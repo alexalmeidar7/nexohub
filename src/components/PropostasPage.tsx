@@ -50,16 +50,43 @@ export default function PropostasPage() {
 
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
+  // Signed URLs for private proposal artwork (bucket "comercial-privado")
+  const [artUrls, setArtUrls] = useState<Record<string, string>>({});
+
+  const PRIVATE_BUCKET = "comercial-privado";
+
+  const signPrivate = async (path: string): Promise<string | null> => {
+    const { data, error } = await supabase.storage
+      .from(PRIVATE_BUCKET)
+      .createSignedUrl(path, 60 * 60);
+    if (error) return null;
+    return data?.signedUrl ?? null;
+  };
+
+  /** Resolves the displayable src for a proposal: legacy public URLs are used
+   * as-is, new private storage paths are resolved to short-lived signed URLs. */
+  const artSrc = (p: any): string | null => {
+    if (!p?.final_art_url) return null;
+    if (/^https?:\/\//.test(p.final_art_url)) return p.final_art_url;
+    return artUrls[p.id] || null;
+  };
 
   const handleUploadBg = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingBg(true);
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      toast.error("Não autenticado");
+      setUploadingBg(false);
+      return;
+    }
     const fileName = `custom_bg_${Date.now()}.${file.name.split('.').pop()}`;
-    const path = `backgrounds/${fileName}`;
+    const path = `${uid}/propostas-bg/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage.from("comercial").upload(path, file);
+    const { error: uploadError } = await supabase.storage.from(PRIVATE_BUCKET).upload(path, file, { upsert: true });
 
     if (uploadError) {
       toast.error("Erro ao enviar imagem de fundo");
@@ -67,8 +94,8 @@ export default function PropostasPage() {
       return;
     }
 
-    const { data: { publicUrl } } = supabase.storage.from("comercial").getPublicUrl(path);
-    setCustomBg(publicUrl);
+    const signed = await signPrivate(path);
+    if (signed) setCustomBg(signed);
     setUploadingBg(false);
     toast.success("Imagem de fundo aplicada!");
   };
@@ -83,8 +110,22 @@ export default function PropostasPage() {
     const { data: p } = await supabase.from("comercial_propostas").select("*, mockup:comercial_mockups(*)");
     setMockups(m || []);
     setPropostas(p || []);
+
+    // Resolve signed URLs for private artwork paths
+    const privateRows = (p || []).filter((row: any) => row.final_art_url && !/^https?:\/\//.test(row.final_art_url));
+    if (privateRows.length) {
+      const entries = await Promise.all(
+        privateRows.map(async (row: any) => [row.id, await signPrivate(row.final_art_url)] as const)
+      );
+      setArtUrls((prev) => {
+        const next = { ...prev };
+        entries.forEach(([id, url]) => { if (url) next[id] = url; });
+        return next;
+      });
+    }
     setIsLoading(false);
   };
+
 
   const handleCreateProposta = async () => {
     if (!selectedMockup) return;
