@@ -90,6 +90,7 @@ const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
 const PlayerPage = lazyRetry(() => import("./pages/Player"));
 const PlayerTvWelcome = lazyRetry(() => import("./pages/player/PlayerTvWelcome"));
 const PairPage = lazyRetry(() => import("./pages/PairPage"));
+const EntregaPremio = lazyRetry(() => import("./pages/EntregaPremio"));
 const GoogleCheckPage = lazyRetry(() => import("./pages/GoogleCheckPage"));
 const TvPairingEventsPage = lazyRetry(() => import("./pages/TvPairingEventsPage"));
 const PlayerApp = lazyRetry(() => import("./pages/PlayerApp"));
