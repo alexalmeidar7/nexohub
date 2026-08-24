@@ -2857,9 +2857,6 @@ export default function AgendaPage() {
                   locale={ptBR}
                   modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
                   modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
-                  modifiersStyles={{
-                    today: { backgroundColor: NEXO_LIME, color: NEXO_DARK, fontWeight: 800 },
-                  }}
                   classNames={{
                     caption_label: "text-[15px] font-medium",
                     nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-muted border-0 flex items-center justify-center transition-colors",
