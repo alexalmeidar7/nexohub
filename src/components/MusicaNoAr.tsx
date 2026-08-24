@@ -1570,7 +1570,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     <span className="text-white font-black text-lg tracking-wider uppercase animate-pulse">Intervalo</span>
                   </div>
                 ) : displayCover ? (
-                  <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                  <img key={displayCover} src={displayCover} alt="Capa" className="nexo-cover-anim object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }}>
                     <Music size={36} />
@@ -1581,7 +1581,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
-                <div className="space-y-1">
+                <div key={`${displayTitulo}|${displayArtista}`} className="nexo-track-anim space-y-1">
                    <div className="text-xl lg:text-3xl font-black tracking-tight truncate m-0 text-white" style={{ color: "#FFFFFF", textShadow: "0 2px 4px rgba(0,0,0,0.5)", letterSpacing: 0 }}>
                      {displayTitulo}
                    </div>
@@ -1600,6 +1600,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     </span>
                   </div>
                 </div>
+
 
                 {music && music.duracao > 0 && (
                   <div className="space-y-2 mt-2 max-w-md">
@@ -1694,20 +1695,25 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
                 {/* ── ONLINE SOURCE ── */}
                 <div 
-                  className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl" 
+                  className={`rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl ${isOnlineSelected ? "nexo-source-active" : ""}`}
                   style={{ 
-                    background: "#F8FAFC", 
+                    background: isOnlineSelected ? NEXO_CYAN : "#F8FAFC", 
                     border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
+                    boxShadow: isOnlineSelected ? `0 12px 40px ${NEXO_CYAN}55` : undefined,
+                    ["--nexo-source-tint" as string]: "rgba(255,255,255,0.14)",
+                    ["--nexo-source-sweep" as string]: "rgba(255,255,255,0.35)",
                   }}
                 >
+
                   <div className="flex items-center gap-4">
                     <div 
                       className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
                       style={{ 
-                        background: isOnlineSelected ? NEXO_CYAN : "#E2E8F0",
+                        background: isOnlineSelected ? "#FFFFFF" : "#E2E8F0",
                       }}
                     >
-                      <Globe size={24} style={{ color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK }} />
+                      <Globe size={24} style={{ color: isOnlineSelected ? NEXO_CYAN : NEXO_DARK }} />
+
                     </div>
                     <div>
                       <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
@@ -1765,20 +1771,24 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl" 
+                className={`rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl ${isLocalSelected ? "nexo-source-active" : ""}`}
                 style={{ 
-                  background: "#F8FAFC", 
+                  background: isLocalSelected ? NEXO_LIME : "#F8FAFC", 
                   border: `2px solid ${isLocalSelected ? NEXO_LIME : "#E2E8F0"}`,
+                  boxShadow: isLocalSelected ? `0 12px 40px ${NEXO_LIME}66` : undefined,
+                  ["--nexo-source-tint" as string]: "rgba(255,255,255,0.18)",
+                  ["--nexo-source-sweep" as string]: "rgba(255,255,255,0.6)",
                 }}
               >
                 <div className="flex items-center gap-4">
                   <div 
                     className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
                     style={{ 
-                      background: isLocalSelected ? NEXO_LIME : "#E2E8F0",
+                      background: isLocalSelected ? "#FFFFFF" : "#E2E8F0",
                     }}
                   >
                     <FolderOpen size={24} style={{ color: NEXO_DARK }} />
+
                   </div>
                   <div className="flex-1">
                     <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
