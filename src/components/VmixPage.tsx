@@ -2200,7 +2200,6 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
         </div>
 
         <div className="mt-20 pt-10 border-t border-white/5 flex flex-col items-center justify-center gap-6">
-          <img src={logoMixControl} alt="NEXO VMIX CONTROL" className="h-6 w-auto opacity-20 grayscale" />
           <p className="text-[10px] text-white/10 uppercase font-black tracking-[0.4em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
         </div>
 
