@@ -42,9 +42,9 @@ function Calendar({ className, classNames, showOutsideDays = true, styles, modif
           color: "var(--layout-header-text, hsl(var(--primary-foreground)))",
         },
         today: {
-          backgroundColor: "color-mix(in srgb, var(--layout-accent-color, hsl(var(--primary))) 18%, var(--layout-page-bg, hsl(var(--background))) 82%)",
-          color: "var(--layout-page-text, hsl(var(--foreground)))",
-          fontWeight: 700,
+          backgroundColor: "#C6F03C",
+          color: "#0A2540",
+          fontWeight: 800,
         },
         range_middle: {
           backgroundColor: "color-mix(in srgb, var(--layout-accent-color, hsl(var(--primary))) 12%, var(--layout-page-bg, hsl(var(--background))) 88%)",
