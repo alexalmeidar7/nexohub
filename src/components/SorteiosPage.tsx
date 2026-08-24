@@ -1412,6 +1412,8 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                       <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => marcarEntregue(s, false)}>Reverter</button>
                     </div>
                   </div>
+                  </div>
+
                 ) : s.expirado ? (
                   <div className="flex flex-col items-end gap-1">
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#FEE2E2", color: "#991B1B", borderRadius: 999, padding: "6px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
