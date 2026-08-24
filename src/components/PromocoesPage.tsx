@@ -441,7 +441,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
         {items.length === 0 ? (
           <div className="p-12 text-center bg-[#F8FAFC] rounded-2xl border-2 border-dashed border-[#E2E8F0]">
-            <p className="text-sm text-[#64748B] font-medium">em comercial/promoções  - a ediçãod das promoções nao esta funcionaod. faça o texto abrindo todas as promoções cadastradas para ver se o formulário carrega corretamente as informação de CADA PROMOÇÃO </p>
+            <p className="text-sm text-[#64748B] font-medium">Nenhuma promoção cadastrada.</p>
           </div>
         ) : (
           <div className="overflow-x-auto" style={{ borderRadius: 24, border: `1px solid ${CYAN}22` }}>

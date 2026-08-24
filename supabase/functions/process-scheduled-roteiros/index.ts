@@ -121,7 +121,7 @@ function generateXml(roteiro: any, data: any): string {
       xml += `  </escalada>\n`
     }
     blocosList.forEach((b: any, bi: number) => {
-      xml += `  <bloco numero="${bi + 1}">\n`
+      xml += `  <bloco numero="${bi + 1}">\n`;
       (b.noticias || []).forEach((n: any, ni: number) => {
         if (!n.titulo) return
         xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`
