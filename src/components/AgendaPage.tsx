@@ -508,16 +508,18 @@ export default function AgendaPage() {
   useEffect(() => {
     const loadAll = async () => {
       setLoadingData(true);
+      // Crítico primeiro (grade + eventos) — libera a tela mais rápido
       const [{ data: emp }] = await Promise.all([
         supabase.from("empresa_config").select("timezone").eq("user_id", user.id).maybeSingle(),
         fetchProgramas(),
         fetchEventos(),
-        fetchApresentadores()
       ]);
       if (emp?.timezone && user) {
         (user as any).timezone = emp.timezone;
       }
       setLoadingData(false);
+      // Secundário (apresentadores usados só nos formulários) carrega em background
+      fetchApresentadores();
     };
     loadAll();
   }, [fetchProgramas, fetchEventos, fetchApresentadores]);
