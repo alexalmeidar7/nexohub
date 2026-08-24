@@ -22,17 +22,25 @@ export async function getMusicExceptions(userId: string | null | undefined): Pro
   if (hit && now - hit.ts < TTL_MS) return hit.list;
   
   try {
-    const { data } = await supabase
-      .from("infomusic_excecoes")
-      .select("*")
-      .eq("user_id", userId);
-    
+    const [{ data }, { data: settings }] = await Promise.all([
+      supabase.from("infomusic_excecoes").select("*").eq("user_id", userId),
+      supabase
+        .from("user_settings")
+        .select("infomusic_excecoes_capa_url, infomusic_excecoes_artista_url")
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ]);
+
+    // Imagens gerais da lista de exceções (valem para todos os termos sem imagem própria)
+    const defaultCapa = (settings as any)?.infomusic_excecoes_capa_url || null;
+    const defaultArtista = (settings as any)?.infomusic_excecoes_artista_url || null;
+
     const list: MusicException[] = (data || []).map((d: any) => ({
       id: d.id,
       termo: d.termo,
-      capa_url: d.capa_url,
-      artista_url: d.artista_url,
-      background_url: d.background_url
+      capa_url: d.capa_url || defaultCapa,
+      artista_url: d.artista_url || defaultArtista,
+      background_url: d.background_url || defaultArtista
     }));
 
 
@@ -42,6 +50,7 @@ export async function getMusicExceptions(userId: string | null | undefined): Pro
     return hit?.list || [];
   }
 }
+
 
 export function matchesMusicException(
   exceptions: (string | MusicException)[],

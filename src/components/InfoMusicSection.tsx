@@ -59,6 +59,9 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   const [testMusica, setTestMusica] = useState("");
   const [testing, setTesting] = useState(false);
   const [excecoes, setExcecoes] = useState<any[]>([]);
+  const [defaultCapaUrl, setDefaultCapaUrl] = useState<string | null>(null);
+  const [defaultArtistaUrl, setDefaultArtistaUrl] = useState<string | null>(null);
+
   const [savingExcecoes, setSavingExcecoes] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
@@ -253,8 +256,11 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     setAllCuriosities(curiositiesRes.data || []);
     setLoadingAllCuriosities(false);
 
-    const data = settingsRes.data;
+    const data = settingsRes.data as any;
+    setDefaultCapaUrl(data?.infomusic_excecoes_capa_url || null);
+    setDefaultArtistaUrl(data?.infomusic_excecoes_artista_url || null);
     setAiEnabled(data?.infomusic_ai_enabled !== false);
+
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
     setLastManualId(data?.last_manual_curiosity_id || null);
     
@@ -268,6 +274,68 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       });
     }
   };
+
+  /** Faz upload de uma imagem e devolve a URL pública */
+  const uploadExcecaoImage = async (file: File, prefix: string): Promise<string | null> => {
+    if (!user) return null;
+    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const path = `${user.id}/${prefix}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("xml-files").upload(path, file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data } = supabase.storage.from("xml-files").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const pickImage = (onPick: (file: File) => void) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) onPick(file);
+    };
+    input.click();
+  };
+
+  /** Salva a imagem geral da lista de EXCEÇÕES (vale para todos os termos sem imagem própria) */
+  const saveDefaultExcecaoImage = async (kind: "capa" | "artista", file: File) => {
+    if (!user) return;
+    try {
+      const url = await uploadExcecaoImage(file, `excecao-geral-${kind}`);
+      if (!url) return;
+      const column = kind === "capa" ? "infomusic_excecoes_capa_url" : "infomusic_excecoes_artista_url";
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, [column]: url } as any, { onConflict: "user_id" });
+      if (error) throw error;
+      if (kind === "capa") setDefaultCapaUrl(url); else setDefaultArtistaUrl(url);
+      try {
+        const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+        invalidateMusicExceptionsCache(user.id);
+      } catch {}
+      toast.success(kind === "capa" ? "Capa geral das exceções salva!" : "Foto geral do artista salva!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro no upload da imagem geral");
+    }
+  };
+
+  const clearDefaultExcecaoImage = async (kind: "capa" | "artista") => {
+    if (!user) return;
+    const column = kind === "capa" ? "infomusic_excecoes_capa_url" : "infomusic_excecoes_artista_url";
+    const { error } = await supabase
+      .from("user_settings")
+      .upsert({ user_id: user.id, [column]: null } as any, { onConflict: "user_id" });
+    if (error) { toast.error("Erro ao remover imagem"); return; }
+    if (kind === "capa") setDefaultCapaUrl(null); else setDefaultArtistaUrl(null);
+    try {
+      const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+      invalidateMusicExceptionsCache(user.id);
+    } catch {}
+    toast.success("Imagem geral removida");
+  };
+
+
 
   useEffect(() => {
     load();
@@ -706,53 +774,78 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               <div className="w-1 h-4 bg-amber-500 rounded-full" />
               <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
             </div>
-            <div className="flex gap-1">
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                id="upload-excecao-capa"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    toast.info("Upload de capa iniciado (mock)");
-                    // Logica de upload viria aqui
-                  }
-                }}
-              />
-              <Button 
-                size="icon" 
-                variant="outline" 
-                className="h-6 w-6 text-amber-600 border-amber-200 hover:bg-amber-50 rounded-full bg-white/50"
-                title="Cadastrar imagem da capa para exceção"
-                onClick={() => document.getElementById("upload-excecao-capa")?.click()}
-              >
-                <ImagePlus size={10} />
-              </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-black uppercase tracking-wider text-gray-400">Imagens gerais</span>
+              {/* Capa geral da lista */}
+              <div className="flex items-center gap-1">
+                {defaultCapaUrl ? (
+                  <button
+                    type="button"
+                    title="Capa geral da lista (clique para trocar)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("capa", f))}
+                    className="relative h-7 w-7 rounded-md overflow-hidden border-2 border-amber-300 shadow-sm"
+                  >
+                    <img src={defaultCapaUrl} alt="Capa geral das exceções" className="h-full w-full object-cover" />
+                  </button>
+                ) : (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-6 w-6 text-amber-600 border-amber-200 hover:bg-amber-50 rounded-full bg-white/50"
+                    title="Cadastrar capa geral (vale para toda a lista de exceções)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("capa", f))}
+                  >
+                    <ImagePlus size={10} />
+                  </Button>
+                )}
+                {defaultCapaUrl && (
+                  <button
+                    type="button"
+                    className="text-gray-300 hover:text-red-500"
+                    title="Remover capa geral"
+                    onClick={() => void clearDefaultExcecaoImage("capa")}
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
 
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                id="upload-excecao-artista"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    toast.info("Upload de artista iniciado (mock)");
-                  }
-                }}
-              />
-              <Button 
-                size="icon" 
-                variant="outline" 
-                className="h-6 w-6 text-blue-600 border-blue-200 hover:bg-blue-50 rounded-full bg-white/50"
-                title="Cadastrar imagem do artista para exceção"
-                onClick={() => document.getElementById("upload-excecao-artista")?.click()}
-              >
-                <Plus size={10} />
-              </Button>
+              {/* Artista geral da lista */}
+              <div className="flex items-center gap-1">
+                {defaultArtistaUrl ? (
+                  <button
+                    type="button"
+                    title="Foto geral do artista (clique para trocar)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("artista", f))}
+                    className="relative h-7 w-7 rounded-md overflow-hidden border-2 border-blue-300 shadow-sm"
+                  >
+                    <img src={defaultArtistaUrl} alt="Artista geral das exceções" className="h-full w-full object-cover" />
+                  </button>
+                ) : (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-6 w-6 text-blue-600 border-blue-200 hover:bg-blue-50 rounded-full bg-white/50"
+                    title="Cadastrar foto de artista geral (vale para toda a lista de exceções)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("artista", f))}
+                  >
+                    <Plus size={10} />
+                  </Button>
+                )}
+                {defaultArtistaUrl && (
+                  <button
+                    type="button"
+                    className="text-gray-300 hover:text-red-500"
+                    title="Remover foto geral do artista"
+                    onClick={() => void clearDefaultExcecaoImage("artista")}
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
@@ -773,79 +866,85 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                   >
                     <td style={{ padding: "12px 14px", fontWeight: 700, fontSize: 13 }}>{exc.termo}</td>
                     <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                      <div className="flex items-center justify-center gap-1">
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className={`h-6 w-6 rounded-full ${exc.capa_url ? "text-emerald-500 bg-emerald-50" : "text-gray-400 hover:text-amber-500 hover:bg-amber-50"}`}
-                          title="Cadastrar imagem da capa"
-                          onClick={() => {
-                            const input = document.createElement("input");
-                            input.type = "file";
-                            input.accept = "image/*";
-                            input.onchange = async (e: any) => {
-                              const file = e.target.files?.[0];
-                              if (!file || !user) return;
-                              try {
-                                const fileName = `excecao-capa-${exc.id}-${Date.now()}`;
-                                const { data: upData, error: upErr } = await supabase.storage
-                                  .from("xml-files")
-                                  .upload(`${user.id}/${fileName}`, file);
-                                if (upErr) throw upErr;
-                                
-                                const { data: { publicUrl } } = supabase.storage
-                                  .from("xml-files")
-                                  .getPublicUrl(`${user.id}/${fileName}`);
-                                  
-                                await supabase.from("infomusic_excecoes").update({ capa_url: publicUrl } as any).eq("id", exc.id);
-                                loadExcecoes();
-                                toast.success("Capa atualizada!");
-                              } catch (err) {
-                                toast.error("Erro no upload");
-                              }
-                            };
-                            input.click();
-                          }}
-                        >
-                          <ImagePlus size={12} />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className={`h-6 w-6 rounded-full ${(exc as any).artista_url ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-blue-500 hover:bg-blue-50"}`}
-                          title="Cadastrar imagem do artista"
-                          onClick={() => {
-                            const input = document.createElement("input");
-                            input.type = "file";
-                            input.accept = "image/*";
-                            input.onchange = async (e: any) => {
-                              const file = e.target.files?.[0];
-                              if (!file || !user) return;
-                              try {
-                                const fileName = `excecao-artista-${exc.id}-${Date.now()}`;
-                                const { data: upData, error: upErr } = await supabase.storage
-                                  .from("xml-files")
-                                  .upload(`${user.id}/${fileName}`, file);
-                                if (upErr) throw upErr;
-                                
-                                const { data: { publicUrl } } = supabase.storage
-                                  .from("xml-files")
-                                  .getPublicUrl(`${user.id}/${fileName}`);
-                                  
-                                await supabase.from("infomusic_excecoes").update({ artista_url: publicUrl } as any).eq("id", exc.id);
-                                loadExcecoes();
-                                toast.success("Foto do artista atualizada!");
-                              } catch (err) {
-                                toast.error("Erro no upload");
-                              }
-                            };
-                            input.click();
-                          }}
-                        >
-                          <Plus size={12} />
-                        </Button>
-                      </div>
+                      {(() => {
+                        const ownCapa = exc.capa_url || null;
+                        const ownArtista = (exc as any).artista_url || null;
+                        const effCapa = ownCapa || defaultCapaUrl;
+                        const effArtista = ownArtista || defaultArtistaUrl;
+                        const saveOwn = async (kind: "capa" | "artista", file: File) => {
+                          try {
+                            const url = await uploadExcecaoImage(file, `excecao-${kind}-${exc.id}`);
+                            if (!url) return;
+                            const column = kind === "capa" ? "capa_url" : "artista_url";
+                            const { error } = await supabase
+                              .from("infomusic_excecoes")
+                              .update({ [column]: url } as any)
+                              .eq("id", exc.id);
+                            if (error) throw error;
+                            const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+                            invalidateMusicExceptionsCache(user?.id);
+                            loadExcecoes();
+                            toast.success(kind === "capa" ? "Capa específica atualizada!" : "Foto específica do artista atualizada!");
+                          } catch {
+                            toast.error("Erro no upload");
+                          }
+                        };
+                        const clearOwn = async (kind: "capa" | "artista") => {
+                          const column = kind === "capa" ? "capa_url" : "artista_url";
+                          const { error } = await supabase
+                            .from("infomusic_excecoes")
+                            .update({ [column]: null } as any)
+                            .eq("id", exc.id);
+                          if (error) { toast.error("Erro ao remover"); return; }
+                          const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+                          invalidateMusicExceptionsCache(user?.id);
+                          loadExcecoes();
+                          toast.success("Voltou a usar a imagem geral da lista");
+                        };
+                        const Slot = ({ kind, own, eff, color }: { kind: "capa" | "artista"; own: string | null; eff: string | null; color: string }) => (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => pickImage((f) => void saveOwn(kind, f))}
+                              title={own
+                                ? `Imagem específica desta ${kind === "capa" ? "capa" : "foto de artista"} (clique para trocar)`
+                                : eff
+                                  ? "Usando a imagem geral da lista (clique para cadastrar uma específica)"
+                                  : `Cadastrar ${kind === "capa" ? "capa" : "foto do artista"}`}
+                              className="relative h-8 w-8 rounded-md overflow-hidden border-2 flex items-center justify-center bg-white/70"
+                              style={{ borderColor: own ? color : eff ? `${color}55` : "#E5E7EB", opacity: own ? 1 : eff ? 0.75 : 1 }}
+                            >
+                              {eff ? (
+                                <img src={eff} alt="" className="h-full w-full object-cover" />
+                              ) : kind === "capa" ? (
+                                <ImagePlus size={12} className="text-gray-400" />
+                              ) : (
+                                <Plus size={12} className="text-gray-400" />
+                              )}
+                            </button>
+                            {own ? (
+                              <button
+                                type="button"
+                                className="text-[8px] font-black uppercase text-gray-300 hover:text-red-500"
+                                onClick={() => void clearOwn(kind)}
+                                title="Remover imagem específica e voltar à imagem geral"
+                              >
+                                própria ✕
+                              </button>
+                            ) : (
+                              <span className="text-[8px] font-black uppercase text-gray-300">{eff ? "geral" : "—"}</span>
+                            )}
+                          </div>
+                        );
+                        return (
+                          <div className="flex items-start justify-center gap-2">
+                            <Slot kind="capa" own={ownCapa} eff={effCapa} color="#F59E0B" />
+                            <Slot kind="artista" own={ownArtista} eff={effArtista} color="#3B82F6" />
+                          </div>
+                        );
+                      })()}
                     </td>
+
                     <td style={{ padding: "12px 14px", textAlign: "center" }}>
                       <Button 
                         size="icon" 
