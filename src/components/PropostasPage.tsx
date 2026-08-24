@@ -50,16 +50,43 @@ export default function PropostasPage() {
 
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
+  // Signed URLs for private proposal artwork (bucket "comercial-privado")
+  const [artUrls, setArtUrls] = useState<Record<string, string>>({});
+
+  const PRIVATE_BUCKET = "comercial-privado";
+
+  const signPrivate = async (path: string): Promise<string | null> => {
+    const { data, error } = await supabase.storage
+      .from(PRIVATE_BUCKET)
+      .createSignedUrl(path, 60 * 60);
+    if (error) return null;
+    return data?.signedUrl ?? null;
+  };
+
+  /** Resolves the displayable src for a proposal: legacy public URLs are used
+   * as-is, new private storage paths are resolved to short-lived signed URLs. */
+  const artSrc = (p: any): string | null => {
+    if (!p?.final_art_url) return null;
+    if (/^https?:\/\//.test(p.final_art_url)) return p.final_art_url;
+    return artUrls[p.id] || null;
+  };
 
   const handleUploadBg = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingBg(true);
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      toast.error("Não autenticado");
+      setUploadingBg(false);
+      return;
+    }
     const fileName = `custom_bg_${Date.now()}.${file.name.split('.').pop()}`;
-    const path = `backgrounds/${fileName}`;
+    const path = `${uid}/propostas-bg/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage.from("comercial").upload(path, file);
+    const { error: uploadError } = await supabase.storage.from(PRIVATE_BUCKET).upload(path, file, { upsert: true });
 
     if (uploadError) {
       toast.error("Erro ao enviar imagem de fundo");
@@ -67,8 +94,8 @@ export default function PropostasPage() {
       return;
     }
 
-    const { data: { publicUrl } } = supabase.storage.from("comercial").getPublicUrl(path);
-    setCustomBg(publicUrl);
+    const signed = await signPrivate(path);
+    if (signed) setCustomBg(signed);
     setUploadingBg(false);
     toast.success("Imagem de fundo aplicada!");
   };
@@ -83,8 +110,22 @@ export default function PropostasPage() {
     const { data: p } = await supabase.from("comercial_propostas").select("*, mockup:comercial_mockups(*)");
     setMockups(m || []);
     setPropostas(p || []);
+
+    // Resolve signed URLs for private artwork paths
+    const privateRows = (p || []).filter((row: any) => row.final_art_url && !/^https?:\/\//.test(row.final_art_url));
+    if (privateRows.length) {
+      const entries = await Promise.all(
+        privateRows.map(async (row: any) => [row.id, await signPrivate(row.final_art_url)] as const)
+      );
+      setArtUrls((prev) => {
+        const next = { ...prev };
+        entries.forEach(([id, url]) => { if (url) next[id] = url; });
+        return next;
+      });
+    }
     setIsLoading(false);
   };
+
 
   const handleCreateProposta = async () => {
     if (!selectedMockup) return;
@@ -118,10 +159,18 @@ export default function PropostasPage() {
     if (!file) return;
 
     setUploadingArt(true);
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      toast.error("Não autenticado");
+      setUploadingArt(false);
+      return;
+    }
     const fileName = `${propostaId}_art_${Date.now()}.${file.name.split('.').pop()}`;
-    const path = `artes/${fileName}`;
+    // Private bucket: proposal artwork must never be publicly downloadable
+    const path = `${uid}/artes/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage.from("comercial").upload(path, file);
+    const { error: uploadError } = await supabase.storage.from(PRIVATE_BUCKET).upload(path, file, { upsert: true });
 
     if (uploadError) {
       toast.error("Erro ao enviar arte");
@@ -129,22 +178,23 @@ export default function PropostasPage() {
       return;
     }
 
-    const { data: { publicUrl } } = supabase.storage.from("comercial").getPublicUrl(path);
-
     const { error: updateError } = await supabase.from("comercial_propostas").update({
-      final_art_url: publicUrl,
+      final_art_url: path,
       status: "aprovacao"
     }).eq("id", propostaId);
 
     if (updateError) {
       toast.error("Erro ao atualizar status");
     } else {
+      const signed = await signPrivate(path);
+      if (signed) setArtUrls((prev) => ({ ...prev, [propostaId]: signed }));
       toast.success("Arte enviada para aprovação!");
       fetchData();
       if (selectedProposta?.id === propostaId) {
-        setSelectedProposta(prev => ({ ...prev, status: "aprovacao", final_art_url: publicUrl }));
+        setSelectedProposta(prev => ({ ...prev, status: "aprovacao", final_art_url: path }));
       }
     }
+
     setUploadingArt(false);
   };
 
@@ -1431,8 +1481,9 @@ export default function PropostasPage() {
           {propostas.map(p => (
             <div key={p.id} className="group relative rounded-xl border bg-white overflow-hidden transition-all hover:shadow-md">
               <div className="aspect-[4/3] bg-slate-100 relative">
-                {p.final_art_url ? (
-                  <img src={p.final_art_url} className="w-full h-full object-cover" />
+                {artSrc(p) ? (
+                  <img src={artSrc(p) as string} className="w-full h-full object-cover" />
+
                 ) : p.mockup?.image_url ? (
                   <img src={p.mockup.image_url} className="w-full h-full object-cover opacity-50 grayscale" />
                 ) : (
@@ -1561,12 +1612,13 @@ export default function PropostasPage() {
                     style={{ width: "400px", aspectRatio: "1/1.414" }}
                   >
                     <img 
-                      src={selectedProposta.final_art_url || "/mockup-bg-v4.png"} 
+                      src={artSrc(selectedProposta) || "/mockup-bg-v4.png"} 
                       className="w-full h-full object-cover"
                       crossOrigin="anonymous"
                     />
 
-                    {!selectedProposta.final_art_url && (
+                    {!artSrc(selectedProposta) && (
+
                       <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
                         <div className="bg-white/90 p-6 rounded-lg shadow-lg border">
                           <p className="text-[10px] font-bold text-sky-600 uppercase mb-4">Pré-visualização de Dados</p>
