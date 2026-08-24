@@ -159,10 +159,18 @@ export default function PropostasPage() {
     if (!file) return;
 
     setUploadingArt(true);
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) {
+      toast.error("Não autenticado");
+      setUploadingArt(false);
+      return;
+    }
     const fileName = `${propostaId}_art_${Date.now()}.${file.name.split('.').pop()}`;
-    const path = `artes/${fileName}`;
+    // Private bucket: proposal artwork must never be publicly downloadable
+    const path = `${uid}/artes/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage.from("comercial").upload(path, file);
+    const { error: uploadError } = await supabase.storage.from(PRIVATE_BUCKET).upload(path, file, { upsert: true });
 
     if (uploadError) {
       toast.error("Erro ao enviar arte");
@@ -170,22 +178,23 @@ export default function PropostasPage() {
       return;
     }
 
-    const { data: { publicUrl } } = supabase.storage.from("comercial").getPublicUrl(path);
-
     const { error: updateError } = await supabase.from("comercial_propostas").update({
-      final_art_url: publicUrl,
+      final_art_url: path,
       status: "aprovacao"
     }).eq("id", propostaId);
 
     if (updateError) {
       toast.error("Erro ao atualizar status");
     } else {
+      const signed = await signPrivate(path);
+      if (signed) setArtUrls((prev) => ({ ...prev, [propostaId]: signed }));
       toast.success("Arte enviada para aprovação!");
       fetchData();
       if (selectedProposta?.id === propostaId) {
-        setSelectedProposta(prev => ({ ...prev, status: "aprovacao", final_art_url: publicUrl }));
+        setSelectedProposta(prev => ({ ...prev, status: "aprovacao", final_art_url: path }));
       }
     }
+
     setUploadingArt(false);
   };
 
