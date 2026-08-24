@@ -1708,10 +1708,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     <div 
                       className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
                       style={{ 
-                        background: isOnlineSelected ? NEXO_CYAN : "#E2E8F0",
+                        background: isOnlineSelected ? "#FFFFFF" : "#E2E8F0",
                       }}
                     >
-                      <Globe size={24} style={{ color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK }} />
+                      <Globe size={24} style={{ color: isOnlineSelected ? NEXO_CYAN : NEXO_DARK }} />
+
                     </div>
                     <div>
                       <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
