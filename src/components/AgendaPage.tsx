@@ -2855,8 +2855,8 @@ export default function AgendaPage() {
                   onSelect={setSelectedDate}
                   className={cn("p-2 pointer-events-auto agenda-calendar")}
                   locale={ptBR}
-                  modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
-                  modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
+                  modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates, isToday: (d: Date) => isSameDay(d, new Date()) }}
+                  modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day", isToday: "agenda-today-highlight" }}
                   classNames={{
                     caption_label: "text-[15px] font-medium",
                     nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-muted border-0 flex items-center justify-center transition-colors",
