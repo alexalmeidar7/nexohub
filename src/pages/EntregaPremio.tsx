@@ -150,13 +150,34 @@ export default function EntregaPremio() {
           <h1 style={{ fontSize: 20, fontWeight: 800, color: DARK, margin: "4px 0 0" }}>Registro de retirada</h1>
         </header>
 
-        {loading && <div style={card}>Carregando...</div>}
-
-        {erro && !info && (
-          <div style={{ ...card, borderColor: "#fca5a5", color: "#991B1B", display: "flex", gap: 10, alignItems: "center" }}>
-            <AlertTriangle size={18} /> {erro}
+        {!info && (
+          <div style={{ ...card, display: "grid", gap: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>Digite o código de 4 dígitos da entrega</div>
+            <input
+              autoFocus
+              inputMode="numeric"
+              value={pin}
+              maxLength={4}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => { if (e.key === "Enter") autenticar(); }}
+              placeholder="0000"
+              style={{
+                width: "100%", height: 64, borderRadius: 16, border: `2px solid ${CYAN}66`,
+                textAlign: "center", fontSize: 32, fontWeight: 800, letterSpacing: 12, color: DARK,
+                background: BG, outline: "none", fontFamily: "'Montserrat', system-ui, sans-serif",
+              }}
+            />
+            <button style={btn} disabled={loading} onClick={autenticar}>
+              {loading ? "Validando..." : "Autenticar"}
+            </button>
+            {erro && (
+              <div style={{ color: "#991B1B", fontSize: 12, display: "flex", gap: 8, alignItems: "center" }}>
+                <AlertTriangle size={16} /> {erro}
+              </div>
+            )}
           </div>
         )}
+
 
         {info && (
           <>
