@@ -1387,7 +1387,18 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                   {s.observacoes && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{s.observacoes}</div>}
                 </div>
                 {s.entregue ? (
+                  <div className="flex items-center gap-3">
+                    {thumbs[s.id] && (
+                      <img
+                        src={thumbs[s.id]}
+                        alt={`Foto da entrega do prêmio para ${s.nome_ganhador}`}
+                        onClick={() => setFotoUrl(thumbs[s.id])}
+                        title="Clique para ampliar"
+                        style={{ width: 52, height: 52, borderRadius: 12, objectFit: "cover", cursor: "zoom-in", border: `2px solid ${LIME}` }}
+                      />
+                    )}
                   <div className="flex flex-col items-end gap-1">
+
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: LIME, color: DARK, borderRadius: 999, padding: "6px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
                       <Check size={14} /> Entregue
                     </div>
