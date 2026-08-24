@@ -2508,6 +2508,33 @@ function SwitcherUI({
     });
   }, [programas]);
 
+  // Próximo programa da grade (mesmo dia)
+  const nextProgram = useMemo(() => {
+    if (!programas || programas.length === 0) return null;
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const dayMap: Record<number, string> = {
+      0: "domingo", 1: "segunda", 2: "terça", 3: "quarta",
+      4: "quinta", 5: "sexta", 6: "sábado"
+    };
+    const dayName = dayMap[now.getDay()];
+    const matchesToday = (p: any) => {
+      if (!p.dias_semana || p.dias_semana.length === 0) return true;
+      return p.dias_semana.some((d: string) => d?.toLowerCase()?.startsWith(dayName.slice(0, 3)));
+    };
+    const list = programas
+      .filter((p: any) => p.horario_inicio && matchesToday(p) && p.id !== currentProgram?.id)
+      .map((p: any) => {
+        const [h, m] = p.horario_inicio.split(":").map(Number);
+        return { p, start: h * 60 + m };
+      })
+      .filter((x: any) => x.start > nowMin)
+      .sort((a: any, b: any) => a.start - b.start);
+    return list[0]?.p || null;
+  }, [programas, currentProgram]);
+
+
+
   const tabs = [
     { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
     { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
@@ -2678,7 +2705,21 @@ function SwitcherUI({
                     })}
                   </span>
                 </div>
+
+                {/* Próximo programa da grade */}
+                <div className="ml-3 flex flex-col justify-center px-4 py-1.5 rounded-xl bg-[#0c0c0e]/50 border border-white/5 min-w-[180px]">
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">A SEGUIR</span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.05em] text-white/90 truncate max-w-[200px] leading-none">
+                    {nextProgram?.nome || "—"}
+                  </span>
+                  {nextProgram && (
+                    <span className="text-[9px] font-medium text-white/40 leading-none mt-1 font-mono">
+                      {nextProgram.horario_inicio?.slice(0, 5)} - {nextProgram.horario_fim?.slice(0, 5)}
+                    </span>
+                  )}
+                </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -3236,84 +3277,6 @@ function SwitcherUI({
 
           return (
             <>
-              {/* ── Dynamic Schedule Header ── */}
-              <div className="flex items-stretch gap-3">
-                {/* CURRENTLY ON AIR - LARGE RED INDICATOR */}
-                <div className="flex-1 rounded-xl p-4 border border-[#dc2626] bg-[#dc262610] shadow-[0_0_30px_rgba(220,38,38,0.15)] flex flex-col justify-between">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#dc2626] text-white animate-pulse">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">NO AR</span>
-                    </div>
-                    {onAir && (
-                      <span className="text-[10px] font-bold text-white/50 font-mono tracking-tighter">
-                        {onAir.horario_inicio?.slice(0,5)} — {onAir.horario_fim?.slice(0,5)}
-                      </span>
-                    )}
-                  </div>
-
-                  {onAir ? (
-                    <div className="space-y-3">
-                      <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none truncate">{onAir.nome}</h2>
-                      
-                      {(() => {
-                        const remSec = secondsUntilEnd(onAir);
-                        const totalSec = programDurationSec(onAir);
-                        const elapsedSec = totalSec - remSec;
-                        const progress = totalSec > 0 ? Math.min(100, (elapsedSec / totalSec) * 100) : 0;
-                        const rh = Math.floor(remSec / 3600);
-                        const rm = Math.floor((remSec % 3600) / 60);
-                        const rs = remSec % 60;
-                        const timeStr = rh > 0
-                          ? `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`
-                          : `${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`;
-                        return (
-                          <div className="space-y-1.5">
-                            <div className="flex items-end justify-between">
-                              <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Restante</span>
-                              <span className="text-xl font-mono font-black tabular-nums tracking-widest" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
-                                {remSec <= 0 ? "00:00" : timeStr}
-                              </span>
-                            </div>
-                            <div className="h-1.5 rounded-full bg-[#ffffff08] overflow-hidden">
-                              <div className="h-full rounded-full bg-[#dc2626] transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, boxShadow: "0 0 10px rgba(220,38,38,0.5)" }} />
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center border border-dashed border-white/5 rounded-lg bg-black/20">
-                      <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Aguardando programação</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* UPCOMING - COMPACT SIDEBAR */}
-                <div className="w-80 rounded-xl p-4 border border-[#ffffff08] bg-[#1a1a1f] flex flex-col">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Eye size={14} className="text-white/40" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">A Seguir</span>
-                  </div>
-
-                  <div className="flex-1 space-y-3">
-                    {upcoming.length > 0 ? upcoming.slice(0, 2).map((up, i) => (
-                      <div key={up.id} className={`p-3 rounded-lg border bg-black/20 ${i === 0 ? "border-white/10" : "border-white/5 opacity-50"}`}>
-                        <div className="flex justify-between items-start gap-2 mb-1">
-                          <span className="text-xs font-black text-white/90 uppercase truncate">{up.nome}</span>
-                          <span className="text-[10px] font-mono font-bold text-blue-400 shrink-0">{up.horario_inicio?.slice(0,5)}</span>
-                        </div>
-                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Estúdio: {up.estudio || "—"}</p>
-                      </div>
-                    )) : (
-                      <div className="flex-1 flex items-center justify-center">
-                        <span className="text-[9px] font-bold text-white/10 uppercase tracking-widest">Sem próximos eventos</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               {/* ── Programas Preset + Botões de Efeitos side by side ── */}
               <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
                 {/* Left: Programas Preset */}
@@ -3323,11 +3286,6 @@ function SwitcherUI({
                       <Radio size={14} style={{ color: "#999" }} />
                       <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>
                         {studioName || "Estúdio FM"} - inserir nova automação 
-                        {programas.find(p => isProgramForToday(p) && isNowInProgram(p)) && (
-                          <span className="ml-2 text-[10px] text-red-500 animate-pulse">
-                            ● NO AR: {programas.find(p => isProgramForToday(p) && isNowInProgram(p))?.nome}
-                          </span>
-                        )}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
