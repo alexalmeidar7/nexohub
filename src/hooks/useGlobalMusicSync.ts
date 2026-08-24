@@ -181,6 +181,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             music_current_cover: matchedExcecao.capa_url || photo || "",
             music_deezer_artist_img: matchedExcecao.background_url || matchedExcecao.capa_url || photo || "",
             music_current_curiosity: "",
+            music_current_excecao: matchedExcecao,
           }).catch(() => {});
         }
         return;
