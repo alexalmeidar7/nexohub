@@ -403,12 +403,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         const [settingsRes, exceptionsRes] = await Promise.all([
           supabase
             .from("user_settings")
-            .select("music_xml_url, music_source_mode, dashboard_items")
+            .select("music_xml_url, music_source_mode, dashboard_items, infomusic_excecoes_capa_url, infomusic_excecoes_artista_url")
             .eq("user_id", user.id)
             .maybeSingle(),
           supabase
             .from("infomusic_excecoes")
-            .select("id, termo, capa_url, background_url")
+            .select("id, termo, capa_url, artista_url, background_url")
             .eq("user_id", user.id)
         ]);
 
@@ -422,7 +422,16 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           localStoragePath: dashboardItems?.local_xml_storage_path || null,
         };
         
-        excecoesRef.current = exceptionsRes.data || [];
+        // Imagens gerais da lista de exceções: valem quando o termo não tem imagem própria
+        const defCapa = (settings as any)?.infomusic_excecoes_capa_url || null;
+        const defArtista = (settings as any)?.infomusic_excecoes_artista_url || null;
+        excecoesRef.current = (exceptionsRes.data || []).map((e: any) => ({
+          ...e,
+          capa_url: e.capa_url || defCapa,
+          artista_url: e.artista_url || defArtista,
+          background_url: e.background_url || defArtista,
+        }));
+
         settingsFetchedRef.current = true;
       }
 
