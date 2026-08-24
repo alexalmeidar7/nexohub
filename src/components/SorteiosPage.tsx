@@ -112,6 +112,8 @@ interface Sorteio {
   expirado?: boolean;
   data_expiracao?: string | null;
   entrega_token?: string | null;
+  entrega_pin?: string | null;
+
   foto_entrega_url?: string | null;
   programa_nome?: string | null;
 }
