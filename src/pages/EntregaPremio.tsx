@@ -38,11 +38,13 @@ export default function EntregaPremio() {
   const { token } = useParams<{ token: string }>();
   const [info, setInfo] = useState<Info | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [camOn, setCamOn] = useState(false);
   const [agora, setAgora] = useState(new Date());
+  const [pin, setPin] = useState("");
+  const [pinOk, setPinOk] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -55,13 +57,23 @@ export default function EntregaPremio() {
 
   useEffect(() => {
     document.title = "Registrar entrega de prêmio";
-    (async () => {
-      const r = await call({ token });
-      if (r?.ok) setInfo(r.info);
-      else setErro(r?.error || "Não foi possível carregar o registro");
-      setLoading(false);
-    })();
-  }, [token]);
+  }, []);
+
+  const autenticar = async () => {
+    const p = pin.replace(/\D/g, "");
+    if (p.length !== 4) return setErro("Digite os 4 dígitos");
+    setErro(null);
+    setLoading(true);
+    const r = await call({ token, pin: p });
+    setLoading(false);
+    if (r?.ok && r.info) {
+      setPinOk(p);
+      setInfo(r.info);
+    } else {
+      setErro(r?.error || "Código inválido");
+    }
+  };
+
 
   const stopCam = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -113,11 +125,12 @@ export default function EntregaPremio() {
   const confirmar = async () => {
     if (!photo) return;
     setSaving(true);
-    const r = await call({ action: "confirm", token, photoBase64: photo });
+    const r = await call({ action: "confirm", token, pin: pinOk, photoBase64: photo });
     setSaving(false);
     if (r?.ok) setInfo(r.info);
     else setErro(r?.error || "Erro ao salvar a foto");
   };
+
 
   const card: React.CSSProperties = {
     background: "#fff", borderRadius: 20, padding: 18, border: `1px solid ${CYAN}33`,
@@ -137,13 +150,34 @@ export default function EntregaPremio() {
           <h1 style={{ fontSize: 20, fontWeight: 800, color: DARK, margin: "4px 0 0" }}>Registro de retirada</h1>
         </header>
 
-        {loading && <div style={card}>Carregando...</div>}
-
-        {erro && !info && (
-          <div style={{ ...card, borderColor: "#fca5a5", color: "#991B1B", display: "flex", gap: 10, alignItems: "center" }}>
-            <AlertTriangle size={18} /> {erro}
+        {!info && (
+          <div style={{ ...card, display: "grid", gap: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>Digite o código de 4 dígitos da entrega</div>
+            <input
+              autoFocus
+              inputMode="numeric"
+              value={pin}
+              maxLength={4}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onKeyDown={(e) => { if (e.key === "Enter") autenticar(); }}
+              placeholder="0000"
+              style={{
+                width: "100%", height: 64, borderRadius: 16, border: `2px solid ${CYAN}66`,
+                textAlign: "center", fontSize: 32, fontWeight: 800, letterSpacing: 12, color: DARK,
+                background: BG, outline: "none", fontFamily: "'Montserrat', system-ui, sans-serif",
+              }}
+            />
+            <button style={btn} disabled={loading} onClick={autenticar}>
+              {loading ? "Validando..." : "Autenticar"}
+            </button>
+            {erro && (
+              <div style={{ color: "#991B1B", fontSize: 12, display: "flex", gap: 8, alignItems: "center" }}>
+                <AlertTriangle size={16} /> {erro}
+              </div>
+            )}
           </div>
         )}
+
 
         {info && (
           <>
@@ -205,10 +239,11 @@ export default function EntregaPremio() {
                 ) : photo ? (
                   <>
                     <button style={{ ...btn, background: LIME, color: DARK }} disabled={saving} onClick={confirmar}>
-                      <Check size={18} /> {saving ? "Salvando..." : "Confirmar entrega"}
+                      <Check size={18} /> {saving ? "Salvando..." : "Salvar foto"}
                     </button>
                     <button style={{ ...btn, background: "#fff", color: DARK, border: `2px solid ${CYAN}`, height: 46 }} onClick={startCam}>
-                      <RefreshCw size={16} /> Tirar outra foto
+                      <RefreshCw size={16} /> Refazer a foto
+
                     </button>
                   </>
                 ) : (

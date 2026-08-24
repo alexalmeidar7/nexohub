@@ -112,6 +112,8 @@ interface Sorteio {
   expirado?: boolean;
   data_expiracao?: string | null;
   entrega_token?: string | null;
+  entrega_pin?: string | null;
+
   foto_entrega_url?: string | null;
   programa_nome?: string | null;
 }
@@ -1409,10 +1411,15 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
             <div style={{ display: "inline-block", padding: 14, background: "#fff", border: `2px solid ${CYAN}`, borderRadius: 20 }}>
               <QRCodeCanvas value={entregaLink(qrFor)} size={220} level="M" includeMargin={false} />
             </div>
-            <p style={{ fontSize: 12, color: "#64748B", marginTop: 14 }}>
-              O atendente lê este QR Code com o celular para registrar a foto do ouvinte recebendo o prêmio.
+            <div style={{ marginTop: 14, padding: "12px 14px", background: "#D6F4FB", borderRadius: 16 }}>
+              <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "#64748B", fontWeight: 800 }}>Código de acesso</div>
+              <div style={{ fontSize: 30, fontWeight: 900, color: DARK, letterSpacing: 10 }}>{qrFor.entrega_pin || "----"}</div>
+            </div>
+            <p style={{ fontSize: 12, color: "#64748B", marginTop: 12 }}>
+              O atendente lê o QR Code, informa este código de 4 dígitos e registra a foto do ouvinte recebendo o prêmio.
             </p>
             <div style={{ fontSize: 10, color: "#94a3b8", wordBreak: "break-all", marginTop: 6 }}>{entregaLink(qrFor)}</div>
+
             <div className="flex gap-2 mt-4">
               <button style={{ ...ghostBtn, flex: 1 }} onClick={() => { navigator.clipboard?.writeText(entregaLink(qrFor)); toast({ title: "Link copiado" }); }}>Copiar link</button>
               <button style={{ ...primaryBtn, flex: 1 }} onClick={() => setQrFor(null)}>Fechar</button>
