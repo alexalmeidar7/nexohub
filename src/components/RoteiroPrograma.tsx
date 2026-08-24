@@ -916,8 +916,8 @@ export default function RoteiroPrograma() {
                           ) : null;
                         })()}
                       </div>
-                      <p style={{ ...MONT, fontSize: 11, color: "#64748B", marginTop: 2, margin: 0 }}>
-                        Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
+                      <p style={{ ...MONT, fontSize: 10, color: "#94A3B8", marginTop: 4, margin: 0, textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 700 }}>
+                        Envio automático do XML no horário agendado
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
