@@ -2471,6 +2471,7 @@ export type Database = {
           data_entrega: string | null
           data_expiracao: string | null
           data_sorteio: string
+          entrega_pin: string | null
           entrega_registrada_em: string | null
           entrega_token: string
           entregue: boolean
@@ -2493,6 +2494,7 @@ export type Database = {
           data_entrega?: string | null
           data_expiracao?: string | null
           data_sorteio?: string
+          entrega_pin?: string | null
           entrega_registrada_em?: string | null
           entrega_token?: string
           entregue?: boolean
@@ -2515,6 +2517,7 @@ export type Database = {
           data_entrega?: string | null
           data_expiracao?: string | null
           data_sorteio?: string
+          entrega_pin?: string | null
           entrega_registrada_em?: string | null
           entrega_token?: string
           entregue?: boolean
