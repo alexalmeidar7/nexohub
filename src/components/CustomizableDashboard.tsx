@@ -1905,10 +1905,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         const titulo = (di.music_current_title || "").toString().trim();
         const artista = (di.music_current_artist || "").toString().trim();
         const capa = (di.music_current_cover || "").toString();
-        if (titulo) {
+        const excecao = di.music_current_excecao || null;
+        if (titulo || excecao) {
           setCurrentMusic(prev => {
-            if (prev?.titulo === titulo && prev?.artista === artista && prev?.capa === capa) return prev;
-            return { titulo, artista, capa, excecao: di.music_current_excecao || null };
+            if (prev?.titulo === titulo && prev?.artista === artista && prev?.capa === capa && prev?.excecao === excecao) return prev;
+            return { titulo, artista, capa, excecao };
           });
         }
       } catch {}
@@ -1917,10 +1918,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     const poll = () => {
       try {
         const d = readMusicData(effectiveUid) as any;
-        if (d && d.titulo) {
+        if (d && (d.titulo || d.excecao)) {
           setCurrentMusic(prev => {
-            if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
-            return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "", excecao: d.excecao || null };
+            if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "") && prev?.excecao === (d.excecao || null)) return prev;
+            return { titulo: d.titulo || "", artista: d.artista || "", capa: d.capa || "", excecao: d.excecao || null };
           });
           return;
         }
@@ -2352,7 +2353,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => { cancelled = true; };
   }, [currentMusic?.artista]);
 
-  const displayArt = artistBgUrl || currentMusic?.capa || currentMusic?.excecao?.capa_url || channelLogo;
+  // Faixas da lista de EXCEÇÕES (ex.: BREAK) sempre usam a capa cadastrada
+  // na exceção (própria ou a imagem geral da lista) — nunca a imagem do artista.
+  const displayArt = currentMusic?.excecao
+    ? (currentMusic.excecao.capa_url || currentMusic.capa || channelLogo)
+    : (artistBgUrl || currentMusic?.capa || channelLogo);
 
   // Crossfade for background art
   const [visibleArt, setVisibleArt] = useState(displayArt);

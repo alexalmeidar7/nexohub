@@ -181,6 +181,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             music_current_cover: matchedExcecao.capa_url || photo || "",
             music_deezer_artist_img: matchedExcecao.background_url || matchedExcecao.capa_url || photo || "",
             music_current_curiosity: "",
+            music_current_excecao: matchedExcecao,
           }).catch(() => {});
         }
         return;
@@ -196,6 +197,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             music_current_artist: data.artista,
             music_current_cover: photo,
             music_deezer_artist_img: photo,
+            music_current_excecao: null,
           }).catch(() => {});
         }
         return;
@@ -355,6 +357,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
+              music_current_excecao: null,
               music_deezer_artist_img: artistImg || "",
             }).catch(() => {});
           }
@@ -537,6 +540,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
               music_current_title: "",
               music_current_artist: "",
               music_current_cover: "",
+              music_current_excecao: null,
               music_current_curiosity: "",
             });
           } catch {}
