@@ -90,6 +90,7 @@ const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
 const PlayerPage = lazyRetry(() => import("./pages/Player"));
 const PlayerTvWelcome = lazyRetry(() => import("./pages/player/PlayerTvWelcome"));
 const PairPage = lazyRetry(() => import("./pages/PairPage"));
+const EntregaPremio = lazyRetry(() => import("./pages/EntregaPremio"));
 const GoogleCheckPage = lazyRetry(() => import("./pages/GoogleCheckPage"));
 const TvPairingEventsPage = lazyRetry(() => import("./pages/TvPairingEventsPage"));
 const PlayerApp = lazyRetry(() => import("./pages/PlayerApp"));
@@ -254,6 +255,7 @@ const App = () => (
             <Route path="/:userSlug/player/tv" element={<SlugGuard><PlayerTvWelcome /></SlugGuard>} />
             <Route path="/player/tv" element={<Navigate to="/" replace />} />
             <Route path="/:userSlug/pair" element={<PairPage />} />
+            <Route path="/entrega/:token" element={<EntregaPremio />} />
             <Route path="/google-check" element={<GoogleCheckPage />} />
             <Route path="/:userSlug/google-check" element={<GoogleCheckPage />} />
             <Route path="/tv-pairing-events" element={<TvPairingEventsPage />} />
