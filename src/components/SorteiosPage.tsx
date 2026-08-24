@@ -1362,7 +1362,14 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                       <Check size={14} /> Entregue
                     </div>
                     {s.data_entrega && <div style={{ fontSize: 10, color: "#64748B" }}>{new Date(s.data_entrega).toLocaleString("pt-BR")}</div>}
-                    <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => marcarEntregue(s, false)}>Reverter</button>
+                    <div className="flex gap-1">
+                      {s.foto_entrega_url && (
+                        <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => verFoto(s)}>
+                          <ImageIcon size={12} /> Foto
+                        </button>
+                      )}
+                      <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => marcarEntregue(s, false)}>Reverter</button>
+                    </div>
                   </div>
                 ) : s.expirado ? (
                   <div className="flex flex-col items-end gap-1">
@@ -1372,9 +1379,16 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                     {s.data_expiracao && <div style={{ fontSize: 10, color: "#64748B" }}>Expirou em {new Date(s.data_expiracao).toLocaleString("pt-BR")}</div>}
                   </div>
                 ) : (
-                  <button style={limeBtn} onClick={() => marcarEntregue(s, true)}>
-                    <Truck size={16} /> Marcar Entregue
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {s.entrega_token && (
+                      <button style={{ ...primaryBtn, height: 36 }} onClick={() => setQrFor(s)} title="QR Code para o atendente registrar a entrega">
+                        <QrCode size={16} /> QR Code
+                      </button>
+                    )}
+                    <button style={limeBtn} onClick={() => marcarEntregue(s, true)}>
+                      <Truck size={16} /> Marcar Entregue
+                    </button>
+                  </div>
                 )}
 
                 <button style={{ ...ghostBtn, height: 36, padding: "0 10px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => excluir(s.id)}>
@@ -1383,6 +1397,33 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
               </div>
             );
           })}
+        </div>
+      )}
+
+      {qrFor && (
+        <div onClick={() => setQrFor(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,37,64,0.55)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 24, padding: 24, maxWidth: 380, width: "100%", textAlign: "center", fontFamily: FONT }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: CYAN, fontWeight: 800 }}>Entrega de prêmio</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: DARK, margin: "4px 0 2px" }}>{qrFor.nome_ganhador}</div>
+            <div style={{ fontSize: 12, color: "#64748B", marginBottom: 14 }}>{premioMap[qrFor.premio_id]?.nome || "—"}</div>
+            <div style={{ display: "inline-block", padding: 14, background: "#fff", border: `2px solid ${CYAN}`, borderRadius: 20 }}>
+              <QRCodeCanvas value={entregaLink(qrFor)} size={220} level="M" includeMargin={false} />
+            </div>
+            <p style={{ fontSize: 12, color: "#64748B", marginTop: 14 }}>
+              O atendente lê este QR Code com o celular para registrar a foto do ouvinte recebendo o prêmio.
+            </p>
+            <div style={{ fontSize: 10, color: "#94a3b8", wordBreak: "break-all", marginTop: 6 }}>{entregaLink(qrFor)}</div>
+            <div className="flex gap-2 mt-4">
+              <button style={{ ...ghostBtn, flex: 1 }} onClick={() => { navigator.clipboard?.writeText(entregaLink(qrFor)); toast({ title: "Link copiado" }); }}>Copiar link</button>
+              <button style={{ ...primaryBtn, flex: 1 }} onClick={() => setQrFor(null)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {fotoUrl && (
+        <div onClick={() => setFotoUrl(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,37,64,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <img src={fotoUrl} alt="Foto da entrega do prêmio" style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: 20 }} />
         </div>
       )}
 
