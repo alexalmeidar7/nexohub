@@ -525,6 +525,50 @@ export default function RoteiroPrograma() {
     }
   };
 
+  // ── Agendador local: envia o XML exatamente ao atingir a data/hora agendada ──
+  const autoSendingRef = useRef<Set<string>>(new Set());
+  const agendadosRef = useRef<any[]>([]);
+  agendadosRef.current = agendados;
+  const regenRef = useRef(regenerateXmlForRoteiro);
+  regenRef.current = regenerateXmlForRoteiro;
+
+  useEffect(() => {
+    let stopped = false;
+    const tick = async () => {
+      if (stopped) return;
+      const now = Date.now();
+      const due = agendadosRef.current.filter((r: any) => {
+        if (!r.agendado_para_envio || r.enviado_agendamento) return false;
+        if (autoSendingRef.current.has(r.id)) return false;
+        return new Date(r.agendado_para_envio).getTime() <= now;
+      });
+      if (due.length === 0) return;
+      for (const r of due) {
+        autoSendingRef.current.add(r.id);
+        try {
+          const ok = await regenRef.current(r);
+          if (ok) {
+            await supabase.from("roteiros").update({
+              xml_pushed_at: new Date().toISOString(),
+              agendado_para_envio: null,
+              enviado_agendamento: true,
+            }).eq("id", r.id);
+            toast.success(`Roteiro "${r.programa_nome || "Programa"}" enviado automaticamente para o vMix`);
+          }
+        } catch (e) {
+          console.warn("[AutoSendRoteiro] falha", e);
+        } finally {
+          autoSendingRef.current.delete(r.id);
+        }
+      }
+      if (!stopped) fetchHistorico();
+    };
+    tick();
+    const id = setInterval(tick, 15000);
+    return () => { stopped = true; clearInterval(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
 
   const regenerateAllXmls = async () => {
     if (!user) return;
