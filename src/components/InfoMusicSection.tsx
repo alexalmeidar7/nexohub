@@ -774,53 +774,78 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               <div className="w-1 h-4 bg-amber-500 rounded-full" />
               <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
             </div>
-            <div className="flex gap-1">
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                id="upload-excecao-capa"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    toast.info("Upload de capa iniciado (mock)");
-                    // Logica de upload viria aqui
-                  }
-                }}
-              />
-              <Button 
-                size="icon" 
-                variant="outline" 
-                className="h-6 w-6 text-amber-600 border-amber-200 hover:bg-amber-50 rounded-full bg-white/50"
-                title="Cadastrar imagem da capa para exceção"
-                onClick={() => document.getElementById("upload-excecao-capa")?.click()}
-              >
-                <ImagePlus size={10} />
-              </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-black uppercase tracking-wider text-gray-400">Imagens gerais</span>
+              {/* Capa geral da lista */}
+              <div className="flex items-center gap-1">
+                {defaultCapaUrl ? (
+                  <button
+                    type="button"
+                    title="Capa geral da lista (clique para trocar)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("capa", f))}
+                    className="relative h-7 w-7 rounded-md overflow-hidden border-2 border-amber-300 shadow-sm"
+                  >
+                    <img src={defaultCapaUrl} alt="Capa geral das exceções" className="h-full w-full object-cover" />
+                  </button>
+                ) : (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-6 w-6 text-amber-600 border-amber-200 hover:bg-amber-50 rounded-full bg-white/50"
+                    title="Cadastrar capa geral (vale para toda a lista de exceções)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("capa", f))}
+                  >
+                    <ImagePlus size={10} />
+                  </Button>
+                )}
+                {defaultCapaUrl && (
+                  <button
+                    type="button"
+                    className="text-gray-300 hover:text-red-500"
+                    title="Remover capa geral"
+                    onClick={() => void clearDefaultExcecaoImage("capa")}
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
 
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                id="upload-excecao-artista"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    toast.info("Upload de artista iniciado (mock)");
-                  }
-                }}
-              />
-              <Button 
-                size="icon" 
-                variant="outline" 
-                className="h-6 w-6 text-blue-600 border-blue-200 hover:bg-blue-50 rounded-full bg-white/50"
-                title="Cadastrar imagem do artista para exceção"
-                onClick={() => document.getElementById("upload-excecao-artista")?.click()}
-              >
-                <Plus size={10} />
-              </Button>
+              {/* Artista geral da lista */}
+              <div className="flex items-center gap-1">
+                {defaultArtistaUrl ? (
+                  <button
+                    type="button"
+                    title="Foto geral do artista (clique para trocar)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("artista", f))}
+                    className="relative h-7 w-7 rounded-md overflow-hidden border-2 border-blue-300 shadow-sm"
+                  >
+                    <img src={defaultArtistaUrl} alt="Artista geral das exceções" className="h-full w-full object-cover" />
+                  </button>
+                ) : (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-6 w-6 text-blue-600 border-blue-200 hover:bg-blue-50 rounded-full bg-white/50"
+                    title="Cadastrar foto de artista geral (vale para toda a lista de exceções)"
+                    onClick={() => pickImage((f) => void saveDefaultExcecaoImage("artista", f))}
+                  >
+                    <Plus size={10} />
+                  </Button>
+                )}
+                {defaultArtistaUrl && (
+                  <button
+                    type="button"
+                    className="text-gray-300 hover:text-red-500"
+                    title="Remover foto geral do artista"
+                    onClick={() => void clearDefaultExcecaoImage("artista")}
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
