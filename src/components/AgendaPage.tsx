@@ -447,26 +447,35 @@ export default function AgendaPage() {
 
   const fetchEventos = useCallback(async () => {
     if (!user) return;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("event_types_config")
-      .eq("user_id", user.id)
-      .single();
-    
+
+    // Performance: carrega apenas a janela de datas relevante (não todo o histórico)
+    const dayStr = (offset: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    const winStart = dayStr(-120);
+    const winEnd = dayStr(365);
+
+    const [{ data: profile }, { data: evts }] = await Promise.all([
+      supabase.from("profiles").select("event_types_config").eq("user_id", user.id).maybeSingle(),
+      supabase
+        .from("agenda_eventos")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("data", winStart)
+        .lte("data", winEnd)
+        .order("data"),
+    ]);
+
     if (profile?.event_types_config) {
       setEventTypesConfig(profile.event_types_config);
     }
 
-    const { data: evts } = await supabase
-      .from("agenda_eventos")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("data");
-
     if (!evts) { setEventos([]); return; }
 
     const eventIds = evts.map((e: any) => e.id);
-    const programaIds = evts.map((e: any) => e.programa_id).filter(Boolean);
+    const programaIds = Array.from(new Set(evts.map((e: any) => e.programa_id).filter(Boolean)));
 
     const [{ data: parts }, { data: progs }] = await Promise.all([
       eventIds.length
@@ -477,11 +486,19 @@ export default function AgendaPage() {
         : Promise.resolve({ data: [] }),
     ]);
 
+    const partsByEvent = new Map<string, any[]>();
+    for (const p of parts || []) {
+      const arr = partsByEvent.get(p.evento_id) || [];
+      arr.push(p);
+      partsByEvent.set(p.evento_id, arr);
+    }
+    const progsById = new Map((progs || []).map((p: any) => [p.id, p]));
+
     const enriched: Evento[] = evts.map((e: any) => ({
       ...e,
       prioridade: e.prioridade || "normal",
-      programa: (progs || []).find((p: any) => p.id === e.programa_id),
-      participantes: (parts || []).filter((p: any) => p.evento_id === e.id),
+      programa: progsById.get(e.programa_id),
+      participantes: partsByEvent.get(e.id) || [],
     }));
 
     setEventos(enriched);
