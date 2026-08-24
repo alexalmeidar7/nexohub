@@ -340,10 +340,14 @@ export default function BlitzPage() {
       
       if (error) throw error;
       
-      toast({ title: "Cliente cadastrado com sucesso!" });
+      toast({ title: `Cliente ${cleanNome} cadastrado com sucesso!`, description: "Já vinculado a esta blitz." });
       setCadastroOpen(false);
-      await loadClientes();
+      setConfirmCadastroOpen(false);
+      setShowSugestoes(false);
+      setSugestoesClientes([]);
+      setClientesDisponiveis(prev => [...prev, { id: "novo", nome: cleanNome }]);
       setForm(prev => ({ ...prev, cliente: cleanNome }));
+      await loadClientes();
     } catch (e: any) {
       toast({ title: "Erro ao cadastrar cliente", description: e.message, variant: "destructive" });
     } finally {
@@ -373,41 +377,48 @@ export default function BlitzPage() {
       equipe: form.equipe.trim() || null,
       observacoes: form.observacoes.trim() || null,
     };
-    const agendaPayload = await buildAgendaPayload(user.id, payload);
 
-    if (editingId) {
-      const current = items.find(i => i.id === editingId);
-      const { error } = await supabase.from("blitz_promocionais").update(payload).eq("id", editingId);
-      if (error) { setSaving(false); toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
-      if (current?.agenda_evento_id) {
-        await supabase.from("agenda_eventos").update(agendaPayload).eq("id", current.agenda_evento_id);
+    try {
+      const agendaPayload = await buildAgendaPayload(user.id, payload);
+
+      if (editingId) {
+        const current = items.find(i => i.id === editingId);
+        const { error } = await supabase.from("blitz_promocionais").update(payload).eq("id", editingId);
+        if (error) throw error;
+        if (current?.agenda_evento_id) {
+          await supabase.from("agenda_eventos").update(agendaPayload).eq("id", current.agenda_evento_id);
+        } else {
+          const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").maybeSingle();
+          if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
+        }
+        void logBlitzHistorico({
+          userId: user.id, blitzId: editingId, cliente: payload.cliente, acao: "editada",
+          dadosAntes: current, dadosDepois: payload,
+        });
       } else {
-        const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
-        if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
+        const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").maybeSingle();
+        const { data: created, error } = await supabase
+          .from("blitz_promocionais")
+          .insert({ ...payload, agenda_evento_id: evt?.id || null })
+          .select("id")
+          .maybeSingle();
+        if (error) throw error;
+        void logBlitzHistorico({
+          userId: user.id, blitzId: created?.id ?? null, cliente: payload.cliente, acao: "criada",
+          dadosDepois: payload,
+        });
       }
-      await logBlitzHistorico({
-        userId: user.id, blitzId: editingId, cliente: payload.cliente, acao: "editada",
-        dadosAntes: current, dadosDepois: payload,
-      });
-    } else {
-      const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
-      const { data: created, error } = await supabase
-        .from("blitz_promocionais")
-        .insert({ ...payload, agenda_evento_id: evt?.id || null })
-        .select("id")
-        .single();
-      if (error) { setSaving(false); toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
-      await logBlitzHistorico({
-        userId: user.id, blitzId: created?.id ?? null, cliente: payload.cliente, acao: "criada",
-        dadosDepois: payload,
-      });
+      toast({ title: editingId ? "Blitz atualizada" : "Blitz agendada e adicionada à agenda" });
+      reset();
+      load();
+      if (showHistorico) loadHistorico();
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar", description: e?.message || "Tente novamente", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    toast({ title: editingId ? "Blitz atualizada" : "Blitz cadastrada e adicionada à agenda" });
-    reset();
-    load();
-    if (showHistorico) loadHistorico();
   };
+
 
   const edit = (b: Blitz) => {
     setEditingId(b.id);
@@ -702,7 +713,7 @@ export default function BlitzPage() {
         <div className="flex gap-2 mt-5">
           <button style={limeBtn} onClick={save} disabled={saving}>
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {editingId ? "Salvar alterações" : "Cadastrar blitz"}
+            {editingId ? "Salvar alterações" : "Agendar blitz"}
           </button>
           {editingId && <button style={ghostBtn} onClick={reset}><X size={14} /> Cancelar</button>}
         </div>
