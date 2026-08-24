@@ -38,11 +38,13 @@ export default function EntregaPremio() {
   const { token } = useParams<{ token: string }>();
   const [info, setInfo] = useState<Info | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [camOn, setCamOn] = useState(false);
   const [agora, setAgora] = useState(new Date());
+  const [pin, setPin] = useState("");
+  const [pinOk, setPinOk] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -55,13 +57,23 @@ export default function EntregaPremio() {
 
   useEffect(() => {
     document.title = "Registrar entrega de prêmio";
-    (async () => {
-      const r = await call({ token });
-      if (r?.ok) setInfo(r.info);
-      else setErro(r?.error || "Não foi possível carregar o registro");
-      setLoading(false);
-    })();
-  }, [token]);
+  }, []);
+
+  const autenticar = async () => {
+    const p = pin.replace(/\D/g, "");
+    if (p.length !== 4) return setErro("Digite os 4 dígitos");
+    setErro(null);
+    setLoading(true);
+    const r = await call({ token, pin: p });
+    setLoading(false);
+    if (r?.ok && r.info) {
+      setPinOk(p);
+      setInfo(r.info);
+    } else {
+      setErro(r?.error || "Código inválido");
+    }
+  };
+
 
   const stopCam = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop());
