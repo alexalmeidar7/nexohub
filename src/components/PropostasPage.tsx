@@ -1481,8 +1481,9 @@ export default function PropostasPage() {
           {propostas.map(p => (
             <div key={p.id} className="group relative rounded-xl border bg-white overflow-hidden transition-all hover:shadow-md">
               <div className="aspect-[4/3] bg-slate-100 relative">
-                {p.final_art_url ? (
-                  <img src={p.final_art_url} className="w-full h-full object-cover" />
+                {artSrc(p) ? (
+                  <img src={artSrc(p) as string} className="w-full h-full object-cover" />
+
                 ) : p.mockup?.image_url ? (
                   <img src={p.mockup.image_url} className="w-full h-full object-cover opacity-50 grayscale" />
                 ) : (
