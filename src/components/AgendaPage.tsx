@@ -2844,6 +2844,10 @@ export default function AgendaPage() {
                 .agenda-calendar [class*="day_today"] { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(198, 240, 60, 0.35) !important; }
                 .agenda-calendar .rdp-day_today:hover,
                 .agenda-calendar .rdp-day_today.rdp-day_selected:hover { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; }
+                .agenda-calendar .agenda-today-highlight,
+                .agenda-calendar .agenda-today-highlight.rdp-day_selected { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(198, 240, 60, 0.35) !important; }
+                .agenda-calendar .agenda-today-highlight:hover,
+                .agenda-calendar .agenda-today-highlight.rdp-day_selected:hover { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; }
                 .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
                 .agenda-calendar .is-feriado-day { position: relative; }
                 .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: var(--layout-accent-color, #ef4444); }
