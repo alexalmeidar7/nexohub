@@ -118,7 +118,7 @@ export default function GoogleWeekGrid<T>({
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Single scrollable surface: sticky header stays fixed while body scrolls */}
-      <div ref={scrollRef} data-testid="week-grid-scroll" className="relative overflow-y-auto flex-1" style={{ minHeight: 0 }}>
+      <div ref={scrollRef} data-testid="week-grid-scroll" className="relative overflow-y-auto flex-1" style={{ minHeight: 0, maxHeight: "min(70vh, 640px)" }}>
         {/* Day header */}
         <div
           className="grid sticky top-0 z-20 shrink-0"
