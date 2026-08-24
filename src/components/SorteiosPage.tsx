@@ -1276,6 +1276,17 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
   const { toast } = useToast();
   const [filter, setFilter] = useState<"pendentes" | "entregues" | "expirados" | "todos">("pendentes");
   const [search, setSearch] = useState("");
+  const [qrFor, setQrFor] = useState<Sorteio | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+
+  const entregaLink = (s: Sorteio) => `${window.location.origin}/entrega/${s.entrega_token}`;
+
+  const verFoto = async (s: Sorteio) => {
+    if (!s.foto_entrega_url) return;
+    const { data, error } = await supabase.storage.from("entregas").createSignedUrl(s.foto_entrega_url, 300);
+    if (error || !data?.signedUrl) { toast({ title: "Erro", description: error?.message || "Foto indisponível", variant: "destructive" }); return; }
+    setFotoUrl(data.signedUrl);
+  };
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
