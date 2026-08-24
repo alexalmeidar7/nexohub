@@ -42,8 +42,8 @@ function Calendar({ className, classNames, showOutsideDays = true, styles, modif
           color: "var(--layout-header-text, hsl(var(--primary-foreground)))",
         },
         today: {
-          backgroundColor: "#C6F03C",
-          color: "#0A2540",
+          backgroundColor: "#C6F03C !important",
+          color: "#0A2540 !important",
           fontWeight: 800,
         },
         range_middle: {
