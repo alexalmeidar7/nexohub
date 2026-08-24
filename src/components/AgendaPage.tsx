@@ -1306,14 +1306,23 @@ export default function AgendaPage() {
             : NEXO_CYAN;
 
     const fmt = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+    const statusOption = statusOptions.find((s) => s.value === evt.status);
 
     return {
       key: `${evt.id}-${dateStr}`,
       title: evt.programa?.nome || evt.descricao || "Evento",
-      subtitle: `${fmt(start)} – ${fmt(end)}${evt.local ? ` · ${evt.local}` : ""}`,
+      subtitle: `${fmt(start)} – ${fmt(end)}`,
       startMin: start,
       endMin: end,
       color,
+      local: evt.local,
+      recorrencia: evt.recorrencia,
+      recorrenciaLabel: recorrenciaLabels[evt.recorrencia],
+      status: evt.status,
+      statusLabel: statusOption?.label,
+      statusColor: statusOption?.color,
+      participantes: evt.participantes?.map((p) => p.nome).filter(Boolean),
+      tipoEvento: evt.tipo_evento,
       raw: evt,
     };
   }, []);
@@ -2830,10 +2839,10 @@ export default function AgendaPage() {
                 .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
                 .agenda-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #2563eb) !important; color: #fff !important; }
                 .agenda-calendar .rdp-day_selected:hover { background-color: var(--layout-accent-color, #2563eb) !important; }
-                .agenda-calendar .rdp-day_today { background-color: var(--layout-header-bg, #1a1a1a) !important; color: var(--layout-header-text, #ffffff) !important; font-weight: 700 !important; }
-                .agenda-calendar .rdp-day_today:hover { background-color: var(--layout-header-bg, #1a1a1a) !important; color: var(--layout-header-text, #ffffff) !important; }
-                .agenda-calendar [class*="day_today"] { background-color: var(--layout-header-bg, #1a1a1a) !important; color: var(--layout-header-text, #ffffff) !important; font-weight: 700 !important; }
-                .agenda-calendar .rdp-day_today.rdp-day_selected { background-color: var(--layout-header-bg, #1a1a1a) !important; color: var(--layout-header-text, #ffffff) !important; }
+                .agenda-calendar .rdp-day_today { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(198, 240, 60, 0.35) !important; }
+                .agenda-calendar .rdp-day_today:hover { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; }
+                .agenda-calendar [class*="day_today"] { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; font-weight: 800 !important; }
+                .agenda-calendar .rdp-day_today.rdp-day_selected { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; }
                 .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
                 .agenda-calendar .is-feriado-day { position: relative; }
                 .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: var(--layout-accent-color, #ef4444); }
@@ -2847,6 +2856,9 @@ export default function AgendaPage() {
                   locale={ptBR}
                   modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
                   modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
+                  modifiersStyles={{
+                    today: { backgroundColor: NEXO_LIME, color: NEXO_DARK, fontWeight: 800 },
+                  }}
                   classNames={{
                     caption_label: "text-[15px] font-medium",
                     nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-muted border-0 flex items-center justify-center transition-colors",
