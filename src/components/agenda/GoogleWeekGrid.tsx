@@ -232,50 +232,78 @@ export default function GoogleWeekGrid<T>({
                   const top = ((ev.startMin - START_HOUR * 60) / 60) * HOUR_H;
                   const height = Math.max(20, ((ev.endMin - ev.startMin) / 60) * HOUR_H - 2);
                   const widthPct = 100 / cols;
-                  const hasDetails = height > 34;
-                  const hasBadges = height > 54;
-                  const hasPeople = height > 74;
+                  const hasTime = height > 30;
+                  const hasNote = height > 46 && !!ev.note;
+                  const hasMeta = height > 62;
+                  const hasPeople = height > 84;
                   return (
                     <button
                       key={ev.key}
                       type="button"
+                      data-nexo-skip
                       onClick={() => onEventClick(ev.raw, dateStr)}
-                      className="absolute text-left overflow-hidden transition-shadow hover:shadow-md"
+                      className="absolute text-left overflow-hidden transition-shadow hover:shadow-md flex flex-col"
                       style={{
                         top,
                         height,
-                        left: `calc(${col * widthPct}% + 2px)`,
-                        width: `calc(${widthPct}% - 4px)`,
+                        left: `calc(${col * widthPct}% + 1px)`,
+                        width: `calc(${widthPct}% - 2px)`,
                         borderRadius: 0,
-                        padding: "3px 6px",
-                        background: `color-mix(in srgb, ${ev.color} 14%, #FFFFFF)`,
-                        borderLeft: `3px solid ${ev.color}`,
+                        padding: "4px 6px",
+                        background: `color-mix(in srgb, ${ev.color} 10%, #FFFFFF)`,
+                        borderLeft: `4px solid ${ev.color}`,
+                        borderTop: `1px solid color-mix(in srgb, ${ev.color} 25%, #FFFFFF)`,
+                        borderRight: `1px solid color-mix(in srgb, ${ev.color} 20%, #FFFFFF)`,
+                        borderBottom: `1px solid color-mix(in srgb, ${ev.color} 20%, #FFFFFF)`,
                         color: NEXO_DARK,
-                        lineHeight: 1.2,
+                        lineHeight: 1.25,
+                        gap: 1,
                       }}
-                      title={`${ev.title}${ev.subtitle ? ` — ${ev.subtitle}` : ""}`}
+                      title={`${ev.title}${ev.subtitle ? ` — ${ev.subtitle}` : ""}${ev.note ? `\n${ev.note}` : ""}`}
                     >
-                      <span className="block text-[11px] font-semibold truncate">{ev.title}</span>
-                      {hasDetails && ev.subtitle && (
-                        <span className="block text-[10px] opacity-70 truncate">{ev.subtitle}</span>
+                      {hasTime && ev.subtitle && (
+                        <span
+                          className="block text-[9px] font-bold uppercase tracking-wide truncate"
+                          style={{ color: ev.color }}
+                        >
+                          {ev.subtitle}
+                        </span>
                       )}
-                      {hasDetails && ev.local && (
-                        <span className="block text-[9px] opacity-60 truncate mt-0.5">📍 {ev.local}</span>
+                      <span className="block text-[11px] font-bold truncate" style={{ letterSpacing: "-0.01em" }}>
+                        {ev.title}
+                      </span>
+                      {hasNote && (
+                        <span
+                          className="block text-[9.5px] font-medium overflow-hidden"
+                          style={{
+                            color: "rgba(10,37,64,0.72)",
+                            display: "-webkit-box",
+                            WebkitBoxOrient: "vertical",
+                            WebkitLineClamp: height > 80 ? 3 : 2,
+                          }}
+                        >
+                          {ev.note}
+                        </span>
                       )}
-                      {hasBadges && (
-                        <div className="flex flex-wrap gap-1 mt-1">
+                      {hasMeta && (
+                        <div className="flex items-center gap-1 flex-wrap mt-auto">
+                          {ev.local && (
+                            <span className="text-[8.5px] font-semibold uppercase tracking-wide truncate" style={{ color: "rgba(10,37,64,0.55)", maxWidth: "100%" }}>
+                              {ev.local}
+                            </span>
+                          )}
                           {ev.recorrencia && ev.recorrencia !== "unico" && (
                             <span
-                              className="text-[8px] font-bold px-1 py-0.5 rounded-sm"
-                              style={{ backgroundColor: `${ev.color}22`, color: ev.color }}
+                              className="text-[8px] font-bold px-1"
+                              style={{ backgroundColor: `${ev.color}1F`, color: ev.color, borderRadius: 0 }}
                             >
-                              🔁 {ev.recorrenciaLabel}
+                              {ev.recorrenciaLabel}
                             </span>
                           )}
                           {ev.status && ev.status !== "ativo" && ev.statusLabel && ev.statusColor && (
                             <span
-                              className="text-[8px] font-bold px-1 py-0.5 rounded-sm"
-                              style={{ backgroundColor: `${ev.statusColor}22`, color: ev.statusColor }}
+                              className="text-[8px] font-bold px-1"
+                              style={{ backgroundColor: `${ev.statusColor}1F`, color: ev.statusColor, borderRadius: 0 }}
                             >
                               {ev.statusLabel}
                             </span>
@@ -283,15 +311,15 @@ export default function GoogleWeekGrid<T>({
                         </div>
                       )}
                       {hasPeople && ev.participantes && ev.participantes.length > 0 && (
-                        <div className="flex items-center gap-1 mt-1 text-[9px] opacity-70 truncate">
-                          <span>👤</span>
+                        <span className="block text-[8.5px] truncate" style={{ color: "rgba(10,37,64,0.5)" }}>
                           {ev.participantes.slice(0, 3).join(", ")}
                           {ev.participantes.length > 3 && ` +${ev.participantes.length - 3}`}
-                        </div>
+                        </span>
                       )}
                     </button>
                   );
                 })}
+
               </div>
             );
           })}
