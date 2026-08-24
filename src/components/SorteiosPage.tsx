@@ -1280,15 +1280,43 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
   const [search, setSearch] = useState("");
   const [qrFor, setQrFor] = useState<Sorteio | null>(null);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
 
   const entregaLink = (s: Sorteio) => `${window.location.origin}/entrega/${s.entrega_token}`;
 
+  // Miniaturas assinadas das fotos de entrega
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const pending = sorteios.filter(s => s.foto_entrega_url && !thumbs[s.id]);
+      if (pending.length === 0) return;
+      const entries = await Promise.all(pending.map(async s => {
+        const { data } = await supabase.storage.from("entregas").createSignedUrl(s.foto_entrega_url as string, 3600);
+        return [s.id, data?.signedUrl || ""] as const;
+      }));
+      if (cancelled) return;
+      setThumbs(prev => ({ ...prev, ...Object.fromEntries(entries.filter(([, u]) => u)) }));
+    })();
+    return () => { cancelled = true; };
+  }, [sorteios, thumbs]);
+
+  // Atualiza a lista assim que o atendente salva a foto no celular
+  useEffect(() => {
+    const ch = supabase
+      .channel("sorteio-entregas-sync")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "sorteio_sorteios" }, () => onReload())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [onReload]);
+
   const verFoto = async (s: Sorteio) => {
     if (!s.foto_entrega_url) return;
+    if (thumbs[s.id]) { setFotoUrl(thumbs[s.id]); return; }
     const { data, error } = await supabase.storage.from("entregas").createSignedUrl(s.foto_entrega_url, 300);
     if (error || !data?.signedUrl) { toast({ title: "Erro", description: error?.message || "Foto indisponível", variant: "destructive" }); return; }
     setFotoUrl(data.signedUrl);
   };
+
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
@@ -1359,7 +1387,18 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                   {s.observacoes && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{s.observacoes}</div>}
                 </div>
                 {s.entregue ? (
+                  <div className="flex items-center gap-3">
+                    {thumbs[s.id] && (
+                      <img
+                        src={thumbs[s.id]}
+                        alt={`Foto da entrega do prêmio para ${s.nome_ganhador}`}
+                        onClick={() => setFotoUrl(thumbs[s.id])}
+                        title="Clique para ampliar"
+                        style={{ width: 52, height: 52, borderRadius: 12, objectFit: "cover", cursor: "zoom-in", border: `2px solid ${LIME}` }}
+                      />
+                    )}
                   <div className="flex flex-col items-end gap-1">
+
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: LIME, color: DARK, borderRadius: 999, padding: "6px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
                       <Check size={14} /> Entregue
                     </div>
@@ -1373,6 +1412,8 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                       <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => marcarEntregue(s, false)}>Reverter</button>
                     </div>
                   </div>
+                  </div>
+
                 ) : s.expirado ? (
                   <div className="flex flex-col items-end gap-1">
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#FEE2E2", color: "#991B1B", borderRadius: 999, padding: "6px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
