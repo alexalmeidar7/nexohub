@@ -1495,8 +1495,30 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
       )}
 
       {fotoUrl && (
-        <div onClick={() => setFotoUrl(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,37,64,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <img src={fotoUrl} alt="Foto da entrega do prêmio" style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: 20 }} />
+        <div onClick={() => setFotoUrl(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,37,64,0.7)", zIndex: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 20 }}>
+          <img src={fotoUrl} alt="Foto da entrega do prêmio" style={{ maxWidth: "90vw", maxHeight: "78vh", borderRadius: 20 }} />
+          <button
+            style={{ ...primaryBtn, padding: "0 20px" }}
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                const res = await fetch(fotoUrl);
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `entrega-premio.${(blob.type.split("/")[1] || "jpg")}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 4000);
+              } catch {
+                toast({ title: "Erro ao baixar foto", variant: "destructive" });
+              }
+            }}
+          >
+            <Download size={14} /> Baixar foto
+          </button>
         </div>
       )}
 
