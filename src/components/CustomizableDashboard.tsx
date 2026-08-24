@@ -2353,7 +2353,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => { cancelled = true; };
   }, [currentMusic?.artista]);
 
-  const displayArt = artistBgUrl || currentMusic?.capa || currentMusic?.excecao?.capa_url || channelLogo;
+  // Faixas da lista de EXCEÇÕES (ex.: BREAK) sempre usam a capa cadastrada
+  // na exceção (própria ou a imagem geral da lista) — nunca a imagem do artista.
+  const displayArt = currentMusic?.excecao
+    ? (currentMusic.excecao.capa_url || currentMusic.capa || channelLogo)
+    : (artistBgUrl || currentMusic?.capa || channelLogo);
 
   // Crossfade for background art
   const [visibleArt, setVisibleArt] = useState(displayArt);
