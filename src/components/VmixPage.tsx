@@ -2137,7 +2137,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 
             {/* SAVED CONNECTIONS LIST */}
             {vmixConnections.map((conn) => (
-              <div key={conn.id} className="flex flex-col gap-6">
+              <div key={conn.id} className="flex flex-col gap-6 w-full max-w-[260px]">
                 <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Estúdio Salvo</p>
                 <div
                   className="group relative aspect-square rounded-[48px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-5 transition-all duration-500 hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] hover:-translate-y-2"
@@ -2187,7 +2187,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
             ))}
 
             {vmixConnections.length === 0 && (
-              <div className="flex flex-col gap-6 opacity-40">
+              <div className="flex flex-col gap-6 opacity-40 w-full max-w-[260px]">
                 <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Vazio</p>
                 <div className="aspect-square w-full rounded-[48px] bg-[#1a1a1a]/50 border border-dashed border-white/10 flex flex-col items-center justify-center gap-4">
                   <Monitor size={40} className="text-white/5" />
