@@ -1308,10 +1308,19 @@ export default function AgendaPage() {
     const fmt = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
     const statusOption = statusOptions.find((s) => s.value === evt.status);
 
+    const clean = (t?: string | null) =>
+      (t || "").replace(/\s+/g, " ").trim();
+    const note =
+      clean(evt.youtube_titulo) ||
+      clean(evt.youtube_descricao) ||
+      clean(evt.descricao) ||
+      "";
+
     return {
       key: `${evt.id}-${dateStr}`,
       title: evt.programa?.nome || evt.descricao || "Evento",
       subtitle: `${fmt(start)} – ${fmt(end)}`,
+      note: note ? note.slice(0, 140) : undefined,
       startMin: start,
       endMin: end,
       color,
@@ -1326,6 +1335,7 @@ export default function AgendaPage() {
       raw: evt,
     };
   }, []);
+
 
 
   const renderEventCard = (evt: Evento, inactive = false) => (
