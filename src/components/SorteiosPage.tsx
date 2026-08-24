@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, Plus, Shuffle, Check, Radio, Clock, AlertTriangle, History, QrCode, Image as ImageIcon } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, Plus, Shuffle, Check, Radio, Clock, AlertTriangle, History, QrCode, Image as ImageIcon, Download } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -1317,6 +1317,26 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
     setFotoUrl(data.signedUrl);
   };
 
+  const baixarFoto = async (s: Sorteio) => {
+    if (!s.foto_entrega_url) return;
+    try {
+      const { data, error } = await supabase.storage.from("entregas").download(s.foto_entrega_url);
+      if (error || !data) throw error || new Error("Foto indisponível");
+      const ext = (s.foto_entrega_url.split(".").pop() || "jpg").split("?")[0];
+      const safeName = (s.nome_ganhador || "entrega").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `entrega-${safeName}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e: any) {
+      toast({ title: "Erro ao baixar foto", description: e?.message || "Tente novamente", variant: "destructive" });
+    }
+  };
+
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
@@ -1405,9 +1425,14 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                     {s.data_entrega && <div style={{ fontSize: 10, color: "#64748B" }}>{new Date(s.data_entrega).toLocaleString("pt-BR")}</div>}
                     <div className="flex gap-1">
                       {s.foto_entrega_url && (
-                        <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => verFoto(s)}>
-                          <ImageIcon size={12} /> Foto
-                        </button>
+                        <>
+                          <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => verFoto(s)}>
+                            <ImageIcon size={12} /> Foto
+                          </button>
+                          <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => baixarFoto(s)} title="Baixar foto da entrega">
+                            <Download size={12} /> Baixar
+                          </button>
+                        </>
                       )}
                       <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => marcarEntregue(s, false)}>Reverter</button>
                     </div>
@@ -1470,8 +1495,30 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
       )}
 
       {fotoUrl && (
-        <div onClick={() => setFotoUrl(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,37,64,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <img src={fotoUrl} alt="Foto da entrega do prêmio" style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: 20 }} />
+        <div onClick={() => setFotoUrl(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,37,64,0.7)", zIndex: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 20 }}>
+          <img src={fotoUrl} alt="Foto da entrega do prêmio" style={{ maxWidth: "90vw", maxHeight: "78vh", borderRadius: 20 }} />
+          <button
+            style={{ ...primaryBtn, padding: "0 20px" }}
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                const res = await fetch(fotoUrl);
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `entrega-premio.${(blob.type.split("/")[1] || "jpg")}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 4000);
+              } catch {
+                toast({ title: "Erro ao baixar foto", variant: "destructive" });
+              }
+            }}
+          >
+            <Download size={14} /> Baixar foto
+          </button>
         </div>
       )}
 

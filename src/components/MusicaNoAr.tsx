@@ -389,7 +389,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  const showConfig = true;
+  // Seção "Configuração das Origens" inicia fechada (expansível)
+  const [showConfig, setShowConfig] = useState(false);
   const [allExceptions, setAllExceptions] = useState<MusicException[]>([]);
 
   useEffect(() => {
@@ -1639,59 +1640,59 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
-      <section 
-        className="group/config"
-        style={{ 
-          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", 
-          borderRadius: 28, 
-          overflow: "hidden", 
-          boxShadow: "0 10px 40px -10px rgba(10, 37, 64, 0.08)",
-          border: `1px solid ${showConfig ? NEXO_CYAN : "color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)"}`,
-          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+      <section
+        className="group/config relative space-y-5 rounded-2xl p-5"
+        style={{
+          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
         }}
       >
-
-        <div 
-          className="w-full flex items-center justify-between transition-all"
-          style={{ 
-            padding: "24px 32px", 
-            borderBottom: showConfig ? `1px solid ${NEXO_CYAN}22` : "none",
-            background: showConfig ? `linear-gradient(to right, ${NEXO_LIGHT_BLUE}33, transparent)` : "transparent"
-          }}
+        <div
+          className="flex items-center justify-between mb-2 cursor-pointer group"
+          onClick={() => setShowConfig(v => !v)}
         >
-          <div className="flex items-center gap-4">
-            <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg" 
-              style={{ 
-                background: showConfig ? NEXO_CYAN : NEXO_DARK, 
-                boxShadow: showConfig ? `0 8px 20px ${NEXO_CYAN}44` : "0 4px 12px rgba(10, 37, 64, 0.2)",
-                transform: showConfig ? "rotate(90deg)" : "rotate(0deg)"
-              }}
-            >
-              <Settings size={22} className="text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: NEXO_CYAN }} />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
+                <Settings size={18} style={{ color: NEXO_CYAN }} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: NEXO_CYAN }}>
+                  CONFIGURAÇÃO DAS ORIGENS
+                </h3>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+                  XML Online, Pasta Local e Sincronização
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="block" style={{ color: NEXO_DARK, fontSize: 16, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
-                Configuração das Origens
-              </span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
-
-                XML Online, Pasta Local e Sincronização
-              </span>
+            <div className="ml-2 transition-transform duration-200" style={{ transform: showConfig ? "rotate(180deg)" : "rotate(0deg)", color: NEXO_DARK }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
           </div>
-           <div
-             className="w-12 h-12 rounded-2xl flex items-center justify-center"
-             style={{ backgroundColor: NEXO_CYAN, color: "#FFFFFF" }}
-             title="Seção sempre visível"
-           >
-             <ChevronUp size={24} />
-           </div>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <span
+              className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
+              style={{ backgroundColor: lastSource ? "#ECFEFF" : "#F1F5F9", color: lastSource ? "#0891B2" : "#94A3B8" }}
+            >
+              {lastSource === "pasta" ? "Local ativo" : lastSource === "online" ? "Online ativo" : "Aguardando"}
+            </span>
+            {showConfig && (
+              <button
+                className="h-8 w-8 rounded-full flex items-center justify-center text-black/40 hover:text-black/70 hover:bg-black/5"
+                onClick={() => setShowConfig(false)}
+                title="Fechar seção"
+              >
+                <ChevronUp size={16} />
+              </button>
+            )}
+          </div>
         </div>
 
-
-        {true && (
-          <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+        {showConfig && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
                 {/* ── ONLINE SOURCE ── */}
                 <div 

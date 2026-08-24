@@ -525,6 +525,50 @@ export default function RoteiroPrograma() {
     }
   };
 
+  // ── Agendador local: envia o XML exatamente ao atingir a data/hora agendada ──
+  const autoSendingRef = useRef<Set<string>>(new Set());
+  const agendadosRef = useRef<any[]>([]);
+  agendadosRef.current = agendados;
+  const regenRef = useRef(regenerateXmlForRoteiro);
+  regenRef.current = regenerateXmlForRoteiro;
+
+  useEffect(() => {
+    let stopped = false;
+    const tick = async () => {
+      if (stopped) return;
+      const now = Date.now();
+      const due = agendadosRef.current.filter((r: any) => {
+        if (!r.agendado_para_envio || r.enviado_agendamento) return false;
+        if (autoSendingRef.current.has(r.id)) return false;
+        return new Date(r.agendado_para_envio).getTime() <= now;
+      });
+      if (due.length === 0) return;
+      for (const r of due) {
+        autoSendingRef.current.add(r.id);
+        try {
+          const ok = await regenRef.current(r);
+          if (ok) {
+            await supabase.from("roteiros").update({
+              xml_pushed_at: new Date().toISOString(),
+              agendado_para_envio: null,
+              enviado_agendamento: true,
+            }).eq("id", r.id);
+            toast.success(`Roteiro "${r.programa_nome || "Programa"}" enviado automaticamente para o vMix`);
+          }
+        } catch (e) {
+          console.warn("[AutoSendRoteiro] falha", e);
+        } finally {
+          autoSendingRef.current.delete(r.id);
+        }
+      }
+      if (!stopped) fetchHistorico();
+    };
+    tick();
+    const id = setInterval(tick, 15000);
+    return () => { stopped = true; clearInterval(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
 
   const regenerateAllXmls = async () => {
     if (!user) return;
@@ -840,10 +884,35 @@ export default function RoteiroPrograma() {
               {agendados.map((r) => {
                 const prog = programas.find(p => p.id === r.programa_id);
                 return (
-                  <div key={r.id} className="flex items-center gap-4 p-4 rounded-xl border-2 border-dashed border-slate-100 hover:border-cyan-100 transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">
-                      <Clock size={20} />
+                  <div key={r.id} className="relative flex items-stretch gap-4 pl-0">
+                    {/* ── Timeline: Data e depois Horário ── */}
+                    <div className="flex flex-col items-center shrink-0" style={{ width: 96 }}>
+                      <div
+                        className="w-full flex flex-col items-center justify-center py-2"
+                        style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12 }}
+                      >
+                        <span style={{ ...MONT, fontSize: 9, fontWeight: 800, letterSpacing: 1, color: "#94A3B8", textTransform: "uppercase" }}>
+                          {new Date(r.agendado_para_envio).toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}
+                        </span>
+                        <span style={{ ...MONT, fontSize: 20, fontWeight: 900, lineHeight: 1.1, color: DARK }}>
+                          {new Date(r.agendado_para_envio).toLocaleDateString("pt-BR", { day: "2-digit" })}
+                        </span>
+                        <span style={{ ...MONT, fontSize: 9, fontWeight: 800, letterSpacing: 1, color: "#94A3B8", textTransform: "uppercase" }}>
+                          {new Date(r.agendado_para_envio).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}
+                        </span>
+                      </div>
+                      <div
+                        className="mt-1.5 w-full flex items-center justify-center gap-1 py-1"
+                        style={{ background: CYAN, borderRadius: 999 }}
+                      >
+                        <Clock size={11} color="#fff" />
+                        <span style={{ ...MONT, fontSize: 11, fontWeight: 900, color: "#fff", letterSpacing: 0.5 }}>
+                          {new Date(r.agendado_para_envio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div className="flex-1 w-px my-1" style={{ background: "#E2E8F0" }} />
                     </div>
+                    <div className="flex-1 flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-cyan-200 transition-colors">
                     <div className="flex-1">
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
@@ -872,8 +941,8 @@ export default function RoteiroPrograma() {
                           ) : null;
                         })()}
                       </div>
-                      <p style={{ ...MONT, fontSize: 11, color: "#64748B", marginTop: 2, margin: 0 }}>
-                        Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
+                      <p style={{ ...MONT, fontSize: 10, color: "#94A3B8", marginTop: 4, margin: 0, textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 700 }}>
+                        Envio automático do XML no horário agendado
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -924,6 +993,7 @@ export default function RoteiroPrograma() {
                       >
                         <Trash2 size={16} />
                       </button>
+                    </div>
                     </div>
                   </div>
                 );
