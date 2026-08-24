@@ -110,8 +110,18 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         targetUserId = subUser.parent_user_id;
       }
 
+      // Performance: janela curta de datas (timeline de 14 dias) em vez de todo o histórico
+      const winStart = format(addDays(new Date(), -7), "yyyy-MM-dd");
+      const winEnd = format(addDays(new Date(), 45), "yyyy-MM-dd");
       const [evtsRes, progsRes] = await Promise.all([
-        supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId).order("data"),
+        supabase
+          .from("agenda_eventos")
+          .select("*")
+          .eq("user_id", targetUserId)
+          .gte("data", winStart)
+          .lte("data", winEnd)
+          .order("data")
+          .limit(300),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo").eq("user_id", targetUserId),
       ]);
       if (cancelled) return;
