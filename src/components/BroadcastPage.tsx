@@ -1105,18 +1105,36 @@ export default function BroadcastPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  onClick={() => handleSave()}
-                  disabled={saving}
-                  className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
-                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 12px 24px ${LIME}25` }}
-                >
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  Salvar XML Broadcast
-                </button>
-                
-                {insertLiveArt && (
+              {insertLiveArt ? (
+                <div className="flex flex-col gap-4">
+                  {/* Imagem que será enviada no insert */}
+                  <div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-white/60">Imagem do Insert Live</div>
+                    <div className="rounded-xl overflow-hidden bg-black/50 border border-white/5 p-2">
+                      <img src={insertLiveArt} alt="Insert Live" className="w-full max-h-56 object-contain" />
+                    </div>
+                  </div>
+
+                  {/* Horários programados */}
+                  <div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-white/60">Horários de Inserção Automática</div>
+                    {insertLiveSchedule.length === 0 ? (
+                      <p className="text-[10px] text-white/50 italic">Sem horários calculados para hoje.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {insertLiveSchedule.map(t => (
+                          <span
+                            key={t}
+                            className="px-3 py-1.5 rounded-lg text-[12px] font-bold tabular-nums"
+                            style={{ backgroundColor: `${CYAN}18`, border: `1px solid ${CYAN}45`, color: CYAN }}
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     onClick={handleInsertNow}
                     disabled={insertingNow}
@@ -1124,10 +1142,14 @@ export default function BroadcastPage() {
                     style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 12px 24px rgba(220,38,38,0.3)" }}
                   >
                     <Youtube size={16} />
-                    {insertingNow ? "Live Ativa (30s)" : "Acionar Insert Live"}
+                    {insertingNow ? "Live Ativa (30s)" : "Inserir Agora (Manual)"}
                   </button>
-                )}
-              </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-white/50 italic">
+                  Nenhuma imagem de Insert Live cadastrada para hoje (arte 5 do evento de live na agenda).
+                </p>
+              )}
 
               <div className="pt-2 border-t border-white/5 flex items-center justify-between">
                 <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Sincronização Ativa</span>
