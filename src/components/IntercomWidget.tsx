@@ -534,14 +534,14 @@ export default function IntercomWidget() {
     return (
       <div 
         id="intercom-minimized-fab"
-        className="fixed z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto"
+        className="absolute inset-0 z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto flex items-center justify-center"
         onClick={(e) => { 
           e.stopPropagation();
           setOpen(true); 
           setMinimized(false); 
         }}
       >
-        <div className="relative group">
+        <div className="relative group w-full h-full flex items-center justify-center">
           {isActive && (
             <>
               <div className="absolute inset-0 rounded-full animate-ping"
