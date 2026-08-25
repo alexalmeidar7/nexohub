@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useVmixCategories, VmixCategoryCreator, VmixCategoryPanel } from "@/components/vmix/VmixCategories";
+import NdiWebrtcMonitor from "@/components/vmix/NdiWebrtcMonitor";
+
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
