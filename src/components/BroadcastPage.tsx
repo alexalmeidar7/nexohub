@@ -46,6 +46,7 @@ interface BroadcastData {
   tickerUnitario: boolean;
   tickerRssEnabled: boolean;
   tickerRssUrl: string;
+  tickerNewsRoteiroId?: string;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -68,6 +69,7 @@ const defaultBroadcast: BroadcastData = {
   tickerUnitario: false,
   tickerRssEnabled: false,
   tickerRssUrl: "",
+  tickerNewsRoteiroId: "",
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
@@ -246,6 +248,9 @@ export default function BroadcastPage() {
 
   // Ticker auto-content
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
+  const [roteirosOptions, setRoteirosOptions] = useState<
+    { id: string; titulo: string; tipo_programa: string | null; created_at: string; count: number }[]
+  >([]);
   const [weatherText, setWeatherText] = useState("");
   const [quotesText, setQuotesText] = useState("");
   const [rssStatus, setRssStatus] = useState<{
