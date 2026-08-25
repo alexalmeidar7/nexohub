@@ -1871,18 +1871,34 @@ export default function BroadcastPage() {
                   ["texto", aSeguirXmlPreview.texto],
                   ["programa_logo", aSeguirXmlPreview.programa_logo],
                   ["locutor_foto", aSeguirXmlPreview.locutor_foto],
-                ] as [string, string][]).map(([field, value], i) => (
+                ] as [string, string][]).map(([field, value], i) => {
+                  // URLs de imagem: mostra apenas o nome do arquivo para evitar poluição visual
+                  const isImg = field === "programa_logo" || field === "locutor_foto";
+                  const short = isImg && value
+                    ? (() => {
+                        try {
+                          const f = decodeURIComponent(new URL(value).pathname.split("/").pop() || value);
+                          return f.length > 44 ? `${f.slice(0, 40)}…` : f;
+                        } catch {
+                          const f = value.split("/").pop() || value;
+                          return f.length > 44 ? `${f.slice(0, 40)}…` : f;
+                        }
+                      })()
+                    : value;
+                  return (
                   <div
                     key={field}
                     className="flex items-start gap-3 px-3 py-1.5 text-[10px]"
                     style={{ backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.03)" : "transparent" }}
                   >
                     <span className="font-mono shrink-0 w-[110px]" style={{ color: CYAN }}>{field}</span>
-                    <span className="font-mono break-all" style={{ color: value ? "#ffffffdd" : "#ffffff45" }}>
-                      {value || "(vazio)"}
+                    <span className="font-mono break-all" style={{ color: value ? "#ffffffdd" : "#ffffff45" }} title={value || ""}>
+                      {short || "(vazio)"}
                     </span>
                   </div>
-                ))}
+                  );
+                })}
+
               </div>
 
               <p className="mt-2 text-[10px]" style={{ color: "#ffffff55" }}>
