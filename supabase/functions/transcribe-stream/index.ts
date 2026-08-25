@@ -51,6 +51,39 @@ function mergeBytes(left: Uint8Array, right: Uint8Array) {
   return merged;
 }
 
+function decodeHttpChunked(chunks: Uint8Array[]) {
+  const source = chunks.reduce((acc, chunk) => mergeBytes(acc, chunk), new Uint8Array(0));
+  const decoded: Uint8Array[] = [];
+  let index = 0;
+  let total = 0;
+
+  while (index < source.byteLength) {
+    let lineEnd = -1;
+    for (let i = index; i < source.byteLength - 1; i += 1) {
+      if (source[i] === 13 && source[i + 1] === 10) {
+        lineEnd = i;
+        break;
+      }
+    }
+    if (lineEnd < 0) break;
+
+    const line = new TextDecoder().decode(source.slice(index, lineEnd)).split(";", 1)[0].trim();
+    const size = Number.parseInt(line, 16);
+    if (!Number.isFinite(size) || size < 0) break;
+    index = lineEnd + 2;
+    if (size === 0) break;
+    if (index + size > source.byteLength) break;
+
+    const bodyChunk = source.slice(index, index + size);
+    decoded.push(bodyChunk);
+    total += bodyChunk.byteLength;
+    index += size;
+    if (source[index] === 13 && source[index + 1] === 10) index += 2;
+  }
+
+  return total > 0 ? { chunks: decoded, total } : { chunks, total: chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0) };
+}
+
 function findHeaderEnd(bytes: Uint8Array) {
   for (let i = 0; i <= bytes.byteLength - 4; i += 1) {
     if (bytes[i] === 13 && bytes[i + 1] === 10 && bytes[i + 2] === 13 && bytes[i + 3] === 10) return i;
@@ -61,6 +94,10 @@ function findHeaderEnd(bytes: Uint8Array) {
 function parseContentType(headersText: string) {
   const match = headersText.match(/\r?\ncontent-type:\s*([^\r\n;]+)/i);
   return (match?.[1] || "audio/mpeg").trim().toLowerCase();
+}
+
+function isChunkedTransfer(headersText: string) {
+  return /\r?\ntransfer-encoding:\s*chunked/i.test(headersText);
 }
 
 function ensureSuccessfulStatus(headersText: string) {
@@ -170,6 +207,7 @@ async function captureWithRawTls(url: string): Promise<CapturedAudio> {
   let headerBuffer = new Uint8Array(0);
   let contentType = "audio/mpeg";
   let headerParsed = false;
+  let chunked = false;
 
   try {
     await conn.write(new TextEncoder().encode(request));
@@ -198,6 +236,7 @@ async function captureWithRawTls(url: string): Promise<CapturedAudio> {
         const headersText = decoder.decode(headerBuffer.slice(0, headerEnd));
         ensureSuccessfulStatus(headersText);
         contentType = parseContentType(headersText);
+        chunked = isChunkedTransfer(headersText);
         const bodyStart = headerEnd + 4;
         const remainder = headerBuffer.slice(bodyStart);
         if (remainder.byteLength > 0) {
@@ -217,6 +256,11 @@ async function captureWithRawTls(url: string): Promise<CapturedAudio> {
     } catch {
       // ignore close errors from non-compliant streaming servers
     }
+  }
+
+  if (chunked) {
+    const decoded = decodeHttpChunked(chunks);
+    return { chunks: decoded.chunks, total: decoded.total, contentType };
   }
 
   return { chunks, total, contentType };
