@@ -2847,13 +2847,33 @@ function SwitcherUI({
             )}
 
             {/* ATEM-style console reorganized */}
-            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#000000", border: "1px solid #C6F03C25" }}>
               <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr_1.2fr]">
                 
                 {/* 1. LEFT: PRE-VISUALIZAÇÃO (Inputs) */}
-                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333" }}>
+                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #C6F03C20" }}>
+                  {/* Categorias (drag and drop) — no topo do box */}
+                  <section className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: "#C6F03C" }}>Categorias</h3>
+                    <VmixCategoryPanel
+                      side="preview"
+                      categorias={switcherCategorias}
+                      inputs={inputs}
+                      previewInput={previewInput}
+                      activeInput={activeInput}
+                      onSelect={(num) => { sendCommand("PreviewInput", num); setPreviewInput(num); }}
+                      onDropInput={moverInputCategoria}
+                      onRemoveInput={removerInputCategoria}
+                      onDelete={excluirCategoria}
+                      shortcuts={inputShortcuts}
+                      capturingShortcut={capturingShortcut}
+                      onSetShortcut={(k) => setCapturingShortcut(k)}
+                    />
+                    <VmixCategoryCreator onCreate={criarCategoria} />
+                  </section>
+
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-emerald-400/80">◐ Pré-Visualização</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5" style={{ color: "#C6F03C" }}>◐ Pré-Visualização</h3>
                     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
                       {inputs.length === 0 && (
                         <span className="col-span-full text-[10px] text-white/30">Nenhum input.</span>
@@ -2880,10 +2900,10 @@ function SwitcherUI({
                             title={input.title}
                             className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
-                              backgroundColor: isPreview ? "#16a34a" : "#3a3a3a",
-                              color: isPreview ? "#fff" : "#ddd",
-                              borderColor: isPreview ? "#86efac" : "#4a4a4a",
-                              boxShadow: isPreview ? "0 0 18px rgba(22,163,74,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              backgroundColor: isPreview ? "#C6F03C" : "#1a1a1a",
+                              color: isPreview ? "#000" : "#e5e5e5",
+                              borderColor: isPreview ? "#C6F03C" : "#2a2a2a",
+                              boxShadow: isPreview ? "0 0 18px rgba(198,240,60,0.5), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                               opacity: isActive && !isPreview ? 0.55 : 1,
                             }}
                           >
@@ -2894,11 +2914,16 @@ function SwitcherUI({
                             <div
                               className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
                                 isCapturing
-                                  ? "bg-yellow-500 text-black border-yellow-300 animate-pulse z-10"
-                                  : shortcut
-                                    ? "bg-black/60 text-white/90 border-white/20"
-                                    : "bg-black/20 text-white/30 border-transparent opacity-0 group-hover:opacity-100"
+                                  ? "animate-pulse z-10"
+                                  : shortcut ? "" : "opacity-0 group-hover:opacity-100"
                               }`}
+                              style={
+                                isCapturing
+                                  ? { backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C" }
+                                  : shortcut
+                                    ? { backgroundColor: "#000000aa", color: "#C6F03C", borderColor: "#C6F03C40" }
+                                    : { backgroundColor: "#00000080", color: "#ffffff50", borderColor: "transparent" }
+                              }
                             >
                               {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
                             </div>
@@ -2907,24 +2932,8 @@ function SwitcherUI({
                       })}
                     </div>
                   </section>
-
-                  {/* Categorias (drag and drop) */}
-                  <section className="space-y-2">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
-                    <VmixCategoryPanel
-                      side="preview"
-                      categorias={switcherCategorias}
-                      inputs={inputs}
-                      previewInput={previewInput}
-                      activeInput={activeInput}
-                      onSelect={(num) => { sendCommand("PreviewInput", num); setPreviewInput(num); }}
-                      onDropInput={moverInputCategoria}
-                      onRemoveInput={removerInputCategoria}
-                      onDelete={excluirCategoria}
-                    />
-                    <VmixCategoryCreator onCreate={criarCategoria} />
-                  </section>
                 </div>
+
 
                 {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333", backgroundColor: "#222225" }}>
