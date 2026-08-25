@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!supabaseUrl || !anonKey || !serviceKey || !lovableApiKey) {
+    const elevenLabsApiKey = Deno.env.get("ELEVENLABS_API_KEY");
+    if (!supabaseUrl || !anonKey || !serviceKey || !elevenLabsApiKey) {
       return json({ ok: false, error: "Serviço de transcrição não configurado" });
     }
 
@@ -112,14 +112,15 @@ Deno.serve(async (req) => {
     const audioBlob = new Blob(chunks, { type: safeContentType });
     const form = new FormData();
     form.append("file", audioBlob, `stream.${extension}`);
-    form.append("model", "openai/gpt-4o-mini-transcribe");
-    form.append("language", "pt");
-    form.append("response_format", "json");
+    form.append("model_id", "scribe_v1");
+    form.append("language_code", "por");
+    form.append("tag_audio_events", "false");
+    form.append("diarize", "false");
 
     const startedAt = new Date(Date.now() - 14_000).toISOString();
-    const transcriptionResponse = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
+    const transcriptionResponse = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
       method: "POST",
-      headers: { "Lovable-API-Key": lovableApiKey },
+      headers: { "xi-api-key": elevenLabsApiKey },
       body: form,
     });
     if (!transcriptionResponse.ok) {
@@ -132,10 +133,12 @@ Deno.serve(async (req) => {
       } catch {
         if (detail.trim()) gatewayMessage = detail.slice(0, 180);
       }
-      if (transcriptionResponse.status === 402) {
-        gatewayMessage = "Créditos da Lovable AI insuficientes para continuar a transcrição.";
+      if (transcriptionResponse.status === 401) {
+        gatewayMessage = "A integração de transcrição precisa ser reconectada.";
+      } else if (transcriptionResponse.status === 402) {
+        gatewayMessage = "A integração de transcrição está sem créditos.";
       } else if (transcriptionResponse.status === 403) {
-        gatewayMessage = "A Lovable AI está desativada ou bloqueada para este workspace.";
+        gatewayMessage = "A integração de transcrição não tem permissão para processar áudio.";
       } else if (transcriptionResponse.status === 429) {
         gatewayMessage = "O serviço de transcrição está temporariamente ocupado. Aguarde um minuto e tente novamente.";
       }
