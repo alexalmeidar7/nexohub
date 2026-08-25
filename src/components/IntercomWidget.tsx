@@ -590,31 +590,28 @@ export default function IntercomWidget() {
     return (
       <div 
         id="intercom-selection-menu"
-        className="nexo-scope fixed z-[100] rounded-full overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300 ease-out" 
-        style={{ ...glassStyle, width: "auto" }}
+        className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
+        style={{ width: "auto" }}
       >
-        <div className="flex items-center gap-1.5 px-2 py-1.5">
-          <button onClick={() => setRole("speaker")}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all hover:bg-[#00BFF0]/10 group"
-            title="Intercom - Falar com ouvintes">
-            <Mic size={14} className="text-[#00BFF0] transition-transform group-hover:scale-110" />
-            <span className="text-[#002132] text-[10px] font-bold">Intercom</span>
-          </button>
-          
-          <div className="w-px h-4 bg-[#00BFF0]/20" />
-          
-          <button onClick={() => setRole("listener")}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all hover:bg-green-500/10 group"
-            title="Ouvinte - Receber áudio">
-            <Headphones size={14} className="text-green-500 transition-transform group-hover:scale-110" />
-            <span className="text-[#002132] text-[10px] font-bold">Ouvinte</span>
-          </button>
-          
-          <div className="w-px h-4 bg-[#00BFF0]/20" />
+        <div className="flex items-center gap-1">
+          {/* Grupo lima: falar / ouvir */}
+          <div className="flex items-center rounded-full overflow-hidden" style={{ backgroundColor: "#C6F03C" }}>
+            <button onClick={() => setRole("speaker")}
+              className="w-9 h-9 flex items-center justify-center transition-all hover:brightness-95"
+              title="Intercom — falar com ouvintes">
+              <Mic size={16} className="text-[#002132]" />
+            </button>
+            <div className="w-px h-4" style={{ backgroundColor: "rgba(0,33,50,0.35)" }} />
+            <button onClick={() => setRole("listener")}
+              className="w-9 h-9 flex items-center justify-center transition-all hover:brightness-95"
+              title="Ouvinte — receber áudio">
+              <Headphones size={16} className="text-[#002132]" />
+            </button>
+          </div>
 
-          <button onClick={handleClose} 
-            className="w-7 h-7 flex items-center justify-center rounded-full text-[#002132]/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
-            title="Desligar">
+          <button onClick={handleClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-[#002132]/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
+            title="Fechar">
             <X size={14} />
           </button>
         </div>
