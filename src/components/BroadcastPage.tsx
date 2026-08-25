@@ -1684,30 +1684,6 @@ export default function BroadcastPage() {
                   </div>
                 )}
 
-                {whatsappNumber && (
-                  <label className="flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all border-2" 
-                    style={{ 
-                      backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
-                      borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
-                    }}>
-
-                    <input
-                      type="checkbox"
-                      checked={data.showQrCode}
-                      onChange={e => {
-                        const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
-                        setData(nextData);
-                        void handleSave(nextData);
-                      }}
-                      className="w-4 h-4"
-                      style={{ accentColor: CYAN }}
-                    />
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-white block">WhatsApp QR Code</span>
-                      <p className="text-[9px] text-white/40">Exibir QR para interação ao vivo</p>
-                    </div>
-                  </label>
-                )}
               </div>
             </div>
           </div>
