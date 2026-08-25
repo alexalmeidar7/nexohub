@@ -1595,29 +1595,33 @@ export default function BroadcastPage() {
               </div>
 
               <div
-                className="overflow-hidden rounded-md"
-                style={{ backgroundColor: "#000", border: "1px solid #FFFFFF", height: 34 }}
+                className="overflow-hidden rounded-md relative"
+                style={{ backgroundColor: "#FFFFFF", border: "1px solid #FFFFFF", height: 34 }}
               >
                 {composedTicker ? (
                   <div
-                    className="text-[13px] font-semibold"
+                    className="text-[13px] font-semibold absolute whitespace-nowrap"
                     style={{
-                      display: "inline-block",
-                      whiteSpace: "nowrap",
                       lineHeight: "34px",
-                      color: "#ffffff",
-                      paddingLeft: "100%",
-                      animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
+                      color: NAVY,
+                      animation: `tickerSlidePv ${Math.max(18, Math.round(composedTicker.length * 0.22))}s linear infinite`,
                     }}
                   >
                     {composedTicker}
+                    <style>{`
+                      @keyframes tickerSlidePv {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-100%); }
+                      }
+                    `}</style>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-[11px]" style={{ color: "#ffffff50" }}>
+                  <div className="flex items-center justify-center h-full text-[11px]" style={{ color: "#0A254080" }}>
                     Ative fontes acima ou digite um texto para ver o preview.
                   </div>
                 )}
               </div>
+
 
               {/* Preview de TODOS os textos setados no ticker */}
               <div className="mt-3">
