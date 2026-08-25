@@ -1,23 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type NdiSource = { label: string; url: string };
 
-const MOCK_SOURCES: NdiSource[] = [
-  { label: "Estúdio 1 (NDI 1)", url: "http://localhost:8889/estudio1/whep" },
-  { label: "Estúdio 2 (NDI 2)", url: "http://localhost:8889/estudio2/whep" },
-  { label: "Estúdio 3 (NDI 3)", url: "http://localhost:8889/estudio3/whep" },
-];
-
 type Status = "idle" | "connecting" | "live" | "error";
+type Discovery = "idle" | "scanning" | "found" | "empty" | "unreachable";
 
-export default function NdiWebrtcMonitor() {
+const WHEP_PORT = 8889;
+const API_PORT = 9997;
+
+function hostFromUrl(raw?: string | null): string {
+  if (!raw) return "";
+  let v = raw.trim();
+  if (!v) return "";
+  if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+  try {
+    return new URL(v).hostname;
+  } catch {
+    return "";
+  }
+}
+
+export default function NdiWebrtcMonitor({ vmixBaseUrl }: { vmixBaseUrl?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
-  const [sources] = useState<NdiSource[]>(MOCK_SOURCES);
+  const [sources, setSources] = useState<NdiSource[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [status, setStatus] = useState<Status>("idle");
+  const [discovery, setDiscovery] = useState<Discovery>("idle");
 
-  const closeConnection = () => {
+  const defaultHost = hostFromUrl(vmixBaseUrl) || "127.0.0.1";
+  const [host, setHost] = useState<string>(defaultHost);
+
+  useEffect(() => {
+    setHost((prev) => (prev && prev !== "127.0.0.1" ? prev : defaultHost));
+  }, [defaultHost]);
+
+  const closeConnection = useCallback(() => {
     if (pcRef.current) {
       try {
         pcRef.current.getSenders().forEach((s) => s.track?.stop());
@@ -28,7 +46,63 @@ export default function NdiWebrtcMonitor() {
       pcRef.current = null;
     }
     if (videoRef.current) videoRef.current.srcObject = null;
-  };
+  }, []);
+
+  // Discovery: lists the streams currently published on the local WebRTC/NDI
+  // bridge (MediaMTX-compatible API). Each published path = one NDI source.
+  const discoverSources = useCallback(async (targetHost: string) => {
+    const h = (targetHost || "").trim();
+    if (!h) {
+      setSources([]);
+      setDiscovery("unreachable");
+      return;
+    }
+    setDiscovery("scanning");
+
+    const endpoints = [
+      `http://${h}:${API_PORT}/v3/paths/list`,
+      `http://${h}:${API_PORT}/v2/paths/list`,
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, { signal: AbortSignal.timeout(4000) });
+        if (!res.ok) continue;
+        const json = await res.json();
+
+        const items: any[] = Array.isArray(json?.items)
+          ? json.items
+          : json?.items && typeof json.items === "object"
+            ? Object.entries(json.items).map(([name, v]) => ({ name, ...(v as object) }))
+            : [];
+
+        const found: NdiSource[] = items
+          .map((it) => {
+            const name: string = it?.name ?? "";
+            if (!name) return null;
+            const ready = it?.ready !== false;
+            return {
+              label: `${name.replace(/[_-]+/g, " ").toUpperCase()}${ready ? "" : " (offline)"}`,
+              url: `http://${h}:${WHEP_PORT}/${name}/whep`,
+            };
+          })
+          .filter(Boolean) as NdiSource[];
+
+        setSources(found);
+        setDiscovery(found.length ? "found" : "empty");
+        return;
+      } catch {
+        /* try next endpoint */
+      }
+    }
+
+    setSources([]);
+    setDiscovery("unreachable");
+  }, []);
+
+  useEffect(() => {
+    void discoverSources(defaultHost);
+  }, [defaultHost, discoverSources]);
 
   // WHEP (WebRTC-HTTP Egress Protocol) subscriber
   const connectWebRTC = async (url: string) => {
@@ -77,7 +151,7 @@ export default function NdiWebrtcMonitor() {
     }
   };
 
-  useEffect(() => () => closeConnection(), []);
+  useEffect(() => () => closeConnection(), [closeConnection]);
 
   const handleChange = (url: string) => {
     setSelected(url);
@@ -91,6 +165,17 @@ export default function NdiWebrtcMonitor() {
     error: { label: "SEM SINAL", color: "#ef4444" },
   };
   const meta = statusMeta[status];
+
+  const discoveryText =
+    discovery === "scanning"
+      ? "Buscando fontes na rede…"
+      : discovery === "found"
+        ? `${sources.length} fonte(s) encontrada(s) em ${host}`
+        : discovery === "empty"
+          ? `Nenhuma fonte publicada em ${host}`
+          : discovery === "unreachable"
+            ? `Bridge NDI/WebRTC não encontrada em ${host}:${API_PORT}`
+            : "";
 
   return (
     <section>
@@ -110,19 +195,48 @@ export default function NdiWebrtcMonitor() {
         </span>
       </div>
 
+      <div className="flex gap-1.5 mb-1.5">
+        <input
+          value={host}
+          onChange={(e) => setHost(e.target.value)}
+          placeholder="IP do servidor NDI/WebRTC"
+          className="flex-1 h-8 rounded text-[10px] font-bold tracking-wider px-2 outline-none"
+          style={{ backgroundColor: "#111", color: "#e5e5e5", border: "1px solid #C6F03C30" }}
+        />
+        <button
+          type="button"
+          onClick={() => void discoverSources(host)}
+          className="h-8 px-2.5 rounded text-[9px] font-black uppercase tracking-widest"
+          style={{ backgroundColor: "#C6F03C", color: "#000" }}
+        >
+          {discovery === "scanning" ? "…" : "Buscar"}
+        </button>
+      </div>
+
       <select
         value={selected}
         onChange={(e) => handleChange(e.target.value)}
-        className="w-full h-9 rounded text-[11px] font-bold uppercase tracking-wider px-2.5 outline-none mb-2.5"
-        style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", border: "1px solid #C6F03C50" }}
+        disabled={!sources.length}
+        className="w-full h-9 rounded text-[11px] font-bold uppercase tracking-wider px-2.5 outline-none mb-1.5"
+        style={{
+          backgroundColor: "#1a1a1a",
+          color: sources.length ? "#e5e5e5" : "#ffffff50",
+          border: "1px solid #C6F03C50",
+        }}
       >
-        <option value="">— Selecionar fonte —</option>
+        <option value="">{sources.length ? "— Selecionar fonte —" : "— Nenhuma fonte na rede —"}</option>
         {sources.map((s) => (
           <option key={s.url} value={s.url}>
             {s.label}
           </option>
         ))}
       </select>
+
+      {discoveryText && (
+        <p className="text-[9px] font-bold uppercase tracking-wider mb-2.5" style={{ color: discovery === "found" ? "#C6F03C99" : "#ffffff45" }}>
+          {discoveryText}
+        </p>
+      )}
 
       <div
         className="relative w-full overflow-hidden rounded"
