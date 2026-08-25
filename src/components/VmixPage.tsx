@@ -2820,9 +2820,6 @@ function SwitcherUI({
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-end gap-2 flex-wrap">
-              <SwitcherStatusPill />
-            </div>
             {(reloadingInputs || reloadFallback) && (
               <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
                 reloadingInputs
