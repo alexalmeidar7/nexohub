@@ -3342,18 +3342,7 @@ function SwitcherUI({
           };
 
           const todayPrograms = programas
-            .filter(p => {
-              // Only show active programs in the automation section
-              if (!p.ativo) return false;
-              
-              // Only filter by studio if a specific studio name (other than default) is provided
-              if (studioName && studioName !== "vMix Studio" && studioName.trim() !== "") {
-                // Exact or partial match for the studio name set in the connection
-                const match = p.estudio && p.estudio.toLowerCase().includes(studioName.toLowerCase());
-                return match && isProgramForToday(p);
-              }
-              return isProgramForToday(p);
-            })
+            .filter(p => p.ativo && matchesStudio(p.estudio, studioName) && isProgramForToday(p))
             .sort((a, b) => toMin(a.horario_inicio) - toMin(b.horario_inicio));
 
           const onAir = todayPrograms.find(isNowInProgram);
