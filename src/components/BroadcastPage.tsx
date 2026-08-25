@@ -642,6 +642,17 @@ export default function BroadcastPage() {
     [empresaSocials, selectedSocialTypes],
   );
 
+  // Lista de todos os textos ativos no ticker (para preview)
+  const tickerItems = useMemo(() => {
+    const items: { source: string; text: string }[] = [];
+    if (data.tickerNews) newsTitles.forEach(t => items.push({ source: "Notícia", text: t }));
+    if (data.tickerWeather && weatherText) items.push({ source: "Tempo", text: weatherText });
+    if (data.tickerQuotes && quotesText) items.push({ source: "Cotação", text: quotesText });
+    if (data.tickerSocials) tickerSocialItems.forEach(s => items.push({ source: s.tipo, text: s.valor }));
+    if (data.ticker.trim()) items.push({ source: "Livre", text: data.ticker.trim() });
+    return items;
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, tickerSocialItems]);
+
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
     const parts: string[] = [];
