@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const openAiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!supabaseUrl || !anonKey || !serviceKey || !openAiKey) {
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!supabaseUrl || !anonKey || !serviceKey || !lovableApiKey) {
       return json({ ok: false, error: "Serviço de transcrição não configurado" });
     }
 
@@ -95,23 +95,51 @@ Deno.serve(async (req) => {
 
     if (total < 8_000) return json({ ok: false, error: "O streaming não entregou áudio suficiente" });
 
-    const audioBlob = new Blob(chunks, { type: contentType });
+    const safeContentType = contentType.includes("aac")
+      ? "audio/aac"
+      : contentType.includes("ogg")
+        ? "audio/ogg"
+        : contentType.includes("wav")
+          ? "audio/wav"
+          : "audio/mpeg";
+    const extension = safeContentType === "audio/aac"
+      ? "aac"
+      : safeContentType === "audio/ogg"
+        ? "ogg"
+        : safeContentType === "audio/wav"
+          ? "wav"
+          : "mp3";
+    const audioBlob = new Blob(chunks, { type: safeContentType });
     const form = new FormData();
-    form.append("file", audioBlob, contentType.includes("aac") ? "stream.aac" : "stream.mp3");
-    form.append("model", "whisper-1");
+    form.append("file", audioBlob, `stream.${extension}`);
+    form.append("model", "openai/gpt-4o-mini-transcribe");
     form.append("language", "pt");
     form.append("response_format", "json");
 
     const startedAt = new Date(Date.now() - 14_000).toISOString();
-    const transcriptionResponse = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    const transcriptionResponse = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${openAiKey}` },
+      headers: { "Lovable-API-Key": lovableApiKey },
       body: form,
     });
     if (!transcriptionResponse.ok) {
       const detail = await transcriptionResponse.text();
       console.error("[transcribe-stream] transcription failed", transcriptionResponse.status, detail.slice(0, 300));
-      return json({ ok: false, error: "Não foi possível transcrever este formato de áudio" });
+      let gatewayMessage = "Não foi possível transcrever o áudio";
+      try {
+        const parsedDetail = JSON.parse(detail);
+        gatewayMessage = parsedDetail?.error?.message || parsedDetail?.message || gatewayMessage;
+      } catch {
+        if (detail.trim()) gatewayMessage = detail.slice(0, 180);
+      }
+      if (transcriptionResponse.status === 402) {
+        gatewayMessage = "Créditos da Lovable AI insuficientes para continuar a transcrição.";
+      } else if (transcriptionResponse.status === 403) {
+        gatewayMessage = "A Lovable AI está desativada ou bloqueada para este workspace.";
+      } else if (transcriptionResponse.status === 429) {
+        gatewayMessage = "O serviço de transcrição está temporariamente ocupado. Aguarde um minuto e tente novamente.";
+      }
+      return json({ ok: false, error: gatewayMessage, status: transcriptionResponse.status });
     }
 
     const result = await transcriptionResponse.json();
