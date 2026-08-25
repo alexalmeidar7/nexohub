@@ -3397,11 +3397,8 @@ function SwitcherUI({
                       };
 
                       const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
-                      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-                      const studioFilterActive = !!studioName && studioName.trim() !== "" && studioName !== "vMix Studio";
-                      const programasEstudio = studioFilterActive
-                        ? programas.filter(p => p.estudio && (norm(p.estudio).includes(norm(studioName)) || norm(studioName).includes(norm(p.estudio))))
-                        : programas;
+                      const studioFilterActive = isStudioScoped(studioName);
+                      const programasEstudio = programas.filter(p => matchesStudio(p.estudio, studioName));
                       const ordered = hasSavedOrder ? programasEstudio : [...programasEstudio].sort((a, b) => {
                         const studioOrder = (s: string | null) => {
                           if (!s) return 2;
@@ -3414,6 +3411,18 @@ function SwitcherUI({
                         if (diff !== 0) return diff;
                         return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
                       });
+                      if (studioFilterActive && ordered.length === 0) {
+                        return (
+                          <div className="rounded-lg px-4 py-6 text-center" style={{ backgroundColor: "#ffffff05", border: "1px dashed #ffffff14" }}>
+                            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>
+                              Nenhum programa vinculado ao estúdio “{studioName}”
+                            </p>
+                            <p className="text-[10px] text-white/40 mt-1">
+                              Vincule o estúdio aos programas na Grade de Programação para exibi-los aqui.
+                            </p>
+                          </div>
+                        );
+                      }
                       const groups: Record<string, typeof ordered> = {};
                       for (const p of ordered) {
                         const key = p.estudio || "Sem Estúdio";
