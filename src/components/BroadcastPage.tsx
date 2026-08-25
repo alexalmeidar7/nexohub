@@ -1516,6 +1516,40 @@ export default function BroadcastPage() {
                       </div>
                     </label>
 
+                    {/* Seleção da fonte das notícias (roteiro) */}
+                    {key === "tickerNews" && active && (
+                      <div
+                        className="mt-2 ml-4 p-3 rounded-xl space-y-2"
+                        style={{ backgroundColor: NAVY_DEEP, border: `1px dashed ${CYAN}55` }}
+                      >
+                        <div className="text-[9px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>
+                          Fonte das notícias
+                        </div>
+                        <select
+                          value={data.tickerNewsRoteiroId || ""}
+                          onChange={e => {
+                            const nextData = { ...latestDataRef.current, tickerNewsRoteiroId: e.target.value };
+                            setData(nextData);
+                            void handleSave(nextData);
+                          }}
+                          style={inputStyle}
+                          className="w-full text-[11px]"
+                        >
+                          <option value="">Automático — último roteiro jornalístico</option>
+                          {roteirosOptions.map(r => (
+                            <option key={r.id} value={r.id}>
+                              {r.titulo}
+                              {r.created_at ? ` · ${String(r.created_at).slice(0, 10).split("-").reverse().join("/")}` : ""}
+                              {r.count ? ` · ${r.count} títulos` : " · sem títulos"}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[9.5px]" style={{ color: "#ffffff60" }}>
+                          Escolha de qual roteiro os títulos serão exibidos no ticker.
+                        </p>
+                      </div>
+                    )}
+
                     {/* QR Code do WhatsApp — logo abaixo de Notícias */}
                     {key === "tickerNews" && whatsappNumber && (
                       <label
