@@ -12,6 +12,7 @@ export default function IntercomListener() {
   usePageTitle("Intercomunicador — Receptor");
   const [params] = useSearchParams();
   const uid = params.get("uid");
+  const nomeParam = (params.get("nome") || "").trim();
 
   const [connected, setConnected] = useState(false);
   const [speakerOnline, setSpeakerOnline] = useState(false);
@@ -288,7 +289,7 @@ export default function IntercomListener() {
 
       if (status === "SUBSCRIBED") {
         setConnected(true);
-        await ch.track({ role: "listener", online: true, name: LISTENER_PRESENCE_NAME });
+        await ch.track({ role: "listener", online: true, name: nomeParam || LISTENER_PRESENCE_NAME });
       }
     });
 
