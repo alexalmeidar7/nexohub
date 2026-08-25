@@ -3397,7 +3397,12 @@ function SwitcherUI({
                       };
 
                       const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
-                      const ordered = hasSavedOrder ? programas : [...programas].sort((a, b) => {
+                      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                      const studioFilterActive = !!studioName && studioName.trim() !== "" && studioName !== "vMix Studio";
+                      const programasEstudio = studioFilterActive
+                        ? programas.filter(p => p.estudio && (norm(p.estudio).includes(norm(studioName)) || norm(studioName).includes(norm(p.estudio))))
+                        : programas;
+                      const ordered = hasSavedOrder ? programasEstudio : [...programasEstudio].sort((a, b) => {
                         const studioOrder = (s: string | null) => {
                           if (!s) return 2;
                           const l = s.toLowerCase();
