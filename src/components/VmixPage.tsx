@@ -2936,9 +2936,9 @@ function SwitcherUI({
 
 
                 {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
-                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333", backgroundColor: "#222225" }}>
+                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #C6F03C20", backgroundColor: "#050505" }}>
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Overlays</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5" style={{ color: "#C6F03C" }}>Overlays</h3>
                     <div className="grid grid-cols-2 gap-2">
                       {[1, 2, 3, 4].map(n => {
                         const isOn = overlays[n];
@@ -2952,10 +2952,10 @@ function SwitcherUI({
                             }}
                             className="h-16 rounded border text-[10px] font-black tracking-wider transition-all"
                             style={{
-                              backgroundColor: isOn ? "#dc2626" : "#3a3a3a",
-                              color: isOn ? "#fff" : "#ddd",
-                              borderColor: isOn ? "#fca5a5" : "#4a4a4a",
-                              boxShadow: isOn ? "0 0 12px rgba(220,38,38,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              backgroundColor: isOn ? "#C6F03C" : "#1a1a1a",
+                              color: isOn ? "#000" : "#e5e5e5",
+                              borderColor: isOn ? "#C6F03C" : "#2a2a2a",
+                              boxShadow: isOn ? "0 0 12px rgba(198,240,60,0.45)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                             }}
                           >
                             OVERLAY {n}
@@ -2967,26 +2967,26 @@ function SwitcherUI({
                   </section>
 
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Transições</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5" style={{ color: "#C6F03C" }}>Transições</h3>
                     <div className="grid gap-2">
                       <button
                         onClick={() => sendCommand("Cut")}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#7f1d1d", color: "#fff", borderColor: "#b91c1c", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)" }}
+                        style={{ backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C", boxShadow: "0 0 12px rgba(198,240,60,0.35)" }}
                       >
                         CUT
                       </button>
                       <button
                         onClick={() => sendCommand("Fade", undefined, String(transitionDuration))}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60" }}
+                        style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", borderColor: "#C6F03C50" }}
                       >
                         FADE
                       </button>
                       <button
                         onClick={() => sendCommand("Merge", undefined, String(transitionDuration))}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#3a3a3a", color: "#fff", borderColor: "#4a4a4a" }}
+                        style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", borderColor: "#2a2a2a" }}
                       >
                         MERGE
                       </button>
@@ -2995,7 +2995,25 @@ function SwitcherUI({
                 </div>
 
                 {/* 3. RIGHT: PROGRAMA (No Ar) */}
-                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#1d1d1d" }}>
+                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#000000" }}>
+                  {/* Espelhamento das categorias criadas na Pré-visualização — no topo do box */}
+                  {switcherCategorias.length > 0 && (
+                    <section className="space-y-2">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
+                      <VmixCategoryPanel
+                        side="program"
+                        categorias={switcherCategorias}
+                        inputs={inputs}
+                        previewInput={previewInput}
+                        activeInput={activeInput}
+                        onSelect={(num) => { sendCommand("CutDirect", num); setActiveInput(num); }}
+                        shortcuts={inputShortcuts}
+                        capturingShortcut={capturingShortcut}
+                        onSetShortcut={(k) => setCapturingShortcut(k)}
+                      />
+                    </section>
+                  )}
+
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
                     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
@@ -3018,24 +3036,29 @@ function SwitcherUI({
                             title={input.title}
                             className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
-                              backgroundColor: isActive ? "#dc2626" : "#3a3a3a",
-                              color: isActive ? "#fff" : "#ddd",
-                              borderColor: isActive ? "#fca5a5" : "#4a4a4a",
-                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              backgroundColor: isActive ? "#dc2626" : "#1a1a1a",
+                              color: isActive ? "#fff" : "#e5e5e5",
+                              borderColor: isActive ? "#dc2626" : "#2a2a2a",
+                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                             }}
                           >
                             <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
                             <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
-                            
+
                             {/* Keyboard Shortcut Indicator */}
-                            <div 
+                            <div
                               className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
-                                isCapturing 
-                                  ? "bg-yellow-500 text-black border-yellow-300 animate-pulse z-10" 
-                                  : shortcut 
-                                    ? "bg-black/60 text-white/90 border-white/20" 
-                                    : "bg-black/20 text-white/30 border-transparent opacity-0 group-hover:opacity-100"
+                                isCapturing
+                                  ? "animate-pulse z-10"
+                                  : shortcut ? "" : "opacity-0 group-hover:opacity-100"
                               }`}
+                              style={
+                                isCapturing
+                                  ? { backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C" }
+                                  : shortcut
+                                    ? { backgroundColor: "#000000aa", color: "#C6F03C", borderColor: "#C6F03C40" }
+                                    : { backgroundColor: "#00000080", color: "#ffffff50", borderColor: "transparent" }
+                              }
                             >
                               {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
                             </div>
@@ -3044,22 +3067,8 @@ function SwitcherUI({
                       })}
                     </div>
                   </section>
-
-                  {/* Espelhamento das categorias criadas na Pré-visualização */}
-                  {switcherCategorias.length > 0 && (
-                    <section className="space-y-2">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
-                      <VmixCategoryPanel
-                        side="program"
-                        categorias={switcherCategorias}
-                        inputs={inputs}
-                        previewInput={previewInput}
-                        activeInput={activeInput}
-                        onSelect={(num) => { sendCommand("CutDirect", num); setActiveInput(num); }}
-                      />
-                    </section>
-                  )}
                 </div>
+
               </div>
             </div>
 
