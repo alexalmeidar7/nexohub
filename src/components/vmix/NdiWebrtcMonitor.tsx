@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type VmixInputLike = { number: number; key?: string; title?: string; type?: string };
+type VmixInputLike = { number: string | number; key?: string; title?: string; type?: string };
 
 type NdiSource = {
   label: string;
   /** MJPEG (vMix) ou WHEP (bridge WebRTC) */
   kind: "mjpeg" | "whep";
   url: string;
+  path?: string;
 };
 
 type Status = "idle" | "connecting" | "live" | "error";
@@ -27,20 +28,42 @@ function hostOf(base: string): string {
   }
 }
 
+function isLocalNetworkHost(host: string): boolean {
+  return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|localhost$)/i.test(host);
+}
+
+function playbackBases(base: string): string[] {
+  if (!base) return [];
+  const result = [base];
+  try {
+    const parsed = new URL(base);
+    if (isLocalNetworkHost(parsed.hostname) && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") {
+      const port = parsed.port || "8088";
+      result.push(`http://127.0.0.1:${port}`, `http://localhost:${port}`);
+    }
+  } catch {
+    /* URL already normalized; keep the configured base only */
+  }
+  return Array.from(new Set(result));
+}
+
 const isNdiType = (t?: string) => /ndi|desktop/i.test(t || "");
 
 export default function NdiWebrtcMonitor({
   vmixBaseUrl,
   inputs = [],
+  onRefresh,
 }: {
   vmixBaseUrl?: string;
   inputs?: VmixInputLike[];
+  onRefresh?: () => void | Promise<void>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [selected, setSelected] = useState<string>("");
   const [status, setStatus] = useState<Status>("idle");
   const [reloadKey, setReloadKey] = useState(0);
+  const [playbackAttempt, setPlaybackAttempt] = useState(0);
   const [bridgeSources, setBridgeSources] = useState<NdiSource[]>([]);
 
   const base = normalizeBase(vmixBaseUrl);
@@ -51,15 +74,28 @@ export default function NdiWebrtcMonitor({
   //    então cada entrada vira uma fonte reproduzível sem bridge externa.
   const vmixSources = useMemo<NdiSource[]>(() => {
     if (!base) return [];
-    const list = [...inputs].filter((i) => typeof i?.number === "number");
+    const list = [...inputs].filter((i) => String(i?.number ?? "").trim() !== "");
     const ndi = list.filter((i) => isNdiType(i.type));
     const others = list.filter((i) => !isNdiType(i.type));
     const build = (i: VmixInputLike, tag: string): NdiSource => ({
       label: `${tag} ${i.number} · ${(i.title || "Sem título").replace(/\s+/g, " ").trim()}`,
       kind: "mjpeg",
       url: `${base}/mjpeg?Input=${encodeURIComponent(i.number)}`,
+      path: `/mjpeg?Input=${encodeURIComponent(i.number)}`,
     });
     return [
+      {
+        label: "VMIX NDI · OUTPUT 1 (PROGRAMA)",
+        kind: "mjpeg",
+        url: `${base}/mjpeg`,
+        path: "/mjpeg",
+      },
+      {
+        label: "VMIX NDI · PREVIEW",
+        kind: "mjpeg",
+        url: `${base}/mjpeg?Input=Preview`,
+        path: "/mjpeg?Input=Preview",
+      },
       ...ndi.map((i) => build(i, "NDI")),
       ...others.map((i) => build(i, "IN")),
     ];
@@ -174,6 +210,7 @@ export default function NdiWebrtcMonitor({
       void connectWebRTC(url);
     } else {
       setStatus("connecting");
+      setPlaybackAttempt(0);
       setReloadKey((k) => k + 1);
     }
   };
@@ -186,8 +223,12 @@ export default function NdiWebrtcMonitor({
   };
   const meta = statusMeta[status];
 
-  const mjpegSrc =
-    current?.kind === "mjpeg" ? `${current.url}&_=${reloadKey}` : "";
+  const mjpegCandidates = useMemo(() => {
+    if (current?.kind !== "mjpeg") return [];
+    const path = current.path || current.url.slice(base.length);
+    return playbackBases(base).map((candidateBase) => `${candidateBase}${path}${path.includes("?") ? "&" : "?"}_=${reloadKey}`);
+  }, [base, current, reloadKey]);
+  const mjpegSrc = mjpegCandidates[playbackAttempt] || "";
 
   return (
     <section>
@@ -231,7 +272,9 @@ export default function NdiWebrtcMonitor({
         <button
           type="button"
           onClick={() => {
+            void onRefresh?.();
             setReloadKey((k) => k + 1);
+            setPlaybackAttempt(0);
             void discoverBridge(host);
             if (current?.kind === "whep") void connectWebRTC(current.url);
           }}
@@ -244,7 +287,7 @@ export default function NdiWebrtcMonitor({
 
       <p className="text-[9px] font-bold uppercase tracking-wider mb-2.5" style={{ color: "#ffffff45" }}>
         {sources.length
-          ? `${sources.length} fonte(s) do vMix${host ? ` em ${host}` : ""}`
+          ? `${sources.length} fonte(s) sincronizada(s) do vMix${host ? ` em ${host}` : ""}`
           : "Nenhuma entrada carregada do vMix"}
       </p>
 
@@ -260,7 +303,14 @@ export default function NdiWebrtcMonitor({
             className="absolute"
             style={{ top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" }}
             onLoad={() => setStatus("live")}
-            onError={() => setStatus("error")}
+            onError={() => {
+              if (playbackAttempt + 1 < mjpegCandidates.length) {
+                setPlaybackAttempt((attempt) => attempt + 1);
+                setStatus("connecting");
+                return;
+              }
+              setStatus("error");
+            }}
           />
         ) : (
           <video
@@ -280,7 +330,7 @@ export default function NdiWebrtcMonitor({
             {status === "connecting"
               ? "Conectando…"
               : status === "error"
-                ? "Sem sinal · verifique o Web Controller do vMix"
+                ? "Sem sinal · libere o Web Controller e o acesso HTTP local"
                 : "Selecione uma fonte NDI"}
           </div>
         )}
