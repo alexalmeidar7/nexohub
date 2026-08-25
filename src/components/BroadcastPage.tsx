@@ -1388,34 +1388,101 @@ export default function BroadcastPage() {
                 { key: "tickerNews", icon: <Newspaper size={12} />, label: "Notícias", desc: "Títulos das últimas notícias" },
                 { key: "tickerWeather", icon: <CloudSun size={12} />, label: "Previsão do Tempo", desc: "Tempo atual e amanhã" },
                 { key: "tickerQuotes", icon: <TrendingUp size={12} />, label: "Cotações", desc: "Dólar e Euro (BRL)" },
-                { key: "tickerSocials", icon: <Instagram size={12} />, label: "Redes Sociais", desc: "Instagram, Facebook, YouTube, Site, WhatsApp" },
+                { key: "tickerSocials", icon: <Instagram size={12} />, label: "Redes Sociais", desc: "Escolha quais redes vão para o ticker" },
               ] as const).map(({ key, icon, label, desc }) => {
                 const active = data[key];
                 return (
-                  <label
-                    key={key}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
-                    style={{
-                      backgroundColor: active ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
-                      border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={active}
-                      onChange={e => {
-                        const nextData = { ...latestDataRef.current, [key]: e.target.checked };
-                        setData(nextData);
-                        void handleSave(nextData);
+                  <div key={key}>
+                    <label
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
+                      style={{
+                        backgroundColor: active ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                        border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
                       }}
-                      style={{ accentColor: CYAN }}
-                    />
-                    <span style={{ color: active ? CYAN : "#ffffff60" }}>{icon}</span>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[12px] font-semibold text-white block">{label}</span>
-                      <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
-                    </div>
-                  </label>
+                    >
+                      <input
+                        type="checkbox"
+                        checked={active}
+                        onChange={e => {
+                          const nextData = { ...latestDataRef.current, [key]: e.target.checked };
+                          setData(nextData);
+                          void handleSave(nextData);
+                        }}
+                        style={{ accentColor: CYAN }}
+                      />
+                      <span style={{ color: active ? CYAN : "#ffffff60" }}>{icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[12px] font-semibold text-white block">{label}</span>
+                        <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
+                      </div>
+                    </label>
+
+                    {/* QR Code do WhatsApp — logo abaixo de Notícias */}
+                    {key === "tickerNews" && whatsappNumber && (
+                      <label
+                        className="mt-2 flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
+                        style={{
+                          backgroundColor: data.showQrCode ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                          border: `1px solid ${data.showQrCode ? CYAN : NAVY_BORDER}`,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={data.showQrCode}
+                          onChange={e => {
+                            const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
+                            setData(nextData);
+                            void handleSave(nextData);
+                          }}
+                          style={{ accentColor: CYAN }}
+                        />
+                        <span style={{ color: data.showQrCode ? CYAN : "#ffffff60" }}><Phone size={12} /></span>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[12px] font-semibold text-white block">QR Code (WhatsApp)</span>
+                          <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>Exibir QR para interação ao vivo</p>
+                        </div>
+                      </label>
+                    )}
+
+                    {/* Submenu — seleção de redes sociais */}
+                    {key === "tickerSocials" && active && (
+                      <div
+                        className="mt-2 ml-4 p-3 rounded-xl space-y-1.5"
+                        style={{ backgroundColor: NAVY_DEEP, border: `1px dashed ${CYAN}55` }}
+                      >
+                        <div className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>
+                          Redes enviadas ao ticker
+                        </div>
+                        {empresaSocials.length === 0 ? (
+                          <p className="text-[10px] italic" style={{ color: "#ffffff60" }}>Nenhuma rede social configurada na empresa.</p>
+                        ) : (
+                          empresaSocials.map(s => {
+                            const selected = selectedSocialTypes.includes(s.tipo);
+                            return (
+                              <label key={s.tipo} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={selected}
+                                  onChange={e => {
+                                    const base = selectedSocialTypes;
+                                    const next = e.target.checked
+                                      ? Array.from(new Set([...base, s.tipo]))
+                                      : base.filter(t => t !== s.tipo);
+                                    const nextData = { ...latestDataRef.current, tickerSocialTypes: next };
+                                    setData(nextData);
+                                    void handleSave(nextData);
+                                  }}
+                                  style={{ accentColor: CYAN }}
+                                />
+                                <span style={{ color: selected ? CYAN : "#ffffff60" }}>{s.icon}</span>
+                                <span className="text-[11px] truncate" style={{ color: selected ? "#fff" : "#ffffff70" }}>{s.valor}</span>
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
