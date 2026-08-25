@@ -120,7 +120,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
       setCommands([]);
       setCustomHorario("");
       setNome("");
-      setEstudio("FM");
+      setEstudio(estudioFixo || "FM");
       setDiasSemana([]);
       setDataEspecifica("");
       setLoading(false);
