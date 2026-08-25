@@ -64,83 +64,87 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
 
   if (!user) {
     return (
-      <div className="h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0d0446, #1a0a6e)" }}>
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: "#000000" }}>
         <form
           onSubmit={handleLogin}
           className="w-full max-w-sm rounded-2xl p-8 flex flex-col gap-5"
-          style={{ backgroundColor: "#ffffff", boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}
+          style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}
         >
           <div className="flex flex-col items-center gap-2 mb-2">
             <img src={vmixControlLogo.url} alt="Mix Control" className="h-8" />
-            <p className="text-xs" style={{ color: "#6b7280" }}>Faça login para acessar o controle</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff45" }}>Faça login para acessar o controle</p>
           </div>
 
           {error && (
-            <div className="text-xs text-center font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: "#fee2e2", color: "#dc2626" }}>
+            <div className="text-xs text-center font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: "#dc262620", color: "#f87171", border: "1px solid #dc262640" }}>
               {error}
             </div>
           )}
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: "#0d0446" }}>E-mail</label>
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>E-mail</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
-              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2"
-              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0" }}
+              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all"
+              style={{ backgroundColor: "#141414", color: "#fff", border: "1px solid #ffffff14" }}
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: "#0d0446" }}>Senha</label>
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Senha</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2"
-              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0" }}
+              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all"
+              style={{ backgroundColor: "#141414", color: "#fff", border: "1px solid #ffffff14" }}
             />
           </div>
 
           <button
             type="submit"
             disabled={signing}
-            className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #3a3a44, #4a4a54)" }}
+            className="w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: "#C6F03C", color: "#000" }}
           >
             {signing ? <Loader2 className="animate-spin" size={16} /> : null}
             Entrar
           </button>
+
         </form>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
-      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
-        <div className="flex items-center gap-2">
-          {/* Removido relógio e botão nova janela */}
-        </div>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#000000" }}>
+      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #C6F03C20" }}>
+        <div className="flex items-center gap-2" />
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <img src={vmixControlLogo.url} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-white/60 text-xs">{user.email}</span>
-          {/* Removido botão Voltar */}
-          <button onClick={handleLogout} className="text-white/50 hover:text-white transition-colors" title="Sair">
-            <LogOut size={16} />
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#C6F03C99" }}>{user.email}</span>
+          <button
+            onClick={handleLogout}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+            style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C30" }}
+            title="Sair"
+          >
+            <LogOut size={15} />
           </button>
         </div>
       </header>
-      <main className="flex-1 p-6" style={{ backgroundColor: "#191919" }}>
+      <main className="flex-1 p-6" style={{ backgroundColor: "#000000" }}>
         <VmixPage forcedConnected={forcedConnected} />
       </main>
     </div>
   );
+
 }

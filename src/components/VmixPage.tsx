@@ -2638,7 +2638,7 @@ function SwitcherUI({
               <div className="flex flex-col">
                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
                 <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-white/20'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-[#C6F03C] animate-pulse shadow-[0_0_10px_rgba(198,240,60,0.7)]' : 'bg-white/20'}`} />
                   <div className="flex flex-col">
                     <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
                       {currentProgram?.nome || activeTitle}
@@ -2664,9 +2664,10 @@ function SwitcherUI({
                   onClick={() => setActiveTab(item.key)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
                   style={{
-                    color: activeTab === item.key ? "#fff" : "#777",
-                    backgroundColor: activeTab === item.key ? "#2a2a30" : "transparent",
-                    border: activeTab === item.key ? "1px solid #dc262655" : "1px solid transparent",
+                    color: activeTab === item.key ? "#000" : "#8a8a8a",
+                    backgroundColor: activeTab === item.key ? "#C6F03C" : "#141414",
+                    border: activeTab === item.key ? "1px solid #C6F03C" : "1px solid #ffffff0d",
+                    boxShadow: activeTab === item.key ? "0 0 16px rgba(198,240,60,0.25)" : "none",
                   }}
                 >
                   {item.icon} {item.label}
@@ -2684,7 +2685,8 @@ function SwitcherUI({
                   setSavedUrl("");
                   navigate("/vmix-control");
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#777] hover:text-white transition-all"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:brightness-125"
+                style={{ backgroundColor: "#141414", color: "#C6F03C", border: "1px solid #C6F03C35" }}
               >
                 <RefreshCw size={13} /> VOLTAR
               </button>
@@ -2694,11 +2696,12 @@ function SwitcherUI({
               {/* Status Indicator (Now part of the main button group) */}
               <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e]/50 border border-white/5">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C] shadow-[0_0_10px_rgba(198,240,60,0.7)]" : "bg-[#555]"}`} />
+                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: connected ? "#C6F03C" : "#777" }}>
                     {connected ? "STATUS: CONECTADO" : "STATUS: DESCONECTADO"}
                   </span>
                 </div>
+
                 {connected && (
                   <>
                     <div className="w-px h-3 bg-white/10" />
@@ -3365,13 +3368,14 @@ function SwitcherUI({
 
                       <button
                         onClick={() => setEditingPresetId("new")}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#22c55e10] hover:bg-[#22c55e20] border border-[#22c55e20] transition-colors"
-                        style={{ color: "#22c55e" }}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
                         title="Criar novo programa"
                       >
                         <Plus size={12} />
-                        <span className="text-[10px] font-black uppercase tracking-wider">+ nova automação</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider">nova automação</span>
                       </button>
+
                     </div>
                   </div>
                   <div className="p-4 space-y-4">
@@ -3809,6 +3813,7 @@ function SwitcherUI({
             programaId={prog.id}
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
+            estudioFixo={studioName || null}
             userId={user.id}
             inputs={inputs}
             onRunCommands={async (cmds) => {
