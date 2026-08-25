@@ -658,14 +658,11 @@ serve(async (req) => {
       }
 
       // Janela de exibição configurável pelo usuário:
-      // entra `lead` segundos antes do início e permanece por `duration` segundos.
+      // entra `lead` segundos antes do início e permanece até o horário de início.
       const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
       const leadSeconds = Number(broadcastConfig.aSeguirLeadSeconds) > 0
         ? Number(broadcastConfig.aSeguirLeadSeconds)
-        : 180;
-      const durationSeconds = Number(broadcastConfig.aSeguirDurationSeconds) > 0
-        ? Number(broadcastConfig.aSeguirDurationSeconds)
-        : 120;
+        : 300;
       const forceUntilRaw = broadcastConfig.aSeguirForceUntil;
       const forceUntilMs = forceUntilRaw ? Date.parse(String(forceUntilRaw)) : 0;
       const forcedActive = !!forceUntilMs && forceUntilMs > now.getTime();
@@ -674,8 +671,8 @@ serve(async (req) => {
       if (nextStart >= 0) {
         let delta = nextStart - nowSeconds;
         if (delta < 0) delta += 24 * 60 * 60;
-        const endDelta = Math.max(0, leadSeconds - durationSeconds);
-        inWindow = delta <= leadSeconds && delta >= endDelta;
+        // Permanece no XML até o horário de início do programa.
+        inWindow = delta <= leadSeconds;
       }
 
       if (!forcedActive && !inWindow) {
@@ -1285,6 +1282,7 @@ serve(async (req) => {
     lines.push("    <a_seguir>");
     lines.push(`      <ativo>${aSeguirEnabled ? "1" : "0"}</ativo>`);
     lines.push(`      <programa_nome>${esc(aSeguirNome)}</programa_nome>`);
+    lines.push(`      <nome_programa>${esc(aSeguirNome)}</nome_programa>`);
     lines.push(`      <programa_logo>${esc(aSeguirLogo)}</programa_logo>`);
     lines.push(`      <locutor_nome>${esc(aSeguirLocutorNome)}</locutor_nome>`);
     lines.push(`      <locutor_foto>${esc(aSeguirLocutorFoto)}</locutor_foto>`);
