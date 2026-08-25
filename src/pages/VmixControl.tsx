@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Clock, ExternalLink, RefreshCw } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
-import vmixControlLogo from "@/assets/vmixcontrol.png.asset.json";
+import vmixControlLogo from "@/assets/logo-mixcontrol.png";
 import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
 
 export default function VmixControl({ forcedConnected = false }: { forcedConnected?: boolean }) {
@@ -71,7 +71,7 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
           style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}
         >
           <div className="flex flex-col items-center gap-2 mb-2">
-            <img src={vmixControlLogo.url} alt="Mix Control" className="h-8" />
+            <img src={vmixControlLogo} alt="Mix Control" className="h-8" />
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff45" }}>Faça login para acessar o controle</p>
           </div>
 
@@ -127,7 +127,7 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #C6F03C20" }}>
         <div className="flex items-center gap-2" />
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <img src={vmixControlLogo.url} alt="NEXO VMIX CONTROL" className="h-6" />
+          <img src={vmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#C6F03C99" }}>{user.email}</span>
