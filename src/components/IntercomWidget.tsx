@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2, ChevronDown } from "lucide-react";
+import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2, ChevronDown, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -49,6 +49,7 @@ export default function IntercomWidget() {
     return saved ? Math.max(0, Math.min(1, parseFloat(saved))) : 1;
   });
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -585,6 +586,22 @@ export default function IntercomWidget() {
   }
 
 
+  const listenerPageUrl = `${window.location.origin}/intercom?uid=${userId || ""}${nameInput.trim() ? `&nome=${encodeURIComponent(nameInput.trim())}` : ""}`;
+  const copyListenerPageUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(listenerPageUrl);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = listenerPageUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 1800);
+  };
+
   // ─── Role Selection ───
   if (role === "none" && !listenerName) {
     return (
@@ -645,6 +662,22 @@ export default function IntercomWidget() {
             className="w-full px-3 py-2 rounded-lg text-xs text-[#002132] bg-[#00BFF0]/8 border border-[#00BFF0]/25 outline-none focus:border-[#00BFF0]/50 placeholder:text-[#002132]/30 font-medium"
             autoFocus
           />
+          {/* URL da página de áudio (para inserir no navegador do vMix) */}
+          <div className="mt-3 p-2 rounded-lg" style={{ backgroundColor: "rgba(0,191,240,0.07)", border: "1px dashed rgba(0,191,240,0.35)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[#00BFF0] mb-1">Página só de áudio (vMix)</p>
+            <div className="flex items-center gap-2">
+              <span className="flex-1 min-w-0 truncate text-[10px] text-[#002132]/70 font-mono">{listenerPageUrl}</span>
+              <button
+                onClick={copyListenerPageUrl}
+                title="Copiar URL para o navegador do vMix"
+                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg transition-all hover:brightness-95"
+                style={{ backgroundColor: copiedUrl ? "#C6F03C" : "rgba(0,191,240,0.15)" }}
+              >
+                {copiedUrl ? <Check size={13} className="text-[#002132]" /> : <Copy size={13} className="text-[#00BFF0]" />}
+              </button>
+            </div>
+          </div>
+
           <button onClick={confirmListenerName} disabled={!nameInput.trim()}
             className="w-full mt-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-30"
             style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
