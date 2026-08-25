@@ -1227,19 +1227,12 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Identidade visual e Conteúdo */}
+            {/* Conteúdo do Título Simples */}
+            {(data.tituloMode || "simples") === "simples" && (
             <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${LIME}20` }}>
-                  <ImageIcon size={16} style={{ color: LIME }} />
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  Identidade do Bloco
-                </span>
-              </div>
-              
               <div className="space-y-6">
-                {(data.tituloMode || "simples") === "simples" && (
+                {true && (
+
                   <div className="relative group">
                     <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
                     <input
