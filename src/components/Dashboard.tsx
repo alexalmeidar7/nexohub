@@ -1293,6 +1293,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
           </button>
           <h1 className="font-bold text-lg truncate flex-1 ml-3" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>{empresa.nome || "Dashboard"}</h1>
+          <div className="relative flex-shrink-0 mr-2" data-intercom-anchor>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
+              className="flex items-center justify-center rounded-full transition-all active:scale-95"
+              style={{ width: 32, height: 32, backgroundColor: `${layoutColors.accentColor}26`, color: layoutColors.accentColor }}
+              aria-label="Intercomunicador"
+            >
+              <Radio size={15} />
+            </button>
+          </div>
           <button
             onClick={onLogout}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all mr-2"
@@ -1485,7 +1495,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             )}
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="relative" id="intercom-toolbar-marker">
+                <div className="relative" id="intercom-toolbar-marker" data-intercom-anchor>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
                     className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
@@ -1493,7 +1503,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   >
                     <Radio size={18} />
                   </button>
-                  <Suspense fallback={null}><IntercomWidget /></Suspense>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="bottom"><p className="text-xs">Intercomunicador</p></TooltipContent>
@@ -2069,6 +2078,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       <Suspense fallback={null}>
         <BlitzLocutorPopup userId={effectiveUserId || user?.id || null} />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <IntercomWidget />
       </Suspense>
 
       {subUserModules === null && (
