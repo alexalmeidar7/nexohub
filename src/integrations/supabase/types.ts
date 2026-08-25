@@ -2739,6 +2739,33 @@ export type Database = {
           },
         ]
       }
+      transcricoes_streaming: {
+        Row: {
+          created_at: string
+          id: string
+          texto_transcrito: string
+          timestamp_fim: string
+          timestamp_inicio: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          texto_transcrito: string
+          timestamp_fim?: string
+          timestamp_inicio?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          texto_transcrito?: string
+          timestamp_fim?: string
+          timestamp_inicio?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tv_pairing_codes: {
         Row: {
           claimed_at: string | null
