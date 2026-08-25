@@ -8,6 +8,7 @@ type NdiSource = {
   kind: "mjpeg" | "whep";
   url: string;
   path?: string;
+  fallbackPaths?: string[];
 };
 
 type Status = "idle" | "connecting" | "live" | "error";
@@ -51,15 +52,21 @@ const isNdiType = (t?: string) => /ndi|desktop/i.test(t || "");
 
 export default function NdiWebrtcMonitor({
   vmixBaseUrl,
+  vmixUser,
+  vmixPass,
   inputs = [],
   onRefresh,
 }: {
   vmixBaseUrl?: string;
+  vmixUser?: string;
+  vmixPass?: string;
   inputs?: VmixInputLike[];
   onRefresh?: () => void | Promise<void>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const mjpegAbortRef = useRef<AbortController | null>(null);
+  const frameUrlRef = useRef<string | null>(null);
   const [selected, setSelected] = useState<string>("");
   const [status, setStatus] = useState<Status>("idle");
   const [reloadKey, setReloadKey] = useState(0);
@@ -77,12 +84,21 @@ export default function NdiWebrtcMonitor({
     const list = [...inputs].filter((i) => String(i?.number ?? "").trim() !== "");
     const ndi = list.filter((i) => isNdiType(i.type));
     const others = list.filter((i) => !isNdiType(i.type));
-    const build = (i: VmixInputLike, tag: string): NdiSource => ({
-      label: `${tag} ${i.number} · ${(i.title || "Sem título").replace(/\s+/g, " ").trim()}`,
-      kind: "mjpeg",
-      url: `${base}/mjpeg?Input=${encodeURIComponent(i.number)}`,
-      path: `/mjpeg?Input=${encodeURIComponent(i.number)}`,
-    });
+    const build = (i: VmixInputLike, tag: string): NdiSource => {
+      const inputNumber = String(i.number);
+      const inputKey = String(i.key || "").trim();
+      const paths = Array.from(new Set([
+        `/mjpeg?Input=${encodeURIComponent(inputNumber)}`,
+        inputKey ? `/mjpeg?Input=${encodeURIComponent(inputKey)}` : "",
+      ].filter(Boolean)));
+      return {
+        label: `${tag} ${i.number} · ${(i.title || "Sem título").replace(/\s+/g, " ").trim()}`,
+        kind: "mjpeg",
+        url: `${base}${paths[0]}`,
+        path: paths[0],
+        fallbackPaths: paths.slice(1),
+      };
+    };
     return [
       {
         label: "VMIX NDI · OUTPUT 1 (PROGRAMA)",
@@ -143,6 +159,12 @@ export default function NdiWebrtcMonitor({
   const sources = useMemo(() => [...vmixSources, ...bridgeSources], [vmixSources, bridgeSources]);
 
   const closeConnection = useCallback(() => {
+    mjpegAbortRef.current?.abort();
+    mjpegAbortRef.current = null;
+    if (frameUrlRef.current) {
+      URL.revokeObjectURL(frameUrlRef.current);
+      frameUrlRef.current = null;
+    }
     if (pcRef.current) {
       try {
         pcRef.current.getSenders().forEach((s) => s.track?.stop());
@@ -154,6 +176,71 @@ export default function NdiWebrtcMonitor({
     }
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
+
+  const showJpegFrame = useCallback((bytes: Uint8Array) => {
+    const nextUrl = URL.createObjectURL(new Blob([bytes], { type: "image/jpeg" }));
+    const image = document.getElementById("vmix-ndi-mjpeg-frame") as HTMLImageElement | null;
+    if (!image) {
+      URL.revokeObjectURL(nextUrl);
+      return;
+    }
+    const previousUrl = frameUrlRef.current;
+    frameUrlRef.current = nextUrl;
+    image.src = nextUrl;
+    if (previousUrl) URL.revokeObjectURL(previousUrl);
+    setStatus("live");
+  }, []);
+
+  const connectMjpeg = useCallback(async (source: NdiSource) => {
+    closeConnection();
+    setStatus("connecting");
+    const paths = [source.path, ...(source.fallbackPaths || [])].filter(Boolean) as string[];
+    const targets = playbackBases(base).flatMap((candidateBase) =>
+      paths.map((path) => `${candidateBase}${path}${path.includes("?") ? "&" : "?"}_=${Date.now()}`),
+    );
+    const headers: Record<string, string> = { Accept: "multipart/x-mixed-replace,image/jpeg,*/*" };
+    if (vmixUser) headers.Authorization = `Basic ${btoa(`${vmixUser}:${vmixPass || ""}`)}`;
+
+    for (const target of targets) {
+      const controller = new AbortController();
+      mjpegAbortRef.current = controller;
+      try {
+        const response = await fetch(target, { headers, cache: "no-store", mode: "cors", signal: controller.signal });
+        if (!response.ok || !response.body) throw new Error(`MJPEG ${response.status}`);
+        const reader = response.body.getReader();
+        let buffer = new Uint8Array(0);
+        while (!controller.signal.aborted) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const merged = new Uint8Array(buffer.length + value.length);
+          merged.set(buffer);
+          merged.set(value, buffer.length);
+          buffer = merged;
+
+          let start = -1;
+          let end = -1;
+          for (let index = 0; index < buffer.length - 1; index += 1) {
+            if (start < 0 && buffer[index] === 0xff && buffer[index + 1] === 0xd8) start = index;
+            if (start >= 0 && buffer[index] === 0xff && buffer[index + 1] === 0xd9) {
+              end = index + 2;
+              break;
+            }
+          }
+          if (start >= 0 && end > start) {
+            showJpegFrame(buffer.slice(start, end));
+            buffer = buffer.slice(end);
+          } else if (buffer.length > 8_000_000) {
+            buffer = buffer.slice(-1_000_000);
+          }
+        }
+        if (!controller.signal.aborted) throw new Error("Fluxo MJPEG encerrado");
+        return;
+      } catch (error) {
+        if (controller.signal.aborted) return;
+      }
+    }
+    setStatus("error");
+  }, [base, closeConnection, showJpegFrame, vmixPass, vmixUser]);
 
   // WHEP (WebRTC-HTTP Egress Protocol) subscriber
   const connectWebRTC = useCallback(
@@ -209,9 +296,9 @@ export default function NdiWebrtcMonitor({
     if (src?.kind === "whep") {
       void connectWebRTC(url);
     } else {
-      setStatus("connecting");
       setPlaybackAttempt(0);
       setReloadKey((k) => k + 1);
+      if (src) void connectMjpeg(src);
     }
   };
 
@@ -222,13 +309,6 @@ export default function NdiWebrtcMonitor({
     error: { label: "SEM SINAL", color: "#ef4444" },
   };
   const meta = statusMeta[status];
-
-  const mjpegCandidates = useMemo(() => {
-    if (current?.kind !== "mjpeg") return [];
-    const path = current.path || current.url.slice(base.length);
-    return playbackBases(base).map((candidateBase) => `${candidateBase}${path}${path.includes("?") ? "&" : "?"}_=${reloadKey}`);
-  }, [base, current, reloadKey]);
-  const mjpegSrc = mjpegCandidates[playbackAttempt] || "";
 
   return (
     <section>
@@ -277,6 +357,7 @@ export default function NdiWebrtcMonitor({
             setPlaybackAttempt(0);
             void discoverBridge(host);
             if (current?.kind === "whep") void connectWebRTC(current.url);
+            if (current?.kind === "mjpeg") void connectMjpeg(current);
           }}
           className="h-9 px-2.5 rounded text-[9px] font-black uppercase tracking-widest"
           style={{ backgroundColor: "#C6F03C", color: "#000" }}
@@ -295,22 +376,12 @@ export default function NdiWebrtcMonitor({
         className="relative w-full overflow-hidden rounded"
         style={{ paddingBottom: "56.25%", backgroundColor: "#000", border: "1px solid #C6F03C25" }}
       >
-        {mjpegSrc ? (
+        {current?.kind === "mjpeg" ? (
           <img
-            key={mjpegSrc}
-            src={mjpegSrc}
+            id="vmix-ndi-mjpeg-frame"
             alt={current?.label || "Fonte NDI"}
             className="absolute"
             style={{ top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" }}
-            onLoad={() => setStatus("live")}
-            onError={() => {
-              if (playbackAttempt + 1 < mjpegCandidates.length) {
-                setPlaybackAttempt((attempt) => attempt + 1);
-                setStatus("connecting");
-                return;
-              }
-              setStatus("error");
-            }}
           />
         ) : (
           <video
