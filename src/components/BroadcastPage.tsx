@@ -455,26 +455,57 @@ export default function BroadcastPage() {
       // (skip when a custom RSS source is enabled — that effect owns newsTitles)
       const rssActive = !!(latestDataRef.current?.tickerRssEnabled && latestDataRef.current?.tickerRssUrl);
       if (!rssActive) {
-        const { data: latestRoteiro } = await supabase
-          .from("roteiros")
-          .select("tickertitulos, conteudo_html")
-          .eq("user_id", user.id)
-          .eq("tipo_programa", "Jornalístico")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (latestRoteiro) {
-          if (latestRoteiro.tickertitulos) {
-            setNewsTitles(latestRoteiro.tickertitulos.split("  •  ").filter(Boolean));
-          } else if (latestRoteiro.conteudo_html) {
-            const matches = latestRoteiro.conteudo_html.match(/<strong>Notícia\s*\d+:<\/strong>\s*([^<]+)/g);
+        const parseTitles = (r: any): string[] => {
+          if (r?.tickertitulos) {
+            return String(r.tickertitulos)
+              .split(/\s*[•|]\s*/)
+              .map((s: string) => s.trim())
+              .filter(Boolean);
+          }
+          if (r?.conteudo_html) {
+            const matches = String(r.conteudo_html).match(/<strong>Notícia\s*\d+:<\/strong>\s*([^<]+)/g);
             if (matches) {
-              const titles = matches.map((m: string) => m.replace(/<strong>Notícia\s*\d+:<\/strong>\s*/, "").trim()).filter(Boolean);
-              setNewsTitles(titles);
+              return matches
+                .map((m: string) => m.replace(/<strong>Notícia\s*\d+:<\/strong>\s*/, "").trim())
+                .filter(Boolean);
             }
           }
+          return [];
+        };
+
+        // Busca os últimos roteiros jornalísticos (aceita variações de acento/caixa)
+        const { data: rows } = await supabase
+          .from("roteiros")
+          .select("tickertitulos, conteudo_html, tipo_programa, created_at")
+          .eq("user_id", user.id)
+          .ilike("tipo_programa", "%jorn%")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        let titles: string[] = [];
+        for (const r of rows || []) {
+          titles = parseTitles(r);
+          if (titles.length > 0) break;
         }
+
+        // Fallback: qualquer roteiro recente que já tenha títulos de ticker
+        if (titles.length === 0) {
+          const { data: anyRows } = await supabase
+            .from("roteiros")
+            .select("tickertitulos, conteudo_html, created_at")
+            .eq("user_id", user.id)
+            .not("tickertitulos", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(3);
+          for (const r of anyRows || []) {
+            titles = parseTitles(r);
+            if (titles.length > 0) break;
+          }
+        }
+
+        if (titles.length > 0) setNewsTitles(titles);
       }
+
 
       // Fetch weather
       if (settings?.weather_lat && settings?.weather_lon) {
@@ -1196,19 +1227,12 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Identidade visual e Conteúdo */}
+            {/* Conteúdo do Título Simples */}
+            {(data.tituloMode || "simples") === "simples" && (
             <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${LIME}20` }}>
-                  <ImageIcon size={16} style={{ color: LIME }} />
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  Identidade do Bloco
-                </span>
-              </div>
-              
               <div className="space-y-6">
-                {(data.tituloMode || "simples") === "simples" && (
+                {true && (
+
                   <div className="relative group">
                     <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
                     <input
@@ -1287,60 +1311,10 @@ export default function BroadcastPage() {
                   )}
                 </div>
 
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Custom Background (.png)</label>
-                    {data.assuntoBgUrl && (
-                      <label className="flex items-center gap-2 cursor-pointer bg-white/5 px-2 py-1 rounded-lg">
-                        <input
-                          type="checkbox"
-                          checked={data.useCustomAssuntoBg}
-                          onChange={e => {
-                            const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
-                            setData(next);
-                            void handleSave(next);
-                          }}
-                          className="w-3 h-3"
-                          style={{ accentColor: CYAN }}
-                        />
-                        <span className="text-[9px] font-bold text-white/70">ACTIVE</span>
-                      </label>
-                    )}
-                  </div>
-                  
-                  {data.assuntoBgUrl ? (
-                    <div className="group relative rounded-xl overflow-hidden border border-white/5 bg-black/40">
-                      <div className="p-2 aspect-[16/4]">
-                        <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
-                      </div>
-                      <button
-                        onClick={removeBgImage}
-                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl cursor-pointer border-2 border-dashed border-white/5 hover:border-[#00BFF0]30 hover:bg-[#00BFF0]05 transition-all">
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                        {uploadingBg ? <Loader2 size={16} className="animate-spin text-[#00BFF0]" /> : <Upload size={16} className="text-white/70" />}
-                      </div>
-                      <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">{uploadingBg ? "Enviando..." : "Enviar PNG 1920x200"}</span>
-                      <input
-                        type="file"
-                        accept="image/png"
-                        className="hidden"
-                        onChange={e => {
-                          const f = e.target.files?.[0];
-                          if (f) handleBgUpload(f);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                  )}
-                </div>
               </div>
             </div>
+            )}
+
             {(data.tituloMode || "simples") === "web" && (
               <div className="p-6 rounded-2xl" style={cardStyle}>
                 <SectionHeader n="01" label="Título Web · Mensagens Rotativas" color={CYAN} />
@@ -1621,29 +1595,33 @@ export default function BroadcastPage() {
               </div>
 
               <div
-                className="overflow-hidden rounded-md"
-                style={{ backgroundColor: "#000", border: "1px solid #FFFFFF", height: 34 }}
+                className="overflow-hidden rounded-md relative"
+                style={{ backgroundColor: "#FFFFFF", border: "1px solid #FFFFFF", height: 34 }}
               >
                 {composedTicker ? (
                   <div
-                    className="text-[13px] font-semibold"
+                    className="text-[13px] font-semibold absolute whitespace-nowrap"
                     style={{
-                      display: "inline-block",
-                      whiteSpace: "nowrap",
                       lineHeight: "34px",
-                      color: "#ffffff",
-                      paddingLeft: "100%",
-                      animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
+                      color: NAVY,
+                      animation: `tickerSlidePv ${Math.max(18, Math.round(composedTicker.length * 0.22))}s linear infinite`,
                     }}
                   >
                     {composedTicker}
+                    <style>{`
+                      @keyframes tickerSlidePv {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-100%); }
+                      }
+                    `}</style>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-[11px]" style={{ color: "#ffffff50" }}>
+                  <div className="flex items-center justify-center h-full text-[11px]" style={{ color: "#0A254080" }}>
                     Ative fontes acima ou digite um texto para ver o preview.
                   </div>
                 )}
               </div>
+
 
               {/* Preview de TODOS os textos setados no ticker */}
               <div className="mt-3">
@@ -1691,37 +1669,6 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Presença Social */}
-            <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
-                    <Instagram size={16} style={{ color: CYAN }} />
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
-                    Redes Sociais
-                  </span>
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50">{empresaSocials.length} Canais</span>
-              </div>
-
-
-              <div className="space-y-3">
-                {empresaSocials.length === 0 ? (
-                  <p className="text-[10px] text-white/70 italic">Nenhuma rede social configurada.</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-2">
-                    {empresaSocials.map((s, i) => (
-                      <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
-                        <span style={{ color: CYAN }}>{s.icon}</span>
-                        <span className="text-[10px] font-bold text-white/80 truncate">{s.valor}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-              </div>
-            </div>
           </div>
         )}
 
@@ -1924,18 +1871,34 @@ export default function BroadcastPage() {
                   ["texto", aSeguirXmlPreview.texto],
                   ["programa_logo", aSeguirXmlPreview.programa_logo],
                   ["locutor_foto", aSeguirXmlPreview.locutor_foto],
-                ] as [string, string][]).map(([field, value], i) => (
+                ] as [string, string][]).map(([field, value], i) => {
+                  // URLs de imagem: mostra apenas o nome do arquivo para evitar poluição visual
+                  const isImg = field === "programa_logo" || field === "locutor_foto";
+                  const short = isImg && value
+                    ? (() => {
+                        try {
+                          const f = decodeURIComponent(new URL(value).pathname.split("/").pop() || value);
+                          return f.length > 44 ? `${f.slice(0, 40)}…` : f;
+                        } catch {
+                          const f = value.split("/").pop() || value;
+                          return f.length > 44 ? `${f.slice(0, 40)}…` : f;
+                        }
+                      })()
+                    : value;
+                  return (
                   <div
                     key={field}
                     className="flex items-start gap-3 px-3 py-1.5 text-[10px]"
                     style={{ backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.03)" : "transparent" }}
                   >
                     <span className="font-mono shrink-0 w-[110px]" style={{ color: CYAN }}>{field}</span>
-                    <span className="font-mono break-all" style={{ color: value ? "#ffffffdd" : "#ffffff45" }}>
-                      {value || "(vazio)"}
+                    <span className="font-mono break-all" style={{ color: value ? "#ffffffdd" : "#ffffff45" }} title={value || ""}>
+                      {short || "(vazio)"}
                     </span>
                   </div>
-                ))}
+                  );
+                })}
+
               </div>
 
               <p className="mt-2 text-[10px]" style={{ color: "#ffffff55" }}>
@@ -2302,9 +2265,9 @@ function MockupPreview({
           </div>
         </div>
 
-        {/* Ticker bar – fundo preto, borda branca, texto branco até o final */}
+        {/* Ticker bar – fundo branco, texto escuro rolando até o fim */}
         {composedTicker && (
-          <div className="overflow-hidden mt-3" style={{ backgroundColor: "#000000", border: "1px solid #FFFFFF", height: 28, borderRadius: 8 }}>
+          <div className="overflow-hidden mt-3" style={{ backgroundColor: "#FFFFFF", border: "1px solid #FFFFFF", height: 28, borderRadius: 8 }}>
             <div
               style={{
                 display: "inline-block",
@@ -2314,17 +2277,18 @@ function MockupPreview({
                 animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
               }}
             >
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#FFFFFF", opacity: 1 }}>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#0A2540", opacity: 1 }}>
                 {composedTicker.split(/(\s[▲▼]\s[+−]\d+[.,]\d{2}%)/g).map((seg, i) => {
                   const m = seg.match(/^\s([▲▼])\s([+−]\d+[.,]\d{2}%)$/);
                   if (m) {
-                    const color = m[1] === "▲" ? "#4ade80" : "#f87171";
+                    const color = m[1] === "▲" ? "#16a34a" : "#dc2626";
                     return <span key={i} style={{ color }}>{seg}</span>;
                   }
                   return <span key={i}>{seg}</span>;
                 })}
               </span>
             </div>
+
             <style>{`
               @keyframes tickerSlide {
                 0% { transform: translateX(0); }
