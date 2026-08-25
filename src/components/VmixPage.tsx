@@ -2953,7 +2953,10 @@ function SwitcherUI({
 
                 {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #C6F03C20", backgroundColor: "#050505" }}>
+                  <NdiWebrtcMonitor />
+
                   <section>
+
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5" style={{ color: "#C6F03C" }}>Overlays</h3>
                     <div className="grid grid-cols-2 gap-2">
                       {[1, 2, 3, 4].map(n => {
