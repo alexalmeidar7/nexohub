@@ -771,17 +771,29 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     }
   }, [user, loadProgramas]);
 
-  // Load custom buttons
+  // Estúdios únicos cadastrados na Grade de Programação
+  const estudiosDisponiveis = useMemo(
+    () => Array.from(new Set(programas.map(p => (p.estudio || "").trim()).filter(Boolean))).sort(),
+    [programas],
+  );
+
+  // Load custom buttons (escopo: estúdio selecionado; botões legados sem estúdio continuam visíveis)
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
     let query = (supabase.from("custom_vmix_buttons" as any) as any)
       .select("*")
       .eq("user_id", user.id);
-    
-    // No automatic studio filtering for custom buttons display - show all
+
     const { data } = await query.order("created_at");
-    if (data) setCustomButtons(data);
-  }, [user]);
+    if (data) {
+      const studio = (studioName || "").trim();
+      setCustomButtons(
+        studio
+          ? (data as any[]).filter(b => !b.estudio || b.estudio === studio)
+          : (data as any[]),
+      );
+    }
+  }, [user, studioName]);
 
   useEffect(() => { loadCustomButtons(); }, [loadCustomButtons]);
 
