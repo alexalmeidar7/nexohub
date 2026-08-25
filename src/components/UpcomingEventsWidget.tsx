@@ -110,22 +110,38 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         targetUserId = subUser.parent_user_id;
       }
 
-      // Performance: janela curta de datas (timeline de 14 dias) em vez de todo o histórico
+      // Performance: janela curta de datas (timeline de 14 dias) em vez de todo o histórico.
+      // Eventos RECORRENTES (lives semanais, etc.) podem ter a data-base antiga; por isso
+      // buscamos separadamente os eventos únicos dentro da janela e as recorrências cujo
+      // período ainda cubra a janela atual.
       const winStart = format(addDays(new Date(), -7), "yyyy-MM-dd");
       const winEnd = format(addDays(new Date(), 45), "yyyy-MM-dd");
-      const [evtsRes, progsRes] = await Promise.all([
+      const [uniqueRes, recurringRes, progsRes] = await Promise.all([
         supabase
           .from("agenda_eventos")
           .select("*")
           .eq("user_id", targetUserId)
+          .or("recorrencia.eq.unico,recorrencia.is.null")
           .gte("data", winStart)
           .lte("data", winEnd)
+          .order("data")
+          .limit(300),
+        supabase
+          .from("agenda_eventos")
+          .select("*")
+          .eq("user_id", targetUserId)
+          .not("recorrencia", "eq", "unico")
+          .lte("data", winEnd)
+          .or(`periodo_fim.gte.${winStart},periodo_fim.is.null`)
           .order("data")
           .limit(300),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo").eq("user_id", targetUserId),
       ]);
       if (cancelled) return;
-      const evts = evtsRes.data || [];
+      const evtsMap = new Map<string, any>();
+      (uniqueRes.data || []).forEach((e: any) => evtsMap.set(e.id, e));
+      (recurringRes.data || []).forEach((e: any) => { if (!evtsMap.has(e.id)) evtsMap.set(e.id, e); });
+      const evts = Array.from(evtsMap.values()).sort((a: any, b: any) => a.data.localeCompare(b.data));
       const progs = (progsRes.data || []) as Programa[];
       setProgramasAll(progs);
       const progMap = new Map(progs.map(p => [p.id, p]));
