@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Radio, Download, ChevronDown, ChevronUp, Loader2, Play, Square } from "lucide-react";
+import { Radio, Download, ChevronDown, ChevronUp, Loader2, Play, Square, Search, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 const NEXO_CYAN = "#00BFF0";
 const NEXO_LIME = "#C6F03C";
@@ -29,6 +30,7 @@ function parts(iso: string) {
 }
 
 type Bloco = { key: string; dia: string; diaKey: string; hora: string; linhas: { id: string; hhmm: string; texto: string }[] };
+type DiaGrupo = { diaKey: string; dia: string; blocos: Bloco[]; filename: string; content: string };
 
 function agrupar(rows: Row[]): Bloco[] {
   const map = new Map<string, Bloco>();
@@ -41,6 +43,17 @@ function agrupar(rows: Row[]): Bloco[] {
   return Array.from(map.values()).sort((a, b) => (a.key < b.key ? -1 : 1));
 }
 
+function nomeArquivoDia(diaKey: string) {
+  const [ano, mes, dia] = diaKey.split("-");
+  return `${dia}-${mes}-${ano}.txt`;
+}
+
+function textoDoDia(blocos: Bloco[]) {
+  return `${blocos
+    .map((b) => `[ ${b.dia} - ${b.hora} ]\n` + b.linhas.map((l) => `${l.hhmm} ${l.texto}`).join("\n"))
+    .join("\n\n")}\n`;
+}
+
 export default function TranscricaoStreamingPanel({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
@@ -51,6 +64,8 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
   const [channelId, setChannelId] = useState("");
   const [capturing, setCapturing] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
+  const [arquivoAtual, setArquivoAtual] = useState<{ diaKey: string; url: string; filename: string } | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
   const captureRef = useRef(false);
 
@@ -120,12 +135,35 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
     };
   }, [userId, open]);
 
-  const blocos = useMemo(() => agrupar(rows), [rows]);
+  const filteredRows = useMemo(() => {
+    const term = busca.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter((row) => row.texto_transcrito.toLowerCase().includes(term));
+  }, [busca, rows]);
+
+  const blocos = useMemo(() => agrupar(filteredRows), [filteredRows]);
+  const diasAgrupados = useMemo<DiaGrupo[]>(() => {
+    const map = new Map<string, DiaGrupo>();
+    for (const bloco of blocos) {
+      const current = map.get(bloco.diaKey) || {
+        diaKey: bloco.diaKey,
+        dia: bloco.dia,
+        blocos: [],
+        filename: nomeArquivoDia(bloco.diaKey),
+        content: "",
+      };
+      current.blocos.push(bloco);
+      map.set(bloco.diaKey, current);
+    }
+    return Array.from(map.values())
+      .map((dia) => ({ ...dia, content: textoDoDia(dia.blocos) }))
+      .sort((a, b) => (a.diaKey < b.diaKey ? 1 : -1));
+  }, [blocos]);
   const dias = useMemo(() => {
     const set = new Map<string, string>();
-    blocos.forEach((b) => set.set(b.diaKey, b.dia));
+    diasAgrupados.forEach((b) => set.set(b.diaKey, b.dia));
     return Array.from(set.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [blocos]);
+  }, [diasAgrupados]);
 
   useEffect(() => {
     if (!diaExport && dias.length) setDiaExport(dias[0][0]);
@@ -135,27 +173,53 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
   useEffect(() => {
     const el = logRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [rows, open]);
+  }, [filteredRows, open]);
+
+  useEffect(() => {
+    const updateDailyLink = () => {
+      const now = new Date();
+      const reachedDayEnd = now.getHours() === 23 && now.getMinutes() >= 59;
+      if (!reachedDayEnd) return;
+      const diaKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const dia = diasAgrupados.find((item) => item.diaKey === diaKey);
+      if (!dia || arquivoAtual?.diaKey === diaKey) return;
+      const url = URL.createObjectURL(new Blob([dia.content], { type: "text/plain;charset=utf-8" }));
+      setArquivoAtual((prev) => {
+        if (prev?.url) URL.revokeObjectURL(prev.url);
+        return { diaKey, url, filename: dia.filename };
+      });
+    };
+    updateDailyLink();
+    const timer = window.setInterval(updateDailyLink, 30_000);
+    return () => window.clearInterval(timer);
+  }, [arquivoAtual?.diaKey, diasAgrupados]);
+
+  useEffect(() => () => {
+    if (arquivoAtual?.url) URL.revokeObjectURL(arquivoAtual.url);
+  }, [arquivoAtual?.url]);
 
   const exportar = useCallback(() => {
-    const alvo = blocos.filter((b) => b.diaKey === diaExport);
-    if (!alvo.length) {
+    const alvo = diasAgrupados.find((b) => b.diaKey === diaExport);
+    if (!alvo) {
       toast.error("Nenhuma transcrição nesse dia.");
       return;
     }
-    const texto = alvo
-      .map((b) => `[ ${b.dia} - ${b.hora} ]\n` + b.linhas.map((l) => `${l.hhmm} ${l.texto}`).join("\n"))
-      .join("\n\n");
-    const blob = new Blob([`${texto}\n`], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([alvo.content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `transcricao_${diaExport}.txt`;
+    a.download = alvo.filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-  }, [blocos, diaExport]);
+  }, [diasAgrupados, diaExport]);
+
+  const linkDiaSelecionado = useMemo(() => diasAgrupados.find((dia) => dia.diaKey === diaExport), [diaExport, diasAgrupados]);
+  const linkDiaHref = useMemo(() => {
+    if (!linkDiaSelecionado) return "";
+    return `data:text/plain;charset=utf-8,${encodeURIComponent(linkDiaSelecionado.content)}`;
+  }, [linkDiaSelecionado]);
 
   const total = rows.length;
 
@@ -194,10 +258,10 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
 
   return (
     <section className="mt-6">
-      <div className="rounded-2xl p-5 space-y-5" style={{ backgroundColor: "#0A2540", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="rounded-2xl border border-border bg-card/80 p-5 shadow-xl shadow-black/20 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(0,191,240,0.14)" }}>
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
             <Radio size={18} style={{ color: NEXO_CYAN }} />
           </div>
           <div className="flex-1 min-w-0">
@@ -217,73 +281,102 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
               {live ? "Ao vivo" : "Offline"}
             </span>
           )}
-          <button
+          <Button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="p-2 rounded-xl text-white/70 transition-opacity hover:opacity-70"
+            variant="ghost"
+            size="icon"
             aria-label={open ? "Fechar seção" : "Abrir seção"}
           >
             {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
+          </Button>
         </div>
 
         {open && (
           <div className="space-y-4">
             {/* Controles */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_auto_auto] xl:grid-cols-[minmax(240px,1fr)_auto_auto_auto]">
               <select
                 value={channelId}
                 onChange={(e) => setChannelId(e.target.value)}
                 disabled={capturing}
-                className="rounded-full px-4 py-2 text-[12px] font-bold text-white outline-none disabled:opacity-50"
-                style={{ backgroundColor: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+                className="h-11 rounded-full border border-border bg-background/70 px-4 text-[12px] font-bold text-foreground outline-none disabled:opacity-50"
                 aria-label="Canal de áudio para transcrição"
               >
                 {channels.length === 0 && <option value="">Nenhum canal de áudio ativo</option>}
-                {channels.map((channel) => <option key={channel.id} value={channel.id} style={{ color: "#0A2540" }}>{channel.name}</option>)}
+                {channels.map((channel) => <option key={channel.id} value={channel.id}>{channel.name}</option>)}
               </select>
               {!capturing ? (
-                <button
+                <Button
                   type="button"
                   onClick={iniciarCaptura}
                   disabled={!channelId}
-                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-bold uppercase tracking-wider disabled:opacity-40"
-                  style={{ backgroundColor: NEXO_CYAN, color: "#04202b" }}
+                  className="h-11"
                 >
                   <Play size={15} /> Iniciar streaming
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
                   onClick={pararCaptura}
-                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-bold uppercase tracking-wider bg-red-600 text-white"
+                  variant="destructive"
+                  className="h-11"
                 >
                   <Square size={14} /> Parar streaming
-                </button>
+                </Button>
               )}
+              <div className="relative min-w-[220px]">
+                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar palavra"
+                  className="h-11 w-full rounded-full border border-border bg-background/70 pl-10 pr-4 text-[12px] font-semibold text-foreground outline-none placeholder:text-muted-foreground"
+                />
+              </div>
+              <span className="flex h-11 items-center justify-end text-[11px] text-muted-foreground">
+                {capturing ? "Capturando áudio…" : `${filteredRows.length}/${total} trecho(s) · ${blocos.length} bloco(s)`}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/35 p-3">
               <select
                 value={diaExport}
                 onChange={(e) => setDiaExport(e.target.value)}
-                className="rounded-full px-4 py-2 text-[12px] font-bold text-white outline-none"
-                style={{ backgroundColor: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+                className="h-10 rounded-full border border-border bg-background/70 px-4 text-[12px] font-bold text-foreground outline-none"
               >
                 {dias.length === 0 && <option value="">Sem registros</option>}
                 {dias.map(([k, label]) => (
-                  <option key={k} value={k} style={{ color: "#0A2540" }}>{label}</option>
+                  <option key={k} value={k}>{label}</option>
                 ))}
               </select>
-              <button
+              <Button
                 type="button"
                 onClick={exportar}
                 disabled={!diaExport}
-                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-bold uppercase tracking-wider transition-transform hover:scale-[1.02] disabled:opacity-40"
-                style={{ backgroundColor: NEXO_LIME, color: "#1d2600" }}
+                variant="save"
+                size="sm"
               >
                 <Download size={15} /> Exportar dia (.txt)
-              </button>
-              <span className="text-[11px] text-white/50 ml-auto">
-                {capturing ? "Capturando áudio…" : `${total} trecho(s) · ${blocos.length} bloco(s)`}
-              </span>
+              </Button>
+              {linkDiaSelecionado && (
+                <a
+                  href={linkDiaHref}
+                  download={linkDiaSelecionado.filename}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 text-[11px] font-black uppercase tracking-wider text-primary transition hover:bg-primary/15"
+                >
+                  <FileText size={14} /> {linkDiaSelecionado.filename}
+                </a>
+              )}
+              {arquivoAtual && (
+                <a
+                  href={arquivoAtual.url}
+                  download={arquivoAtual.filename}
+                  className="ml-auto inline-flex h-10 items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 text-[11px] font-black uppercase tracking-wider text-primary"
+                >
+                  <FileText size={14} /> Fechamento 23:59: {arquivoAtual.filename}
+                </a>
+              )}
             </div>
 
             {captureError && (
@@ -295,26 +388,35 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
             {/* Log */}
             <div
               ref={logRef}
-              className="rounded-2xl p-5 h-[340px] overflow-y-auto font-mono text-[12.5px] leading-relaxed space-y-4 text-white/85"
-              style={{ backgroundColor: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}
+              className="rounded-2xl border border-border bg-background/60 p-5 h-[420px] overflow-y-auto font-mono text-[12.5px] leading-relaxed space-y-5 text-foreground/85"
             >
               {loading && (
                 <p className="flex items-center gap-2 text-white/50">
                   <Loader2 size={14} className="animate-spin" /> Carregando…
                 </p>
               )}
-              {!loading && blocos.length === 0 && (
-                <p className="text-white/40">Nenhuma transcrição recebida ainda.</p>
+              {!loading && diasAgrupados.length === 0 && (
+                <p className="text-muted-foreground">{busca ? "Nenhuma transcrição encontrada para essa busca." : "Nenhuma transcrição recebida ainda."}</p>
               )}
-              {blocos.map((b) => (
-                <div key={b.key} className="space-y-1">
-                  <div className="font-bold tracking-wider" style={{ color: NEXO_CYAN }}>
-                    [ {b.dia} - {b.hora} ]
+              {diasAgrupados.map((dia) => (
+                <div key={dia.diaKey} className="space-y-3">
+                  <div className="sticky top-0 z-10 -mx-2 flex items-center justify-between border-b border-border bg-background/95 px-2 py-2 backdrop-blur">
+                    <span className="text-[12px] font-black uppercase tracking-[0.2em] text-primary">{dia.dia}</span>
+                    <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(dia.content)}`} download={dia.filename} className="text-[10px] font-black uppercase tracking-wider text-primary/80 hover:text-primary">
+                      {dia.filename}
+                    </a>
                   </div>
-                  {b.linhas.map((l) => (
-                    <div key={l.id} className="flex gap-2">
-                      <span className="text-white/35 shrink-0">{l.hhmm}</span>
-                      <span>{l.texto}</span>
+                  {dia.blocos.map((b) => (
+                    <div key={b.key} className="space-y-1">
+                      <div className="font-bold tracking-wider" style={{ color: NEXO_CYAN }}>
+                        [ {b.dia} - {b.hora} ]
+                      </div>
+                      {b.linhas.map((l) => (
+                        <div key={l.id} className="flex gap-2 border-l border-border pl-3">
+                          <span className="text-muted-foreground shrink-0">{l.hhmm}</span>
+                          <span>{l.texto}</span>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
