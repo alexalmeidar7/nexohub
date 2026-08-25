@@ -534,14 +534,14 @@ export default function IntercomWidget() {
     return (
       <div 
         id="intercom-minimized-fab"
-        className="fixed z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto"
+        className="absolute inset-0 z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto flex items-center justify-center"
         onClick={(e) => { 
           e.stopPropagation();
           setOpen(true); 
           setMinimized(false); 
         }}
       >
-        <div className="relative group">
+        <div className="relative group w-full h-full flex items-center justify-center">
           {isActive && (
             <>
               <div className="absolute inset-0 rounded-full animate-ping"
@@ -607,7 +607,7 @@ export default function IntercomWidget() {
     return (
       <div 
         id="intercom-selection-menu"
-        className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
+        className="nexo-scope absolute left-full top-1/2 -translate-y-1/2 ml-2 z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
         style={{ width: "auto" }}
       >
         <div className="flex items-center gap-1">
@@ -640,7 +640,7 @@ export default function IntercomWidget() {
   // ─── Listener: name input (before joining channel) ───
   if (role === "listener" && !listenerName) {
     return (
-      <div className="fixed top-[43px] right-[115px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
+      <div className="absolute left-full top-0 ml-2 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
         <div className="flex items-center gap-2 px-4 py-3">
           <button onClick={handleBack} className="text-[#002132]/50 hover:text-[#00BFF0] p-1 rounded-lg hover:bg-[#00BFF0]/12 transition-all">
             <ArrowLeft size={14} />
@@ -691,7 +691,7 @@ export default function IntercomWidget() {
   // ─── Listener mode (active) ───
   if (role === "listener" && listenerName) {
     return (
-      <div className="fixed top-[43px] right-[115px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
+      <div className="absolute left-full top-0 ml-2 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
         onClick={handleUnlockAudio}>
         <audio ref={audioRef} autoPlay playsInline />
         <div className="flex items-center gap-2 px-3 py-2.5">
@@ -859,7 +859,7 @@ export default function IntercomWidget() {
 
   // ─── Speaker mode ───
   return (
-    <div className="fixed top-[43px] right-[115px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
+    <div className="absolute left-full top-0 ml-2 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5">
         <button
