@@ -2249,9 +2249,9 @@ function MockupPreview({
           </div>
         </div>
 
-        {/* Ticker bar – fundo preto, borda branca, texto branco até o final */}
+        {/* Ticker bar – fundo branco, texto escuro rolando até o fim */}
         {composedTicker && (
-          <div className="overflow-hidden mt-3" style={{ backgroundColor: "#000000", border: "1px solid #FFFFFF", height: 28, borderRadius: 8 }}>
+          <div className="overflow-hidden mt-3" style={{ backgroundColor: "#FFFFFF", border: "1px solid #FFFFFF", height: 28, borderRadius: 8 }}>
             <div
               style={{
                 display: "inline-block",
@@ -2261,17 +2261,18 @@ function MockupPreview({
                 animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
               }}
             >
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#FFFFFF", opacity: 1 }}>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#0A2540", opacity: 1 }}>
                 {composedTicker.split(/(\s[▲▼]\s[+−]\d+[.,]\d{2}%)/g).map((seg, i) => {
                   const m = seg.match(/^\s([▲▼])\s([+−]\d+[.,]\d{2}%)$/);
                   if (m) {
-                    const color = m[1] === "▲" ? "#4ade80" : "#f87171";
+                    const color = m[1] === "▲" ? "#16a34a" : "#dc2626";
                     return <span key={i} style={{ color }}>{seg}</span>;
                   }
                   return <span key={i}>{seg}</span>;
                 })}
               </span>
             </div>
+
             <style>{`
               @keyframes tickerSlide {
                 0% { transform: translateX(0); }
