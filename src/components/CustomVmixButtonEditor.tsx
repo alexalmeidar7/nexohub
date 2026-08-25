@@ -167,7 +167,7 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapp
   return line;
 }
 
-export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping }: Props) {
+export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping, estudio }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
   const [color, setColor] = useState("#f59e0b");
