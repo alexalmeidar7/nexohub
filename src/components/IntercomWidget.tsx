@@ -14,13 +14,22 @@ interface ListenerInfo {
   name: string;
 }
 
+interface AnchorRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 export default function IntercomWidget() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [anchorRect, setAnchorRect] = useState<AnchorRect | null>(null);
 
   useEffect(() => {
     const openHandler = () => {
+      setAnchorRect(readAnchorRect());
       setOpen(true);
       // Removed setMinimized(false) to maintain state if it was already minimized while navigating
     };
@@ -65,6 +74,34 @@ export default function IntercomWidget() {
   const levelRafRef = useRef<number>(0);
   const listenerVolumeRef = useRef<number>(1);
   const userId = user?.id;
+
+  const readAnchorRect = useCallback((): AnchorRect | null => {
+    if (typeof document === "undefined") return null;
+    const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-intercom-anchor]"));
+    const anchor = anchors.find((el) => {
+      const rect = el.getBoundingClientRect();
+      const style = window.getComputedStyle(el);
+      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+    });
+
+    if (!anchor) return null;
+
+    const rect = anchor.getBoundingClientRect();
+    return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+  }, []);
+
+  useEffect(() => {
+    if (!open && !minimized) return;
+
+    const syncAnchor = () => setAnchorRect(readAnchorRect());
+    syncAnchor();
+    window.addEventListener("resize", syncAnchor);
+    window.addEventListener("orientationchange", syncAnchor);
+    return () => {
+      window.removeEventListener("resize", syncAnchor);
+      window.removeEventListener("orientationchange", syncAnchor);
+    };
+  }, [open, minimized, readAnchorRect]);
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
   useEffect(() => { talkingRef.current = talking; }, [talking]);
@@ -540,6 +577,36 @@ export default function IntercomWidget() {
     border: "1px solid rgba(0,191,240,0.15)",
   } as const;
 
+  const anchorStyle = (() => {
+    const fallback = { top: 72, left: 72, width: 36, height: 36 };
+    const rect = anchorRect ?? fallback;
+    const viewportWidth = typeof window === "undefined" ? 1280 : window.innerWidth;
+    const isCompact = viewportWidth < 1024;
+    const panelWidth = 300;
+    const gap = 8;
+    const maxLeft = Math.max(gap, viewportWidth - panelWidth - gap);
+    const preferredLeft = isCompact ? rect.left : rect.left + rect.width + gap;
+    return {
+      top: isCompact ? rect.top + rect.height + gap : rect.top,
+      left: Math.min(maxLeft, Math.max(gap, preferredLeft)),
+      width: rect.width,
+      height: rect.height,
+    };
+  })();
+
+  const floatingPanelStyle = {
+    ...glassStyle,
+    top: anchorStyle.top,
+    left: anchorStyle.left,
+  } as const;
+
+  const minimizedStyle = {
+    top: anchorStyle.top,
+    left: anchorStyle.left,
+    width: anchorStyle.width,
+    height: anchorStyle.height,
+  } as const;
+
   // ─── FAB / Minimized Indicator ───
   // Note: Position is handled by a marker element in Dashboard.tsx to stay on top of the icon
   if (minimized && role !== "none") {
@@ -549,7 +616,8 @@ export default function IntercomWidget() {
         {role === "listener" && <audio ref={audioRef} autoPlay playsInline className="hidden" />}
         <div 
           id="intercom-minimized-fab"
-          className="absolute inset-0 z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto flex items-center justify-center"
+          className="fixed z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto flex items-center justify-center"
+          style={minimizedStyle}
           onClick={(e) => { 
             e.stopPropagation();
             setOpen(true); 
@@ -623,7 +691,7 @@ export default function IntercomWidget() {
     return (
       <div 
         id="intercom-selection-menu"
-        className="nexo-scope absolute left-full top-1/2 -translate-y-1/2 ml-2 z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
+        className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
         style={{ width: "auto" }}
       >
         <div className="flex items-center gap-1">
@@ -656,7 +724,7 @@ export default function IntercomWidget() {
   // ─── Listener: name input (before joining channel) ───
   if (role === "listener" && !listenerName) {
     return (
-      <div className="absolute left-full top-0 ml-2 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}>
+      <div className="fixed z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...floatingPanelStyle, width: 280 }}>
         <div className="flex items-center gap-2 px-4 py-3">
           <button onClick={handleBack} className="text-[#002132]/50 hover:text-[#00BFF0] p-1 rounded-lg hover:bg-[#00BFF0]/12 transition-all">
             <ArrowLeft size={14} />
@@ -707,7 +775,7 @@ export default function IntercomWidget() {
   // ─── Listener mode (active) ───
   if (role === "listener" && listenerName) {
     return (
-      <div className="absolute left-full top-0 ml-2 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
+      <div className="fixed z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...floatingPanelStyle, width: 280 }}
         onClick={handleUnlockAudio}>
         <audio ref={audioRef} autoPlay playsInline />
         <div className="flex items-center gap-2 px-3 py-2.5">
@@ -876,7 +944,7 @@ export default function IntercomWidget() {
 
   // ─── Speaker mode ───
   return (
-    <div className="absolute left-full top-0 ml-2 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 300 }}>
+    <div className="fixed z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...floatingPanelStyle, width: 300 }}>
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5">
         <button
