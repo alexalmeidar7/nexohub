@@ -2146,22 +2146,24 @@ function MockupPreview({
           </div>
         </div>
 
-        {/* Ticker bar – separate from title, with gap */}
+        {/* Ticker bar – fundo preto, borda branca, texto branco até o final */}
         {composedTicker && (
-          <div className="overflow-hidden mt-3" style={{ backgroundColor: accentColor + "18", border: `1px solid ${accentColor}30`, height: 28, borderRadius: 8 }}>
+          <div className="overflow-hidden mt-3" style={{ backgroundColor: "#000000", border: "1px solid #FFFFFF", height: 28, borderRadius: 8 }}>
             <div
-              className="flex items-center h-full whitespace-nowrap"
               style={{
-                animation: "tickerSlide 20s linear infinite",
+                display: "inline-block",
+                whiteSpace: "nowrap",
                 paddingLeft: "100%",
+                lineHeight: "28px",
+                animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
               }}
             >
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#FFFFFF", opacity: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#FFFFFF", opacity: 1 }}>
                 {composedTicker.split(/(\s[▲▼]\s[+−]\d+[.,]\d{2}%)/g).map((seg, i) => {
                   const m = seg.match(/^\s([▲▼])\s([+−]\d+[.,]\d{2}%)$/);
                   if (m) {
                     const color = m[1] === "▲" ? "#4ade80" : "#f87171";
-                    return <span key={i} style={{ color, textShadow: `0 0 10px ${color}40` }}>{seg}</span>;
+                    return <span key={i} style={{ color }}>{seg}</span>;
                   }
                   return <span key={i}>{seg}</span>;
                 })}
