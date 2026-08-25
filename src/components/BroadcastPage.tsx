@@ -478,6 +478,21 @@ export default function BroadcastPage() {
           return [];
         };
 
+        const selectedRoteiroId = latestDataRef.current?.tickerNewsRoteiroId || "";
+        if (selectedRoteiroId) {
+          const { data: chosen } = await supabase
+            .from("roteiros")
+            .select("tickertitulos, conteudo_html")
+            .eq("id", selectedRoteiroId)
+            .maybeSingle();
+          const chosenTitles = parseTitles(chosen);
+          setNewsTitles(chosenTitles);
+          if (chosenTitles.length >= 0) {
+            // seleção manual tem prioridade absoluta
+            return;
+          }
+        }
+
         // Busca os últimos roteiros jornalísticos (aceita variações de acento/caixa)
         const { data: rows } = await supabase
           .from("roteiros")
