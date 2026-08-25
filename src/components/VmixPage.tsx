@@ -3031,6 +3031,21 @@ function SwitcherUI({
                       })}
                     </div>
                   </section>
+
+                  {/* Espelhamento das categorias criadas na Pré-visualização */}
+                  {switcherCategorias.length > 0 && (
+                    <section className="space-y-2">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
+                      <VmixCategoryPanel
+                        side="program"
+                        categorias={switcherCategorias}
+                        inputs={inputs}
+                        previewInput={previewInput}
+                        activeInput={activeInput}
+                        onSelect={(num) => { sendCommand("CutDirect", num); setActiveInput(num); }}
+                      />
+                    </section>
+                  )}
                 </div>
               </div>
             </div>
