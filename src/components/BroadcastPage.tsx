@@ -455,26 +455,57 @@ export default function BroadcastPage() {
       // (skip when a custom RSS source is enabled — that effect owns newsTitles)
       const rssActive = !!(latestDataRef.current?.tickerRssEnabled && latestDataRef.current?.tickerRssUrl);
       if (!rssActive) {
-        const { data: latestRoteiro } = await supabase
-          .from("roteiros")
-          .select("tickertitulos, conteudo_html")
-          .eq("user_id", user.id)
-          .eq("tipo_programa", "Jornalístico")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (latestRoteiro) {
-          if (latestRoteiro.tickertitulos) {
-            setNewsTitles(latestRoteiro.tickertitulos.split("  •  ").filter(Boolean));
-          } else if (latestRoteiro.conteudo_html) {
-            const matches = latestRoteiro.conteudo_html.match(/<strong>Notícia\s*\d+:<\/strong>\s*([^<]+)/g);
+        const parseTitles = (r: any): string[] => {
+          if (r?.tickertitulos) {
+            return String(r.tickertitulos)
+              .split(/\s*[•|]\s*/)
+              .map((s: string) => s.trim())
+              .filter(Boolean);
+          }
+          if (r?.conteudo_html) {
+            const matches = String(r.conteudo_html).match(/<strong>Notícia\s*\d+:<\/strong>\s*([^<]+)/g);
             if (matches) {
-              const titles = matches.map((m: string) => m.replace(/<strong>Notícia\s*\d+:<\/strong>\s*/, "").trim()).filter(Boolean);
-              setNewsTitles(titles);
+              return matches
+                .map((m: string) => m.replace(/<strong>Notícia\s*\d+:<\/strong>\s*/, "").trim())
+                .filter(Boolean);
             }
           }
+          return [];
+        };
+
+        // Busca os últimos roteiros jornalísticos (aceita variações de acento/caixa)
+        const { data: rows } = await supabase
+          .from("roteiros")
+          .select("tickertitulos, conteudo_html, tipo_programa, created_at")
+          .eq("user_id", user.id)
+          .ilike("tipo_programa", "%jorn%")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        let titles: string[] = [];
+        for (const r of rows || []) {
+          titles = parseTitles(r);
+          if (titles.length > 0) break;
         }
+
+        // Fallback: qualquer roteiro recente que já tenha títulos de ticker
+        if (titles.length === 0) {
+          const { data: anyRows } = await supabase
+            .from("roteiros")
+            .select("tickertitulos, conteudo_html, created_at")
+            .eq("user_id", user.id)
+            .not("tickertitulos", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(3);
+          for (const r of anyRows || []) {
+            titles = parseTitles(r);
+            if (titles.length > 0) break;
+          }
+        }
+
+        if (titles.length > 0) setNewsTitles(titles);
       }
+
 
       // Fetch weather
       if (settings?.weather_lat && settings?.weather_lon) {
