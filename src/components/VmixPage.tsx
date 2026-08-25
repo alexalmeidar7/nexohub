@@ -2210,29 +2210,29 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
             <div className="p-8 space-y-6">
               <div className="space-y-2">
                 <h2 className="text-xl font-black uppercase tracking-tight text-[#C6F03C]">Configurar Conexão</h2>
-                <p className="text-xs text-white/40 leading-relaxed">essa lista de estudio, deve trazer os estudio cadastrados em grade de programação</p>
+                <p className="text-xs text-white/40 leading-relaxed">Os estúdios listados são os cadastrados na Grade de Programação.</p>
               </div>
 
               <div className="space-y-5">
-                {/* Studio Name Select */}
+                {/* Studio Name Select — dinâmico a partir da Grade de Programação */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Estúdio</label>
-                  <select
-                    value={studioName}
-                    onChange={e => setStudioName(e.target.value)}
-                    className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-medium outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
-                  >
-                    <option value="" className="bg-[#1a1a1f]">Selecione um estúdio</option>
-                    {programas
-                      .map(p => p.estudio)
-                      .filter((v, i, a) => v && a.indexOf(v) === i)
-                      .map(estudio => (
-                        <option key={estudio} value={estudio!} className="bg-[#1a1a1f]">{estudio}</option>
-                      ))
-                    }
-                    <option value="Estúdio Principal" className="bg-[#1a1a1f]">Estúdio Principal</option>
-                    <option value="Estúdio B" className="bg-[#1a1a1f]">Estúdio B</option>
-                  </select>
+                  {estudiosDisponiveis.length === 0 ? (
+                    <p className="px-5 py-4 rounded-2xl bg-white/5 border border-dashed border-white/10 text-[11px] text-white/40">
+                      Nenhum estúdio cadastrado na Grade de Programação.
+                    </p>
+                  ) : (
+                    <select
+                      value={studioName}
+                      onChange={e => setStudioName(e.target.value)}
+                      className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-medium outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
+                    >
+                      <option value="" className="bg-[#1a1a1f]">Selecione um estúdio</option>
+                      {estudiosDisponiveis.map(estudio => (
+                        <option key={estudio} value={estudio} className="bg-[#1a1a1f]">{estudio}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 {/* URL Parts */}
