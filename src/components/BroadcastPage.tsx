@@ -1665,37 +1665,6 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Presença Social */}
-            <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
-                    <Instagram size={16} style={{ color: CYAN }} />
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
-                    Redes Sociais
-                  </span>
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50">{empresaSocials.length} Canais</span>
-              </div>
-
-
-              <div className="space-y-3">
-                {empresaSocials.length === 0 ? (
-                  <p className="text-[10px] text-white/70 italic">Nenhuma rede social configurada.</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-2">
-                    {empresaSocials.map((s, i) => (
-                      <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
-                        <span style={{ color: CYAN }}>{s.icon}</span>
-                        <span className="text-[10px] font-bold text-white/80 truncate">{s.valor}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-              </div>
-            </div>
           </div>
         )}
 
