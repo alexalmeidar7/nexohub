@@ -1318,60 +1318,10 @@ export default function BroadcastPage() {
                   )}
                 </div>
 
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Custom Background (.png)</label>
-                    {data.assuntoBgUrl && (
-                      <label className="flex items-center gap-2 cursor-pointer bg-white/5 px-2 py-1 rounded-lg">
-                        <input
-                          type="checkbox"
-                          checked={data.useCustomAssuntoBg}
-                          onChange={e => {
-                            const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
-                            setData(next);
-                            void handleSave(next);
-                          }}
-                          className="w-3 h-3"
-                          style={{ accentColor: CYAN }}
-                        />
-                        <span className="text-[9px] font-bold text-white/70">ACTIVE</span>
-                      </label>
-                    )}
-                  </div>
-                  
-                  {data.assuntoBgUrl ? (
-                    <div className="group relative rounded-xl overflow-hidden border border-white/5 bg-black/40">
-                      <div className="p-2 aspect-[16/4]">
-                        <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
-                      </div>
-                      <button
-                        onClick={removeBgImage}
-                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl cursor-pointer border-2 border-dashed border-white/5 hover:border-[#00BFF0]30 hover:bg-[#00BFF0]05 transition-all">
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                        {uploadingBg ? <Loader2 size={16} className="animate-spin text-[#00BFF0]" /> : <Upload size={16} className="text-white/70" />}
-                      </div>
-                      <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">{uploadingBg ? "Enviando..." : "Enviar PNG 1920x200"}</span>
-                      <input
-                        type="file"
-                        accept="image/png"
-                        className="hidden"
-                        onChange={e => {
-                          const f = e.target.files?.[0];
-                          if (f) handleBgUpload(f);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                  )}
-                </div>
               </div>
             </div>
+            )}
+
             {(data.tituloMode || "simples") === "web" && (
               <div className="p-6 rounded-2xl" style={cardStyle}>
                 <SectionHeader n="01" label="Título Web · Mensagens Rotativas" color={CYAN} />
