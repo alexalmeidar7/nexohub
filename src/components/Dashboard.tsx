@@ -2101,7 +2101,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       {subUserModules === null && (
         <>
-          <Suspense fallback={null}><IntercomWidget /></Suspense>
           {isDashboard && <BotsStatusBox />}
         </>
       )}
