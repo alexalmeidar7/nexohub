@@ -1521,6 +1521,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   >
                     <Radio size={18} />
                   </button>
+                  <Suspense fallback={null}><IntercomWidget /></Suspense>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="bottom"><p className="text-xs">Intercomunicador</p></TooltipContent>
