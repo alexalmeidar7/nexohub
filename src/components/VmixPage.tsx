@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useVmixCategories, VmixCategoryCreator, VmixCategoryPanel } from "@/components/vmix/VmixCategories";
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
@@ -771,17 +772,29 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     }
   }, [user, loadProgramas]);
 
-  // Load custom buttons
+  // Estúdios únicos cadastrados na Grade de Programação
+  const estudiosDisponiveis = useMemo(
+    () => Array.from(new Set(programas.map(p => (p.estudio || "").trim()).filter(Boolean))).sort(),
+    [programas],
+  );
+
+  // Load custom buttons (escopo: estúdio selecionado; botões legados sem estúdio continuam visíveis)
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
     let query = (supabase.from("custom_vmix_buttons" as any) as any)
       .select("*")
       .eq("user_id", user.id);
-    
-    // No automatic studio filtering for custom buttons display - show all
+
     const { data } = await query.order("created_at");
-    if (data) setCustomButtons(data);
-  }, [user]);
+    if (data) {
+      const studio = (studioName || "").trim();
+      setCustomButtons(
+        studio
+          ? (data as any[]).filter(b => !b.estudio || b.estudio === studio)
+          : (data as any[]),
+      );
+    }
+  }, [user, studioName]);
 
   useEffect(() => { loadCustomButtons(); }, [loadCustomButtons]);
 
@@ -2210,29 +2223,29 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
             <div className="p-8 space-y-6">
               <div className="space-y-2">
                 <h2 className="text-xl font-black uppercase tracking-tight text-[#C6F03C]">Configurar Conexão</h2>
-                <p className="text-xs text-white/40 leading-relaxed">essa lista de estudio, deve trazer os estudio cadastrados em grade de programação</p>
+                <p className="text-xs text-white/40 leading-relaxed">Os estúdios listados são os cadastrados na Grade de Programação.</p>
               </div>
 
               <div className="space-y-5">
-                {/* Studio Name Select */}
+                {/* Studio Name Select — dinâmico a partir da Grade de Programação */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Estúdio</label>
-                  <select
-                    value={studioName}
-                    onChange={e => setStudioName(e.target.value)}
-                    className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-medium outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
-                  >
-                    <option value="" className="bg-[#1a1a1f]">Selecione um estúdio</option>
-                    {programas
-                      .map(p => p.estudio)
-                      .filter((v, i, a) => v && a.indexOf(v) === i)
-                      .map(estudio => (
-                        <option key={estudio} value={estudio!} className="bg-[#1a1a1f]">{estudio}</option>
-                      ))
-                    }
-                    <option value="Estúdio Principal" className="bg-[#1a1a1f]">Estúdio Principal</option>
-                    <option value="Estúdio B" className="bg-[#1a1a1f]">Estúdio B</option>
-                  </select>
+                  {estudiosDisponiveis.length === 0 ? (
+                    <p className="px-5 py-4 rounded-2xl bg-white/5 border border-dashed border-white/10 text-[11px] text-white/40">
+                      Nenhum estúdio cadastrado na Grade de Programação.
+                    </p>
+                  ) : (
+                    <select
+                      value={studioName}
+                      onChange={e => setStudioName(e.target.value)}
+                      className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-medium outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
+                    >
+                      <option value="" className="bg-[#1a1a1f]">Selecione um estúdio</option>
+                      {estudiosDisponiveis.map(estudio => (
+                        <option key={estudio} value={estudio} className="bg-[#1a1a1f]">{estudio}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 {/* URL Parts */}
@@ -2455,6 +2468,17 @@ function SwitcherUI({
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
+
+  // Categorias do switcher (por usuário + estúdio), com drag and drop
+  const {
+    categorias: switcherCategorias,
+    criar: criarCategoria,
+    excluir: excluirCategoria,
+    moverInput: moverInputCategoria,
+    removerInput: removerInputCategoria,
+    categorizados: inputsCategorizados,
+  } = useVmixCategories(user?.id, studioName);
+  const inputsSemCategoria = (inputs as any[]).filter((i: any) => !inputsCategorizados.has(i.number));
 
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
@@ -2826,11 +2850,11 @@ function SwitcherUI({
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333" }}>
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-emerald-400/80">◐ Pré-Visualização</h3>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputs.length || 2))}, minmax(0,1fr))` }}>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
                       {inputs.length === 0 && (
                         <span className="col-span-full text-[10px] text-white/30">Nenhum input.</span>
                       )}
-                      {inputs.map(input => {
+                      {inputsSemCategoria.map((input: any) => {
                         const isPreview = previewInput === input.number;
                         const isActive = activeInput === input.number;
                         const shortcut = inputShortcuts[input.key] || inputShortcuts[input.number];
@@ -2839,6 +2863,8 @@ function SwitcherUI({
                         return (
                           <button
                             key={`pvw-${input.key || input.number}`}
+                            draggable
+                            onDragStart={(e) => e.dataTransfer.setData("text/vmix-input", input.number)}
                             onClick={(e) => {
                               sendCommand("PreviewInput", input.number);
                               setPreviewInput(input.number);
@@ -2877,17 +2903,30 @@ function SwitcherUI({
                       })}
                     </div>
                   </section>
+
+                  {/* Categorias (drag and drop) */}
+                  <section className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
+                    <VmixCategoryPanel
+                      side="preview"
+                      categorias={switcherCategorias}
+                      inputs={inputs}
+                      previewInput={previewInput}
+                      activeInput={activeInput}
+                      onSelect={(num) => { sendCommand("PreviewInput", num); setPreviewInput(num); }}
+                      onDropInput={moverInputCategoria}
+                      onRemoveInput={removerInputCategoria}
+                      onDelete={excluirCategoria}
+                    />
+                    <VmixCategoryCreator onCreate={criarCategoria} />
+                  </section>
                 </div>
 
                 {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333", backgroundColor: "#222225" }}>
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Próxima Transição</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Overlays</h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="h-16 rounded border flex items-center justify-center text-[10px] font-black uppercase tracking-wider"
-                        style={{ backgroundColor: "#f59e0b", color: "#111", borderColor: "#fcd34d", boxShadow: "0 0 10px rgba(245,158,11,0.35)" }}>
-                        BKGD
-                      </div>
                       {[1, 2, 3, 4].map(n => {
                         const isOn = overlays[n];
                         return (
@@ -2896,7 +2935,7 @@ function SwitcherUI({
                             onClick={() => {
                               const cmd = isOn ? `OverlayInput${n}Off` : `OverlayInput${n}`;
                               sendCommand(cmd);
-                              setOverlays(prev => ({ ...prev, [n]: !prev[n] }));
+                              setOverlays((prev: any) => ({ ...prev, [n]: !prev[n] }));
                             }}
                             className="h-16 rounded border text-[10px] font-black tracking-wider transition-all"
                             style={{
@@ -2906,7 +2945,7 @@ function SwitcherUI({
                               boxShadow: isOn ? "0 0 12px rgba(220,38,38,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
                             }}
                           >
-                            KEY {n}
+                            OVERLAY {n}
                             {isOn && <span className="block text-[8px] mt-0.5 opacity-90">ON AIR</span>}
                           </button>
                         );
@@ -2914,20 +2953,9 @@ function SwitcherUI({
                     </div>
                   </section>
 
-                  {/* Transition Controls inside Middle section */}
                   <section>
-                    <div className="flex items-center gap-2 mb-2">
-                       <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">Duração</span>
-                       <input
-                         type="range"
-                         min={200} max={4000} step={100}
-                         value={transitionDuration}
-                         onChange={e => { const v = Number(e.target.value); setTransitionDuration(v); localStorage.setItem("vmix_transition_duration", String(v)); }}
-                         className="flex-1 accent-amber-500"
-                       />
-                       <span className="text-[10px] font-mono text-amber-400 w-12 text-right">{(transitionDuration/1000).toFixed(1)}s</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Transições</h3>
+                    <div className="grid gap-2">
                       <button
                         onClick={() => sendCommand("Cut")}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
@@ -2936,11 +2964,18 @@ function SwitcherUI({
                         CUT
                       </button>
                       <button
-                        onClick={() => sendCommand(transitionStyle, undefined, String(transitionDuration))}
+                        onClick={() => sendCommand("Fade", undefined, String(transitionDuration))}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60" }}
                       >
-                        AUTO
+                        FADE
+                      </button>
+                      <button
+                        onClick={() => sendCommand("Merge", undefined, String(transitionDuration))}
+                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#3a3a3a", color: "#fff", borderColor: "#4a4a4a" }}
+                      >
+                        MERGE
                       </button>
                     </div>
                   </section>
@@ -2950,8 +2985,8 @@ function SwitcherUI({
                 <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#1d1d1d" }}>
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputs.length || 2))}, minmax(0,1fr))` }}>
-                      {inputs.map(input => {
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
+                      {inputsSemCategoria.map((input: any) => {
                         const isActive = activeInput === input.number;
                         const shortcut = inputShortcuts[input.key] || inputShortcuts[input.number];
                         const isCapturing = capturingShortcut === (input.key || input.number);
@@ -2996,6 +3031,21 @@ function SwitcherUI({
                       })}
                     </div>
                   </section>
+
+                  {/* Espelhamento das categorias criadas na Pré-visualização */}
+                  {switcherCategorias.length > 0 && (
+                    <section className="space-y-2">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
+                      <VmixCategoryPanel
+                        side="program"
+                        categorias={switcherCategorias}
+                        inputs={inputs}
+                        previewInput={previewInput}
+                        activeInput={activeInput}
+                        onSelect={(num) => { sendCommand("CutDirect", num); setActiveInput(num); }}
+                      />
+                    </section>
+                  )}
                 </div>
               </div>
             </div>
@@ -3803,6 +3853,7 @@ function SwitcherUI({
           onRunCommands={async (cmds) => {
             await runCommandsUnified(cmds as any[], "Teste concluído");
           }}
+          estudio={studioName || null}
           onSaved={loadCustomButtons}
         />
       )}

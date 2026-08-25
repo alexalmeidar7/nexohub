@@ -98,6 +98,8 @@ interface Props {
   onRunCommands: (commands: PresetCommand[]) => Promise<void>;
   onSaved: () => void;
   inputMapping?: Record<string, { title: string; key: string }>;
+  /** Estúdio selecionado — novos botões ficam vinculados a ele */
+  estudio?: string | null;
 }
 
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -165,7 +167,7 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapp
   return line;
 }
 
-export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping }: Props) {
+export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping, estudio }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
   const [color, setColor] = useState("#f59e0b");
@@ -239,7 +241,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       return;
     }
     setSaving(true);
-    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, data_especifica: dataEspecifica || null, horario, commands };
+    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, data_especifica: dataEspecifica || null, horario, commands, estudio: estudio || null };
     if (buttonId) {
       await (supabase.from("custom_vmix_buttons" as any) as any).update(payload).eq("id", buttonId);
     } else {

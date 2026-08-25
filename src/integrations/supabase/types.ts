@@ -900,6 +900,7 @@ export type Database = {
           created_at: string
           data_especifica: string | null
           dias_semana: string[] | null
+          estudio: string | null
           horario: string | null
           id: string
           nome: string
@@ -912,6 +913,7 @@ export type Database = {
           created_at?: string
           data_especifica?: string | null
           dias_semana?: string[] | null
+          estudio?: string | null
           horario?: string | null
           id?: string
           nome?: string
@@ -924,6 +926,7 @@ export type Database = {
           created_at?: string
           data_especifica?: string | null
           dias_semana?: string[] | null
+          estudio?: string | null
           horario?: string | null
           id?: string
           nome?: string
@@ -2981,6 +2984,42 @@ export type Database = {
           url?: string
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      vmix_switcher_categorias: {
+        Row: {
+          created_at: string
+          estudio: string | null
+          icone: string | null
+          id: string
+          inputs: Json
+          nome: string
+          ordem: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          estudio?: string | null
+          icone?: string | null
+          id?: string
+          inputs?: Json
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          estudio?: string | null
+          icone?: string | null
+          id?: string
+          inputs?: Json
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
