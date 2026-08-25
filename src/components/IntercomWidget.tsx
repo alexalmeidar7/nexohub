@@ -691,7 +691,7 @@ export default function IntercomWidget() {
   // ─── Listener mode (active) ───
   if (role === "listener" && listenerName) {
     return (
-      <div className="fixed top-[43px] right-[115px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
+      <div className="absolute left-full top-0 ml-2 z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }}
         onClick={handleUnlockAudio}>
         <audio ref={audioRef} autoPlay playsInline />
         <div className="flex items-center gap-2 px-3 py-2.5">
