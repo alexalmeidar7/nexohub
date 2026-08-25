@@ -46,6 +46,7 @@ interface BroadcastData {
   tickerUnitario: boolean;
   tickerRssEnabled: boolean;
   tickerRssUrl: string;
+  tickerNewsRoteiroId?: string;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -68,6 +69,7 @@ const defaultBroadcast: BroadcastData = {
   tickerUnitario: false,
   tickerRssEnabled: false,
   tickerRssUrl: "",
+  tickerNewsRoteiroId: "",
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
@@ -246,6 +248,9 @@ export default function BroadcastPage() {
 
   // Ticker auto-content
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
+  const [roteirosOptions, setRoteirosOptions] = useState<
+    { id: string; titulo: string; tipo_programa: string | null; created_at: string; count: number }[]
+  >([]);
   const [weatherText, setWeatherText] = useState("");
   const [quotesText, setQuotesText] = useState("");
   const [rssStatus, setRssStatus] = useState<{
@@ -473,6 +478,15 @@ export default function BroadcastPage() {
           return [];
         };
 
+        const selectedRoteiroId = latestDataRef.current?.tickerNewsRoteiroId || "";
+        if (selectedRoteiroId) {
+          const { data: chosen } = await supabase
+            .from("roteiros")
+            .select("tickertitulos, conteudo_html")
+            .eq("id", selectedRoteiroId)
+            .maybeSingle();
+          setNewsTitles(parseTitles(chosen));
+        } else {
         // Busca os últimos roteiros jornalísticos (aceita variações de acento/caixa)
         const { data: rows } = await supabase
           .from("roteiros")
@@ -504,6 +518,7 @@ export default function BroadcastPage() {
         }
 
         if (titles.length > 0) setNewsTitles(titles);
+        }
       }
 
 
@@ -662,6 +677,31 @@ export default function BroadcastPage() {
   }, [data.tickerRssEnabled, data.tickerRssUrl]);
 
   // Redes sociais selecionadas para o ticker (vazio = todas)
+  // Lista de roteiros disponíveis para escolher a fonte das notícias do ticker
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: rows } = await supabase
+        .from("roteiros")
+        .select("id, programa_nome, tipo_programa, data_programa, created_at, tickertitulos")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      setRoteirosOptions(
+        (rows || []).map((r: any) => ({
+          id: r.id,
+          titulo: r.programa_nome || "Roteiro sem nome",
+          tipo_programa: r.tipo_programa || null,
+          created_at: r.data_programa || r.created_at,
+          count: r.tickertitulos
+            ? String(r.tickertitulos).split(/\s*[•|]\s*/).map((t: string) => t.trim()).filter(Boolean).length
+            : 0,
+        }))
+      );
+    })();
+  }, []);
+
   const selectedSocialTypes = useMemo(() => {
     const sel = data.tickerSocialTypes;
     if (!sel || sel.length === 0) return empresaSocials.map(s => s.tipo);
@@ -1475,6 +1515,40 @@ export default function BroadcastPage() {
                         <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
                       </div>
                     </label>
+
+                    {/* Seleção da fonte das notícias (roteiro) */}
+                    {key === "tickerNews" && active && (
+                      <div
+                        className="mt-2 ml-4 p-3 rounded-xl space-y-2"
+                        style={{ backgroundColor: NAVY_DEEP, border: `1px dashed ${CYAN}55` }}
+                      >
+                        <div className="text-[9px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>
+                          Fonte das notícias
+                        </div>
+                        <select
+                          value={data.tickerNewsRoteiroId || ""}
+                          onChange={e => {
+                            const nextData = { ...latestDataRef.current, tickerNewsRoteiroId: e.target.value };
+                            setData(nextData);
+                            void handleSave(nextData);
+                          }}
+                          style={inputStyle}
+                          className="w-full text-[11px]"
+                        >
+                          <option value="">Automático — último roteiro jornalístico</option>
+                          {roteirosOptions.map(r => (
+                            <option key={r.id} value={r.id}>
+                              {r.titulo}
+                              {r.created_at ? ` · ${String(r.created_at).slice(0, 10).split("-").reverse().join("/")}` : ""}
+                              {r.count ? ` · ${r.count} títulos` : " · sem títulos"}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[9.5px]" style={{ color: "#ffffff60" }}>
+                          Escolha de qual roteiro os títulos serão exibidos no ticker.
+                        </p>
+                      </div>
+                    )}
 
                     {/* QR Code do WhatsApp — logo abaixo de Notícias */}
                     {key === "tickerNews" && whatsappNumber && (
