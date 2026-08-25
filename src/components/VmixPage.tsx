@@ -2468,6 +2468,17 @@ function SwitcherUI({
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
 
+  // Categorias do switcher (por usuário + estúdio), com drag and drop
+  const {
+    categorias: switcherCategorias,
+    criar: criarCategoria,
+    excluir: excluirCategoria,
+    moverInput: moverInputCategoria,
+    removerInput: removerInputCategoria,
+    categorizados: inputsCategorizados,
+  } = useVmixCategories(user?.id, studioName);
+  const inputsSemCategoria = (inputs as any[]).filter((i: any) => !inputsCategorizados.has(i.number));
+
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
   // Filter program based on current time and weekday
