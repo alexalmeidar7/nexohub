@@ -51,7 +51,6 @@ interface BroadcastData {
   aSeguirEnabled: boolean;
   aSeguirForceUntil?: string;
   aSeguirLeadSeconds: number;
-  aSeguirDurationSeconds: number;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -71,8 +70,7 @@ const defaultBroadcast: BroadcastData = {
   assuntoBgProgramaIds: [],
   aSeguirEnabled: false,
   aSeguirForceUntil: "",
-  aSeguirLeadSeconds: 180,
-  aSeguirDurationSeconds: 120,
+  aSeguirLeadSeconds: 300,
 };
 
 // ── helpers for next-program countdown (mirrors serve-xml-broadcast) ──
@@ -130,7 +128,7 @@ interface NextProgramInfo {
 }
 
 
-function computeNextProgramInfo(allProgs: any[], timezone: string | null | undefined, leadSeconds: number, durationSeconds: number, forceUntilIso?: string): NextProgramInfo | null {
+function computeNextProgramInfo(allProgs: any[], timezone: string | null | undefined, leadSeconds: number, forceUntilIso?: string): NextProgramInfo | null {
   const z = getZonedInfo(new Date(), timezone);
   const now = new Date();
   const nowSeconds = z.seconds;
@@ -178,11 +176,11 @@ function computeNextProgramInfo(allProgs: any[], timezone: string | null | undef
   let secondsUntilStart = nextStartSeconds - nowSeconds;
   if (secondsUntilStart < 0) secondsUntilStart += 24 * 60 * 60;
 
-  const endDelta = Math.max(0, leadSeconds - durationSeconds);
+  // A informação permanece no XML até o horário de início do programa.
   const windowOpenSeconds = Math.max(0, secondsUntilStart - leadSeconds);
-  const windowCloseSeconds = Math.max(0, secondsUntilStart - endDelta);
-  const actualDurationSeconds = Math.max(0, leadSeconds - endDelta);
-  const isInWindow = secondsUntilStart <= leadSeconds && secondsUntilStart >= endDelta;
+  const windowCloseSeconds = 0;
+  const actualDurationSeconds = leadSeconds;
+  const isInWindow = secondsUntilStart <= leadSeconds;
   const isForced = !!forceUntilIso && new Date(forceUntilIso).getTime() > Date.now();
   const forcedRemainingSeconds = isForced
     ? Math.max(0, Math.floor((new Date(forceUntilIso).getTime() - Date.now()) / 1000))
@@ -235,7 +233,7 @@ export default function BroadcastPage() {
   const [allProgramasFull, setAllProgramasFull] = useState<any[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<"preview" | "ticker" | "aseguir" | "assuntos" | "xml">("preview");
+  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir" | "assuntos" | "xml">("preview");
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
   const [nextProgramInfo, setNextProgramInfo] = useState<NextProgramInfo | null>(null);
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
@@ -837,8 +835,7 @@ export default function BroadcastPage() {
       const info = computeNextProgramInfo(
         allProgramasFull,
         timezone,
-        Number(data.aSeguirLeadSeconds) || 180,
-        Number(data.aSeguirDurationSeconds) || 120,
+        Number(data.aSeguirLeadSeconds) || 300,
         data.aSeguirForceUntil,
       );
       setNextProgramInfo(info);
@@ -846,7 +843,7 @@ export default function BroadcastPage() {
     tick();
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
-  }, [user, allProgramasFull, timezone, data.aSeguirLeadSeconds, data.aSeguirDurationSeconds, data.aSeguirForceUntil]);
+  }, [user, allProgramasFull, timezone, data.aSeguirLeadSeconds, data.aSeguirForceUntil]);
 
   // A Seguir — locutor do próximo programa (para a prévia do XML)
   const [aSeguirLocutor, setASeguirLocutor] = useState<{ nome: string; foto: string } | null>(null);
@@ -963,10 +960,10 @@ export default function BroadcastPage() {
 
         {/* ── Navigation (segmented, always labelled) ── */}
         <div className="flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-          {(["preview", "assuntos", "ticker", "aseguir", "xml"] as const).map(tabId => {
+          {(["preview", "insert", "assuntos", "ticker", "aseguir", "xml"] as const).map(tabId => {
             const active = activeTab === tabId;
-            const labels: Record<string, string> = { preview: "Ao Vivo", assuntos: "Pauta", ticker: "Ticker", aseguir: "A Seguir", xml: "XML" };
-            const Icons: Record<string, any> = { preview: ImageIcon, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock, xml: Code2 };
+            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", assuntos: "Título", ticker: "Ticker", aseguir: "A Seguir", xml: "XML" };
+            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock, xml: Code2 };
             const Icon = Icons[tabId];
             return (
               <button
@@ -993,10 +990,7 @@ export default function BroadcastPage() {
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
 
         {activeTab === "preview" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-0">
-
-          {/* ── Left: Preview stage + status strip ── */}
-          <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
+        <div className="w-full max-w-[1280px] mx-auto flex flex-col gap-6 min-h-0">
             {/* 16:9 preview stage with Tally Border */}
             <div 
               className="w-full relative rounded-2xl overflow-hidden group transition-all duration-500"
@@ -1054,41 +1048,11 @@ export default function BroadcastPage() {
                 </div>
               </div>
             </div>
+        </div>
+        )}
 
-            {/* Robust Status Console */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Locutor", value: displayLocutor, color: LIME, icon: <Mic size={14} /> },
-                { label: "Current Topic", value: data.assunto || "NOT SET", color: "#fff", icon: <MessageCircle size={14} /> },
-                { label: "Sponsorships", value: `${sponsorLogos.length} ACTIVE`, color: CYAN, icon: <Save size={14} /> },
-                { label: "Social Presence", value: empresaSocials.length > 0 ? `${empresaSocials.length} CHANNELS` : "OFFLINE", color: empresaSocials.length > 0 ? LIME : "#ffffff40", icon: <Instagram size={14} /> },
-              ].map((kpi, idx) => (
-                <div 
-                  key={idx}
-                  className="p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden transition-all group"
-                  style={{ 
-                    ...cardStyle, 
-                    background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)`,
-                    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)"
-                  }}
-
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">{kpi.label}</span>
-                    <span style={{ color: kpi.color, filter: "drop-shadow(0 0 5px rgba(255,255,255,0.1))" }}>{kpi.icon}</span>
-                  </div>
-                  <span className="text-sm font-black truncate tracking-wide" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
-                  <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-0 group-hover:w-full transition-all duration-500" style={{ backgroundColor: `${kpi.color}40` }} />
-
-                </div>
-              ))}
-            </div>
-          </div>
-
-
-          {/* ── Right: Control Center ── */}
-          <div className="lg:col-span-4 flex flex-col gap-6 min-h-0 overflow-y-auto pr-1">
-
+        {activeTab === "insert" && (
+          <div className="max-w-3xl mx-auto flex flex-col gap-6">
             {/* Robust Control Bento */}
             <div 
               className="p-6 rounded-2xl flex flex-col gap-5" 
@@ -1147,8 +1111,11 @@ export default function BroadcastPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-
+        {activeTab === "assuntos" && (
+          <div className="max-w-3xl mx-auto flex flex-col gap-6">
             {/* Identidade visual e Conteúdo */}
             <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
               <div className="flex items-center gap-3 mb-6">
@@ -1291,70 +1258,10 @@ export default function BroadcastPage() {
                 </div>
               </div>
             </div>
-
-            {/* Presença Social */}
-            <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
-                    <Instagram size={16} style={{ color: CYAN }} />
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
-                    Redes Sociais
-                  </span>
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50">{empresaSocials.length} Canais</span>
-              </div>
-
-
-              <div className="space-y-3">
-                {empresaSocials.length === 0 ? (
-                  <p className="text-[10px] text-white/70 italic">Nenhuma rede social configurada.</p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-2">
-                    {empresaSocials.map((s, i) => (
-                      <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
-                        <span style={{ color: CYAN }}>{s.icon}</span>
-                        <span className="text-[10px] font-bold text-white/80 truncate">{s.valor}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {whatsappNumber && (
-                  <label className="flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all border-2" 
-                    style={{ 
-                      backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
-                      borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
-                    }}>
-
-                    <input
-                      type="checkbox"
-                      checked={data.showQrCode}
-                      onChange={e => {
-                        const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
-                        setData(nextData);
-                        void handleSave(nextData);
-                      }}
-                      className="w-4 h-4"
-                      style={{ accentColor: CYAN }}
-                    />
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-white block">WhatsApp QR Code</span>
-                      <p className="text-[9px] text-white/40">Exibir QR para interação ao vivo</p>
-                    </div>
-                  </label>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        )}
-
-        {activeTab === "assuntos" && (
-          <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
+            <div className="p-6 rounded-2xl" style={cardStyle}>
             <SectionHeader n="01" label="Assuntos do Programa" color={CYAN} />
             <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
+            </div>
           </div>
         )}
 
@@ -1603,6 +1510,62 @@ export default function BroadcastPage() {
                 ))}
               </div>
             </div>
+
+            {/* Presença Social */}
+            <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
+                    <Instagram size={16} style={{ color: CYAN }} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                    Redes Sociais
+                  </span>
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50">{empresaSocials.length} Canais</span>
+              </div>
+
+
+              <div className="space-y-3">
+                {empresaSocials.length === 0 ? (
+                  <p className="text-[10px] text-white/70 italic">Nenhuma rede social configurada.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {empresaSocials.map((s, i) => (
+                      <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
+                        <span style={{ color: CYAN }}>{s.icon}</span>
+                        <span className="text-[10px] font-bold text-white/80 truncate">{s.valor}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {whatsappNumber && (
+                  <label className="flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all border-2" 
+                    style={{ 
+                      backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
+                      borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
+                    }}>
+
+                    <input
+                      type="checkbox"
+                      checked={data.showQrCode}
+                      onChange={e => {
+                        const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
+                        setData(nextData);
+                        void handleSave(nextData);
+                      }}
+                      className="w-4 h-4"
+                      style={{ accentColor: CYAN }}
+                    />
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-white block">WhatsApp QR Code</span>
+                      <p className="text-[9px] text-white/40">Exibir QR para interação ao vivo</p>
+                    </div>
+                  </label>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -1636,10 +1599,9 @@ export default function BroadcastPage() {
               </div>
             </label>
 
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3">
               {([
-                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa", fallback: 180 },
-                { key: "aSeguirDurationSeconds" as const, label: "Permanecer no XML", hint: "Tempo em que as informações ficam no XML", fallback: 120 },
+                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa — a informação permanece no XML até o início do programa", fallback: 300 },
               ]).map(({ key, label, hint, fallback }) => {
                 const current = Number(data[key] ?? fallback);
                 return (
@@ -1652,11 +1614,9 @@ export default function BroadcastPage() {
                     <p className="text-[10px] mb-3" style={{ color: "#ffffff55" }}>{hint}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
-                        { v: 30, l: "30s" },
-                        { v: 60, l: "1min" },
-                        { v: 90, l: "1min30" },
-                        { v: 120, l: "2min" },
-                        { v: 180, l: "3min" },
+                        { v: 300, l: "5 min" },
+                        { v: 600, l: "10 min" },
+                        { v: 900, l: "15 min" },
                       ].map(({ v, l }) => {
                         const active = current === v;
                         return (
@@ -1846,9 +1806,8 @@ export default function BroadcastPage() {
                 type="button"
                 disabled={!data.aSeguirEnabled || saving}
                 onClick={() => {
-                  const dur = Number(latestDataRef.current.aSeguirDurationSeconds) > 0
-                    ? Number(latestDataRef.current.aSeguirDurationSeconds)
-                    : 120;
+                  // Força até o horário de início do próximo programa
+                  const dur = Math.max(30, Number(nextProgramInfo?.secondsUntilStart) || 300);
                   const until = new Date(Date.now() + dur * 1000).toISOString();
                   const nextData = { ...latestDataRef.current, aSeguirForceUntil: until };
                   setData(nextData);
@@ -1872,13 +1831,14 @@ export default function BroadcastPage() {
               <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>Campos no XML</div>
               <div>a_seguir/ativo</div>
               <div>a_seguir/programa_nome</div>
+              <div>a_seguir/nome_programa</div>
               <div>a_seguir/programa_logo (.png)</div>
               <div>a_seguir/locutor_nome</div>
               <div>a_seguir/locutor_foto (.png)</div>
               <div>a_seguir/horario</div>
               <div>a_seguir/texto → "começa às: 14:00"</div>
               <p className="mt-3" style={{ color: "#ffffff60" }}>
-                As informações entram no XML conforme a antecedência configurada e permanecem pelo tempo definido.
+                As informações entram no XML conforme a antecedência configurada e permanecem até o horário de início do programa.
                 Fora dessa janela, as imagens ficam com <code>blanck.png</code> e os textos vazios.
               </p>
             </div>
@@ -2196,7 +2156,7 @@ function MockupPreview({
                 paddingLeft: "100%",
               }}
             >
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#FFFFFF", opacity: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
                 {composedTicker.split(/(\s[▲▼]\s[+−]\d+[.,]\d{2}%)/g).map((seg, i) => {
                   const m = seg.match(/^\s([▲▼])\s([+−]\d+[.,]\d{2}%)$/);
                   if (m) {
