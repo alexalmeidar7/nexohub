@@ -3853,6 +3853,7 @@ function SwitcherUI({
           onRunCommands={async (cmds) => {
             await runCommandsUnified(cmds as any[], "Teste concluído");
           }}
+          estudio={studioName || null}
           onSaved={loadCustomButtons}
         />
       )}
