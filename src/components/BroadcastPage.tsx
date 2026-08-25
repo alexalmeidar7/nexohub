@@ -1165,6 +1165,37 @@ export default function BroadcastPage() {
 
         {activeTab === "assuntos" && (
           <div className="max-w-3xl mx-auto flex flex-col gap-6">
+            {/* Seletor de modo de envio do título */}
+            <div className="p-4 rounded-2xl" style={cardStyle}>
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-3 text-white/60">Como enviar o título ao XML</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {([
+                  { v: "simples" as const, label: "Título Simples", desc: "Digite o assunto e ele vai automaticamente para o XML broadcast" },
+                  { v: "web" as const, label: "Título Web", desc: "Até 3 mensagens rotativas por programa" },
+                ]).map(({ v, label, desc }) => {
+                  const on = (data.tituloMode || "simples") === v;
+                  return (
+                    <button
+                      key={v}
+                      onClick={() => {
+                        const nextData = { ...latestDataRef.current, tituloMode: v };
+                        setData(nextData);
+                        void handleSave(nextData);
+                      }}
+                      className="text-left p-4 rounded-xl transition-all"
+                      style={{
+                        backgroundColor: on ? `${CYAN}18` : NAVY_DEEP,
+                        border: `1px solid ${on ? CYAN : NAVY_BORDER}`,
+                      }}
+                    >
+                      <span className="text-[11px] font-black uppercase tracking-widest block" style={{ color: on ? CYAN : "#ffffff90" }}>{label}</span>
+                      <p className="text-[10px] mt-1" style={{ color: "#ffffff60" }}>{desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Identidade visual e Conteúdo */}
             <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
               <div className="flex items-center gap-3 mb-6">
@@ -1177,18 +1208,21 @@ export default function BroadcastPage() {
               </div>
               
               <div className="space-y-6">
-                <div className="relative group">
-                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
-                  <input
-                    type="text"
-                    value={data.assunto}
-                    onChange={e => setData({ ...data, assunto: e.target.value })}
-                    onBlur={onFieldBlur}
-                    placeholder="Defina o assunto principal..."
-                    className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none outline-none"
-                    style={inputStyle}
-                  />
-                </div>
+                {(data.tituloMode || "simples") === "simples" && (
+                  <div className="relative group">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
+                    <input
+                      type="text"
+                      value={data.assunto}
+                      onChange={e => setData({ ...data, assunto: e.target.value })}
+                      onBlur={onFieldBlur}
+                      placeholder="Defina o assunto principal..."
+                      className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none outline-none"
+                      style={inputStyle}
+                    />
+                    <p className="text-[9px] mt-2" style={{ color: "#ffffff50" }}>Enviado automaticamente para o XML broadcast ao sair do campo.</p>
+                  </div>
+                )}
 
 
 
@@ -1307,10 +1341,12 @@ export default function BroadcastPage() {
                 </div>
               </div>
             </div>
-            <div className="p-6 rounded-2xl" style={cardStyle}>
-            <SectionHeader n="01" label="Assuntos do Programa" color={CYAN} />
-            <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
-            </div>
+            {(data.tituloMode || "simples") === "web" && (
+              <div className="p-6 rounded-2xl" style={cardStyle}>
+                <SectionHeader n="01" label="Título Web · Mensagens Rotativas" color={CYAN} />
+                <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
+              </div>
+            )}
           </div>
         )}
 
