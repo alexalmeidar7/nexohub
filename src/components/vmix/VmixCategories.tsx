@@ -173,6 +173,9 @@ interface PanelProps {
   onDropInput?: (inputNumber: string, categoriaId: string) => void;
   onRemoveInput?: (inputNumber: string, categoriaId: string) => void;
   onDelete?: (id: string) => void;
+  shortcuts?: Record<string, string>;
+  capturingShortcut?: string | null;
+  onSetShortcut?: (inputKey: string) => void;
 }
 
 /**
@@ -181,10 +184,12 @@ interface PanelProps {
  */
 export function VmixCategoryPanel({
   side, categorias, inputs, previewInput, activeInput, onSelect, onDropInput, onRemoveInput, onDelete,
+  shortcuts, capturingShortcut, onSetShortcut,
 }: PanelProps) {
   const [dragOver, setDragOver] = useState<string | null>(null);
   const editable = side === "preview";
-  const accent = side === "preview" ? "#16a34a" : "#dc2626";
+  const accent = side === "preview" ? "#C6F03C" : "#dc2626";
+  const accentText = side === "preview" ? "#000" : "#fff";
 
   if (categorias.length === 0) return null;
 
@@ -208,19 +213,19 @@ export function VmixCategoryPanel({
             } : undefined}
             className="rounded border p-2"
             style={{
-              borderColor: dragOver === cat.id ? "#C6F03C" : "#ffffff12",
-              backgroundColor: dragOver === cat.id ? "#C6F03C12" : "#00000030",
+              borderColor: dragOver === cat.id ? "#C6F03C" : "#ffffff10",
+              backgroundColor: dragOver === cat.id ? "#C6F03C12" : "#0a0a0a",
             }}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <Icon size={12} style={{ color: accent }} />
+                <Icon size={12} style={{ color: "#C6F03C" }} />
                 <span className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: "#ffffff80" }}>{cat.nome}</span>
                 <span className="text-[8px] font-mono" style={{ color: "#ffffff35" }}>{items.length}</span>
               </div>
               {editable && onDelete && (
-                <button onClick={() => onDelete(cat.id)} className="text-white/25 hover:text-red-400 transition-colors" title="Excluir categoria">
-                  <Trash2 size={11} />
+                <button onClick={() => onDelete(cat.id)} className="text-white/15 hover:text-white/50 transition-colors" title="Excluir categoria">
+                  <X size={10} />
                 </button>
               )}
             </div>
@@ -233,32 +238,58 @@ export function VmixCategoryPanel({
               <div className="grid grid-cols-2 gap-1.5">
                 {items.map(input => {
                   const on = side === "preview" ? previewInput === input.number : activeInput === input.number;
+                  const shortcutKey = input.key || input.number;
+                  const shortcut = shortcuts?.[input.key] || shortcuts?.[input.number];
+                  const isCapturing = capturingShortcut === shortcutKey;
                   return (
                     <div key={`${side}-${cat.id}-${input.number}`} className="relative group">
                       <button
                         draggable={editable}
                         onDragStart={editable ? (e) => e.dataTransfer.setData("text/vmix-input", input.number) : undefined}
                         onClick={() => onSelect(input.number)}
+                        onContextMenu={onSetShortcut ? (e) => { e.preventDefault(); onSetShortcut(shortcutKey); } : undefined}
                         title={input.title}
                         className="w-full h-12 rounded border text-[10px] font-bold flex flex-col items-center justify-center transition-all"
                         style={{
-                          backgroundColor: on ? accent : "#3a3a3a",
-                          color: on ? "#fff" : "#ddd",
-                          borderColor: on ? "#ffffff60" : "#4a4a4a",
-                          boxShadow: on ? `0 0 14px ${accent}80` : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                          backgroundColor: on ? accent : "#1a1a1a",
+                          color: on ? accentText : "#e5e5e5",
+                          borderColor: on ? accent : "#2a2a2a",
+                          boxShadow: on ? `0 0 14px ${accent}70` : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         }}
                       >
                         <span className="text-[9px] font-black opacity-70 leading-none">{input.number}</span>
                         <span className="truncate max-w-full px-1 uppercase leading-tight mt-0.5">{input.title}</span>
                       </button>
+
+                      {onSetShortcut && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onSetShortcut(shortcutKey); }}
+                          className={`absolute -top-1 left-1 px-1 py-0.5 rounded text-[8px] font-mono border transition-all ${
+                            isCapturing
+                              ? "animate-pulse z-10"
+                              : shortcut ? "" : "opacity-0 group-hover:opacity-100"
+                          }`}
+                          style={
+                            isCapturing
+                              ? { backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C" }
+                              : shortcut
+                                ? { backgroundColor: "#000000aa", color: "#C6F03C", borderColor: "#C6F03C40" }
+                                : { backgroundColor: "#00000080", color: "#ffffff50", borderColor: "transparent" }
+                          }
+                          title="Definir atalho de teclado"
+                        >
+                          {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
+                        </button>
+                      )}
+
                       {editable && onRemoveInput && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onRemoveInput(input.number, cat.id); }}
-                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full items-center justify-center hidden group-hover:flex"
-                          style={{ backgroundColor: "#dc2626", color: "#fff" }}
+                          className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full items-center justify-center hidden group-hover:flex"
+                          style={{ backgroundColor: "#1a1a1a", color: "#ffffff70", border: "1px solid #2a2a2a" }}
                           title="Remover da categoria"
                         >
-                          <X size={9} />
+                          <X size={8} />
                         </button>
                       )}
                     </div>
@@ -272,3 +303,4 @@ export function VmixCategoryPanel({
     </div>
   );
 }
+

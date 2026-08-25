@@ -2532,30 +2532,34 @@ function SwitcherUI({
     });
   }, [programas]);
 
-  // Próximo programa da grade (mesmo dia)
+  // Próximo programa da grade (tolerante a acentos/formatos e com wrap para o próximo ciclo)
   const nextProgram = useMemo(() => {
     if (!programas || programas.length === 0) return null;
     const now = new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const dayMap: Record<number, string> = {
-      0: "domingo", 1: "segunda", 2: "terça", 3: "quarta",
-      4: "quinta", 5: "sexta", 6: "sábado"
-    };
-    const dayName = dayMap[now.getDay()];
+    const norm = (s?: string | null) =>
+      (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    const daysShort = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+    const todayShort = daysShort[now.getDay()];
     const matchesToday = (p: any) => {
       if (!p.dias_semana || p.dias_semana.length === 0) return true;
-      return p.dias_semana.some((d: string) => d?.toLowerCase()?.startsWith(dayName.slice(0, 3)));
+      return p.dias_semana.some((d: string) => {
+        const n = norm(d);
+        return n.startsWith(todayShort) || n === String(now.getDay());
+      });
     };
-    const list = programas
-      .filter((p: any) => p.horario_inicio && matchesToday(p) && p.id !== currentProgram?.id)
+    const withStart = programas
+      .filter((p: any) => p.horario_inicio && p.id !== currentProgram?.id && matchesToday(p))
       .map((p: any) => {
-        const [h, m] = p.horario_inicio.split(":").map(Number);
-        return { p, start: h * 60 + m };
+        const [h, m] = String(p.horario_inicio).split(":").map(Number);
+        return { p, start: (h || 0) * 60 + (m || 0) };
       })
-      .filter((x: any) => x.start > nowMin)
       .sort((a: any, b: any) => a.start - b.start);
-    return list[0]?.p || null;
+    if (withStart.length === 0) return null;
+    const upcoming = withStart.find((x: any) => x.start > nowMin);
+    return (upcoming || withStart[0]).p;
   }, [programas, currentProgram]);
+
 
 
 
@@ -2715,10 +2719,11 @@ function SwitcherUI({
                   style={{ minWidth: '120px', textAlign: 'center' }}
                 >
                   <span 
-                    className="text-2xl tracking-widest text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                    className="text-2xl tracking-widest drop-shadow-[0_0_10px_rgba(198,240,60,0.45)]"
                     style={{ 
                       fontFamily: "'Digital-7', monospace",
-                      fontVariantNumeric: "tabular-nums"
+                      fontVariantNumeric: "tabular-nums",
+                      color: "#C6F03C"
                     }}
                   >
                     {currentTime.toLocaleTimeString('pt-BR', { 
@@ -2843,13 +2848,33 @@ function SwitcherUI({
             )}
 
             {/* ATEM-style console reorganized */}
-            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#000000", border: "1px solid #C6F03C25" }}>
               <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr_1.2fr]">
                 
                 {/* 1. LEFT: PRE-VISUALIZAÇÃO (Inputs) */}
-                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333" }}>
+                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #C6F03C20" }}>
+                  {/* Categorias (drag and drop) — no topo do box */}
+                  <section className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: "#C6F03C" }}>Categorias</h3>
+                    <VmixCategoryPanel
+                      side="preview"
+                      categorias={switcherCategorias}
+                      inputs={inputs}
+                      previewInput={previewInput}
+                      activeInput={activeInput}
+                      onSelect={(num) => { sendCommand("PreviewInput", num); setPreviewInput(num); }}
+                      onDropInput={moverInputCategoria}
+                      onRemoveInput={removerInputCategoria}
+                      onDelete={excluirCategoria}
+                      shortcuts={inputShortcuts}
+                      capturingShortcut={capturingShortcut}
+                      onSetShortcut={(k) => setCapturingShortcut(k)}
+                    />
+                    <VmixCategoryCreator onCreate={criarCategoria} />
+                  </section>
+
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-emerald-400/80">◐ Pré-Visualização</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5" style={{ color: "#C6F03C" }}>◐ Pré-Visualização</h3>
                     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
                       {inputs.length === 0 && (
                         <span className="col-span-full text-[10px] text-white/30">Nenhum input.</span>
@@ -2876,10 +2901,10 @@ function SwitcherUI({
                             title={input.title}
                             className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
-                              backgroundColor: isPreview ? "#16a34a" : "#3a3a3a",
-                              color: isPreview ? "#fff" : "#ddd",
-                              borderColor: isPreview ? "#86efac" : "#4a4a4a",
-                              boxShadow: isPreview ? "0 0 18px rgba(22,163,74,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              backgroundColor: isPreview ? "#C6F03C" : "#1a1a1a",
+                              color: isPreview ? "#000" : "#e5e5e5",
+                              borderColor: isPreview ? "#C6F03C" : "#2a2a2a",
+                              boxShadow: isPreview ? "0 0 18px rgba(198,240,60,0.5), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                               opacity: isActive && !isPreview ? 0.55 : 1,
                             }}
                           >
@@ -2890,11 +2915,16 @@ function SwitcherUI({
                             <div
                               className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
                                 isCapturing
-                                  ? "bg-yellow-500 text-black border-yellow-300 animate-pulse z-10"
-                                  : shortcut
-                                    ? "bg-black/60 text-white/90 border-white/20"
-                                    : "bg-black/20 text-white/30 border-transparent opacity-0 group-hover:opacity-100"
+                                  ? "animate-pulse z-10"
+                                  : shortcut ? "" : "opacity-0 group-hover:opacity-100"
                               }`}
+                              style={
+                                isCapturing
+                                  ? { backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C" }
+                                  : shortcut
+                                    ? { backgroundColor: "#000000aa", color: "#C6F03C", borderColor: "#C6F03C40" }
+                                    : { backgroundColor: "#00000080", color: "#ffffff50", borderColor: "transparent" }
+                              }
                             >
                               {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
                             </div>
@@ -2903,29 +2933,13 @@ function SwitcherUI({
                       })}
                     </div>
                   </section>
-
-                  {/* Categorias (drag and drop) */}
-                  <section className="space-y-2">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
-                    <VmixCategoryPanel
-                      side="preview"
-                      categorias={switcherCategorias}
-                      inputs={inputs}
-                      previewInput={previewInput}
-                      activeInput={activeInput}
-                      onSelect={(num) => { sendCommand("PreviewInput", num); setPreviewInput(num); }}
-                      onDropInput={moverInputCategoria}
-                      onRemoveInput={removerInputCategoria}
-                      onDelete={excluirCategoria}
-                    />
-                    <VmixCategoryCreator onCreate={criarCategoria} />
-                  </section>
                 </div>
 
+
                 {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
-                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333", backgroundColor: "#222225" }}>
+                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #C6F03C20", backgroundColor: "#050505" }}>
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Overlays</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5" style={{ color: "#C6F03C" }}>Overlays</h3>
                     <div className="grid grid-cols-2 gap-2">
                       {[1, 2, 3, 4].map(n => {
                         const isOn = overlays[n];
@@ -2939,10 +2953,10 @@ function SwitcherUI({
                             }}
                             className="h-16 rounded border text-[10px] font-black tracking-wider transition-all"
                             style={{
-                              backgroundColor: isOn ? "#dc2626" : "#3a3a3a",
-                              color: isOn ? "#fff" : "#ddd",
-                              borderColor: isOn ? "#fca5a5" : "#4a4a4a",
-                              boxShadow: isOn ? "0 0 12px rgba(220,38,38,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              backgroundColor: isOn ? "#C6F03C" : "#1a1a1a",
+                              color: isOn ? "#000" : "#e5e5e5",
+                              borderColor: isOn ? "#C6F03C" : "#2a2a2a",
+                              boxShadow: isOn ? "0 0 12px rgba(198,240,60,0.45)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                             }}
                           >
                             OVERLAY {n}
@@ -2954,26 +2968,26 @@ function SwitcherUI({
                   </section>
 
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Transições</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5" style={{ color: "#C6F03C" }}>Transições</h3>
                     <div className="grid gap-2">
                       <button
                         onClick={() => sendCommand("Cut")}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#7f1d1d", color: "#fff", borderColor: "#b91c1c", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)" }}
+                        style={{ backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C", boxShadow: "0 0 12px rgba(198,240,60,0.35)" }}
                       >
                         CUT
                       </button>
                       <button
                         onClick={() => sendCommand("Fade", undefined, String(transitionDuration))}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60" }}
+                        style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", borderColor: "#C6F03C50" }}
                       >
                         FADE
                       </button>
                       <button
                         onClick={() => sendCommand("Merge", undefined, String(transitionDuration))}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#3a3a3a", color: "#fff", borderColor: "#4a4a4a" }}
+                        style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", borderColor: "#2a2a2a" }}
                       >
                         MERGE
                       </button>
@@ -2982,7 +2996,25 @@ function SwitcherUI({
                 </div>
 
                 {/* 3. RIGHT: PROGRAMA (No Ar) */}
-                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#1d1d1d" }}>
+                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#000000" }}>
+                  {/* Espelhamento das categorias criadas na Pré-visualização — no topo do box */}
+                  {switcherCategorias.length > 0 && (
+                    <section className="space-y-2">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
+                      <VmixCategoryPanel
+                        side="program"
+                        categorias={switcherCategorias}
+                        inputs={inputs}
+                        previewInput={previewInput}
+                        activeInput={activeInput}
+                        onSelect={(num) => { sendCommand("CutDirect", num); setActiveInput(num); }}
+                        shortcuts={inputShortcuts}
+                        capturingShortcut={capturingShortcut}
+                        onSetShortcut={(k) => setCapturingShortcut(k)}
+                      />
+                    </section>
+                  )}
+
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
                     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
@@ -3005,24 +3037,29 @@ function SwitcherUI({
                             title={input.title}
                             className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
-                              backgroundColor: isActive ? "#dc2626" : "#3a3a3a",
-                              color: isActive ? "#fff" : "#ddd",
-                              borderColor: isActive ? "#fca5a5" : "#4a4a4a",
-                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              backgroundColor: isActive ? "#dc2626" : "#1a1a1a",
+                              color: isActive ? "#fff" : "#e5e5e5",
+                              borderColor: isActive ? "#dc2626" : "#2a2a2a",
+                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                             }}
                           >
                             <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
                             <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
-                            
+
                             {/* Keyboard Shortcut Indicator */}
-                            <div 
+                            <div
                               className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
-                                isCapturing 
-                                  ? "bg-yellow-500 text-black border-yellow-300 animate-pulse z-10" 
-                                  : shortcut 
-                                    ? "bg-black/60 text-white/90 border-white/20" 
-                                    : "bg-black/20 text-white/30 border-transparent opacity-0 group-hover:opacity-100"
+                                isCapturing
+                                  ? "animate-pulse z-10"
+                                  : shortcut ? "" : "opacity-0 group-hover:opacity-100"
                               }`}
+                              style={
+                                isCapturing
+                                  ? { backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C" }
+                                  : shortcut
+                                    ? { backgroundColor: "#000000aa", color: "#C6F03C", borderColor: "#C6F03C40" }
+                                    : { backgroundColor: "#00000080", color: "#ffffff50", borderColor: "transparent" }
+                              }
                             >
                               {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
                             </div>
@@ -3031,22 +3068,8 @@ function SwitcherUI({
                       })}
                     </div>
                   </section>
-
-                  {/* Espelhamento das categorias criadas na Pré-visualização */}
-                  {switcherCategorias.length > 0 && (
-                    <section className="space-y-2">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
-                      <VmixCategoryPanel
-                        side="program"
-                        categorias={switcherCategorias}
-                        inputs={inputs}
-                        previewInput={previewInput}
-                        activeInput={activeInput}
-                        onSelect={(num) => { sendCommand("CutDirect", num); setActiveInput(num); }}
-                      />
-                    </section>
-                  )}
                 </div>
+
               </div>
             </div>
 
@@ -3333,60 +3356,13 @@ function SwitcherUI({
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
-                      <Radio size={14} style={{ color: "#999" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>
-                        {studioName || "Estúdio FM"} - inserir nova automação 
+                      <Radio size={14} style={{ color: "#C6F03C" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>
+                        Automações
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => {
-                          const data = JSON.stringify(programas, null, 2);
-                          const blob = new Blob([data], { type: "application/json" });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = `presets-programas-${new Date().toISOString().split("T")[0]}.json`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                          toast({ title: "Exportado", description: "Lista de programas exportada com sucesso." });
-                        }}
-                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                        style={{ color: "#888" }}
-                        title="Exportar programas"
-                      >
-                        <Download size={12} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          const input = document.createElement("input");
-                          input.type = "file";
-                          input.accept = ".json";
-                          input.onchange = async (e) => {
-                            const file = (e.target as HTMLInputElement).files?.[0];
-                            if (!file) return;
-                            try {
-                              const text = await file.text();
-                              const imported = JSON.parse(text);
-                              if (Array.isArray(imported)) {
-                                // Simple import: we just show them, they are not saved to DB yet unless edited/saved individually
-                                // or we could batch insert. For now, let's just toast and suggest manual re-save if needed
-                                // or better: offer to merge/replace.
-                                setProgramas(prev => [...imported, ...prev.filter(p => !imported.find((i: any) => i.id === p.id))]);
-                                toast({ title: "Importado", description: `${imported.length} programas carregados na lista.` });
-                              }
-                            } catch (err) {
-                              toast({ title: "Erro na importação", variant: "destructive" });
-                            }
-                          };
-                          input.click();
-                        }}
-                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                        style={{ color: "#888" }}
-                        title="Importar programas"
-                      >
-                        <Upload size={12} />
-                      </button>
+
                       <button
                         onClick={() => setEditingPresetId("new")}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#22c55e10] hover:bg-[#22c55e20] border border-[#22c55e20] transition-colors"
