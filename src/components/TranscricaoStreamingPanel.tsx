@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Radio, Download, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Radio, Download, ChevronDown, ChevronUp, Loader2, Play, Square } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,6 +12,8 @@ type Row = {
   timestamp_inicio: string;
   timestamp_fim: string | null;
 };
+
+type AudioChannel = { id: string; name: string; url: string };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -45,9 +47,34 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
   const [loading, setLoading] = useState(false);
   const [live, setLive] = useState(false);
   const [diaExport, setDiaExport] = useState<string>("");
+  const [channels, setChannels] = useState<AudioChannel[]>([]);
+  const [channelId, setChannelId] = useState("");
+  const [capturing, setCapturing] = useState(false);
+  const [captureError, setCaptureError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
+  const captureRef = useRef(false);
 
   const userId = effectiveUserId || null;
+
+  useEffect(() => {
+    if (!userId || !open) return;
+    supabase
+      .from("streaming_channels")
+      .select("id, name, url")
+      .eq("user_id", userId)
+      .eq("active", true)
+      .eq("type", "audio_live")
+      .order("numero_canal")
+      .then(({ data, error }) => {
+        if (error) {
+          setCaptureError("Não foi possível carregar os canais de áudio.");
+          return;
+        }
+        const next = (data || []) as AudioChannel[];
+        setChannels(next);
+        setChannelId((current) => current && next.some((item) => item.id === current) ? current : (next[0]?.id || ""));
+      });
+  }, [userId, open]);
 
   // Carga inicial
   useEffect(() => {
@@ -132,6 +159,39 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
 
   const total = rows.length;
 
+  const pararCaptura = useCallback(() => {
+    captureRef.current = false;
+    setCapturing(false);
+    toast.info("Transcrição do streaming parada");
+  }, []);
+
+  const iniciarCaptura = useCallback(async () => {
+    if (!userId || !channelId || captureRef.current) return;
+    captureRef.current = true;
+    setCapturing(true);
+    setCaptureError(null);
+    toast.success("Transcrição do streaming iniciada");
+
+    while (captureRef.current) {
+      const { data, error } = await supabase.functions.invoke("transcribe-stream", {
+        body: { userId, channelId },
+      });
+      if (!captureRef.current) break;
+      if (error || data?.ok === false) {
+        const message = data?.error || error?.message || "Falha ao transcrever o streaming";
+        setCaptureError(message);
+        captureRef.current = false;
+        setCapturing(false);
+        toast.error(message);
+        break;
+      }
+    }
+  }, [channelId, userId]);
+
+  useEffect(() => () => {
+    captureRef.current = false;
+  }, []);
+
   return (
     <section className="mt-6">
       <div className="rounded-2xl p-5 space-y-5" style={{ backgroundColor: "#0A2540", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -145,7 +205,7 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
               Monitor de Transcrição do Streaming
             </h4>
             <p className="text-[11px] text-white/50 truncate">
-              Recebe em tempo real os textos transcritos gravados no banco de dados
+              Transcreve diretamente o canal de áudio selecionado e atualiza o texto em tempo real
             </p>
           </div>
           {open && (
@@ -172,6 +232,36 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
             {/* Controles */}
             <div className="flex flex-wrap items-center gap-3">
               <select
+                value={channelId}
+                onChange={(e) => setChannelId(e.target.value)}
+                disabled={capturing}
+                className="rounded-full px-4 py-2 text-[12px] font-bold text-white outline-none disabled:opacity-50"
+                style={{ backgroundColor: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+                aria-label="Canal de áudio para transcrição"
+              >
+                {channels.length === 0 && <option value="">Nenhum canal de áudio ativo</option>}
+                {channels.map((channel) => <option key={channel.id} value={channel.id} style={{ color: "#0A2540" }}>{channel.name}</option>)}
+              </select>
+              {!capturing ? (
+                <button
+                  type="button"
+                  onClick={iniciarCaptura}
+                  disabled={!channelId}
+                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-bold uppercase tracking-wider disabled:opacity-40"
+                  style={{ backgroundColor: NEXO_CYAN, color: "#04202b" }}
+                >
+                  <Play size={15} /> Iniciar streaming
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={pararCaptura}
+                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-bold uppercase tracking-wider bg-red-600 text-white"
+                >
+                  <Square size={14} /> Parar streaming
+                </button>
+              )}
+              <select
                 value={diaExport}
                 onChange={(e) => setDiaExport(e.target.value)}
                 className="rounded-full px-4 py-2 text-[12px] font-bold text-white outline-none"
@@ -192,9 +282,15 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
                 <Download size={15} /> Exportar dia (.txt)
               </button>
               <span className="text-[11px] text-white/50 ml-auto">
-                {total} trecho(s) · {blocos.length} bloco(s)
+                {capturing ? "Capturando áudio…" : `${total} trecho(s) · ${blocos.length} bloco(s)`}
               </span>
             </div>
+
+            {captureError && (
+              <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3 text-[12px] font-semibold text-red-300">
+                {captureError}
+              </div>
+            )}
 
             {/* Log */}
             <div
@@ -225,10 +321,6 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
               ))}
             </div>
 
-            <p className="text-[11px] text-white/40">
-              Integração externa (Deepgram + Node.js) de referência em{" "}
-              <code className="text-white/60">docs/deepgram-stream-to-supabase.node.js</code>.
-            </p>
           </div>
         )}
       </div>
