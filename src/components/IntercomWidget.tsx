@@ -21,6 +21,21 @@ interface AnchorRect {
   height: number;
 }
 
+const readIntercomAnchorRect = (): AnchorRect | null => {
+  if (typeof document === "undefined") return null;
+  const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-intercom-anchor]"));
+  const anchor = anchors.find((el) => {
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+  });
+
+  if (!anchor) return null;
+
+  const rect = anchor.getBoundingClientRect();
+  return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+};
+
 export default function IntercomWidget() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -29,7 +44,7 @@ export default function IntercomWidget() {
 
   useEffect(() => {
     const openHandler = () => {
-      setAnchorRect(readAnchorRect());
+      setAnchorRect(readIntercomAnchorRect());
       setOpen(true);
       // Removed setMinimized(false) to maintain state if it was already minimized while navigating
     };
@@ -75,25 +90,10 @@ export default function IntercomWidget() {
   const listenerVolumeRef = useRef<number>(1);
   const userId = user?.id;
 
-  const readAnchorRect = useCallback((): AnchorRect | null => {
-    if (typeof document === "undefined") return null;
-    const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-intercom-anchor]"));
-    const anchor = anchors.find((el) => {
-      const rect = el.getBoundingClientRect();
-      const style = window.getComputedStyle(el);
-      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
-    });
-
-    if (!anchor) return null;
-
-    const rect = anchor.getBoundingClientRect();
-    return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
-  }, []);
-
   useEffect(() => {
     if (!open && !minimized) return;
 
-    const syncAnchor = () => setAnchorRect(readAnchorRect());
+    const syncAnchor = () => setAnchorRect(readIntercomAnchorRect());
     syncAnchor();
     window.addEventListener("resize", syncAnchor);
     window.addEventListener("orientationchange", syncAnchor);
@@ -101,7 +101,7 @@ export default function IntercomWidget() {
       window.removeEventListener("resize", syncAnchor);
       window.removeEventListener("orientationchange", syncAnchor);
     };
-  }, [open, minimized, readAnchorRect]);
+  }, [open, minimized]);
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
   useEffect(() => { talkingRef.current = talking; }, [talking]);
@@ -692,7 +692,7 @@ export default function IntercomWidget() {
       <div 
         id="intercom-selection-menu"
         className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
-        style={{ width: "auto" }}
+        style={{ top: anchorStyle.top, left: anchorStyle.left, width: "auto" }}
       >
         <div className="flex items-center gap-1">
           {/* Grupo lima: falar / ouvir */}
