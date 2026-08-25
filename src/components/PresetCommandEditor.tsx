@@ -565,8 +565,8 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           <div className="flex items-center gap-2 mb-2">
             <button
               onClick={() => setShowCode(!showCode)}
-              className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded transition-colors"
-              style={{ color: "#888", backgroundColor: showCode ? "#ffffff10" : "transparent" }}
+              className="text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded transition-colors"
+              style={{ color: showCode ? "#000" : "#C6F03C", backgroundColor: showCode ? "#C6F03C" : "#C6F03C15" }}
             >
               {showCode ? "Ocultar código" : "Ver / Colar código do script"}
             </button>
@@ -574,25 +574,25 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           {showCode && (
             <div className="space-y-2">
               {commands.length > 0 && (
-                <pre className="p-3 rounded-lg text-[10px] font-mono overflow-x-auto" style={{ backgroundColor: "#111118", color: "#22c55e", border: "1px solid #222", whiteSpace: "pre-wrap" }}>
+                <pre className="p-3 rounded-lg text-[10px] font-mono overflow-x-auto" style={{ backgroundColor: "#000000", color: "#C6F03C", border: "1px solid #C6F03C25", whiteSpace: "pre-wrap" }}>
                   {generateScript()}
                 </pre>
               )}
               <div className="flex flex-col gap-1">
-                <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Cole o script aqui para importar ações</label>
+                <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: "#777" }}>Cole o script aqui para importar ações</label>
                 <textarea
                   value={pasteValue}
                   onChange={e => setPasteValue(e.target.value)}
                   rows={4}
                   className="w-full text-[10px] font-mono px-3 py-2 rounded-lg outline-none resize-none"
-                  style={{ backgroundColor: "#111118", color: "#ccc", border: "1px solid #333" }}
+                  style={{ backgroundColor: "#0a0a0a", color: "#ddd", border: "1px solid #ffffff14" }}
                   placeholder={"CutDirect(guid, -1)\n*SelectIndex(guid, 6)\n*SetText(guid, 2, Texto)"}
                 />
                 <button
                   onClick={() => { parseScript(pasteValue); setPasteValue(""); }}
                   disabled={!pasteValue.trim()}
-                  className="self-start flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03] disabled:opacity-30"
-                  style={{ backgroundColor: "#8b5cf615", color: "#8b5cf6", border: "1px solid #8b5cf630" }}
+                  className="self-start flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-30"
+                  style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C35" }}
                 >
                   Importar Script
                 </button>
@@ -602,11 +602,11 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 px-5 py-3" style={{ borderTop: "1px solid #ffffff0a", backgroundColor: "#ffffff03" }}>
+        <div className="flex items-center justify-between gap-2 px-5 py-3" style={{ borderTop: "1px solid #C6F03C20", backgroundColor: "#000000" }}>
           <button
             onClick={addCommand}
-            className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-            style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+            className="flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
+            style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C35" }}
           >
             <Plus size={12} />
             Adicionar Ação
@@ -616,13 +616,14 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               <button
                 onClick={runAll}
                 disabled={running}
-                className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-                style={{ backgroundColor: "#22c55e15", color: "#22c55e", border: "1px solid #22c55e30" }}
+                className="flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
+                style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
               >
                 {running ? <Loader2 className="animate-spin" size={12} /> : <Play size={12} />}
                 Testar
               </button>
             )}
+
             <Button variant="save"
               onClick={saveCommands}
               disabled={saving}
