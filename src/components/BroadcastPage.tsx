@@ -41,6 +41,8 @@ interface BroadcastData {
   tickerWeather: boolean;
   tickerQuotes: boolean;
   tickerSocials: boolean;
+  tickerSocialTypes?: string[];
+  tituloMode?: "simples" | "web";
   tickerUnitario: boolean;
   tickerRssEnabled: boolean;
   tickerRssUrl: string;
@@ -61,6 +63,8 @@ const defaultBroadcast: BroadcastData = {
   tickerWeather: false,
   tickerQuotes: false,
   tickerSocials: false,
+  tickerSocialTypes: [],
+  tituloMode: "simples",
   tickerUnitario: false,
   tickerRssEnabled: false,
   tickerRssUrl: "",
@@ -626,6 +630,18 @@ export default function BroadcastPage() {
     return () => { cancelled = true; clearInterval(id); };
   }, [data.tickerRssEnabled, data.tickerRssUrl]);
 
+  // Redes sociais selecionadas para o ticker (vazio = todas)
+  const selectedSocialTypes = useMemo(() => {
+    const sel = data.tickerSocialTypes;
+    if (!sel || sel.length === 0) return empresaSocials.map(s => s.tipo);
+    return sel;
+  }, [data.tickerSocialTypes, empresaSocials]);
+
+  const tickerSocialItems = useMemo(
+    () => empresaSocials.filter(s => selectedSocialTypes.includes(s.tipo)),
+    [empresaSocials, selectedSocialTypes],
+  );
+
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
     const parts: string[] = [];
@@ -638,7 +654,7 @@ export default function BroadcastPage() {
     if (data.tickerQuotes && quotesText) {
       parts.push(quotesText);
     }
-    if (data.tickerSocials && empresaSocials.length > 0) {
+    if (data.tickerSocials && tickerSocialItems.length > 0) {
       const labels: Record<string, string> = {
         instagram: "Instagram",
         facebook: "Facebook",
@@ -647,7 +663,7 @@ export default function BroadcastPage() {
         whatsapp: "WhatsApp",
       };
       parts.push(
-        empresaSocials
+        tickerSocialItems
           .map(s => `${labels[s.tipo] || s.tipo}: ${s.valor}`)
           .join("  •  ")
       );
@@ -656,7 +672,7 @@ export default function BroadcastPage() {
       parts.push(data.ticker);
     }
     return parts.join("  •  ");
-  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, empresaSocials]);
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, tickerSocialItems]);
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
