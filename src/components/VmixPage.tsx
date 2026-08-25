@@ -2363,6 +2363,8 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       previewInput={previewInput}
       connectionMode={connectionMode}
       savedUrl={savedUrl}
+      vmixUser={vmixUser}
+      vmixPass={vmixPass}
       connecting={connecting}
       connected={connected}
       logoMixControl={logoMixControl}
@@ -2458,7 +2460,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 
 // Actual Switcher UI (used when effectiveConnected)
 function SwitcherUI({ 
-  inputs, activeInput, previewInput, connectionMode, savedUrl, 
+  inputs, activeInput, previewInput, connectionMode, savedUrl, vmixUser, vmixPass,
   connecting, connected, logoMixControl, studioName, selectedConnectionId,
   activeTab, setActiveTab, streaming, recording, overlays,
   setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
@@ -2957,6 +2959,8 @@ function SwitcherUI({
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #C6F03C20", backgroundColor: "#050505" }}>
                   <NdiWebrtcMonitor
                     vmixBaseUrl={savedUrl || vmixUrl}
+                    vmixUser={vmixUser}
+                    vmixPass={vmixPass}
                     inputs={inputs}
                     onRefresh={reloadInputsAndSources}
                   />
