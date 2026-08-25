@@ -677,6 +677,31 @@ export default function BroadcastPage() {
   }, [data.tickerRssEnabled, data.tickerRssUrl]);
 
   // Redes sociais selecionadas para o ticker (vazio = todas)
+  // Lista de roteiros disponíveis para escolher a fonte das notícias do ticker
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: rows } = await supabase
+        .from("roteiros")
+        .select("id, programa_nome, tipo_programa, data_programa, created_at, tickertitulos")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      setRoteirosOptions(
+        (rows || []).map((r: any) => ({
+          id: r.id,
+          titulo: r.programa_nome || "Roteiro sem nome",
+          tipo_programa: r.tipo_programa || null,
+          created_at: r.data_programa || r.created_at,
+          count: r.tickertitulos
+            ? String(r.tickertitulos).split(/\s*[•|]\s*/).map((t: string) => t.trim()).filter(Boolean).length
+            : 0,
+        }))
+      );
+    })();
+  }, []);
+
   const selectedSocialTypes = useMemo(() => {
     const sel = data.tickerSocialTypes;
     if (!sel || sel.length === 0) return empresaSocials.map(s => s.tipo);
