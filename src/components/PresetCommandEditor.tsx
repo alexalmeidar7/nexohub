@@ -108,7 +108,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   const [pasteValue, setPasteValue] = useState("");
   const [customHorario, setCustomHorario] = useState<string>("");
   const [nome, setNome] = useState("");
-  const [estudio, setEstudio] = useState("FM");
+  const [estudio, setEstudio] = useState(estudioFixo || "FM");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [dataEspecifica, setDataEspecifica] = useState("");
 
