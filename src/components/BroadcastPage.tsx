@@ -831,6 +831,43 @@ export default function BroadcastPage() {
     handleSave();
   }, [handleSave]);
 
+  // ── Atualização automática do ticker no XML a cada 5 minutos ──
+  // Recarrega as fontes (notícias/tempo/cotações) e regrava a config no
+  // backend em silêncio, para o XML do vMix sempre servir texto atualizado.
+  const [tickerSyncedAt, setTickerSyncedAt] = useState<Date | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    const syncTicker = async () => {
+      try {
+        await loadInitialData();
+        const { data: cur } = await supabase
+          .from("user_settings")
+          .select("cenario_config")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const existing = (cur?.cenario_config && typeof cur.cenario_config === "object")
+          ? cur.cenario_config as Record<string, any>
+          : {};
+        const broadcast = {
+          ...(existing.broadcast || {}),
+          ...latestDataRef.current,
+          tickerUpdatedAt: new Date().toISOString(),
+        };
+        await supabase
+          .from("user_settings")
+          .update({ cenario_config: { ...existing, broadcast } as any })
+          .eq("user_id", user.id);
+        setTickerSyncedAt(new Date());
+      } catch {
+        /* silencioso — próxima janela de 5min tenta de novo */
+      }
+    };
+    void syncTicker();
+    const id = setInterval(syncTicker, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [user, loadInitialData]);
+
+
   const handleInsertNow = useCallback(async () => {
     if (!user || !insertLiveArt) return;
     setInsertingNow(true);
