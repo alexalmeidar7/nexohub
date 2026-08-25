@@ -344,19 +344,22 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}>
-      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ backgroundColor: "#1a1a22", border: "1px solid #333", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 20px 60px rgba(0,0,0,0.7)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #ffffff0a", background: "linear-gradient(135deg, #1e1e28, #22222c)" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #C6F03C20", backgroundColor: "#000000" }}>
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>
-              {programaId === "new" ? "Novo Programa Preset" : (nome || programaNome)}
+            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#C6F03C" }}>
+              {programaId === "new" ? "Nova Automação" : (nome || programaNome)}
             </h2>
             <div className="flex items-center gap-1.5">
-              <Clock size={10} style={{ color: "#888" }} />
-              <span className="text-[10px] font-mono" style={{ color: "#888", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.5 }}>
+              <Clock size={10} style={{ color: "#C6F03C90" }} />
+              <span className="text-[10px] font-mono" style={{ color: "#999", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.5 }}>
                 {programaId === "new" ? (customHorario || "00:00") : programaHorario}
               </span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#666" }}>{commands.length} ação(ões)</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#C6F03C15", color: "#C6F03C" }}>{commands.length} ação(ões)</span>
+              {estudio && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest" style={{ backgroundColor: "#ffffff08", color: "#777" }}>{estudio}</span>
+              )}
             </div>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
@@ -365,32 +368,19 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Configurações do Programa */}
-        <div className="px-5 py-4 space-y-4 bg-white/5 border-b border-white/5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Nome do Programa</label>
-              <input
-                type="text"
-                value={nome}
-                onChange={e => setNome(e.target.value)}
-                className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc]"
-                placeholder="Ex: Manhã Mix, Top 10..."
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Estúdio</label>
-              <select
-                value={estudio}
-                onChange={e => setEstudio(e.target.value)}
-                className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc]"
-              >
-                <option value="FM">FM</option>
-                <option value="PODCAST">PODCAST</option>
-                <option value="ESTÚDIO A">ESTÚDIO A</option>
-                <option value="ESTÚDIO B">ESTÚDIO B</option>
-              </select>
-            </div>
+        <div className="px-5 py-4 space-y-4" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #ffffff0a" }}>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Nome do Programa</label>
+            <input
+              type="text"
+              value={nome}
+              onChange={e => setNome(e.target.value)}
+              className="text-xs px-3 py-2 rounded-lg outline-none"
+              style={{ backgroundColor: "#141414", border: "1px solid #ffffff14", color: "#eee" }}
+              placeholder="Ex: Manhã Mix, Top 10..."
+            />
           </div>
+
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
