@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, CheckCircle2 } from "lucide-react";
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
+const TranscricaoAudioSection = lazy(() => import("./TranscricaoAudioSection"));
 import XmlLinkRow from "./XmlLinkRow";
 import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";
