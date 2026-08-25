@@ -2955,7 +2955,7 @@ function SwitcherUI({
 
                 {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #C6F03C20", backgroundColor: "#050505" }}>
-                  <NdiWebrtcMonitor vmixBaseUrl={savedUrl || vmixUrl} />
+                  <NdiWebrtcMonitor vmixBaseUrl={savedUrl || vmixUrl} inputs={inputs} />
 
                   <section>
 
