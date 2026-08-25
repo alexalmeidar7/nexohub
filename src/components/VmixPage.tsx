@@ -798,7 +798,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     [programas],
   );
 
-  // Load custom buttons (escopo: estúdio selecionado; botões legados sem estúdio continuam visíveis)
+  // Load custom buttons (escopo estrito: apenas botões do estúdio selecionado)
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
     let query = (supabase.from("custom_vmix_buttons" as any) as any)
@@ -807,12 +807,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 
     const { data } = await query.order("created_at");
     if (data) {
-      const studio = (studioName || "").trim();
-      setCustomButtons(
-        studio
-          ? (data as any[]).filter(b => !b.estudio || b.estudio === studio)
-          : (data as any[]),
-      );
+      setCustomButtons((data as any[]).filter(b => matchesStudio(b.estudio, studioName)));
     }
   }, [user, studioName]);
 
