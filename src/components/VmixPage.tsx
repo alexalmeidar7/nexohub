@@ -27,6 +27,26 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
 import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
 
+/* ── Escopo de estúdio (validação central) ─────────────────────────────── */
+const normStudio = (s?: string | null) =>
+  (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+
+/** true quando um estúdio específico foi selecionado na conexão */
+export const isStudioScoped = (studioName?: string | null) => {
+  const n = normStudio(studioName);
+  return n !== "" && n !== "vmix studio";
+};
+
+/** valida se um registro (programa/botão) pertence ao estúdio selecionado */
+export const matchesStudio = (recordStudio?: string | null, studioName?: string | null) => {
+  if (!isStudioScoped(studioName)) return true;
+  const a = normStudio(recordStudio);
+  const b = normStudio(studioName);
+  if (!a) return false; // sem estúdio definido não herda o estúdio selecionado
+  return a === b || a.includes(b) || b.includes(a);
+};
+
+
 interface VmixInput {
   key: string;
   number: string;
@@ -778,7 +798,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     [programas],
   );
 
-  // Load custom buttons (escopo: estúdio selecionado; botões legados sem estúdio continuam visíveis)
+  // Load custom buttons (escopo estrito: apenas botões do estúdio selecionado)
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
     let query = (supabase.from("custom_vmix_buttons" as any) as any)
@@ -787,12 +807,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 
     const { data } = await query.order("created_at");
     if (data) {
-      const studio = (studioName || "").trim();
-      setCustomButtons(
-        studio
-          ? (data as any[]).filter(b => !b.estudio || b.estudio === studio)
-          : (data as any[]),
-      );
+      setCustomButtons((data as any[]).filter(b => matchesStudio(b.estudio, studioName)));
     }
   }, [user, studioName]);
 
@@ -3327,18 +3342,7 @@ function SwitcherUI({
           };
 
           const todayPrograms = programas
-            .filter(p => {
-              // Only show active programs in the automation section
-              if (!p.ativo) return false;
-              
-              // Only filter by studio if a specific studio name (other than default) is provided
-              if (studioName && studioName !== "vMix Studio" && studioName.trim() !== "") {
-                // Exact or partial match for the studio name set in the connection
-                const match = p.estudio && p.estudio.toLowerCase().includes(studioName.toLowerCase());
-                return match && isProgramForToday(p);
-              }
-              return isProgramForToday(p);
-            })
+            .filter(p => p.ativo && matchesStudio(p.estudio, studioName) && isProgramForToday(p))
             .sort((a, b) => toMin(a.horario_inicio) - toMin(b.horario_inicio));
 
           const onAir = todayPrograms.find(isNowInProgram);
@@ -3397,11 +3401,8 @@ function SwitcherUI({
                       };
 
                       const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
-                      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-                      const studioFilterActive = !!studioName && studioName.trim() !== "" && studioName !== "vMix Studio";
-                      const programasEstudio = studioFilterActive
-                        ? programas.filter(p => p.estudio && (norm(p.estudio).includes(norm(studioName)) || norm(studioName).includes(norm(p.estudio))))
-                        : programas;
+                      const studioFilterActive = isStudioScoped(studioName);
+                      const programasEstudio = programas.filter(p => matchesStudio(p.estudio, studioName));
                       const ordered = hasSavedOrder ? programasEstudio : [...programasEstudio].sort((a, b) => {
                         const studioOrder = (s: string | null) => {
                           if (!s) return 2;
@@ -3414,6 +3415,18 @@ function SwitcherUI({
                         if (diff !== 0) return diff;
                         return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
                       });
+                      if (studioFilterActive && ordered.length === 0) {
+                        return (
+                          <div className="rounded-lg px-4 py-6 text-center" style={{ backgroundColor: "#ffffff05", border: "1px dashed #ffffff14" }}>
+                            <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>
+                              Nenhum programa vinculado ao estúdio “{studioName}”
+                            </p>
+                            <p className="text-[10px] text-white/40 mt-1">
+                              Vincule o estúdio aos programas na Grade de Programação para exibi-los aqui.
+                            </p>
+                          </div>
+                        );
+                      }
                       const groups: Record<string, typeof ordered> = {};
                       for (const p of ordered) {
                         const key = p.estudio || "Sem Estúdio";
