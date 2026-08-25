@@ -2532,30 +2532,34 @@ function SwitcherUI({
     });
   }, [programas]);
 
-  // Próximo programa da grade (mesmo dia)
+  // Próximo programa da grade (tolerante a acentos/formatos e com wrap para o próximo ciclo)
   const nextProgram = useMemo(() => {
     if (!programas || programas.length === 0) return null;
     const now = new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const dayMap: Record<number, string> = {
-      0: "domingo", 1: "segunda", 2: "terça", 3: "quarta",
-      4: "quinta", 5: "sexta", 6: "sábado"
-    };
-    const dayName = dayMap[now.getDay()];
+    const norm = (s?: string | null) =>
+      (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    const daysShort = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+    const todayShort = daysShort[now.getDay()];
     const matchesToday = (p: any) => {
       if (!p.dias_semana || p.dias_semana.length === 0) return true;
-      return p.dias_semana.some((d: string) => d?.toLowerCase()?.startsWith(dayName.slice(0, 3)));
+      return p.dias_semana.some((d: string) => {
+        const n = norm(d);
+        return n.startsWith(todayShort) || n === String(now.getDay());
+      });
     };
-    const list = programas
-      .filter((p: any) => p.horario_inicio && matchesToday(p) && p.id !== currentProgram?.id)
+    const withStart = programas
+      .filter((p: any) => p.horario_inicio && p.id !== currentProgram?.id && matchesToday(p))
       .map((p: any) => {
-        const [h, m] = p.horario_inicio.split(":").map(Number);
-        return { p, start: h * 60 + m };
+        const [h, m] = String(p.horario_inicio).split(":").map(Number);
+        return { p, start: (h || 0) * 60 + (m || 0) };
       })
-      .filter((x: any) => x.start > nowMin)
       .sort((a: any, b: any) => a.start - b.start);
-    return list[0]?.p || null;
+    if (withStart.length === 0) return null;
+    const upcoming = withStart.find((x: any) => x.start > nowMin);
+    return (upcoming || withStart[0]).p;
   }, [programas, currentProgram]);
+
 
 
 
