@@ -2638,7 +2638,7 @@ function SwitcherUI({
               <div className="flex flex-col">
                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
                 <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-white/20'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-[#C6F03C] animate-pulse shadow-[0_0_10px_rgba(198,240,60,0.7)]' : 'bg-white/20'}`} />
                   <div className="flex flex-col">
                     <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
                       {currentProgram?.nome || activeTitle}
