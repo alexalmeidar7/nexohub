@@ -178,7 +178,9 @@ export default function NdiWebrtcMonitor({
   }, []);
 
   const showJpegFrame = useCallback((bytes: Uint8Array) => {
-    const nextUrl = URL.createObjectURL(new Blob([bytes], { type: "image/jpeg" }));
+    const frame = new Uint8Array(bytes.length);
+    frame.set(bytes);
+    const nextUrl = URL.createObjectURL(new Blob([frame.buffer], { type: "image/jpeg" }));
     const image = document.getElementById("vmix-ndi-mjpeg-frame") as HTMLImageElement | null;
     if (!image) {
       URL.revokeObjectURL(nextUrl);
