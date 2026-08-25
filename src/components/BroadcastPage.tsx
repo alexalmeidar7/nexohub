@@ -41,6 +41,8 @@ interface BroadcastData {
   tickerWeather: boolean;
   tickerQuotes: boolean;
   tickerSocials: boolean;
+  tickerSocialTypes?: string[];
+  tituloMode?: "simples" | "web";
   tickerUnitario: boolean;
   tickerRssEnabled: boolean;
   tickerRssUrl: string;
@@ -61,6 +63,8 @@ const defaultBroadcast: BroadcastData = {
   tickerWeather: false,
   tickerQuotes: false,
   tickerSocials: false,
+  tickerSocialTypes: [],
+  tituloMode: "simples",
   tickerUnitario: false,
   tickerRssEnabled: false,
   tickerRssUrl: "",
@@ -626,6 +630,29 @@ export default function BroadcastPage() {
     return () => { cancelled = true; clearInterval(id); };
   }, [data.tickerRssEnabled, data.tickerRssUrl]);
 
+  // Redes sociais selecionadas para o ticker (vazio = todas)
+  const selectedSocialTypes = useMemo(() => {
+    const sel = data.tickerSocialTypes;
+    if (!sel || sel.length === 0) return empresaSocials.map(s => s.tipo);
+    return sel;
+  }, [data.tickerSocialTypes, empresaSocials]);
+
+  const tickerSocialItems = useMemo(
+    () => empresaSocials.filter(s => selectedSocialTypes.includes(s.tipo)),
+    [empresaSocials, selectedSocialTypes],
+  );
+
+  // Lista de todos os textos ativos no ticker (para preview)
+  const tickerItems = useMemo(() => {
+    const items: { source: string; text: string }[] = [];
+    if (data.tickerNews) newsTitles.forEach(t => items.push({ source: "Notícia", text: t }));
+    if (data.tickerWeather && weatherText) items.push({ source: "Tempo", text: weatherText });
+    if (data.tickerQuotes && quotesText) items.push({ source: "Cotação", text: quotesText });
+    if (data.tickerSocials) tickerSocialItems.forEach(s => items.push({ source: s.tipo, text: s.valor }));
+    if (data.ticker.trim()) items.push({ source: "Livre", text: data.ticker.trim() });
+    return items;
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, tickerSocialItems]);
+
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
     const parts: string[] = [];
@@ -638,7 +665,7 @@ export default function BroadcastPage() {
     if (data.tickerQuotes && quotesText) {
       parts.push(quotesText);
     }
-    if (data.tickerSocials && empresaSocials.length > 0) {
+    if (data.tickerSocials && tickerSocialItems.length > 0) {
       const labels: Record<string, string> = {
         instagram: "Instagram",
         facebook: "Facebook",
@@ -647,7 +674,7 @@ export default function BroadcastPage() {
         whatsapp: "WhatsApp",
       };
       parts.push(
-        empresaSocials
+        tickerSocialItems
           .map(s => `${labels[s.tipo] || s.tipo}: ${s.valor}`)
           .join("  •  ")
       );
@@ -656,7 +683,7 @@ export default function BroadcastPage() {
       parts.push(data.ticker);
     }
     return parts.join("  •  ");
-  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, empresaSocials]);
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, tickerSocialItems]);
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
@@ -1078,18 +1105,36 @@ export default function BroadcastPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  onClick={() => handleSave()}
-                  disabled={saving}
-                  className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
-                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 12px 24px ${LIME}25` }}
-                >
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  Salvar XML Broadcast
-                </button>
-                
-                {insertLiveArt && (
+              {insertLiveArt ? (
+                <div className="flex flex-col gap-4">
+                  {/* Imagem que será enviada no insert */}
+                  <div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-white/60">Imagem do Insert Live</div>
+                    <div className="rounded-xl overflow-hidden bg-black/50 border border-white/5 p-2">
+                      <img src={insertLiveArt} alt="Insert Live" className="w-full max-h-56 object-contain" />
+                    </div>
+                  </div>
+
+                  {/* Horários programados */}
+                  <div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-white/60">Horários de Inserção Automática</div>
+                    {insertLiveSchedule.length === 0 ? (
+                      <p className="text-[10px] text-white/50 italic">Sem horários calculados para hoje.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {insertLiveSchedule.map(t => (
+                          <span
+                            key={t}
+                            className="px-3 py-1.5 rounded-lg text-[12px] font-bold tabular-nums"
+                            style={{ backgroundColor: `${CYAN}18`, border: `1px solid ${CYAN}45`, color: CYAN }}
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     onClick={handleInsertNow}
                     disabled={insertingNow}
@@ -1097,10 +1142,14 @@ export default function BroadcastPage() {
                     style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 12px 24px rgba(220,38,38,0.3)" }}
                   >
                     <Youtube size={16} />
-                    {insertingNow ? "Live Ativa (30s)" : "Acionar Insert Live"}
+                    {insertingNow ? "Live Ativa (30s)" : "Inserir Agora (Manual)"}
                   </button>
-                )}
-              </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-white/50 italic">
+                  Nenhuma imagem de Insert Live cadastrada para hoje (arte 5 do evento de live na agenda).
+                </p>
+              )}
 
               <div className="pt-2 border-t border-white/5 flex items-center justify-between">
                 <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Sincronização Ativa</span>
@@ -1116,6 +1165,37 @@ export default function BroadcastPage() {
 
         {activeTab === "assuntos" && (
           <div className="max-w-3xl mx-auto flex flex-col gap-6">
+            {/* Seletor de modo de envio do título */}
+            <div className="p-4 rounded-2xl" style={cardStyle}>
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-3 text-white/60">Como enviar o título ao XML</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {([
+                  { v: "simples" as const, label: "Título Simples", desc: "Digite o assunto e ele vai automaticamente para o XML broadcast" },
+                  { v: "web" as const, label: "Título Web", desc: "Até 3 mensagens rotativas por programa" },
+                ]).map(({ v, label, desc }) => {
+                  const on = (data.tituloMode || "simples") === v;
+                  return (
+                    <button
+                      key={v}
+                      onClick={() => {
+                        const nextData = { ...latestDataRef.current, tituloMode: v };
+                        setData(nextData);
+                        void handleSave(nextData);
+                      }}
+                      className="text-left p-4 rounded-xl transition-all"
+                      style={{
+                        backgroundColor: on ? `${CYAN}18` : NAVY_DEEP,
+                        border: `1px solid ${on ? CYAN : NAVY_BORDER}`,
+                      }}
+                    >
+                      <span className="text-[11px] font-black uppercase tracking-widest block" style={{ color: on ? CYAN : "#ffffff90" }}>{label}</span>
+                      <p className="text-[10px] mt-1" style={{ color: "#ffffff60" }}>{desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Identidade visual e Conteúdo */}
             <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
               <div className="flex items-center gap-3 mb-6">
@@ -1128,18 +1208,21 @@ export default function BroadcastPage() {
               </div>
               
               <div className="space-y-6">
-                <div className="relative group">
-                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
-                  <input
-                    type="text"
-                    value={data.assunto}
-                    onChange={e => setData({ ...data, assunto: e.target.value })}
-                    onBlur={onFieldBlur}
-                    placeholder="Defina o assunto principal..."
-                    className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none outline-none"
-                    style={inputStyle}
-                  />
-                </div>
+                {(data.tituloMode || "simples") === "simples" && (
+                  <div className="relative group">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
+                    <input
+                      type="text"
+                      value={data.assunto}
+                      onChange={e => setData({ ...data, assunto: e.target.value })}
+                      onBlur={onFieldBlur}
+                      placeholder="Defina o assunto principal..."
+                      className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none outline-none"
+                      style={inputStyle}
+                    />
+                    <p className="text-[9px] mt-2" style={{ color: "#ffffff50" }}>Enviado automaticamente para o XML broadcast ao sair do campo.</p>
+                  </div>
+                )}
 
 
 
@@ -1258,10 +1341,12 @@ export default function BroadcastPage() {
                 </div>
               </div>
             </div>
-            <div className="p-6 rounded-2xl" style={cardStyle}>
-            <SectionHeader n="01" label="Assuntos do Programa" color={CYAN} />
-            <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
-            </div>
+            {(data.tituloMode || "simples") === "web" && (
+              <div className="p-6 rounded-2xl" style={cardStyle}>
+                <SectionHeader n="01" label="Título Web · Mensagens Rotativas" color={CYAN} />
+                <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
+              </div>
+            )}
           </div>
         )}
 
@@ -1388,34 +1473,101 @@ export default function BroadcastPage() {
                 { key: "tickerNews", icon: <Newspaper size={12} />, label: "Notícias", desc: "Títulos das últimas notícias" },
                 { key: "tickerWeather", icon: <CloudSun size={12} />, label: "Previsão do Tempo", desc: "Tempo atual e amanhã" },
                 { key: "tickerQuotes", icon: <TrendingUp size={12} />, label: "Cotações", desc: "Dólar e Euro (BRL)" },
-                { key: "tickerSocials", icon: <Instagram size={12} />, label: "Redes Sociais", desc: "Instagram, Facebook, YouTube, Site, WhatsApp" },
+                { key: "tickerSocials", icon: <Instagram size={12} />, label: "Redes Sociais", desc: "Escolha quais redes vão para o ticker" },
               ] as const).map(({ key, icon, label, desc }) => {
                 const active = data[key];
                 return (
-                  <label
-                    key={key}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
-                    style={{
-                      backgroundColor: active ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
-                      border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={active}
-                      onChange={e => {
-                        const nextData = { ...latestDataRef.current, [key]: e.target.checked };
-                        setData(nextData);
-                        void handleSave(nextData);
+                  <div key={key}>
+                    <label
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
+                      style={{
+                        backgroundColor: active ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                        border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
                       }}
-                      style={{ accentColor: CYAN }}
-                    />
-                    <span style={{ color: active ? CYAN : "#ffffff60" }}>{icon}</span>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[12px] font-semibold text-white block">{label}</span>
-                      <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
-                    </div>
-                  </label>
+                    >
+                      <input
+                        type="checkbox"
+                        checked={active}
+                        onChange={e => {
+                          const nextData = { ...latestDataRef.current, [key]: e.target.checked };
+                          setData(nextData);
+                          void handleSave(nextData);
+                        }}
+                        style={{ accentColor: CYAN }}
+                      />
+                      <span style={{ color: active ? CYAN : "#ffffff60" }}>{icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[12px] font-semibold text-white block">{label}</span>
+                        <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
+                      </div>
+                    </label>
+
+                    {/* QR Code do WhatsApp — logo abaixo de Notícias */}
+                    {key === "tickerNews" && whatsappNumber && (
+                      <label
+                        className="mt-2 flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
+                        style={{
+                          backgroundColor: data.showQrCode ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                          border: `1px solid ${data.showQrCode ? CYAN : NAVY_BORDER}`,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={data.showQrCode}
+                          onChange={e => {
+                            const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
+                            setData(nextData);
+                            void handleSave(nextData);
+                          }}
+                          style={{ accentColor: CYAN }}
+                        />
+                        <span style={{ color: data.showQrCode ? CYAN : "#ffffff60" }}><Phone size={12} /></span>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[12px] font-semibold text-white block">QR Code (WhatsApp)</span>
+                          <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>Exibir QR para interação ao vivo</p>
+                        </div>
+                      </label>
+                    )}
+
+                    {/* Submenu — seleção de redes sociais */}
+                    {key === "tickerSocials" && active && (
+                      <div
+                        className="mt-2 ml-4 p-3 rounded-xl space-y-1.5"
+                        style={{ backgroundColor: NAVY_DEEP, border: `1px dashed ${CYAN}55` }}
+                      >
+                        <div className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>
+                          Redes enviadas ao ticker
+                        </div>
+                        {empresaSocials.length === 0 ? (
+                          <p className="text-[10px] italic" style={{ color: "#ffffff60" }}>Nenhuma rede social configurada na empresa.</p>
+                        ) : (
+                          empresaSocials.map(s => {
+                            const selected = selectedSocialTypes.includes(s.tipo);
+                            return (
+                              <label key={s.tipo} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={selected}
+                                  onChange={e => {
+                                    const base = selectedSocialTypes;
+                                    const next = e.target.checked
+                                      ? Array.from(new Set([...base, s.tipo]))
+                                      : base.filter(t => t !== s.tipo);
+                                    const nextData = { ...latestDataRef.current, tickerSocialTypes: next };
+                                    setData(nextData);
+                                    void handleSave(nextData);
+                                  }}
+                                  style={{ accentColor: CYAN }}
+                                />
+                                <span style={{ color: selected ? CYAN : "#ffffff60" }}>{s.icon}</span>
+                                <span className="text-[11px] truncate" style={{ color: selected ? "#fff" : "#ffffff70" }}>{s.valor}</span>
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -1469,16 +1621,19 @@ export default function BroadcastPage() {
               </div>
 
               <div
-                className="relative overflow-hidden rounded-md"
-                style={{ backgroundColor: "#000", border: `1px solid ${NAVY_BORDER}`, height: 34 }}
+                className="overflow-hidden rounded-md"
+                style={{ backgroundColor: "#000", border: "1px solid #FFFFFF", height: 34 }}
               >
                 {composedTicker ? (
                   <div
-                    className="absolute whitespace-nowrap text-[13px] font-semibold flex items-center h-full"
+                    className="text-[13px] font-semibold"
                     style={{
+                      display: "inline-block",
+                      whiteSpace: "nowrap",
+                      lineHeight: "34px",
                       color: "#ffffff",
-                      animation: "tickerSlide 30s linear infinite",
                       paddingLeft: "100%",
+                      animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
                     }}
                   >
                     {composedTicker}
@@ -1490,13 +1645,38 @@ export default function BroadcastPage() {
                 )}
               </div>
 
+              {/* Preview de TODOS os textos setados no ticker */}
+              <div className="mt-3">
+                <div className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: CYAN }}>
+                  Textos no ticker ({tickerItems.length})
+                </div>
+                <div
+                  className="rounded-md p-2 max-h-56 overflow-auto space-y-1"
+                  style={{ backgroundColor: "rgba(0,0,0,0.35)", border: `1px dashed ${NAVY_BORDER}` }}
+                >
+                  {tickerItems.length === 0 ? (
+                    <div className="text-[10.5px] text-center py-3" style={{ color: "#ffffff50" }}>
+                      Nenhum texto ativo no ticker.
+                    </div>
+                  ) : (
+                    tickerItems.map((it, i) => (
+                      <div key={i} className="flex items-start gap-2 text-[11px]">
+                        <span className="shrink-0 text-[9.5px] font-mono" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
+                        <span className="shrink-0 text-[9px] uppercase font-bold px-1.5 rounded" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>{it.source}</span>
+                        <span className="min-w-0 flex-1" style={{ color: "#ffffffcc" }}>{it.text}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
               {/* Composição por fonte */}
               <div className="mt-3 space-y-1.5">
                 {[
                   { on: data.tickerNews, label: "Notícias", value: newsTitles.length ? `${newsTitles.length} títulos` : "—" },
                   { on: data.tickerWeather, label: "Tempo", value: weatherText || "—" },
                   { on: data.tickerQuotes, label: "Cotações", value: quotesText || "—" },
-                  { on: data.tickerSocials, label: "Redes", value: empresaSocials.length ? `${empresaSocials.length} canais` : "—" },
+                  { on: data.tickerSocials, label: "Redes", value: tickerSocialItems.length ? `${tickerSocialItems.length} canais` : "—" },
                   { on: !!data.ticker, label: "Texto livre", value: data.ticker || "—" },
                 ].map((row, i) => (
                   <div key={i} className="flex items-center gap-2 text-[11px]">
@@ -1540,30 +1720,6 @@ export default function BroadcastPage() {
                   </div>
                 )}
 
-                {whatsappNumber && (
-                  <label className="flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all border-2" 
-                    style={{ 
-                      backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
-                      borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
-                    }}>
-
-                    <input
-                      type="checkbox"
-                      checked={data.showQrCode}
-                      onChange={e => {
-                        const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
-                        setData(nextData);
-                        void handleSave(nextData);
-                      }}
-                      className="w-4 h-4"
-                      style={{ accentColor: CYAN }}
-                    />
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-white block">WhatsApp QR Code</span>
-                      <p className="text-[9px] text-white/40">Exibir QR para interação ao vivo</p>
-                    </div>
-                  </label>
-                )}
               </div>
             </div>
           </div>
@@ -2146,22 +2302,24 @@ function MockupPreview({
           </div>
         </div>
 
-        {/* Ticker bar – separate from title, with gap */}
+        {/* Ticker bar – fundo preto, borda branca, texto branco até o final */}
         {composedTicker && (
-          <div className="overflow-hidden mt-3" style={{ backgroundColor: accentColor + "18", border: `1px solid ${accentColor}30`, height: 28, borderRadius: 8 }}>
+          <div className="overflow-hidden mt-3" style={{ backgroundColor: "#000000", border: "1px solid #FFFFFF", height: 28, borderRadius: 8 }}>
             <div
-              className="flex items-center h-full whitespace-nowrap"
               style={{
-                animation: "tickerSlide 20s linear infinite",
+                display: "inline-block",
+                whiteSpace: "nowrap",
                 paddingLeft: "100%",
+                lineHeight: "28px",
+                animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
               }}
             >
-              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#FFFFFF", opacity: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#FFFFFF", opacity: 1 }}>
                 {composedTicker.split(/(\s[▲▼]\s[+−]\d+[.,]\d{2}%)/g).map((seg, i) => {
                   const m = seg.match(/^\s([▲▼])\s([+−]\d+[.,]\d{2}%)$/);
                   if (m) {
                     const color = m[1] === "▲" ? "#4ade80" : "#f87171";
-                    return <span key={i} style={{ color, textShadow: `0 0 10px ${color}40` }}>{seg}</span>;
+                    return <span key={i} style={{ color }}>{seg}</span>;
                   }
                   return <span key={i}>{seg}</span>;
                 })}
