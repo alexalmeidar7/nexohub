@@ -53,6 +53,7 @@ export default function IntercomWidget() {
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const remoteDescSetRef = useRef(false);
@@ -67,6 +68,33 @@ export default function IntercomWidget() {
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
   useEffect(() => { talkingRef.current = talking; }, [talking]);
+
+  const attachRemoteStreamToAudio = useCallback((stream?: MediaStream | null) => {
+    const el = audioRef.current;
+    const nextStream = stream ?? remoteStreamRef.current;
+    if (!el || !nextStream) return;
+
+    if (el.srcObject !== nextStream) {
+      try { el.pause(); } catch {}
+      el.srcObject = nextStream;
+    }
+
+    el.defaultMuted = false;
+    el.muted = false;
+    el.volume = listenerVolumeRef.current;
+
+    el.play()
+      .then(() => setAudioBlocked(false))
+      .catch((e) => {
+        console.warn("[Intercom Listener] Autoplay blocked:", e?.message);
+        setAudioBlocked(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (role !== "listener" || !listenerName) return;
+    attachRemoteStreamToAudio();
+  }, [role, listenerName, open, minimized, attachRemoteStreamToAudio]);
 
   // ─── Signaling channel (shared by both roles) ───
   useEffect(() => {
@@ -169,23 +197,10 @@ export default function IntercomWidget() {
             console.log("[Intercom Listener] Got audio track!");
             setReceiving(true);
             const stream = ev.streams[0] || new MediaStream([ev.track]);
-            const el = audioRef.current;
-            if (el) {
-              try { el.pause(); } catch {}
-              try { (el as any).srcObject = null; } catch {}
-              el.srcObject = stream;
-              el.muted = false;
-              el.volume = listenerVolumeRef.current;
-              const tryPlay = () => el.play()
-                .then(() => setAudioBlocked(false))
-                .catch((e) => {
-                  console.warn("[Intercom Listener] Autoplay blocked:", e?.message);
-                  setAudioBlocked(true);
-                });
-              tryPlay();
-              // Re-attempt after a tick — some browsers need a microtask after srcObject swap
-              setTimeout(tryPlay, 100);
-            }
+            remoteStreamRef.current = stream;
+            attachRemoteStreamToAudio(stream);
+            // Re-attempt after a tick — some browsers need a microtask after srcObject swap
+            setTimeout(() => attachRemoteStreamToAudio(stream), 100);
           };
 
           pc.onconnectionstatechange = () => {
@@ -244,6 +259,7 @@ export default function IntercomWidget() {
         console.log("[Intercom Listener] Speaker hung up");
         pcRef.current?.close();
         pcRef.current = null;
+        remoteStreamRef.current = null;
         remoteDescSetRef.current = false;
         pendingCandidatesRef.current = [];
         setReceiving(false);
@@ -275,6 +291,7 @@ export default function IntercomWidget() {
       channelReadyRef.current = false;
       pcRef.current?.close();
       pcRef.current = null;
+      remoteStreamRef.current = null;
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
       ch.untrack();
@@ -458,6 +475,7 @@ export default function IntercomWidget() {
     stopTalking();
     pcRef.current?.close();
     pcRef.current = null;
+    remoteStreamRef.current = null;
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
     setRole("none");
@@ -480,6 +498,7 @@ export default function IntercomWidget() {
     stopTalking();
     pcRef.current?.close();
     pcRef.current = null;
+    remoteStreamRef.current = null;
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
     setRole("none");
@@ -500,13 +519,7 @@ export default function IntercomWidget() {
 
   // Autoplay unlock for listener
   const handleUnlockAudio = () => {
-    if (audioRef.current && audioRef.current.srcObject) {
-      audioRef.current.muted = false;
-      audioRef.current.volume = listenerVolume;
-      audioRef.current.play()
-        .then(() => setAudioBlocked(false))
-        .catch(console.warn);
-    }
+    attachRemoteStreamToAudio();
   };
 
   // Keep audio element volume in sync
@@ -532,52 +545,55 @@ export default function IntercomWidget() {
   if (minimized && role !== "none") {
     const isActive = talking || receiving;
     return (
-      <div 
-        id="intercom-minimized-fab"
-        className="absolute inset-0 z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto flex items-center justify-center"
-        onClick={(e) => { 
-          e.stopPropagation();
-          setOpen(true); 
-          setMinimized(false); 
-        }}
-      >
-        <div className="relative group w-full h-full flex items-center justify-center">
-          {isActive && (
-            <>
-              <div className="absolute inset-0 rounded-full animate-ping"
-                style={{ border: `2px solid ${talking ? "#ef4444" : "#00BFF0"}`, animationDuration: "1.5s" }} />
-              <div className="absolute -inset-1 rounded-full animate-ping"
-                style={{ border: `1px solid ${talking ? "rgba(239,68,68,0.3)" : "rgba(0,191,240,0.3)"}`, animationDuration: "2.5s" }} />
-            </>
-          )}
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg border hover:scale-110 bg-black"
-            style={{
-              borderColor: talking ? "#ef4444" : receiving ? "#00BFF0" : "rgba(0,191,240,0.4)",
-              boxShadow: isActive ? `0 0 20px ${talking ? "rgba(239,68,68,0.4)" : "rgba(0,191,240,0.4)"}` : "0 4px 8px rgba(0,0,0,0.3)"
-            }}>
-            {talking ? (
-              <Mic size={18} className="text-white" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
-            ) : receiving ? (
-              <Volume2 size={18} className="text-[#00BFF0]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
-            ) : role === "speaker" ? (
-              <Mic size={18} className="text-white/40" />
-            ) : (
-              <Headphones size={18} className="text-white/40" />
+      <>
+        {role === "listener" && <audio ref={audioRef} autoPlay playsInline className="hidden" />}
+        <div 
+          id="intercom-minimized-fab"
+          className="absolute inset-0 z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto flex items-center justify-center"
+          onClick={(e) => { 
+            e.stopPropagation();
+            setOpen(true); 
+            setMinimized(false); 
+          }}
+        >
+          <div className="relative group w-full h-full flex items-center justify-center">
+            {isActive && (
+              <>
+                <div className="absolute inset-0 rounded-full animate-ping"
+                  style={{ border: `2px solid ${talking ? "#ef4444" : "#00BFF0"}`, animationDuration: "1.5s" }} />
+                <div className="absolute -inset-1 rounded-full animate-ping"
+                  style={{ border: `1px solid ${talking ? "rgba(239,68,68,0.3)" : "rgba(0,191,240,0.3)"}`, animationDuration: "2.5s" }} />
+              </>
             )}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg border hover:scale-110 bg-black"
+              style={{
+                borderColor: talking ? "#ef4444" : receiving ? "#00BFF0" : "rgba(0,191,240,0.4)",
+                boxShadow: isActive ? `0 0 20px ${talking ? "rgba(239,68,68,0.4)" : "rgba(0,191,240,0.4)"}` : "0 4px 8px rgba(0,0,0,0.3)"
+              }}>
+              {talking ? (
+                <Mic size={18} className="text-white" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+              ) : receiving ? (
+                <Volume2 size={18} className="text-[#00BFF0]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+              ) : role === "speaker" ? (
+                <Mic size={18} className="text-white/40" />
+              ) : (
+                <Headphones size={18} className="text-white/40" />
+              )}
+            </div>
+            
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 rounded bg-black/80 text-white text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              {talking ? "Transmitindo" : receiving ? "Recebendo" : "Intercom Ligado"}
+            </div>
           </div>
           
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 rounded bg-black/80 text-white text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            {talking ? "Transmitindo" : receiving ? "Recebendo" : "Intercom Ligado"}
-          </div>
+          <style>{`
+            @keyframes intercomIconPulse {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.15); }
+            }
+          `}</style>
         </div>
-        
-        <style>{`
-          @keyframes intercomIconPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-          }
-        `}</style>
-      </div>
+      </>
     );
   }
 
@@ -795,6 +811,7 @@ export default function IntercomWidget() {
               setRole("none");
               setOpen(true);
               setMinimized(false);
+              remoteStreamRef.current = null;
               const el = audioRef.current;
               if (el) {
                 try { el.pause(); } catch {}
