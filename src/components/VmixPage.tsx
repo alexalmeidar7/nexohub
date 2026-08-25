@@ -3813,6 +3813,7 @@ function SwitcherUI({
             programaId={prog.id}
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
+            estudioFixo={studioName || null}
             userId={user.id}
             inputs={inputs}
             onRunCommands={async (cmds) => {
