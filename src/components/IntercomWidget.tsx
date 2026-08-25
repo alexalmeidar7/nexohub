@@ -607,7 +607,7 @@ export default function IntercomWidget() {
     return (
       <div 
         id="intercom-selection-menu"
-        className="nexo-scope absolute left-full top-0 ml-2 z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
+        className="nexo-scope absolute left-full top-1/2 -translate-y-1/2 ml-2 z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
         style={{ width: "auto" }}
       >
         <div className="flex items-center gap-1">
