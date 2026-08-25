@@ -831,6 +831,43 @@ export default function BroadcastPage() {
     handleSave();
   }, [handleSave]);
 
+  // ── Atualização automática do ticker no XML a cada 5 minutos ──
+  // Recarrega as fontes (notícias/tempo/cotações) e regrava a config no
+  // backend em silêncio, para o XML do vMix sempre servir texto atualizado.
+  const [tickerSyncedAt, setTickerSyncedAt] = useState<Date | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    const syncTicker = async () => {
+      try {
+        await loadInitialData();
+        const { data: cur } = await supabase
+          .from("user_settings")
+          .select("cenario_config")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const existing = (cur?.cenario_config && typeof cur.cenario_config === "object")
+          ? cur.cenario_config as Record<string, any>
+          : {};
+        const broadcast = {
+          ...(existing.broadcast || {}),
+          ...latestDataRef.current,
+          tickerUpdatedAt: new Date().toISOString(),
+        };
+        await supabase
+          .from("user_settings")
+          .update({ cenario_config: { ...existing, broadcast } as any })
+          .eq("user_id", user.id);
+        setTickerSyncedAt(new Date());
+      } catch {
+        /* silencioso — próxima janela de 5min tenta de novo */
+      }
+    };
+    void syncTicker();
+    const id = setInterval(syncTicker, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [user, loadInitialData]);
+
+
   const handleInsertNow = useCallback(async () => {
     if (!user || !insertLiveArt) return;
     setInsertingNow(true);
@@ -1659,14 +1696,23 @@ export default function BroadcastPage() {
               className="mt-4 p-3 rounded-xl"
               style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                 <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff70" }}>
                   Preview do Ticker · o que sai no XML
                 </div>
-                <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>
-                  {data.tickerUnitario ? "Unitário · 4s por item" : "Contínuo"}
+                <div className="flex items-center gap-2">
+                  <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(198,240,60,0.15)", color: LIME }}>
+                    Atualiza no XML a cada 5 min
+                    {tickerSyncedAt
+                      ? ` · ${tickerSyncedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                      : ""}
+                  </div>
+                  <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>
+                    {data.tickerUnitario ? "Unitário · 4s por item" : "Contínuo"}
+                  </div>
                 </div>
               </div>
+
 
               <div
                 className="overflow-hidden rounded-md relative"
