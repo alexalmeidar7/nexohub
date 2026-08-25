@@ -1552,16 +1552,19 @@ export default function BroadcastPage() {
               </div>
 
               <div
-                className="relative overflow-hidden rounded-md"
-                style={{ backgroundColor: "#000", border: `1px solid ${NAVY_BORDER}`, height: 34 }}
+                className="overflow-hidden rounded-md"
+                style={{ backgroundColor: "#000", border: "1px solid #FFFFFF", height: 34 }}
               >
                 {composedTicker ? (
                   <div
-                    className="absolute whitespace-nowrap text-[13px] font-semibold flex items-center h-full"
+                    className="text-[13px] font-semibold"
                     style={{
+                      display: "inline-block",
+                      whiteSpace: "nowrap",
+                      lineHeight: "34px",
                       color: "#ffffff",
-                      animation: "tickerSlide 30s linear infinite",
                       paddingLeft: "100%",
+                      animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
                     }}
                   >
                     {composedTicker}
@@ -1573,13 +1576,38 @@ export default function BroadcastPage() {
                 )}
               </div>
 
+              {/* Preview de TODOS os textos setados no ticker */}
+              <div className="mt-3">
+                <div className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: CYAN }}>
+                  Textos no ticker ({tickerItems.length})
+                </div>
+                <div
+                  className="rounded-md p-2 max-h-56 overflow-auto space-y-1"
+                  style={{ backgroundColor: "rgba(0,0,0,0.35)", border: `1px dashed ${NAVY_BORDER}` }}
+                >
+                  {tickerItems.length === 0 ? (
+                    <div className="text-[10.5px] text-center py-3" style={{ color: "#ffffff50" }}>
+                      Nenhum texto ativo no ticker.
+                    </div>
+                  ) : (
+                    tickerItems.map((it, i) => (
+                      <div key={i} className="flex items-start gap-2 text-[11px]">
+                        <span className="shrink-0 text-[9.5px] font-mono" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
+                        <span className="shrink-0 text-[9px] uppercase font-bold px-1.5 rounded" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>{it.source}</span>
+                        <span className="min-w-0 flex-1" style={{ color: "#ffffffcc" }}>{it.text}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
               {/* Composição por fonte */}
               <div className="mt-3 space-y-1.5">
                 {[
                   { on: data.tickerNews, label: "Notícias", value: newsTitles.length ? `${newsTitles.length} títulos` : "—" },
                   { on: data.tickerWeather, label: "Tempo", value: weatherText || "—" },
                   { on: data.tickerQuotes, label: "Cotações", value: quotesText || "—" },
-                  { on: data.tickerSocials, label: "Redes", value: empresaSocials.length ? `${empresaSocials.length} canais` : "—" },
+                  { on: data.tickerSocials, label: "Redes", value: tickerSocialItems.length ? `${tickerSocialItems.length} canais` : "—" },
                   { on: !!data.ticker, label: "Texto livre", value: data.ticker || "—" },
                 ].map((row, i) => (
                   <div key={i} className="flex items-center gap-2 text-[11px]">
