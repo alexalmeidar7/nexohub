@@ -27,6 +27,26 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
 import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
 
+/* ── Escopo de estúdio (validação central) ─────────────────────────────── */
+const normStudio = (s?: string | null) =>
+  (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+
+/** true quando um estúdio específico foi selecionado na conexão */
+export const isStudioScoped = (studioName?: string | null) => {
+  const n = normStudio(studioName);
+  return n !== "" && n !== "vmix studio";
+};
+
+/** valida se um registro (programa/botão) pertence ao estúdio selecionado */
+export const matchesStudio = (recordStudio?: string | null, studioName?: string | null) => {
+  if (!isStudioScoped(studioName)) return true;
+  const a = normStudio(recordStudio);
+  const b = normStudio(studioName);
+  if (!a) return false; // sem estúdio definido não herda o estúdio selecionado
+  return a === b || a.includes(b) || b.includes(a);
+};
+
+
 interface VmixInput {
   key: string;
   number: string;
