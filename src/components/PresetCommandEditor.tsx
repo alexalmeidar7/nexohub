@@ -384,32 +384,34 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Horário de Execução</label>
+              <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Horário de Execução</label>
               <div className="flex items-center gap-2">
                 <input
                   type="time"
                   value={customHorario}
                   onChange={e => setCustomHorario(e.target.value)}
-                  className="bg-[#181820] text-xs px-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc] flex-1"
+                  className="text-xs px-3 py-2 rounded-lg outline-none flex-1"
+                  style={{ backgroundColor: "#141414", border: "1px solid #ffffff14", color: "#eee" }}
                 />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Data Específica (Opcional)</label>
+              <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Data Específica (Opcional)</label>
               <div className="flex items-center gap-2 relative">
-                <Calendar size={12} className="absolute left-3 text-[#666]" />
+                <Calendar size={12} className="absolute left-3" style={{ color: "#C6F03C80" }} />
                 <input
                   type="date"
                   value={dataEspecifica}
                   onChange={e => setDataEspecifica(e.target.value)}
-                  className="bg-[#181820] text-xs pl-9 pr-3 py-2 rounded-lg outline-none border border-[#333] text-[#ccc] w-full"
+                  className="text-xs pl-9 pr-3 py-2 rounded-lg outline-none w-full"
+                  style={{ backgroundColor: "#141414", border: "1px solid #ffffff14", color: "#eee" }}
                 />
               </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] font-bold uppercase tracking-widest text-[#888]">Dias da Semana</label>
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Dias da Semana</label>
             <div className="flex flex-wrap gap-1">
               {DIAS_SEMANA_OPCOES.map(dia => {
                 const active = diasSemana.includes(dia);
@@ -417,11 +419,11 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                   <button
                     key={dia}
                     onClick={() => setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia])}
-                    className="text-[9px] font-bold px-2 py-1 rounded border transition-all"
+                    className="text-[9px] font-black uppercase px-2 py-1 rounded border transition-all"
                     style={{
-                      backgroundColor: active ? "#3b82f620" : "#ffffff05",
-                      color: active ? "#3b82f6" : "#666",
-                      borderColor: active ? "#3b82f640" : "transparent"
+                      backgroundColor: active ? "#C6F03C" : "#1a1a1a",
+                      color: active ? "#000" : "#777",
+                      borderColor: active ? "#C6F03C" : "#ffffff10"
                     }}
                   >
                     {dia.slice(0, 3)}
@@ -430,6 +432,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               })}
             </div>
           </div>
+
         </div>
 
         {/* Commands list */}
