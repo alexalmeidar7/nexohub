@@ -2006,6 +2006,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         />
       </Suspense>
 
+      {/* ═══ TRANSCRIÇÃO DE ÁUDIO ═══ */}
+      <Suspense fallback={null}>
+        <TranscricaoAudioSection />
+      </Suspense>
+
+
+
 
       {/* XML MUSICA AGORA */}
       <section className="mt-8 mb-12">
