@@ -98,6 +98,8 @@ interface Props {
   onRunCommands: (commands: PresetCommand[]) => Promise<void>;
   onSaved: () => void;
   inputMapping?: Record<string, { title: string; key: string }>;
+  /** Estúdio selecionado — novos botões ficam vinculados a ele */
+  estudio?: string | null;
 }
 
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
