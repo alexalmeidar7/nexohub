@@ -64,6 +64,7 @@ export default function NdiWebrtcMonitor({
   onRefresh?: () => void | Promise<void>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const mjpegAbortRef = useRef<AbortController | null>(null);
   const frameUrlRef = useRef<string | null>(null);
@@ -181,7 +182,7 @@ export default function NdiWebrtcMonitor({
     const frame = new Uint8Array(bytes.length);
     frame.set(bytes);
     const nextUrl = URL.createObjectURL(new Blob([frame.buffer], { type: "image/jpeg" }));
-    const image = document.getElementById("vmix-ndi-mjpeg-frame") as HTMLImageElement | null;
+    const image = imageRef.current;
     if (!image) {
       URL.revokeObjectURL(nextUrl);
       return;
@@ -380,10 +381,10 @@ export default function NdiWebrtcMonitor({
       >
         {current?.kind === "mjpeg" ? (
           <img
-            id="vmix-ndi-mjpeg-frame"
+            ref={imageRef}
             alt={current?.label || "Fonte NDI"}
             className="absolute"
-            style={{ top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" }}
+            style={{ top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", visibility: status === "live" ? "visible" : "hidden" }}
           />
         ) : (
           <video
