@@ -1696,14 +1696,23 @@ export default function BroadcastPage() {
               className="mt-4 p-3 rounded-xl"
               style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                 <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff70" }}>
                   Preview do Ticker · o que sai no XML
                 </div>
-                <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>
-                  {data.tickerUnitario ? "Unitário · 4s por item" : "Contínuo"}
+                <div className="flex items-center gap-2">
+                  <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(198,240,60,0.15)", color: LIME }}>
+                    Atualiza no XML a cada 5 min
+                    {tickerSyncedAt
+                      ? ` · ${tickerSyncedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                      : ""}
+                  </div>
+                  <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>
+                    {data.tickerUnitario ? "Unitário · 4s por item" : "Contínuo"}
+                  </div>
                 </div>
               </div>
+
 
               <div
                 className="overflow-hidden rounded-md relative"
