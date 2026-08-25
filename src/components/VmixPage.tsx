@@ -2850,11 +2850,11 @@ function SwitcherUI({
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333" }}>
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-emerald-400/80">◐ Pré-Visualização</h3>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputs.length || 2))}, minmax(0,1fr))` }}>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
                       {inputs.length === 0 && (
                         <span className="col-span-full text-[10px] text-white/30">Nenhum input.</span>
                       )}
-                      {inputs.map(input => {
+                      {inputsSemCategoria.map((input: any) => {
                         const isPreview = previewInput === input.number;
                         const isActive = activeInput === input.number;
                         const shortcut = inputShortcuts[input.key] || inputShortcuts[input.number];
@@ -2863,6 +2863,8 @@ function SwitcherUI({
                         return (
                           <button
                             key={`pvw-${input.key || input.number}`}
+                            draggable
+                            onDragStart={(e) => e.dataTransfer.setData("text/vmix-input", input.number)}
                             onClick={(e) => {
                               sendCommand("PreviewInput", input.number);
                               setPreviewInput(input.number);
@@ -2900,6 +2902,23 @@ function SwitcherUI({
                         );
                       })}
                     </div>
+                  </section>
+
+                  {/* Categorias (drag and drop) */}
+                  <section className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Categorias</h3>
+                    <VmixCategoryPanel
+                      side="preview"
+                      categorias={switcherCategorias}
+                      inputs={inputs}
+                      previewInput={previewInput}
+                      activeInput={activeInput}
+                      onSelect={(num) => { sendCommand("PreviewInput", num); setPreviewInput(num); }}
+                      onDropInput={moverInputCategoria}
+                      onRemoveInput={removerInputCategoria}
+                      onDelete={excluirCategoria}
+                    />
+                    <VmixCategoryCreator onCreate={criarCategoria} />
                   </section>
                 </div>
 
