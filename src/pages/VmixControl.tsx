@@ -122,25 +122,28 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
-      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
-        <div className="flex items-center gap-2">
-          {/* Removido relógio e botão nova janela */}
-        </div>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#000000" }}>
+      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #C6F03C20" }}>
+        <div className="flex items-center gap-2" />
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <img src={vmixControlLogo.url} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-white/60 text-xs">{user.email}</span>
-          {/* Removido botão Voltar */}
-          <button onClick={handleLogout} className="text-white/50 hover:text-white transition-colors" title="Sair">
-            <LogOut size={16} />
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#C6F03C99" }}>{user.email}</span>
+          <button
+            onClick={handleLogout}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+            style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C30" }}
+            title="Sair"
+          >
+            <LogOut size={15} />
           </button>
         </div>
       </header>
-      <main className="flex-1 p-6" style={{ backgroundColor: "#191919" }}>
+      <main className="flex-1 p-6" style={{ backgroundColor: "#000000" }}>
         <VmixPage forcedConnected={forcedConnected} />
       </main>
     </div>
   );
+
 }
