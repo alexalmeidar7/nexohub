@@ -2925,12 +2925,8 @@ function SwitcherUI({
                 {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333", backgroundColor: "#222225" }}>
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Próxima Transição</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Overlays</h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="h-16 rounded border flex items-center justify-center text-[10px] font-black uppercase tracking-wider"
-                        style={{ backgroundColor: "#f59e0b", color: "#111", borderColor: "#fcd34d", boxShadow: "0 0 10px rgba(245,158,11,0.35)" }}>
-                        BKGD
-                      </div>
                       {[1, 2, 3, 4].map(n => {
                         const isOn = overlays[n];
                         return (
@@ -2939,7 +2935,7 @@ function SwitcherUI({
                             onClick={() => {
                               const cmd = isOn ? `OverlayInput${n}Off` : `OverlayInput${n}`;
                               sendCommand(cmd);
-                              setOverlays(prev => ({ ...prev, [n]: !prev[n] }));
+                              setOverlays((prev: any) => ({ ...prev, [n]: !prev[n] }));
                             }}
                             className="h-16 rounded border text-[10px] font-black tracking-wider transition-all"
                             style={{
@@ -2949,7 +2945,7 @@ function SwitcherUI({
                               boxShadow: isOn ? "0 0 12px rgba(220,38,38,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
                             }}
                           >
-                            KEY {n}
+                            OVERLAY {n}
                             {isOn && <span className="block text-[8px] mt-0.5 opacity-90">ON AIR</span>}
                           </button>
                         );
@@ -2957,20 +2953,9 @@ function SwitcherUI({
                     </div>
                   </section>
 
-                  {/* Transition Controls inside Middle section */}
                   <section>
-                    <div className="flex items-center gap-2 mb-2">
-                       <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">Duração</span>
-                       <input
-                         type="range"
-                         min={200} max={4000} step={100}
-                         value={transitionDuration}
-                         onChange={e => { const v = Number(e.target.value); setTransitionDuration(v); localStorage.setItem("vmix_transition_duration", String(v)); }}
-                         className="flex-1 accent-amber-500"
-                       />
-                       <span className="text-[10px] font-mono text-amber-400 w-12 text-right">{(transitionDuration/1000).toFixed(1)}s</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Transições</h3>
+                    <div className="grid gap-2">
                       <button
                         onClick={() => sendCommand("Cut")}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
@@ -2979,11 +2964,18 @@ function SwitcherUI({
                         CUT
                       </button>
                       <button
-                        onClick={() => sendCommand(transitionStyle, undefined, String(transitionDuration))}
+                        onClick={() => sendCommand("Fade", undefined, String(transitionDuration))}
                         className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60" }}
                       >
-                        AUTO
+                        FADE
+                      </button>
+                      <button
+                        onClick={() => sendCommand("Merge", undefined, String(transitionDuration))}
+                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#3a3a3a", color: "#fff", borderColor: "#4a4a4a" }}
+                      >
+                        MERGE
                       </button>
                     </div>
                   </section>
