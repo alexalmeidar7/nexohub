@@ -2719,10 +2719,11 @@ function SwitcherUI({
                   style={{ minWidth: '120px', textAlign: 'center' }}
                 >
                   <span 
-                    className="text-2xl tracking-widest text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                    className="text-2xl tracking-widest drop-shadow-[0_0_10px_rgba(198,240,60,0.45)]"
                     style={{ 
                       fontFamily: "'Digital-7', monospace",
-                      fontVariantNumeric: "tabular-nums"
+                      fontVariantNumeric: "tabular-nums",
+                      color: "#C6F03C"
                     }}
                   >
                     {currentTime.toLocaleTimeString('pt-BR', { 
