@@ -30,6 +30,9 @@ interface Props {
   inputs: VmixInput[];
   onRunCommands: (commands: PresetCommand[]) => Promise<void>;
   inputMapping?: Record<string, { title: string; key: string }>;
+  /** Estúdio já selecionado em /vmix-control — evita campo redundante no popup. */
+  estudioFixo?: string | null;
+
 }
 
 const PRESET_COMMANDS = [
