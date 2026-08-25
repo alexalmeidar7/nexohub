@@ -2985,8 +2985,8 @@ function SwitcherUI({
                 <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#1d1d1d" }}>
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputs.length || 2))}, minmax(0,1fr))` }}>
-                      {inputs.map(input => {
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputsSemCategoria.length || 2))}, minmax(0,1fr))` }}>
+                      {inputsSemCategoria.map((input: any) => {
                         const isActive = activeInput === input.number;
                         const shortcut = inputShortcuts[input.key] || inputShortcuts[input.number];
                         const isCapturing = capturingShortcut === (input.key || input.number);
