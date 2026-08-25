@@ -2012,6 +2012,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         <TranscricaoAudioSection />
       </Suspense>
 
+      {/* ═══ MONITOR DE TRANSCRIÇÃO DO STREAMING (REALTIME) ═══ */}
+      <Suspense fallback={null}>
+        <TranscricaoStreamingPanel effectiveUserId={dataUserId} />
+      </Suspense>
+
+
 
 
 
