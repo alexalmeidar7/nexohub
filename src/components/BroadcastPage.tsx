@@ -485,14 +485,8 @@ export default function BroadcastPage() {
             .select("tickertitulos, conteudo_html")
             .eq("id", selectedRoteiroId)
             .maybeSingle();
-          const chosenTitles = parseTitles(chosen);
-          setNewsTitles(chosenTitles);
-          if (chosenTitles.length >= 0) {
-            // seleção manual tem prioridade absoluta
-            return;
-          }
-        }
-
+          setNewsTitles(parseTitles(chosen));
+        } else {
         // Busca os últimos roteiros jornalísticos (aceita variações de acento/caixa)
         const { data: rows } = await supabase
           .from("roteiros")
@@ -524,6 +518,7 @@ export default function BroadcastPage() {
         }
 
         if (titles.length > 0) setNewsTitles(titles);
+        }
       }
 
 
