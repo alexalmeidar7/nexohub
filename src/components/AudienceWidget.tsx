@@ -837,15 +837,6 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         >
           <FileBarChart size={14} />
         </button>
-        <button
-          onClick={openConfig}
-          aria-label="Configurar fontes"
-          title="Configurar fontes"
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-          style={{ background: "rgba(10,37,64,0.12)", color: dark }}
-        >
-          <Settings size={14} />
-        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-3">
