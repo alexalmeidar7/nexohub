@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Radio, ChevronRight, Clock, Loader2, ArrowRight, Mic, Music, User } from "lucide-react";
 import { getApresentadores } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { lazyRetry } from "@/lib/lazyRetry";
 
-const DashboardGradeDialog = lazy(() => import("./DashboardGradeDialog"));
+const DashboardGradeDialog = lazyRetry(() => import("./DashboardGradeDialog"));
 
 export interface Programa {
   id: string;

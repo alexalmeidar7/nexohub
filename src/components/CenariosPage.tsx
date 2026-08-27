@@ -1,9 +1,10 @@
-import { lazy, Suspense, useState } from "react";
+import { Suspense, useState } from "react";
 import { MonitorPlay, Tv } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { lazyRetry } from "@/lib/lazyRetry";
 
-const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
-const CenariosEstudioPage = lazy(() => import("./CenariosEstudioTabs"));
+const CenarioInterativoPage = lazyRetry(() => import("./CenarioInterativoPage"));
+const CenariosEstudioPage = lazyRetry(() => import("./CenariosEstudioTabs"));
 
 type Tab = "interativo" | "estudio";
 
