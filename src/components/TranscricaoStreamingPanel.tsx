@@ -142,9 +142,10 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
   }, [busca, rows]);
 
   const blocos = useMemo(() => agrupar(filteredRows), [filteredRows]);
-  const diasAgrupados = useMemo<DiaGrupo[]>(() => {
+
+  const agruparPorDia = useCallback((lista: Bloco[]): DiaGrupo[] => {
     const map = new Map<string, DiaGrupo>();
-    for (const bloco of blocos) {
+    for (const bloco of lista) {
       const current = map.get(bloco.diaKey) || {
         diaKey: bloco.diaKey,
         dia: bloco.dia,
@@ -158,12 +159,18 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
     return Array.from(map.values())
       .map((dia) => ({ ...dia, content: textoDoDia(dia.blocos) }))
       .sort((a, b) => (a.diaKey < b.diaKey ? 1 : -1));
-  }, [blocos]);
+  }, []);
+
+  // Exibição respeita a busca…
+  const diasAgrupados = useMemo<DiaGrupo[]>(() => agruparPorDia(blocos), [agruparPorDia, blocos]);
+  // …mas a exportação (.txt) sempre usa o dia completo, sem filtro de busca.
+  const diasCompletos = useMemo<DiaGrupo[]>(() => agruparPorDia(agrupar(rows)), [agruparPorDia, rows]);
+
   const dias = useMemo(() => {
     const set = new Map<string, string>();
-    diasAgrupados.forEach((b) => set.set(b.diaKey, b.dia));
+    diasCompletos.forEach((b) => set.set(b.diaKey, b.dia));
     return Array.from(set.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [diasAgrupados]);
+  }, [diasCompletos]);
 
   useEffect(() => {
     if (!diaExport && dias.length) setDiaExport(dias[0][0]);
