@@ -670,13 +670,24 @@ export default function RoteiroPrograma() {
             />
           ) : (
           (() => {
-            const grupos = new Map<string, any[]>();
+            const normKey = (s: string) =>
+              (s || "")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, " ")
+                .trim()
+                .toUpperCase();
+            // agrupa por estúdio normalizado (evita seções duplicadas por caixa/acento/espaços)
+            const grupos = new Map<string, { label: string; itens: any[] }>();
             historico.forEach(r => {
-              const key = ((r.estudio || "").trim()) || "Sem estúdio";
-              if (!grupos.has(key)) grupos.set(key, []);
-              grupos.get(key)!.push(r);
+              const raw = ((r.estudio || "").replace(/\s+/g, " ").trim()) || "Sem estúdio";
+              const key = normKey(raw) || "SEM ESTUDIO";
+              const existing = grupos.get(key);
+              if (existing) existing.itens.push(r);
+              else grupos.set(key, { label: raw, itens: [r] });
             });
-            const estudios = Array.from(grupos.keys()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+            const estudios = Array.from(grupos.keys()).sort((a, b) =>
+              grupos.get(a)!.label.localeCompare(grupos.get(b)!.label, "pt-BR")
+            );
             return (
               <div className="flex flex-col gap-3">
                 {estudios.map(est => (
@@ -684,15 +695,16 @@ export default function RoteiroPrograma() {
                     <div className="flex items-center gap-2 mb-2 px-0.5">
                       <span style={{ display: "inline-block", width: 6, height: 14, borderRadius: 999, background: CYAN }} />
                       <span style={{ ...MONT, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
-                        {est}
+                        {grupos.get(est)!.label}
                       </span>
                       <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
-                        {grupos.get(est)!.length}
+                        {grupos.get(est)!.itens.length}
                       </span>
                       <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, ${CYAN}55, transparent)` }} />
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                      {grupos.get(est)!.map(r => {
+                      {grupos.get(est)!.itens.map(r => {
+
                         const [yy, mm, dd] = (r.data_programa || "").split("-").map(Number);
                         const dataFormatada = yy ? format(new Date(yy, (mm || 1) - 1, dd || 1), "dd/MM/yyyy") : "";
                         const hasXml = typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::");
