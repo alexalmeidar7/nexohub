@@ -640,11 +640,6 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const current =
     rotation.length > 0 ? rotation[rotIdx % rotation.length] : null;
 
-  const openConfig = () => {
-    initialSourcesRef.current = { ...sources };
-    setConfigOpen(true);
-  };
-
   const persistIfChanged = async () => {
     if (!dataUserId) return;
     const initial = initialSourcesRef.current;
@@ -836,15 +831,6 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           style={{ background: "rgba(10,37,64,0.12)", color: dark }}
         >
           <FileBarChart size={14} />
-        </button>
-        <button
-          onClick={openConfig}
-          aria-label="Configurar fontes"
-          title="Configurar fontes"
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-          style={{ background: "rgba(10,37,64,0.12)", color: dark }}
-        >
-          <Settings size={14} />
         </button>
       </div>
 
