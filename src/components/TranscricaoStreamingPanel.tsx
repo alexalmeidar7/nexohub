@@ -142,9 +142,10 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
   }, [busca, rows]);
 
   const blocos = useMemo(() => agrupar(filteredRows), [filteredRows]);
-  const diasAgrupados = useMemo<DiaGrupo[]>(() => {
+
+  const agruparPorDia = useCallback((lista: Bloco[]): DiaGrupo[] => {
     const map = new Map<string, DiaGrupo>();
-    for (const bloco of blocos) {
+    for (const bloco of lista) {
       const current = map.get(bloco.diaKey) || {
         diaKey: bloco.diaKey,
         dia: bloco.dia,
@@ -158,12 +159,18 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
     return Array.from(map.values())
       .map((dia) => ({ ...dia, content: textoDoDia(dia.blocos) }))
       .sort((a, b) => (a.diaKey < b.diaKey ? 1 : -1));
-  }, [blocos]);
+  }, []);
+
+  // Exibição respeita a busca…
+  const diasAgrupados = useMemo<DiaGrupo[]>(() => agruparPorDia(blocos), [agruparPorDia, blocos]);
+  // …mas a exportação (.txt) sempre usa o dia completo, sem filtro de busca.
+  const diasCompletos = useMemo<DiaGrupo[]>(() => agruparPorDia(agrupar(rows)), [agruparPorDia, rows]);
+
   const dias = useMemo(() => {
     const set = new Map<string, string>();
-    diasAgrupados.forEach((b) => set.set(b.diaKey, b.dia));
+    diasCompletos.forEach((b) => set.set(b.diaKey, b.dia));
     return Array.from(set.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [diasAgrupados]);
+  }, [diasCompletos]);
 
   useEffect(() => {
     if (!diaExport && dias.length) setDiaExport(dias[0][0]);
@@ -181,7 +188,7 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
       const reachedDayEnd = now.getHours() === 23 && now.getMinutes() >= 59;
       if (!reachedDayEnd) return;
       const diaKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-      const dia = diasAgrupados.find((item) => item.diaKey === diaKey);
+      const dia = diasCompletos.find((item) => item.diaKey === diaKey);
       if (!dia || arquivoAtual?.diaKey === diaKey) return;
       const url = URL.createObjectURL(new Blob([dia.content], { type: "text/plain;charset=utf-8" }));
       setArquivoAtual((prev) => {
@@ -192,14 +199,14 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
     updateDailyLink();
     const timer = window.setInterval(updateDailyLink, 30_000);
     return () => window.clearInterval(timer);
-  }, [arquivoAtual?.diaKey, diasAgrupados]);
+  }, [arquivoAtual?.diaKey, diasCompletos]);
 
   useEffect(() => () => {
     if (arquivoAtual?.url) URL.revokeObjectURL(arquivoAtual.url);
   }, [arquivoAtual?.url]);
 
   const exportar = useCallback(() => {
-    const alvo = diasAgrupados.find((b) => b.diaKey === diaExport);
+    const alvo = diasCompletos.find((b) => b.diaKey === diaExport);
     if (!alvo) {
       toast.error("Nenhuma transcrição nesse dia.");
       return;
@@ -213,9 +220,9 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-  }, [diasAgrupados, diaExport]);
+  }, [diasCompletos, diaExport]);
 
-  const linkDiaSelecionado = useMemo(() => diasAgrupados.find((dia) => dia.diaKey === diaExport), [diaExport, diasAgrupados]);
+  const linkDiaSelecionado = useMemo(() => diasCompletos.find((dia) => dia.diaKey === diaExport), [diaExport, diasCompletos]);
   const linkDiaHref = useMemo(() => {
     if (!linkDiaSelecionado) return "";
     return `data:text/plain;charset=utf-8,${encodeURIComponent(linkDiaSelecionado.content)}`;
@@ -402,7 +409,7 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
                 <div key={dia.diaKey} className="space-y-3">
                   <div className="sticky top-0 z-10 -mx-2 flex items-center justify-between border-b border-border bg-background/95 px-2 py-2 backdrop-blur">
                     <span className="text-[12px] font-black uppercase tracking-[0.2em] text-primary">{dia.dia}</span>
-                    <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(dia.content)}`} download={dia.filename} className="text-[10px] font-black uppercase tracking-wider text-primary/80 hover:text-primary">
+                    <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(diasCompletos.find((d) => d.diaKey === dia.diaKey)?.content || dia.content)}`} download={dia.filename} className="text-[10px] font-black uppercase tracking-wider text-primary/80 hover:text-primary">
                       {dia.filename}
                     </a>
                   </div>

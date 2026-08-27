@@ -600,20 +600,24 @@ export default function IntercomWidget() {
     left: anchorStyle.left,
   } as const;
 
-  const minimizedStyle = {
-    top: anchorStyle.top,
-    left: anchorStyle.left,
-    width: anchorStyle.width,
-    height: anchorStyle.height,
-  } as const;
+  // O indicador minimizado deve ficar EXATAMENTE sobre o ícone do intercom
+  // (não deslocado para o lado, o que cobria o botão de notificações).
+  const minimizedStyle = anchorRect
+    ? {
+        top: anchorRect.top,
+        left: anchorRect.left,
+        width: anchorRect.width,
+        height: anchorRect.height,
+      }
+    : null;
 
   // ─── FAB / Minimized Indicator ───
-  // Note: Position is handled by a marker element in Dashboard.tsx to stay on top of the icon
   if (minimized && role !== "none") {
     const isActive = talking || receiving;
     return (
       <>
         {role === "listener" && <audio ref={audioRef} autoPlay playsInline className="hidden" />}
+        {minimizedStyle && (
         <div 
           id="intercom-minimized-fab"
           className="fixed z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto flex items-center justify-center"
@@ -661,7 +665,9 @@ export default function IntercomWidget() {
             }
           `}</style>
         </div>
+        )}
       </>
+
     );
   }
 
