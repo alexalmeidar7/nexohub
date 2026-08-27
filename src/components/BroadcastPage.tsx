@@ -80,7 +80,9 @@ const defaultBroadcast: BroadcastData = {
   aSeguirEnabled: false,
   aSeguirForceUntil: "",
   aSeguirLeadSeconds: 300,
+  aSeguirRefreshSeconds: 60,
 };
+
 
 // ── helpers for next-program countdown (mirrors serve-xml-broadcast) ──
 const DAY_NAME_MAP: Record<string, string> = {
