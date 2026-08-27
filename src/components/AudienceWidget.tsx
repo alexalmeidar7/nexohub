@@ -640,11 +640,6 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const current =
     rotation.length > 0 ? rotation[rotIdx % rotation.length] : null;
 
-  const openConfig = () => {
-    initialSourcesRef.current = { ...sources };
-    setConfigOpen(true);
-  };
-
   const persistIfChanged = async () => {
     if (!dataUserId) return;
     const initial = initialSourcesRef.current;
