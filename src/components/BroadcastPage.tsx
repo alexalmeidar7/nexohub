@@ -1899,7 +1899,24 @@ export default function BroadcastPage() {
               })}
             </div>
 
+            {data.aSeguirEnabled && (
+              <div
+                className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px]"
+                style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${LIME}40`, color: "#ffffff80" }}
+              >
+                <span className="font-bold uppercase tracking-widest" style={{ color: LIME }}>
+                  Envio automático em backend ativo
+                </span>
+                <span className="font-mono">
+                  {aSeguirSentAt
+                    ? `último envio ${aSeguirSentAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                    : "aguardando primeiro ciclo…"}
+                </span>
+              </div>
+            )}
+
             {/* Countdown status */}
+
 
             <div
               className="mt-4 p-4 rounded-xl"
