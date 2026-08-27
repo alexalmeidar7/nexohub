@@ -75,7 +75,7 @@ const ModulosPage = lazy(() => import("./ModulosPage"));
 const SubUsuariosPage = lazy(() => import("./SubUsuariosPage"));
 const PacotesPage = lazy(() => import("./PacotesPage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
-const BlitzLocutorPopup = lazy(() => import("./BlitzLocutorPopup"));
+
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
