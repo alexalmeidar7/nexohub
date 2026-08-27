@@ -63,19 +63,60 @@ import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
 import DailyUpdateGuard from "@/components/DailyUpdateGuard";
 
+// Recovery for stale/broken chunk downloads (typical after a new deploy while
+// the tab was open). Instead of dumping the user on an error screen, do one
+// cache-busting hard reload of the CURRENT url. Guarded by sessionStorage +
+// cooldown so it can never loop.
+const CHUNK_RECOVERY_KEY = "__chunk_recovery_at__";
+const CHUNK_RECOVERY_COOLDOWN_MS = 60000;
+
+export function recoverFromChunkFailure(): boolean {
+  try {
+    const now = Date.now();
+    const last = Number(sessionStorage.getItem(CHUNK_RECOVERY_KEY) || "0");
+    if (now - last < CHUNK_RECOVERY_COOLDOWN_MS) return false;
+    sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(now));
+    const url = new URL(window.location.href);
+    url.searchParams.set("_r", String(now));
+    window.location.replace(url.toString());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const isChunkErrorMessage = (message?: string) =>
+  !!message &&
+  (message.includes("Failed to fetch dynamically imported module") ||
+    message.includes("Importing a module script failed") ||
+    message.includes("error loading dynamically imported module") ||
+    message.includes("Loading chunk") ||
+    message.includes("Loading CSS chunk") ||
+    message.includes("dynamically imported module"));
+
 // Retry wrapper for lazy imports — retries the import promise up to `retries`
 // times on chunk load failure, with exponential backoff. IMPORTANT: retries
 // must resolve with a real module object ({ default: Component }), NOT with a
 // nested lazy component — React.lazy would then fail to render.
 export function lazyRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
-  retries = 3,
-  delay = 400 // Reduced delay from 800ms to 400ms
+  retries = 4,
+  delay = 350
 ) {
   return lazy(() => {
     const attempt = (left: number, wait: number): Promise<{ default: T }> =>
       factory().catch((err) => {
-        if (left <= 0) throw err;
+        if (left <= 0) {
+          // Last resort: one cache-busting reload keeps navigation fluid
+          // instead of showing "Erro ao carregar a página".
+          if (isChunkErrorMessage(String((err as Error)?.message || err))) {
+            if (recoverFromChunkFailure()) {
+              // Hang until the reload happens so no error screen flashes.
+              return new Promise<{ default: T }>(() => {});
+            }
+          }
+          throw err;
+        }
         return new Promise<{ default: T }>((resolve, reject) => {
           setTimeout(() => attempt(left - 1, wait * 1.5).then(resolve, reject), wait);
         });
@@ -83,6 +124,7 @@ export function lazyRetry<T extends React.ComponentType<any>>(
     return attempt(retries, delay);
   });
 }
+
 
 
 // Lazy-loaded heavy pages with automatic retry
