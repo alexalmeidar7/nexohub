@@ -587,6 +587,10 @@ serve(async (req) => {
 
     // ── A SEGUIR (next program) ──────────────────────────────────────────
     const aSeguirEnabled = !!broadcastConfig.aSeguirEnabled;
+    // Intervalo (segundos) escolhido pelo usuário para o backend regerar o nódulo.
+    const aSeguirRefreshSeconds = Number(broadcastConfig.aSeguirRefreshSeconds) > 0
+      ? Math.max(15, Number(broadcastConfig.aSeguirRefreshSeconds))
+      : 60;
     let aSeguirNome = "";
     let aSeguirLogo = "";
     let aSeguirLocutorNome = "";
@@ -1288,6 +1292,8 @@ serve(async (req) => {
     lines.push(`      <locutor_foto>${esc(aSeguirLocutorFoto)}</locutor_foto>`);
     lines.push(`      <horario>${esc(aSeguirHorario)}</horario>`);
     lines.push(`      <texto>${esc(aSeguirTexto)}</texto>`);
+    lines.push(`      <intervalo_atualizacao>${aSeguirRefreshSeconds}</intervalo_atualizacao>`);
+    lines.push(`      <atualizado_em>${esc(new Date().toISOString())}</atualizado_em>`);
     lines.push("    </a_seguir>");
     lines.push("  </dados>");
     lines.push("</items>");
