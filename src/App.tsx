@@ -162,11 +162,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   }
 
   componentDidCatch(error: Error) {
-    const isChunkError =
-      error.message?.includes("Failed to fetch dynamically imported module") ||
-      error.message?.includes("Loading chunk") ||
-      error.message?.includes("Loading CSS chunk") ||
-      error.message?.includes("dynamically imported module");
+    const isChunkError = isChunkErrorMessage(error.message);
 
     // Only transient chunk-download failures can recover by remounting here.
     // Runtime/render errors must surface immediately instead of leaving the
@@ -174,11 +170,16 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
     if (isChunkError && this.state.retryCount < 3) {
       this.retryTimer = setTimeout(() => {
         this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
-      }, 400); // Reduced delay from 800ms to 400ms
-    } else if (!isChunkError) {
+      }, 400);
+    } else if (isChunkError) {
+      // Exhausted in-place retries: one cache-busting reload instead of the
+      // error screen, so navigation stays fluid after a new deploy.
+      recoverFromChunkFailure();
+    } else {
       this.setState({ retryCount: 3 });
     }
   }
+
 
   componentWillUnmount() {
     if (this.retryTimer) clearTimeout(this.retryTimer);
