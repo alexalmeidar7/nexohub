@@ -1855,8 +1855,9 @@ export default function BroadcastPage() {
 
             <div className="mt-3 grid gap-3">
               {([
-                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa — a informação permanece no XML até o início do programa", fallback: 300 },
-              ]).map(({ key, label, hint, fallback }) => {
+                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa — a informação permanece no XML até o início do programa", fallback: 300, options: [{ v: 300, l: "5 min" }, { v: 600, l: "10 min" }, { v: 900, l: "15 min" }] },
+                { key: "aSeguirRefreshSeconds" as const, label: "Atualizar no XML a cada", hint: "Intervalo em que o backend regera as informações do programa a seguir no XML BROADCAST", fallback: 60, options: [{ v: 15, l: "15 s" }, { v: 30, l: "30 s" }, { v: 60, l: "1 min" }, { v: 120, l: "2 min" }, { v: 300, l: "5 min" }] },
+              ]).map(({ key, label, hint, fallback, options }) => {
                 const current = Number(data[key] ?? fallback);
                 return (
                   <div
@@ -1867,11 +1868,8 @@ export default function BroadcastPage() {
                     <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>{label}</div>
                     <p className="text-[10px] mb-3" style={{ color: "#ffffff55" }}>{hint}</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {[
-                        { v: 300, l: "5 min" },
-                        { v: 600, l: "10 min" },
-                        { v: 900, l: "15 min" },
-                      ].map(({ v, l }) => {
+                      {options.map(({ v, l }) => {
+
                         const active = current === v;
                         return (
                           <button
