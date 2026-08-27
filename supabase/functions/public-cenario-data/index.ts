@@ -119,9 +119,12 @@ Deno.serve(async (req) => {
           .maybeSingle(),
         supabase
           .from("programas")
-          .select("id, nome, selo, thumb, capa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
+          .select("id, nome, selo, thumb, capa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa, estudio")
           .eq("user_id", userId)
-          .eq("ativo", true),
+          .eq("ativo", true)
+          // Cenários externos devem refletir SOMENTE a grade do estúdio FM
+          // (ignora podcasts/TV e outros estúdios).
+          .ilike("estudio", "%fm%"),
         supabase
           .from("enquetes_agendadas")
           .select("*")
