@@ -1177,6 +1177,7 @@ export type Database = {
       }
       infomusic_excecoes: {
         Row: {
+          artista_url: string | null
           background_url: string | null
           capa_url: string | null
           created_at: string | null
@@ -1186,6 +1187,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          artista_url?: string | null
           background_url?: string | null
           capa_url?: string | null
           created_at?: string | null
@@ -1195,6 +1197,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          artista_url?: string | null
           background_url?: string | null
           capa_url?: string | null
           created_at?: string | null
