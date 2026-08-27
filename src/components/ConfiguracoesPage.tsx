@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Sparkles } from "lucide-react";
-import { lazy, Suspense } from "react";
-const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
-const PlayerLayoutCustomizer = lazy(() => import("./PlayerLayoutCustomizer"));
-const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
-const PermissoesSection = lazy(() => import("./PermissoesSection"));
-const AISection = lazy(() => import("./AISection"));
+import { Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
+const LayoutCustomizer = lazyRetry(() => import("./LayoutCustomizer"));
+const PlayerLayoutCustomizer = lazyRetry(() => import("./PlayerLayoutCustomizer"));
+const InfoMusicSection = lazyRetry(() => import("./InfoMusicSection"));
+const PermissoesSection = lazyRetry(() => import("./PermissoesSection"));
+const AISection = lazyRetry(() => import("./AISection"));
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";

@@ -1,9 +1,10 @@
-import { lazy, Suspense, useState } from "react";
+import { Suspense, useState } from "react";
 import { Image as ImageIcon, Globe } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { lazyRetry } from "@/lib/lazyRetry";
 
-const CenariosEstudioPage = lazy(() => import("./CenariosEstudioPage"));
-const CenariosEstudioWebPage = lazy(() => import("./CenariosEstudioWebPage"));
+const CenariosEstudioPage = lazyRetry(() => import("./CenariosEstudioPage"));
+const CenariosEstudioWebPage = lazyRetry(() => import("./CenariosEstudioWebPage"));
 
 type SubTab = "imagens" | "web";
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense, Component, useEffect, type ReactNode } from "react";
+import { Suspense, Component, useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -62,70 +62,7 @@ import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
 import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
 import DailyUpdateGuard from "@/components/DailyUpdateGuard";
-
-// Recovery for stale/broken chunk downloads (typical after a new deploy while
-// the tab was open). Instead of dumping the user on an error screen, do one
-// cache-busting hard reload of the CURRENT url. Guarded by sessionStorage +
-// cooldown so it can never loop.
-const CHUNK_RECOVERY_KEY = "__chunk_recovery_at__";
-const CHUNK_RECOVERY_COOLDOWN_MS = 60000;
-
-export function recoverFromChunkFailure(): boolean {
-  try {
-    const now = Date.now();
-    const last = Number(sessionStorage.getItem(CHUNK_RECOVERY_KEY) || "0");
-    if (now - last < CHUNK_RECOVERY_COOLDOWN_MS) return false;
-    sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(now));
-    const url = new URL(window.location.href);
-    url.searchParams.set("_r", String(now));
-    window.location.replace(url.toString());
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-const isChunkErrorMessage = (message?: string) =>
-  !!message &&
-  (message.includes("Failed to fetch dynamically imported module") ||
-    message.includes("Importing a module script failed") ||
-    message.includes("error loading dynamically imported module") ||
-    message.includes("Loading chunk") ||
-    message.includes("Loading CSS chunk") ||
-    message.includes("dynamically imported module"));
-
-// Retry wrapper for lazy imports — retries the import promise up to `retries`
-// times on chunk load failure, with exponential backoff. IMPORTANT: retries
-// must resolve with a real module object ({ default: Component }), NOT with a
-// nested lazy component — React.lazy would then fail to render.
-export function lazyRetry<T extends React.ComponentType<any>>(
-  factory: () => Promise<{ default: T }>,
-  retries = 4,
-  delay = 350
-) {
-  return lazy(() => {
-    const attempt = (left: number, wait: number): Promise<{ default: T }> =>
-      factory().catch((err) => {
-        if (left <= 0) {
-          // Last resort: one cache-busting reload keeps navigation fluid
-          // instead of showing "Erro ao carregar a página".
-          if (isChunkErrorMessage(String((err as Error)?.message || err))) {
-            if (recoverFromChunkFailure()) {
-              // Hang until the reload happens so no error screen flashes.
-              return new Promise<{ default: T }>(() => {});
-            }
-          }
-          throw err;
-        }
-        return new Promise<{ default: T }>((resolve, reject) => {
-          setTimeout(() => attempt(left - 1, wait * 1.5).then(resolve, reject), wait);
-        });
-      });
-    return attempt(retries, delay);
-  });
-}
-
-
+import { isChunkErrorMessage, lazyRetry, recoverFromChunkFailure } from "@/lib/lazyRetry";
 
 // Lazy-loaded heavy pages with automatic retry
 const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
@@ -164,17 +101,13 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   componentDidCatch(error: Error) {
     const isChunkError = isChunkErrorMessage(error.message);
 
-    // Only transient chunk-download failures can recover by remounting here.
-    // Runtime/render errors must surface immediately instead of leaving the
-    // whole app indefinitely on "Sincronizando ambiente".
-    if (isChunkError && this.state.retryCount < 3) {
-      this.retryTimer = setTimeout(() => {
-        this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
-      }, 400);
+    // A rejected React.lazy import is cached by React, so remounting it cannot
+    // recover. Reload once immediately and keep the fallback hidden while the
+    // browser switches to the current deployment.
+    if (isChunkError && recoverFromChunkFailure()) {
+      return;
     } else if (isChunkError) {
-      // Exhausted in-place retries: one cache-busting reload instead of the
-      // error screen, so navigation stays fluid after a new deploy.
-      recoverFromChunkFailure();
+      this.setState({ retryCount: 3 });
     } else {
       this.setState({ retryCount: 3 });
     }

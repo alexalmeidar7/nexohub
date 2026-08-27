@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, CheckCircle2 } from "lucide-react";
-const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
-const TranscricaoStreamingPanel = lazy(() => import("./TranscricaoStreamingPanel"));
+import { lazyRetry } from "@/lib/lazyRetry";
+const InfoMusicSection = lazyRetry(() => import("./InfoMusicSection"));
+const TranscricaoStreamingPanel = lazyRetry(() => import("./TranscricaoStreamingPanel"));
 import XmlLinkRow from "./XmlLinkRow";
 import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";

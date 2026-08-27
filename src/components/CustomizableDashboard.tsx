@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense, Fragment } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star, Minimize2, Maximize2 } from "lucide-react";
 import {
@@ -16,6 +16,7 @@ import { readMusicData, readMusicStart, musicDataKey, musicStartKey, MUSIC_DATA_
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import AudioSpectrum from "@/components/AudioSpectrum";
 import AutoScrollText from "@/components/player/AutoScrollText";
+import { lazyRetry } from "@/lib/lazyRetry";
 
 
 /* Typewriter text component — animates character-by-character on text change */
@@ -43,9 +44,9 @@ function TypewriterText({ text, className, style }: { text: string; className?: 
   return <span className={className} style={style}>{displayed}{isTyping && <span className="animate-pulse opacity-60">|</span>}</span>;
 }
 
-const AgendaPage = lazy(() => import("./AgendaPage"));
-const OnAirWidget = lazy(() => import("./OnAirWidget"));
-const AudienceWidget = lazy(() => import("./AudienceWidget"));
+const AgendaPage = lazyRetry(() => import("./AgendaPage"));
+const OnAirWidget = lazyRetry(() => import("./OnAirWidget"));
+const AudienceWidget = lazyRetry(() => import("./AudienceWidget"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
 
