@@ -872,6 +872,32 @@ export default function BroadcastPage() {
     return () => clearInterval(id);
   }, [user, loadInitialData]);
 
+  // ── Módulo A SEGUIR: envio contínuo em backend ──
+  // Quando habilitado, o XML é regerado no backend (serve-xml-broadcast
+  // calcula o próximo programa da grade a cada requisição) no intervalo
+  // escolhido pelo usuário. Aqui apenas disparamos o refresh periódico e
+  // registramos o último envio para o usuário acompanhar.
+  const [aSeguirSentAt, setASeguirSentAt] = useState<Date | null>(null);
+  useEffect(() => {
+    if (!user || !data.aSeguirEnabled) return;
+    const every = Math.max(15, Number(data.aSeguirRefreshSeconds) || 60) * 1000;
+    let cancelled = false;
+    const push = async () => {
+      try {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user.id}&aseguir=1&t=${Date.now()}`;
+        await fetch(url, { cache: "no-store" });
+        if (!cancelled) setASeguirSentAt(new Date());
+      } catch {
+        /* silencioso — próximo ciclo tenta de novo */
+      }
+    };
+    void push();
+    const timer = setInterval(push, every);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [user, data.aSeguirEnabled, data.aSeguirRefreshSeconds]);
+
+
+
 
   const handleInsertNow = useCallback(async () => {
     if (!user || !insertLiveArt) return;
