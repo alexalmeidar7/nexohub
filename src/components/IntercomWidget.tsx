@@ -665,7 +665,9 @@ export default function IntercomWidget() {
             }
           `}</style>
         </div>
+        )}
       </>
+
     );
   }
 
