@@ -54,6 +54,9 @@ interface BroadcastData {
   aSeguirEnabled: boolean;
   aSeguirForceUntil?: string;
   aSeguirLeadSeconds: number;
+  aSeguirRefreshSeconds?: number;
+  aSeguirLastSentAt?: string;
+
 }
 
 const defaultBroadcast: BroadcastData = {
