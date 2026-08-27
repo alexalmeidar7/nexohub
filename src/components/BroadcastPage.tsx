@@ -54,6 +54,9 @@ interface BroadcastData {
   aSeguirEnabled: boolean;
   aSeguirForceUntil?: string;
   aSeguirLeadSeconds: number;
+  aSeguirRefreshSeconds?: number;
+  aSeguirLastSentAt?: string;
+
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -77,7 +80,9 @@ const defaultBroadcast: BroadcastData = {
   aSeguirEnabled: false,
   aSeguirForceUntil: "",
   aSeguirLeadSeconds: 300,
+  aSeguirRefreshSeconds: 60,
 };
+
 
 // ── helpers for next-program countdown (mirrors serve-xml-broadcast) ──
 const DAY_NAME_MAP: Record<string, string> = {
@@ -866,6 +871,32 @@ export default function BroadcastPage() {
     const id = setInterval(syncTicker, 5 * 60 * 1000);
     return () => clearInterval(id);
   }, [user, loadInitialData]);
+
+  // ── Módulo A SEGUIR: envio contínuo em backend ──
+  // Quando habilitado, o XML é regerado no backend (serve-xml-broadcast
+  // calcula o próximo programa da grade a cada requisição) no intervalo
+  // escolhido pelo usuário. Aqui apenas disparamos o refresh periódico e
+  // registramos o último envio para o usuário acompanhar.
+  const [aSeguirSentAt, setASeguirSentAt] = useState<Date | null>(null);
+  useEffect(() => {
+    if (!user || !data.aSeguirEnabled) return;
+    const every = Math.max(15, Number(data.aSeguirRefreshSeconds) || 60) * 1000;
+    let cancelled = false;
+    const push = async () => {
+      try {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user.id}&aseguir=1&t=${Date.now()}`;
+        await fetch(url, { cache: "no-store" });
+        if (!cancelled) setASeguirSentAt(new Date());
+      } catch {
+        /* silencioso — próximo ciclo tenta de novo */
+      }
+    };
+    void push();
+    const timer = setInterval(push, every);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [user, data.aSeguirEnabled, data.aSeguirRefreshSeconds]);
+
+
 
 
   const handleInsertNow = useCallback(async () => {
@@ -1824,8 +1855,9 @@ export default function BroadcastPage() {
 
             <div className="mt-3 grid gap-3">
               {([
-                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa — a informação permanece no XML até o início do programa", fallback: 300 },
-              ]).map(({ key, label, hint, fallback }) => {
+                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa — a informação permanece no XML até o início do programa", fallback: 300, options: [{ v: 300, l: "5 min" }, { v: 600, l: "10 min" }, { v: 900, l: "15 min" }] },
+                { key: "aSeguirRefreshSeconds" as const, label: "Atualizar no XML a cada", hint: "Intervalo em que o backend regera as informações do programa a seguir no XML BROADCAST", fallback: 60, options: [{ v: 15, l: "15 s" }, { v: 30, l: "30 s" }, { v: 60, l: "1 min" }, { v: 120, l: "2 min" }, { v: 300, l: "5 min" }] },
+              ]).map(({ key, label, hint, fallback, options }) => {
                 const current = Number(data[key] ?? fallback);
                 return (
                   <div
@@ -1836,11 +1868,8 @@ export default function BroadcastPage() {
                     <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>{label}</div>
                     <p className="text-[10px] mb-3" style={{ color: "#ffffff55" }}>{hint}</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {[
-                        { v: 300, l: "5 min" },
-                        { v: 600, l: "10 min" },
-                        { v: 900, l: "15 min" },
-                      ].map(({ v, l }) => {
+                      {options.map(({ v, l }) => {
+
                         const active = current === v;
                         return (
                           <button
@@ -1870,7 +1899,24 @@ export default function BroadcastPage() {
               })}
             </div>
 
+            {data.aSeguirEnabled && (
+              <div
+                className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px]"
+                style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${LIME}40`, color: "#ffffff80" }}
+              >
+                <span className="font-bold uppercase tracking-widest" style={{ color: LIME }}>
+                  Envio automático em backend ativo
+                </span>
+                <span className="font-mono">
+                  {aSeguirSentAt
+                    ? `último envio ${aSeguirSentAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                    : "aguardando primeiro ciclo…"}
+                </span>
+              </div>
+            )}
+
             {/* Countdown status */}
+
 
             <div
               className="mt-4 p-4 rounded-xl"
