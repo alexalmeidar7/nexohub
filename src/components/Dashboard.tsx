@@ -2076,9 +2076,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </footer>
       </div>
 
-      <Suspense fallback={null}>
-        <BlitzLocutorPopup userId={effectiveUserId || user?.id || null} />
-      </Suspense>
 
       <Suspense fallback={null}>
         <IntercomWidget />
