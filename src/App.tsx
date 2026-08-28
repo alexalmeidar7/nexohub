@@ -90,7 +90,7 @@ interface ErrorBoundaryState {
   retryCount: number;
 }
 
-class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: string }, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false, retryCount: 0 };
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -101,6 +101,12 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   componentDidCatch(error: Error) {
     const isChunkError = isChunkErrorMessage(error.message);
 
+    console.error("[NavigationErrorBoundary]", {
+      message: error.message,
+      path: window.location.pathname,
+      isChunkError,
+    });
+
     // A rejected React.lazy import is cached by React, so remounting it cannot
     // recover. Reload once immediately and keep the fallback hidden while the
     // browser switches to the current deployment.
@@ -110,6 +116,12 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
       this.setState({ retryCount: 3 });
     } else {
       this.setState({ retryCount: 3 });
+    }
+  }
+
+  componentDidUpdate(previousProps: Readonly<{ children: ReactNode; locationKey: string }>) {
+    if (this.state.hasError && previousProps.locationKey !== this.props.locationKey) {
+      this.setState({ hasError: false, retryCount: 0 });
     }
   }
 
@@ -176,6 +188,15 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   }
 }
 
+function NavigationErrorBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  return (
+    <ChunkErrorBoundary locationKey={`${location.pathname}${location.search}${location.hash}`}>
+      {children}
+    </ChunkErrorBoundary>
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -198,7 +219,7 @@ const App = () => (
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <OAuthReturnHandler />
           <PlayerSplashPrefetch />
-          <ChunkErrorBoundary>
+          <NavigationErrorBoundary>
           <Suspense fallback={<RouteProgress />}>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -268,7 +289,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
-          </ChunkErrorBoundary>
+          </NavigationErrorBoundary>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

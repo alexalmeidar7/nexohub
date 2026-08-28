@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings } from "lucide-react";
 import { PlayerBackButton } from "@/components/player/PlayerBackButton";
@@ -21,10 +22,10 @@ import DjModeLayer from "@/components/player/DjModeLayer";
 import { toast } from "sonner";
 import { playerSignOut } from "@/lib/playerSignOut";
 
-const PlayerChat = lazy(() => import("@/components/PlayerChat"));
-const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
-const LyricsPopup = lazy(() => import("@/components/player/LyricsPopup"));
-const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
+const PlayerChat = lazyRetry(() => import("@/components/PlayerChat"));
+const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
+const LyricsPopup = lazyRetry(() => import("@/components/player/LyricsPopup"));
+const WatchProfilePopup = lazyRetry(() => import("@/components/player/WatchProfilePopup"));
 
 export interface AudioPlayerScreenProps {
   audioRef: React.RefObject<HTMLAudioElement>;

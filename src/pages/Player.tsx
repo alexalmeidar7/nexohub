@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { toast } from "sonner";
 import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,12 +47,12 @@ import {
 } from "lucide-react";
 
 import ElegantLoader from "@/components/player/ElegantLoader";
-const PlayerChat = lazy(() => import("@/components/PlayerChat"));
-const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
-const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
-const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
-const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
-const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
+const PlayerChat = lazyRetry(() => import("@/components/PlayerChat"));
+const AudioSpectrum = lazyRetry(() => import("@/components/AudioSpectrum"));
+const AudioDualCard = lazyRetry(() => import("@/components/AudioDualCard"));
+const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
+const KaraokeOverlay = lazyRetry(() => import("@/components/KaraokeOverlay"));
+const WatchProfilePopup = lazyRetry(() => import("@/components/player/WatchProfilePopup"));
 import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
@@ -59,7 +60,7 @@ import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
 
-const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"));
+const AudioPlayerScreen = lazyRetry(() => import("@/pages/player/AudioPlayerScreen"));
 
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";

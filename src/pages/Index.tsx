@@ -1,11 +1,12 @@
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { Navigate } from "react-router-dom";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { supabase } from "@/integrations/supabase/client";
 
-const LoginScreen = lazy(() => import("@/components/LoginScreen"));
+const LoginScreen = lazyRetry(() => import("@/components/LoginScreen"));
 
 export default function Index() {
   const { user, loading } = useAuth();
