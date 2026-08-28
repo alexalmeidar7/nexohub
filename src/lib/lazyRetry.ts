@@ -2,6 +2,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 
 const CHUNK_RECOVERY_KEY = "__chunk_recovery_at__";
 const CHUNK_RECOVERY_COOLDOWN_MS = 60_000;
+const IMPORT_RETRY_DELAYS_MS = [400, 1_000, 2_000];
 
 export const isChunkErrorMessage = (message?: string) => {
   const normalized = (message || "").toLowerCase();
@@ -40,12 +41,27 @@ export function recoverFromChunkFailure(): boolean {
 export function lazyRetry<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
 ): LazyExoticComponent<T> {
-  return lazy(() =>
-    factory().catch((error) => {
-      if (isChunkErrorMessage(String((error as Error)?.message || error)) && recoverFromChunkFailure()) {
-        return new Promise<{ default: T }>(() => {});
+  return lazy(async () => {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= IMPORT_RETRY_DELAYS_MS.length; attempt += 1) {
+      try {
+        return await factory();
+      } catch (error) {
+        lastError = error;
+        const message = String((error as Error)?.message || error);
+        if (!isChunkErrorMessage(message)) throw error;
+
+        const delay = IMPORT_RETRY_DELAYS_MS[attempt];
+        if (delay === undefined) break;
+        await new Promise<void>((resolve) => window.setTimeout(resolve, delay));
       }
-      throw error;
-    }),
-  );
+    }
+
+    if (recoverFromChunkFailure()) {
+      return await new Promise<{ default: T }>(() => {});
+    }
+
+    throw lastError;
+  });
 }
