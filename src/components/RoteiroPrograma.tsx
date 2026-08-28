@@ -1,4 +1,5 @@
-import { useState, useEffect, lazy, Suspense, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, Suspense, useMemo, useCallback, useRef } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,9 +9,9 @@ import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
-const WhatsAppSendDialog = lazy(() => import("./WhatsAppSendDialog"));
-const ProgramaExpressInline = lazy(() => import("./ProgramaExpressInline"));
-const AutomacaoProgramaSection = lazy(() => import("./AutomacaoProgramaSection"));
+const WhatsAppSendDialog = lazyRetry(() => import("./WhatsAppSendDialog"));
+const ProgramaExpressInline = lazyRetry(() => import("./ProgramaExpressInline"));
+const AutomacaoProgramaSection = lazyRetry(() => import("./AutomacaoProgramaSection"));
 import HistoricoTable from "./HistoricoTable";
 import type { ExpressEditData } from "./ProgramaExpressInline";
 

@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo, Suspense } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,12 +22,12 @@ import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { playerSignOut } from "@/lib/playerSignOut";
-const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
-const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
-const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
-const ProfileDialog = lazy(() => import("@/components/player/ProfileDialog"));
-const Top10DetailInline = lazy(() => import("@/components/player/Top10DetailInline"));
-const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
+const MiniPlayerWidget = lazyRetry(() => import("@/components/player/MiniPlayerWidget"));
+const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
+const CatalogDetailInline = lazyRetry(() => import("@/components/player/CatalogDetailInline"));
+const ProfileDialog = lazyRetry(() => import("@/components/player/ProfileDialog"));
+const Top10DetailInline = lazyRetry(() => import("@/components/player/Top10DetailInline"));
+const WatchProfilePopup = lazyRetry(() => import("@/components/player/WatchProfilePopup"));
 
 interface Channel {
   id: string;
