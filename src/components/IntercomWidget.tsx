@@ -602,6 +602,10 @@ export default function IntercomWidget() {
 
   // O indicador minimizado deve ficar EXATAMENTE sobre o ícone do intercom
   // (não deslocado para o lado, o que cobria o botão de notificações).
+  // O indicador minimizado deve ficar EXATAMENTE sobre o ícone do intercom
+  // (não deslocado para o lado, o que cobria o botão de notificações).
+  // Quando não existe ícone visível na tela atual, usa uma posição de segurança
+  // para que o usuário nunca perca o acesso ao intercom.
   const minimizedStyle = anchorRect
     ? {
         top: anchorRect.top,
@@ -609,7 +613,8 @@ export default function IntercomWidget() {
         width: anchorRect.width,
         height: anchorRect.height,
       }
-    : null;
+    : { top: 16, left: 16, width: 36, height: 36 };
+
 
   // ─── FAB / Minimized Indicator ───
   if (minimized && role !== "none") {
