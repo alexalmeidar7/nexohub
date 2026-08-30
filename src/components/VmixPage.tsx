@@ -3602,11 +3602,25 @@ function SwitcherUI({
                             )}
                             {prog.estudio && (
                               <div className="absolute top-1.5 right-1.5 z-[2]">
-                                <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
-                                  style={{ backgroundColor: progOnAir ? "#ffffff" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: progOnAir ? "#000" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
+                                <span className="text-[6px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
+                                  style={{
+                                    backgroundColor: progOnAir ? "rgba(255,255,255,0.22)" : "rgba(198,240,60,0.14)",
+                                    color: progOnAir ? "#fff" : "#C6F03C",
+                                    border: `1px solid ${progOnAir ? "rgba(255,255,255,0.35)" : "rgba(198,240,60,0.35)"}`,
+                                  }}
                                 >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
                               </div>
                             )}
+                            {remaining !== null && (
+                              <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[3] flex items-center gap-1 px-1.5 py-[2px] rounded"
+                                style={{ backgroundColor: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.25)" }}
+                                title="Tempo restante do programa no ar"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#fff" }} />
+                                <span className="text-[9px] font-black tabular-nums" style={{ color: "#fff" }}>{formatCountdown(remaining)}</span>
+                              </div>
+                            )}
+
                             {prog.dias_semana && prog.dias_semana.length > 0 && (
                               <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
                                 {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
