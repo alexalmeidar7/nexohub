@@ -23,7 +23,9 @@ function normalizeHlsUrl(raw?: string | null): string {
   try {
     const u = new URL(v);
     if (!u.port) u.port = "8088";
-    if (!u.pathname || u.pathname === "/") u.pathname = "/livelan";
+    if (!u.pathname || u.pathname === "/") u.pathname = "/livelan/stream.m3u8";
+    // vMix LiveLAN publica o manifesto em /livelan/stream.m3u8
+    if (/^\/livelan\/?$/i.test(u.pathname)) u.pathname = "/livelan/stream.m3u8";
     return u.toString().replace(/\/$/, "");
   } catch {
     return v;
