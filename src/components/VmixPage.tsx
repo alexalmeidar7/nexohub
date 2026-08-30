@@ -3043,7 +3043,7 @@ function SwitcherUI({
                               sendCommand(cmd);
                               setOverlays((prev: any) => ({ ...prev, [n]: !prev[n] }));
                             }}
-                            className="h-16 rounded border text-[10px] font-black tracking-wider transition-all"
+                            className="vmix-hover-ring h-16 rounded border text-[10px] font-black tracking-wider transition-all"
                             style={{
                               backgroundColor: isOn ? "#C6F03C" : "#1a1a1a",
                               color: isOn ? "#000" : "#e5e5e5",
@@ -3064,21 +3064,21 @@ function SwitcherUI({
                     <div className="grid gap-2">
                       <button
                         onClick={() => sendCommand("Cut")}
-                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        className="vmix-hover-ring h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C", boxShadow: "0 0 12px rgba(198,240,60,0.35)" }}
                       >
                         CUT
                       </button>
                       <button
                         onClick={() => sendCommand("Fade", undefined, String(transitionDuration))}
-                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        className="vmix-hover-ring h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", borderColor: "#C6F03C50" }}
                       >
                         FADE
                       </button>
                       <button
                         onClick={() => sendCommand("Merge", undefined, String(transitionDuration))}
-                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        className="vmix-hover-ring h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", borderColor: "#2a2a2a" }}
                       >
                         MERGE
