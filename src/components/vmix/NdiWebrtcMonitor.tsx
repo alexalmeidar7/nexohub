@@ -31,7 +31,7 @@ function normalizeBase(raw?: string | null): string {
   }
 }
 
-/** Aceita "192.168.0.10", "192.168.0.10:8080" ou a URL completa do LiveLAN. */
+/** Aceita "10.1.1.62", "10.1.1.62:8088/livelan" ou a URL completa do LiveLAN. */
 function normalizeHlsUrl(raw?: string | null): string {
   if (!raw) return "";
   let v = raw.trim();
@@ -39,13 +39,15 @@ function normalizeHlsUrl(raw?: string | null): string {
   if (!/^https?:\/\//i.test(v)) v = "http://" + v;
   try {
     const u = new URL(v);
-    if (!u.port) u.port = "8080";
-    if (!/\.m3u8$/i.test(u.pathname)) u.pathname = "/stream.m3u8";
-    return u.toString();
+    if (!u.port) u.port = "8088";
+    // Caminho livre: /livelan (padrão do vMix), /stream.m3u8, master.m3u8 etc.
+    if (!u.pathname || u.pathname === "/") u.pathname = "/livelan";
+    return u.toString().replace(/\/$/, "");
   } catch {
     return v;
   }
 }
+
 
 function snapshotPaths(inputRef: string): string[] {
   const q = inputRef ? `?input=${encodeURIComponent(inputRef)}` : "";
@@ -284,7 +286,7 @@ export default function NdiWebrtcMonitor({
             value={draftHls}
             onChange={(e) => setDraftHls(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveHls()}
-            placeholder="http://192.168.0.10:8080/stream.m3u8"
+            placeholder="http://10.1.1.62:8088/livelan"
             className="vmix-hover-ring flex-1 h-9 rounded text-[11px] font-bold px-2.5 outline-none"
             style={fieldStyle}
           />
