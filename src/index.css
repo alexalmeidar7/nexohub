@@ -839,6 +839,24 @@ table:not([data-no-row-hover]) tbody tr:hover {
   animation: vmix-onair-pulse 2s ease-in-out infinite;
 }
 
+/* vMix Switcher/Automação — borda branca discreta no hover */
+.vmix-hover-ring:hover {
+  outline: 1px solid rgba(255, 255, 255, 0.55);
+  outline-offset: -1px;
+}
+
+/* vMix — borda branca piscando no botão ativo/clicado */
+@keyframes vmix-white-blink {
+  0%, 100% { outline-color: rgba(255, 255, 255, 1); }
+  50% { outline-color: rgba(255, 255, 255, 0.12); }
+}
+.vmix-active-blink {
+  outline: 2px solid rgba(255, 255, 255, 1);
+  outline-offset: -2px;
+  animation: vmix-white-blink 1s ease-in-out infinite;
+}
+
+
 /* Cenário — flex gap fallback for CEF 86 */
 .cenario-sidebar-btn + .cenario-sidebar-btn { margin-top: 0.5vh; }
 .cenario-sidebar-sub + .cenario-sidebar-sub { margin-top: 0.4vh; }
