@@ -188,10 +188,12 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapp
 export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping, estudio }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
-  const [color, setColor] = useState("#f59e0b");
+  const [color, setColor] = useState("#C6F03C");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [dataEspecifica, setDataEspecifica] = useState("");
   const [horario, setHorario] = useState("");
+  const [shortcut, setShortcut] = useState("");
+  const [iconKey, setIconKey] = useState("");
   const [commands, setCommands] = useState<PresetCommand[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -210,24 +212,29 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         .then(({ data }: any) => {
           if (data) {
             setNome(data.nome || "");
-            setColor(data.color || "#f59e0b");
+            setColor(data.color || "#C6F03C");
             setDiasSemana(data.dias_semana || []);
             setDataEspecifica(data.data_especifica || "");
             setHorario(data.horario || "");
+            setShortcut(data.shortcut || "");
+            setIconKey(data.icon || "");
             setCommands(Array.isArray(data.commands) ? data.commands : []);
           }
           setLoading(false);
         });
     } else {
       setNome("");
-      setColor("#f59e0b");
+      setColor("#C6F03C");
       setDiasSemana([]);
       setDataEspecifica("");
       setHorario("");
+      setShortcut("");
+      setIconKey("");
       setCommands([]);
       setLoading(false);
     }
   }, [open, buttonId]);
+
 
   const toggleDia = (dia: string) => {
     setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
