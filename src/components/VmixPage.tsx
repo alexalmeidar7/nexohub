@@ -1881,12 +1881,8 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   const inputShortcutsRef = useRef(inputShortcuts);
   inputShortcutsRef.current = inputShortcuts;
 
-  // Relógio de 1s — alimenta o contador regressivo dos programas no ar
-  const [nowTick, setNowTick] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
+
+
 
   // Atalhos dos botões personalizados
   const customButtonsRef = useRef<any[]>(customButtons);
