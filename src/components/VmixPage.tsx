@@ -3516,12 +3516,22 @@ function SwitcherUI({
                             </span>
                             <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                           </div>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {progs.map((prog) => {
                         const isActive = activePreset === prog.id;
                         const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
                         const startTime = prog.horario_inicio?.slice(0, 5) || "";
                         const endTime = prog.horario_fim?.slice(0, 5) || "";
+                        // Contador regressivo até o fim do programa no ar (usa nowTick de 1s)
+                        const nowSecs = (() => {
+                          const d = new Date(nowTick);
+                          return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+                        })();
+                        const endSecs = timeToSeconds(prog.horario_fim);
+                        const remaining = progOnAir && endSecs !== null
+                          ? (endSecs >= nowSecs ? endSecs - nowSecs : endSecs + 86400 - nowSecs)
+                          : null;
+
                         return (
                           <div
                             key={prog.id}
