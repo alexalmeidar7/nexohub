@@ -3856,6 +3856,15 @@ function SwitcherUI({
                         <Plus size={12} />
                         <span className="text-[10px] font-black uppercase tracking-wider">novo botão</span>
                       </button>
+                      <button
+                        onClick={cycleCustomBtnTextScale}
+                        className="vmix-hover-ring flex items-center gap-1 px-2 py-1 rounded-md transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#C6F03C15", color: "#C6F03C", border: "1px solid #C6F03C50" }}
+                        title="Aumentar o texto dos botões personalizados"
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-wider">A+</span>
+                        <span className="text-[9px] font-bold tabular-nums opacity-70">{Math.round(customBtnTextScale * 100)}%</span>
+                      </button>
                     </div>
                   </div>
                   <div className="p-5 space-y-4">
