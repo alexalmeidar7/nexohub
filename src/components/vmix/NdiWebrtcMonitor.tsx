@@ -94,7 +94,15 @@ export default function NdiWebrtcMonitor({
       const Hls = await getHls();
       if (cancelled) return;
       if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: true, liveDurationInfinity: true });
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          liveDurationInfinity: true,
+          manifestLoadingRetryDelay: 1000,
+          manifestLoadingMaxRetry: 6,
+          levelLoadingMaxRetry: 6,
+          fragLoadingMaxRetry: 6,
+        });
         hlsRef.current = hls;
         hls.loadSource(effectiveHls);
         hls.attachMedia(video);
@@ -102,8 +110,22 @@ export default function NdiWebrtcMonitor({
           setStatus("live");
           video.play().catch(() => {});
         });
+        hls.on(Hls.Events.FRAG_BUFFERED, () => setStatus("live"));
         hls.on(Hls.Events.ERROR, (_e, data) => {
-          if (data?.fatal) setStatus("error");
+          if (!data?.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            // Rede local instável / manifesto ainda não publicado: tenta de novo.
+            retryRef.current = window.setTimeout(() => {
+              if (!cancelled) hls.startLoad();
+            }, 2000);
+            setStatus("connecting");
+            return;
+          }
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hls.recoverMediaError();
+            return;
+          }
+          setStatus("error");
         });
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = effectiveHls;
