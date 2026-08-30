@@ -59,6 +59,23 @@ export const matchesStudio = (recordStudio?: string | null, studioName?: string 
   return ta.some(x => tb.some(y => x === y || x.includes(y) || y.includes(x)));
 };
 
+/** "HH:MM" -> segundos do dia */
+const timeToSeconds = (hhmm?: string | null) => {
+  if (!hhmm) return null;
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 3600 + m * 60;
+};
+
+/** Segundos -> MM:SS ou HH:MM:SS */
+const formatCountdown = (total: number) => {
+  const s = Math.max(0, Math.floor(total));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+};
 
 
 interface VmixInput {
