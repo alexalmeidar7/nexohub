@@ -2545,10 +2545,16 @@ function SwitcherUI({
   currentTime
 }: any) {
 
-
+  // Relógio de 1s — alimenta o contador regressivo dos programas no ar
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
+
 
   // Categorias do switcher (por usuário + estúdio), com drag and drop
   const {
