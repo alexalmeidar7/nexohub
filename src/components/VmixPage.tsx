@@ -3512,12 +3512,13 @@ function SwitcherUI({
                       }
                       return Object.entries(groups).map(([studio, progs]) => (
                         <div key={studio}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: studio.toLowerCase().includes("fm") ? "#3b82f620" : studio.toLowerCase().includes("podcast") ? "#8b5cf620" : "#ffffff08", color: studio.toLowerCase().includes("fm") ? "#3b82f6" : studio.toLowerCase().includes("podcast") ? "#8b5cf6" : "#888" }}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded" style={{ backgroundColor: "rgba(198,240,60,0.12)", color: "#C6F03C", border: "1px solid rgba(198,240,60,0.3)" }}>
                               {studio}
                             </span>
                             <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                           </div>
+
                           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {progs.map((prog) => {
                         const isActive = activePreset === prog.id;
