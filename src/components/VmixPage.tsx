@@ -3925,8 +3925,11 @@ function SwitcherUI({
                             )}
 
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
-                              <BtnIcon size={16} style={{ color: textColor, opacity: 0.85 }} />
-                              <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: textColor }}>{btn.nome}</span>
+                              <BtnIcon size={Math.round(16 * customBtnTextScale)} style={{ color: textColor, opacity: 0.85 }} />
+                              <span
+                                className="font-black uppercase tracking-wider text-center leading-tight"
+                                style={{ color: textColor, fontSize: `${9 * customBtnTextScale}px` }}
+                              >{btn.nome}</span>
                             </div>
 
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
