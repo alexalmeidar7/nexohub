@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Calendar } from "lucide-react";
@@ -11,6 +12,7 @@ interface PresetCommand {
   value?: string;
   extraKey?: string;
   extraValue?: string;
+  enabled?: boolean;
 }
 
 interface VmixInput {
