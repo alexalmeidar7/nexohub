@@ -42,9 +42,16 @@ export default function NdiWebrtcMonitor({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
 
-  // Campo sempre vazio ao abrir; a URL digitada é salva automaticamente.
-  const [draftHls, setDraftHls] = useState("");
-  const [hlsUrl, setHlsUrl] = useState("");
+  // Recupera a última URL salva e dá play automaticamente.
+  const storedHls = (() => {
+    try {
+      return localStorage.getItem(HLS_KEY) || "";
+    } catch {
+      return "";
+    }
+  })();
+  const [draftHls, setDraftHls] = useState(storedHls);
+  const [hlsUrl, setHlsUrl] = useState(storedHls);
   const [status, setStatus] = useState<Status>("idle");
   const [running, setRunning] = useState(true);
   const [muted, setMuted] = useState(true);
