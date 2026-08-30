@@ -286,7 +286,7 @@ export default function NdiWebrtcMonitor({
             value={draftHls}
             onChange={(e) => setDraftHls(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveHls()}
-            placeholder="http://192.168.0.10:8080/stream.m3u8"
+            placeholder="http://10.1.1.62:8088/livelan"
             className="vmix-hover-ring flex-1 h-9 rounded text-[11px] font-bold px-2.5 outline-none"
             style={fieldStyle}
           />
