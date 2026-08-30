@@ -39,14 +39,26 @@ export const isStudioScoped = (studioName?: string | null) => {
   return n !== "" && n !== "vmix studio";
 };
 
+/** remove palavras genéricas ("estúdio", "studio", "sala") para comparar apenas o identificador */
+const studioTokens = (s?: string | null) =>
+  normStudio(s)
+    .split(/[\s\-_/|.]+/)
+    .filter(t => t && !["estudio", "studio", "sala", "de", "do", "da"].includes(t));
+
 /** valida se um registro (programa/botão) pertence ao estúdio selecionado */
 export const matchesStudio = (recordStudio?: string | null, studioName?: string | null) => {
   if (!isStudioScoped(studioName)) return true;
   const a = normStudio(recordStudio);
   const b = normStudio(studioName);
   if (!a) return false; // sem estúdio definido não herda o estúdio selecionado
-  return a === b || a.includes(b) || b.includes(a);
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+  // Comparação por identificador: "Estúdio FM" ↔ conexão "ESTUDIO JFM"
+  const ta = studioTokens(recordStudio);
+  const tb = studioTokens(studioName);
+  if (ta.length === 0 || tb.length === 0) return false;
+  return ta.some(x => tb.some(y => x === y || x.includes(y) || y.includes(x)));
 };
+
 
 
 interface VmixInput {
