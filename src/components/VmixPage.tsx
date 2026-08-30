@@ -2982,7 +2982,7 @@ function SwitcherUI({
                               setCapturingShortcut(input.key || input.number);
                             }}
                             title={input.title}
-                            className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            className="group vmix-hover-ring relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
                               backgroundColor: isPreview ? "#C6F03C" : "#1a1a1a",
                               color: isPreview ? "#000" : "#e5e5e5",
@@ -3043,7 +3043,7 @@ function SwitcherUI({
                               sendCommand(cmd);
                               setOverlays((prev: any) => ({ ...prev, [n]: !prev[n] }));
                             }}
-                            className="h-16 rounded border text-[10px] font-black tracking-wider transition-all"
+                            className="vmix-hover-ring h-16 rounded border text-[10px] font-black tracking-wider transition-all"
                             style={{
                               backgroundColor: isOn ? "#C6F03C" : "#1a1a1a",
                               color: isOn ? "#000" : "#e5e5e5",
@@ -3064,21 +3064,21 @@ function SwitcherUI({
                     <div className="grid gap-2">
                       <button
                         onClick={() => sendCommand("Cut")}
-                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        className="vmix-hover-ring h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C", boxShadow: "0 0 12px rgba(198,240,60,0.35)" }}
                       >
                         CUT
                       </button>
                       <button
                         onClick={() => sendCommand("Fade", undefined, String(transitionDuration))}
-                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        className="vmix-hover-ring h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", borderColor: "#C6F03C50" }}
                       >
                         FADE
                       </button>
                       <button
                         onClick={() => sendCommand("Merge", undefined, String(transitionDuration))}
-                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        className="vmix-hover-ring h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
                         style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", borderColor: "#2a2a2a" }}
                       >
                         MERGE
@@ -3127,7 +3127,7 @@ function SwitcherUI({
                               setCapturingShortcut(input.key || input.number);
                             }}
                             title={input.title}
-                            className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            className="group vmix-hover-ring relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
                               backgroundColor: isActive ? "#dc2626" : "#1a1a1a",
                               color: isActive ? "#fff" : "#e5e5e5",
@@ -3537,7 +3537,7 @@ function SwitcherUI({
                         return (
                           <div
                             key={prog.id}
-                            className={`group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair ring-2 ring-red-500 animate-pulse" : ""}`}
+                            className={`group/preset vmix-hover-ring relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair ring-2 ring-red-500 animate-pulse" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
@@ -3591,14 +3591,15 @@ function SwitcherUI({
                               <div
                                 draggable
                                 onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
-                                className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing"
+                                className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-[3px] rounded cursor-grab active:cursor-grabbing"
                                 style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
                                 title="Arraste para reposicionar"
                               >
-                                <GripVertical size={7} style={{ color: "#666" }} />
-                                <Clock size={8} style={{ color: progOnAir ? "#fff" : "#888" }} />
-                                <span className="text-[7px] font-bold tabular-nums" style={{ color: progOnAir ? "#fff" : "#999" }}>{startTime} - {endTime}</span>
+                                <GripVertical size={9} style={{ color: "#666" }} />
+                                <Clock size={11} style={{ color: progOnAir ? "#fff" : "#888" }} />
+                                <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: progOnAir ? "#fff" : "#ddd" }}>{startTime} - {endTime}</span>
                               </div>
+
                             )}
                             {prog.estudio && (
                               <div className="absolute top-1.5 right-1.5 z-[2]">
@@ -3855,11 +3856,11 @@ function SwitcherUI({
                         return (
                           <div
                             key={btn.id}
-                            className="group/custom relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
+                            className={`group/custom vmix-hover-ring relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${isBtnActive ? " vmix-active-blink" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: btnColor,
-                              border: isBtnActive ? `2px solid ${textColor}` : `2px solid ${btnColor}`,
+                              border: `2px solid ${btnColor}`,
                             }}
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
@@ -3869,9 +3870,9 @@ function SwitcherUI({
                             }}
                           >
                             {hasSchedule && (
-                              <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 2 }}>
-                                <Clock size={7} style={{ color: "#fff" }} />
-                                <span className="text-[6px] font-bold tabular-nums" style={{ color: "#fff" }}>{btn.horario?.slice(0, 5)}</span>
+                              <div className="absolute top-1 left-1 flex items-center gap-1 px-2 py-[3px] rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                                <Clock size={11} style={{ color: "#fff" }} />
+                                <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: "#fff" }}>{btn.horario?.slice(0, 5)}</span>
                               </div>
                             )}
                             {btn.dias_semana && btn.dias_semana.length > 0 && (
@@ -3888,13 +3889,18 @@ function SwitcherUI({
                               </div>
                             )}
                             {btn.shortcut && (
-                              <div className="absolute top-1 right-1 z-[3]">
-                                <span className="inline-flex items-center rounded bg-gray-900 px-2 py-[2px] text-[9px] font-black uppercase tracking-widest text-white shadow"
-                                  style={{ border: "1px solid rgba(255,255,255,0.35)" }}
+                              <div className="absolute top-1.5 right-1.5 z-[3]">
+                                <span className="text-[6px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
+                                  style={{
+                                    backgroundColor: `${textColor}22`,
+                                    color: textColor,
+                                    border: `1px solid ${textColor}59`,
+                                  }}
                                   title={`Atalho: ${btn.shortcut}`}
                                 >{btn.shortcut}</span>
                               </div>
                             )}
+
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
                               <BtnIcon size={16} style={{ color: textColor, opacity: 0.85 }} />
                               <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: textColor }}>{btn.nome}</span>
@@ -3909,7 +3915,7 @@ function SwitcherUI({
                       })}
                       {/* + Criar */}
                       <div
-                        className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
+                        className="relative vmix-hover-ring rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
                         style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
                         onClick={() => setEditingCustomButtonId("new")}
                       >
