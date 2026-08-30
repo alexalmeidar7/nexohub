@@ -45,11 +45,9 @@ function normalizeHlsUrl(raw?: string | null): string {
     return u.toString().replace(/\/$/, "");
   } catch {
     return v;
-
-  } catch {
-    return v;
   }
 }
+
 
 function snapshotPaths(inputRef: string): string[] {
   const q = inputRef ? `?input=${encodeURIComponent(inputRef)}` : "";
