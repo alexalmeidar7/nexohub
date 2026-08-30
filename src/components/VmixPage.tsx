@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { getIconForName } from "./CustomVmixButtonEditor";
+import { getIconForName, resolveButtonIcon } from "./CustomVmixButtonEditor";
 import logoMixControl from "@/assets/logo-mixcontrol.png"; // Keeping reference to the main logo asset.
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
@@ -59,6 +59,23 @@ export const matchesStudio = (recordStudio?: string | null, studioName?: string 
   return ta.some(x => tb.some(y => x === y || x.includes(y) || y.includes(x)));
 };
 
+/** "HH:MM" -> segundos do dia */
+const timeToSeconds = (hhmm?: string | null) => {
+  if (!hhmm) return null;
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 3600 + m * 60;
+};
+
+/** Segundos -> MM:SS ou HH:MM:SS */
+const formatCountdown = (total: number) => {
+  const s = Math.max(0, Math.floor(total));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+};
 
 
 interface VmixInput {
@@ -1864,6 +1881,35 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   const inputShortcutsRef = useRef(inputShortcuts);
   inputShortcutsRef.current = inputShortcuts;
 
+
+
+
+  // Atalhos dos botões personalizados
+  const customButtonsRef = useRef<any[]>(customButtons);
+  customButtonsRef.current = customButtons;
+  const runCommandsRef = useRef(runCommandsUnified);
+  runCommandsRef.current = runCommandsUnified;
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const pressed = `${e.ctrlKey ? "Ctrl+" : ""}${e.altKey ? "Alt+" : ""}${e.shiftKey ? "Shift+" : ""}${e.key.toUpperCase()}`.toLowerCase();
+      const btn = customButtonsRef.current.find((b: any) => (b?.shortcut || "").toLowerCase() === pressed);
+      if (!btn) return;
+      e.preventDefault();
+      setActiveCustomButton(btn.id);
+      if (Array.isArray(btn.commands) && btn.commands.length > 0) {
+        void runCommandsRef.current(btn.commands as any[], `Efeito: ${btn.nome}`);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+
+
+
   useEffect(() => {
     if (!effectiveConnected) return;
     const handler = (e: KeyboardEvent) => {
@@ -2495,10 +2541,16 @@ function SwitcherUI({
   currentTime
 }: any) {
 
-
+  // Relógio de 1s — alimenta o contador regressivo dos programas no ar
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
+
 
   // Categorias do switcher (por usuário + estúdio), com drag and drop
   const {
@@ -3086,23 +3138,22 @@ function SwitcherUI({
                             <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
                             <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
 
-                            {/* Keyboard Shortcut Indicator */}
+                            {/* Keyboard Shortcut Indicator (estilo tecla de teclado, alto contraste) */}
                             <div
-                              className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
-                                isCapturing
-                                  ? "animate-pulse z-10"
-                                  : shortcut ? "" : "opacity-0 group-hover:opacity-100"
+                              className={`absolute -top-1.5 -right-1.5 z-10 inline-flex items-center rounded px-2 py-0.5 text-[9px] font-black font-mono uppercase tracking-widest shadow-md transition-all ${
+                                isCapturing ? "animate-pulse" : shortcut ? "" : "opacity-0 group-hover:opacity-100"
                               }`}
                               style={
                                 isCapturing
-                                  ? { backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C" }
+                                  ? { backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }
                                   : shortcut
-                                    ? { backgroundColor: "#000000aa", color: "#C6F03C", borderColor: "#C6F03C40" }
-                                    : { backgroundColor: "#00000080", color: "#ffffff50", borderColor: "transparent" }
+                                    ? { backgroundColor: "#1f2937", color: "#ffffff", border: "1px solid rgba(255,255,255,0.45)" }
+                                    : { backgroundColor: "#111827", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.2)" }
                               }
                             >
                               {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
                             </div>
+
                           </button>
                         );
                       })}
@@ -3460,22 +3511,33 @@ function SwitcherUI({
                       }
                       return Object.entries(groups).map(([studio, progs]) => (
                         <div key={studio}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ backgroundColor: studio.toLowerCase().includes("fm") ? "#3b82f620" : studio.toLowerCase().includes("podcast") ? "#8b5cf620" : "#ffffff08", color: studio.toLowerCase().includes("fm") ? "#3b82f6" : studio.toLowerCase().includes("podcast") ? "#8b5cf6" : "#888" }}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded" style={{ backgroundColor: "rgba(198,240,60,0.12)", color: "#C6F03C", border: "1px solid rgba(198,240,60,0.3)" }}>
                               {studio}
                             </span>
                             <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                           </div>
-                          <div className="grid grid-cols-3 gap-2">
+
+                          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {progs.map((prog) => {
                         const isActive = activePreset === prog.id;
                         const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
                         const startTime = prog.horario_inicio?.slice(0, 5) || "";
                         const endTime = prog.horario_fim?.slice(0, 5) || "";
+                        // Contador regressivo até o fim do programa no ar (usa nowTick de 1s)
+                        const nowSecs = (() => {
+                          const d = new Date(nowTick);
+                          return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+                        })();
+                        const endSecs = timeToSeconds(prog.horario_fim);
+                        const remaining = progOnAir && endSecs !== null
+                          ? (endSecs >= nowSecs ? endSecs - nowSecs : endSecs + 86400 - nowSecs)
+                          : null;
+
                         return (
                           <div
                             key={prog.id}
-                            className={`group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair" : ""}`}
+                            className={`group/preset relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair ring-2 ring-red-500 animate-pulse" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
@@ -3540,11 +3602,25 @@ function SwitcherUI({
                             )}
                             {prog.estudio && (
                               <div className="absolute top-1.5 right-1.5 z-[2]">
-                                <span className="text-[6px] font-bold uppercase tracking-wider px-1 py-[1px] rounded"
-                                  style={{ backgroundColor: progOnAir ? "#ffffff" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f630" : "#8b5cf630", color: progOnAir ? "#000" : prog.estudio.toLowerCase().includes("fm") ? "#3b82f6" : "#8b5cf6" }}
+                                <span className="text-[6px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
+                                  style={{
+                                    backgroundColor: progOnAir ? "rgba(255,255,255,0.22)" : "rgba(198,240,60,0.14)",
+                                    color: progOnAir ? "#fff" : "#C6F03C",
+                                    border: `1px solid ${progOnAir ? "rgba(255,255,255,0.35)" : "rgba(198,240,60,0.35)"}`,
+                                  }}
                                 >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
                               </div>
                             )}
+                            {remaining !== null && (
+                              <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[3] flex items-center gap-1 px-1.5 py-[2px] rounded"
+                                style={{ backgroundColor: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.25)" }}
+                                title="Tempo restante do programa no ar"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#fff" }} />
+                                <span className="text-[9px] font-black tabular-nums" style={{ color: "#fff" }}>{formatCountdown(remaining)}</span>
+                              </div>
+                            )}
+
                             {prog.dias_semana && prog.dias_semana.length > 0 && (
                               <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
                                 {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
@@ -3761,13 +3837,14 @@ function SwitcherUI({
                       </button>
                     </div>
                   </div>
-                  <div className="p-4 space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
+                  <div className="p-5 space-y-4">
+                    <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
                         const isBtnActive = activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
                         const btnColor = btn.color || "#C6F03C";
-                        const BtnIcon = getIconForName(btn.nome || "");
+                        const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
+
                         // Compute text color based on background luminance
                         const hex = btnColor.replace("#", "");
                         const r = parseInt(hex.substring(0, 2), 16) / 255;
@@ -3810,10 +3887,19 @@ function SwitcherUI({
                                 })}
                               </div>
                             )}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-4 pb-3 gap-1">
+                            {btn.shortcut && (
+                              <div className="absolute top-1 right-1 z-[3]">
+                                <span className="inline-flex items-center rounded bg-gray-900 px-2 py-[2px] text-[9px] font-black uppercase tracking-widest text-white shadow"
+                                  style={{ border: "1px solid rgba(255,255,255,0.35)" }}
+                                  title={`Atalho: ${btn.shortcut}`}
+                                >{btn.shortcut}</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
                               <BtnIcon size={16} style={{ color: textColor, opacity: 0.85 }} />
                               <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: textColor }}>{btn.nome}</span>
                             </div>
+
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
                               <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
