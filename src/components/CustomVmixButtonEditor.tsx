@@ -340,39 +340,96 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         </div>
 
         {/* Form + Commands */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+        <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="animate-spin" size={20} style={{ color: "#666" }} />
             </div>
           ) : (
             <>
-              {/* Name field */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
-                  <Tag size={10} /> Nome do Botão
+              {/* Name + shortcut */}
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                    <Tag size={10} /> Nome do Botão
+                  </label>
+                  <input
+                    type="text"
+                    value={nome}
+                    onChange={e => setNome(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-lg outline-none"
+                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                    placeholder="Ex: Abertura Jornal, Vinheta Comercial..."
+                  />
+                </div>
+                <div className="flex flex-col gap-2 sm:w-40">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                    <Keyboard size={10} /> Atalho
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={shortcut}
+                      readOnly
+                      onKeyDown={e => {
+                        e.preventDefault();
+                        if (e.key === "Backspace" || e.key === "Delete" || e.key === "Escape") { setShortcut(""); return; }
+                        if (e.key.length === 1 || /^F\d{1,2}$/.test(e.key)) {
+                          setShortcut(`${e.ctrlKey ? "Ctrl+" : ""}${e.altKey ? "Alt+" : ""}${e.shiftKey ? "Shift+" : ""}${e.key.toUpperCase()}`);
+                        }
+                      }}
+                      className="w-full text-center text-[11px] font-black uppercase px-3 py-2.5 rounded-lg outline-none cursor-pointer"
+                      style={{ backgroundColor: "#181820", color: "#fff", border: `1px solid ${shortcut ? "#C6F03C60" : "#333"}` }}
+                      placeholder="Clique e tecle"
+                    />
+                    {shortcut && (
+                      <button onClick={() => setShortcut("")} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10" style={{ color: "#888" }}>
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Icon picker */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                  <Sparkles size={10} /> Ícone do Botão
                 </label>
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={e => setNome(e.target.value)}
-                  className="w-full text-xs px-3 py-2 rounded-lg outline-none"
-                  style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
-                  placeholder="Ex: Abertura Jornal, Vinheta Comercial..."
-                />
+                <div className="grid grid-cols-10 gap-1.5 p-2.5 rounded-lg max-h-32 overflow-y-auto" style={{ backgroundColor: "#12121a", border: "1px solid #2a2a38" }}>
+                  {Object.entries(ICON_LIBRARY).map(([key, Icon]) => {
+                    const active = iconKey === key;
+                    return (
+                      <button
+                        key={key}
+                        title={key}
+                        onClick={() => setIconKey(active ? "" : key)}
+                        className="aspect-square rounded-lg flex items-center justify-center transition-all hover:scale-105"
+                        style={{
+                          backgroundColor: active ? `${color}22` : "#ffffff06",
+                          border: active ? `1px solid ${color}` : "1px solid transparent",
+                          color: active ? color : "#888",
+                        }}
+                      >
+                        <Icon size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="text-[8px]" style={{ color: "#555" }}>Sem seleção, o ícone é sugerido pelo nome do botão.</span>
               </div>
 
               {/* Color picker */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+              <div className="flex flex-col gap-2">
+                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
                   <Palette size={10} /> Cor do Botão
                 </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {BUTTON_COLORS.map(c => (
+                <div className="flex flex-wrap gap-2">
+                  {[{ value: "#C6F03C", label: "Lima" }, ...BUTTON_COLORS].map(c => (
                     <button
                       key={c.value}
                       onClick={() => setColor(c.value)}
-                      className="w-6 h-6 rounded-full transition-all hover:scale-110"
+                      className="w-7 h-7 rounded-full transition-all hover:scale-110"
                       style={{
                         backgroundColor: c.value,
                         border: color === c.value ? "2px solid #fff" : "2px solid #333",
@@ -383,6 +440,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   ))}
                 </div>
               </div>
+
 
               {/* Schedule row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
