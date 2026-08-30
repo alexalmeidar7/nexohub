@@ -3138,23 +3138,22 @@ function SwitcherUI({
                             <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
                             <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
 
-                            {/* Keyboard Shortcut Indicator */}
+                            {/* Keyboard Shortcut Indicator (estilo tecla de teclado, alto contraste) */}
                             <div
-                              className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
-                                isCapturing
-                                  ? "animate-pulse z-10"
-                                  : shortcut ? "" : "opacity-0 group-hover:opacity-100"
+                              className={`absolute -top-1.5 -right-1.5 z-10 inline-flex items-center rounded px-2 py-0.5 text-[9px] font-black font-mono uppercase tracking-widest shadow-md transition-all ${
+                                isCapturing ? "animate-pulse" : shortcut ? "" : "opacity-0 group-hover:opacity-100"
                               }`}
                               style={
                                 isCapturing
-                                  ? { backgroundColor: "#C6F03C", color: "#000", borderColor: "#C6F03C" }
+                                  ? { backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }
                                   : shortcut
-                                    ? { backgroundColor: "#000000aa", color: "#C6F03C", borderColor: "#C6F03C40" }
-                                    : { backgroundColor: "#00000080", color: "#ffffff50", borderColor: "transparent" }
+                                    ? { backgroundColor: "#1f2937", color: "#ffffff", border: "1px solid rgba(255,255,255,0.45)" }
+                                    : { backgroundColor: "#111827", color: "#9ca3af", border: "1px solid rgba(255,255,255,0.2)" }
                               }
                             >
                               {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
                             </div>
+
                           </button>
                         );
                       })}
