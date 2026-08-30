@@ -275,7 +275,7 @@ export default function NdiWebrtcMonitor({
       }
     }
     setStatus("error");
-  }, [base, closeConnection, showJpegFrame, vmixPass, vmixUser]);
+  }, [base, closeConnection, showJpegFrame, tryNativeMjpeg, vmixPass, vmixUser]);
 
   // WHEP (WebRTC-HTTP Egress Protocol) subscriber
   const connectWebRTC = useCallback(
