@@ -83,9 +83,9 @@ export default function NdiWebrtcMonitor({
   const vmixSources = useMemo<NdiSource[]>(() => {
     if (!base) return [];
     const list = [...inputs].filter((i) => String(i?.number ?? "").trim() !== "");
+    // Exclusivamente saídas/entradas NDI (NDI / Desktop Capture via NDI)
     const ndi = list.filter((i) => isNdiType(i.type));
-    const others = list.filter((i) => !isNdiType(i.type));
-    const build = (i: VmixInputLike, tag: string): NdiSource => {
+    const build = (i: VmixInputLike): NdiSource => {
       const inputNumber = String(i.number);
       const inputKey = String(i.key || "").trim();
       const paths = Array.from(new Set([
@@ -93,7 +93,7 @@ export default function NdiWebrtcMonitor({
         inputKey ? `/mjpeg?Input=${encodeURIComponent(inputKey)}` : "",
       ].filter(Boolean)));
       return {
-        label: `${tag} ${i.number} · ${(i.title || "Sem título").replace(/\s+/g, " ").trim()}`,
+        label: `NDI ${i.number} · ${(i.title || "Sem título").replace(/\s+/g, " ").trim()}`,
         kind: "mjpeg",
         url: `${base}${paths[0]}`,
         path: paths[0],
@@ -113,10 +113,10 @@ export default function NdiWebrtcMonitor({
         url: `${base}/mjpeg?Input=Preview`,
         path: "/mjpeg?Input=Preview",
       },
-      ...ndi.map((i) => build(i, "NDI")),
-      ...others.map((i) => build(i, "IN")),
+      ...ndi.map((i) => build(i)),
     ];
   }, [base, inputs]);
+
 
   // 2) Opcional: bridge WebRTC/WHEP (MediaMTX) na mesma máquina do vMix.
   const discoverBridge = useCallback(async (targetHost: string) => {
