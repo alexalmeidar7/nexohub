@@ -1888,6 +1888,31 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     return () => window.clearInterval(id);
   }, []);
 
+  // Atalhos dos botões personalizados
+  const customButtonsRef = useRef<any[]>(customButtons);
+  customButtonsRef.current = customButtons;
+  const runCommandsRef = useRef(runCommandsUnified);
+  runCommandsRef.current = runCommandsUnified;
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const pressed = `${e.ctrlKey ? "Ctrl+" : ""}${e.altKey ? "Alt+" : ""}${e.shiftKey ? "Shift+" : ""}${e.key.toUpperCase()}`.toLowerCase();
+      const btn = customButtonsRef.current.find((b: any) => (b?.shortcut || "").toLowerCase() === pressed);
+      if (!btn) return;
+      e.preventDefault();
+      setActiveCustomButton(btn.id);
+      if (Array.isArray(btn.commands) && btn.commands.length > 0) {
+        void runCommandsRef.current(btn.commands as any[], `Efeito: ${btn.nome}`);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+
+
 
   useEffect(() => {
     if (!effectiveConnected) return;
