@@ -2541,6 +2541,26 @@ function SwitcherUI({
   currentTime
 }: any) {
 
+  // Tamanho do texto dos botões personalizados (persistido)
+  const [customBtnTextScale, setCustomBtnTextScale] = useState<number>(() => {
+    try {
+      return Number(localStorage.getItem("vmix_custom_btn_text_scale")) || 1;
+    } catch {
+      return 1;
+    }
+  });
+  const cycleCustomBtnTextScale = () => {
+    setCustomBtnTextScale((prev) => {
+      const next = prev >= 1.6 ? 1 : Math.round((prev + 0.2) * 10) / 10;
+      try {
+        localStorage.setItem("vmix_custom_btn_text_scale", String(next));
+      } catch {
+        /* storage indisponível */
+      }
+      return next;
+    });
+  };
+
   // Relógio de 1s — alimenta o contador regressivo dos programas no ar
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
@@ -3836,6 +3856,15 @@ function SwitcherUI({
                         <Plus size={12} />
                         <span className="text-[10px] font-black uppercase tracking-wider">novo botão</span>
                       </button>
+                      <button
+                        onClick={cycleCustomBtnTextScale}
+                        className="vmix-hover-ring flex items-center gap-1 px-2 py-1 rounded-md transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#C6F03C15", color: "#C6F03C", border: "1px solid #C6F03C50" }}
+                        title="Aumentar o texto dos botões personalizados"
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-wider">A+</span>
+                        <span className="text-[9px] font-bold tabular-nums opacity-70">{Math.round(customBtnTextScale * 100)}%</span>
+                      </button>
                     </div>
                   </div>
                   <div className="p-5 space-y-4">
@@ -3843,16 +3872,10 @@ function SwitcherUI({
                       {customButtons.map((btn: any) => {
                         const isBtnActive = activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
-                        const btnColor = btn.color || "#C6F03C";
+                        // Cor padronizada (mesmo visual do botão "+ novo botão")
+                        const btnColor = "#C6F03C";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
-
-                        // Compute text color based on background luminance
-                        const hex = btnColor.replace("#", "");
-                        const r = parseInt(hex.substring(0, 2), 16) / 255;
-                        const g = parseInt(hex.substring(2, 4), 16) / 255;
-                        const b = parseInt(hex.substring(4, 6), 16) / 255;
-                        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-                        const textColor = luminance > 0.5 ? "#000000" : "#ffffff";
+                        const textColor = "#000000";
                         return (
                           <div
                             key={btn.id}
@@ -3902,8 +3925,11 @@ function SwitcherUI({
                             )}
 
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
-                              <BtnIcon size={16} style={{ color: textColor, opacity: 0.85 }} />
-                              <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: textColor }}>{btn.nome}</span>
+                              <BtnIcon size={Math.round(16 * customBtnTextScale)} style={{ color: textColor, opacity: 0.85 }} />
+                              <span
+                                className="font-black uppercase tracking-wider text-center leading-tight"
+                                style={{ color: textColor, fontSize: `${9 * customBtnTextScale}px` }}
+                              >{btn.nome}</span>
                             </div>
 
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>

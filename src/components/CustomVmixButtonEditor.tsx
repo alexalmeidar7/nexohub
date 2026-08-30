@@ -419,27 +419,6 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 <span className="text-[8px]" style={{ color: "#555" }}>Sem seleção, o ícone é sugerido pelo nome do botão.</span>
               </div>
 
-              {/* Color picker */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
-                  <Palette size={10} /> Cor do Botão
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[{ value: "#C6F03C", label: "Lima" }, ...BUTTON_COLORS].map(c => (
-                    <button
-                      key={c.value}
-                      onClick={() => setColor(c.value)}
-                      className="w-7 h-7 rounded-full transition-all hover:scale-110"
-                      style={{
-                        backgroundColor: c.value,
-                        border: color === c.value ? "2px solid #fff" : "2px solid #333",
-                        boxShadow: color === c.value ? `0 0 8px ${c.value}60` : "none",
-                      }}
-                      title={c.label}
-                    />
-                  ))}
-                </div>
-              </div>
 
 
               {/* Schedule row */}
