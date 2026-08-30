@@ -3856,11 +3856,11 @@ function SwitcherUI({
                         return (
                           <div
                             key={btn.id}
-                            className="group/custom relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]"
+                            className={`group/custom vmix-hover-ring relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${isBtnActive ? " vmix-active-blink" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: btnColor,
-                              border: isBtnActive ? `2px solid ${textColor}` : `2px solid ${btnColor}`,
+                              border: `2px solid ${btnColor}`,
                             }}
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
@@ -3870,9 +3870,9 @@ function SwitcherUI({
                             }}
                           >
                             {hasSchedule && (
-                              <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 2 }}>
-                                <Clock size={7} style={{ color: "#fff" }} />
-                                <span className="text-[6px] font-bold tabular-nums" style={{ color: "#fff" }}>{btn.horario?.slice(0, 5)}</span>
+                              <div className="absolute top-1 left-1 flex items-center gap-1 px-2 py-[3px] rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 2 }}>
+                                <Clock size={11} style={{ color: "#fff" }} />
+                                <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: "#fff" }}>{btn.horario?.slice(0, 5)}</span>
                               </div>
                             )}
                             {btn.dias_semana && btn.dias_semana.length > 0 && (
@@ -3889,13 +3889,18 @@ function SwitcherUI({
                               </div>
                             )}
                             {btn.shortcut && (
-                              <div className="absolute top-1 right-1 z-[3]">
-                                <span className="inline-flex items-center rounded bg-gray-900 px-2 py-[2px] text-[9px] font-black uppercase tracking-widest text-white shadow"
-                                  style={{ border: "1px solid rgba(255,255,255,0.35)" }}
+                              <div className="absolute top-1.5 right-1.5 z-[3]">
+                                <span className="text-[6px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
+                                  style={{
+                                    backgroundColor: `${textColor}22`,
+                                    color: textColor,
+                                    border: `1px solid ${textColor}59`,
+                                  }}
                                   title={`Atalho: ${btn.shortcut}`}
                                 >{btn.shortcut}</span>
                               </div>
                             )}
+
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
                               <BtnIcon size={16} style={{ color: textColor, opacity: 0.85 }} />
                               <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: textColor }}>{btn.nome}</span>
