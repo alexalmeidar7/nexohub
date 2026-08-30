@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { getIconForName } from "./CustomVmixButtonEditor";
+import { getIconForName, resolveButtonIcon } from "./CustomVmixButtonEditor";
 import logoMixControl from "@/assets/logo-mixcontrol.png"; // Keeping reference to the main logo asset.
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
