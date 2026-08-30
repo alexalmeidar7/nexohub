@@ -43,6 +43,7 @@ export default function NdiWebrtcMonitor({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
+  const retryRef = useRef<number | null>(null);
 
   // Recupera a última URL salva e dá play automaticamente.
   const storedHls = (() => {
