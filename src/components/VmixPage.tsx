@@ -3888,10 +3888,19 @@ function SwitcherUI({
                                 })}
                               </div>
                             )}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-4 pb-3 gap-1">
+                            {btn.shortcut && (
+                              <div className="absolute top-1 right-1 z-[3]">
+                                <span className="inline-flex items-center rounded bg-gray-900 px-2 py-[2px] text-[9px] font-black uppercase tracking-widest text-white shadow"
+                                  style={{ border: "1px solid rgba(255,255,255,0.35)" }}
+                                  title={`Atalho: ${btn.shortcut}`}
+                                >{btn.shortcut}</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
                               <BtnIcon size={16} style={{ color: textColor, opacity: 0.85 }} />
                               <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: textColor }}>{btn.nome}</span>
                             </div>
+
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
                               <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
