@@ -162,6 +162,11 @@ export default function NdiWebrtcMonitor({
   const closeConnection = useCallback(() => {
     mjpegAbortRef.current?.abort();
     mjpegAbortRef.current = null;
+    if (imageRef.current) {
+      imageRef.current.onload = null;
+      imageRef.current.onerror = null;
+      imageRef.current.removeAttribute("src");
+    }
     if (frameUrlRef.current) {
       URL.revokeObjectURL(frameUrlRef.current);
       frameUrlRef.current = null;
