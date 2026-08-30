@@ -2541,6 +2541,26 @@ function SwitcherUI({
   currentTime
 }: any) {
 
+  // Tamanho do texto dos botões personalizados (persistido)
+  const [customBtnTextScale, setCustomBtnTextScale] = useState<number>(() => {
+    try {
+      return Number(localStorage.getItem("vmix_custom_btn_text_scale")) || 1;
+    } catch {
+      return 1;
+    }
+  });
+  const cycleCustomBtnTextScale = () => {
+    setCustomBtnTextScale((prev) => {
+      const next = prev >= 1.6 ? 1 : Math.round((prev + 0.2) * 10) / 10;
+      try {
+        localStorage.setItem("vmix_custom_btn_text_scale", String(next));
+      } catch {
+        /* storage indisponível */
+      }
+      return next;
+    });
+  };
+
   // Relógio de 1s — alimenta o contador regressivo dos programas no ar
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
