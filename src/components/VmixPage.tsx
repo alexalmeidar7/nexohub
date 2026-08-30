@@ -3701,8 +3701,8 @@ function SwitcherUI({
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
-                      <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Botões Personalizados</span>
+                      <Wand2 size={14} style={{ color: "#C6F03C" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>Botões Personalizados</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -3752,11 +3752,12 @@ function SwitcherUI({
                       </button>
                       <button
                         onClick={() => setEditingCustomButtonId("new")}
-                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                        style={{ color: "#22c55e" }}
-                        title="Criar novo efeito"
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
+                        title="Criar novo botão"
                       >
-                        <Plus size={14} />
+                        <Plus size={12} />
+                        <span className="text-[10px] font-black uppercase tracking-wider">novo botão</span>
                       </button>
                     </div>
                   </div>
@@ -3765,7 +3766,7 @@ function SwitcherUI({
                       {customButtons.map((btn: any) => {
                         const isBtnActive = activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
-                        const btnColor = btn.color || "#f59e0b";
+                        const btnColor = btn.color || "#C6F03C";
                         const BtnIcon = getIconForName(btn.nome || "");
                         // Compute text color based on background luminance
                         const hex = btnColor.replace("#", "");
@@ -3827,8 +3828,8 @@ function SwitcherUI({
                         onClick={() => setEditingCustomButtonId("new")}
                       >
                         <div className="flex flex-col items-center gap-0.5">
-                          <Plus size={14} style={{ color: "#f59e0b" }} />
-                          <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>+ Criar</span>
+                          <Plus size={14} style={{ color: "#C6F03C" }} />
+                          <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>+ Criar</span>
                         </div>
                       </div>
                     </div>
