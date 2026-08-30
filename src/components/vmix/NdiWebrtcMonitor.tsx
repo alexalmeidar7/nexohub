@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type HlsType from "hls.js";
 
 type VmixInputLike = { number: string | number; key?: string; title?: string; type?: string };
 
 type Status = "idle" | "connecting" | "live" | "error";
+type Mode = "hls" | "snapshot";
 
-const STORAGE_KEY = "vmix_snapshot_base";
+const SNAP_KEY = "vmix_snapshot_base";
+const HLS_KEY = "vmix_livelan_url";
+const MODE_KEY = "vmix_monitor_mode";
 const isNdiType = (t?: string) => /ndi|desktop/i.test(t || "");
+
+let hlsModule: typeof import("hls.js") | null = null;
+const getHls = async () => {
+  if (!hlsModule) hlsModule = await import("hls.js");
+  return hlsModule.default;
+};
 
 function normalizeBase(raw?: string | null): string {
   if (!raw) return "";
@@ -21,7 +31,22 @@ function normalizeBase(raw?: string | null): string {
   }
 }
 
-/** vMix serve a imagem estática do input por estes caminhos (varia por versão). */
+/** Aceita "192.168.0.10", "192.168.0.10:8080" ou a URL completa do LiveLAN. */
+function normalizeHlsUrl(raw?: string | null): string {
+  if (!raw) return "";
+  let v = raw.trim();
+  if (!v) return "";
+  if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+  try {
+    const u = new URL(v);
+    if (!u.port) u.port = "8080";
+    if (!/\.m3u8$/i.test(u.pathname)) u.pathname = "/stream.m3u8";
+    return u.toString();
+  } catch {
+    return v;
+  }
+}
+
 function snapshotPaths(inputRef: string): string[] {
   const q = inputRef ? `?input=${encodeURIComponent(inputRef)}` : "";
   return [
@@ -43,26 +68,45 @@ export default function NdiWebrtcMonitor({
   onRefresh?: () => void | Promise<void>;
 }) {
   const imageRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<HlsType | null>(null);
   const pathIndexRef = useRef(0);
-  const [base, setBase] = useState<string>(() => {
+
+  const read = (k: string, fallback = "") => {
     try {
-      return localStorage.getItem(STORAGE_KEY) || "";
+      return localStorage.getItem(k) || fallback;
     } catch {
-      return "";
+      return fallback;
     }
-  });
+  };
+  const write = (k: string, v: string) => {
+    try {
+      if (v) localStorage.setItem(k, v);
+      else localStorage.removeItem(k);
+    } catch {
+      /* storage indisponível */
+    }
+  };
+
+  const [mode, setMode] = useState<Mode>(() => (read(MODE_KEY) === "snapshot" ? "snapshot" : "hls"));
+  const [base, setBase] = useState<string>(() => read(SNAP_KEY));
+  const [hlsUrl, setHlsUrl] = useState<string>(() => read(HLS_KEY));
   const [draftBase, setDraftBase] = useState("");
+  const [draftHls, setDraftHls] = useState(() => read(HLS_KEY));
   const [source, setSource] = useState<string>("");
   const [fps, setFps] = useState(3);
   const [status, setStatus] = useState<Status>("idle");
   const [running, setRunning] = useState(true);
+  const [muted, setMuted] = useState(true);
 
-  // base efetiva: manual (salva) ou a do vMix conectado
   const effectiveBase = useMemo(() => normalizeBase(base || vmixBaseUrl), [base, vmixBaseUrl]);
+  const effectiveHls = useMemo(() => normalizeHlsUrl(hlsUrl), [hlsUrl]);
 
   useEffect(() => {
     setDraftBase(effectiveBase.replace(/^https?:\/\//, ""));
   }, [effectiveBase]);
+
+  useEffect(() => write(MODE_KEY, mode), [mode]);
 
   const sources = useMemo(() => {
     const ndi = inputs.filter((i) => String(i?.number ?? "").trim() !== "" && isNdiType(i.type));
@@ -76,14 +120,67 @@ export default function NdiWebrtcMonitor({
     ];
   }, [inputs]);
 
+  const target = mode === "hls" ? effectiveHls : effectiveBase;
   const mixedContent = typeof window !== "undefined"
     && window.location.protocol === "https:"
-    && effectiveBase.startsWith("http://");
+    && target.startsWith("http://");
 
-  const paths = useMemo(() => snapshotPaths(source), [source]);
-
-  // Polling do snapshot via <img> + cache-buster (não sofre pré-flight CORS)
+  // ---- HLS (LiveLAN do vMix) ----
   useEffect(() => {
+    if (mode !== "hls") return;
+    const video = videoRef.current;
+    if (!video || !effectiveHls || !running) {
+      setStatus("idle");
+      return;
+    }
+    let cancelled = false;
+    setStatus("connecting");
+
+    (async () => {
+      const Hls = await getHls();
+      if (cancelled) return;
+      if (Hls.isSupported()) {
+        const hls = new Hls({ enableWorker: true, lowLatencyMode: true, liveDurationInfinity: true });
+        hlsRef.current = hls;
+        hls.loadSource(effectiveHls);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setStatus("live");
+          video.play().catch(() => {});
+        });
+        hls.on(Hls.Events.ERROR, (_e, data) => {
+          if (data?.fatal) setStatus("error");
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = effectiveHls;
+        video.addEventListener("loadedmetadata", () => {
+          setStatus("live");
+          video.play().catch(() => {});
+        });
+        video.addEventListener("error", () => setStatus("error"));
+      } else {
+        setStatus("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      video.removeAttribute("src");
+    };
+  }, [mode, effectiveHls, running]);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted;
+  }, [muted, status]);
+
+  // ---- Snapshot (fallback via polling de imagem) ----
+  const paths = useMemo(() => snapshotPaths(source), [source]);
+  useEffect(() => {
+    if (mode !== "snapshot") return;
     if (!effectiveBase || !running) {
       setStatus("idle");
       return;
@@ -91,51 +188,47 @@ export default function NdiWebrtcMonitor({
     pathIndexRef.current = 0;
     setStatus("connecting");
     let cancelled = false;
-    let timer: number | undefined;
-
-    const tick = () => {
-      if (cancelled) return;
-      const img = imageRef.current;
-      if (!img) return;
-      const path = paths[pathIndexRef.current % paths.length];
-      const sep = path.includes("?") ? "&" : "?";
-      img.src = `${effectiveBase}${path}${sep}t=${Date.now()}`;
-    };
 
     const img = imageRef.current;
+    const tick = () => {
+      if (cancelled || !imageRef.current) return;
+      const path = paths[pathIndexRef.current % paths.length];
+      const sep = path.includes("?") ? "&" : "?";
+      imageRef.current.src = `${effectiveBase}${path}${sep}t=${Date.now()}`;
+    };
     if (img) {
-      img.onload = () => {
-        if (!cancelled) setStatus("live");
-      };
+      img.onload = () => !cancelled && setStatus("live");
       img.onerror = () => {
         if (cancelled) return;
         pathIndexRef.current += 1;
         if (pathIndexRef.current >= paths.length * 2) setStatus("error");
       };
     }
-
     tick();
-    timer = window.setInterval(tick, Math.max(120, Math.round(1000 / fps)));
+    const timer = window.setInterval(tick, Math.max(120, Math.round(1000 / fps)));
 
     return () => {
       cancelled = true;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
       if (img) {
         img.onload = null;
         img.onerror = null;
       }
     };
-  }, [effectiveBase, paths, fps, running]);
+  }, [mode, effectiveBase, paths, fps, running]);
+
+  const saveHls = useCallback(() => {
+    const next = normalizeHlsUrl(draftHls);
+    setHlsUrl(next);
+    setDraftHls(next);
+    write(HLS_KEY, next);
+    setStatus("connecting");
+  }, [draftHls]);
 
   const saveBase = useCallback(() => {
     const next = normalizeBase(draftBase);
     setBase(next);
-    try {
-      if (next) localStorage.setItem(STORAGE_KEY, next);
-      else localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* storage indisponível */
-    }
+    write(SNAP_KEY, next);
     setStatus("connecting");
   }, [draftBase]);
 
@@ -146,12 +239,13 @@ export default function NdiWebrtcMonitor({
     error: { label: "SEM SINAL", color: "#ef4444" },
   };
   const meta = statusMeta[status];
+  const fieldStyle = { backgroundColor: "#1a1a1a", color: "#e5e5e5", border: "1px solid #C6F03C50" } as const;
 
   return (
     <section>
       <div className="flex items-center justify-between mb-2.5 gap-2">
         <h3 className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: "#C6F03C" }}>
-          Preview vMix (Snapshot)
+          Monitor Output 1
         </h3>
         <span
           className="flex items-center gap-1.5 text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
@@ -165,108 +259,178 @@ export default function NdiWebrtcMonitor({
         </span>
       </div>
 
-      {/* IP / porta do vMix local */}
-      <div className="flex gap-1.5 mb-1.5">
-        <input
-          value={draftBase}
-          onChange={(e) => setDraftBase(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && saveBase()}
-          placeholder="192.168.0.10:8088"
-          className="vmix-hover-ring flex-1 h-9 rounded text-[11px] font-bold tracking-wider px-2.5 outline-none"
-          style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", border: "1px solid #C6F03C50" }}
-        />
-        <button
-          type="button"
-          onClick={saveBase}
-          className="vmix-hover-ring h-9 px-2.5 rounded text-[9px] font-black uppercase tracking-widest"
-          style={{ backgroundColor: "#C6F03C", color: "#000" }}
-        >
-          Salvar IP
-        </button>
+      {/* Modo */}
+      <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+        {([["hls", "HLS · LIVELAN"], ["snapshot", "SNAPSHOT"]] as [Mode, string][]).map(([m, label]) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className="vmix-hover-ring h-8 rounded text-[9px] font-black uppercase tracking-widest"
+            style={{
+              backgroundColor: mode === m ? "#C6F03C" : "#1a1a1a",
+              color: mode === m ? "#000" : "#C6F03C",
+              border: "1px solid #C6F03C50",
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      <div className="flex gap-1.5 mb-1.5">
-        <select
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-          className="vmix-hover-ring flex-1 h-9 rounded text-[11px] font-bold uppercase tracking-wider px-2.5 outline-none"
-          style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", border: "1px solid #C6F03C50" }}
-        >
-          {sources.map((s) => (
-            <option key={s.value || "program"} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={fps}
-          onChange={(e) => setFps(Number(e.target.value))}
-          className="vmix-hover-ring h-9 rounded text-[11px] font-bold uppercase tracking-wider px-2 outline-none"
-          style={{ backgroundColor: "#1a1a1a", color: "#e5e5e5", border: "1px solid #C6F03C50" }}
-          title="Taxa de atualização"
-        >
-          {[1, 2, 3, 5, 8].map((f) => (
-            <option key={f} value={f}>{f} FPS</option>
-          ))}
-        </select>
+      {mode === "hls" ? (
+        <div className="flex gap-1.5 mb-1.5">
+          <input
+            value={draftHls}
+            onChange={(e) => setDraftHls(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && saveHls()}
+            placeholder="http://192.168.0.10:8080/stream.m3u8"
+            className="vmix-hover-ring flex-1 h-9 rounded text-[11px] font-bold px-2.5 outline-none"
+            style={fieldStyle}
+          />
+          <button
+            type="button"
+            onClick={saveHls}
+            className="vmix-hover-ring h-9 px-2.5 rounded text-[9px] font-black uppercase tracking-widest"
+            style={{ backgroundColor: "#C6F03C", color: "#000" }}
+          >
+            Salvar URL
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="flex gap-1.5 mb-1.5">
+            <input
+              value={draftBase}
+              onChange={(e) => setDraftBase(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveBase()}
+              placeholder="192.168.0.10:8088"
+              className="vmix-hover-ring flex-1 h-9 rounded text-[11px] font-bold px-2.5 outline-none"
+              style={fieldStyle}
+            />
+            <button
+              type="button"
+              onClick={saveBase}
+              className="vmix-hover-ring h-9 px-2.5 rounded text-[9px] font-black uppercase tracking-widest"
+              style={{ backgroundColor: "#C6F03C", color: "#000" }}
+            >
+              Salvar IP
+            </button>
+          </div>
+          <div className="flex gap-1.5 mb-1.5">
+            <select
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              className="vmix-hover-ring flex-1 h-9 rounded text-[11px] font-bold uppercase tracking-wider px-2.5 outline-none"
+              style={fieldStyle}
+            >
+              {sources.map((s) => (
+                <option key={s.value || "program"} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            <select
+              value={fps}
+              onChange={(e) => setFps(Number(e.target.value))}
+              className="vmix-hover-ring h-9 rounded text-[11px] font-bold uppercase tracking-wider px-2 outline-none"
+              style={fieldStyle}
+              title="Taxa de atualização"
+            >
+              {[1, 2, 3, 5, 8].map((f) => (
+                <option key={f} value={f}>{f} FPS</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+
+      <div className="flex gap-1.5 mb-2">
         <button
           type="button"
           onClick={() => {
             void onRefresh?.();
             setRunning((r) => !r);
-            if (!running) setStatus("connecting");
           }}
-          className="vmix-hover-ring h-9 px-2.5 rounded text-[9px] font-black uppercase tracking-widest"
+          className="vmix-hover-ring flex-1 h-8 rounded text-[9px] font-black uppercase tracking-widest"
           style={{ backgroundColor: running ? "#1a1a1a" : "#C6F03C", color: running ? "#C6F03C" : "#000", border: "1px solid #C6F03C50" }}
         >
           {running ? "Pausar" : "Iniciar"}
         </button>
+        {mode === "hls" && (
+          <button
+            type="button"
+            onClick={() => setMuted((m) => !m)}
+            className="vmix-hover-ring h-8 px-3 rounded text-[9px] font-black uppercase tracking-widest"
+            style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C50" }}
+          >
+            {muted ? "Som off" : "Som on"}
+          </button>
+        )}
       </div>
 
       <div
         className="relative w-full overflow-hidden rounded"
         style={{ paddingBottom: "56.25%", backgroundColor: "#000", border: "1px solid #C6F03C25" }}
       >
-        <img
-          ref={imageRef}
-          alt="Preview vMix"
-          className="absolute"
-          style={{
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            visibility: status === "live" ? "visible" : "hidden",
-          }}
-        />
+        {mode === "hls" ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted={muted}
+            className="absolute"
+            style={{
+              top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain",
+              visibility: status === "live" ? "visible" : "hidden",
+            }}
+          />
+        ) : (
+          <img
+            ref={imageRef}
+            alt="Preview vMix"
+            className="absolute"
+            style={{
+              top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain",
+              visibility: status === "live" ? "visible" : "hidden",
+            }}
+          />
+        )}
+
         {status !== "live" && (
           <div
-            className="absolute flex flex-col items-center justify-center text-center px-3 gap-1"
-            style={{ top: 0, left: 0, right: 0, bottom: 0, color: "#ffffff40" }}
+            className="absolute flex flex-col items-center justify-center text-center px-4 gap-1.5"
+            style={{ top: 0, left: 0, right: 0, bottom: 0, color: "#ffffff55" }}
           >
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {!effectiveBase
-                ? "Informe o IP:porta do vMix"
+              {!target
+                ? mode === "hls" ? "Informe a URL do LiveLAN (.m3u8)" : "Informe o IP:porta do vMix"
                 : status === "connecting"
                   ? "Conectando…"
                   : status === "error"
-                    ? "Sem imagem do snapshot"
-                    : "Preview pausado"}
+                    ? "Não foi possível abrir o stream"
+                    : "Monitor pausado"}
             </span>
+            {status === "error" && mixedContent && (
+              <span className="text-[9px] font-bold normal-case leading-relaxed" style={{ color: "#facc15", maxWidth: 380 }}>
+                O painel está em HTTPS e o stream do vMix é HTTP. Clique no cadeado na barra de
+                endereços → Configurações do site → “Conteúdo não seguro” → Permitir, e recarregue a página.
+              </span>
+            )}
+            {status === "error" && !mixedContent && (
+              <span className="text-[9px] font-bold normal-case leading-relaxed" style={{ color: "#facc15", maxWidth: 380 }}>
+                Verifique se o LiveLAN está ativo no vMix e se a URL/porta estão corretas na mesma rede local.
+              </span>
+            )}
           </div>
         )}
       </div>
 
-      {mixedContent && (
+      {mixedContent && status !== "error" && (
         <p className="text-[9px] font-bold uppercase tracking-wider mt-2 leading-relaxed" style={{ color: "#facc15" }}>
-          Painel em HTTPS acessando vMix em HTTP: o navegador pode bloquear a imagem (mixed content).
-          Libere “Conteúdo não seguro” para este site nas permissões do navegador, ou abra o painel via
-          http:// na rede local.
+          HTTPS → HTTP: se o vídeo não abrir, libere “Conteúdo não seguro” no cadeado do navegador.
         </p>
       )}
-      <p className="text-[9px] font-bold uppercase tracking-wider mt-1.5" style={{ color: "#ffffff45" }}>
-        {effectiveBase ? `Snapshot de ${effectiveBase} · ${fps} FPS` : "Nenhum endereço configurado"}
+      <p className="text-[9px] font-bold uppercase tracking-wider mt-1.5 break-all" style={{ color: "#ffffff45" }}>
+        {target ? (mode === "hls" ? `LiveLAN: ${target}` : `Snapshot: ${target} · ${fps} FPS`) : "Nenhuma fonte configurada"}
       </p>
     </section>
   );
