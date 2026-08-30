@@ -1488,7 +1488,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   };
 
   const normalizeCommands = useCallback((cmds: any[] = []) => {
-    return cmds.map((cmd) => {
+    return cmds.filter((cmd) => cmd?.enabled !== false).map((cmd) => {
       const value = cmd?.extraValue
         ? (cmd?.value ? `${cmd.value},${cmd.extraValue}` : cmd.extraValue)
         : (cmd?.value || "");

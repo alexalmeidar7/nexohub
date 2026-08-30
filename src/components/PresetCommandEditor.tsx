@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Calendar } from "lucide-react";
@@ -11,6 +12,7 @@ interface PresetCommand {
   value?: string;
   extraKey?: string;
   extraValue?: string;
+  enabled?: boolean;
 }
 
 interface VmixInput {
@@ -454,8 +456,10 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               const hasExtra = def?.params.includes("extra");
               const extraLabels = getExtraLabel(cmd.fn);
 
+              const cmdEnabled = cmd.enabled !== false;
+
               return (
-                <div key={cmd.id} className="rounded-lg overflow-hidden" style={{ backgroundColor: "#222230", border: "1px solid #2a2a38" }}>
+                <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#222230", border: "1px solid #2a2a38", opacity: cmdEnabled ? 1 : 0.45 }}>
                   {/* Command header */}
                   <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#ffffff04", borderBottom: "1px solid #ffffff06" }}>
                     <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#dc262630" : "#ffffff08", color: idx === 0 ? "#dc2626" : "#888" }}>
@@ -465,7 +469,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                       <GripVertical size={10} style={{ color: "#444" }} />
                       <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs, inputMapping)}</span>
                     </div>
-                    <div className="flex items-center gap-0.5">
+                    <div className="flex items-center gap-1.5">
                       <button onClick={() => moveCommand(idx, -1)} disabled={idx === 0} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#888" }}>
                         <ChevronUp size={10} />
                       </button>
@@ -475,8 +479,15 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                       <button onClick={() => removeCommand(cmd.id)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/20 transition-colors" style={{ color: "#f87171" }}>
                         <Trash2 size={10} />
                       </button>
+                      <Switch
+                        checked={cmdEnabled}
+                        onCheckedChange={v => updateCommand(cmd.id, { enabled: v })}
+                        aria-label={cmdEnabled ? "Desabilitar comando" : "Habilitar comando"}
+                        className="scale-75"
+                      />
                     </div>
                   </div>
+
 
                   {/* Command fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">

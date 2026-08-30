@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, Timer, Sun, Moon, Cloud, Heart, Settings, Power, SkipForward, Pause, StopCircle, Repeat, Shuffle, Image, Type, Layers, Monitor, Disc, Eye, Lock, Unlock, Send, Download, Upload, Bookmark, Flag, Hash, Globe, Phone, Mail, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Loader2, X, ChevronDown, ChevronUp, Clock, Tag, Code, Copy, ClipboardPaste, Palette, Music, Radio, Tv, Mic, Volume2, Video, Zap, Star, Sparkles, Clapperboard, Megaphone, Bell, Timer, Sun, Moon, Cloud, Heart, Settings, Power, SkipForward, Pause, StopCircle, Repeat, Shuffle, Image, Type, Layers, Monitor, Disc, Eye, Lock, Unlock, Send, Download, Upload, Bookmark, Flag, Hash, Globe, Phone, Mail, MessageSquare, Calendar, Keyboard, type LucideIcon } from "lucide-react";
 
 const BUTTON_COLORS = [
   { value: "#f59e0b", label: "Amarelo" },
@@ -73,6 +74,21 @@ export function getIconForName(name: string): LucideIcon {
   return Sparkles;
 }
 
+/** Biblioteca de ícones para seleção manual no modal */
+export const ICON_LIBRARY: Record<string, LucideIcon> = {
+  Sparkles, Star, Zap, Clapperboard, Megaphone, Bell, Timer, Clock, Calendar,
+  Music, Disc, Radio, Tv, Monitor, Mic, Volume2, Video, Image, Type, Layers,
+  Play, Pause, StopCircle, SkipForward, Repeat, Shuffle, Power, Settings,
+  Sun, Moon, Cloud, Heart, Eye, Lock, Unlock, Send, Download, Upload,
+  Bookmark, Flag, Hash, Globe, Phone, Mail, MessageSquare, Tag,
+};
+
+/** Resolve o ícone salvo, caindo no automático por palavra-chave */
+export function resolveButtonIcon(iconKey?: string | null, name = ""): LucideIcon {
+  if (iconKey && ICON_LIBRARY[iconKey]) return ICON_LIBRARY[iconKey];
+  return getIconForName(name);
+}
+
 interface PresetCommand {
   id: string;
   fn: string;
@@ -80,7 +96,9 @@ interface PresetCommand {
   value?: string;
   extraKey?: string;
   extraValue?: string;
+  enabled?: boolean;
 }
+
 
 interface VmixInput {
   key: string;
@@ -170,10 +188,12 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapp
 export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping, estudio }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
-  const [color, setColor] = useState("#f59e0b");
+  const [color, setColor] = useState("#C6F03C");
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [dataEspecifica, setDataEspecifica] = useState("");
   const [horario, setHorario] = useState("");
+  const [shortcut, setShortcut] = useState("");
+  const [iconKey, setIconKey] = useState("");
   const [commands, setCommands] = useState<PresetCommand[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -192,24 +212,29 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         .then(({ data }: any) => {
           if (data) {
             setNome(data.nome || "");
-            setColor(data.color || "#f59e0b");
+            setColor(data.color || "#C6F03C");
             setDiasSemana(data.dias_semana || []);
             setDataEspecifica(data.data_especifica || "");
             setHorario(data.horario || "");
+            setShortcut(data.shortcut || "");
+            setIconKey(data.icon || "");
             setCommands(Array.isArray(data.commands) ? data.commands : []);
           }
           setLoading(false);
         });
     } else {
       setNome("");
-      setColor("#f59e0b");
+      setColor("#C6F03C");
       setDiasSemana([]);
       setDataEspecifica("");
       setHorario("");
+      setShortcut("");
+      setIconKey("");
       setCommands([]);
       setLoading(false);
     }
   }, [open, buttonId]);
+
 
   const toggleDia = (dia: string) => {
     setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
@@ -241,7 +266,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       return;
     }
     setSaving(true);
-    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, data_especifica: dataEspecifica || null, horario, commands, estudio: estudio || null };
+    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, data_especifica: dataEspecifica || null, horario, commands, estudio: estudio || null, shortcut: shortcut || null, icon: iconKey || null };
     if (buttonId) {
       await (supabase.from("custom_vmix_buttons" as any) as any).update(payload).eq("id", buttonId);
     } else {
@@ -315,39 +340,96 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         </div>
 
         {/* Form + Commands */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+        <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="animate-spin" size={20} style={{ color: "#666" }} />
             </div>
           ) : (
             <>
-              {/* Name field */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
-                  <Tag size={10} /> Nome do Botão
+              {/* Name + shortcut */}
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                    <Tag size={10} /> Nome do Botão
+                  </label>
+                  <input
+                    type="text"
+                    value={nome}
+                    onChange={e => setNome(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-lg outline-none"
+                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                    placeholder="Ex: Abertura Jornal, Vinheta Comercial..."
+                  />
+                </div>
+                <div className="flex flex-col gap-2 sm:w-40">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                    <Keyboard size={10} /> Atalho
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={shortcut}
+                      readOnly
+                      onKeyDown={e => {
+                        e.preventDefault();
+                        if (e.key === "Backspace" || e.key === "Delete" || e.key === "Escape") { setShortcut(""); return; }
+                        if (e.key.length === 1 || /^F\d{1,2}$/.test(e.key)) {
+                          setShortcut(`${e.ctrlKey ? "Ctrl+" : ""}${e.altKey ? "Alt+" : ""}${e.shiftKey ? "Shift+" : ""}${e.key.toUpperCase()}`);
+                        }
+                      }}
+                      className="w-full text-center text-[11px] font-black uppercase px-3 py-2.5 rounded-lg outline-none cursor-pointer"
+                      style={{ backgroundColor: "#181820", color: "#fff", border: `1px solid ${shortcut ? "#C6F03C60" : "#333"}` }}
+                      placeholder="Clique e tecle"
+                    />
+                    {shortcut && (
+                      <button onClick={() => setShortcut("")} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10" style={{ color: "#888" }}>
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Icon picker */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                  <Sparkles size={10} /> Ícone do Botão
                 </label>
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={e => setNome(e.target.value)}
-                  className="w-full text-xs px-3 py-2 rounded-lg outline-none"
-                  style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
-                  placeholder="Ex: Abertura Jornal, Vinheta Comercial..."
-                />
+                <div className="grid grid-cols-10 gap-1.5 p-2.5 rounded-lg max-h-32 overflow-y-auto" style={{ backgroundColor: "#12121a", border: "1px solid #2a2a38" }}>
+                  {Object.entries(ICON_LIBRARY).map(([key, Icon]) => {
+                    const active = iconKey === key;
+                    return (
+                      <button
+                        key={key}
+                        title={key}
+                        onClick={() => setIconKey(active ? "" : key)}
+                        className="aspect-square rounded-lg flex items-center justify-center transition-all hover:scale-105"
+                        style={{
+                          backgroundColor: active ? `${color}22` : "#ffffff06",
+                          border: active ? `1px solid ${color}` : "1px solid transparent",
+                          color: active ? color : "#888",
+                        }}
+                      >
+                        <Icon size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="text-[8px]" style={{ color: "#555" }}>Sem seleção, o ícone é sugerido pelo nome do botão.</span>
               </div>
 
               {/* Color picker */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+              <div className="flex flex-col gap-2">
+                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
                   <Palette size={10} /> Cor do Botão
                 </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {BUTTON_COLORS.map(c => (
+                <div className="flex flex-wrap gap-2">
+                  {[{ value: "#C6F03C", label: "Lima" }, ...BUTTON_COLORS].map(c => (
                     <button
                       key={c.value}
                       onClick={() => setColor(c.value)}
-                      className="w-6 h-6 rounded-full transition-all hover:scale-110"
+                      className="w-7 h-7 rounded-full transition-all hover:scale-110"
                       style={{
                         backgroundColor: c.value,
                         border: color === c.value ? "2px solid #fff" : "2px solid #333",
@@ -358,6 +440,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   ))}
                 </div>
               </div>
+
 
               {/* Schedule row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -486,8 +569,10 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   const hasExtra = def?.params.includes("extra");
                   const extraLabels = getExtraLabel(cmd.fn);
 
+                  const cmdEnabled = cmd.enabled !== false;
+
                   return (
-                    <div key={cmd.id} className="rounded-lg overflow-hidden" style={{ backgroundColor: "#222230", border: "1px solid #2a2a38" }}>
+                    <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#222230", border: "1px solid #2a2a38", opacity: cmdEnabled ? 1 : 0.45 }}>
                       <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#ffffff04", borderBottom: "1px solid #ffffff06" }}>
                         <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#dc262630" : "#ffffff08", color: idx === 0 ? "#dc2626" : "#888" }}>
                           #{idx}
@@ -496,7 +581,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                           <GripVertical size={10} style={{ color: "#444" }} />
                           <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs, inputMapping)}</span>
                         </div>
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center gap-1.5">
                           <button onClick={() => moveCommand(idx, -1)} disabled={idx === 0} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#888" }}>
                             <ChevronUp size={10} />
                           </button>
@@ -506,8 +591,15 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                           <button onClick={() => removeCommand(cmd.id)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/20 transition-colors" style={{ color: "#f87171" }}>
                             <Trash2 size={10} />
                           </button>
+                          <Switch
+                            checked={cmdEnabled}
+                            onCheckedChange={v => updateCommand(cmd.id, { enabled: v })}
+                            aria-label={cmdEnabled ? "Desabilitar comando" : "Habilitar comando"}
+                            className="scale-75"
+                          />
                         </div>
                       </div>
+
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
                         <div className="flex flex-col gap-1 sm:col-span-2">

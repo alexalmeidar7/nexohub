@@ -83,9 +83,9 @@ export default function NdiWebrtcMonitor({
   const vmixSources = useMemo<NdiSource[]>(() => {
     if (!base) return [];
     const list = [...inputs].filter((i) => String(i?.number ?? "").trim() !== "");
+    // Exclusivamente saídas/entradas NDI (NDI / Desktop Capture via NDI)
     const ndi = list.filter((i) => isNdiType(i.type));
-    const others = list.filter((i) => !isNdiType(i.type));
-    const build = (i: VmixInputLike, tag: string): NdiSource => {
+    const build = (i: VmixInputLike): NdiSource => {
       const inputNumber = String(i.number);
       const inputKey = String(i.key || "").trim();
       const paths = Array.from(new Set([
@@ -93,7 +93,7 @@ export default function NdiWebrtcMonitor({
         inputKey ? `/mjpeg?Input=${encodeURIComponent(inputKey)}` : "",
       ].filter(Boolean)));
       return {
-        label: `${tag} ${i.number} · ${(i.title || "Sem título").replace(/\s+/g, " ").trim()}`,
+        label: `NDI ${i.number} · ${(i.title || "Sem título").replace(/\s+/g, " ").trim()}`,
         kind: "mjpeg",
         url: `${base}${paths[0]}`,
         path: paths[0],
@@ -113,10 +113,10 @@ export default function NdiWebrtcMonitor({
         url: `${base}/mjpeg?Input=Preview`,
         path: "/mjpeg?Input=Preview",
       },
-      ...ndi.map((i) => build(i, "NDI")),
-      ...others.map((i) => build(i, "IN")),
+      ...ndi.map((i) => build(i)),
     ];
   }, [base, inputs]);
+
 
   // 2) Opcional: bridge WebRTC/WHEP (MediaMTX) na mesma máquina do vMix.
   const discoverBridge = useCallback(async (targetHost: string) => {
@@ -162,6 +162,11 @@ export default function NdiWebrtcMonitor({
   const closeConnection = useCallback(() => {
     mjpegAbortRef.current?.abort();
     mjpegAbortRef.current = null;
+    if (imageRef.current) {
+      imageRef.current.onload = null;
+      imageRef.current.onerror = null;
+      imageRef.current.removeAttribute("src");
+    }
     if (frameUrlRef.current) {
       URL.revokeObjectURL(frameUrlRef.current);
       frameUrlRef.current = null;
@@ -194,6 +199,26 @@ export default function NdiWebrtcMonitor({
     setStatus("live");
   }, []);
 
+  /** Binding nativo: o browser decodifica multipart/x-mixed-replace direto no <img>. */
+  const tryNativeMjpeg = useCallback((target: string) => {
+    return new Promise<boolean>((resolve) => {
+      const image = imageRef.current;
+      if (!image) return resolve(false);
+      let settled = false;
+      const finish = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        image.onload = null;
+        image.onerror = null;
+        resolve(ok);
+      };
+      image.onload = () => finish(true);
+      image.onerror = () => finish(false);
+      image.src = target;
+      window.setTimeout(() => finish(false), 5000);
+    });
+  }, []);
+
   const connectMjpeg = useCallback(async (source: NdiSource) => {
     closeConnection();
     setStatus("connecting");
@@ -203,6 +228,18 @@ export default function NdiWebrtcMonitor({
     );
     const headers: Record<string, string> = { Accept: "multipart/x-mixed-replace,image/jpeg,*/*" };
     if (vmixUser) headers.Authorization = `Basic ${btoa(`${vmixUser}:${vmixPass || ""}`)}`;
+
+    // 1) tentativa direta no elemento <img> (funciona mesmo sem CORS)
+    for (const target of targets) {
+      const ok = await tryNativeMjpeg(target);
+      if (ok) {
+        setStatus("live");
+        return;
+      }
+    }
+
+    // 2) fallback: leitura manual do multipart via fetch
+
 
     for (const target of targets) {
       const controller = new AbortController();
@@ -243,7 +280,7 @@ export default function NdiWebrtcMonitor({
       }
     }
     setStatus("error");
-  }, [base, closeConnection, showJpegFrame, vmixPass, vmixUser]);
+  }, [base, closeConnection, showJpegFrame, tryNativeMjpeg, vmixPass, vmixUser]);
 
   // WHEP (WebRTC-HTTP Egress Protocol) subscriber
   const connectWebRTC = useCallback(
