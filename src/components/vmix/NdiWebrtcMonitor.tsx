@@ -142,6 +142,10 @@ export default function NdiWebrtcMonitor({
 
     return () => {
       cancelled = true;
+      if (retryRef.current) {
+        window.clearTimeout(retryRef.current);
+        retryRef.current = null;
+      }
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
