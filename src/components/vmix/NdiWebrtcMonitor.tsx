@@ -23,7 +23,9 @@ function normalizeHlsUrl(raw?: string | null): string {
   try {
     const u = new URL(v);
     if (!u.port) u.port = "8088";
-    if (!u.pathname || u.pathname === "/") u.pathname = "/livelan";
+    if (!u.pathname || u.pathname === "/") u.pathname = "/livelan/stream.m3u8";
+    // vMix LiveLAN publica o manifesto em /livelan/stream.m3u8
+    if (/^\/livelan\/?$/i.test(u.pathname)) u.pathname = "/livelan/stream.m3u8";
     return u.toString().replace(/\/$/, "");
   } catch {
     return v;
@@ -41,10 +43,18 @@ export default function NdiWebrtcMonitor({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
+  const retryRef = useRef<number | null>(null);
 
-  // Campo sempre vazio ao abrir; a URL digitada é salva automaticamente.
-  const [draftHls, setDraftHls] = useState("");
-  const [hlsUrl, setHlsUrl] = useState("");
+  // Recupera a última URL salva e dá play automaticamente.
+  const storedHls = (() => {
+    try {
+      return localStorage.getItem(HLS_KEY) || "";
+    } catch {
+      return "";
+    }
+  })();
+  const [draftHls, setDraftHls] = useState(storedHls);
+  const [hlsUrl, setHlsUrl] = useState(storedHls);
   const [status, setStatus] = useState<Status>("idle");
   const [running, setRunning] = useState(true);
   const [muted, setMuted] = useState(true);
@@ -85,7 +95,15 @@ export default function NdiWebrtcMonitor({
       const Hls = await getHls();
       if (cancelled) return;
       if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: true, liveDurationInfinity: true });
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          liveDurationInfinity: true,
+          manifestLoadingRetryDelay: 1000,
+          manifestLoadingMaxRetry: 6,
+          levelLoadingMaxRetry: 6,
+          fragLoadingMaxRetry: 6,
+        });
         hlsRef.current = hls;
         hls.loadSource(effectiveHls);
         hls.attachMedia(video);
@@ -93,8 +111,22 @@ export default function NdiWebrtcMonitor({
           setStatus("live");
           video.play().catch(() => {});
         });
+        hls.on(Hls.Events.FRAG_BUFFERED, () => setStatus("live"));
         hls.on(Hls.Events.ERROR, (_e, data) => {
-          if (data?.fatal) setStatus("error");
+          if (!data?.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            // Rede local instável / manifesto ainda não publicado: tenta de novo.
+            retryRef.current = window.setTimeout(() => {
+              if (!cancelled) hls.startLoad();
+            }, 2000);
+            setStatus("connecting");
+            return;
+          }
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hls.recoverMediaError();
+            return;
+          }
+          setStatus("error");
         });
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = effectiveHls;
@@ -110,6 +142,10 @@ export default function NdiWebrtcMonitor({
 
     return () => {
       cancelled = true;
+      if (retryRef.current) {
+        window.clearTimeout(retryRef.current);
+        retryRef.current = null;
+      }
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
