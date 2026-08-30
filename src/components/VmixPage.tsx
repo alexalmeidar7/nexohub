@@ -3872,16 +3872,10 @@ function SwitcherUI({
                       {customButtons.map((btn: any) => {
                         const isBtnActive = activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
-                        const btnColor = btn.color || "#C6F03C";
+                        // Cor padronizada (mesmo visual do botão "+ novo botão")
+                        const btnColor = "#C6F03C";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
-
-                        // Compute text color based on background luminance
-                        const hex = btnColor.replace("#", "");
-                        const r = parseInt(hex.substring(0, 2), 16) / 255;
-                        const g = parseInt(hex.substring(2, 4), 16) / 255;
-                        const b = parseInt(hex.substring(4, 6), 16) / 255;
-                        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-                        const textColor = luminance > 0.5 ? "#000000" : "#ffffff";
+                        const textColor = "#000000";
                         return (
                           <div
                             key={btn.id}
