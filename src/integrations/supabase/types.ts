@@ -902,8 +902,10 @@ export type Database = {
           dias_semana: string[] | null
           estudio: string | null
           horario: string | null
+          icon: string | null
           id: string
           nome: string
+          shortcut: string | null
           updated_at: string
           user_id: string
         }
@@ -915,8 +917,10 @@ export type Database = {
           dias_semana?: string[] | null
           estudio?: string | null
           horario?: string | null
+          icon?: string | null
           id?: string
           nome?: string
+          shortcut?: string | null
           updated_at?: string
           user_id: string
         }
@@ -928,8 +932,10 @@ export type Database = {
           dias_semana?: string[] | null
           estudio?: string | null
           horario?: string | null
+          icon?: string | null
           id?: string
           nome?: string
+          shortcut?: string | null
           updated_at?: string
           user_id?: string
         }
