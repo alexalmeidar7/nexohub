@@ -194,6 +194,26 @@ export default function NdiWebrtcMonitor({
     setStatus("live");
   }, []);
 
+  /** Binding nativo: o browser decodifica multipart/x-mixed-replace direto no <img>. */
+  const tryNativeMjpeg = useCallback((target: string) => {
+    return new Promise<boolean>((resolve) => {
+      const image = imageRef.current;
+      if (!image) return resolve(false);
+      let settled = false;
+      const finish = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        image.onload = null;
+        image.onerror = null;
+        resolve(ok);
+      };
+      image.onload = () => finish(true);
+      image.onerror = () => finish(false);
+      image.src = target;
+      window.setTimeout(() => finish(false), 5000);
+    });
+  }, []);
+
   const connectMjpeg = useCallback(async (source: NdiSource) => {
     closeConnection();
     setStatus("connecting");
@@ -203,6 +223,18 @@ export default function NdiWebrtcMonitor({
     );
     const headers: Record<string, string> = { Accept: "multipart/x-mixed-replace,image/jpeg,*/*" };
     if (vmixUser) headers.Authorization = `Basic ${btoa(`${vmixUser}:${vmixPass || ""}`)}`;
+
+    // 1) tentativa direta no elemento <img> (funciona mesmo sem CORS)
+    for (const target of targets) {
+      const ok = await tryNativeMjpeg(target);
+      if (ok) {
+        setStatus("live");
+        return;
+      }
+    }
+
+    // 2) fallback: leitura manual do multipart via fetch
+
 
     for (const target of targets) {
       const controller = new AbortController();
