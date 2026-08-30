@@ -143,8 +143,8 @@ const PRESET_COMMANDS = [
   { value: "AudioOn", label: "AudioOn", desc: "Liga áudio do input", category: "Áudio", params: ["input"] },
   { value: "AudioOff", label: "AudioOff", desc: "Desliga áudio do input", category: "Áudio", params: ["input"] },
   { value: "SetVolume", label: "SetVolume", desc: "Define volume (0-100)", category: "Áudio", params: ["input", "value"] },
-  { value: "StartStreaming", label: "StartStreaming", desc: "Inicia streaming", category: "Streaming", params: [] },
-  { value: "StopStreaming", label: "StopStreaming", desc: "Para streaming", category: "Streaming", params: [] },
+  { value: "StartStreaming", label: "StartStreaming", desc: "Inicia streaming (0, 1 ou 2)", category: "Streaming", params: ["value"] },
+  { value: "StopStreaming", label: "StopStreaming", desc: "Para streaming (0, 1 ou 2)", category: "Streaming", params: ["value"] },
   { value: "StartRecording", label: "StartRecording", desc: "Inicia gravação", category: "Gravação", params: [] },
   { value: "StopRecording", label: "StopRecording", desc: "Para gravação", category: "Gravação", params: [] },
   { value: "ScriptStart", label: "ScriptStart", desc: "Inicia um script vMix", category: "Script", params: ["value"] },
@@ -568,6 +568,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   const hasValue = def?.params.includes("value");
                   const hasExtra = def?.params.includes("extra");
                   const extraLabels = getExtraLabel(cmd.fn);
+                  const isStreamingFn = cmd.fn === "StartStreaming" || cmd.fn === "StopStreaming";
 
                   const cmdEnabled = cmd.enabled !== false;
 
@@ -645,16 +646,29 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                         {hasValue && (
                           <div className="flex flex-col gap-1">
                             <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>
-                              {cmd.fn === "SelectIndex" ? "Index" : cmd.fn === "Fade" ? "Duração (ms)" : cmd.fn === "SetVolume" ? "Volume (0-100)" : hasExtra ? extraLabels.keyLabel : "Value"}
+                              {cmd.fn === "SelectIndex" ? "Index" : cmd.fn === "Fade" ? "Duração (ms)" : cmd.fn === "SetVolume" ? "Volume (0-100)" : isStreamingFn ? "Streaming" : hasExtra ? extraLabels.keyLabel : "Value"}
                             </label>
-                            <input
-                              type="text"
-                              value={cmd.value || ""}
-                              onChange={e => updateCommand(cmd.id, { value: e.target.value })}
-                              className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                              style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
-                              placeholder="Valor..."
-                            />
+                            {isStreamingFn ? (
+                              <select
+                                value={cmd.value ?? "0"}
+                                onChange={e => updateCommand(cmd.id, { value: e.target.value })}
+                                className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                                style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                              >
+                                <option value="0">Streaming 0</option>
+                                <option value="1">Streaming 1</option>
+                                <option value="2">Streaming 2</option>
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={cmd.value || ""}
+                                onChange={e => updateCommand(cmd.id, { value: e.target.value })}
+                                className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                                style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                                placeholder="Valor..."
+                              />
+                            )}
                           </div>
                         )}
 
