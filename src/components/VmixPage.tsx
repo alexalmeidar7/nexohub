@@ -2982,7 +2982,7 @@ function SwitcherUI({
                               setCapturingShortcut(input.key || input.number);
                             }}
                             title={input.title}
-                            className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            className="group vmix-hover-ring relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
                               backgroundColor: isPreview ? "#C6F03C" : "#1a1a1a",
                               color: isPreview ? "#000" : "#e5e5e5",
@@ -3127,7 +3127,7 @@ function SwitcherUI({
                               setCapturingShortcut(input.key || input.number);
                             }}
                             title={input.title}
-                            className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            className="group vmix-hover-ring relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
                               backgroundColor: isActive ? "#dc2626" : "#1a1a1a",
                               color: isActive ? "#fff" : "#e5e5e5",
@@ -3915,7 +3915,7 @@ function SwitcherUI({
                       })}
                       {/* + Criar */}
                       <div
-                        className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
+                        className="relative vmix-hover-ring rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
                         style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
                         onClick={() => setEditingCustomButtonId("new")}
                       >
