@@ -3838,13 +3838,14 @@ function SwitcherUI({
                       </button>
                     </div>
                   </div>
-                  <div className="p-4 space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
+                  <div className="p-5 space-y-4">
+                    <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
                         const isBtnActive = activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
                         const btnColor = btn.color || "#C6F03C";
-                        const BtnIcon = getIconForName(btn.nome || "");
+                        const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
+
                         // Compute text color based on background luminance
                         const hex = btnColor.replace("#", "");
                         const r = parseInt(hex.substring(0, 2), 16) / 255;
