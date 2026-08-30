@@ -74,6 +74,21 @@ export function getIconForName(name: string): LucideIcon {
   return Sparkles;
 }
 
+/** Biblioteca de ícones para seleção manual no modal */
+export const ICON_LIBRARY: Record<string, LucideIcon> = {
+  Sparkles, Star, Zap, Clapperboard, Megaphone, Bell, Timer, Clock, Calendar,
+  Music, Disc, Radio, Tv, Monitor, Mic, Volume2, Video, Image, Type, Layers,
+  Play, Pause, StopCircle, SkipForward, Repeat, Shuffle, Power, Settings,
+  Sun, Moon, Cloud, Heart, Eye, Lock, Unlock, Send, Download, Upload,
+  Bookmark, Flag, Hash, Globe, Phone, Mail, MessageSquare, Tag,
+};
+
+/** Resolve o ícone salvo, caindo no automático por palavra-chave */
+export function resolveButtonIcon(iconKey?: string | null, name = ""): LucideIcon {
+  if (iconKey && ICON_LIBRARY[iconKey]) return ICON_LIBRARY[iconKey];
+  return getIconForName(name);
+}
+
 interface PresetCommand {
   id: string;
   fn: string;
@@ -81,7 +96,9 @@ interface PresetCommand {
   value?: string;
   extraKey?: string;
   extraValue?: string;
+  enabled?: boolean;
 }
+
 
 interface VmixInput {
   key: string;
