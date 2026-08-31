@@ -44,6 +44,7 @@ export default function NdiWebrtcMonitor({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<HlsType | null>(null);
   const retryRef = useRef<number | null>(null);
+  const connectionTimeoutRef = useRef<number | null>(null);
 
   // Recupera a última URL salva e dá play automaticamente.
   const storedHls = (() => {
@@ -90,9 +91,18 @@ export default function NdiWebrtcMonitor({
     }
     let cancelled = false;
     setStatus("connecting");
+    connectionTimeoutRef.current = window.setTimeout(() => {
+      if (!cancelled) setStatus("error");
+    }, 12000);
 
     (async () => {
-      const Hls = await getHls();
+      let Hls: Awaited<ReturnType<typeof getHls>>;
+      try {
+        Hls = await getHls();
+      } catch {
+        if (!cancelled) setStatus("error");
+        return;
+      }
       if (cancelled) return;
       if (Hls.isSupported()) {
         const hls = new Hls({
@@ -103,21 +113,29 @@ export default function NdiWebrtcMonitor({
           manifestLoadingMaxRetry: 6,
           levelLoadingMaxRetry: 6,
           fragLoadingMaxRetry: 6,
+          manifestLoadingTimeOut: 8000,
+          levelLoadingTimeOut: 8000,
+          fragLoadingTimeOut: 8000,
         });
         hlsRef.current = hls;
-        hls.loadSource(effectiveHls);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setStatus("live");
-          video.play().catch(() => {});
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+          if (!cancelled) hls.loadSource(effectiveHls);
         });
-        hls.on(Hls.Events.FRAG_BUFFERED, () => setStatus("live"));
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => setStatus("error"));
+        });
+        hls.on(Hls.Events.FRAG_BUFFERED, () => {
+          if (connectionTimeoutRef.current) window.clearTimeout(connectionTimeoutRef.current);
+          connectionTimeoutRef.current = null;
+          setStatus("live");
+        });
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (!data?.fatal) return;
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            // Rede local instável / manifesto ainda não publicado: tenta de novo.
+            // Recarrega o manifesto completo; startLoad sozinho não recupera todos os erros de manifesto.
             retryRef.current = window.setTimeout(() => {
-              if (!cancelled) hls.startLoad();
+              if (!cancelled) hls.loadSource(effectiveHls);
             }, 2000);
             setStatus("connecting");
             return;
@@ -142,6 +160,10 @@ export default function NdiWebrtcMonitor({
 
     return () => {
       cancelled = true;
+      if (connectionTimeoutRef.current) {
+        window.clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
       if (retryRef.current) {
         window.clearTimeout(retryRef.current);
         retryRef.current = null;
@@ -249,6 +271,9 @@ export default function NdiWebrtcMonitor({
           autoPlay
           playsInline
           muted={muted}
+          onPlaying={() => setStatus("live")}
+          onCanPlay={() => setStatus("live")}
+          onError={() => setStatus("error")}
           className="absolute"
           style={{
             top: 0,

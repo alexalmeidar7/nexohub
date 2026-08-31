@@ -171,6 +171,7 @@ interface PanelProps {
   activeInput?: string | null;
   onSelect: (inputNumber: string) => void;
   onDropInput?: (inputNumber: string, categoriaId: string) => void;
+  onReorderInput?: (categoriaId: string, inputNumber: string, targetInputNumber: string) => void;
   onRemoveInput?: (inputNumber: string, categoriaId: string) => void;
   onDelete?: (id: string) => void;
   shortcuts?: Record<string, string>;
@@ -183,7 +184,7 @@ interface PanelProps {
  * no lado "program" as mesmas categorias são espelhadas (somente execução).
  */
 export function VmixCategoryPanel({
-  side, categorias, inputs, previewInput, activeInput, onSelect, onDropInput, onRemoveInput, onDelete,
+  side, categorias, inputs, previewInput, activeInput, onSelect, onDropInput, onReorderInput, onRemoveInput, onDelete,
   shortcuts, capturingShortcut, onSetShortcut,
 }: PanelProps) {
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -242,14 +243,27 @@ export function VmixCategoryPanel({
                   const shortcut = shortcuts?.[input.key] || shortcuts?.[input.number];
                   const isCapturing = capturingShortcut === shortcutKey;
                   return (
-                    <div key={`${side}-${cat.id}-${input.number}`} className="relative group">
+                    <div
+                      key={`${side}-${cat.id}-${input.number}`}
+                      className="relative group"
+                      onDragOver={editable ? (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; } : undefined}
+                      onDrop={editable ? (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const dragged = e.dataTransfer.getData("text/vmix-input");
+                        if (dragged && dragged !== input.number) onReorderInput?.(cat.id, dragged, input.number);
+                      } : undefined}
+                    >
                       <button
                         draggable={editable}
-                        onDragStart={editable ? (e) => e.dataTransfer.setData("text/vmix-input", input.number) : undefined}
+                        onDragStart={editable ? (e) => {
+                          e.dataTransfer.setData("text/vmix-input", input.number);
+                          e.dataTransfer.effectAllowed = "move";
+                        } : undefined}
                         onClick={() => onSelect(input.number)}
                         onContextMenu={onSetShortcut ? (e) => { e.preventDefault(); onSetShortcut(shortcutKey); } : undefined}
                         title={input.title}
-                        className="w-full h-12 rounded border text-[10px] font-bold flex flex-col items-center justify-center transition-all"
+                        className="vmix-hover-ring w-full h-12 rounded border text-[10px] font-bold flex flex-col items-center justify-center transition-all cursor-grab active:cursor-grabbing"
                         style={{
                           backgroundColor: on ? accent : "#1a1a1a",
                           color: on ? accentText : "#e5e5e5",
