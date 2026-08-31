@@ -254,23 +254,21 @@ export default function AdsPage() {
     id: "pl-1",
     nome: "Break padrão",
     usarHorario: false,
-    horario: "12:00",
+    horaInicio: "12:00",
+    horaFim: "13:00",
     dias: [1, 2, 3, 4, 5],
-    itens: [
-      { id: "b1", titulo: "Spot 30s — Supermercado Nexo", duracao: "00:30" },
-      { id: "b2", titulo: "VT 15s — Loja Vitória", duracao: "00:15" },
-    ],
+    itens: [],
   }]);
   const [selectedPl, setSelectedPl] = useState("pl-1");
   const breakFileRef = useRef<HTMLInputElement>(null);
 
-  /* Biblioteca de mídias (drag & drop para o break) */
-  const [biblioteca, setBiblioteca] = useState<BreakItem[]>([
-    { id: "m1", titulo: "Spot 30s — Supermercado Nexo", duracao: "00:30" },
-    { id: "m2", titulo: "VT 15s — Loja Vitória", duracao: "00:15" },
-    { id: "m3", titulo: "VT 20s — Auto Center Alfa", duracao: "00:20" },
-  ]);
-  const bibliotecaFileRef = useRef<HTMLInputElement>(null);
+  /* Biblioteca de mídias: arquivos das campanhas ativas */
+  const biblioteca = useMemo<BreakItem[]>(
+    () => campanhas
+      .filter(c => c.status === "Ativa" && c.midia)
+      .map(c => ({ id: `cmp-${c.id}`, titulo: c.midia as string, duracao: "--:--", campanha: c.nome })),
+    [campanhas],
+  );
   const [dragOverPl, setDragOverPl] = useState(false);
 
   const currentPl = playlists.find(p => p.id === selectedPl) || null;
