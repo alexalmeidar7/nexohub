@@ -2713,6 +2713,24 @@ function useAgendaPodcastTriggers({
     return map;
   }, [eventos, rejected, podcastProgramas, isPodcastStudio, tick]);
 
+  /** Próximo evento especificamente AO VIVO por programa, usado pelos botões StartStreaming. */
+  const liveEventoPorPrograma = useMemo(() => {
+    const map: Record<string, AgendaEventoLite> = {};
+    if (!isPodcastStudio) return map;
+
+    const validIds = new Set(podcastProgramas.map((p: any) => p.id));
+    const candidates = eventos
+      .filter(ev => ev.programa_id && validIds.has(ev.programa_id) && isLiveEvento(ev.tipo_evento) && !rejected.has(ev.id))
+      .map(ev => ({ ev, ms: eventoStartMs(ev) }))
+      .filter(item => item.ms !== null && (item.ms as number) + 3600_000 > tick)
+      .sort((a, b) => (a.ms as number) - (b.ms as number));
+
+    for (const { ev } of candidates) {
+      if (!map[ev.programa_id as string]) map[ev.programa_id as string] = ev;
+    }
+    return map;
+  }, [eventos, rejected, podcastProgramas, isPodcastStudio, tick]);
+
   const confirmarEvento = useCallback((ev: AgendaEventoLite) => {
     setConfirmed(prev => {
       const next = new Set(prev); next.add(ev.id); saveIdSet(confirmedKey, next); return next;
@@ -2802,7 +2820,7 @@ function useAgendaPodcastTriggers({
     }
   }, [tick, eventoPorPrograma, isPodcastStudio, user, customButtons, runCommandsUnified, toast, streamingFiredKey]);
 
-  return { isPodcastStudio, eventos, eventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
+  return { isPodcastStudio, eventos, eventoPorPrograma, liveEventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
 }
 
 // Actual Switcher UI (used when effectiveConnected)
@@ -2864,6 +2882,7 @@ function SwitcherUI({
     isPodcastStudio,
     eventos,
     eventoPorPrograma,
+    liveEventoPorPrograma,
     confirmed: agendaConfirmados,
     confirmarEvento,
     rejeitarEvento,
@@ -4331,21 +4350,36 @@ function SwitcherUI({
                     <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
                         const isBtnActive = !isDefaultAutomationActive && activeCustomButton === btn.id;
-                        const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
+                        const isAgendaLiveButton = isPodcastStudio && hasStartStreamingCommand(btn);
+                        const liveEvento = isAgendaLiveButton && btn.programa_id
+                          ? liveEventoPorPrograma[btn.programa_id]
+                          : undefined;
+                        const isLiveButtonEnabled = !isAgendaLiveButton || Boolean(liveEvento);
+                        const hasSchedule = isAgendaLiveButton
+                          ? Boolean(liveEvento)
+                          : btn.horario && btn.dias_semana?.length > 0;
+                        const liveScheduleLabel = liveEvento
+                          ? `${liveEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(liveEvento.horario_gravacao || "--:--").slice(0, 5)}`
+                          : "";
                         // Cor padronizada (mesmo visual do botão "+ novo botão")
-                        const btnColor = "#C6F03C";
+                        const btnColor = isLiveButtonEnabled ? "#C6F03C" : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
-                        const textColor = "#000000";
+                        const textColor = isLiveButtonEnabled ? "#000000" : "#85858d";
                         return (
                           <div
                             key={btn.id}
-                            className={`group/custom vmix-hover-ring relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${isBtnActive ? " vmix-active-blink" : ""}`}
+                            className={`group/custom relative rounded-lg overflow-hidden transition-all duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer hover:scale-[1.03]" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: btnColor,
-                              border: `2px solid ${btnColor}`,
-                              opacity: dragCustomButtonId === btn.id ? 0.45 : 1,
+                              border: `2px solid ${isLiveButtonEnabled ? btnColor : "#50505a"}`,
+                              opacity: dragCustomButtonId === btn.id ? 0.45 : isLiveButtonEnabled ? 1 : 0.62,
                             }}
+                            title={isAgendaLiveButton
+                              ? isLiveButtonEnabled
+                                ? `AO VIVO agendado: ${liveScheduleLabel}. O disparo será automático pela Agenda.`
+                                : "Desabilitado: não há evento AO VIVO deste programa salvo na Agenda."
+                              : undefined} 
                             draggable
                             onDragStart={(e) => {
                               setDragCustomButtonId(btn.id);
@@ -4361,6 +4395,16 @@ function SwitcherUI({
                             }}
                             onDragEnd={() => setDragCustomButtonId(null)}
                             onClick={async () => {
+                              if (isAgendaLiveButton) {
+                                toast({
+                                  title: isLiveButtonEnabled ? "Botão armado pela Agenda" : "Botão desabilitado",
+                                  description: isLiveButtonEnabled
+                                    ? `O StartStreaming será disparado automaticamente em ${liveScheduleLabel}.`
+                                    : "Cadastre um evento AO VIVO para o programa vinculado a este botão.",
+                                  variant: isLiveButtonEnabled ? "default" : "destructive",
+                                });
+                                return;
+                              }
                               setActiveCustomButton(btn.id);
                               if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
                                 await runCommandsUnified(btn.commands as any[], `Efeito: ${btn.nome}`);
@@ -4369,8 +4413,14 @@ function SwitcherUI({
                           >
                             {hasSchedule && (
                               <div className="absolute top-1 left-1 flex items-center gap-1 px-2 py-[3px] rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 2 }}>
-                                <Clock size={11} style={{ color: "#fff" }} />
-                                <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: "#fff" }}>{btn.horario?.slice(0, 5)}</span>
+                                <Clock size={11} style={{ color: isAgendaLiveButton ? "#C6F03C" : "#fff" }} />
+                                <span className="text-[10px] font-black tabular-nums leading-none" style={{ color: isAgendaLiveButton ? "#C6F03C" : "#fff" }}>{isAgendaLiveButton ? liveScheduleLabel : btn.horario?.slice(0, 5)}</span>
+                              </div>
+                            )}
+                            {isAgendaLiveButton && !isLiveButtonEnabled && (
+                              <div className="absolute top-1 left-1 right-1 flex items-center justify-center gap-1 px-1.5 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.42)", zIndex: 2 }}>
+                                <Lock size={10} style={{ color: "#a1a1aa" }} />
+                                <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: "#c4c4cc" }}>Sem AO VIVO na agenda</span>
                               </div>
                             )}
                             {btn.dias_semana && btn.dias_semana.length > 0 && (
