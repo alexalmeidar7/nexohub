@@ -52,7 +52,7 @@ interface Campanha {
   midia: string | null;
 }
 
-interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string }
+interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string }
 interface BreakPlaylist {
   id: string;
   nome: string;
