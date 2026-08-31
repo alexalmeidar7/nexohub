@@ -613,7 +613,8 @@ export default function IntercomWidget() {
         width: anchorRect.width,
         height: anchorRect.height,
       }
-    : { top: 16, left: 16, width: 36, height: 36 };
+    : ({ bottom: 20, right: 20, width: 36, height: 36 } as const);
+
 
 
   // ─── FAB / Minimized Indicator ───
