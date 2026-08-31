@@ -181,6 +181,12 @@ function getExtraLabel(fn: string): { keyLabel: string; valueLabel: string } {
   return { keyLabel: "Extra Key", valueLabel: "Extra Value" };
 }
 
+function getStoredProgramaId(commands: unknown): string {
+  if (!Array.isArray(commands)) return "";
+  const commandWithProgram = commands.find((command: any) => typeof command?.programa_id === "string" && command.programa_id);
+  return commandWithProgram?.programa_id || "";
+}
+
 function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapping?: Record<string, { title: string; key: string }>): string {
   let inputLabel = "";
   if (cmd.input) {
@@ -260,7 +266,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
             setHorario(data.horario || "");
             setShortcut(data.shortcut || "");
             setIconKey(data.icon || "");
-            setProgramaId(data.programa_id || "");
+            setProgramaId(data.programa_id || getStoredProgramaId(data.commands));
             setCommands(Array.isArray(data.commands) ? data.commands : []);
           }
           setLoading(false);
@@ -330,9 +336,10 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       dias_semana: diasSemana,
       data_especifica: dataEspecifica || null,
       horario,
-      commands,
+      commands: commands.map((command, index) => index === 0
+        ? { ...command, programa_id: isPodcastStudio ? programaId || null : null }
+        : command),
       estudio: estudio || null,
-      programa_id: isPodcastStudio ? programaId || null : null,
       shortcut: shortcut || null,
       icon: iconKey || null,
     };
@@ -341,11 +348,11 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       ? await (supabase.from("custom_vmix_buttons" as any) as any)
           .update(payload)
           .eq("id", buttonId)
-          .select("id, programa_id")
+          .select("id")
           .single()
       : await (supabase.from("custom_vmix_buttons" as any) as any)
           .insert({ ...payload, user_id: userId })
-          .select("id, programa_id")
+          .select("id")
           .single();
 
     setSaving(false);
@@ -355,15 +362,6 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       toast({
         title: "Não foi possível salvar",
         description: result.error.message || "Verifique a conexão e tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isPodcastStudio && isLiveButton && result.data?.programa_id !== programaId) {
-      toast({
-        title: "Vinculação não confirmada",
-        description: "O botão foi salvo, mas o programa não foi vinculado. Tente salvar novamente.",
         variant: "destructive",
       });
       return;

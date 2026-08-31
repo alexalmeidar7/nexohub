@@ -2610,6 +2610,16 @@ const hasStartStreamingCommand = (button: { commands?: unknown }) =>
     command?.enabled !== false && command?.fn === "StartStreaming",
   );
 
+/** Compatibilidade: a vinculação é lida da coluna legada ou do JSON de comandos. */
+const getButtonProgramaId = (button: { programa_id?: unknown; commands?: unknown }): string | null => {
+  if (typeof button.programa_id === "string" && button.programa_id) return button.programa_id;
+  if (!Array.isArray(button.commands)) return null;
+  const commandWithProgram = button.commands.find((command: any) =>
+    typeof command?.programa_id === "string" && command.programa_id,
+  );
+  return commandWithProgram?.programa_id || null;
+};
+
 const normalizeScheduleName = (value?: string | null) =>
   (value || "")
     .toLowerCase()
@@ -2811,7 +2821,7 @@ function useAgendaPodcastTriggers({
       if (startMs === null || now < startMs || now >= startMs + 120_000) continue;
 
       const buttons = customButtons.filter((button: any) =>
-        button?.programa_id === programaId &&
+        getButtonProgramaId(button) === programaId &&
         hasStartStreamingCommand(button) &&
         Array.isArray(button?.commands) && button.commands.length > 0,
       );
@@ -4360,11 +4370,12 @@ function SwitcherUI({
                     <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
                         const isBtnActive = !isDefaultAutomationActive && activeCustomButton === btn.id;
-                        const isAgendaLiveButton = isPodcastStudio && Boolean(btn.programa_id) && (
+                        const linkedProgramaId = getButtonProgramaId(btn);
+                        const isAgendaLiveButton = isPodcastStudio && Boolean(linkedProgramaId) && (
                           hasStartStreamingCommand(btn) || isLiveAutomationButton(btn)
                         );
-                        const liveEvento = isAgendaLiveButton && btn.programa_id
-                          ? liveEventoPorPrograma[btn.programa_id]
+                        const liveEvento = isAgendaLiveButton && linkedProgramaId
+                          ? liveEventoPorPrograma[linkedProgramaId]
                           : undefined;
                         const isLiveButtonEnabled = !isAgendaLiveButton || Boolean(liveEvento);
                         const hasSchedule = isAgendaLiveButton
