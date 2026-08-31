@@ -52,12 +52,13 @@ interface Campanha {
   midia: string | null;
 }
 
-interface BreakItem { id: string; titulo: string; duracao: string }
+interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string }
 interface BreakPlaylist {
   id: string;
   nome: string;
   usarHorario: boolean;
-  horario: string;
+  horaInicio: string;
+  horaFim: string;
   dias: number[];
   itens: BreakItem[];
 }
