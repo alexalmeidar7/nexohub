@@ -2747,6 +2747,25 @@ const normalizeScheduleName = (value?: string | null) =>
     .replace(/\blive\b|\bao\s*vivo\b/g, "")
     .replace(/[^a-z0-9]/g, "");
 
+/**
+ * Resolve o programa do botão pela vinculação explícita e, para botões legados,
+ * pelo nome. Ex.: “LIVE - FAMÍLIA POSITIVA” encontra “Família Positiva”.
+ */
+const resolveButtonProgramaId = (button: { programa_id?: unknown; commands?: unknown; nome?: string | null }, programas: Programa[]) => {
+  const linkedId = getButtonProgramaId(button);
+  if (linkedId) return linkedId;
+
+  const buttonName = normalizeScheduleName(button.nome);
+  if (!buttonName) return null;
+
+  const matchedProgram = programas.find((programa) => {
+    const programName = normalizeScheduleName(programa.nome);
+    return programName !== "" && (programName === buttonName || buttonName.includes(programName) || programName.includes(buttonName));
+  });
+
+  return matchedProgram?.id || null;
+};
+
 const eventoStartMs = (ev: AgendaEventoLite) => {
   const hora = (ev.horario_gravacao || "00:00").slice(0, 5);
   const ms = Date.parse(`${ev.data}T${hora}:00-03:00`);
@@ -2829,12 +2848,26 @@ function useAgendaPodcastTriggers({
   // Mantém a Automação sincronizada quando a Agenda é alterada em outra tela,
   // sem exigir que o operador recarregue o Switcher.
   useEffect(() => {
-    if (!isPodcastStudio) return;
+    if (!user || !isPodcastStudio) return;
+
+    const channel = supabase
+      .channel(`vmix-agenda-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${user.id}` },
+        () => { void loadEventos(); },
+      )
+      .subscribe();
+
     const id = window.setInterval(() => {
       void loadEventos();
-    }, 20000);
-    return () => window.clearInterval(id);
-  }, [isPodcastStudio, loadEventos]);
+    }, 5000);
+
+    return () => {
+      window.clearInterval(id);
+      supabase.removeChannel(channel);
+    };
+  }, [user, isPodcastStudio, loadEventos]);
 
   /** próximo evento válido (não rejeitado) por programa */
   const eventoPorPrograma = useMemo(() => {
@@ -2940,7 +2973,7 @@ function useAgendaPodcastTriggers({
       if (startMs === null || now < startMs || now >= startMs + 120_000) continue;
 
       const buttons = customButtons.filter((button: any) =>
-        getButtonProgramaId(button) === programaId &&
+        resolveButtonProgramaId(button, podcastProgramas) === programaId &&
         hasStartStreamingCommand(button) &&
         Array.isArray(button?.commands) && button.commands.length > 0,
       );
@@ -4502,7 +4535,7 @@ function SwitcherUI({
                         }
 
                         const isBtnActive = !isDefaultAutomationActive && activeCustomButton === btn.id;
-                        const linkedProgramaId = getButtonProgramaId(btn);
+                        const linkedProgramaId = resolveButtonProgramaId(btn, programas.filter((programa: Programa) => matchesStudio(programa.estudio, studioName)));
                         const isAgendaLiveButton = isPodcastStudio && Boolean(linkedProgramaId) && (
                           hasStartStreamingCommand(btn) || isLiveAutomationButton(btn)
                         );
