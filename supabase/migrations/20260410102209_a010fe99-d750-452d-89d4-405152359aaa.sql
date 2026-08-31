@@ -8,7 +8,7 @@ SELECT cron.schedule(
   'update-weather-xml-cron',
   '*/15 * * * *',
   $$
-  SELECT extensions.http_post(
+  SELECT net.http_post(
     url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'SUPABASE_URL' LIMIT 1) || '/functions/v1/update-weather-xml',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
