@@ -320,7 +320,7 @@ export default function AdsPage() {
     <button
       type="button"
       onClick={onClick}
-      className="relative text-left rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+      className="relative text-left p-4 transition-all"
       style={{
         background: active ? LIME : "#fff",
         border: `2px solid ${active ? INK : `${CYAN}33`}`,
