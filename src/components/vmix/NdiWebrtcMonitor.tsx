@@ -45,6 +45,7 @@ export default function NdiWebrtcMonitor({
   const hlsRef = useRef<HlsType | null>(null);
   const retryRef = useRef<number | null>(null);
   const connectionTimeoutRef = useRef<number | null>(null);
+  const networkRetryCountRef = useRef(0);
 
   // Recupera a última URL salva e dá play automaticamente.
   const storedHls = (() => {
@@ -90,6 +91,7 @@ export default function NdiWebrtcMonitor({
       return;
     }
     let cancelled = false;
+    networkRetryCountRef.current = 0;
     setStatus("connecting");
     connectionTimeoutRef.current = window.setTimeout(() => {
       if (!cancelled) setStatus("error");
@@ -126,6 +128,7 @@ export default function NdiWebrtcMonitor({
           video.play().catch(() => setStatus("error"));
         });
         hls.on(Hls.Events.FRAG_BUFFERED, () => {
+          networkRetryCountRef.current = 0;
           if (connectionTimeoutRef.current) window.clearTimeout(connectionTimeoutRef.current);
           connectionTimeoutRef.current = null;
           setStatus("live");
@@ -133,6 +136,13 @@ export default function NdiWebrtcMonitor({
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (!data?.fatal) return;
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            networkRetryCountRef.current += 1;
+            if (networkRetryCountRef.current >= 3) {
+              if (connectionTimeoutRef.current) window.clearTimeout(connectionTimeoutRef.current);
+              connectionTimeoutRef.current = null;
+              setStatus("error");
+              return;
+            }
             // Recarrega o manifesto completo; startLoad sozinho não recupera todos os erros de manifesto.
             retryRef.current = window.setTimeout(() => {
               if (!cancelled) hls.loadSource(effectiveHls);
