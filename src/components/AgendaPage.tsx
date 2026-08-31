@@ -746,12 +746,13 @@ export default function AgendaPage() {
   };
 
   const handleSave = async () => {
-    if (!user || !formProgramaId || !formData) return;
+    const eventDate = formData ?? selectedDate ?? new Date();
+    if (!user || !formProgramaId) return;
 
     const payload = {
       user_id: user.id,
       programa_id: formProgramaId,
-      data: format(formData, "yyyy-MM-dd"),
+      data: format(eventDate, "yyyy-MM-dd"),
       local: formLocal,
       descricao: formDescricao,
       recorrencia: formRecorrencia,
@@ -2828,7 +2829,7 @@ export default function AgendaPage() {
                 variant="save"
                 type="button"
                 onClick={handleSave}
-                disabled={!formProgramaId || !formData}
+                disabled={!formProgramaId}
                 className="w-full h-11 rounded-full text-sm font-black uppercase tracking-wider"
               >
                 {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
