@@ -2561,6 +2561,17 @@ const isLiveEvento = (tipo?: string | null) => {
   return t.includes("live") || t.includes("ao vivo") || t.includes("vivo");
 };
 
+const isLiveAutomationButton = (button: { nome?: string | null }) =>
+  /\blive\b|ao\s*vivo/i.test(button.nome || "");
+
+const normalizeScheduleName = (value?: string | null) =>
+  (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\blive\b|\bao\s*vivo\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
 const eventoStartMs = (ev: AgendaEventoLite) => {
   const hora = (ev.horario_gravacao || "00:00").slice(0, 5);
   const ms = Date.parse(`${ev.data}T${hora}:00-03:00`);
@@ -2691,9 +2702,12 @@ function useAgendaPodcastTriggers({
       if (live) {
         const jsDay = new Date(now).getDay();
         const dayLabels = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-        const agendados = customButtons.filter((b: any) =>
-          Array.isArray(b?.dias_semana) && b.dias_semana.includes(dayLabels[jsDay]) &&
-          Array.isArray(b?.commands) && b.commands.length > 0);
+        const agendados = customButtons.filter((b: any) => {
+          const isSameProgram = normalizeScheduleName(b?.nome).includes(normalizeScheduleName(prog.nome));
+          return isLiveAutomationButton(b) &&
+            isSameProgram &&
+            Array.isArray(b?.commands) && b.commands.length > 0;
+        });
         for (const btn of agendados) {
           await runCommandsUnified(btn.commands as any[], `Agenda AO VIVO: ${btn.nome}`);
         }
@@ -2717,7 +2731,7 @@ function useAgendaPodcastTriggers({
     }
   }, [tick, confirmed, eventoPorPrograma, isPodcastStudio, user, podcastProgramas, customButtons, runCommandsUnified, toast, firedKey]);
 
-  return { isPodcastStudio, eventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
+  return { isPodcastStudio, eventos, eventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
 }
 
 // Actual Switcher UI (used when effectiveConnected)
