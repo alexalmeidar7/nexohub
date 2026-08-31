@@ -2606,10 +2606,15 @@ const isLiveAutomationButton = (button: { nome?: string | null }) =>
 
 /** Aceita formatos atuais e legados do widget de monitor de áudio. */
 const getAudioMonitorInput = (button: any): string | null => {
-  const isAudioMonitor = [button?.type, button?.button_type, button?.widget_type, button?.kind]
+  const isAudioMonitor = [button?.type, button?.button_type, button?.widget_type, button?.kind, button?.monitor_type]
     .some((value) => value === "audio_monitor" || value === "audio-monitor");
   const monitorCommand = Array.isArray(button?.commands)
-    ? button.commands.find((command: any) => command?.type === "audio_monitor" || command?.kind === "audio_monitor" || command?.audioMonitorInput)
+    ? button.commands.find((command: any) =>
+      command?.type === "audio_monitor" ||
+      command?.kind === "audio_monitor" ||
+      command?.fn === "AudioMonitor" ||
+      command?.audioMonitorInput,
+    )
     : null;
 
   if (!isAudioMonitor && !monitorCommand) return null;
@@ -2631,6 +2636,7 @@ function AudioMonitorButton({
   const [levels, setLevels] = useState<number[]>(() => Array.from({ length: 28 }, (_, index) => 0.16 + (index % 5) * 0.035));
   const [peaks, setPeaks] = useState<number[]>(() => Array(28).fill(0.18));
   const [db, setDb] = useState(-28);
+  const [rightDb, setRightDb] = useState(-31);
 
   useEffect(() => {
     let frame = 0;
@@ -2648,7 +2654,9 @@ function AudioMonitorButton({
             return value + (target - value) * 0.58;
           });
           const currentPeak = Math.max(...next);
-          setDb(Math.round(-48 + currentPeak * 43));
+          const leftLevel = Math.round(-48 + currentPeak * 43);
+          setDb(leftLevel);
+          setRightDb(Math.max(-48, Math.min(-1, leftLevel + Math.round(Math.sin(time / 320) * 3 - 1))));
           setPeaks((previousPeaks) => previousPeaks.map((peak, index) => Math.max(next[index], peak - 0.035)));
           return next;
         });
@@ -2678,13 +2686,21 @@ function AudioMonitorButton({
           <p className="mt-1 truncate text-[9px] font-black uppercase tracking-wide text-white/95" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
           <p className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.16em] text-white/35">Input {input}</p>
         </div>
-        <div className="rounded-md px-1.5 py-1 text-right" style={{ backgroundColor: `${dbColor}16`, border: `1px solid ${dbColor}55`, boxShadow: `0 0 14px ${dbColor}18` }}>
-          <span className="block text-[13px] font-black leading-none tabular-nums" style={{ color: dbColor }}>{db}</span>
-          <span className="mt-0.5 block text-[5px] font-black tracking-[0.16em]" style={{ color: dbColor }}>dB</span>
+        <div className="rounded-md px-1.5 py-1" style={{ backgroundColor: `${dbColor}16`, border: `1px solid ${dbColor}55`, boxShadow: `0 0 14px ${dbColor}18` }}>
+          <div className="flex items-center gap-1.5 font-black tabular-nums" style={{ color: dbColor }}>
+            <span className="text-[6px] tracking-wider text-white/45">L</span>
+            <span className="text-[12px] leading-none">{db}</span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 font-black tabular-nums" style={{ color: dbColor }}>
+            <span className="text-[6px] tracking-wider text-white/45">R</span>
+            <span className="text-[12px] leading-none">{rightDb}</span>
+          </div>
+          <span className="mt-1 block text-center text-[5px] font-black tracking-[0.16em]" style={{ color: dbColor }}>dBFS</span>
         </div>
       </div>
 
-      <div className="absolute bottom-2.5 left-2.5 right-2.5 top-[48px] overflow-hidden rounded-md border border-white/[0.07] bg-black/35 px-1.5 pb-1.5 pt-1">
+      <div className="absolute bottom-2.5 left-2.5 right-2.5 top-[48px] overflow-hidden rounded-md border border-white/[0.07] bg-black/35 px-1.5 pb-1.5 pt-1" style={{ boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)" }}>
+        <div className="pointer-events-none absolute inset-x-0 top-1 z-10 flex justify-between px-1 text-[5px] font-black tracking-wider text-white/25"><span>-6</span><span>-18</span><span>-36</span></div>
         <div className="pointer-events-none absolute inset-0 opacity-30" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)", backgroundSize: "100% 33.33%" }} />
         <div className="relative flex h-full items-end gap-[2px]">
           {levels.map((level, index) => {
