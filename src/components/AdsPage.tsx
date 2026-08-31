@@ -50,6 +50,8 @@ interface Campanha {
   views: number;
   clicks: number;
   midia: string | null;
+  midiaUrl?: string | null;
+  slot?: VideoSlot;
 }
 
 interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string }
@@ -186,11 +188,45 @@ export default function AdsPage() {
     clearFile();
   }
 
-  /* ---------------- CAMPANHAS ---------------- */
+  /* ---------------- CAMPANHAS (persistidas em comercial_preroll) ---------------- */
   const [campanhas, setCampanhas] = useState<Campanha[]>([]);
   const [previewCampanha, setPreviewCampanha] = useState<Campanha | null>(null);
+  const [salvandoCampanha, setSalvandoCampanha] = useState(false);
 
-  function saveCampaign() {
+  const DIAS_DB = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+
+  const rowToCampanha = (r: any): Campanha => ({
+    id: r.id,
+    nome: r.nome || "",
+    cliente: r.ads_cliente || "",
+    inicio: r.data_inicial ? format(new Date(`${r.data_inicial}T12:00:00`), "dd/MM/yyyy") : null,
+    fim: r.data_final ? format(new Date(`${r.data_final}T12:00:00`), "dd/MM/yyyy") : null,
+    canais: (r.ads_canais && r.ads_canais.length ? r.ads_canais : ["Vídeo (preroll)"]) as string[],
+    status: r.active ? "Ativa" : "Pausada",
+    views: r.views_count || 0,
+    clicks: r.clicks_count || 0,
+    midia: r.video_url ? decodeURIComponent(r.video_url.split("/").pop() || "") : null,
+    midiaUrl: r.video_url || null,
+    slot: r.is_midroll ? "midroll" : "preroll",
+  });
+
+  const loadCampanhas = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("comercial_preroll")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setCampanhas((data || []).map(rowToCampanha));
+  };
+
+  useEffect(() => { loadCampanhas(); }, [user?.id]);
+
+  async function saveCampaign() {
+    if (!user?.id) {
+      toast({ title: "Sessão expirada", variant: "destructive" });
+      return;
+    }
     if (!name.trim() || !client.trim()) {
       toast({ title: "Preencha nome da campanha e cliente", variant: "destructive" });
       return;
@@ -205,27 +241,73 @@ export default function AdsPage() {
       chChatbot ? "Chatbot" : null,
     ].filter(Boolean) as string[];
 
-    if (editingId) {
-      setCampanhas(list => list.map(c => c.id === editingId ? {
-        ...c,
-        nome: name.trim(), cliente: client.trim(),
-        inicio: startDate ? format(startDate, "dd/MM/yyyy") : null,
-        fim: endDate ? format(endDate, "dd/MM/yyyy") : null,
-        canais, midia: file ? file.name : c.midia,
-      } : c));
-      toast({ title: "Campanha atualizada" });
-    } else {
-      setCampanhas(list => [{
-        id: crypto.randomUUID(),
-        nome: name.trim(), cliente: client.trim(),
-        inicio: startDate ? format(startDate, "dd/MM/yyyy") : null,
-        fim: endDate ? format(endDate, "dd/MM/yyyy") : null,
-        canais, status: "Ativa", views: 0, clicks: 0,
-        midia: file ? file.name : null,
-      }, ...list]);
-      toast({ title: "Campanha salva", description: "Disponível na tabela de campanhas ativas." });
+    // Quando o formato é Break Comercial, a campanha segue as diretrizes
+    // (horário e dias da semana) da playlist selecionada na aba Break comercial.
+    const plRef = playlists.find(p => p.id === selectedPl);
+    const usaBreak = videoSlot === "break" && !!plRef;
+    const horarioInicio = usaBreak && plRef!.usarHorario ? plRef!.horaInicio : "00:00";
+    const horarioFim = usaBreak && plRef!.usarHorario ? plRef!.horaFim : "23:59";
+    const diasSemana = usaBreak ? plRef!.dias.map(d => DIAS_DB[d]) : [];
+
+    setSalvandoCampanha(true);
+    try {
+      let mediaUrl: string | null = null;
+      let mediaType = "video";
+      if (file) {
+        const ext = file.name.split(".").pop() || "bin";
+        const path = `${user.id}/ads-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("preroll").upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+        mediaUrl = supabase.storage.from("preroll").getPublicUrl(path).data.publicUrl;
+        mediaType = file.type.startsWith("image") ? "image" : file.type.startsWith("audio") ? "audio" : "video";
+      }
+
+      const payload: any = {
+        user_id: user.id,
+        nome: name.trim(),
+        ads_cliente: client.trim(),
+        ads_canais: canais,
+        horario_inicio: horarioInicio,
+        horario_fim: horarioFim,
+        dias_semana: diasSemana,
+        data_inicial: startDate ? format(startDate, "yyyy-MM-dd") : null,
+        data_final: endDate ? format(endDate, "yyyy-MM-dd") : null,
+        is_midroll: videoSlot === "midroll",
+        placements: videoSlot === "midroll" ? ["mid_roll"] : ["pre_roll"],
+        link_url: botLink || "",
+        active: true,
+      };
+      if (mediaUrl) { payload.video_url = mediaUrl; payload.media_type = mediaType; }
+
+      if (editingId) {
+        const { error } = await supabase.from("comercial_preroll").update(payload).eq("id", editingId);
+        if (error) throw error;
+        toast({ title: "Campanha atualizada" });
+      } else {
+        const { error } = await supabase.from("comercial_preroll").insert({ ...payload, video_url: mediaUrl || "" });
+        if (error) throw error;
+        toast({ title: "Campanha salva", description: "Já disponível para o player e streamings." });
+      }
+      await loadCampanhas();
+      resetForm();
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar campanha", description: e.message, variant: "destructive" });
+    } finally {
+      setSalvandoCampanha(false);
     }
-    resetForm();
+  }
+
+  async function togglePausa(c: Campanha) {
+    const { error } = await supabase.from("comercial_preroll")
+      .update({ active: c.status !== "Ativa" }).eq("id", c.id);
+    if (error) { toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" }); return; }
+    loadCampanhas();
+  }
+
+  async function excluirCampanha(c: Campanha) {
+    const { error } = await supabase.from("comercial_preroll").delete().eq("id", c.id);
+    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
+    loadCampanhas();
   }
 
   function editCampanha(c: Campanha) {
@@ -235,8 +317,10 @@ export default function AdsPage() {
     setChVideo(c.canais.some(x => x.startsWith("Vídeo")));
     setChAudio(c.canais.some(x => x.startsWith("Áudio")));
     setChChatbot(c.canais.includes("Chatbot"));
+    setVideoSlot(c.slot || "preroll");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
 
   /* ---------------- RELATÓRIO ---------------- */
   const [reportOpen, setReportOpen] = useState(false);
