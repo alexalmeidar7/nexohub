@@ -2623,6 +2623,92 @@ const getButtonProgramaId = (button: { programa_id?: unknown; commands?: unknown
   return commandWithProgram?.agendaProgramId || commandWithProgram?.programa_id || null;
 };
 
+interface AudioMonitorConfig {
+  input: string;
+  label: string;
+}
+
+const getAudioMonitorConfig = (button: { commands?: unknown }): AudioMonitorConfig | null => {
+  if (!Array.isArray(button.commands)) return null;
+  const config = button.commands.find((command: any) => command?.widgetType === "audio-monitor");
+  if (!config || typeof config.audioInput !== "string") return null;
+  return {
+    input: config.audioInput,
+    label: typeof config.audioLabel === "string" && config.audioLabel ? config.audioLabel : `Input ${config.audioInput}`,
+  };
+};
+
+/**
+ * Widget preparado para trocar o mock por dados vindos do WebSocket/polling do vMix.
+ * Basta substituir a geração de `nextLevels` pelo payload de medição recebido.
+ */
+function AudioMonitorWidget({ input, label }: AudioMonitorConfig) {
+  const [levels, setLevels] = useState<number[]>(() => Array.from({ length: 20 }, () => 12));
+  const [db, setDb] = useState(-42);
+  const frameRef = useRef<number>(0);
+  const phaseRef = useRef(0);
+
+  useEffect(() => {
+    let mounted = true;
+    const animate = () => {
+      phaseRef.current += 0.085;
+      const base = 20 + Math.abs(Math.sin(phaseRef.current * 0.7)) * 52;
+      const nextLevels = Array.from({ length: 20 }, (_, index) => {
+        const wave = Math.sin(phaseRef.current * (1.3 + index * 0.04) + index * 0.72);
+        const detail = Math.sin(phaseRef.current * 2.7 + index * 1.3);
+        return Math.max(8, Math.min(96, base * (0.42 + Math.abs(wave) * 0.58) + detail * 8));
+      });
+      const peak = Math.max(...nextLevels);
+      if (mounted) {
+        setLevels(nextLevels);
+        setDb(Math.round(-60 + peak * 0.58));
+      }
+      frameRef.current = requestAnimationFrame(animate);
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    return () => {
+      mounted = false;
+      cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
+
+  const meterColor = db >= -4 ? "#ef4444" : db >= -14 ? "#facc15" : "#4ade80";
+
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-[#111b15] via-[#111114] to-[#09090b] p-3">
+      <div className="absolute inset-0 opacity-40" style={{ background: `radial-gradient(circle at 50% 100%, ${meterColor}35, transparent 62%)` }} />
+      <div className="relative flex h-full flex-col justify-between">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-[7px] font-black uppercase tracking-[0.16em] text-white/45">
+              <Volume2 size={10} style={{ color: meterColor }} /> Monitor de áudio
+            </div>
+            <p className="mt-1 truncate text-[10px] font-black uppercase tracking-wide text-white">{label}</p>
+            <p className="text-[8px] font-mono text-white/35">INPUT {input}</p>
+          </div>
+          <div className="rounded-md border px-1.5 py-1 text-right" style={{ borderColor: `${meterColor}66`, backgroundColor: `${meterColor}18` }}>
+            <span className="block text-[13px] font-black tabular-nums leading-none" style={{ color: meterColor }}>{db}</span>
+            <span className="text-[6px] font-bold uppercase tracking-wider" style={{ color: meterColor }}>dB</span>
+          </div>
+        </div>
+
+        <div className="flex h-10 items-end gap-[2px] rounded-md border border-white/5 bg-black/30 px-1.5 py-1">
+          {levels.map((level, index) => {
+            const color = level > 83 ? "#ef4444" : level > 63 ? "#facc15" : "#4ade80";
+            return (
+              <span
+                key={index}
+                className="min-w-0 flex-1 rounded-sm transition-[height,background-color] duration-75"
+                style={{ height: `${level}%`, backgroundColor: color, boxShadow: `0 0 6px ${color}80` }}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const normalizeScheduleName = (value?: string | null) =>
   (value || "")
     .toLowerCase()
@@ -2891,6 +2977,55 @@ function SwitcherUI({
       }
       return next;
     });
+  };
+
+  const [createButtonTypeOpen, setCreateButtonTypeOpen] = useState(false);
+  const [audioMonitorFormOpen, setAudioMonitorFormOpen] = useState(false);
+  const [audioMonitorInput, setAudioMonitorInput] = useState("");
+  const [savingAudioMonitor, setSavingAudioMonitor] = useState(false);
+
+  const openAudioMonitorForm = () => {
+    setCreateButtonTypeOpen(false);
+    setAudioMonitorInput(inputs[0]?.number || "");
+    setAudioMonitorFormOpen(true);
+  };
+
+  const createAudioMonitor = async () => {
+    const selectedInput = inputs.find((input: any) => input.number === audioMonitorInput);
+    if (!selectedInput) {
+      toast({ title: "Selecione um input", description: "Escolha o input que terá o áudio monitorado.", variant: "destructive" });
+      return;
+    }
+    if (!user?.id) return;
+
+    setSavingAudioMonitor(true);
+    const label = `${selectedInput.number} · ${selectedInput.title}`;
+    const { error } = await (supabase.from("custom_vmix_buttons" as any) as any).insert({
+      user_id: user.id,
+      nome: `Áudio · ${selectedInput.title}`,
+      color: "#22c55e",
+      dias_semana: [],
+      horario: "",
+      estudio: studioName || null,
+      commands: [{
+        id: crypto.randomUUID(),
+        fn: "",
+        enabled: false,
+        widgetType: "audio-monitor",
+        audioInput: selectedInput.number,
+        audioLabel: label,
+      }],
+    });
+    setSavingAudioMonitor(false);
+
+    if (error) {
+      toast({ title: "Não foi possível criar", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Monitor de áudio criado", description: `Monitorando o input ${label}.` });
+    setAudioMonitorFormOpen(false);
+    await loadCustomButtons();
   };
 
   // Relógio de 1s — alimenta o contador regressivo dos programas no ar
@@ -4350,7 +4485,7 @@ function SwitcherUI({
                         <Upload size={12} />
                       </button>
                       <button
-                        onClick={() => setEditingCustomButtonId("new")}
+                        onClick={() => setCreateButtonTypeOpen(true)}
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all hover:brightness-110"
                         style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
                         title="Criar novo botão"
@@ -4372,7 +4507,9 @@ function SwitcherUI({
                   <div className="p-5 space-y-4">
                     <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
-                        const isBtnActive = !isDefaultAutomationActive && activeCustomButton === btn.id;
+                        const audioMonitorConfig = getAudioMonitorConfig(btn);
+                        const isAudioMonitor = Boolean(audioMonitorConfig);
+                        const isBtnActive = !isAudioMonitor && !isDefaultAutomationActive && activeCustomButton === btn.id;
                         const linkedProgramaId = getButtonProgramaId(btn);
                         const isAgendaLiveButton = isPodcastStudio && Boolean(linkedProgramaId) && (
                           hasStartStreamingCommand(btn) || isLiveAutomationButton(btn)
@@ -4388,7 +4525,7 @@ function SwitcherUI({
                           ? `${liveEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(liveEvento.horario_gravacao || "--:--").slice(0, 5)}`
                           : "";
                         // Cor padronizada (mesmo visual do botão "+ novo botão")
-                        const btnColor = isLiveButtonEnabled ? "#C6F03C" : "#36363d";
+                        const btnColor = isAudioMonitor ? "#111114" : isLiveButtonEnabled ? "#C6F03C" : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
                         const textColor = isLiveButtonEnabled ? "#000000" : "#85858d";
                         return (
@@ -4421,6 +4558,7 @@ function SwitcherUI({
                             }}
                             onDragEnd={() => setDragCustomButtonId(null)}
                             onClick={async () => {
+                              if (isAudioMonitor) return;
                               if (isAgendaLiveButton) {
                                 toast({
                                   title: isLiveButtonEnabled ? "Botão armado pela Agenda" : "Botão desabilitado",
@@ -4475,18 +4613,22 @@ function SwitcherUI({
                               </div>
                             )}
 
-                            <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
-                              <BtnIcon size={Math.round(16 * customBtnTextScale)} style={{ color: textColor, opacity: 0.85 }} />
-                              <span
-                                className="font-black uppercase tracking-wider text-center leading-tight"
-                                style={{ color: textColor, fontSize: `${9 * customBtnTextScale}px` }}
-                              >{btn.nome}</span>
-                            </div>
+                            {isAudioMonitor && audioMonitorConfig ? (
+                              <AudioMonitorWidget input={audioMonitorConfig.input} label={audioMonitorConfig.label} />
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center p-1.5 pt-5 pb-3 gap-1">
+                                <BtnIcon size={Math.round(16 * customBtnTextScale)} style={{ color: textColor, opacity: 0.85 }} />
+                                <span
+                                  className="font-black uppercase tracking-wider text-center leading-tight"
+                                  style={{ color: textColor, fontSize: `${9 * customBtnTextScale}px` }}
+                                >{btn.nome}</span>
+                              </div>
+                            )}
 
                             <GripVertical
                               size={12}
-                              className="absolute bottom-1.5 right-1.5 opacity-35 group-hover/custom:opacity-80 transition-opacity cursor-grab"
-                              style={{ color: textColor }}
+                              className="absolute bottom-1.5 right-1.5 z-[4] opacity-35 group-hover/custom:opacity-80 transition-opacity cursor-grab"
+                              style={{ color: isAudioMonitor ? "#ffffff" : textColor }}
                               aria-label="Arraste para reorganizar"
                             />
 
@@ -4501,7 +4643,7 @@ function SwitcherUI({
                       <div
                         className="relative vmix-hover-ring rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
                         style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
-                        onClick={() => setEditingCustomButtonId("new")}
+                        onClick={() => setCreateButtonTypeOpen(true)}
                       >
                         <div className="flex flex-col items-center gap-0.5">
                           <Plus size={14} style={{ color: "#C6F03C" }} />
@@ -4555,6 +4697,62 @@ function SwitcherUI({
           onSaved={loadCustomButtons}
         />
       )}
+
+      {/* Escolha do tipo de botão */}
+      <Dialog open={createButtonTypeOpen} onOpenChange={setCreateButtonTypeOpen}>
+        <DialogContent className="overflow-hidden border-white/10 bg-[#17171b] p-0 text-white sm:max-w-xl">
+          <DialogHeader className="border-b border-white/10 bg-gradient-to-br from-white/[0.07] to-transparent px-6 py-5">
+            <DialogTitle className="text-lg font-black tracking-tight">Qual tipo de botão você deseja criar?</DialogTitle>
+            <DialogDescription className="text-sm text-white/45">Escolha a função principal para continuar a configuração.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 p-6 sm:grid-cols-2">
+            <button
+              onClick={() => { setCreateButtonTypeOpen(false); setEditingCustomButtonId("new"); }}
+              className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-left transition-all duration-200 hover:-translate-y-1 hover:border-[#C6F03C]/60 hover:bg-[#C6F03C]/10 hover:shadow-xl hover:shadow-[#C6F03C]/10"
+            >
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#C6F03C]/15 text-[#C6F03C] transition-transform group-hover:scale-110"><Wand2 size={21} /></div>
+              <h3 className="text-sm font-black uppercase tracking-wide text-white">Botão de Comandos</h3>
+              <p className="mt-2 text-xs leading-relaxed text-white/45">Configure atalhos e sequências de comandos para executar no vMix.</p>
+            </button>
+            <button
+              onClick={openAudioMonitorForm}
+              className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-left transition-all duration-200 hover:-translate-y-1 hover:border-emerald-400/60 hover:bg-emerald-400/10 hover:shadow-xl hover:shadow-emerald-400/10"
+            >
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-400 transition-transform group-hover:scale-110"><Volume2 size={21} /></div>
+              <h3 className="text-sm font-black uppercase tracking-wide text-white">Monitor de Áudio</h3>
+              <p className="mt-2 text-xs leading-relaxed text-white/45">Acompanhe dB e espectro animado de um input em tempo real.</p>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Configuração do monitor de áudio */}
+      <Dialog open={audioMonitorFormOpen} onOpenChange={setAudioMonitorFormOpen}>
+        <DialogContent className="border-white/10 bg-[#17171b] text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-black"><Volume2 className="text-emerald-400" size={20} /> Configurar monitor de áudio</DialogTitle>
+            <DialogDescription className="text-white/45">Selecione o input do vMix que será acompanhado pelo widget.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-3">
+            <label className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Selecionar o Input</label>
+            <select
+              value={audioMonitorInput}
+              onChange={event => setAudioMonitorInput(event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-sm text-white outline-none transition-all focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/20"
+            >
+              <option value="">Selecione um input</option>
+              {inputs.map((input: any) => <option key={input.key || input.number} value={input.number}>{input.number} · {input.title}</option>)}
+            </select>
+            {inputs.length === 0 && <p className="text-xs text-amber-300">Nenhum input disponível. Sincronize o vMix antes de criar o monitor.</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAudioMonitorFormOpen(false)}>Cancelar</Button>
+            <Button onClick={createAudioMonitor} disabled={savingAudioMonitor || !audioMonitorInput} className="bg-emerald-400 text-black hover:bg-emerald-300">
+              {savingAudioMonitor && <Loader2 size={14} className="mr-2 animate-spin" />} Criar monitor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Command Log Panel ── */}
       <div className="fixed bottom-0 left-0 right-0 z-50" style={{ pointerEvents: "none" }}>
