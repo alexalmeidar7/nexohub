@@ -101,7 +101,7 @@ export function useVmixCategories(userId?: string | null, estudio?: string | nul
     [categorias],
   );
 
-  return { categorias, reload, criar, excluir, moverInput, removerInput, categorizados };
+  return { categorias, reload, criar, excluir, setInputs, moverInput, removerInput, categorizados };
 }
 
 interface CreateProps { onCreate: (nome: string, icone: string) => void }

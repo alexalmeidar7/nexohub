@@ -2525,6 +2525,9 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       setDragPresetIdx={setDragPresetIdx}
       customButtons={customButtons}
       setCustomButtons={setCustomButtons}
+      dragCustomButtonId={dragCustomButtonId}
+      setDragCustomButtonId={setDragCustomButtonId}
+      reorderCustomButton={reorderCustomButton}
       editingCustomButtonId={editingCustomButtonId}
       setEditingCustomButtonId={setEditingCustomButtonId}
       activeCustomButton={activeCustomButton}
@@ -2562,7 +2565,8 @@ function SwitcherUI({
   capturingShortcut, setCapturingShortcut, manualNdiHost, setManualNdiHost, ThumbnailImg,
   ndiUrl, setNdiUrl, programas, setProgramas, activePreset, setActivePreset,
   editingPresetId, setEditingPresetId, dragPresetIdx, setDragPresetIdx,
-  customButtons, setCustomButtons, editingCustomButtonId, setEditingCustomButtonId,
+  customButtons, setCustomButtons, dragCustomButtonId, setDragCustomButtonId, reorderCustomButton,
+  editingCustomButtonId, setEditingCustomButtonId,
   activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
   loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
   ndiInputs, inputMapping,
@@ -2606,6 +2610,7 @@ function SwitcherUI({
     categorias: switcherCategorias,
     criar: criarCategoria,
     excluir: excluirCategoria,
+    setInputs: setInputsCategoria,
     moverInput: moverInputCategoria,
     removerInput: removerInputCategoria,
     categorizados: inputsCategorizados,
