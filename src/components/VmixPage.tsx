@@ -2893,6 +2893,67 @@ function SwitcherUI({
     return (upcoming || withStart[0]).p;
   }, [programas, currentProgram]);
 
+  // No estúdio PODCAST, o cabeçalho é controlado exclusivamente pelos eventos da Agenda.
+  // A duração do evento segue o intervalo cadastrado para o programa correspondente.
+  const podcastAgendaSchedule = useMemo(() => {
+    if (!isPodcastStudio) return [];
+
+    const programaPorId = new Map(
+      programas
+        .filter((programa: Programa) => matchesStudio(programa.estudio, studioName))
+        .map((programa: Programa) => [programa.id, programa]),
+    );
+
+    return eventos
+      .map((evento) => {
+        const programa = evento.programa_id ? programaPorId.get(evento.programa_id) : undefined;
+        const startMs = eventoStartMs(evento);
+        if (!programa || startMs === null) return null;
+
+        const startSeconds = timeToSeconds(programa.horario_inicio);
+        const endSeconds = timeToSeconds(programa.horario_fim);
+        const durationSeconds = startSeconds !== null && endSeconds !== null
+          ? (endSeconds > startSeconds ? endSeconds - startSeconds : 86400 - startSeconds + endSeconds)
+          : 3600;
+
+        return {
+          evento,
+          programa,
+          startMs,
+          endMs: startMs + durationSeconds * 1000,
+        };
+      })
+      .filter((item): item is { evento: AgendaEventoLite; programa: Programa; startMs: number; endMs: number } => item !== null)
+      .sort((a, b) => a.startMs - b.startMs);
+  }, [isPodcastStudio, eventos, programas, studioName]);
+
+  const podcastCurrentAgenda = useMemo(() => {
+    const now = nowTick;
+    return podcastAgendaSchedule.find((item) => item.startMs <= now && now < item.endMs) || null;
+  }, [podcastAgendaSchedule, nowTick]);
+
+  const podcastNextAgenda = useMemo(() => {
+    const now = nowTick;
+    return podcastAgendaSchedule.find((item) => item.startMs > now) || null;
+  }, [podcastAgendaSchedule, nowTick]);
+
+  const headerCurrentProgram = isPodcastStudio ? podcastCurrentAgenda?.programa || null : currentProgram;
+  const headerNextProgram = isPodcastStudio ? podcastNextAgenda?.programa || null : nextProgram;
+  const headerCurrentSchedule = isPodcastStudio
+    ? podcastCurrentAgenda
+      ? `${isLiveEvento(podcastCurrentAgenda.evento.tipo_evento) ? "AO VIVO" : "GRAVAÇÃO"} · ${(podcastCurrentAgenda.evento.horario_gravacao || "--:--").slice(0, 5)}`
+      : ""
+    : headerCurrentProgram
+      ? `${headerCurrentProgram.horario_inicio} - ${headerCurrentProgram.horario_fim}`
+      : "";
+  const headerNextSchedule = isPodcastStudio
+    ? podcastNextAgenda
+      ? `${isLiveEvento(podcastNextAgenda.evento.tipo_evento) ? "AO VIVO" : "GRAVAÇÃO"} · ${(podcastNextAgenda.evento.horario_gravacao || "--:--").slice(0, 5)}`
+      : ""
+    : headerNextProgram
+      ? `${headerNextProgram.horario_inicio?.slice(0, 5)} - ${headerNextProgram.horario_fim?.slice(0, 5)}`
+      : "";
+
 
 
 
@@ -2975,11 +3036,11 @@ function SwitcherUI({
                     <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-[#C6F03C] animate-pulse shadow-[0_0_10px_rgba(198,240,60,0.7)]' : 'bg-white/20'}`} />
                     <div className="flex flex-col min-w-0">
                       <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
-                        {currentProgram?.nome || activeTitle}
+                        {headerCurrentProgram?.nome || (isPodcastStudio ? "sem evento no momento" : activeTitle)}
                       </span>
-                      {currentProgram && (
+                      {headerCurrentSchedule && (
                         <span className="text-[9px] font-medium text-white/40 leading-none mt-0.5">
-                          {currentProgram.horario_inicio} - {currentProgram.horario_fim}
+                          {headerCurrentSchedule}
                         </span>
                       )}
                     </div>
@@ -2991,11 +3052,11 @@ function SwitcherUI({
                 <div className="flex flex-col justify-center min-w-[180px]">
                   <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">A SEGUIR</span>
                   <span className="text-[11px] font-black uppercase tracking-[0.05em] text-white/90 truncate max-w-[200px] leading-none">
-                    {nextProgram?.nome || "—"}
+                    {headerNextProgram?.nome || "—"}
                   </span>
-                  {nextProgram && (
+                  {headerNextSchedule && (
                     <span className="text-[9px] font-medium text-white/40 leading-none mt-1 font-mono">
-                      {nextProgram.horario_inicio?.slice(0, 5)} - {nextProgram.horario_fim?.slice(0, 5)}
+                      {headerNextSchedule}
                     </span>
                   )}
                 </div>
