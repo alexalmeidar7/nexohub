@@ -152,6 +152,20 @@ interface Programa {
   apresentador_foto?: string | null;
 }
 
+/** Normaliza dados legados do banco antes de renderizar a grade do Switcher. */
+const normalizeProgramaRecord = (value: any): Programa => ({
+  id: String(value?.id || ""),
+  nome: typeof value?.nome === "string" ? value.nome : "Sem nome",
+  ativo: value?.ativo !== false,
+  horario_inicio: typeof value?.horario_inicio === "string" ? value.horario_inicio : "00:00",
+  horario_fim: typeof value?.horario_fim === "string" ? value.horario_fim : "00:00",
+  dias_semana: Array.isArray(value?.dias_semana)
+    ? value.dias_semana.filter((day: unknown) => day !== null && day !== undefined).map(String)
+    : null,
+  estudio: typeof value?.estudio === "string" ? value.estudio : null,
+  apresentador_foto: typeof value?.apresentadores?.foto === "string" ? value.apresentadores.foto : null,
+});
+
 // Helper to detect private/local IPs
 function isPrivateIp(url: string): boolean {
   try {
@@ -799,7 +813,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     }
 
     if (data) {
-      const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
+      const mapped = data.map(normalizeProgramaRecord);
       try {
         const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
         if (savedOrder.length > 0) {
@@ -2556,6 +2570,19 @@ interface AgendaEventoLite {
   descricao: string | null;
 }
 
+/** Impede que registros antigos ou parcialmente preenchidos da Agenda derrubem o Switcher. */
+const normalizeAgendaEvento = (value: any): AgendaEventoLite | null => {
+  if (!value?.id || typeof value?.data !== "string") return null;
+  return {
+    id: String(value.id),
+    programa_id: value.programa_id === null || value.programa_id === undefined ? null : String(value.programa_id),
+    data: value.data,
+    horario_gravacao: typeof value.horario_gravacao === "string" ? value.horario_gravacao : null,
+    tipo_evento: typeof value.tipo_evento === "string" ? value.tipo_evento : null,
+    descricao: typeof value.descricao === "string" ? value.descricao : null,
+  };
+};
+
 const isLiveEvento = (tipo?: string | null) => {
   const t = (tipo || "").toLowerCase();
   return t.includes("live") || t.includes("ao vivo") || t.includes("vivo");
@@ -2637,7 +2664,13 @@ function useAgendaPodcastTriggers({
       .eq("user_id", user.id)
       .gte("data", hoje)
       .order("data", { ascending: true });
-    if (data) setEventos(data as AgendaEventoLite[]);
+    if (data) {
+      setEventos(
+        data
+          .map(normalizeAgendaEvento)
+          .filter((evento): evento is AgendaEventoLite => evento !== null),
+      );
+    }
   }, [user, isPodcastStudio]);
 
   useEffect(() => { loadEventos(); }, [loadEventos]);
