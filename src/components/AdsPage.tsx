@@ -326,7 +326,7 @@ export default function AdsPage() {
       }}
     >
       <span
-        className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all"
+        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center transition-all"
         style={{
           background: active ? INK : "transparent",
           border: `2px solid ${active ? INK : `${CYAN}55`}`,
