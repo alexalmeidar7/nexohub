@@ -679,6 +679,8 @@ export type Database = {
       comercial_preroll: {
         Row: {
           active: boolean
+          ads_canais: string[] | null
+          ads_cliente: string | null
           aspect_ratio: string
           background_url: string | null
           clicks_count: number
@@ -705,6 +707,8 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          ads_canais?: string[] | null
+          ads_cliente?: string | null
           aspect_ratio?: string
           background_url?: string | null
           clicks_count?: number
@@ -731,6 +735,8 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          ads_canais?: string[] | null
+          ads_cliente?: string | null
           aspect_ratio?: string
           background_url?: string | null
           clicks_count?: number
