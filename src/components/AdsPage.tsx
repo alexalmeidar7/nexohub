@@ -693,10 +693,22 @@ export default function AdsPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-white overflow-hidden" style={cardStyle}>
+                  <div
+                    className="rounded-2xl bg-white overflow-hidden"
+                    style={{ ...cardStyle, outline: dragOverPl ? `2px dashed ${CYAN}` : "none", outlineOffset: -4 }}
+                    onDragOver={e => { e.preventDefault(); setDragOverPl(true); }}
+                    onDragLeave={() => setDragOverPl(false)}
+                    onDrop={e => {
+                      e.preventDefault();
+                      setDragOverPl(false);
+                      const id = e.dataTransfer.getData("text/nexo-midia");
+                      if (id) dropMidiaNaPlaylist(id);
+                    }}
+                  >
                     <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
                       <div className="text-sm font-black" style={{ color: INK }}>Arquivos da playlist</div>
                       <div className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{currentPl.itens.length}</div>
+                      <div className="text-[11px] ml-2" style={{ color: `${INK}77` }}>Arraste as mídias para cá</div>
                       <button type="button" onClick={() => breakFileRef.current?.click()}
                         className="ml-auto h-9 px-4 rounded-full text-[11px] font-black inline-flex items-center gap-1.5"
                         style={{ background: LIME, color: INK }}>
@@ -705,6 +717,7 @@ export default function AdsPage() {
                       <input ref={breakFileRef} type="file" multiple accept="video/*,audio/*" className="hidden"
                         onChange={e => addBreakFiles(e.target.files)} />
                     </div>
+
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
