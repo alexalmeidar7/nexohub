@@ -3853,22 +3853,30 @@ function SwitcherUI({
                         const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
                         const startTime = prog.horario_inicio?.slice(0, 5) || "";
                         const endTime = prog.horario_fim?.slice(0, 5) || "";
-                        // Contador regressivo até o fim do programa no ar (usa nowTick de 1s)
-                        const nowSecs = (() => {
-                          const d = new Date(nowTick);
-                          return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
-                        })();
-                        const endSecs = timeToSeconds(prog.horario_fim);
-                        const remaining = progOnAir && endSecs !== null
-                          ? (endSecs >= nowSecs ? endSecs - nowSecs : endSecs + 86400 - nowSecs)
-                          : null;
-
                         const agendaEvento = isPodcastStudio ? eventoPorPrograma[prog.id] : undefined;
                         const agendaConfirmado = agendaEvento ? agendaConfirmados.has(agendaEvento.id) : false;
                         const agendaLive = agendaEvento ? isLiveEvento(agendaEvento.tipo_evento) : false;
                         const agendaDataLabel = agendaEvento
                           ? `${agendaEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(agendaEvento.horario_gravacao || "--:--").slice(0, 5)}`
                           : "";
+                        const podcastAgendaItem = isPodcastStudio && agendaEvento
+                          ? podcastAgendaSchedule.find(item => item.evento.id === agendaEvento.id)
+                          : undefined;
+
+                        // No PODCAST, o contador segue exclusivamente a duração do evento da agenda.
+                        // Nos demais estúdios, mantém o contador da grade de programação.
+                        const nowSecs = (() => {
+                          const d = new Date(nowTick);
+                          return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+                        })();
+                        const endSecs = timeToSeconds(prog.horario_fim);
+                        const remaining = isPodcastStudio
+                          ? podcastAgendaItem && podcastAgendaItem.startMs <= nowTick && nowTick < podcastAgendaItem.endMs
+                            ? Math.max(0, Math.floor((podcastAgendaItem.endMs - nowTick) / 1000))
+                            : null
+                          : progOnAir && endSecs !== null
+                            ? (endSecs >= nowSecs ? endSecs - nowSecs : endSecs + 86400 - nowSecs)
+                            : null;
 
                         return (
                           <div key={prog.id} className="flex flex-col gap-1.5">
@@ -3930,15 +3938,23 @@ function SwitcherUI({
                               <div
                                 draggable
                                 onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
-                                className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-[3px] rounded cursor-grab active:cursor-grabbing"
+                                className="absolute top-1.5 left-1.5 flex flex-col items-start gap-1 px-2 py-[3px] rounded cursor-grab active:cursor-grabbing"
                                 style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
                                 title={agendaEvento ? "Horário definido na agenda" : "Arraste para reposicionar"}
                               >
-                                <GripVertical size={9} style={{ color: "#666" }} />
-                                <Clock size={11} style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#888" }} />
-                                <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#ddd" }}>
-                                  {agendaEvento ? agendaDataLabel : `${startTime} - ${endTime}`}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                  <GripVertical size={9} style={{ color: "#666" }} />
+                                  <Clock size={11} style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#888" }} />
+                                  <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#ddd" }}>
+                                    {agendaEvento ? agendaDataLabel : `${startTime} - ${endTime}`}
+                                  </span>
+                                </div>
+                                {isPodcastStudio && remaining !== null && (
+                                  <div className="ml-4 flex items-center gap-1 border-t border-white/15 pt-1">
+                                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#C6F03C" }} />
+                                    <span className="text-[9px] font-black tabular-nums" style={{ color: "#fff" }}>{formatCountdown(remaining)}</span>
+                                  </div>
+                                )}
                               </div>
                             )}
 
@@ -3953,7 +3969,7 @@ function SwitcherUI({
                                 >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
                               </div>
                             )}
-                            {remaining !== null && (
+                            {!isPodcastStudio && remaining !== null && (
                               <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[3] flex items-center gap-1 px-1.5 py-[2px] rounded"
                                 style={{ backgroundColor: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.25)" }}
                                 title="Tempo restante do programa no ar"
