@@ -2606,19 +2606,29 @@ const isLiveAutomationButton = (button: { nome?: string | null }) =>
 
 /** Aceita formatos atuais e legados do widget de monitor de áudio. */
 const getAudioMonitorInput = (button: any): string | null => {
+  const monitorTypes = ["audio_monitor", "audio-monitor", "audio", "audio_spectrum", "audio-spectrum", "audio_meter", "audio-meter"];
+  const normalizedName = (button?.nome || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
   const isAudioMonitor = [button?.type, button?.button_type, button?.widget_type, button?.kind, button?.monitor_type]
-    .some((value) => value === "audio_monitor" || value === "audio-monitor");
+    .some((value) => typeof value === "string" && monitorTypes.includes(value.toLowerCase()));
   const monitorCommand = Array.isArray(button?.commands)
     ? button.commands.find((command: any) =>
-      command?.type === "audio_monitor" ||
-      command?.kind === "audio_monitor" ||
+      monitorTypes.includes(String(command?.type || command?.kind || "").toLowerCase()) ||
       command?.fn === "AudioMonitor" ||
-      command?.audioMonitorInput,
+      command?.audioMonitorInput ||
+      command?.audio_input,
     )
     : null;
+  const isNamedAudioMonitor = normalizedName === "audio" || normalizedName === "audiomonitor" || normalizedName === "audiometro";
 
-  if (!isAudioMonitor && !monitorCommand) return null;
-  const input = button?.audio_input || button?.input || monitorCommand?.audioMonitorInput || monitorCommand?.input;
+  if (!isAudioMonitor && !monitorCommand && !isNamedAudioMonitor) return null;
+  const firstCommandWithInput = Array.isArray(button?.commands)
+    ? button.commands.find((command: any) => command?.input || command?.audioMonitorInput || command?.audio_input)
+    : null;
+  const input = button?.audio_input || button?.audioInput || button?.audio_source || button?.input || monitorCommand?.audioMonitorInput || monitorCommand?.audio_input || monitorCommand?.input || firstCommandWithInput?.audioMonitorInput || firstCommandWithInput?.audio_input || firstCommandWithInput?.input;
   return input === undefined || input === null || input === "" ? "—" : String(input);
 };
 
