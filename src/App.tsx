@@ -1,4 +1,4 @@
-import { Suspense, Component, useEffect, type ReactNode } from "react";
+import { Suspense, Component, Fragment, useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -88,10 +88,15 @@ const VmixAssunto = lazyRetry(() => import("./pages/VmixAssunto"));
 interface ErrorBoundaryState {
   hasError: boolean;
   retryCount: number;
+  remountKey: number;
 }
 
+// Auto-heal delays: remount the failing subtree in place instead of showing a
+// dead-end error screen. Only after all attempts fail do we surface the UI.
+const AUTO_HEAL_DELAYS_MS = [250, 700, 1800];
+
 class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: string }, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, retryCount: 0 };
+  state: ErrorBoundaryState = { hasError: false, retryCount: 0, remountKey: 0 };
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   static getDerivedStateFromError() {
@@ -105,54 +110,70 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
       message: error.message,
       path: window.location.pathname,
       isChunkError,
+      attempt: this.state.retryCount,
     });
 
     // A rejected React.lazy import is cached by React, so remounting it cannot
-    // recover. Reload once immediately and keep the fallback hidden while the
-    // browser switches to the current deployment.
-    if (isChunkError && recoverFromChunkFailure()) {
+    // recover on its own — reload once (cache-busted) when allowed.
+    if (isChunkError && recoverFromChunkFailure()) return;
+
+    const delay = AUTO_HEAL_DELAYS_MS[this.state.retryCount];
+    if (delay === undefined) {
+      // Out of in-place attempts: show the manual recovery UI.
+      this.setState({ retryCount: AUTO_HEAL_DELAYS_MS.length });
       return;
-    } else if (isChunkError) {
-      this.setState({ retryCount: 3 });
-    } else {
-      this.setState({ retryCount: 3 });
     }
+
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = setTimeout(() => {
+      this.setState((prev) => ({
+        hasError: false,
+        retryCount: prev.retryCount + 1,
+        remountKey: prev.remountKey + 1,
+      }));
+    }, delay);
   }
 
   componentDidUpdate(previousProps: Readonly<{ children: ReactNode; locationKey: string }>) {
-    if (this.state.hasError && previousProps.locationKey !== this.props.locationKey) {
-      this.setState({ hasError: false, retryCount: 0 });
+    // A new route is a clean slate — forget previous failures.
+    if (previousProps.locationKey !== this.props.locationKey) {
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
+      if (this.state.hasError || this.state.retryCount > 0) {
+        this.setState({ hasError: false, retryCount: 0 });
+      }
     }
   }
-
 
   componentWillUnmount() {
     if (this.retryTimer) clearTimeout(this.retryTimer);
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, retryCount: 0 });
+    this.setState((prev) => ({ hasError: false, retryCount: 0, remountKey: prev.remountKey + 1 }));
   };
 
   handleReload = () => {
-    window.location.reload();
+    if (!recoverFromChunkFailure()) window.location.reload();
   };
 
   render() {
     if (this.state.hasError) {
       const isPlayer = typeof window !== "undefined" && window.location.pathname.includes("/player");
+      const healing = this.state.retryCount < AUTO_HEAL_DELAYS_MS.length;
 
-      if (isPlayer && this.state.retryCount < 3) {
+      if (isPlayer && healing) {
         return <PlayerSyncLoader size={32} />;
       }
-
 
       return (
         <div
           className="h-screen w-screen flex flex-col items-center justify-center gap-4"
           style={{ backgroundColor: isPlayer ? "#000" : "#131519", color: "#fff" }}
         >
-          {this.state.retryCount < 3 ? (
+          {healing ? (
             <>
               <LoadingSpinner size={32} />
               <p className="text-sm opacity-60">
@@ -184,7 +205,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
         </div>
       );
     }
-    return this.props.children;
+    return <Fragment key={this.state.remountKey}>{this.props.children}</Fragment>;
   }
 }
 
