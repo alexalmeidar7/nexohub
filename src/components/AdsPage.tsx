@@ -697,7 +697,7 @@ export default function AdsPage() {
                               <Pencil size={15} />
                             </button>
                             <button type="button" title={c.status === "Ativa" ? "Pausar" : "Retomar"}
-                              onClick={() => setCampanhas(l => l.map(x => x.id === c.id ? { ...x, status: x.status === "Ativa" ? "Pausada" : "Ativa" } : x))}
+                              onClick={() => togglePausa(c)}
                               className="w-9 h-9 rounded-full inline-flex items-center justify-center" style={{ background: `${LIME}66`, color: INK }}>
                               {c.status === "Ativa" ? <Pause size={15} /> : <Play size={15} />}
                             </button>
@@ -705,7 +705,7 @@ export default function AdsPage() {
                               className="w-9 h-9 rounded-full inline-flex items-center justify-center" style={{ background: `${INK}0F`, color: INK }}>
                               <Eye size={15} />
                             </button>
-                            <button type="button" title="Excluir" onClick={() => setCampanhas(l => l.filter(x => x.id !== c.id))}
+                            <button type="button" title="Excluir" onClick={() => excluirCampanha(c)}
                               className="w-9 h-9 rounded-full inline-flex items-center justify-center" style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>
                               <Trash2 size={15} />
                             </button>

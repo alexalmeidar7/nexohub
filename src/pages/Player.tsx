@@ -158,13 +158,27 @@ const matchesCampaignDay = (diasSemana: string[] | null | undefined, now: Date) 
   return diasSemana.includes(todayShort) || diasSemana.includes(todayFull);
 };
 
+const campaignHasVideoPlacement = (campaign: any, isMidroll: boolean) => {
+  const canais = Array.isArray(campaign.ads_canais) ? campaign.ads_canais as string[] : [];
+
+  // Campanhas legadas, criadas antes dos posicionamentos, continuam compatíveis.
+  if (canais.length === 0) return Boolean(campaign.is_midroll) === isMidroll;
+
+  const videoPlacement = canais.find((canal) => canal.toLowerCase().startsWith("vídeo"));
+  if (!videoPlacement) return false;
+
+  const placement = videoPlacement.toLowerCase();
+  if (placement.includes("break")) return false;
+  return isMidroll ? placement.includes("midroll") || placement.includes("mid-roll") : !placement.includes("midroll") && !placement.includes("mid-roll");
+};
+
 const filterCampaignsByType = (campaigns: any[] | null | undefined, now: Date, isMidroll: boolean) => {
   const todayStr = now.toISOString().slice(0, 10);
   return (campaigns || []).filter((p: any) => {
     if (!matchesCampaignDay(p.dias_semana, now)) return false;
     if (p.data_inicial && todayStr < p.data_inicial) return false;
     if (p.data_final && todayStr > p.data_final) return false;
-    return Boolean(p.is_midroll) === isMidroll;
+    return campaignHasVideoPlacement(p, isMidroll);
   });
 };
 
@@ -2962,7 +2976,7 @@ export default function PlayerPage() {
   if (canal && (isAudio || isVideo) && (!isYoutube || isCatalog)) {
     return (
       <Suspense fallback={<PlayerSyncLoader />}>
-
+        <div className="relative min-h-screen">
         <AudioPlayerScreen
           audioRef={audioRef}
           videoRef={videoRef}
@@ -3010,6 +3024,45 @@ export default function PlayerPage() {
           isVideoChannel={isVideo}
           isCatalog={isCatalog}
         />
+
+        {isPrerollVisible && (
+          <div className="fixed inset-0 z-[100] bg-black">
+            <PreRollOverlay
+              prerollUrl={prerollUrl || ""}
+              prerollVideoRef={prerollVideoRef}
+              prerollLinkUrl={prerollLinkUrl}
+              prerollMediaType={prerollMediaType}
+              prerollYoutubeUrl={prerollYoutubeUrl}
+              prerollBackgroundUrl={prerollBackgroundUrl}
+              prerollAspectRatio={prerollAspectRatio}
+              prerollVideoPosition={prerollVideoPosition}
+              onSkip={() => {
+                setPrerollDone(true);
+                setPrerollShowing(false);
+                setPrerollUrl(null);
+                setPrerollLinkUrl(null);
+                setPrerollMediaType("video");
+                setPrerollYoutubeUrl(null);
+                setPrerollBackgroundUrl(null);
+                setPrerollAspectRatio("16:9");
+                setPrerollVideoPosition("center");
+              }}
+              onEnded={() => {
+                setPrerollDone(true);
+                setPrerollShowing(false);
+                setPrerollUrl(null);
+                setPrerollLinkUrl(null);
+                setPrerollMediaType("video");
+                setPrerollYoutubeUrl(null);
+                setPrerollBackgroundUrl(null);
+                setPrerollAspectRatio("16:9");
+                setPrerollVideoPosition("center");
+              }}
+              fullscreen
+            />
+          </div>
+        )}
+        </div>
       </Suspense>
     );
   }
