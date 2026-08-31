@@ -2832,6 +2832,26 @@ function SwitcherUI({
     rejeitarEvento,
   } = useAgendaPodcastTriggers({ user, studioName, programas, customButtons, runCommandsUnified, toast });
 
+  // No PODCAST, a automação DEFAUL/DEFAULT funciona como estado neutro.
+  // Enquanto ela estiver ativa, nenhum outro botão da Automação recebe destaque visual.
+  const isDefaultAutomationActive = useMemo(() => {
+    if (!isPodcastStudio) return false;
+    const normalizeAutomationName = (value?: string | null) =>
+      (value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "");
+    const isDefaultName = (value?: string | null) => {
+      const name = normalizeAutomationName(value);
+      return name === "defaul" || name === "default";
+    };
+
+    return isDefaultName(programas.find((programa: Programa) => programa.id === activePreset)?.nome)
+      || isDefaultName(customButtons.find((button: any) => button.id === activeCustomButton)?.nome);
+  }, [isPodcastStudio, programas, customButtons, activePreset, activeCustomButton]);
+
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
 
@@ -3884,8 +3904,8 @@ function SwitcherUI({
 
                           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {progs.map((prog) => {
-                        const isActive = activePreset === prog.id;
-                        const progOnAir = isProgramForToday(prog) && isNowInProgram(prog);
+                        const isActive = !isDefaultAutomationActive && activePreset === prog.id;
+                        const progOnAir = !isDefaultAutomationActive && isProgramForToday(prog) && isNowInProgram(prog);
                         const startTime = prog.horario_inicio?.slice(0, 5) || "";
                         const endTime = prog.horario_fim?.slice(0, 5) || "";
                         const agendaEvento = isPodcastStudio ? eventoPorPrograma[prog.id] : undefined;
@@ -4273,7 +4293,7 @@ function SwitcherUI({
                   <div className="p-5 space-y-4">
                     <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
-                        const isBtnActive = activeCustomButton === btn.id;
+                        const isBtnActive = !isDefaultAutomationActive && activeCustomButton === btn.id;
                         const hasSchedule = btn.horario && btn.dias_semana?.length > 0;
                         // Cor padronizada (mesmo visual do botão "+ novo botão")
                         const btnColor = "#C6F03C";
