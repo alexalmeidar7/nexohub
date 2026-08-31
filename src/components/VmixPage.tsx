@@ -1712,11 +1712,14 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       try {
         const { data: buttons } = await supabase
           .from("custom_vmix_buttons")
-          .select("id, nome, commands, horario, dias_semana")
+          .select("id, nome, commands, horario, dias_semana, estudio")
           .eq("user_id", user.id);
 
         if (buttons) {
           for (const btn of buttons) {
+            // StartStreaming do PODCAST nunca usa o agendador genérico: ele depende
+            // exclusivamente do evento AO VIVO vinculado ao programa na Agenda.
+            if (normStudio(btn.estudio).includes("podcast") && hasStartStreamingCommand(btn)) continue;
             if (!btn.horario || !btn.dias_semana || (btn.dias_semana as string[]).length === 0) continue;
             const parts = btn.horario.split(":");
             const matchH = parts[0]?.padStart(2, "0");
@@ -1930,6 +1933,8 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // Atalhos dos botões personalizados
   const customButtonsRef = useRef<any[]>(customButtons);
   customButtonsRef.current = customButtons;
+  const studioNameRef = useRef(studioName);
+  studioNameRef.current = studioName;
   const runCommandsRef = useRef(runCommandsUnified);
   runCommandsRef.current = runCommandsUnified;
 
@@ -1941,6 +1946,14 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       const btn = customButtonsRef.current.find((b: any) => (b?.shortcut || "").toLowerCase() === pressed);
       if (!btn) return;
       e.preventDefault();
+      if (normStudio(studioNameRef.current).includes("podcast") && hasStartStreamingCommand(btn)) {
+        toast({
+          title: "Execução protegida pela Agenda",
+          description: "No estúdio PODCAST, este botão StartStreaming é acionado somente pelo evento AO VIVO vinculado na Agenda.",
+          variant: "destructive",
+        });
+        return;
+      }
       setActiveCustomButton(btn.id);
       if (Array.isArray(btn.commands) && btn.commands.length > 0) {
         void runCommandsRef.current(btn.commands as any[], `Efeito: ${btn.nome}`);
@@ -2591,6 +2604,12 @@ const isLiveEvento = (tipo?: string | null) => {
 const isLiveAutomationButton = (button: { nome?: string | null }) =>
   /\blive\b|ao\s*vivo/i.test(button.nome || "");
 
+/** Identifica botões cuja execução precisa ser protegida pela Agenda no estúdio PODCAST. */
+const hasStartStreamingCommand = (button: { commands?: unknown }) =>
+  Array.isArray(button.commands) && button.commands.some((command: any) =>
+    command?.enabled !== false && command?.fn === "StartStreaming",
+  );
+
 const normalizeScheduleName = (value?: string | null) =>
   (value || "")
     .toLowerCase()
@@ -2632,17 +2651,20 @@ function useAgendaPodcastTriggers({
   const [rejected, setRejected] = useState<Set<string>>(() => new Set());
   const [confirmed, setConfirmed] = useState<Set<string>>(() => new Set());
   const firedRef = useRef<Set<string>>(new Set());
+  const streamingFiredRef = useRef<Set<string>>(new Set());
   const [tick, setTick] = useState(() => Date.now());
 
   const rejectedKey = `vmix_agenda_rejeitados:${user?.id || "anon"}`;
   const confirmedKey = `vmix_agenda_confirmados:${user?.id || "anon"}`;
   const firedKey = `vmix_agenda_disparados:${user?.id || "anon"}`;
+  const streamingFiredKey = `vmix_agenda_start_streaming_disparados:${user?.id || "anon"}`;
 
   useEffect(() => {
     setRejected(loadIdSet(rejectedKey));
     setConfirmed(loadIdSet(confirmedKey));
     firedRef.current = loadIdSet(firedKey);
-  }, [rejectedKey, confirmedKey, firedKey]);
+    streamingFiredRef.current = loadIdSet(streamingFiredKey);
+  }, [rejectedKey, confirmedKey, firedKey, streamingFiredKey]);
 
   useEffect(() => {
     if (!isPodcastStudio) return;
@@ -2731,22 +2753,6 @@ function useAgendaPodcastTriggers({
         : [{ fn: "ScriptStart", input: prog.nome }];
       await runCommandsUnified(cmds as any[], `Agenda: ${prog.nome}`);
 
-      // Trava de segurança: botões personalizados apenas em eventos AO VIVO
-      if (live) {
-        const jsDay = new Date(now).getDay();
-        const dayLabels = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-        const agendados = customButtons.filter((b: any) => {
-          const isLinkedToProgram = b?.programa_id === prog.id;
-          const isLegacyProgramMatch = normalizeScheduleName(b?.nome).includes(normalizeScheduleName(prog.nome));
-          return isLiveAutomationButton(b) &&
-            (isLinkedToProgram || (!b?.programa_id && isLegacyProgramMatch)) &&
-            Array.isArray(b?.commands) && b.commands.length > 0;
-        });
-        for (const btn of agendados) {
-          await runCommandsUnified(btn.commands as any[], `Agenda AO VIVO: ${btn.nome}`);
-        }
-      }
-
       toast({
         title: live ? "Automação AO VIVO disparada" : "Automação disparada",
         description: `${prog.nome} — evento ${ev.data} ${(ev.horario_gravacao || "").slice(0, 5)}`,
@@ -2763,7 +2769,38 @@ function useAgendaPodcastTriggers({
         if (prog) void fire(ev, prog);
       }
     }
-  }, [tick, confirmed, eventoPorPrograma, isPodcastStudio, user, podcastProgramas, customButtons, runCommandsUnified, toast, firedKey]);
+  }, [tick, confirmed, eventoPorPrograma, isPodcastStudio, user, podcastProgramas, runCommandsUnified, toast, firedKey]);
+
+  // StartStreaming no PODCAST é isolado dos demais fluxos: somente um evento AO VIVO,
+  // com o mesmo programa vinculado ao botão, pode autorizar seu disparo.
+  useEffect(() => {
+    if (!isPodcastStudio || !user) return;
+    const now = Date.now();
+
+    for (const [programaId, evento] of Object.entries(eventoPorPrograma)) {
+      if (!isLiveEvento(evento.tipo_evento)) continue;
+      const startMs = eventoStartMs(evento);
+      if (startMs === null || now < startMs || now >= startMs + 120_000) continue;
+
+      const buttons = customButtons.filter((button: any) =>
+        button?.programa_id === programaId &&
+        hasStartStreamingCommand(button) &&
+        Array.isArray(button?.commands) && button.commands.length > 0,
+      );
+
+      for (const button of buttons) {
+        const executionId = `${evento.id}:${button.id}`;
+        if (streamingFiredRef.current.has(executionId)) continue;
+        streamingFiredRef.current.add(executionId);
+        saveIdSet(streamingFiredKey, streamingFiredRef.current);
+        void runCommandsUnified(button.commands as any[], `Agenda AO VIVO: ${button.nome}`);
+        toast({
+          title: "Streaming AO VIVO disparado",
+          description: `${button.nome} — ${evento.data} ${(evento.horario_gravacao || "--:--").slice(0, 5)}`,
+        });
+      }
+    }
+  }, [tick, eventoPorPrograma, isPodcastStudio, user, customButtons, runCommandsUnified, toast, streamingFiredKey]);
 
   return { isPodcastStudio, eventos, eventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
 }
