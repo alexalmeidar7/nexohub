@@ -15,7 +15,6 @@ import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import adsBanner from "@/assets/ads-banner.png";
 
 const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
