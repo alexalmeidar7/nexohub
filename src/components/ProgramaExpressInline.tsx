@@ -118,6 +118,48 @@ interface Props {
   renderAsModal?: boolean;
 }
 
+const emptyNewsItem = (): NewsItem => ({ titulo: "", imagemUrl: "", escalada: false });
+
+function normalizePodcastData(data?: Partial<PodcastData> | null): PodcastData {
+  return {
+    tituloTarja: typeof data?.tituloTarja === "string" ? data.tituloTarja : "",
+    introducao: typeof data?.introducao === "string" ? data.introducao : "",
+    agendamentoData: typeof data?.agendamentoData === "string" ? data.agendamentoData : "",
+    agendamentoHorario: typeof data?.agendamentoHorario === "string" ? data.agendamentoHorario : "",
+    perguntas: Array.isArray(data?.perguntas) && data.perguntas.length > 0
+      ? data.perguntas.map((item) => String(item || ""))
+      : [""],
+    concluindo: typeof data?.concluindo === "string" ? data.concluindo : "",
+    apoioImagens: Array.isArray(data?.apoioImagens) && data.apoioImagens.length > 0
+      ? data.apoioImagens.map((item) => String(item || ""))
+      : [""],
+    apoioVideos: Array.isArray(data?.apoioVideos) && data.apoioVideos.length > 0
+      ? data.apoioVideos.map((item) => String(item || ""))
+      : [""],
+  };
+}
+
+function normalizeBlocos(data: unknown): Bloco[] {
+  if (!Array.isArray(data) || data.length === 0) return [{ noticias: [emptyNewsItem()] }];
+
+  return data.map((bloco) => {
+    const noticias = Array.isArray((bloco as Bloco | null)?.noticias)
+      ? (bloco as Bloco).noticias
+          .filter(Boolean)
+          .map((noticia) => ({
+            titulo: typeof noticia?.titulo === "string" ? noticia.titulo : "",
+            imagemUrl: typeof noticia?.imagemUrl === "string" ? noticia.imagemUrl : "",
+            resumo: typeof noticia?.resumo === "string" ? noticia.resumo : undefined,
+            texto_materia: typeof noticia?.texto_materia === "string" ? noticia.texto_materia : undefined,
+            escalada: Boolean(noticia?.escalada),
+            link: typeof noticia?.link === "string" ? noticia.link : undefined,
+          }))
+      : [];
+
+    return { noticias: noticias.length > 0 ? noticias : [emptyNewsItem()] };
+  });
+}
+
 /* Inline participant row with editable cargo */
 function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, userId }: {
   participante: Participante;
@@ -332,7 +374,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
   });
 
-  const isPodcast = estudio.toLowerCase() === "podcast";
+  const isPodcast = (estudio || "").trim().toLowerCase() === "podcast";
 
   // Track edited fields for green check indicators
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
@@ -412,23 +454,27 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       console.log("Loading editData:", editData);
       setEstudio(editData.estudio || "");
       setProgramaId(editData.programaId || "");
-      setBlocos(Array.isArray(editData.blocos) && editData.blocos.length > 0 ? editData.blocos.map(b => ({ ...b, noticias: Array.isArray(b?.noticias) ? b.noticias : [{ titulo: "", imagemUrl: "", escalada: false }] })) : [{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
-      setParticipantes(editData.participantes || []);
-      setEscaladaList(editData.escaladaList || []);
+      setBlocos(normalizeBlocos(editData.blocos));
+      setParticipantes(
+        Array.isArray(editData.participantes)
+          ? editData.participantes.filter(Boolean).map((participante) => ({
+              nome: typeof participante?.nome === "string" ? participante.nome : "",
+              cargo: typeof participante?.cargo === "string" ? participante.cargo : "",
+              instagram: typeof participante?.instagram === "string" ? participante.instagram : "",
+            }))
+          : [],
+      );
+      setEscaladaList(
+        Array.isArray(editData.escaladaList)
+          ? editData.escaladaList.filter(Boolean).map((item) => ({
+              titulo: typeof item?.titulo === "string" ? item.titulo : "",
+              imagemUrl: typeof item?.imagemUrl === "string" ? item.imagemUrl : "",
+            }))
+          : [],
+      );
       setEditingId(editData.roteiroId);
       setEditingXmlPath(editData.existingXmlPath || null);
-      if (editData.podcastData) {
-        setPodcastData({
-          tituloTarja: editData.podcastData.tituloTarja || "",
-          introducao: editData.podcastData.introducao || "",
-          agendamentoData: (editData.podcastData as any).agendamentoData || "",
-          agendamentoHorario: (editData.podcastData as any).agendamentoHorario || "",
-          perguntas: editData.podcastData.perguntas?.length ? editData.podcastData.perguntas : [""],
-          concluindo: editData.podcastData.concluindo || "",
-          apoioImagens: editData.podcastData.apoioImagens?.length ? editData.podcastData.apoioImagens : [""],
-          apoioVideos: editData.podcastData.apoioVideos?.length ? editData.podcastData.apoioVideos : [""],
-        });
-      }
+      setPodcastData(normalizePodcastData(editData.podcastData));
       
       const loadConfigAndTemplates = async () => {
         if (editData.roteiroId) {
@@ -935,7 +981,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setFetchingLink(null);
   };
 
-  const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const escXml = (value: string | null | undefined) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
   const generateXml = (): string => {
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
