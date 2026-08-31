@@ -2968,20 +2968,36 @@ function SwitcherUI({
             <div className="flex items-center gap-6">
               {/* Logo removed as requested */}
               
-              <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
-                <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-[#C6F03C] animate-pulse shadow-[0_0_10px_rgba(198,240,60,0.7)]' : 'bg-white/20'}`} />
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
-                      {currentProgram?.nome || activeTitle}
-                    </span>
-                    {currentProgram && (
-                      <span className="text-[9px] font-medium text-white/40 leading-none mt-0.5">
-                        {currentProgram.horario_inicio} - {currentProgram.horario_fim}
+              <div className="flex items-stretch gap-3">
+                <div className="flex flex-col justify-center">
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-[#C6F03C] animate-pulse shadow-[0_0_10px_rgba(198,240,60,0.7)]' : 'bg-white/20'}`} />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
+                        {currentProgram?.nome || activeTitle}
                       </span>
-                    )}
+                      {currentProgram && (
+                        <span className="text-[9px] font-medium text-white/40 leading-none mt-0.5">
+                          {currentProgram.horario_inicio} - {currentProgram.horario_fim}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                </div>
+
+                <div className="w-px self-stretch bg-white/10" />
+
+                <div className="flex flex-col justify-center min-w-[180px]">
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">A SEGUIR</span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.05em] text-white/90 truncate max-w-[200px] leading-none">
+                    {nextProgram?.nome || "—"}
+                  </span>
+                  {nextProgram && (
+                    <span className="text-[9px] font-medium text-white/40 leading-none mt-1 font-mono">
+                      {nextProgram.horario_inicio?.slice(0, 5)} - {nextProgram.horario_fim?.slice(0, 5)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -3071,18 +3087,6 @@ function SwitcherUI({
                   </span>
                 </div>
 
-                {/* Próximo programa da grade */}
-                <div className="ml-3 flex flex-col justify-center px-4 py-1.5 rounded-xl bg-[#0c0c0e]/50 border border-white/5 min-w-[180px]">
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">A SEGUIR</span>
-                  <span className="text-[11px] font-black uppercase tracking-[0.05em] text-white/90 truncate max-w-[200px] leading-none">
-                    {nextProgram?.nome || "—"}
-                  </span>
-                  {nextProgram && (
-                    <span className="text-[9px] font-medium text-white/40 leading-none mt-1 font-mono">
-                      {nextProgram.horario_inicio?.slice(0, 5)} - {nextProgram.horario_fim?.slice(0, 5)}
-                    </span>
-                  )}
-                </div>
               </div>
 
             </div>
