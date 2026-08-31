@@ -1180,15 +1180,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     else setAddingFinance(false);
   };
 
-  const handleSave = async () => {
-    if (!user || !programaId) return;
+  const handleSave = async (schedule?: { data: string; horario: string }): Promise<boolean> => {
+    if (!user || !programaId) return false;
     if (isPodcast) {
       if (!podcastData.tituloTarja.trim() && podcastData.perguntas.every(p => !p.trim())) {
-        toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return;
+        toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return false;
       }
     } else {
       const totalNews = (blocos || []).reduce((s, b) => s + ((b?.noticias || []).filter(n => n?.titulo?.trim() || n?.texto_materia?.trim()).length), 0);
-      if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return; }
+      if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
     }
     setSaving(true);
     try {
@@ -1234,7 +1234,24 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
-      const { error: updErr } = await supabase.from("roteiros").update({ programa_nome: programaNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`, subtitulo: `express_xml::${xmlUrl}`, conteudo_html: html, participantes: blocosJson, tickertitulos, updated_at: new Date().toISOString() } as any).eq("id", roteiroId);
+      const scheduledDateTime = schedule
+        ? new Date(`${schedule.data}T${schedule.horario}:00`).toISOString()
+        : undefined;
+      const updatePayload: any = {
+        programa_nome: programaNome,
+        estudio,
+        titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
+        subtitulo: `express_xml::${xmlUrl}`,
+        conteudo_html: html,
+        participantes: blocosJson,
+        tickertitulos,
+        updated_at: new Date().toISOString(),
+      };
+      if (scheduledDateTime) {
+        updatePayload.agendado_para_envio = scheduledDateTime;
+        updatePayload.enviado_agendamento = false;
+      }
+      const { error: updErr } = await supabase.from("roteiros").update(updatePayload).eq("id", roteiroId);
       if (updErr) throw updErr;
 
       // Create or update agenda event when podcast is scheduled
@@ -1289,16 +1306,20 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       try { sessionStorage.removeItem("roteiro_auto_generated"); } catch {}
       isAutoGenRef.current = false;
-      toast.success("Roteiro salvo ✨", { duration: 3000, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } });
+      toast.success(schedule ? "Roteiro salvo e agendado ✨" : "Roteiro salvo ✨", { duration: 3000, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } });
+      if (schedule) await fetchScheduledRoteiros();
       reset();
       onFinish();
       setTimeout(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, 200);
+      return true;
     } catch (e: any) {
       console.error("[ProgramaExpress] Erro ao salvar:", e);
       const detalhe = e?.message || e?.error_description || e?.error || (typeof e === "string" ? e : JSON.stringify(e));
       toast.error(`Erro ao salvar: ${detalhe}`, { duration: 8000 });
+      return false;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   // === Nexo Form Design System (mesmo do Cadastro de Participante) ===
@@ -2004,7 +2025,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             open={showSchedulePopup} 
             onOpenChange={setShowSchedulePopup} 
             roteiroId={editingId} 
-            onScheduled={fetchScheduledRoteiros} 
+            onScheduled={fetchScheduledRoteiros}
+            onSaveAndSchedule={async (data, horario) => handleSave({ data, horario })}
           />
         </Suspense>
 

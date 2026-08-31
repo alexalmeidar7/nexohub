@@ -11,15 +11,15 @@ interface AgendarRoteiroPopupProps {
   onOpenChange: (open: boolean) => void;
   roteiroId: string | null;
   onScheduled: () => void;
+  onSaveAndSchedule?: (data: string, horario: string) => Promise<boolean>;
 }
 
-export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onScheduled }: AgendarRoteiroPopupProps) {
+export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onScheduled, onSaveAndSchedule }: AgendarRoteiroPopupProps) {
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSchedule = async () => {
-    if (!roteiroId) return;
     if (!data || !horario) {
       toast.error("Preencha a data e o horário");
       return;
@@ -27,20 +27,29 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
 
     setLoading(true);
     try {
-      const scheduledDateTime = new Date(`${data}T${horario}:00`).toISOString();
-      
-      const { error } = await supabase
-        .from("roteiros")
-        .update({
-          agendado_para_envio: scheduledDateTime,
-          enviado_agendamento: false
-        } as any)
-        .eq("id", roteiroId);
+      if (onSaveAndSchedule) {
+        const saved = await onSaveAndSchedule(data, horario);
+        if (!saved) return;
+      } else {
+        if (!roteiroId) {
+          toast.error("Salve o roteiro antes de agendar");
+          return;
+        }
 
-      if (error) throw error;
+        const scheduledDateTime = new Date(`${data}T${horario}:00`).toISOString();
+        const { error } = await supabase
+          .from("roteiros")
+          .update({
+            agendado_para_envio: scheduledDateTime,
+            enviado_agendamento: false,
+          } as any)
+          .eq("id", roteiroId);
 
-      toast.success("Roteiro agendado com sucesso!");
-      onScheduled();
+        if (error) throw error;
+        toast.success("Roteiro agendado com sucesso!");
+        onScheduled();
+      }
+
       onOpenChange(false);
     } catch (e: any) {
       console.error("Erro ao agendar roteiro:", e);
@@ -112,7 +121,7 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
             className="flex-1 rounded-xl font-bold uppercase text-[11px] tracking-wider shadow-lg transition-transform hover:scale-105"
             style={{ backgroundColor: "#00BFF0", color: "#FFFFFF" }}
           >
-            {loading ? "Agendando..." : <><Check className="w-4 h-4 mr-2" /> Agendar</>}
+            {loading ? "Salvando..." : <><Check className="w-4 h-4 mr-2" /> {onSaveAndSchedule ? "Salvar e Agendar" : "Agendar"}</>}
           </Button>
         </DialogFooter>
       </DialogContent>

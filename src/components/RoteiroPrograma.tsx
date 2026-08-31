@@ -602,7 +602,7 @@ export default function RoteiroPrograma() {
 
 
   const historicoSlot = useMemo(() => {
-    if (historico.length === 0) return null;
+    if (historico.length === 0 && agendados.length === 0) return null;
     return (
       <div className="px-6 pt-4 pb-2" style={MONT}>
         <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
