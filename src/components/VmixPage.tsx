@@ -2774,6 +2774,15 @@ function SwitcherUI({
     return () => window.clearInterval(id);
   }, []);
 
+  // Sincronização dos botões de automação com a agenda (apenas estúdio podcast)
+  const {
+    isPodcastStudio,
+    eventoPorPrograma,
+    confirmed: agendaConfirmados,
+    confirmarEvento,
+    rejeitarEvento,
+  } = useAgendaPodcastTriggers({ user, studioName, programas, customButtons, runCommandsUnified, toast });
+
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
 
