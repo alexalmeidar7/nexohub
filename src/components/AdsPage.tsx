@@ -273,22 +273,22 @@ export default function AdsPage() {
 
   const currentPl = playlists.find(p => p.id === selectedPl) || null;
 
-  function addBibliotecaFiles(files: FileList | null) {
-    if (!files) return;
-    setBiblioteca(list => [
-      ...list,
-      ...Array.from(files).map(f => ({ id: crypto.randomUUID(), titulo: f.name, duracao: "--:--" })),
-    ]);
-    if (bibliotecaFileRef.current) bibliotecaFileRef.current.value = "";
-  }
-
   function dropMidiaNaPlaylist(midiaId: string) {
     const pl = playlists.find(p => p.id === selectedPl);
     const midia = biblioteca.find(m => m.id === midiaId);
     if (!pl || !midia) return;
-    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: crypto.randomUUID() }] });
+    if (pl.itens.some(i => i.origemId === midia.id)) return;
+    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: crypto.randomUUID(), origemId: midia.id }] });
   }
 
+  /* Mídias de campanhas pausadas/excluídas saem das playlists */
+  useEffect(() => {
+    const validos = new Set(biblioteca.map(m => m.id));
+    setPlaylists(list => list.map(p => {
+      const itens = p.itens.filter(i => !i.origemId || validos.has(i.origemId));
+      return itens.length === p.itens.length ? p : { ...p, itens };
+    }));
+  }, [biblioteca]);
 
   function updatePl(id: string, patch: Partial<BreakPlaylist>) {
     setPlaylists(list => list.map(p => p.id === id ? { ...p, ...patch } : p));
@@ -296,7 +296,7 @@ export default function AdsPage() {
 
   function novaPlaylist() {
     const id = crypto.randomUUID();
-    setPlaylists(list => [...list, { id, nome: `Break ${list.length + 1}`, usarHorario: false, horario: "12:00", dias: [1, 2, 3, 4, 5], itens: [] }]);
+    setPlaylists(list => [...list, { id, nome: `Break ${list.length + 1}`, usarHorario: false, horaInicio: "12:00", horaFim: "13:00", dias: [1, 2, 3, 4, 5], itens: [] }]);
     setSelectedPl(id);
   }
 
