@@ -360,11 +360,16 @@ export default function AdsPage() {
     </Popover>
   );
 
+  const [clienteAberto, setClienteAberto] = useState(false);
+  const clientesFiltrados = useMemo(() => {
+    const q = client.trim().toLowerCase();
+    if (!q) return clientes.slice(0, 8);
+    return clientes.filter(c => c.nome.toLowerCase().includes(q)).slice(0, 8);
+  }, [client, clientes]);
+
   return (
     <div className="nexo-scope animate-fade-in" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
-      <div className="relative rounded-2xl overflow-hidden mb-5" style={{ background: BG, boxShadow: "0 8px 32px rgba(0,0,0,0.10)" }}>
-        <img src={adsBanner} alt="Como você quer anunciar?" style={{ width: "100%", height: "auto", display: "block" }} />
-      </div>
+
 
       <div className="rounded-3xl p-6" style={{ background: BG }}>
         <Tabs defaultValue="nova">
