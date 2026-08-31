@@ -2547,8 +2547,181 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 }
 
 
+interface AgendaEventoLite {
+  id: string;
+  programa_id: string | null;
+  data: string;
+  horario_gravacao: string | null;
+  tipo_evento: string | null;
+  descricao: string | null;
+}
+
+const isLiveEvento = (tipo?: string | null) => {
+  const t = (tipo || "").toLowerCase();
+  return t.includes("live") || t.includes("ao vivo") || t.includes("vivo");
+};
+
+const eventoStartMs = (ev: AgendaEventoLite) => {
+  const hora = (ev.horario_gravacao || "00:00").slice(0, 5);
+  const ms = Date.parse(`${ev.data}T${hora}:00-03:00`);
+  return Number.isNaN(ms) ? null : ms;
+};
+
+const loadIdSet = (key: string): Set<string> => {
+  try { return new Set(JSON.parse(localStorage.getItem(key) || "[]") as string[]); } catch { return new Set(); }
+};
+const saveIdSet = (key: string, set: Set<string>) => {
+  try { localStorage.setItem(key, JSON.stringify([...set])); } catch { /* storage indisponível */ }
+};
+
+/**
+ * Sincroniza os botões de automação com a agenda — SOMENTE para o estúdio "podcast".
+ * Gatilho: 1h antes do horário da agenda (gravações) ou exatamente no horário (AO VIVO).
+ * Trava de segurança: botões personalizados só são acionados automaticamente em eventos AO VIVO.
+ */
+function useAgendaPodcastTriggers({
+  user, studioName, programas, customButtons, runCommandsUnified, toast,
+}: {
+  user: any;
+  studioName: string;
+  programas: any[];
+  customButtons: any[];
+  runCommandsUnified: (cmds: any[], label: string) => Promise<void>;
+  toast: (a: any) => void;
+}) {
+  const isPodcastStudio = normStudio(studioName).includes("podcast");
+  const [eventos, setEventos] = useState<AgendaEventoLite[]>([]);
+  const [rejected, setRejected] = useState<Set<string>>(() => new Set());
+  const [confirmed, setConfirmed] = useState<Set<string>>(() => new Set());
+  const firedRef = useRef<Set<string>>(new Set());
+  const [tick, setTick] = useState(() => Date.now());
+
+  const rejectedKey = `vmix_agenda_rejeitados:${user?.id || "anon"}`;
+  const confirmedKey = `vmix_agenda_confirmados:${user?.id || "anon"}`;
+  const firedKey = `vmix_agenda_disparados:${user?.id || "anon"}`;
+
+  useEffect(() => {
+    setRejected(loadIdSet(rejectedKey));
+    setConfirmed(loadIdSet(confirmedKey));
+    firedRef.current = loadIdSet(firedKey);
+  }, [rejectedKey, confirmedKey, firedKey]);
+
+  useEffect(() => {
+    if (!isPodcastStudio) return;
+    const id = window.setInterval(() => setTick(Date.now()), 20000);
+    return () => window.clearInterval(id);
+  }, [isPodcastStudio]);
+
+  const podcastProgramas = useMemo(
+    () => programas.filter((p: any) => matchesStudio(p.estudio, studioName)),
+    [programas, studioName],
+  );
+
+  const loadEventos = useCallback(async () => {
+    if (!user || !isPodcastStudio) return;
+    const hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("agenda_eventos")
+      .select("id, programa_id, data, horario_gravacao, tipo_evento, descricao")
+      .eq("user_id", user.id)
+      .gte("data", hoje)
+      .order("data", { ascending: true });
+    if (data) setEventos(data as AgendaEventoLite[]);
+  }, [user, isPodcastStudio]);
+
+  useEffect(() => { loadEventos(); }, [loadEventos]);
+
+  /** próximo evento válido (não rejeitado) por programa */
+  const eventoPorPrograma = useMemo(() => {
+    const map: Record<string, AgendaEventoLite> = {};
+    if (!isPodcastStudio) return map;
+    const validIds = new Set(podcastProgramas.map((p: any) => p.id));
+    const candidates = eventos
+      .filter(ev => ev.programa_id && validIds.has(ev.programa_id) && !rejected.has(ev.id))
+      .map(ev => ({ ev, ms: eventoStartMs(ev) }))
+      .filter(x => x.ms !== null && (x.ms as number) + 3600_000 > tick)
+      .sort((a, b) => (a.ms as number) - (b.ms as number));
+    for (const { ev } of candidates) {
+      if (!map[ev.programa_id as string]) map[ev.programa_id as string] = ev;
+    }
+    return map;
+  }, [eventos, rejected, podcastProgramas, isPodcastStudio, tick]);
+
+  const confirmarEvento = useCallback((ev: AgendaEventoLite) => {
+    setConfirmed(prev => {
+      const next = new Set(prev); next.add(ev.id); saveIdSet(confirmedKey, next); return next;
+    });
+    const live = isLiveEvento(ev.tipo_evento);
+    toast({
+      title: "Evento confirmado",
+      description: live
+        ? `Disparo AO VIVO exatamente às ${(ev.horario_gravacao || "").slice(0, 5)}.`
+        : `Disparo automático 1 hora antes de ${(ev.horario_gravacao || "").slice(0, 5)}.`,
+    });
+  }, [confirmedKey, toast]);
+
+  const rejeitarEvento = useCallback((ev: AgendaEventoLite) => {
+    setRejected(prev => { const next = new Set(prev); next.add(ev.id); saveIdSet(rejectedKey, next); return next; });
+    setConfirmed(prev => { const next = new Set(prev); next.delete(ev.id); saveIdSet(confirmedKey, next); return next; });
+    setTick(Date.now());
+    toast({ title: "Evento desconsiderado", description: "Buscando o próximo evento agendado." });
+  }, [rejectedKey, confirmedKey, toast]);
+
+  // ── Gatilho automático ──
+  useEffect(() => {
+    if (!isPodcastStudio || !user) return;
+    const now = Date.now();
+
+    const fire = async (ev: AgendaEventoLite, prog: any) => {
+      firedRef.current.add(ev.id);
+      saveIdSet(firedKey, firedRef.current);
+      const live = isLiveEvento(ev.tipo_evento);
+
+      const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
+        .select("commands")
+        .eq("user_id", user.id)
+        .eq("programa_id", prog.id)
+        .maybeSingle();
+      const cmds = Array.isArray(presetData?.commands) && presetData.commands.length > 0
+        ? presetData.commands
+        : [{ fn: "ScriptStart", input: prog.nome }];
+      await runCommandsUnified(cmds as any[], `Agenda: ${prog.nome}`);
+
+      // Trava de segurança: botões personalizados apenas em eventos AO VIVO
+      if (live) {
+        const jsDay = new Date(now).getDay();
+        const dayLabels = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const agendados = customButtons.filter((b: any) =>
+          Array.isArray(b?.dias_semana) && b.dias_semana.includes(dayLabels[jsDay]) &&
+          Array.isArray(b?.commands) && b.commands.length > 0);
+        for (const btn of agendados) {
+          await runCommandsUnified(btn.commands as any[], `Agenda AO VIVO: ${btn.nome}`);
+        }
+      }
+
+      toast({
+        title: live ? "Automação AO VIVO disparada" : "Automação disparada",
+        description: `${prog.nome} — evento ${ev.data} ${(ev.horario_gravacao || "").slice(0, 5)}`,
+      });
+    };
+
+    for (const [programaId, ev] of Object.entries(eventoPorPrograma)) {
+      if (!confirmed.has(ev.id) || firedRef.current.has(ev.id)) continue;
+      const startMs = eventoStartMs(ev);
+      if (startMs === null) continue;
+      const fireAt = isLiveEvento(ev.tipo_evento) ? startMs : startMs - 3600_000;
+      if (now >= fireAt && now < fireAt + 120_000) {
+        const prog = podcastProgramas.find((p: any) => p.id === programaId);
+        if (prog) void fire(ev, prog);
+      }
+    }
+  }, [tick, confirmed, eventoPorPrograma, isPodcastStudio, user, podcastProgramas, customButtons, runCommandsUnified, toast, firedKey]);
+
+  return { isPodcastStudio, eventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
+}
 
 // Actual Switcher UI (used when effectiveConnected)
+
 function SwitcherUI({ 
   inputs, activeInput, previewInput, connectionMode, savedUrl, vmixUser, vmixPass,
   connecting, connected, logoMixControl, studioName, selectedConnectionId,
@@ -2600,6 +2773,15 @@ function SwitcherUI({
     const id = window.setInterval(() => setNowTick(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  // Sincronização dos botões de automação com a agenda (apenas estúdio podcast)
+  const {
+    isPodcastStudio,
+    eventoPorPrograma,
+    confirmed: agendaConfirmados,
+    confirmarEvento,
+    rejeitarEvento,
+  } = useAgendaPodcastTriggers({ user, studioName, programas, customButtons, runCommandsUnified, toast });
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
@@ -3602,9 +3784,56 @@ function SwitcherUI({
                           ? (endSecs >= nowSecs ? endSecs - nowSecs : endSecs + 86400 - nowSecs)
                           : null;
 
+                        const agendaEvento = isPodcastStudio ? eventoPorPrograma[prog.id] : undefined;
+                        const agendaConfirmado = agendaEvento ? agendaConfirmados.has(agendaEvento.id) : false;
+                        const agendaLive = agendaEvento ? isLiveEvento(agendaEvento.tipo_evento) : false;
+                        const agendaDataLabel = agendaEvento
+                          ? `${agendaEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(agendaEvento.horario_gravacao || "--:--").slice(0, 5)}`
+                          : "";
+
                         return (
+                          <div key={prog.id} className="flex flex-col gap-1.5">
+                          {isPodcastStudio && (
+                            agendaEvento ? (
+                              <div className="rounded-lg px-2 py-1.5" style={{ backgroundColor: "#ffffff06", border: "1px solid #ffffff14" }}>
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="text-[10px] font-black tabular-nums" style={{ color: "#C6F03C" }}>{agendaDataLabel}</span>
+                                  <span className="text-[7px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
+                                    style={{
+                                      backgroundColor: agendaLive ? "rgba(220,38,38,0.2)" : "rgba(255,255,255,0.08)",
+                                      color: agendaLive ? "#ff6b6b" : "#aaa",
+                                      border: `1px solid ${agendaLive ? "rgba(220,38,38,0.45)" : "rgba(255,255,255,0.15)"}`,
+                                    }}
+                                  >{agendaLive ? "AO VIVO" : "GRAVAÇÃO"}</span>
+                                </div>
+                                {agendaConfirmado ? (
+                                  <p className="text-[8px] font-bold uppercase tracking-wider mt-1" style={{ color: "#C6F03C" }}>
+                                    Gatilho armado {agendaLive ? "no horário do evento" : "1h antes"}
+                                  </p>
+                                ) : (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <span className="text-[8px] font-bold uppercase tracking-wider text-white/60">Confirmar evento?</span>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); confirmarEvento(agendaEvento); }}
+                                      className="px-1.5 py-[2px] rounded text-[8px] font-black uppercase"
+                                      style={{ backgroundColor: "#C6F03C", color: "#000" }}
+                                    >Sim</button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); rejeitarEvento(agendaEvento); }}
+                                      className="px-1.5 py-[2px] rounded text-[8px] font-black uppercase"
+                                      style={{ backgroundColor: "#ffffff10", color: "#f87171", border: "1px solid #ffffff20" }}
+                                    >Não</button>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="rounded-lg px-2 py-1.5 text-[8px] font-bold uppercase tracking-wider text-white/35"
+                                style={{ backgroundColor: "#ffffff04", border: "1px dashed #ffffff12" }}
+                              >Sem evento na agenda</div>
+                            )
+                          )}
                           <div
-                            key={prog.id}
+
                             className={`group/preset vmix-hover-ring relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair ring-2 ring-red-500 animate-pulse" : ""}`}
                             style={{
                               aspectRatio: "3/2",
@@ -3830,7 +4059,9 @@ function SwitcherUI({
 
                             </div>
                           </div>
+                          </div>
                         );
+
                       })}
                           </div>
                         </div>
