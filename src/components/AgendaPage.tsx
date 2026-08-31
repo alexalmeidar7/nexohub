@@ -448,7 +448,8 @@ export default function AgendaPage() {
   const fetchEventos = useCallback(async () => {
     if (!user) return;
 
-    // Performance: carrega apenas a janela de datas relevante (não todo o histórico)
+    // Carrega somente a janela relevante da agenda e renderiza os eventos assim
+    // que chegam. Participantes e programas são enriquecidos em segundo plano.
     const dayStr = (offset: number) => {
       const d = new Date();
       d.setDate(d.getDate() + offset);
@@ -457,34 +458,39 @@ export default function AgendaPage() {
     const winStart = dayStr(-120);
     const winEnd = dayStr(365);
 
-    const [{ data: profile }, { data: evts }] = await Promise.all([
-      supabase.from("profiles").select("event_types_config").eq("user_id", user.id).maybeSingle(),
-      supabase
-        .from("agenda_eventos")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("data", winStart)
-        .lte("data", winEnd)
-        .order("data"),
-    ]);
+    const { data: evts } = await supabase
+      .from("agenda_eventos")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("data", winStart)
+      .lte("data", winEnd)
+      .order("data");
 
-    if (profile?.event_types_config) {
-      setEventTypesConfig(profile.event_types_config);
+    if (!evts) {
+      setEventos([]);
+      return;
     }
 
-    if (!evts) { setEventos([]); return; }
+    const baseEvents: Evento[] = evts.map((e: any) => ({
+      ...e,
+      prioridade: e.prioridade || "normal",
+      participantes: [],
+    }));
+    setEventos(baseEvents);
 
     const eventIds = evts.map((e: any) => e.id);
     const programaIds = Array.from(new Set(evts.map((e: any) => e.programa_id).filter(Boolean)));
-
-    const [{ data: parts }, { data: progs }] = await Promise.all([
+    const [{ data: parts }, { data: progs }, { data: profile }] = await Promise.all([
       eventIds.length
         ? supabase.from("agenda_participantes").select("*").in("evento_id", eventIds)
         : Promise.resolve({ data: [] }),
       programaIds.length
         ? supabase.from("programas").select("*").in("id", programaIds)
         : Promise.resolve({ data: [] }),
+      supabase.from("profiles").select("event_types_config").eq("user_id", user.id).maybeSingle(),
     ]);
+
+    if (profile?.event_types_config) setEventTypesConfig(profile.event_types_config);
 
     const partsByEvent = new Map<string, any[]>();
     for (const p of parts || []) {
@@ -494,14 +500,12 @@ export default function AgendaPage() {
     }
     const progsById = new Map((progs || []).map((p: any) => [p.id, p]));
 
-    const enriched: Evento[] = evts.map((e: any) => ({
+    setEventos(evts.map((e: any) => ({
       ...e,
       prioridade: e.prioridade || "normal",
       programa: progsById.get(e.programa_id),
       participantes: partsByEvent.get(e.id) || [],
-    }));
-
-    setEventos(enriched);
+    })));
   }, [user]);
 
 

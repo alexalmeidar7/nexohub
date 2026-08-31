@@ -514,6 +514,12 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
+                  onMouseEnter={() => {
+                    if (item.linkPage === "agenda") void import("./AgendaPage");
+                  }}
+                  onTouchStart={() => {
+                    if (item.linkPage === "agenda") void import("./AgendaPage");
+                  }}
                   onClick={() => handleLinkClick(item)}
                 >
                     <div
