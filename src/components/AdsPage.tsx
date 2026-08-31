@@ -264,7 +264,33 @@ export default function AdsPage() {
   const [selectedPl, setSelectedPl] = useState("pl-1");
   const breakFileRef = useRef<HTMLInputElement>(null);
 
+  /* Biblioteca de mídias (drag & drop para o break) */
+  const [biblioteca, setBiblioteca] = useState<BreakItem[]>([
+    { id: "m1", titulo: "Spot 30s — Supermercado Nexo", duracao: "00:30" },
+    { id: "m2", titulo: "VT 15s — Loja Vitória", duracao: "00:15" },
+    { id: "m3", titulo: "VT 20s — Auto Center Alfa", duracao: "00:20" },
+  ]);
+  const bibliotecaFileRef = useRef<HTMLInputElement>(null);
+  const [dragOverPl, setDragOverPl] = useState(false);
+
   const currentPl = playlists.find(p => p.id === selectedPl) || null;
+
+  function addBibliotecaFiles(files: FileList | null) {
+    if (!files) return;
+    setBiblioteca(list => [
+      ...list,
+      ...Array.from(files).map(f => ({ id: crypto.randomUUID(), titulo: f.name, duracao: "--:--" })),
+    ]);
+    if (bibliotecaFileRef.current) bibliotecaFileRef.current.value = "";
+  }
+
+  function dropMidiaNaPlaylist(midiaId: string) {
+    const pl = playlists.find(p => p.id === selectedPl);
+    const midia = biblioteca.find(m => m.id === midiaId);
+    if (!pl || !midia) return;
+    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: crypto.randomUUID() }] });
+  }
+
 
   function updatePl(id: string, patch: Partial<BreakPlaylist>) {
     setPlaylists(list => list.map(p => p.id === id ? { ...p, ...patch } : p));
