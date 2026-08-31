@@ -2697,6 +2697,16 @@ function useAgendaPodcastTriggers({
 
   useEffect(() => { loadEventos(); }, [loadEventos]);
 
+  // Mantém a Automação sincronizada quando a Agenda é alterada em outra tela,
+  // sem exigir que o operador recarregue o Switcher.
+  useEffect(() => {
+    if (!isPodcastStudio) return;
+    const id = window.setInterval(() => {
+      void loadEventos();
+    }, 20000);
+    return () => window.clearInterval(id);
+  }, [isPodcastStudio, loadEventos]);
+
   /** próximo evento válido (não rejeitado) por programa */
   const eventoPorPrograma = useMemo(() => {
     const map: Record<string, AgendaEventoLite> = {};
@@ -4350,7 +4360,9 @@ function SwitcherUI({
                     <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
                         const isBtnActive = !isDefaultAutomationActive && activeCustomButton === btn.id;
-                        const isAgendaLiveButton = isPodcastStudio && hasStartStreamingCommand(btn);
+                        const isAgendaLiveButton = isPodcastStudio && Boolean(btn.programa_id) && (
+                          hasStartStreamingCommand(btn) || isLiveAutomationButton(btn)
+                        );
                         const liveEvento = isAgendaLiveButton && btn.programa_id
                           ? liveEventoPorPrograma[btn.programa_id]
                           : undefined;

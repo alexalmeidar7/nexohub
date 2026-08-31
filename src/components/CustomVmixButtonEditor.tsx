@@ -309,6 +309,20 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       toast({ title: "Nome obrigatório", description: "Informe um nome para o botão.", variant: "destructive" });
       return;
     }
+
+    const isLiveButton = /\blive\b|ao\s*vivo/i.test(nome) || commands.some(command =>
+      command.enabled !== false && command.fn === "StartStreaming",
+    );
+
+    if (isPodcastStudio && isLiveButton && !programaId) {
+      toast({
+        title: "Programa obrigatório",
+        description: "Vincule este botão de live a um programa para sincronizá-lo com a Agenda.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     const payload = {
       nome: nome.trim(),
@@ -322,14 +336,41 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       shortcut: shortcut || null,
       icon: iconKey || null,
     };
-    if (buttonId) {
-      await (supabase.from("custom_vmix_buttons" as any) as any).update(payload).eq("id", buttonId);
-    } else {
-      await (supabase.from("custom_vmix_buttons" as any) as any).insert({ ...payload, user_id: userId });
-    }
+
+    const result = buttonId
+      ? await (supabase.from("custom_vmix_buttons" as any) as any)
+          .update(payload)
+          .eq("id", buttonId)
+          .select("id, programa_id")
+          .single()
+      : await (supabase.from("custom_vmix_buttons" as any) as any)
+          .insert({ ...payload, user_id: userId })
+          .select("id, programa_id")
+          .single();
+
     setSaving(false);
+
+    if (result.error) {
+      console.error("Erro ao salvar botão personalizado:", result.error);
+      toast({
+        title: "Não foi possível salvar",
+        description: result.error.message || "Verifique a conexão e tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isPodcastStudio && isLiveButton && result.data?.programa_id !== programaId) {
+      toast({
+        title: "Vinculação não confirmada",
+        description: "O botão foi salvo, mas o programa não foi vinculado. Tente salvar novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({ title: "Efeito salvo", description: `"${nome}" salvo com ${commands.length} ação(ões).` });
-    onSaved();
+    await onSaved();
     onClose();
   };
 
