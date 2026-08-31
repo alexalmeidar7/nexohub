@@ -97,6 +97,10 @@ interface PresetCommand {
   extraKey?: string;
   extraValue?: string;
   enabled?: boolean;
+  /** Metadado do vínculo com a Agenda; nunca é enviado como coluna do banco. */
+  agendaProgramId?: string | null;
+  /** Compatibilidade temporária com botões salvos antes desta correção. */
+  programa_id?: string | null;
 }
 
 
@@ -183,8 +187,11 @@ function getExtraLabel(fn: string): { keyLabel: string; valueLabel: string } {
 
 function getStoredProgramaId(commands: unknown): string {
   if (!Array.isArray(commands)) return "";
-  const commandWithProgram = commands.find((command: any) => typeof command?.programa_id === "string" && command.programa_id);
-  return commandWithProgram?.programa_id || "";
+  const commandWithProgram = commands.find((command: any) =>
+    (typeof command?.agendaProgramId === "string" && command.agendaProgramId) ||
+    (typeof command?.programa_id === "string" && command.programa_id),
+  );
+  return commandWithProgram?.agendaProgramId || commandWithProgram?.programa_id || "";
 }
 
 function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapping?: Record<string, { title: string; key: string }>): string {
@@ -330,15 +337,23 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     }
 
     setSaving(true);
+    // O programa é metadado dentro do JSON das ações. Removemos explicitamente
+    // a chave legada `programa_id` para que ela nunca seja interpretada pelo
+    // PostgREST como uma coluna de `custom_vmix_buttons`.
+    const savedCommands = commands.map((command, index) => {
+      const { programa_id: _legacyProgramaId, agendaProgramId: _agendaProgramId, ...commandData } = command;
+      return index === 0
+        ? { ...commandData, agendaProgramId: isPodcastStudio ? programaId || null : null }
+        : commandData;
+    });
+
     const payload = {
       nome: nome.trim(),
       color,
       dias_semana: diasSemana,
       data_especifica: dataEspecifica || null,
       horario,
-      commands: commands.map((command, index) => index === 0
-        ? { ...command, programa_id: isPodcastStudio ? programaId || null : null }
-        : command),
+      commands: savedCommands,
       estudio: estudio || null,
       shortcut: shortcut || null,
       icon: iconKey || null,
