@@ -337,8 +337,9 @@ export default function AdsPage() {
       >
         {active && <Check size={13} strokeWidth={4} />}
       </span>
-      <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-2"
+      <div className="w-11 h-11 flex items-center justify-center mb-2"
         style={{ background: active ? "rgba(0,33,50,0.12)" : `${CYAN}15`, color: active ? INK : CYAN }}>
+
         <Icon size={20} />
       </div>
       <div className="text-sm font-black uppercase tracking-wide" style={{ color: INK }}>{label}</div>
