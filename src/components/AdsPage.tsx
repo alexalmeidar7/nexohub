@@ -717,7 +717,7 @@ export default function AdsPage() {
                       }}>
                       <div className="text-sm font-bold" style={{ color: INK }}>{p.nome}</div>
                       <div className="text-[11px]" style={{ color: `${INK}88` }}>
-                        {p.itens.length} arquivos · {p.usarHorario ? `${p.horario} · ${p.dias.map(d => DIAS[d]).join(" ")}` : "sem horário"}
+                        {p.itens.length} arquivos · {p.usarHorario ? `${p.horaInicio}–${p.horaFim} · ${p.dias.map(d => DIAS[d]).join(" ")}` : "sem horário"}
                       </div>
                     </button>
                   ))}
