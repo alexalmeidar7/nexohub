@@ -3847,20 +3847,22 @@ function SwitcherUI({
                               await runCommandsUnified(cmds as any[], `Preset: ${prog.nome}`);
                             }}
                             >
-                            {startTime && (
+                            {(agendaEvento || startTime) && (
                               <div
                                 draggable
                                 onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
                                 className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-[3px] rounded cursor-grab active:cursor-grabbing"
                                 style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
-                                title="Arraste para reposicionar"
+                                title={agendaEvento ? "Horário definido na agenda" : "Arraste para reposicionar"}
                               >
                                 <GripVertical size={9} style={{ color: "#666" }} />
-                                <Clock size={11} style={{ color: progOnAir ? "#fff" : "#888" }} />
-                                <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: progOnAir ? "#fff" : "#ddd" }}>{startTime} - {endTime}</span>
+                                <Clock size={11} style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#888" }} />
+                                <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#ddd" }}>
+                                  {agendaEvento ? agendaDataLabel : `${startTime} - ${endTime}`}
+                                </span>
                               </div>
-
                             )}
+
                             {prog.estudio && (
                               <div className="absolute top-1.5 right-1.5 z-[2]">
                                 <span className="text-[6px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
