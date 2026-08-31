@@ -414,7 +414,6 @@ export default function AdsPage() {
         className="absolute bottom-0 left-0 top-0 w-1 transition-all duration-200"
         style={{ background: active ? INK : CYAN }}
       />
-    >
       <span
         className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center transition-all duration-200"
         style={{
