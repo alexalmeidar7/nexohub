@@ -2776,6 +2776,26 @@ const resolveButtonProgramaId = (button: { programa_id?: unknown; commands?: unk
   return matchedProgram?.id || null;
 };
 
+/**
+ * Resolve o programa de eventos atuais e legados da Agenda. Eventos antigos podem
+ * não ter programa_id preenchido, mas trazem o nome do programa na descrição.
+ */
+const resolveAgendaEventoProgramaId = (evento: AgendaEventoLite, programas: Programa[]) => {
+  if (evento.programa_id && programas.some((programa) => programa.id === evento.programa_id)) {
+    return evento.programa_id;
+  }
+
+  const eventName = normalizeScheduleName(evento.descricao);
+  if (!eventName) return null;
+
+  const matchedProgram = programas.find((programa) => {
+    const programName = normalizeScheduleName(programa.nome);
+    return programName !== "" && (eventName === programName || eventName.includes(programName) || programName.includes(eventName));
+  });
+
+  return matchedProgram?.id || null;
+};
+
 const eventoStartMs = (ev: AgendaEventoLite) => {
   const hora = (ev.horario_gravacao || "00:00").slice(0, 5);
   const ms = Date.parse(`${ev.data}T${hora}:00-03:00`);
@@ -2885,12 +2905,12 @@ function useAgendaPodcastTriggers({
     if (!isPodcastStudio) return map;
     const validIds = new Set(podcastProgramas.map((p: any) => p.id));
     const candidates = eventos
-      .filter(ev => ev.programa_id && validIds.has(ev.programa_id) && !rejected.has(ev.id))
-      .map(ev => ({ ev, ms: eventoStartMs(ev) }))
-      .filter(x => x.ms !== null && (x.ms as number) + 3600_000 > tick)
+      .map(ev => ({ ev, programaId: resolveAgendaEventoProgramaId(ev, podcastProgramas), ms: eventoStartMs(ev) }))
+      .filter(item => item.programaId && validIds.has(item.programaId) && !rejected.has(item.ev.id))
+      .filter(item => item.ms !== null && (item.ms as number) + 3600_000 > tick)
       .sort((a, b) => (a.ms as number) - (b.ms as number));
-    for (const { ev } of candidates) {
-      if (!map[ev.programa_id as string]) map[ev.programa_id as string] = ev;
+    for (const { ev, programaId } of candidates) {
+      if (!map[programaId as string]) map[programaId as string] = ev;
     }
     return map;
   }, [eventos, rejected, podcastProgramas, isPodcastStudio, tick]);
@@ -2902,13 +2922,13 @@ function useAgendaPodcastTriggers({
 
     const validIds = new Set(podcastProgramas.map((p: any) => p.id));
     const candidates = eventos
-      .filter(ev => ev.programa_id && validIds.has(ev.programa_id) && isLiveEvento(ev.tipo_evento) && !rejected.has(ev.id))
-      .map(ev => ({ ev, ms: eventoStartMs(ev) }))
+      .map(ev => ({ ev, programaId: resolveAgendaEventoProgramaId(ev, podcastProgramas), ms: eventoStartMs(ev) }))
+      .filter(item => item.programaId && validIds.has(item.programaId) && isLiveEvento(item.ev.tipo_evento) && !rejected.has(item.ev.id))
       .filter(item => item.ms !== null && (item.ms as number) + 3600_000 > tick)
       .sort((a, b) => (a.ms as number) - (b.ms as number));
 
-    for (const { ev } of candidates) {
-      if (!map[ev.programa_id as string]) map[ev.programa_id as string] = ev;
+    for (const { ev, programaId } of candidates) {
+      if (!map[programaId as string]) map[programaId as string] = ev;
     }
     return map;
   }, [eventos, rejected, podcastProgramas, isPodcastStudio, tick]);
