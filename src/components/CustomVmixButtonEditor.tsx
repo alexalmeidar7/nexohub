@@ -550,6 +550,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   const hasExtra = def?.params.includes("extra");
                   const extraLabels = getExtraLabel(cmd.fn);
                   const isStreamingFn = cmd.fn === "StartStreaming" || cmd.fn === "StopStreaming";
+                  const isMultiViewOverlayFn = cmd.fn === "MultiViewOverlayOn" || cmd.fn === "MultiViewOverlayOff";
 
                   const cmdEnabled = cmd.enabled !== false;
 
