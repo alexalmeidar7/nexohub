@@ -384,6 +384,15 @@ export default function AdsPage() {
     setSelectedPl(id);
   }
 
+  function excluirPlaylist(id: string) {
+    setPlaylists(list => {
+      const atualizada = list.filter(p => p.id !== id);
+      if (selectedPl === id) setSelectedPl(atualizada[0]?.id || "");
+      return atualizada;
+    });
+    toast({ title: "Break excluído" });
+  }
+
   function addBreakFiles(files: FileList | null) {
     if (!files || !currentPl) return;
     const novos: BreakItem[] = Array.from(files).map(f => ({
@@ -749,41 +758,38 @@ export default function AdsPage() {
               </div>
             </div>
 
-            {/* BIBLIOTECA DE MÍDIAS (das campanhas ativas) */}
-            <div className="rounded-2xl bg-white overflow-hidden mb-4" style={cardStyle}>
-              <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
-                <ListMusic size={15} style={{ color: CYAN }} />
-                <div className="text-sm font-black" style={{ color: INK }}>Mídias cadastradas</div>
-                <div className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{biblioteca.length}</div>
-                <div className="text-[11px] ml-2" style={{ color: `${INK}77` }}>Arraste para o break que está sendo criado</div>
-              </div>
-              <div className="p-3 space-y-2 overflow-y-auto" style={{ maxHeight: 5 * 56 + 16 }}>
-                {biblioteca.map(m => (
-                  <div key={m.id} draggable
-                    onDragStart={e => e.dataTransfer.setData("text/nexo-midia", m.id)}
-                    onDoubleClick={() => dropMidiaNaPlaylist(m.id)}
-                    title="Arraste para a playlist do break"
-                    className="px-3 py-2.5 flex items-center gap-3 cursor-grab active:cursor-grabbing select-none"
-                    style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK, height: 48 }}>
-                    <Film size={14} style={{ color: CYAN }} />
-                    <span className="text-[12px] font-bold truncate flex-1">{m.titulo}</span>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5" style={{ background: `${LIME}66`, color: INK }}>{m.campanha}</span>
-                    <span className="text-[11px] tabular-nums" style={{ color: `${INK}77` }}>{m.duracao}</span>
-                  </div>
-                ))}
-                {biblioteca.length === 0 && (
-                  <div className="py-6 w-full text-center text-[12px]" style={{ color: `${INK}66` }}>
-                    Nenhuma mídia. Cadastre um arquivo em uma campanha ativa na aba "Nova campanha".
-                  </div>
-                )}
-              </div>
-            </div>
-
-
             <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+              <div className="space-y-4">
+                {/* BIBLIOTECA DE MÍDIAS (das campanhas ativas) */}
+                <div className="rounded-2xl bg-white overflow-hidden" style={cardStyle}>
+                  <div className="px-4 py-3 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
+                    <ListMusic size={15} style={{ color: CYAN }} />
+                    <div className="text-xs font-black uppercase tracking-wider" style={{ color: INK }}>Mídias cadastradas</div>
+                    <div className="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{biblioteca.length}</div>
+                  </div>
+                  <div className="p-3 space-y-2 overflow-y-auto" style={{ maxHeight: 5 * 56 + 16 }}>
+                    {biblioteca.map(m => (
+                      <div key={m.id} draggable
+                        onDragStart={e => e.dataTransfer.setData("text/nexo-midia", m.id)}
+                        onDoubleClick={() => dropMidiaNaPlaylist(m.id)}
+                        title="Arraste para a playlist do break"
+                        className="px-3 py-2.5 flex items-center gap-3 cursor-grab active:cursor-grabbing select-none"
+                        style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK, height: 48 }}>
+                        <Film size={14} style={{ color: CYAN }} />
+                        <span className="text-[12px] font-bold truncate flex-1">{m.titulo}</span>
+                        <span className="text-[11px] tabular-nums" style={{ color: `${INK}77` }}>{m.duracao}</span>
+                      </div>
+                    ))}
+                    {biblioteca.length === 0 && (
+                      <div className="py-6 w-full text-center text-[12px]" style={{ color: `${INK}66` }}>
+                        Nenhuma mídia. Cadastre um arquivo em uma campanha ativa na aba "Nova campanha".
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              {/* LISTA DE PLAYLISTS */}
-              <div className="rounded-2xl bg-white overflow-hidden h-fit" style={cardStyle}>
+                {/* LISTA DE PLAYLISTS */}
+                <div className="rounded-2xl bg-white overflow-hidden h-fit" style={cardStyle}>
                 <div className="px-4 py-3 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
                   <ListMusic size={15} style={{ color: CYAN }} />
                   <div className="text-xs font-black uppercase tracking-wider" style={{ color: INK }}>Playlists</div>
@@ -811,6 +817,7 @@ export default function AdsPage() {
                     <div className="px-3 py-6 text-center text-[12px]" style={{ color: `${INK}66` }}>Nenhuma playlist.</div>
                   )}
                 </div>
+                </div>
               </div>
 
               {/* DETALHE DA PLAYLIST */}
@@ -819,7 +826,14 @@ export default function AdsPage() {
                   <div className={cardCls} style={cardStyle}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <div className={labelCls}>Nome da playlist</div>
+                        <div className="flex items-center justify-between gap-3 mb-1.5">
+                          <div className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: INK }}>Nome da playlist</div>
+                          <button type="button" onClick={() => excluirPlaylist(currentPl.id)}
+                            className="h-7 px-2.5 rounded-full text-[10px] font-black inline-flex items-center gap-1 transition hover:brightness-95"
+                            style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>
+                            <Trash2 size={12} /> Excluir break
+                          </button>
+                        </div>
                         <input className={inputCls} value={currentPl.nome}
                           onChange={e => updatePl(currentPl.id, { nome: e.target.value })} placeholder="Ex: Break manhã" />
                       </div>
