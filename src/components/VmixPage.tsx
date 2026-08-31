@@ -3900,11 +3900,40 @@ function SwitcherUI({
                               </div>
                             )}
                             <div className="absolute inset-0 flex items-center justify-center p-2 pt-5 pb-4">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 p-2 pt-6 pb-4">
                               <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
                                 style={{ color: isActive ? "#fff" : "#ccc" }}
                               >{prog.nome}</span>
+                              {isPodcastStudio && (
+                                agendaEvento ? (
+                                  agendaConfirmado ? (
+                                    <span className="text-[7px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
+                                      style={{ backgroundColor: "rgba(198,240,60,0.15)", color: "#C6F03C", border: "1px solid rgba(198,240,60,0.4)" }}
+                                    >Armado {agendaLive ? "no horário" : "1h antes"}</span>
+                                  ) : (
+                                    <div className="flex flex-col items-center gap-1">
+                                      <span className="text-[7px] font-bold uppercase tracking-wider text-white/60">Confirmar evento?</span>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); confirmarEvento(agendaEvento); }}
+                                          className="px-2 py-[2px] rounded text-[8px] font-black uppercase"
+                                          style={{ backgroundColor: "#C6F03C", color: "#000" }}
+                                        >Sim</button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); rejeitarEvento(agendaEvento); }}
+                                          className="px-2 py-[2px] rounded text-[8px] font-black uppercase"
+                                          style={{ backgroundColor: "#ffffff10", color: "#f87171", border: "1px solid #ffffff20" }}
+                                        >Não</button>
+                                      </div>
+                                    </div>
+                                  )
+                                ) : (
+                                  <span className="text-[7px] font-bold uppercase tracking-wider text-white/30">Sem evento na agenda</span>
+                                )
+                              )}
                             </div>
                             <div
+
                               className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
                               style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
                             >
