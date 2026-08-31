@@ -15,7 +15,6 @@ import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import adsBanner from "@/assets/ads-banner.png";
 
 const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
@@ -264,7 +263,33 @@ export default function AdsPage() {
   const [selectedPl, setSelectedPl] = useState("pl-1");
   const breakFileRef = useRef<HTMLInputElement>(null);
 
+  /* Biblioteca de mídias (drag & drop para o break) */
+  const [biblioteca, setBiblioteca] = useState<BreakItem[]>([
+    { id: "m1", titulo: "Spot 30s — Supermercado Nexo", duracao: "00:30" },
+    { id: "m2", titulo: "VT 15s — Loja Vitória", duracao: "00:15" },
+    { id: "m3", titulo: "VT 20s — Auto Center Alfa", duracao: "00:20" },
+  ]);
+  const bibliotecaFileRef = useRef<HTMLInputElement>(null);
+  const [dragOverPl, setDragOverPl] = useState(false);
+
   const currentPl = playlists.find(p => p.id === selectedPl) || null;
+
+  function addBibliotecaFiles(files: FileList | null) {
+    if (!files) return;
+    setBiblioteca(list => [
+      ...list,
+      ...Array.from(files).map(f => ({ id: crypto.randomUUID(), titulo: f.name, duracao: "--:--" })),
+    ]);
+    if (bibliotecaFileRef.current) bibliotecaFileRef.current.value = "";
+  }
+
+  function dropMidiaNaPlaylist(midiaId: string) {
+    const pl = playlists.find(p => p.id === selectedPl);
+    const midia = biblioteca.find(m => m.id === midiaId);
+    if (!pl || !midia) return;
+    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: crypto.randomUUID() }] });
+  }
+
 
   function updatePl(id: string, patch: Partial<BreakPlaylist>) {
     setPlaylists(list => list.map(p => p.id === id ? { ...p, ...patch } : p));
@@ -294,7 +319,7 @@ export default function AdsPage() {
     <button
       type="button"
       onClick={onClick}
-      className="relative text-left rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+      className="relative text-left p-4 transition-all"
       style={{
         background: active ? LIME : "#fff",
         border: `2px solid ${active ? INK : `${CYAN}33`}`,
@@ -311,8 +336,9 @@ export default function AdsPage() {
       >
         {active && <Check size={13} strokeWidth={4} />}
       </span>
-      <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-2"
+      <div className="w-11 h-11 flex items-center justify-center mb-2"
         style={{ background: active ? "rgba(0,33,50,0.12)" : `${CYAN}15`, color: active ? INK : CYAN }}>
+
         <Icon size={20} />
       </div>
       <div className="text-sm font-black uppercase tracking-wide" style={{ color: INK }}>{label}</div>
@@ -334,11 +360,16 @@ export default function AdsPage() {
     </Popover>
   );
 
+  const [clienteAberto, setClienteAberto] = useState(false);
+  const clientesFiltrados = useMemo(() => {
+    const q = client.trim().toLowerCase();
+    if (!q) return clientes.slice(0, 8);
+    return clientes.filter(c => c.nome.toLowerCase().includes(q)).slice(0, 8);
+  }, [client, clientes]);
+
   return (
     <div className="nexo-scope animate-fade-in" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
-      <div className="relative rounded-2xl overflow-hidden mb-5" style={{ background: BG, boxShadow: "0 8px 32px rgba(0,0,0,0.10)" }}>
-        <img src={adsBanner} alt="Como você quer anunciar?" style={{ width: "100%", height: "auto", display: "block" }} />
-      </div>
+
 
       <div className="rounded-3xl p-6" style={{ background: BG }}>
         <Tabs defaultValue="nova">
@@ -364,19 +395,29 @@ export default function AdsPage() {
                 <div>
                   <div className={labelCls}>Cliente</div>
                   <div className="flex gap-2">
-                    <Select value={client} onValueChange={setClient}>
-                      <SelectTrigger className={cn(inputCls, "justify-between")}>
-                        <SelectValue placeholder={loadingClientes ? "Carregando..." : clientes.length ? "Selecione o cliente" : "Nenhum cliente cadastrado"} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-50">
-                        {clientes.map(c => (
-                          <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
-                        ))}
-                        {clientes.length === 0 && (
-                          <div className="px-3 py-2 text-xs" style={{ color: `${INK}88` }}>Nenhum cliente em Cadastro / Cliente</div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative flex-1">
+                      <input
+                        className={inputCls}
+                        value={client}
+                        onChange={e => { setClient(e.target.value); setClienteAberto(true); }}
+                        onFocus={() => setClienteAberto(true)}
+                        onBlur={() => setTimeout(() => setClienteAberto(false), 150)}
+                        placeholder={loadingClientes ? "Carregando..." : "Digite o nome do cliente"}
+                      />
+                      {clienteAberto && clientesFiltrados.length > 0 && (
+                        <div className="absolute left-0 right-0 top-[46px] z-50 rounded-2xl bg-white overflow-hidden max-h-56 overflow-y-auto"
+                          style={{ border: `2px solid ${CYAN}33`, boxShadow: "0 12px 30px rgba(0,33,50,0.14)" }}>
+                          {clientesFiltrados.map(c => (
+                            <button key={c.id} type="button"
+                              onMouseDown={e => { e.preventDefault(); setClient(c.nome); setClienteAberto(false); }}
+                              className="w-full text-left px-4 py-2.5 text-[13px] font-bold hover:bg-[#00BFF0]/10"
+                              style={{ color: INK }}>
+                              {c.nome}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <button type="button" onClick={() => setNovoClienteOpen(true)}
                       title="Cadastrar novo cliente"
                       className="h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition hover:brightness-95"
@@ -384,15 +425,16 @@ export default function AdsPage() {
                       <UserPlus size={17} />
                     </button>
                   </div>
-                  {!loadingClientes && clientes.length === 0 && (
+                  {!loadingClientes && client.trim().length > 1 && clientesFiltrados.length === 0 && (
                     <div className="text-[11px] mt-1.5" style={{ color: `${INK}99` }}>
-                      Nenhum cliente encontrado. Deseja cadastrar?{" "}
-                      <button type="button" onClick={() => setNovoClienteOpen(true)} className="font-black underline" style={{ color: CYAN }}>
-                        Salvar cliente
+                      Cliente não encontrado.{" "}
+                      <button type="button" onClick={() => { setNovoCliente(n => ({ ...n, nome: client })); setNovoClienteOpen(true); }} className="font-black underline" style={{ color: CYAN }}>
+                        Cadastrar cliente
                       </button>
                     </div>
                   )}
                 </div>
+
                 <div>
                   <div className={labelCls}><CalendarIcon size={14} /> Data de início</div>
                   {datePicker(startDate, setStartDate, "Selecionar data")}
@@ -618,7 +660,42 @@ export default function AdsPage() {
               </div>
             </div>
 
+            {/* BIBLIOTECA DE MÍDIAS (drag & drop) */}
+            <div className="rounded-2xl bg-white overflow-hidden mb-4" style={cardStyle}>
+              <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
+                <ListMusic size={15} style={{ color: CYAN }} />
+                <div className="text-sm font-black" style={{ color: INK }}>Mídias cadastradas</div>
+                <div className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{biblioteca.length}</div>
+                <div className="text-[11px] ml-2" style={{ color: `${INK}77` }}>Arraste para o break que está sendo criado</div>
+                <button type="button" onClick={() => bibliotecaFileRef.current?.click()}
+                  className="ml-auto h-9 px-4 rounded-full text-[11px] font-black inline-flex items-center gap-1.5"
+                  style={{ background: LIME, color: INK }}>
+                  <Plus size={13} /> Cadastrar mídia
+                </button>
+                <input ref={bibliotecaFileRef} type="file" multiple accept="video/*,audio/*" className="hidden"
+                  onChange={e => addBibliotecaFiles(e.target.files)} />
+              </div>
+              <div className="p-4 flex flex-wrap gap-2">
+                {biblioteca.map(m => (
+                  <div key={m.id} draggable
+                    onDragStart={e => e.dataTransfer.setData("text/nexo-midia", m.id)}
+                    onDoubleClick={() => dropMidiaNaPlaylist(m.id)}
+                    title="Arraste para a playlist do break"
+                    className="px-3 py-2 flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
+                    style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK }}>
+                    <Film size={13} style={{ color: CYAN }} />
+                    <span className="text-[12px] font-bold">{m.titulo}</span>
+                    <span className="text-[11px] tabular-nums" style={{ color: `${INK}77` }}>{m.duracao}</span>
+                  </div>
+                ))}
+                {biblioteca.length === 0 && (
+                  <div className="py-6 w-full text-center text-[12px]" style={{ color: `${INK}66` }}>Nenhuma mídia cadastrada.</div>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+
               {/* LISTA DE PLAYLISTS */}
               <div className="rounded-2xl bg-white overflow-hidden h-fit" style={cardStyle}>
                 <div className="px-4 py-3 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
@@ -693,10 +770,22 @@ export default function AdsPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-white overflow-hidden" style={cardStyle}>
+                  <div
+                    className="rounded-2xl bg-white overflow-hidden"
+                    style={{ ...cardStyle, outline: dragOverPl ? `2px dashed ${CYAN}` : "none", outlineOffset: -4 }}
+                    onDragOver={e => { e.preventDefault(); setDragOverPl(true); }}
+                    onDragLeave={() => setDragOverPl(false)}
+                    onDrop={e => {
+                      e.preventDefault();
+                      setDragOverPl(false);
+                      const id = e.dataTransfer.getData("text/nexo-midia");
+                      if (id) dropMidiaNaPlaylist(id);
+                    }}
+                  >
                     <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
                       <div className="text-sm font-black" style={{ color: INK }}>Arquivos da playlist</div>
                       <div className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{currentPl.itens.length}</div>
+                      <div className="text-[11px] ml-2" style={{ color: `${INK}77` }}>Arraste as mídias para cá</div>
                       <button type="button" onClick={() => breakFileRef.current?.click()}
                         className="ml-auto h-9 px-4 rounded-full text-[11px] font-black inline-flex items-center gap-1.5"
                         style={{ background: LIME, color: INK }}>
@@ -705,6 +794,7 @@ export default function AdsPage() {
                       <input ref={breakFileRef} type="file" multiple accept="video/*,audio/*" className="hidden"
                         onChange={e => addBreakFiles(e.target.files)} />
                     </div>
+
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
