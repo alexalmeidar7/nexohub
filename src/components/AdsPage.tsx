@@ -52,12 +52,13 @@ interface Campanha {
   midia: string | null;
 }
 
-interface BreakItem { id: string; titulo: string; duracao: string }
+interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string }
 interface BreakPlaylist {
   id: string;
   nome: string;
   usarHorario: boolean;
-  horario: string;
+  horaInicio: string;
+  horaFim: string;
   dias: number[];
   itens: BreakItem[];
 }
@@ -253,43 +254,41 @@ export default function AdsPage() {
     id: "pl-1",
     nome: "Break padrão",
     usarHorario: false,
-    horario: "12:00",
+    horaInicio: "12:00",
+    horaFim: "13:00",
     dias: [1, 2, 3, 4, 5],
-    itens: [
-      { id: "b1", titulo: "Spot 30s — Supermercado Nexo", duracao: "00:30" },
-      { id: "b2", titulo: "VT 15s — Loja Vitória", duracao: "00:15" },
-    ],
+    itens: [],
   }]);
   const [selectedPl, setSelectedPl] = useState("pl-1");
   const breakFileRef = useRef<HTMLInputElement>(null);
 
-  /* Biblioteca de mídias (drag & drop para o break) */
-  const [biblioteca, setBiblioteca] = useState<BreakItem[]>([
-    { id: "m1", titulo: "Spot 30s — Supermercado Nexo", duracao: "00:30" },
-    { id: "m2", titulo: "VT 15s — Loja Vitória", duracao: "00:15" },
-    { id: "m3", titulo: "VT 20s — Auto Center Alfa", duracao: "00:20" },
-  ]);
-  const bibliotecaFileRef = useRef<HTMLInputElement>(null);
+  /* Biblioteca de mídias: arquivos das campanhas ativas */
+  const biblioteca = useMemo<BreakItem[]>(
+    () => campanhas
+      .filter(c => c.status === "Ativa" && c.midia)
+      .map(c => ({ id: `cmp-${c.id}`, titulo: c.midia as string, duracao: "--:--", campanha: c.nome })),
+    [campanhas],
+  );
   const [dragOverPl, setDragOverPl] = useState(false);
 
   const currentPl = playlists.find(p => p.id === selectedPl) || null;
-
-  function addBibliotecaFiles(files: FileList | null) {
-    if (!files) return;
-    setBiblioteca(list => [
-      ...list,
-      ...Array.from(files).map(f => ({ id: crypto.randomUUID(), titulo: f.name, duracao: "--:--" })),
-    ]);
-    if (bibliotecaFileRef.current) bibliotecaFileRef.current.value = "";
-  }
 
   function dropMidiaNaPlaylist(midiaId: string) {
     const pl = playlists.find(p => p.id === selectedPl);
     const midia = biblioteca.find(m => m.id === midiaId);
     if (!pl || !midia) return;
-    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: crypto.randomUUID() }] });
+    if (pl.itens.some(i => i.origemId === midia.id)) return;
+    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: crypto.randomUUID(), origemId: midia.id }] });
   }
 
+  /* Mídias de campanhas pausadas/excluídas saem das playlists */
+  useEffect(() => {
+    const validos = new Set(biblioteca.map(m => m.id));
+    setPlaylists(list => list.map(p => {
+      const itens = p.itens.filter(i => !i.origemId || validos.has(i.origemId));
+      return itens.length === p.itens.length ? p : { ...p, itens };
+    }));
+  }, [biblioteca]);
 
   function updatePl(id: string, patch: Partial<BreakPlaylist>) {
     setPlaylists(list => list.map(p => p.id === id ? { ...p, ...patch } : p));
@@ -297,7 +296,7 @@ export default function AdsPage() {
 
   function novaPlaylist() {
     const id = crypto.randomUUID();
-    setPlaylists(list => [...list, { id, nome: `Break ${list.length + 1}`, usarHorario: false, horario: "12:00", dias: [1, 2, 3, 4, 5], itens: [] }]);
+    setPlaylists(list => [...list, { id, nome: `Break ${list.length + 1}`, usarHorario: false, horaInicio: "12:00", horaFim: "13:00", dias: [1, 2, 3, 4, 5], itens: [] }]);
     setSelectedPl(id);
   }
 
@@ -327,7 +326,7 @@ export default function AdsPage() {
       }}
     >
       <span
-        className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all"
+        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center transition-all"
         style={{
           background: active ? INK : "transparent",
           border: `2px solid ${active ? INK : `${CYAN}55`}`,
@@ -660,39 +659,36 @@ export default function AdsPage() {
               </div>
             </div>
 
-            {/* BIBLIOTECA DE MÍDIAS (drag & drop) */}
+            {/* BIBLIOTECA DE MÍDIAS (das campanhas ativas) */}
             <div className="rounded-2xl bg-white overflow-hidden mb-4" style={cardStyle}>
               <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
                 <ListMusic size={15} style={{ color: CYAN }} />
                 <div className="text-sm font-black" style={{ color: INK }}>Mídias cadastradas</div>
                 <div className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{biblioteca.length}</div>
                 <div className="text-[11px] ml-2" style={{ color: `${INK}77` }}>Arraste para o break que está sendo criado</div>
-                <button type="button" onClick={() => bibliotecaFileRef.current?.click()}
-                  className="ml-auto h-9 px-4 rounded-full text-[11px] font-black inline-flex items-center gap-1.5"
-                  style={{ background: LIME, color: INK }}>
-                  <Plus size={13} /> Cadastrar mídia
-                </button>
-                <input ref={bibliotecaFileRef} type="file" multiple accept="video/*,audio/*" className="hidden"
-                  onChange={e => addBibliotecaFiles(e.target.files)} />
               </div>
-              <div className="p-4 flex flex-wrap gap-2">
+              <div className="p-3 space-y-2 overflow-y-auto" style={{ maxHeight: 5 * 56 + 16 }}>
                 {biblioteca.map(m => (
                   <div key={m.id} draggable
                     onDragStart={e => e.dataTransfer.setData("text/nexo-midia", m.id)}
                     onDoubleClick={() => dropMidiaNaPlaylist(m.id)}
                     title="Arraste para a playlist do break"
-                    className="px-3 py-2 flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
-                    style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK }}>
-                    <Film size={13} style={{ color: CYAN }} />
-                    <span className="text-[12px] font-bold">{m.titulo}</span>
+                    className="px-3 py-2.5 flex items-center gap-3 cursor-grab active:cursor-grabbing select-none"
+                    style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK, height: 48 }}>
+                    <Film size={14} style={{ color: CYAN }} />
+                    <span className="text-[12px] font-bold truncate flex-1">{m.titulo}</span>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5" style={{ background: `${LIME}66`, color: INK }}>{m.campanha}</span>
                     <span className="text-[11px] tabular-nums" style={{ color: `${INK}77` }}>{m.duracao}</span>
                   </div>
                 ))}
                 {biblioteca.length === 0 && (
-                  <div className="py-6 w-full text-center text-[12px]" style={{ color: `${INK}66` }}>Nenhuma mídia cadastrada.</div>
+                  <div className="py-6 w-full text-center text-[12px]" style={{ color: `${INK}66` }}>
+                    Nenhuma mídia. Cadastre um arquivo em uma campanha ativa na aba "Nova campanha".
+                  </div>
                 )}
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
 
@@ -717,7 +713,7 @@ export default function AdsPage() {
                       }}>
                       <div className="text-sm font-bold" style={{ color: INK }}>{p.nome}</div>
                       <div className="text-[11px]" style={{ color: `${INK}88` }}>
-                        {p.itens.length} arquivos · {p.usarHorario ? `${p.horario} · ${p.dias.map(d => DIAS[d]).join(" ")}` : "sem horário"}
+                        {p.itens.length} arquivos · {p.usarHorario ? `${p.horaInicio}–${p.horaFim} · ${p.dias.map(d => DIAS[d]).join(" ")}` : "sem horário"}
                       </div>
                     </button>
                   ))}
@@ -738,12 +734,16 @@ export default function AdsPage() {
                           onChange={e => updatePl(currentPl.id, { nome: e.target.value })} placeholder="Ex: Break manhã" />
                       </div>
                       <div>
-                        <div className={labelCls}><Clock size={14} /> Horário fixo</div>
-                        <div className="flex items-center gap-3 h-11">
+                        <div className={labelCls}><Clock size={14} /> Faixa de horário</div>
+                        <div className="flex items-center gap-2 h-11">
                           <Switch checked={currentPl.usarHorario} onCheckedChange={v => updatePl(currentPl.id, { usarHorario: v })} />
-                          <input type="time" disabled={!currentPl.usarHorario} value={currentPl.horario}
-                            onChange={e => updatePl(currentPl.id, { horario: e.target.value })}
-                            className={cn(inputCls, "w-36", !currentPl.usarHorario && "opacity-40")} />
+                          <input type="time" disabled={!currentPl.usarHorario} value={currentPl.horaInicio}
+                            onChange={e => updatePl(currentPl.id, { horaInicio: e.target.value })}
+                            className={cn(inputCls, "w-28", !currentPl.usarHorario && "opacity-40")} />
+                          <span className="text-xs font-black" style={{ color: `${INK}77` }}>até</span>
+                          <input type="time" disabled={!currentPl.usarHorario} value={currentPl.horaFim}
+                            onChange={e => updatePl(currentPl.id, { horaFim: e.target.value })}
+                            className={cn(inputCls, "w-28", !currentPl.usarHorario && "opacity-40")} />
                         </div>
                       </div>
                     </div>
