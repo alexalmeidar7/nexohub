@@ -2604,6 +2604,106 @@ const isLiveEvento = (tipo?: string | null) => {
 const isLiveAutomationButton = (button: { nome?: string | null }) =>
   /\blive\b|ao\s*vivo/i.test(button.nome || "");
 
+/** Aceita formatos atuais e legados do widget de monitor de áudio. */
+const getAudioMonitorInput = (button: any): string | null => {
+  const isAudioMonitor = [button?.type, button?.button_type, button?.widget_type, button?.kind]
+    .some((value) => value === "audio_monitor" || value === "audio-monitor");
+  const monitorCommand = Array.isArray(button?.commands)
+    ? button.commands.find((command: any) => command?.type === "audio_monitor" || command?.kind === "audio_monitor" || command?.audioMonitorInput)
+    : null;
+
+  if (!isAudioMonitor && !monitorCommand) return null;
+  const input = button?.audio_input || button?.input || monitorCommand?.audioMonitorInput || monitorCommand?.input;
+  return input === undefined || input === null || input === "" ? "—" : String(input);
+};
+
+function AudioMonitorButton({
+  button,
+  input,
+  textScale,
+  onEdit,
+}: {
+  button: any;
+  input: string;
+  textScale: number;
+  onEdit: () => void;
+}) {
+  const [levels, setLevels] = useState<number[]>(() => Array.from({ length: 28 }, (_, index) => 0.16 + (index % 5) * 0.035));
+  const [peaks, setPeaks] = useState<number[]>(() => Array(28).fill(0.18));
+  const [db, setDb] = useState(-28);
+
+  useEffect(() => {
+    let frame = 0;
+    let lastUpdate = 0;
+    const animate = (time: number) => {
+      if (time - lastUpdate > 78) {
+        lastUpdate = time;
+        setLevels((previous) => {
+          const next = previous.map((value, index) => {
+            const wave = Math.sin(time / 235 + index * 0.74) * 0.18;
+            const rhythm = Math.sin(time / 660 + index * 0.31) * 0.14;
+            const random = Math.random() * 0.28;
+            const frequencyShape = index < 7 ? 0.22 : index < 18 ? 0.12 : 0.02;
+            const target = Math.max(0.08, Math.min(0.98, 0.26 + wave + rhythm + random + frequencyShape));
+            return value + (target - value) * 0.58;
+          });
+          const currentPeak = Math.max(...next);
+          setDb(Math.round(-48 + currentPeak * 43));
+          setPeaks((previousPeaks) => previousPeaks.map((peak, index) => Math.max(next[index], peak - 0.035)));
+          return next;
+        });
+      }
+      frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const dbColor = db > -5 ? "#fb7185" : db > -14 ? "#fbbf24" : "#5eead4";
+  const monitorName = button?.nome || `Áudio · Input ${input}`;
+
+  return (
+    <div
+      className="group/custom relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_16px_32px_rgba(20,184,166,0.16)]"
+      style={{ aspectRatio: "3/2", background: "radial-gradient(circle at 17% 115%, rgba(20,184,166,0.2), transparent 42%), linear-gradient(145deg, #11181a, #070a0b)", border: "1px solid rgba(94,234,212,0.26)" }}
+      title={`Monitor de áudio do Input ${input}`}
+    >
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.045) 50%, transparent 64%)" }} />
+      <div className="relative z-10 flex items-start justify-between px-2.5 pt-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-300 opacity-60" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-teal-300 shadow-[0_0_9px_rgba(94,234,212,0.9)]" /></span>
+            <span className="text-[7px] font-black uppercase tracking-[0.16em] text-teal-200/75">Monitor de áudio</span>
+          </div>
+          <p className="mt-1 truncate text-[9px] font-black uppercase tracking-wide text-white/95" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
+          <p className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.16em] text-white/35">Input {input}</p>
+        </div>
+        <div className="rounded-md px-1.5 py-1 text-right" style={{ backgroundColor: `${dbColor}16`, border: `1px solid ${dbColor}55`, boxShadow: `0 0 14px ${dbColor}18` }}>
+          <span className="block text-[13px] font-black leading-none tabular-nums" style={{ color: dbColor }}>{db}</span>
+          <span className="mt-0.5 block text-[5px] font-black tracking-[0.16em]" style={{ color: dbColor }}>dB</span>
+        </div>
+      </div>
+
+      <div className="absolute bottom-2.5 left-2.5 right-2.5 top-[48px] overflow-hidden rounded-md border border-white/[0.07] bg-black/35 px-1.5 pb-1.5 pt-1">
+        <div className="pointer-events-none absolute inset-0 opacity-30" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)", backgroundSize: "100% 33.33%" }} />
+        <div className="relative flex h-full items-end gap-[2px]">
+          {levels.map((level, index) => {
+            const color = level > 0.78 ? "#fb7185" : level > 0.57 ? "#fbbf24" : "#5eead4";
+            return (
+              <div key={index} className="relative flex h-full flex-1 items-end">
+                <div className="w-full rounded-t-sm transition-[height] duration-75" style={{ height: `${Math.max(8, level * 100)}%`, background: `linear-gradient(to top, ${color}85, ${color})`, boxShadow: `0 0 8px ${color}70` }} />
+                <span className="absolute left-0 w-full rounded-full" style={{ bottom: `${Math.max(4, peaks[index] * 100)}%`, height: "1px", backgroundColor: "rgba(255,255,255,0.9)", boxShadow: `0 0 5px ${color}` }} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <button onClick={(event) => { event.stopPropagation(); onEdit(); }} className="absolute bottom-1.5 right-1.5 z-20 flex h-4 w-4 items-center justify-center rounded opacity-0 transition-all group-hover/custom:opacity-100 hover:bg-white/15" style={{ color: "#ccfbf1" }} title="Configurar monitor"><Wand2 size={9} /></button>
+    </div>
+  );
+}
+
 /** Identifica botões cuja execução precisa ser protegida pela Agenda no estúdio PODCAST. */
 const hasStartStreamingCommand = (button: { commands?: unknown }) =>
   Array.isArray(button.commands) && button.commands.some((command: any) =>
@@ -4372,6 +4472,19 @@ function SwitcherUI({
                   <div className="p-5 space-y-4">
                     <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                       {customButtons.map((btn: any) => {
+                        const audioMonitorInput = getAudioMonitorInput(btn);
+                        if (audioMonitorInput) {
+                          return (
+                            <AudioMonitorButton
+                              key={btn.id}
+                              button={btn}
+                              input={audioMonitorInput}
+                              textScale={customBtnTextScale}
+                              onEdit={() => setEditingCustomButtonId(btn.id)}
+                            />
+                          );
+                        }
+
                         const isBtnActive = !isDefaultAutomationActive && activeCustomButton === btn.id;
                         const linkedProgramaId = getButtonProgramaId(btn);
                         const isAgendaLiveButton = isPodcastStudio && Boolean(linkedProgramaId) && (
