@@ -660,39 +660,36 @@ export default function AdsPage() {
               </div>
             </div>
 
-            {/* BIBLIOTECA DE MÍDIAS (drag & drop) */}
+            {/* BIBLIOTECA DE MÍDIAS (das campanhas ativas) */}
             <div className="rounded-2xl bg-white overflow-hidden mb-4" style={cardStyle}>
               <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
                 <ListMusic size={15} style={{ color: CYAN }} />
                 <div className="text-sm font-black" style={{ color: INK }}>Mídias cadastradas</div>
                 <div className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{biblioteca.length}</div>
                 <div className="text-[11px] ml-2" style={{ color: `${INK}77` }}>Arraste para o break que está sendo criado</div>
-                <button type="button" onClick={() => bibliotecaFileRef.current?.click()}
-                  className="ml-auto h-9 px-4 rounded-full text-[11px] font-black inline-flex items-center gap-1.5"
-                  style={{ background: LIME, color: INK }}>
-                  <Plus size={13} /> Cadastrar mídia
-                </button>
-                <input ref={bibliotecaFileRef} type="file" multiple accept="video/*,audio/*" className="hidden"
-                  onChange={e => addBibliotecaFiles(e.target.files)} />
               </div>
-              <div className="p-4 flex flex-wrap gap-2">
+              <div className="p-3 space-y-2 overflow-y-auto" style={{ maxHeight: 5 * 56 + 16 }}>
                 {biblioteca.map(m => (
                   <div key={m.id} draggable
                     onDragStart={e => e.dataTransfer.setData("text/nexo-midia", m.id)}
                     onDoubleClick={() => dropMidiaNaPlaylist(m.id)}
                     title="Arraste para a playlist do break"
-                    className="px-3 py-2 flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
-                    style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK }}>
-                    <Film size={13} style={{ color: CYAN }} />
-                    <span className="text-[12px] font-bold">{m.titulo}</span>
+                    className="px-3 py-2.5 flex items-center gap-3 cursor-grab active:cursor-grabbing select-none"
+                    style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK, height: 48 }}>
+                    <Film size={14} style={{ color: CYAN }} />
+                    <span className="text-[12px] font-bold truncate flex-1">{m.titulo}</span>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5" style={{ background: `${LIME}66`, color: INK }}>{m.campanha}</span>
                     <span className="text-[11px] tabular-nums" style={{ color: `${INK}77` }}>{m.duracao}</span>
                   </div>
                 ))}
                 {biblioteca.length === 0 && (
-                  <div className="py-6 w-full text-center text-[12px]" style={{ color: `${INK}66` }}>Nenhuma mídia cadastrada.</div>
+                  <div className="py-6 w-full text-center text-[12px]" style={{ color: `${INK}66` }}>
+                    Nenhuma mídia. Cadastre um arquivo em uma campanha ativa na aba "Nova campanha".
+                  </div>
                 )}
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
 
