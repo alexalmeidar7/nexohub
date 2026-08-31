@@ -107,6 +107,21 @@ interface VmixInput {
   type: string;
 }
 
+interface ProgramaOption {
+  id: string;
+  nome: string;
+  estudio: string | null;
+  ativo: boolean;
+}
+
+const normalizeStudioName = (value?: string | null) =>
+  (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -196,12 +211,37 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [horario, setHorario] = useState("");
   const [shortcut, setShortcut] = useState("");
   const [iconKey, setIconKey] = useState("");
+  const [programaId, setProgramaId] = useState("");
+  const [programasPodcast, setProgramasPodcast] = useState<ProgramaOption[]>([]);
   const [commands, setCommands] = useState<PresetCommand[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
+
+  const isPodcastStudio = normalizeStudioName(estudio).includes("podcast");
+
+  useEffect(() => {
+    if (!open || !isPodcastStudio) {
+      setProgramasPodcast([]);
+      return;
+    }
+
+    (supabase.from("programas") as any)
+      .select("id, nome, estudio, ativo")
+      .eq("user_id", userId)
+      .order("nome")
+      .then(({ data }: { data: ProgramaOption[] | null }) => {
+        const studio = normalizeStudioName(estudio);
+        setProgramasPodcast(
+          (data || []).filter((programa) => {
+            const programStudio = normalizeStudioName(programa.estudio);
+            return programStudio === studio || programStudio.includes(studio) || studio.includes(programStudio);
+          }),
+        );
+      });
+  }, [open, isPodcastStudio, estudio, userId]);
 
   useEffect(() => {
     if (!open) return;
@@ -220,6 +260,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
             setHorario(data.horario || "");
             setShortcut(data.shortcut || "");
             setIconKey(data.icon || "");
+            setProgramaId(data.programa_id || "");
             setCommands(Array.isArray(data.commands) ? data.commands : []);
           }
           setLoading(false);
@@ -232,6 +273,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       setHorario("");
       setShortcut("");
       setIconKey("");
+      setProgramaId("");
       setCommands([]);
       setLoading(false);
     }
@@ -268,7 +310,18 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       return;
     }
     setSaving(true);
-    const payload = { nome: nome.trim(), color, dias_semana: diasSemana, data_especifica: dataEspecifica || null, horario, commands, estudio: estudio || null, shortcut: shortcut || null, icon: iconKey || null };
+    const payload = {
+      nome: nome.trim(),
+      color,
+      dias_semana: diasSemana,
+      data_especifica: dataEspecifica || null,
+      horario,
+      commands,
+      estudio: estudio || null,
+      programa_id: isPodcastStudio ? programaId || null : null,
+      shortcut: shortcut || null,
+      icon: iconKey || null,
+    };
     if (buttonId) {
       await (supabase.from("custom_vmix_buttons" as any) as any).update(payload).eq("id", buttonId);
     } else {
@@ -392,6 +445,30 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   </div>
                 </div>
               </div>
+
+              {isPodcastStudio && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                    <Radio size={10} /> Vincular ao Programa
+                  </label>
+                  <select
+                    value={programaId}
+                    onChange={e => setProgramaId(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-lg outline-none"
+                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                  >
+                    <option value="">— Nenhum programa vinculado —</option>
+                    {programasPodcast.map(programa => (
+                      <option key={programa.id} value={programa.id}>
+                        {programa.nome}{programa.ativo ? "" : " (inativo)"}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-[8px]" style={{ color: "#555" }}>
+                    O botão será associado ao programa selecionado na agenda do estúdio PODCAST.
+                  </span>
+                </div>
+              )}
 
               {/* Icon picker */}
               <div className="flex flex-col gap-2">

@@ -2736,9 +2736,10 @@ function useAgendaPodcastTriggers({
         const jsDay = new Date(now).getDay();
         const dayLabels = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
         const agendados = customButtons.filter((b: any) => {
-          const isSameProgram = normalizeScheduleName(b?.nome).includes(normalizeScheduleName(prog.nome));
+          const isLinkedToProgram = b?.programa_id === prog.id;
+          const isLegacyProgramMatch = normalizeScheduleName(b?.nome).includes(normalizeScheduleName(prog.nome));
           return isLiveAutomationButton(b) &&
-            isSameProgram &&
+            (isLinkedToProgram || (!b?.programa_id && isLegacyProgramMatch)) &&
             Array.isArray(b?.commands) && b.commands.length > 0;
         });
         for (const btn of agendados) {
