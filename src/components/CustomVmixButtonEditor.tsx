@@ -130,6 +130,8 @@ const PRESET_COMMANDS = [
   { value: "PreviewInput", label: "PreviewInput", desc: "Envia input para o Preview", category: "Input", params: ["input"] },
   { value: "SelectIndex", label: "SelectIndex", desc: "Seleciona um índice no input", category: "Input", params: ["input", "value"] },
   { value: "SetMultiViewOverlay", label: "SetMultiViewOverlay", desc: "Define overlay no MultiView", category: "Overlay", params: ["input", "value", "extra"] },
+  { value: "MultiViewOverlayOn", label: "MultiViewOverlayOn", desc: "Liga overlay do MultiView (index 1-10)", category: "Overlay", params: ["input", "value"] },
+  { value: "MultiViewOverlayOff", label: "MultiViewOverlayOff", desc: "Desliga overlay do MultiView (index 1-10)", category: "Overlay", params: ["input", "value"] },
   { value: "SetText", label: "SetText", desc: "Define texto em um título", category: "Título", params: ["input", "value", "extra"] },
   { value: "SetImage", label: "SetImage", desc: "Define imagem em um input", category: "Título", params: ["input", "value", "extra"] },
   { value: "OverlayInput1", label: "Overlay 1 ON", desc: "Ativa Overlay 1", category: "Overlay", params: ["input"] },
