@@ -402,16 +402,23 @@ export default function AdsPage() {
     <button
       type="button"
       onClick={onClick}
-      className="relative text-left p-4 transition-all"
+      data-nexo-skip
+      className="group relative min-h-[142px] overflow-hidden text-left p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BFF0] focus-visible:ring-offset-2"
       style={{
+        borderRadius: 0,
         background: active ? LIME : "#fff",
-        border: `2px solid ${active ? INK : `${CYAN}33`}`,
-        boxShadow: active ? `0 10px 26px ${LIME}66` : "0 4px 14px rgba(0,33,50,0.05)",
-      }}
+        border: `2px solid ${active ? INK : `${CYAN}45`}`,
+        boxShadow: active ? `0 12px 28px ${LIME}66` : "0 5px 16px rgba(0,33,50,0.06)",
+      }}><span
+        aria-hidden="true"
+        className="absolute bottom-0 left-0 top-0 w-1 transition-all duration-200"
+        style={{ background: active ? INK : CYAN }}
+      />
     >
       <span
-        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center transition-all"
+        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center transition-all duration-200"
         style={{
+          borderRadius: 0,
           background: active ? INK : "transparent",
           border: `2px solid ${active ? INK : `${CYAN}55`}`,
           color: LIME,
@@ -419,13 +426,13 @@ export default function AdsPage() {
       >
         {active && <Check size={13} strokeWidth={4} />}
       </span>
-      <div className="w-11 h-11 flex items-center justify-center mb-2"
-        style={{ background: active ? "rgba(0,33,50,0.12)" : `${CYAN}15`, color: active ? INK : CYAN }}>
+      <div className="w-11 h-11 flex items-center justify-center mb-3 transition-transform duration-200 group-hover:scale-105"
+        style={{ borderRadius: 0, background: active ? "rgba(0,33,50,0.12)" : `${CYAN}15`, color: active ? INK : CYAN }}>
 
         <Icon size={20} />
       </div>
-      <div className="text-sm font-black uppercase tracking-wide" style={{ color: INK }}>{label}</div>
-      <div className="text-[11px] mt-0.5" style={{ color: `${INK}99` }}>{hint}</div>
+      <div className="text-sm font-black uppercase tracking-[0.12em]" style={{ color: INK }}>{label}</div>
+      <div className="text-[11px] mt-1 leading-relaxed" style={{ color: `${INK}99` }}>{hint}</div>
     </button>
   );
 
