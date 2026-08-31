@@ -415,6 +415,7 @@ export default function AgendaPage() {
   const [periodoDialogOpen, setPeriodoDialogOpen] = useState(false);
   const [pendingRecorrencia, setPendingRecorrencia] = useState<string>("");
   const [uploadingArte, setUploadingArte] = useState(false);
+  const [savingEvent, setSavingEvent] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
 
@@ -751,9 +752,11 @@ export default function AgendaPage() {
 
   const handleSave = async () => {
     const eventDate = formData ?? selectedDate ?? new Date();
-    if (!user || !formProgramaId) return;
+    if (!user || !formProgramaId || savingEvent) return;
 
-    const payload = {
+    setSavingEvent(true);
+    try {
+      const payload = {
       user_id: user.id,
       programa_id: formProgramaId,
       data: format(eventDate, "yyyy-MM-dd"),
@@ -811,9 +814,12 @@ export default function AgendaPage() {
       }
     }
 
-    resetForm();
-    setDialogOpen(false);
-    fetchEventos();
+      resetForm();
+      setDialogOpen(false);
+      await fetchEventos();
+    } finally {
+      setSavingEvent(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -2833,10 +2839,17 @@ export default function AgendaPage() {
                 variant="save"
                 type="button"
                 onClick={handleSave}
-                disabled={!formProgramaId}
-                className="w-full h-11 rounded-full text-sm font-black uppercase tracking-wider"
+                disabled={!formProgramaId || savingEvent}
+                className="w-full h-11 rounded-full text-sm font-black uppercase tracking-wider transition-all duration-200"
               >
-                {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
+                {savingEvent ? (
+                  <>
+                    <Loader2 className="animate-spin" size={17} />
+                    Salvando seu evento
+                  </>
+                ) : (
+                  editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"
+                )}
               </Button>
             </div>
           </DialogContent>
