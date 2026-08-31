@@ -627,7 +627,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                         {hasValue && (
                           <div className="flex flex-col gap-1">
                             <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>
-                              {cmd.fn === "SelectIndex" ? "Index" : cmd.fn === "Fade" ? "Duração (ms)" : cmd.fn === "SetVolume" ? "Volume (0-100)" : isStreamingFn ? "Streaming" : hasExtra ? extraLabels.keyLabel : "Value"}
+                              {cmd.fn === "SelectIndex" ? "Index" : cmd.fn === "Fade" ? "Duração (ms)" : cmd.fn === "SetVolume" ? "Volume (0-100)" : isStreamingFn ? "Streaming" : isMultiViewOverlayFn ? "Index (1-10)" : hasExtra ? extraLabels.keyLabel : "Value"}
                             </label>
                             {isStreamingFn ? (
                               <select
@@ -639,6 +639,17 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                                 <option value="0">Streaming 0</option>
                                 <option value="1">Streaming 1</option>
                                 <option value="2">Streaming 2</option>
+                              </select>
+                            ) : isMultiViewOverlayFn ? (
+                              <select
+                                value={cmd.value || "1"}
+                                onChange={e => updateCommand(cmd.id, { value: e.target.value })}
+                                className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                                style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                              >
+                                {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(n => (
+                                  <option key={n} value={n}>Index {n}</option>
+                                ))}
                               </select>
                             ) : (
                               <input
