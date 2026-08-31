@@ -3899,8 +3899,8 @@ function SwitcherUI({
                                 })}
                               </div>
                             )}
-                            <div className="absolute inset-0 flex items-center justify-center p-2 pt-5 pb-4">
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 p-2 pt-6 pb-4">
+
                               <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
                                 style={{ color: isActive ? "#fff" : "#ccc" }}
                               >{prog.nome}</span>
