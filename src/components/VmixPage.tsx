@@ -622,6 +622,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [dragPresetIdx, setDragPresetIdx] = useState<number | null>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
+  const [dragCustomButtonId, setDragCustomButtonId] = useState<string | null>(null);
   const [editingCustomButtonId, setEditingCustomButtonId] = useState<string | null | "new">(null);
   const [activeCustomButton, setActiveCustomButton] = useState<string | null>(null);
   // HLS stream URLs per input (for NDI live preview)
@@ -838,8 +839,36 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 
     const { data } = await query.order("created_at");
     if (data) {
-      setCustomButtons((data as any[]).filter(b => matchesStudio(b.estudio, studioName)));
+      const filtered = (data as any[]).filter(b => matchesStudio(b.estudio, studioName));
+      try {
+        const orderKey = `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}`;
+        const savedOrder = JSON.parse(localStorage.getItem(orderKey) || "[]") as string[];
+        filtered.sort((a, b) => {
+          const ai = savedOrder.indexOf(a.id);
+          const bi = savedOrder.indexOf(b.id);
+          if (ai === -1 && bi === -1) return 0;
+          if (ai === -1) return 1;
+          if (bi === -1) return -1;
+          return ai - bi;
+        });
+      } catch { /* mantém ordem de criação */ }
+      setCustomButtons(filtered);
     }
+  }, [user, studioName]);
+
+  const reorderCustomButton = useCallback((draggedId: string, targetId: string) => {
+    if (!user || draggedId === targetId) return;
+    setCustomButtons(prev => {
+      const next = [...prev];
+      const from = next.findIndex(button => button.id === draggedId);
+      const to = next.findIndex(button => button.id === targetId);
+      if (from < 0 || to < 0) return prev;
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      const orderKey = `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}`;
+      localStorage.setItem(orderKey, JSON.stringify(next.map(button => button.id)));
+      return next;
+    });
   }, [user, studioName]);
 
   useEffect(() => { loadCustomButtons(); }, [loadCustomButtons]);
@@ -2496,6 +2525,9 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       setDragPresetIdx={setDragPresetIdx}
       customButtons={customButtons}
       setCustomButtons={setCustomButtons}
+      dragCustomButtonId={dragCustomButtonId}
+      setDragCustomButtonId={setDragCustomButtonId}
+      reorderCustomButton={reorderCustomButton}
       editingCustomButtonId={editingCustomButtonId}
       setEditingCustomButtonId={setEditingCustomButtonId}
       activeCustomButton={activeCustomButton}
@@ -2533,7 +2565,8 @@ function SwitcherUI({
   capturingShortcut, setCapturingShortcut, manualNdiHost, setManualNdiHost, ThumbnailImg,
   ndiUrl, setNdiUrl, programas, setProgramas, activePreset, setActivePreset,
   editingPresetId, setEditingPresetId, dragPresetIdx, setDragPresetIdx,
-  customButtons, setCustomButtons, editingCustomButtonId, setEditingCustomButtonId,
+  customButtons, setCustomButtons, dragCustomButtonId, setDragCustomButtonId, reorderCustomButton,
+  editingCustomButtonId, setEditingCustomButtonId,
   activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
   loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
   ndiInputs, inputMapping,
@@ -2577,6 +2610,7 @@ function SwitcherUI({
     categorias: switcherCategorias,
     criar: criarCategoria,
     excluir: excluirCategoria,
+    setInputs: setInputsCategoria,
     moverInput: moverInputCategoria,
     removerInput: removerInputCategoria,
     categorizados: inputsCategorizados,
@@ -2967,6 +3001,20 @@ function SwitcherUI({
                       activeInput={activeInput}
                       onSelect={(num) => { sendCommand("PreviewInput", num); setPreviewInput(num); }}
                       onDropInput={moverInputCategoria}
+                      onReorderInput={(categoriaId, inputNumber, targetInputNumber) => {
+                        const category = switcherCategorias.find(item => item.id === categoriaId);
+                        if (!category) return;
+                        const from = category.inputs.indexOf(inputNumber);
+                        const to = category.inputs.indexOf(targetInputNumber);
+                        if (from < 0 || to < 0) {
+                          moverInputCategoria(inputNumber, categoriaId);
+                          return;
+                        }
+                        const reordered = [...category.inputs];
+                        const [moved] = reordered.splice(from, 1);
+                        reordered.splice(to, 0, moved);
+                        setInputsCategoria(categoriaId, reordered);
+                      }}
                       onRemoveInput={removerInputCategoria}
                       onDelete={excluirCategoria}
                       shortcuts={inputShortcuts}
@@ -3884,7 +3932,22 @@ function SwitcherUI({
                               aspectRatio: "3/2",
                               backgroundColor: btnColor,
                               border: `2px solid ${btnColor}`,
+                              opacity: dragCustomButtonId === btn.id ? 0.45 : 1,
                             }}
+                            draggable
+                            onDragStart={(e) => {
+                              setDragCustomButtonId(btn.id);
+                              e.dataTransfer.setData("text/vmix-custom-button", btn.id);
+                              e.dataTransfer.effectAllowed = "move";
+                            }}
+                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const draggedId = e.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId;
+                              if (draggedId) reorderCustomButton(draggedId, btn.id);
+                              setDragCustomButtonId(null);
+                            }}
+                            onDragEnd={() => setDragCustomButtonId(null)}
                             onClick={async () => {
                               setActiveCustomButton(btn.id);
                               if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
@@ -3931,6 +3994,13 @@ function SwitcherUI({
                                 style={{ color: textColor, fontSize: `${9 * customBtnTextScale}px` }}
                               >{btn.nome}</span>
                             </div>
+
+                            <GripVertical
+                              size={12}
+                              className="absolute bottom-1.5 right-1.5 opacity-35 group-hover/custom:opacity-80 transition-opacity cursor-grab"
+                              style={{ color: textColor }}
+                              aria-label="Arraste para reorganizar"
+                            />
 
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
