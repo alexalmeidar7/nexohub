@@ -2547,8 +2547,181 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 }
 
 
+interface AgendaEventoLite {
+  id: string;
+  programa_id: string | null;
+  data: string;
+  horario_gravacao: string | null;
+  tipo_evento: string | null;
+  descricao: string | null;
+}
+
+const isLiveEvento = (tipo?: string | null) => {
+  const t = (tipo || "").toLowerCase();
+  return t.includes("live") || t.includes("ao vivo") || t.includes("vivo");
+};
+
+const eventoStartMs = (ev: AgendaEventoLite) => {
+  const hora = (ev.horario_gravacao || "00:00").slice(0, 5);
+  const ms = Date.parse(`${ev.data}T${hora}:00-03:00`);
+  return Number.isNaN(ms) ? null : ms;
+};
+
+const loadIdSet = (key: string): Set<string> => {
+  try { return new Set(JSON.parse(localStorage.getItem(key) || "[]") as string[]); } catch { return new Set(); }
+};
+const saveIdSet = (key: string, set: Set<string>) => {
+  try { localStorage.setItem(key, JSON.stringify([...set])); } catch { /* storage indisponível */ }
+};
+
+/**
+ * Sincroniza os botões de automação com a agenda — SOMENTE para o estúdio "podcast".
+ * Gatilho: 1h antes do horário da agenda (gravações) ou exatamente no horário (AO VIVO).
+ * Trava de segurança: botões personalizados só são acionados automaticamente em eventos AO VIVO.
+ */
+function useAgendaPodcastTriggers({
+  user, studioName, programas, customButtons, runCommandsUnified, toast,
+}: {
+  user: any;
+  studioName: string;
+  programas: any[];
+  customButtons: any[];
+  runCommandsUnified: (cmds: any[], label: string) => Promise<void>;
+  toast: (a: any) => void;
+}) {
+  const isPodcastStudio = normStudio(studioName).includes("podcast");
+  const [eventos, setEventos] = useState<AgendaEventoLite[]>([]);
+  const [rejected, setRejected] = useState<Set<string>>(() => new Set());
+  const [confirmed, setConfirmed] = useState<Set<string>>(() => new Set());
+  const firedRef = useRef<Set<string>>(new Set());
+  const [tick, setTick] = useState(() => Date.now());
+
+  const rejectedKey = `vmix_agenda_rejeitados:${user?.id || "anon"}`;
+  const confirmedKey = `vmix_agenda_confirmados:${user?.id || "anon"}`;
+  const firedKey = `vmix_agenda_disparados:${user?.id || "anon"}`;
+
+  useEffect(() => {
+    setRejected(loadIdSet(rejectedKey));
+    setConfirmed(loadIdSet(confirmedKey));
+    firedRef.current = loadIdSet(firedKey);
+  }, [rejectedKey, confirmedKey, firedKey]);
+
+  useEffect(() => {
+    if (!isPodcastStudio) return;
+    const id = window.setInterval(() => setTick(Date.now()), 20000);
+    return () => window.clearInterval(id);
+  }, [isPodcastStudio]);
+
+  const podcastProgramas = useMemo(
+    () => programas.filter((p: any) => matchesStudio(p.estudio, studioName)),
+    [programas, studioName],
+  );
+
+  const loadEventos = useCallback(async () => {
+    if (!user || !isPodcastStudio) return;
+    const hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+    const { data } = await supabase
+      .from("agenda_eventos")
+      .select("id, programa_id, data, horario_gravacao, tipo_evento, descricao")
+      .eq("user_id", user.id)
+      .gte("data", hoje)
+      .order("data", { ascending: true });
+    if (data) setEventos(data as AgendaEventoLite[]);
+  }, [user, isPodcastStudio]);
+
+  useEffect(() => { loadEventos(); }, [loadEventos]);
+
+  /** próximo evento válido (não rejeitado) por programa */
+  const eventoPorPrograma = useMemo(() => {
+    const map: Record<string, AgendaEventoLite> = {};
+    if (!isPodcastStudio) return map;
+    const validIds = new Set(podcastProgramas.map((p: any) => p.id));
+    const candidates = eventos
+      .filter(ev => ev.programa_id && validIds.has(ev.programa_id) && !rejected.has(ev.id))
+      .map(ev => ({ ev, ms: eventoStartMs(ev) }))
+      .filter(x => x.ms !== null && (x.ms as number) + 3600_000 > tick)
+      .sort((a, b) => (a.ms as number) - (b.ms as number));
+    for (const { ev } of candidates) {
+      if (!map[ev.programa_id as string]) map[ev.programa_id as string] = ev;
+    }
+    return map;
+  }, [eventos, rejected, podcastProgramas, isPodcastStudio, tick]);
+
+  const confirmarEvento = useCallback((ev: AgendaEventoLite) => {
+    setConfirmed(prev => {
+      const next = new Set(prev); next.add(ev.id); saveIdSet(confirmedKey, next); return next;
+    });
+    const live = isLiveEvento(ev.tipo_evento);
+    toast({
+      title: "Evento confirmado",
+      description: live
+        ? `Disparo AO VIVO exatamente às ${(ev.horario_gravacao || "").slice(0, 5)}.`
+        : `Disparo automático 1 hora antes de ${(ev.horario_gravacao || "").slice(0, 5)}.`,
+    });
+  }, [confirmedKey, toast]);
+
+  const rejeitarEvento = useCallback((ev: AgendaEventoLite) => {
+    setRejected(prev => { const next = new Set(prev); next.add(ev.id); saveIdSet(rejectedKey, next); return next; });
+    setConfirmed(prev => { const next = new Set(prev); next.delete(ev.id); saveIdSet(confirmedKey, next); return next; });
+    setTick(Date.now());
+    toast({ title: "Evento desconsiderado", description: "Buscando o próximo evento agendado." });
+  }, [rejectedKey, confirmedKey, toast]);
+
+  // ── Gatilho automático ──
+  useEffect(() => {
+    if (!isPodcastStudio || !user) return;
+    const now = Date.now();
+
+    const fire = async (ev: AgendaEventoLite, prog: any) => {
+      firedRef.current.add(ev.id);
+      saveIdSet(firedKey, firedRef.current);
+      const live = isLiveEvento(ev.tipo_evento);
+
+      const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
+        .select("commands")
+        .eq("user_id", user.id)
+        .eq("programa_id", prog.id)
+        .maybeSingle();
+      const cmds = Array.isArray(presetData?.commands) && presetData.commands.length > 0
+        ? presetData.commands
+        : [{ fn: "ScriptStart", input: prog.nome }];
+      await runCommandsUnified(cmds as any[], `Agenda: ${prog.nome}`);
+
+      // Trava de segurança: botões personalizados apenas em eventos AO VIVO
+      if (live) {
+        const jsDay = new Date(now).getDay();
+        const dayLabels = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const agendados = customButtons.filter((b: any) =>
+          Array.isArray(b?.dias_semana) && b.dias_semana.includes(dayLabels[jsDay]) &&
+          Array.isArray(b?.commands) && b.commands.length > 0);
+        for (const btn of agendados) {
+          await runCommandsUnified(btn.commands as any[], `Agenda AO VIVO: ${btn.nome}`);
+        }
+      }
+
+      toast({
+        title: live ? "Automação AO VIVO disparada" : "Automação disparada",
+        description: `${prog.nome} — evento ${ev.data} ${(ev.horario_gravacao || "").slice(0, 5)}`,
+      });
+    };
+
+    for (const [programaId, ev] of Object.entries(eventoPorPrograma)) {
+      if (!confirmed.has(ev.id) || firedRef.current.has(ev.id)) continue;
+      const startMs = eventoStartMs(ev);
+      if (startMs === null) continue;
+      const fireAt = isLiveEvento(ev.tipo_evento) ? startMs : startMs - 3600_000;
+      if (now >= fireAt && now < fireAt + 120_000) {
+        const prog = podcastProgramas.find((p: any) => p.id === programaId);
+        if (prog) void fire(ev, prog);
+      }
+    }
+  }, [tick, confirmed, eventoPorPrograma, isPodcastStudio, user, podcastProgramas, customButtons, runCommandsUnified, toast, firedKey]);
+
+  return { isPodcastStudio, eventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
+}
 
 // Actual Switcher UI (used when effectiveConnected)
+
 function SwitcherUI({ 
   inputs, activeInput, previewInput, connectionMode, savedUrl, vmixUser, vmixPass,
   connecting, connected, logoMixControl, studioName, selectedConnectionId,
