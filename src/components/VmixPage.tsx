@@ -2791,6 +2791,7 @@ function SwitcherUI({
   // Sincronização dos botões de automação com a agenda (apenas estúdio podcast)
   const {
     isPodcastStudio,
+    eventos,
     eventoPorPrograma,
     confirmed: agendaConfirmados,
     confirmarEvento,
