@@ -50,6 +50,8 @@ interface Campanha {
   views: number;
   clicks: number;
   midia: string | null;
+  midiaUrl?: string | null;
+  slot?: VideoSlot;
 }
 
 interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string }
