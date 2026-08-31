@@ -738,12 +738,16 @@ export default function AdsPage() {
                           onChange={e => updatePl(currentPl.id, { nome: e.target.value })} placeholder="Ex: Break manhã" />
                       </div>
                       <div>
-                        <div className={labelCls}><Clock size={14} /> Horário fixo</div>
-                        <div className="flex items-center gap-3 h-11">
+                        <div className={labelCls}><Clock size={14} /> Faixa de horário</div>
+                        <div className="flex items-center gap-2 h-11">
                           <Switch checked={currentPl.usarHorario} onCheckedChange={v => updatePl(currentPl.id, { usarHorario: v })} />
-                          <input type="time" disabled={!currentPl.usarHorario} value={currentPl.horario}
-                            onChange={e => updatePl(currentPl.id, { horario: e.target.value })}
-                            className={cn(inputCls, "w-36", !currentPl.usarHorario && "opacity-40")} />
+                          <input type="time" disabled={!currentPl.usarHorario} value={currentPl.horaInicio}
+                            onChange={e => updatePl(currentPl.id, { horaInicio: e.target.value })}
+                            className={cn(inputCls, "w-28", !currentPl.usarHorario && "opacity-40")} />
+                          <span className="text-xs font-black" style={{ color: `${INK}77` }}>até</span>
+                          <input type="time" disabled={!currentPl.usarHorario} value={currentPl.horaFim}
+                            onChange={e => updatePl(currentPl.id, { horaFim: e.target.value })}
+                            className={cn(inputCls, "w-28", !currentPl.usarHorario && "opacity-40")} />
                         </div>
                       </div>
                     </div>
