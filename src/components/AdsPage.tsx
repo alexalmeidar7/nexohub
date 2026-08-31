@@ -390,19 +390,29 @@ export default function AdsPage() {
                 <div>
                   <div className={labelCls}>Cliente</div>
                   <div className="flex gap-2">
-                    <Select value={client} onValueChange={setClient}>
-                      <SelectTrigger className={cn(inputCls, "justify-between")}>
-                        <SelectValue placeholder={loadingClientes ? "Carregando..." : clientes.length ? "Selecione o cliente" : "Nenhum cliente cadastrado"} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-50">
-                        {clientes.map(c => (
-                          <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
-                        ))}
-                        {clientes.length === 0 && (
-                          <div className="px-3 py-2 text-xs" style={{ color: `${INK}88` }}>Nenhum cliente em Cadastro / Cliente</div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative flex-1">
+                      <input
+                        className={inputCls}
+                        value={client}
+                        onChange={e => { setClient(e.target.value); setClienteAberto(true); }}
+                        onFocus={() => setClienteAberto(true)}
+                        onBlur={() => setTimeout(() => setClienteAberto(false), 150)}
+                        placeholder={loadingClientes ? "Carregando..." : "Digite o nome do cliente"}
+                      />
+                      {clienteAberto && clientesFiltrados.length > 0 && (
+                        <div className="absolute left-0 right-0 top-[46px] z-50 rounded-2xl bg-white overflow-hidden max-h-56 overflow-y-auto"
+                          style={{ border: `2px solid ${CYAN}33`, boxShadow: "0 12px 30px rgba(0,33,50,0.14)" }}>
+                          {clientesFiltrados.map(c => (
+                            <button key={c.id} type="button"
+                              onMouseDown={e => { e.preventDefault(); setClient(c.nome); setClienteAberto(false); }}
+                              className="w-full text-left px-4 py-2.5 text-[13px] font-bold hover:bg-[#00BFF0]/10"
+                              style={{ color: INK }}>
+                              {c.nome}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <button type="button" onClick={() => setNovoClienteOpen(true)}
                       title="Cadastrar novo cliente"
                       className="h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition hover:brightness-95"
@@ -410,15 +420,16 @@ export default function AdsPage() {
                       <UserPlus size={17} />
                     </button>
                   </div>
-                  {!loadingClientes && clientes.length === 0 && (
+                  {!loadingClientes && client.trim().length > 1 && clientesFiltrados.length === 0 && (
                     <div className="text-[11px] mt-1.5" style={{ color: `${INK}99` }}>
-                      Nenhum cliente encontrado. Deseja cadastrar?{" "}
-                      <button type="button" onClick={() => setNovoClienteOpen(true)} className="font-black underline" style={{ color: CYAN }}>
-                        Salvar cliente
+                      Cliente não encontrado.{" "}
+                      <button type="button" onClick={() => { setNovoCliente(n => ({ ...n, nome: client })); setNovoClienteOpen(true); }} className="font-black underline" style={{ color: CYAN }}>
+                        Cadastrar cliente
                       </button>
                     </div>
                   )}
                 </div>
+
                 <div>
                   <div className={labelCls}><CalendarIcon size={14} /> Data de início</div>
                   {datePicker(startDate, setStartDate, "Selecionar data")}
