@@ -45,6 +45,8 @@ interface Campanha {
   cliente: string;
   inicio: string | null;
   fim: string | null;
+  inicioData?: string | null;
+  fimData?: string | null;
   canais: string[];
   status: "Ativa" | "Pausada";
   views: number;
@@ -201,6 +203,8 @@ export default function AdsPage() {
     cliente: r.ads_cliente || "",
     inicio: r.data_inicial ? format(new Date(`${r.data_inicial}T12:00:00`), "dd/MM/yyyy") : null,
     fim: r.data_final ? format(new Date(`${r.data_final}T12:00:00`), "dd/MM/yyyy") : null,
+    inicioData: r.data_inicial || null,
+    fimData: r.data_final || null,
     canais: (r.ads_canais && r.ads_canais.length ? r.ads_canais : ["Vídeo (preroll)"]) as string[],
     status: r.active ? "Ativa" : "Pausada",
     views: r.views_count || 0,
@@ -311,9 +315,17 @@ export default function AdsPage() {
   }
 
   function editCampanha(c: Campanha) {
+    const parseCampaignDate = (value?: string | null) => {
+      if (!value) return undefined;
+      const date = new Date(`${value}T12:00:00`);
+      return Number.isNaN(date.getTime()) ? undefined : date;
+    };
+
     setEditingId(c.id);
     setName(c.nome);
     setClient(c.cliente);
+    setStartDate(parseCampaignDate(c.inicioData));
+    setEndDate(parseCampaignDate(c.fimData));
     setChVideo(c.canais.some(x => x.startsWith("Vídeo")));
     setChAudio(c.canais.some(x => x.startsWith("Áudio")));
     setChChatbot(c.canais.includes("Chatbot"));

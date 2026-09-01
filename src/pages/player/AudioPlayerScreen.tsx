@@ -85,6 +85,15 @@ interface HistoryTrack {
 
 const HIST_MAX = 50;
 
+interface AudioAdCampaign {
+  id: string;
+  video_url: string | null;
+  media_type: string | null;
+  ads_canais: string[] | null;
+  data_inicial: string | null;
+  data_final: string | null;
+}
+
 function sameHistoryTrack(a?: Pick<HistoryTrack, "artista" | "musica"> | null, b?: Pick<HistoryTrack, "artista" | "musica"> | null) {
   return !!a && !!b
     && (a.artista || "").trim().toLowerCase() === (b.artista || "").trim().toLowerCase()
@@ -209,6 +218,90 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
+
+  // ---- Pré-roll comercial para o streaming de áudio ----
+  // Campanhas de áudio são independentes dos anúncios de vídeo e precisam ser
+  // selecionadas diretamente no player antes do início da transmissão.
+  const [audioAdCampaign, setAudioAdCampaign] = useState<AudioAdCampaign | null>(null);
+  const [audioAdPlaying, setAudioAdPlaying] = useState(false);
+  const audioAdRef = useRef<HTMLAudioElement | null>(null);
+  const audioAdPlayedRef = useRef<string | null>(null);
+  const audioAdOwnerId = radioUserId || effectiveUserId;
+
+  useEffect(() => {
+    if (isVideoChannel || isCatalog || !audioAdOwnerId) {
+      setAudioAdCampaign(null);
+      return;
+    }
+
+    let cancelled = false;
+    const today = new Date().toISOString().slice(0, 10);
+
+    const loadAudioCampaign = async () => {
+      const { data, error } = await supabase
+        .from("comercial_preroll")
+        .select("id, video_url, media_type, ads_canais, data_inicial, data_final")
+        .eq("user_id", audioAdOwnerId)
+        .eq("active", true);
+
+      if (cancelled || error) return;
+
+      const eligible = ((data || []) as AudioAdCampaign[]).filter((campaign) => {
+        const channels = Array.isArray(campaign.ads_canais) ? campaign.ads_canais : [];
+        const isAudioPlacement = channels.some((channel) => String(channel).startsWith("Áudio"));
+        const isAudioMedia = campaign.media_type === "audio";
+        const isInPeriod = (!campaign.data_inicial || campaign.data_inicial <= today)
+          && (!campaign.data_final || campaign.data_final >= today);
+        return isAudioPlacement && isAudioMedia && Boolean(campaign.video_url) && isInPeriod;
+      });
+
+      if (!eligible.length) {
+        setAudioAdCampaign(null);
+        return;
+      }
+
+      setAudioAdCampaign(eligible[Math.floor(Math.random() * eligible.length)]);
+    };
+
+    void loadAudioCampaign();
+    return () => { cancelled = true; };
+  }, [audioAdOwnerId, canal?.id, isCatalog, isVideoChannel]);
+
+  useEffect(() => {
+    if (!audioAdCampaign || !playing || isVideoChannel || isCatalog) return;
+
+    const playbackKey = `${audioAdOwnerId || ""}:${canal?.id || "default"}`;
+    if (audioAdPlayedRef.current === playbackKey) return;
+
+    audioAdPlayedRef.current = playbackKey;
+    audioRef.current?.pause();
+    setAudioAdPlaying(true);
+  }, [audioAdCampaign, audioAdOwnerId, audioRef, canal?.id, isCatalog, isVideoChannel, playing]);
+
+  useEffect(() => {
+    if (!audioAdPlaying || !audioAdCampaign?.video_url) return;
+
+    const ad = audioAdRef.current;
+    if (!ad) return;
+
+    const resumeStream = () => {
+      setAudioAdPlaying(false);
+      if (playing) void audioRef.current?.play().catch(() => {});
+    };
+
+    ad.currentTime = 0;
+    ad.muted = muted;
+    ad.volume = Math.max(0, Math.min(1, volume / 100));
+    ad.addEventListener("ended", resumeStream, { once: true });
+    ad.addEventListener("error", resumeStream, { once: true });
+    void ad.play().catch(resumeStream);
+
+    return () => {
+      ad.pause();
+      ad.removeEventListener("ended", resumeStream);
+      ad.removeEventListener("error", resumeStream);
+    };
+  }, [audioAdCampaign?.video_url, audioAdPlaying, audioRef, muted, playing, volume]);
 
   // ---- Transição de saída ao voltar para Home (com fade-out do áudio/vídeo) ----
   const [exiting, setExiting] = useState(false);
@@ -1358,6 +1451,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
+      {audioAdPlaying && audioAdCampaign?.video_url && (
+        <audio
+          ref={audioAdRef}
+          src={audioAdCampaign.video_url}
+          preload="auto"
+          className="hidden"
+          aria-label="Publicidade"
+        />
+      )}
       <video ref={videoRef} className="hidden" muted playsInline />
 
 
