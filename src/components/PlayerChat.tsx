@@ -110,10 +110,20 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
     if (!joined) return;
 
     const fetchMessages = async () => {
+      const expirationDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+      // Mantém o chat efêmero: toda mensagem expira 24 horas após o envio.
+      await supabase
+        .from("player_chat_messages")
+        .delete()
+        .eq("channel_id", channelId)
+        .lt("created_at", expirationDate);
+
       const { data } = await supabase
         .from("player_chat_messages")
         .select("*")
         .eq("channel_id", channelId)
+        .gte("created_at", expirationDate)
         .order("created_at", { ascending: true })
         .limit(100);
       if (data) setMessages(data);
@@ -127,9 +137,13 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "player_chat_messages", filter: `channel_id=eq.${channelId}` },
         (payload) => {
+          const message = payload.new as ChatMessage;
+          const expirationTime = Date.now() - 24 * 60 * 60 * 1000;
+          if (new Date(message.created_at).getTime() < expirationTime) return;
+
           setMessages((prev) => {
             const filtered = prev.filter(m => !m.id.startsWith("optimistic-"));
-            const updated = [...filtered, payload.new as ChatMessage];
+            const updated = [...filtered, message];
             return updated.slice(-100);
           });
         }
@@ -227,10 +241,18 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
       cidade,
       message: msg,
     });
+    const expirationDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    await supabase
+      .from("player_chat_messages")
+      .delete()
+      .eq("channel_id", channelId)
+      .lt("created_at", expirationDate);
+
     const { data: allMsgs } = await supabase
       .from("player_chat_messages")
       .select("id")
       .eq("channel_id", channelId)
+      .gte("created_at", expirationDate)
       .order("created_at", { ascending: true });
     if (allMsgs && allMsgs.length > 100) {
       const idsToDelete = allMsgs.slice(0, allMsgs.length - 100).map((m) => m.id);
