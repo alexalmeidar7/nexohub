@@ -517,13 +517,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   useEffect(() => {
     const ownerId = radioUserId || effectiveUserId;
-    if (!ownerId || !musicData?.titulo) return;
-    
-    getMusicExceptions(ownerId).then(excs => {
+    let cancelled = false;
+
+    // Limpa imediatamente as imagens da faixa anterior enquanto a exceção atual é resolvida.
+    setMusicExceptionCapa(null);
+    setMusicExceptionArtist(null);
+
+    if (!ownerId || !musicData?.titulo) return () => { cancelled = true; };
+
+    getMusicExceptions(ownerId).then((excs) => {
+      if (cancelled) return;
       const matched = matchesMusicException(excs, musicData.artista, musicData.titulo);
       setMusicExceptionCapa(matched?.capa_url || null);
       setMusicExceptionArtist(matched?.artista_url || null);
     });
+
+    return () => { cancelled = true; };
   }, [musicData?.titulo, musicData?.artista, radioUserId, effectiveUserId]);
 
   // ---- Background dinâmico ----
@@ -556,6 +565,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Imagem do artista (Deezer) intercalada com o gradiente a cada 15s ----
   const [artistBgImage, setArtistBgImage] = useState<string>("");
   useEffect(() => {
+    // A imagem cadastrada na exceção tem prioridade sobre a busca automática.
+    if (musicExceptionArtist) {
+      setArtistBgImage(musicExceptionArtist);
+      return;
+    }
+
     const artista = String(musicData?.artista || "").trim();
     if (!artista) { setArtistBgImage(""); return; }
     const sync = getArtistImageSync(artista);
@@ -565,7 +580,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       if (!cancelled) setArtistBgImage(url || "");
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [musicData?.artista]);
+  }, [musicData?.artista, musicExceptionArtist]);
 
   const [showArtistBg, setShowArtistBg] = useState(false);
   useEffect(() => {
@@ -655,9 +670,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       musica,
       horario: musicData?.horario || hhmm(new Date()),
       programa: currentProg?.nome || "",
-      capa: cover || musicData?.capa || undefined,
+      capa: musicExceptionCapa || cover || musicData?.capa || undefined,
     };
-  }, [musicData?.artista, musicData?.titulo, musicData?.horario, musicData?.capa, currentProg?.nome]);
+  }, [musicData?.artista, musicData?.titulo, musicData?.horario, musicData?.capa, currentProg?.nome, musicExceptionCapa]);
 
   const ensureCurrentAtFront = useCallback((tracks: HistoryTrack[], cover?: string): HistoryTrack[] => {
     const current = currentHistoryTrack(cover);
@@ -805,7 +820,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // Quando a música ao vivo muda, apenas garante que ela apareça no topo — sem refazer subscription/load.
   useEffect(() => {
     setHistory((prev) => ensureCurrentAtFront(prev));
-  }, [musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, ensureCurrentAtFront]);
+  }, [musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, musicExceptionCapa, ensureCurrentAtFront]);
 
 
   // ---- Navegação do carrossel de histórico ----
