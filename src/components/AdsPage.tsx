@@ -56,7 +56,7 @@ interface Campanha {
   slot?: VideoSlot;
 }
 
-interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string }
+interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string; mediaUrl?: string }
 interface BreakPlaylist {
   id: string;
   nome: string;
@@ -211,7 +211,7 @@ export default function AdsPage() {
     clicks: r.clicks_count || 0,
     midia: r.video_url ? decodeURIComponent(r.video_url.split("/").pop() || "") : null,
     midiaUrl: r.video_url || null,
-    slot: r.is_midroll ? "midroll" : "preroll",
+    slot: Array.isArray(r.ads_canais) && r.ads_canais.some((canal: string) => canal.toUpperCase() === "BREAK") ? "break" : r.is_midroll ? "midroll" : "preroll",
   });
 
   const loadCampanhas = async () => {
@@ -240,7 +240,7 @@ export default function AdsPage() {
       return;
     }
     const canais = [
-      chVideo ? `Vídeo (${videoSlot})` : null,
+      chVideo ? (videoSlot === "break" ? "BREAK" : `Vídeo (${videoSlot})`) : null,
       chAudio ? "Áudio (pre-roll)" : null,
       chChatbot ? "Chatbot" : null,
     ].filter(Boolean) as string[];
@@ -357,14 +357,32 @@ export default function AdsPage() {
   }]);
   const [selectedPl, setSelectedPl] = useState("pl-1");
   const breakFileRef = useRef<HTMLInputElement>(null);
+  const [breakConfigLoaded, setBreakConfigLoaded] = useState(false);
 
   /* Biblioteca de mídias: arquivos das campanhas ativas */
   const biblioteca = useMemo<BreakItem[]>(
     () => campanhas
-      .filter(c => c.status === "Ativa" && c.midia)
-      .map(c => ({ id: `cmp-${c.id}`, titulo: c.midia as string, duracao: "--:--", campanha: c.nome })),
+      .filter(c => c.status === "Ativa" && c.midia && c.midiaUrl)
+      .map(c => ({ id: `cmp-${c.id}`, titulo: c.midia as string, duracao: "--:--", campanha: c.nome, mediaUrl: c.midiaUrl })),
     [campanhas],
   );
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (cancelled) return;
+      const config = (data?.dashboard_items as any)?.break_commercial;
+      if (config && Array.isArray(config.playlists)) {
+        setBreaksOn(config.enabled !== false);
+        setTriggerWord(typeof config.triggerWord === "string" ? config.triggerWord : "BREAK");
+        setPlaylists(config.playlists);
+        setSelectedPl(config.activePlaylistId || config.playlists[0]?.id || "");
+      }
+      setBreakConfigLoaded(true);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id]);
   const [dragOverPl, setDragOverPl] = useState(false);
 
   const currentPl = playlists.find(p => p.id === selectedPl) || null;
@@ -374,7 +392,25 @@ export default function AdsPage() {
     const midia = biblioteca.find(m => m.id === midiaId);
     if (!pl || !midia) return;
     if (pl.itens.some(i => i.origemId === midia.id)) return;
-    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: crypto.randomUUID(), origemId: midia.id }] });
+
+    const itemId = crypto.randomUUID();
+    updatePl(pl.id, { itens: [...pl.itens, { ...midia, id: itemId, origemId: midia.id }] });
+
+    if (midia.mediaUrl) {
+      const media = document.createElement("video");
+      media.preload = "metadata";
+      media.src = midia.mediaUrl;
+      media.onloadedmetadata = () => {
+        const total = Math.max(0, Math.round(media.duration || 0));
+        const duracao = total > 0 ? `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}` : "--:--";
+        setPlaylists(list => list.map(playlist => playlist.id !== pl.id ? playlist : {
+          ...playlist,
+          itens: playlist.itens.map(item => item.id === itemId ? { ...item, duracao } : item),
+        }));
+        media.removeAttribute("src");
+      };
+      media.onerror = () => media.removeAttribute("src");
+    }
   }
 
   /* Mídias de campanhas pausadas/excluídas saem das playlists */
@@ -943,10 +979,29 @@ export default function AdsPage() {
                   </div>
 
                   <div className="flex justify-end">
-                    <button type="button" onClick={() => toast({ title: "Break salvo", description: currentPl.nome })}
-                      className="h-11 px-6 rounded-full text-sm font-black flex items-center gap-2"
+                    <button type="button" onClick={async () => {
+                      if (!user?.id) return;
+                      try {
+                        const { data, error } = await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle();
+                        if (error) throw error;
+                        const dashboardItems = { ...((data?.dashboard_items as Record<string, unknown>) || {}) };
+                        dashboardItems.break_commercial = {
+                          enabled: breaksOn,
+                          triggerWord: triggerWord.trim(),
+                          activePlaylistId: currentPl.id,
+                          playlists,
+                        };
+                        const { error: saveError } = await supabase.from("user_settings").upsert({ user_id: user.id, dashboard_items: dashboardItems } as any, { onConflict: "user_id" });
+                        if (saveError) throw saveError;
+                        toast({ title: "Break salvo e ativado", description: `${currentPl.itens.length} mídia(s) prontas para o player.` });
+                      } catch (error: any) {
+                        toast({ title: "Não foi possível salvar o break", description: error.message, variant: "destructive" });
+                      }
+                    }}
+                      disabled={!breakConfigLoaded}
+                      className="h-11 px-6 rounded-full text-sm font-black flex items-center gap-2 disabled:opacity-60"
                       style={{ background: LIME, color: INK }}>
-                      <Save size={16} /> Salvar break
+                      <Save size={16} /> Salvar e ativar break
                     </button>
                   </div>
                 </div>
