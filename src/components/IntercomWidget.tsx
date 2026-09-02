@@ -701,32 +701,78 @@ export default function IntercomWidget() {
   // ─── Role Selection ───
   if (role === "none" && !listenerName) {
     return (
-      <div 
+      <div
         id="intercom-selection-menu"
-        className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-left-2 duration-300 ease-out"
-        style={{ top: anchorStyle.top, left: anchorStyle.left, width: "auto" }}
+        className="nexo-scope fixed z-[100] animate-in fade-in slide-in-from-left-2 zoom-in-95 duration-300 ease-out"
+        style={{ top: anchorStyle.top, left: anchorStyle.left, width: 288 }}
       >
-        <div className="flex items-center gap-1">
-          {/* Grupo lima: falar / ouvir */}
-          <div className="flex items-center rounded-full overflow-hidden" style={{ backgroundColor: "#C6F03C" }}>
-            <button onClick={() => setRole("speaker")}
-              className="w-9 h-9 flex items-center justify-center transition-all hover:brightness-95"
-              title="Intercom — falar com ouvintes">
-              <Mic size={16} className="text-[#002132]" />
-            </button>
-            <div className="w-px h-4" style={{ backgroundColor: "rgba(0,33,50,0.35)" }} />
-            <button onClick={() => setRole("listener")}
-              className="w-9 h-9 flex items-center justify-center transition-all hover:brightness-95"
-              title="Ouvinte — receber áudio">
-              <Headphones size={16} className="text-[#002132]" />
+        <div
+          className="overflow-hidden rounded-2xl border shadow-xl"
+          style={{
+            background: "linear-gradient(145deg, #ffffff 0%, #f4fbfd 100%)",
+            borderColor: "rgba(0,191,240,0.22)",
+            boxShadow: "0 18px 42px rgba(0,33,50,0.18), 0 0 0 1px rgba(255,255,255,0.8) inset",
+          }}
+        >
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "#0A2540" }}>
+                <Radio size={14} className="text-[#C6F03C]" />
+                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+              </div>
+              <div>
+                <p className="text-xs font-black tracking-tight text-[#002132]">Intercom</p>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#002132]/45">Escolha como entrar</p>
+              </div>
+            </div>
+            <button
+              onClick={handleClose}
+              aria-label="Fechar intercom"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-[#002132]/40 transition-all hover:scale-105 hover:bg-red-500/10 hover:text-red-500 active:scale-95"
+              title="Fechar"
+            >
+              <X size={15} />
             </button>
           </div>
 
-          <button onClick={handleClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-[#002132]/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
-            title="Fechar">
-            <X size={14} />
-          </button>
+          <div className="grid grid-cols-2 gap-2 px-3 pb-3">
+            <button
+              onClick={() => setRole("speaker")}
+              className="group relative flex min-h-[112px] flex-col items-start justify-between overflow-hidden rounded-2xl p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
+              style={{ background: "#0A2540", boxShadow: "0 8px 18px rgba(10,37,64,0.18)" }}
+              title="Intercom — falar com ouvintes"
+            >
+              <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#00BFF0]/15 transition-transform duration-300 group-hover:scale-125" />
+              <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#00BFF0] text-white shadow-md shadow-cyan-500/30">
+                <Mic size={17} />
+              </span>
+              <span className="relative">
+                <span className="block text-xs font-black text-white">Falar</span>
+                <span className="mt-0.5 block text-[9px] font-medium text-white/60">Transmitir para ouvintes</span>
+              </span>
+            </button>
+
+            <button
+              onClick={() => setRole("listener")}
+              className="group relative flex min-h-[112px] flex-col items-start justify-between overflow-hidden rounded-2xl border p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#00BFF0]/45 hover:shadow-lg active:scale-[0.98]"
+              style={{ background: "#ffffff", borderColor: "rgba(0,191,240,0.18)", boxShadow: "0 8px 18px rgba(0,33,50,0.06)" }}
+              title="Ouvinte — receber áudio"
+            >
+              <span className="absolute -right-5 -top-5 h-20 w-20 rounded-full bg-[#C6F03C]/25 transition-transform duration-300 group-hover:scale-125" />
+              <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#C6F03C] text-[#0A2540] shadow-md shadow-lime-400/30">
+                <Headphones size={17} />
+              </span>
+              <span className="relative">
+                <span className="block text-xs font-black text-[#002132]">Ouvir</span>
+                <span className="mt-0.5 block text-[9px] font-medium text-[#002132]/50">Receber o áudio ao vivo</span>
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 border-t px-4 py-2" style={{ borderColor: "rgba(0,33,50,0.07)", background: "rgba(0,191,240,0.035)" }}>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[9px] font-semibold text-[#002132]/45">Conexão segura em tempo real</span>
+          </div>
         </div>
       </div>
     );
