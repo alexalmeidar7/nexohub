@@ -25,8 +25,16 @@ const DIAS_MAP: Record<number, string> = {
   1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
 };
 
-async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*, thumb, apresentador_id, apresentadores_ids").order("horario_inicio");
+async function getProgramas(userId?: string): Promise<Programa[]> {
+  let query = supabase
+    .from("programas")
+    .select("*, thumb, apresentador_id, apresentadores_ids")
+    .eq("ativo", true)
+    .order("horario_inicio");
+
+  if (userId) query = query.eq("user_id", userId);
+
+  const { data } = await query;
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
@@ -77,7 +85,11 @@ interface ApresentadorInfo {
   foto: string;
 }
 
-export default function OnAirWidget() {
+interface OnAirWidgetProps {
+  compact?: boolean;
+}
+
+export default function OnAirWidget({ compact = false }: OnAirWidgetProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
@@ -148,7 +160,7 @@ export default function OnAirWidget() {
   }, [user]);
   useEffect(() => {
     const update = async () => {
-      const [programasData, apresentadoresData] = await Promise.all([getProgramas(), getApresentadores()]);
+      const [programasData, apresentadoresData] = await Promise.all([getProgramas(user?.id), getApresentadores()]);
       
       let filteredProgramas = programasData;
       if (user) {
@@ -307,6 +319,38 @@ export default function OnAirWidget() {
   }
 
   const { programa, progress } = onAir;
+
+  if (compact) {
+    const apresentadorAtual = apresentadoresAtuais[apresentadorIndex];
+
+    return (
+      <>
+        <div className="animate-fade-in min-w-0" style={{ color: "var(--layout-nav-text, #ffffff)" }}>
+          <div className="flex items-center gap-1.5 mb-1">
+            <Radio size={9} className="animate-pulse" style={{ color: "var(--layout-accent-color)" }} />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color) }}>Ao vivo</span>
+          </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <p className="text-lg sm:text-xl font-bold leading-tight truncate">{programa.nome}</p>
+            {programa.classificacaoEtaria && (
+              <span className="shrink-0 rounded px-1 py-0.5 text-[8px] font-bold leading-none text-white" style={{ backgroundColor: programa.classificacaoEtaria === "L" ? "#00a651" : "rgba(0,33,50,0.6)" }}>
+                {programa.classificacaoEtaria}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 mt-1.5 text-xs">
+            <span className="inline-flex items-center gap-1 opacity-75"><Clock size={11} /> {programa.horarioInicio} — {programa.horarioFim}</span>
+            {apresentadorAtual?.nome && apresentadorAtual.nome !== "—" && (
+              <span className="inline-flex items-center gap-1 font-semibold truncate"><Mic size={11} /> {apresentadorAtual.nome}</span>
+            )}
+          </div>
+        </div>
+        <Suspense fallback={null}>
+          <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+        </Suspense>
+      </>
+    );
+  }
 
   return (
     <div className="h-full relative overflow-hidden">

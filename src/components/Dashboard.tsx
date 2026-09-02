@@ -1608,11 +1608,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   bottom: "20px",
                   left: "18px",
                   right: "18px",
+                  zIndex: 15,
                   ["--layout-nav-text" as any]: onAirText,
                   ["--layout-icon-color" as any]: onAirText,
                   ["--layout-accent-color" as any]: onAirText,
                 }}
-              />
+              >
+                <Suspense fallback={null}>
+                  <OnAirWidget compact />
+                </Suspense>
+              </div>
               {/* LOCUTOR — foto sem box, encostada no bottom */}
               <div
                 className="nexo-onair-locutor absolute group"
