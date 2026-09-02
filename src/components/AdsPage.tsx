@@ -376,7 +376,7 @@ export default function AdsPage() {
     setClient(c.cliente);
     setStartDate(parseCampaignDate(c.inicioData));
     setEndDate(parseCampaignDate(c.fimData));
-    const restoredSlots = c.slots?.length ? c.slots : ["preroll"];
+    const restoredSlots: VideoSlot[] = c.slots?.length ? c.slots : ["preroll"];
     setChVideo(c.canais.some(x => x.startsWith("Vídeo") || x.toUpperCase() === "BREAK"));
     setChAudio(c.canais.some(x => x.startsWith("Áudio")));
     setChChatbot(c.canais.includes("Chatbot"));

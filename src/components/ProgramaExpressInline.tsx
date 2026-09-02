@@ -2057,7 +2057,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </button>
           
           <button 
-            onClick={handleSave} 
+            onClick={() => { void handleSave(); }} 
             disabled={saving || !programaId} 
             className="flex-[2] flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition-transform active:scale-95" 
             style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13 }}
