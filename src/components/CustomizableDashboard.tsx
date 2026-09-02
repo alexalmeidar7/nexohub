@@ -638,7 +638,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
           </div>
         </div>
         );
-        return onAirSlot ? null : <div className="mb-4">{block}</div>;
+        return onAirSlot ? createPortal(block, onAirSlot) : <div className="mb-4">{block}</div>;
       })()}
 
 
