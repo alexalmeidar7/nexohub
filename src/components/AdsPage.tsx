@@ -53,7 +53,9 @@ interface Campanha {
   clicks: number;
   midia: string | null;
   midiaUrl?: string | null;
-  slot?: VideoSlot;
+  mediaType?: "video" | "audio" | "image" | null;
+  linkUrl?: string | null;
+  slots?: VideoSlot[];
 }
 
 interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string; mediaUrl?: string }
@@ -157,28 +159,33 @@ export default function AdsPage() {
   const [chAudio, setChAudio] = useState(false);
   const [chChatbot, setChChatbot] = useState(false);
 
-  const [videoSlot, setVideoSlot] = useState<VideoSlot>("preroll");
+  const [videoSlots, setVideoSlots] = useState<VideoSlot[]>(["preroll"]);
+  const [breakPickerOpen, setBreakPickerOpen] = useState(false);
   const [botMessage, setBotMessage] = useState("");
   const [botLink, setBotLink] = useState("");
+  const [videoLink, setVideoLink] = useState("");
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [previewMediaType, setPreviewMediaType] = useState<"video" | "audio" | "image" | null>(null);
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const isVideoFile = !!file && file.type.startsWith("video");
+  const isVideoMedia = previewMediaType === "video";
 
   function attachFile(f: File | null) {
     if (!f) return;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
     setFile(f);
+    setPreviewMediaType(f.type.startsWith("audio") ? "audio" : f.type.startsWith("image") ? "image" : "video");
     setPreviewUrl(URL.createObjectURL(f));
   }
 
   function clearFile() {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
     setFile(null);
     setPreviewUrl("");
+    setPreviewMediaType(null);
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -186,7 +193,7 @@ export default function AdsPage() {
     setEditingId(null);
     setName(""); setClient(""); setStartDate(undefined); setEndDate(undefined);
     setChVideo(false); setChAudio(false); setChChatbot(false);
-    setVideoSlot("preroll"); setBotMessage(""); setBotLink("");
+    setVideoSlots(["preroll"]); setBotMessage(""); setBotLink(""); setVideoLink("");
     clearFile();
   }
 
@@ -211,7 +218,13 @@ export default function AdsPage() {
     clicks: r.clicks_count || 0,
     midia: r.video_url ? decodeURIComponent(r.video_url.split("/").pop() || "") : null,
     midiaUrl: r.video_url || null,
-    slot: Array.isArray(r.ads_canais) && r.ads_canais.some((canal: string) => canal.toUpperCase() === "BREAK") ? "break" : r.is_midroll ? "midroll" : "preroll",
+    mediaType: r.media_type === "audio" || r.media_type === "image" ? r.media_type : r.video_url ? "video" : null,
+    linkUrl: r.link_url || null,
+    slots: [
+      ...(Array.isArray(r.ads_canais) && r.ads_canais.some((canal: string) => canal.toUpperCase() === "BREAK") ? ["break" as VideoSlot] : []),
+      ...(Array.isArray(r.ads_canais) && r.ads_canais.some((canal: string) => canal.toLowerCase().includes("midroll")) || r.is_midroll ? ["midroll" as VideoSlot] : []),
+      ...(Array.isArray(r.ads_canais) && r.ads_canais.some((canal: string) => canal.toLowerCase().includes("preroll")) || (!r.is_midroll && !Array.isArray(r.ads_canais)) ? ["preroll" as VideoSlot] : []),
+    ],
   });
 
   const loadCampanhas = async () => {
@@ -240,15 +253,15 @@ export default function AdsPage() {
       return;
     }
     const canais = [
-      chVideo ? (videoSlot === "break" ? "BREAK" : `Vídeo (${videoSlot})`) : null,
+      ...(chVideo ? videoSlots.map(slot => slot === "break" ? "BREAK" : `Vídeo (${slot})`) : []),
       chAudio ? "Áudio (pre-roll)" : null,
       chChatbot ? "Chatbot" : null,
     ].filter(Boolean) as string[];
 
-    // Quando o formato é Break Comercial, a campanha segue as diretrizes
-    // (horário e dias da semana) da playlist selecionada na aba Break comercial.
+    // Quando Break Comercial estiver entre os formatos, a campanha segue as diretrizes
+    // (horário e dias da semana) da playlist escolhida para o break.
     const plRef = playlists.find(p => p.id === selectedPl);
-    const usaBreak = videoSlot === "break" && !!plRef;
+    const usaBreak = chVideo && videoSlots.includes("break") && !!plRef;
     const horarioInicio = usaBreak && plRef!.usarHorario ? plRef!.horaInicio : "00:00";
     const horarioFim = usaBreak && plRef!.usarHorario ? plRef!.horaFim : "23:59";
     const diasSemana = usaBreak ? plRef!.dias.map(d => DIAS_DB[d]) : [];
@@ -276,9 +289,9 @@ export default function AdsPage() {
         dias_semana: diasSemana,
         data_inicial: startDate ? format(startDate, "yyyy-MM-dd") : null,
         data_final: endDate ? format(endDate, "yyyy-MM-dd") : null,
-        is_midroll: videoSlot === "midroll",
-        placements: videoSlot === "midroll" ? ["mid_roll"] : ["pre_roll"],
-        link_url: botLink || "",
+        is_midroll: chVideo && videoSlots.includes("midroll"),
+        placements: chVideo ? videoSlots.map(slot => slot === "midroll" ? "mid_roll" : slot === "preroll" ? "pre_roll" : "break") : [],
+        link_url: videoLink.trim() || botLink.trim() || "",
         active: true,
       };
       if (mediaUrl) { payload.video_url = mediaUrl; payload.media_type = mediaType; }
@@ -326,10 +339,17 @@ export default function AdsPage() {
     setClient(c.cliente);
     setStartDate(parseCampaignDate(c.inicioData));
     setEndDate(parseCampaignDate(c.fimData));
-    setChVideo(c.canais.some(x => x.startsWith("Vídeo")));
+    const restoredSlots = c.slots?.length ? c.slots : ["preroll"];
+    setChVideo(c.canais.some(x => x.startsWith("Vídeo") || x.toUpperCase() === "BREAK"));
     setChAudio(c.canais.some(x => x.startsWith("Áudio")));
     setChChatbot(c.canais.includes("Chatbot"));
-    setVideoSlot(c.slot || "preroll");
+    setVideoSlots(restoredSlots);
+    setVideoLink(c.linkUrl || "");
+    setBotLink(c.canais.includes("Chatbot") ? c.linkUrl || "" : "");
+    setFile(null);
+    setPreviewUrl(c.midiaUrl || "");
+    setPreviewMediaType(c.mediaType || null);
+    if (fileRef.current) fileRef.current.value = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -604,18 +624,36 @@ export default function AdsPage() {
               {(chVideo || chAudio || chChatbot) && (
                 <div className="mt-5 space-y-4">
                   {chVideo && (
-                    <div className="rounded-2xl p-4" style={{ background: `${CYAN}0F` }}>
-                      <div className={labelCls}><Film size={14} /> Formato do vídeo</div>
-                      <Select value={videoSlot} onValueChange={v => setVideoSlot(v as VideoSlot)}>
-                        <SelectTrigger className={cn(inputCls, "justify-between")}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
-                          <SelectItem value="preroll">Pre-roll</SelectItem>
-                          <SelectItem value="midroll">Mid-roll</SelectItem>
-                          <SelectItem value="break">Break Comercial</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="rounded-2xl p-4 space-y-3" style={{ background: `${CYAN}0F` }}>
+                      <div>
+                        <div className={labelCls}><Film size={14} /> Formatos do vídeo</div>
+                        <div className="text-[11px]" style={{ color: `${INK}88` }}>Você pode selecionar mais de um formato para a mesma mídia.</div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {([
+                          { id: "preroll", label: "Pre-roll" },
+                          { id: "midroll", label: "Mid-roll" },
+                          { id: "break", label: "Break Comercial" },
+                        ] as const).map(option => {
+                          const active = videoSlots.includes(option.id);
+                          return (
+                            <button key={option.id} type="button"
+                              onClick={() => {
+                                if (option.id === "break" && !active) { setBreakPickerOpen(true); return; }
+                                setVideoSlots(slots => active ? slots.filter(slot => slot !== option.id) : [...slots, option.id]);
+                              }}
+                              className="h-10 px-4 rounded-full text-[11px] font-black transition"
+                              style={{ background: active ? LIME : "#fff", border: `2px solid ${active ? INK : `${CYAN}55`}`, color: INK }}>
+                              {active && <Check size={13} className="inline mr-1.5 -mt-0.5" />}{option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div>
+                        <div className={labelCls}><Link2 size={14} /> Link do QR Code sobre o vídeo</div>
+                        <input className={inputCls} value={videoLink} onChange={e => setVideoLink(e.target.value)} placeholder="https://destino-da-campanha.com" />
+                        <div className="text-[10px] mt-1.5" style={{ color: `${INK}77` }}>O link é salvo na campanha como destino do QR Code exibido durante a reprodução.</div>
+                      </div>
                     </div>
                   )}
 
@@ -678,9 +716,9 @@ export default function AdsPage() {
                   <div className="flex-1 min-h-[200px] flex items-center justify-center" style={{ background: "#0b1620" }}>
                     {!previewUrl ? (
                       <div className="text-[11px] text-white/50">Nenhuma mídia selecionada</div>
-                    ) : isVideoFile ? (
+                    ) : isVideoMedia ? (
                       <video src={previewUrl} controls className="w-full max-h-[280px]" />
-                    ) : file?.type.startsWith("audio") ? (
+                    ) : previewMediaType === "audio" ? (
                       <audio src={previewUrl} controls className="w-full px-4" />
                     ) : (
                       <img src={previewUrl} alt="preview" className="w-full max-h-[280px] object-contain" />
@@ -1014,6 +1052,33 @@ export default function AdsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={breakPickerOpen} onOpenChange={setBreakPickerOpen}>
+        <DialogContent className="sm:max-w-md bg-white" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: INK }}>Selecionar break comercial</DialogTitle>
+          </DialogHeader>
+          <div className="text-[12px] leading-relaxed" style={{ color: `${INK}99` }}>
+            Escolha a playlist de break que receberá esta mídia ao salvar a campanha.
+          </div>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {playlists.map(playlist => (
+              <button key={playlist.id} type="button"
+                onClick={() => {
+                  setSelectedPl(playlist.id);
+                  setVideoSlots(slots => slots.includes("break") ? slots : [...slots, "break"]);
+                  setBreakPickerOpen(false);
+                }}
+                className="w-full text-left rounded-2xl px-4 py-3 transition hover:bg-[#00BFF0]/10"
+                style={{ background: playlist.id === selectedPl ? `${CYAN}15` : "#fff", border: `2px solid ${playlist.id === selectedPl ? CYAN : `${CYAN}33`}` }}>
+                <div className="text-sm font-black" style={{ color: INK }}>{playlist.nome}</div>
+                <div className="text-[11px] mt-0.5" style={{ color: `${INK}88` }}>{playlist.itens.length} arquivos · {playlist.usarHorario ? `${playlist.horaInicio}–${playlist.horaFim}` : "sem horário definido"}</div>
+              </button>
+            ))}
+            {playlists.length === 0 && <div className="py-5 text-center text-sm" style={{ color: `${INK}77` }}>Crie um break na aba Break comercial antes de selecioná-lo.</div>}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* MODAL NOVO CLIENTE */}
       <Dialog open={novoClienteOpen} onOpenChange={setNovoClienteOpen}>
