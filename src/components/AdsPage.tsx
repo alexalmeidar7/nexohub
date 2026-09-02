@@ -383,7 +383,7 @@ export default function AdsPage() {
   const biblioteca = useMemo<BreakItem[]>(
     () => campanhas
       .filter(c => c.status === "Ativa" && c.midia && c.midiaUrl)
-      .map(c => ({ id: `cmp-${c.id}`, titulo: c.midia as string, duracao: "--:--", campanha: c.nome, mediaUrl: c.midiaUrl })),
+      .map(c => ({ id: `cmp-${c.id}`, titulo: c.nome, duracao: "--:--", campanha: c.nome, mediaUrl: c.midiaUrl })),
     [campanhas],
   );
 
