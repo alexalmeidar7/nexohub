@@ -328,7 +328,7 @@ export default function OnAirWidget({ compact = false }: OnAirWidgetProps) {
         <div className="animate-fade-in min-w-0" style={{ color: "var(--layout-nav-text, #ffffff)" }}>
           <div className="flex items-center gap-1.5 mb-1">
             <Radio size={9} className="animate-pulse" style={{ color: "var(--layout-accent-color)" }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color) }}>Ao vivo</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao vivo</span>
           </div>
           <div className="flex items-center gap-2 min-w-0">
             <p className="text-lg sm:text-xl font-bold leading-tight truncate">{programa.nome}</p>
