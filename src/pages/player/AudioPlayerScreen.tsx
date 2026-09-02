@@ -733,7 +733,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     try {
       const q = encodeURIComponent(`${artista} ${musica}`.trim());
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 4000);
+      // Mantém a troca de faixa responsiva: caso o provedor externo demore,
+      // usamos rapidamente os fallbacks já disponíveis em vez de segurar a capa anterior.
+      const timeoutId = window.setTimeout(() => controller.abort(), 1200);
       const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: controller.signal });
       window.clearTimeout(timeoutId);
       if (!r.ok) throw new Error("itunes fail");
