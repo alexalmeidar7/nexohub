@@ -6,6 +6,7 @@ import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserSlug } from "@/hooks/useUserSlug";
 
 interface WeatherData {
   city: string;
@@ -133,6 +134,7 @@ function savePrimaryCity(uid: string, city: PrimaryCity | null) {
 export default function PrevisaoTempo() {
   const { user } = useAuth();
   const uid = user?.id ?? null;
+  const userSlug = useUserSlug(uid || undefined);
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -700,7 +702,7 @@ export default function PrevisaoTempo() {
           <XmlSection title="XML Tempo">
             <XmlLinkRow
               label="XML TEMPO"
-              permanentUrl="https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/b2f70324-d086-4a5d-a407-cbc4acf98dce/xml-tempo.xml?t=1788357153301"
+              permanentUrl={`http://housemix.nexobrasil.net/xml/${userSlug || "p"}/tempo.xml`}
               xmlContent={(() => {
               if (!weather) return "";
               const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
