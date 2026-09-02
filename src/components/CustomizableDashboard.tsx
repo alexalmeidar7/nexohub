@@ -227,23 +227,23 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
     const fetchOnAir = async () => {
-      const { data } = await supabase
-        .from("programas")
-        .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
-        .eq("user_id", dataUserId!)
-        .eq("ativo", true)
-        .ilike("estudio", "%fm%");
+      const [{ data: empresa }, { data }] = await Promise.all([
+        supabase
+          .from("empresa_config")
+          .select("timezone")
+          .eq("user_id", dataUserId!)
+          .maybeSingle(),
+        supabase
+          .from("programas")
+          .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome), data_especifica")
+          .eq("user_id", dataUserId!)
+          .eq("ativo", true)
+          .ilike("estudio", "%fm%"),
+      ]);
       if (cancelled || !data) return;
-      const now = new Date();
-      const diaAtual = DIAS_MAP[now.getDay()];
-      const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const current = data.find(p =>
-        (p.dias_semana || []).includes(diaAtual) &&
-        horaAtual >= p.horario_inicio &&
-        horaAtual < p.horario_fim
-      );
+
+      const { current } = resolveEffectiveOnAir(data as any[], new Date(), empresa?.timezone || null);
       if (!current) {
         setOnAirProgram(null);
         return;
