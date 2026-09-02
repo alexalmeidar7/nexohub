@@ -4283,12 +4283,23 @@ function SwitcherUI({
                               </div>
                             )}
                             {!isPodcastStudio && remaining !== null && (
-                              <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[3] flex items-center gap-1 px-1.5 py-[2px] rounded"
-                                style={{ backgroundColor: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.25)" }}
+                              <div
+                                className="absolute bottom-1.5 right-1.5 z-[3] flex items-center gap-1 rounded-md px-2 py-1 shadow-lg"
+                                style={{
+                                  background: "linear-gradient(135deg, rgba(15,15,18,0.94), rgba(38,38,44,0.94))",
+                                  border: "1px solid rgba(255,255,255,0.32)",
+                                  boxShadow: "0 4px 14px rgba(0,0,0,0.38)",
+                                }}
                                 title="Tempo restante do programa no ar"
                               >
-                                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#fff" }} />
-                                <span className="text-[9px] font-black tabular-nums" style={{ color: "#fff" }}>{formatCountdown(remaining)}</span>
+                                <span className="relative flex h-1.5 w-1.5">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C6F03C] opacity-70" />
+                                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#C6F03C]" />
+                                </span>
+                                <Clock size={10} style={{ color: "#C6F03C" }} />
+                                <span className="text-[10px] font-black tabular-nums tracking-wide" style={{ color: "#fff" }}>
+                                  {formatCountdown(remaining)}
+                                </span>
                               </div>
                             )}
 
