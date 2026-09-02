@@ -168,7 +168,9 @@ const PRESET_COMMANDS = [
   { value: "StopStreaming", label: "StopStreaming", desc: "Para streaming (0, 1 ou 2)", category: "Streaming", params: ["value"] },
   { value: "StartRecording", label: "StartRecording", desc: "Inicia gravação", category: "Gravação", params: [] },
   { value: "StopRecording", label: "StopRecording", desc: "Para gravação", category: "Gravação", params: [] },
-  { value: "ScriptStart", label: "ScriptStart", desc: "Inicia um script vMix", category: "Script", params: ["value"] },
+  { value: "StartPlayList", label: "StartPlayList", desc: "Inicia a playlist do input", category: "Playlist", params: ["input"] },
+  { value: "StopPlayList", label: "StopPlayList", desc: "Para a playlist do input", category: "Playlist", params: ["input"] },
+  { value: "ScriptStart", label: "ScriptStart", desc: "Inicia um script vMix", category: "Script", params: ["value"] }
   { value: "ScriptStop", label: "ScriptStop", desc: "Para um script vMix", category: "Script", params: ["value"] },
 ];
 
