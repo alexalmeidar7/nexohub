@@ -3211,10 +3211,10 @@ function SwitcherUI({
   const podcastAgendaSchedule = useMemo(() => {
     if (!isPodcastStudio) return [];
 
-    const programaPorId = new Map(
+    const programaPorId = new Map<string, Programa>(
       programas
         .filter((programa: Programa) => matchesStudio(programa.estudio, studioName))
-        .map((programa: Programa) => [programa.id, programa]),
+        .map((programa: Programa) => [programa.id, programa] as [string, Programa]),
     );
 
     return eventos
