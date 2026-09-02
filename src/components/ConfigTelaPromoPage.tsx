@@ -169,10 +169,30 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
       const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true, contentType: file.type || undefined });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
-      setConfig(c => ({ ...c, bg_image_url: urlData.publicUrl }));
+      const nextConfig = { ...config, bg_type: "imagem" as BgType, bg_image_url: urlData.publicUrl };
+
+      setConfig(nextConfig);
+
+      const { data: existing } = await supabase
+        .from("user_settings")
+        .select("cenario_config")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const merged = {
+        ...((existing?.cenario_config as Record<string, unknown>) || {}),
+        tela_promo_bg: nextConfig,
+      };
+
+      const { error: saveError } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, cenario_config: merged }, { onConflict: "user_id" });
+
+      if (saveError) throw saveError;
+
       setUploadProgress(100);
       setUploadStatus("done");
-      toast.success("Imagem enviada!");
+      toast.success("Imagem enviada e aplicada ao módulo locutor!");
     } catch (err: any) {
       console.error("[ConfigTelaPromo] upload error", err);
       setUploadStatus("failed");
@@ -260,6 +280,18 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
                 <div className="space-y-2">
                   <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
                   <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer h-9 text-sm" style={inputStyle} />
+                  {config.bg_image_url && (
+                    <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.14)", background: "rgba(0,0,0,0.16)" }}>
+                      <img
+                        src={config.bg_image_url}
+                        alt="Preview da imagem de fundo selecionada"
+                        className="h-28 w-full object-cover"
+                      />
+                      <p className="px-3 py-2 text-[10px] font-medium" style={{ color: "var(--layout-text)" }}>
+                        Preview da imagem de fundo selecionada
+                      </p>
+                    </div>
+                  )}
                   {uploadStatus !== "idle" && (
                     <div className="space-y-1">
                       <div className="h-1.5 w-full rounded-full overflow-hidden bg-black/10">
@@ -369,7 +401,7 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
             </button>
           </div>
           <div
-            className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-5 p-8 transition-all duration-500 ease-in-out"
+            className="relative rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-5 p-8 transition-all duration-500 ease-in-out"
             style={{
               ...buildTelaPromoBgStyle(config),
               borderColor: previewDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
@@ -378,8 +410,12 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
               boxShadow: previewDark ? "inset 0 0 60px rgba(0,0,0,0.3)" : "inset 0 0 60px rgba(255,255,255,0.1)",
             }}
           >
-            <span className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: config.header_text_color }}>Promoções</span>
-            <div className="flex gap-3">
+            <div
+              className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+              style={{ backgroundColor: "#000000", opacity: config.bg_opacity / 100 }}
+            />
+            <span className="relative z-10 text-sm font-bold uppercase tracking-[0.2em]" style={{ color: config.header_text_color }}>Promoções</span>
+            <div className="relative z-10 flex gap-3">
               {["Promo 1", "Promo 2"].map(label => (
                 <div
                   key={label}
@@ -395,7 +431,7 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
                 </div>
               ))}
             </div>
-            <div className="flex gap-3">
+            <div className="relative z-10 flex gap-3">
               {[1, 2].map(i => (
                 <div
                   key={i}
