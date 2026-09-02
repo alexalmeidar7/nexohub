@@ -158,6 +158,7 @@ export default function AdsPage() {
 
   /* ---------------- FORMULÁRIO ---------------- */
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDates, setEditingDates] = useState<{ start: string | null; end: string | null } | null>(null);
   const [name, setName] = useState("");
   const [client, setClient] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -199,6 +200,7 @@ export default function AdsPage() {
 
   function resetForm() {
     setEditingId(null);
+    setEditingDates(null);
     setName(""); setClient(""); setStartDate(undefined); setEndDate(undefined);
     setChVideo(false); setChAudio(false); setChChatbot(false);
     setVideoSlots(["preroll"]); setBotMessage(""); setBotLink(""); setVideoLink("");
@@ -318,10 +320,13 @@ export default function AdsPage() {
         horario_inicio: horarioInicio,
         horario_fim: horarioFim,
         dias_semana: diasSemana,
-        data_inicial: startDate ? format(startDate, "yyyy-MM-dd") : null,
-        data_final: endDate ? format(endDate, "yyyy-MM-dd") : null,
+        data_inicial: startDate ? format(startDate, "yyyy-MM-dd") : editingDates?.start || null,
+        data_final: endDate ? format(endDate, "yyyy-MM-dd") : editingDates?.end || null,
         is_midroll: chVideo && videoSlots.includes("midroll"),
-        placements: chVideo ? videoSlots.map(slot => slot === "midroll" ? "mid_roll" : slot === "preroll" ? "pre_roll" : "break") : [],
+        placements: [
+          ...(chVideo ? videoSlots.map(slot => slot === "midroll" ? "mid_roll" : slot === "preroll" ? "pre_roll" : "break") : []),
+          ...(chAudio ? ["pre_roll"] : []),
+        ],
         link_url: videoLink.trim() || botLink.trim() || "",
         active: true,
       };
@@ -366,6 +371,7 @@ export default function AdsPage() {
     };
 
     setEditingId(c.id);
+    setEditingDates({ start: c.inicioData || null, end: c.fimData || null });
     setName(c.nome);
     setClient(c.cliente);
     setStartDate(parseCampaignDate(c.inicioData));
