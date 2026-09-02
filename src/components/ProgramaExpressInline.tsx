@@ -210,14 +210,23 @@ function EditedCheck() {
 }
 
 /* Section to refresh all news using new links per block */
-function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLink }: {
+function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLink, onUpdateComplete }: {
   blocos: Bloco[];
   inputStyle: React.CSSProperties;
   onUpdateBloco: (bi: number, items: NewsItem[]) => void;
   fetchFromLink: (bi: number, ni: number, url: string) => Promise<void> | void;
+  onUpdateComplete: () => Promise<boolean>;
 }) {
   const [linksText, setLinksText] = useState<string[]>(() => blocos.map(() => ""));
   const [updating, setUpdating] = useState(false);
+  const [totalLinksToUpdate, setTotalLinksToUpdate] = useState(0);
+  const [currentLink, setCurrentLink] = useState(0);
+  const [updateStage, setUpdateStage] = useState<"updating" | "completed" | "saving" | null>(null);
+  const onUpdateCompleteRef = useRef(onUpdateComplete);
+
+  useEffect(() => {
+    onUpdateCompleteRef.current = onUpdateComplete;
+  }, [onUpdateComplete]);
 
   useEffect(() => {
     setLinksText(prev => {
@@ -227,30 +236,51 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
   }, [blocos.length]);
 
   const handleUpdate = async () => {
-    setUpdating(true);
-    try {
-      let totalLinks = 0;
-      for (let bi = 0; bi < blocos.length; bi++) {
-        const links = linksText[bi]?.split(/\r?\n/).map(l => l.trim()).filter(l => l.startsWith("http")) || [];
-        if (links.length === 0) continue;
-        const newItems: NewsItem[] = links.map(l => ({ titulo: "", imagemUrl: "", escalada: false, link: l }));
-        onUpdateBloco(bi, newItems);
-        totalLinks += links.length;
+    const linksByBlock = blocos.map((_, bi) => ({
+      bi,
+      links: linksText[bi]?.split(/\r?\n/).map(link => link.trim()).filter(link => link.startsWith("http")) || [],
+    })).filter(({ links }) => links.length > 0);
+    const totalLinks = linksByBlock.reduce((total, { links }) => total + links.length, 0);
 
-        // Use current state reference logic via setTimeout to allow state update to propagate
-        // but here we can just pass the newItems info indirectly if needed.
-        // Actually, fetchFromLink uses setBlocos internally which is fine.
+    if (totalLinks === 0) {
+      toast.warning("Nenhum link válido informado");
+      return;
+    }
+
+    setUpdating(true);
+    setTotalLinksToUpdate(totalLinks);
+    setCurrentLink(0);
+    setUpdateStage("updating");
+
+    try {
+      let processedLinks = 0;
+      for (const { bi, links } of linksByBlock) {
+        const newItems: NewsItem[] = links.map(link => ({ titulo: "", imagemUrl: "", escalada: false, link }));
+        onUpdateBloco(bi, newItems);
+
         for (let ni = 0; ni < links.length; ni++) {
+          setCurrentLink(processedLinks + 1);
           await fetchFromLink(bi, ni, links[ni]);
+          processedLinks += 1;
         }
       }
-      if (totalLinks === 0) toast.warning("Nenhum link válido informado");
-      else toast.success(`${totalLinks} notícia(s) atualizadas!`);
+
+      setUpdateStage("completed");
+      await new Promise(resolve => window.setTimeout(resolve, 700));
+      setUpdateStage("saving");
+      await new Promise(resolve => window.setTimeout(resolve, 0));
+
+      const saved = await onUpdateCompleteRef.current();
+      if (!saved) {
+        setUpdateStage(null);
+        setUpdating(false);
+      }
     } catch (e) {
       console.error(e);
       toast.error("Erro ao atualizar notícias");
+      setUpdateStage(null);
+      setUpdating(false);
     }
-    setUpdating(false);
   };
 
   const [collapsed, setCollapsed] = useState(true);
@@ -292,6 +322,28 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
               </div>
             ))}
           </div>
+          {updating && updateStage && (
+            <div className="mt-4 rounded-xl px-4 py-3" style={{ background: `${NEXO_CYAN}12`, border: `1px solid ${NEXO_CYAN}40` }}>
+              <div className="flex items-center gap-2 text-[11px] font-bold" style={{ color: NEXO_DARK }}>
+                {updateStage === "completed" ? <CheckCircle2 size={14} style={{ color: "#22c55e" }} /> : <Loader2 size={14} className="animate-spin" style={{ color: NEXO_CYAN }} />}
+                <span>
+                  {updateStage === "updating" && `${totalLinksToUpdate} links a ser atualizado`}
+                  {updateStage === "completed" && "Todas as noticias atualizadas"}
+                  {updateStage === "saving" && "Salvando noticias atualizadas, enviando para o XML e fechando edição do roteiro"}
+                </span>
+              </div>
+              {updateStage === "updating" && (
+                <>
+                  <p className="mt-1.5 text-[10px] font-semibold" style={{ color: `${NEXO_DARK}99` }}>
+                    Atualizando {currentLink}/{totalLinksToUpdate} inseridos
+                  </p>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ background: `${NEXO_CYAN}20` }}>
+                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${totalLinksToUpdate ? (currentLink / totalLinksToUpdate) * 100 : 0}%`, background: NEXO_CYAN }} />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <button
             onClick={handleUpdate}
             disabled={updating}
@@ -299,7 +351,7 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
             style={{ ...nexoPillPrimary, padding: "12px 20px", fontSize: 12, width: "100%" }}
           >
             {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={14} />}
-            Atualizar Notícias
+            {updating ? "Atualizando Notícias..." : "Atualizar Notícias"}
           </button>
         </>
       )}
@@ -1621,6 +1673,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               setBlocos(prev => prev.map((b, i) => i === bi ? { noticias: items } : b));
             }}
             fetchFromLink={fetchFromLink}
+            onUpdateComplete={handleSave}
           />
         )}
 
