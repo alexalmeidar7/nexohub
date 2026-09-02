@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Film, Music, MessageCircle, Upload, CalendarIcon, Plus, Save, Settings2,
   BarChart3, Radio, Trash2, ShieldCheck, Link2, X, Check, Pause, Play,
-  Pencil, Eye, UserPlus, Loader2, ListMusic, Clock,
+  Pencil, Eye, UserPlus, Loader2, ListMusic, Clock, ImageIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,7 +58,15 @@ interface Campanha {
   slots?: VideoSlot[];
 }
 
-interface BreakItem { id: string; titulo: string; duracao: string; campanha?: string; origemId?: string; mediaUrl?: string }
+interface BreakItem {
+  id: string;
+  titulo: string;
+  duracao: string;
+  campanha?: string;
+  origemId?: string;
+  mediaUrl?: string;
+  mediaType?: "video" | "audio" | "image" | null;
+}
 interface BreakPlaylist {
   id: string;
   nome: string;
@@ -383,7 +391,14 @@ export default function AdsPage() {
   const biblioteca = useMemo<BreakItem[]>(
     () => campanhas
       .filter(c => c.status === "Ativa" && c.midia && c.midiaUrl)
-      .map(c => ({ id: `cmp-${c.id}`, titulo: c.nome, duracao: "--:--", campanha: c.nome, mediaUrl: c.midiaUrl })),
+      .map(c => ({
+        id: `cmp-${c.id}`,
+        titulo: c.nome,
+        duracao: "--:--",
+        campanha: c.nome,
+        mediaUrl: c.midiaUrl,
+        mediaType: c.mediaType,
+      })),
     [campanhas],
   );
 
@@ -861,7 +876,13 @@ export default function AdsPage() {
                         title="Arraste para a playlist do break"
                         className="px-3 py-2.5 flex items-center gap-3 cursor-grab active:cursor-grabbing select-none"
                         style={{ background: `${CYAN}0F`, border: `2px solid ${CYAN}33`, color: INK, height: 48 }}>
-                        <Film size={14} style={{ color: CYAN }} />
+                        {m.mediaType === "audio" ? (
+                          <Music size={14} style={{ color: CYAN }} aria-label="Áudio" />
+                        ) : m.mediaType === "image" ? (
+                          <ImageIcon size={14} style={{ color: CYAN }} aria-label="Imagem" />
+                        ) : (
+                          <Film size={14} style={{ color: CYAN }} aria-label="Vídeo" />
+                        )}
                         <span className="text-[12px] font-bold truncate flex-1">{m.titulo}</span>
                         <span className="text-[11px] tabular-nums" style={{ color: `${INK}77` }}>{m.duracao}</span>
                       </div>
