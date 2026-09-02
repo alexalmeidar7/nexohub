@@ -698,7 +698,10 @@ export default function PrevisaoTempo() {
           </section>
 
           <XmlSection title="XML Tempo">
-            <XmlLinkRow label="XML TEMPO" xmlContent={(() => {
+            <XmlLinkRow
+              label="XML TEMPO"
+              permanentUrl="https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/b2f70324-d086-4a5d-a407-cbc4acf98dce/xml-tempo.xml?t=1788357153301"
+              xmlContent={(() => {
               if (!weather) return "";
               const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
               const dayToXml = (d: DayWeather, tag: string, night = false) =>
