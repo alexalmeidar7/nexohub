@@ -2637,11 +2637,13 @@ function AudioMonitorButton({
   input,
   textScale,
   onEdit,
+  onDelete,
 }: {
   button: any;
   input: string;
   textScale: number;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   const [levels, setLevels] = useState<number[]>(() => Array.from({ length: 28 }, (_, index) => 0.16 + (index % 5) * 0.035));
   const [peaks, setPeaks] = useState<number[]>(() => Array(28).fill(0.18));
@@ -2677,7 +2679,8 @@ function AudioMonitorButton({
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  const dbColor = db > -5 ? "#fb7185" : db > -14 ? "#fbbf24" : "#5eead4";
+  const averageDb = Math.round((db + rightDb) / 2);
+  const dbColor = averageDb > -5 ? "#fb7185" : averageDb > -14 ? "#fbbf24" : "#5eead4";
   const monitorName = button?.nome || `Áudio · Input ${input}`;
 
   return (
@@ -2696,15 +2699,9 @@ function AudioMonitorButton({
           <p className="mt-1 truncate text-[9px] font-black uppercase tracking-wide text-white/95" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
           <p className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.16em] text-white/35">Input {input}</p>
         </div>
-        <div className="rounded-md px-1.5 py-1" style={{ backgroundColor: `${dbColor}16`, border: `1px solid ${dbColor}55`, boxShadow: `0 0 14px ${dbColor}18` }}>
-          <div className="flex items-center gap-1.5 font-black tabular-nums" style={{ color: dbColor }}>
-            <span className="text-[6px] tracking-wider text-white/45">L</span>
-            <span className="text-[12px] leading-none">{db}</span>
-          </div>
-          <div className="mt-0.5 flex items-center gap-1.5 font-black tabular-nums" style={{ color: dbColor }}>
-            <span className="text-[6px] tracking-wider text-white/45">R</span>
-            <span className="text-[12px] leading-none">{rightDb}</span>
-          </div>
+        <div className="rounded-md px-2 py-1.5 text-center" style={{ backgroundColor: `${dbColor}16`, border: `1px solid ${dbColor}55`, boxShadow: `0 0 14px ${dbColor}18` }}>
+          <span className="block text-[6px] font-black tracking-[0.14em] text-white/45">MÉDIA L/R</span>
+          <span className="mt-0.5 block text-[15px] font-black leading-none tabular-nums" style={{ color: dbColor }}>{averageDb}</span>
           <span className="mt-1 block text-center text-[5px] font-black tracking-[0.16em]" style={{ color: dbColor }}>dBFS</span>
         </div>
       </div>
@@ -2725,7 +2722,10 @@ function AudioMonitorButton({
         </div>
       </div>
 
-      <button onClick={(event) => { event.stopPropagation(); onEdit(); }} className="absolute bottom-1.5 right-1.5 z-20 flex h-4 w-4 items-center justify-center rounded opacity-0 transition-all group-hover/custom:opacity-100 hover:bg-white/15" style={{ color: "#ccfbf1" }} title="Configurar monitor"><Wand2 size={9} /></button>
+      <div className="absolute bottom-1.5 right-1.5 z-20 flex items-center gap-1 opacity-0 transition-all group-hover/custom:opacity-100">
+        <button onClick={(event) => { event.stopPropagation(); onEdit(); }} className="flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-white/15" style={{ color: "#ccfbf1" }} title="Alterar input monitorado"><Wand2 size={10} /></button>
+        <button onClick={(event) => { event.stopPropagation(); onDelete(); }} className="flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-red-500/25" style={{ color: "#fda4af" }} title="Excluir monitor de áudio"><Trash2 size={10} /></button>
+      </div>
     </div>
   );
 }
@@ -3074,6 +3074,9 @@ function SwitcherUI({
   const [creationChoiceOpen, setCreationChoiceOpen] = useState(false);
   const [creatingAudioMonitor, setCreatingAudioMonitor] = useState(false);
   const [audioMonitorInput, setAudioMonitorInput] = useState("");
+  const [editingAudioMonitor, setEditingAudioMonitor] = useState<any | null>(null);
+  const [editingAudioMonitorInput, setEditingAudioMonitorInput] = useState("");
+  const [savingAudioMonitor, setSavingAudioMonitor] = useState(false);
 
   const createAudioMonitor = async () => {
     if (!user || !audioMonitorInput) return;
@@ -3096,6 +3099,50 @@ function SwitcherUI({
     } finally {
       setCreatingAudioMonitor(false);
     }
+  };
+
+  const openAudioMonitorEditor = (button: any) => {
+    setEditingAudioMonitor(button);
+    setEditingAudioMonitorInput(getAudioMonitorInput(button) === "—" ? "" : getAudioMonitorInput(button) || "");
+  };
+
+  const saveAudioMonitorInput = async () => {
+    if (!editingAudioMonitor || !editingAudioMonitorInput) return;
+    const selectedInput = inputs.find((input: VmixInput) => input.number === editingAudioMonitorInput);
+    setSavingAudioMonitor(true);
+    try {
+      const commands = Array.isArray(editingAudioMonitor.commands) ? editingAudioMonitor.commands : [];
+      const hasAudioMonitorCommand = commands.some((command: any) => command?.fn === "AudioMonitor");
+      const updatedCommands = hasAudioMonitorCommand
+        ? commands.map((command: any) => command?.fn === "AudioMonitor" ? { ...command, input: editingAudioMonitorInput } : command)
+        : [{ fn: "AudioMonitor", input: editingAudioMonitorInput }];
+      const { error } = await (supabase.from("custom_vmix_buttons" as any) as any)
+        .update({
+          nome: `Áudio · ${selectedInput?.title || `Input ${editingAudioMonitorInput}`}`,
+          commands: updatedCommands,
+          audio_input: editingAudioMonitorInput,
+        })
+        .eq("id", editingAudioMonitor.id);
+      if (error) throw error;
+      await loadCustomButtons();
+      setEditingAudioMonitor(null);
+      toast({ title: "Monitor atualizado", description: `Monitorando o Input ${editingAudioMonitorInput}.` });
+    } catch (error: any) {
+      toast({ title: "Erro ao atualizar monitor", description: error?.message || "Não foi possível atualizar o input monitorado.", variant: "destructive" });
+    } finally {
+      setSavingAudioMonitor(false);
+    }
+  };
+
+  const deleteAudioMonitor = async (button: any) => {
+    if (!window.confirm(`Excluir o monitor de áudio "${button.nome}"?`)) return;
+    const { error } = await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", button.id);
+    if (error) {
+      toast({ title: "Erro ao excluir monitor", description: error.message, variant: "destructive" });
+      return;
+    }
+    await loadCustomButtons();
+    toast({ title: "Monitor de áudio excluído" });
   };
 
   // Relógio de 1s — alimenta o contador regressivo dos programas no ar
@@ -4596,7 +4643,8 @@ function SwitcherUI({
                               button={btn}
                               input={audioMonitorInput}
                               textScale={customBtnTextScale}
-                              onEdit={() => setEditingCustomButtonId(btn.id)}
+                              onEdit={() => openAudioMonitorEditor(btn)}
+                              onDelete={() => deleteAudioMonitor(btn)}
                             />
                           );
                         }
@@ -4848,6 +4896,49 @@ function SwitcherUI({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingAudioMonitor} onOpenChange={(open) => !open && setEditingAudioMonitor(null)}>
+        <DialogContent className="border-white/10 bg-[#17171b] p-0 text-white sm:max-w-md overflow-hidden">
+          <DialogHeader className="border-b border-white/10 bg-gradient-to-br from-[#222228] to-[#121214] px-6 py-5">
+            <DialogTitle className="text-lg font-black tracking-tight text-teal-200">Editar Monitor de Áudio</DialogTitle>
+            <DialogDescription className="text-xs leading-relaxed text-white/45">
+              Para manter este monitor simples, altere apenas o input acompanhado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 p-6">
+            <div>
+              <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-white/45">Input monitorado</label>
+              <select
+                value={editingAudioMonitorInput}
+                onChange={(event) => setEditingAudioMonitorInput(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-[#0e0e10] px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/15"
+              >
+                <option value="">Selecione um input de áudio</option>
+                {inputs.map((input: VmixInput) => (
+                  <option key={input.key || input.number} value={input.number}>
+                    {input.number} — {input.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-between gap-2 border-t border-white/10 pt-4">
+              <button
+                onClick={() => deleteAudioMonitor(editingAudioMonitor)}
+                disabled={savingAudioMonitor}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-50"
+              >
+                <Trash2 size={13} /> Excluir
+              </button>
+              <div className="flex gap-2">
+                <button onClick={() => setEditingAudioMonitor(null)} disabled={savingAudioMonitor} className="rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white/50 transition hover:bg-white/5 hover:text-white disabled:opacity-50">Cancelar</button>
+                <button onClick={saveAudioMonitorInput} disabled={savingAudioMonitor || !editingAudioMonitorInput} className="flex items-center gap-2 rounded-lg bg-teal-300 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-[#071010] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50">
+                  {savingAudioMonitor ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Salvar input
+                </button>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
