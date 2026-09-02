@@ -398,6 +398,7 @@ export default function ProgramaForm() {
   const [estudio, setEstudio] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [variavel, setVariavel] = useState(false);
+  const [agendamentoVariavel, setAgendamentoVariavel] = useState<"data" | "dias">("data");
   const [dataVariavel, setDataVariavel] = useState<Date | undefined>(undefined);
   const [descricao, setDescricao] = useState("");
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
@@ -656,7 +657,7 @@ export default function ProgramaForm() {
   const resetForm = () => {
     nomeDraftRef.current = "";
     if (nomeInputRef.current) nomeInputRef.current.value = "";
-    setNome(""); setApresentadorId(""); setApresentadoresIds([]); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
+    setNome(""); setApresentadorId(""); setApresentadoresIds([]); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setAgendamentoVariavel("data"); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
   };
 
   // Helper: upload images to storage and return URLs
@@ -680,23 +681,27 @@ export default function ProgramaForm() {
     if (!estudio.trim()) { setConflictMsg("Informe o estúdio."); return; }
 
     if (variavel) {
-      if (!dataVariavel) { setConflictMsg("Selecione a data para o programa variável."); return; }
+      if (agendamentoVariavel === "data" && !dataVariavel) { setConflictMsg("Selecione a data para o programa variável."); return; }
+      if (agendamentoVariavel === "dias" && diasSemana.length === 0) { setConflictMsg("Selecione ao menos um dia da semana."); return; }
+
       const DIAS_MAP_REV: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-      const dayOfWeek = DIAS_MAP_REV[dataVariavel.getDay()];
-      const dataStr = format(dataVariavel, "yyyy-MM-dd");
+      const diasVariavel = agendamentoVariavel === "data"
+        ? [DIAS_MAP_REV[dataVariavel!.getDay()]]
+        : diasSemana;
+      const dataStr = agendamentoVariavel === "data" ? format(dataVariavel!, "yyyy-MM-dd") : null;
 
       setSaving(true);
       let targetId = editingId;
       if (editingId) {
         await supabase.from("programas").update({
-          nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
+          nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
           apresentadores_ids: apresentadoresIds,
         } as any).eq("id", editingId);
       } else {
         const { data: inserted } = await supabase.from("programas").insert({
-          user_id: user.id, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
+          user_id: user.id, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
           apresentadores_ids: apresentadoresIds,
@@ -752,7 +757,7 @@ export default function ProgramaForm() {
     setApresentadoresIds(p.apresentadoresIds?.length > 0 ? p.apresentadoresIds : (p.apresentadorId ? [p.apresentadorId] : []));
     setSelo(p.selo); setCapa(p.capa); setThumb(p.thumb);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
-    setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setDescricao(p.descricao);
+    setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setAgendamentoVariavel(p.dataVariavel ? "data" : "dias"); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
     setClassificacaoEtaria(p.classificacaoEtaria || "");
     setTipoPrograma(p.tipoPrograma || "");
@@ -846,8 +851,8 @@ export default function ProgramaForm() {
 
     if (matching.length === 0) return undefined;
 
-    // Variable programs take priority but ONLY on their specific date
-    const variable = matching.find(p => p.variavel && p.dataVariavel === dateForDay);
+    // Programas variáveis têm prioridade na data específica ou nos dias semanais configurados.
+    const variable = matching.find(p => p.variavel && (!p.dataVariavel || p.dataVariavel === dateForDay));
     if (variable) return variable;
 
     // Priority: show program that starts in this slot if any
@@ -1065,7 +1070,7 @@ export default function ProgramaForm() {
             {/* Variável Toggle */}
             <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${variavel ? "#F59E0B" : CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
               <div style={{ position: "relative", width: 34, height: 18 }}>
-                <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
+                <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) { setDataVariavel(undefined); setAgendamentoVariavel("data"); } }} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
                 <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: variavel ? "#F59E0B" : "#E2E8F0", transition: "background 0.2s" }} />
                 <span style={{ position: "absolute", top: 2, left: variavel ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
               </div>
@@ -1248,8 +1253,37 @@ export default function ProgramaForm() {
             />
           </Field>
 
-          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Calendar size={12} /> Dias da Semana</span>} span="md:col-span-2 lg:col-span-3">
-            <div className="flex flex-wrap gap-2">
+          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Calendar size={12} /> {variavel ? "Agendamento do Programa Variável" : "Dias da Semana"}</span>} span="md:col-span-2 lg:col-span-3">
+            {variavel && (
+              <div style={{ display: "flex", gap: 6, marginBottom: 12, padding: 4, width: "fit-content", borderRadius: 999, background: "#FFFFFF", border: `1px solid ${CYAN}` }}>
+                {([
+                  { value: "data", label: "Data específica" },
+                  { value: "dias", label: "Dias da semana" },
+                ] as const).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => { setAgendamentoVariavel(value); setConflictMsg(""); }}
+                    style={{
+                      height: 30,
+                      padding: "0 14px",
+                      borderRadius: 999,
+                      border: "none",
+                      background: agendamentoVariavel === value ? "#F59E0B" : "transparent",
+                      color: agendamentoVariavel === value ? "#FFFFFF" : DARK,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: 0.6,
+                      textTransform: "uppercase",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {(!variavel || agendamentoVariavel === "dias") && <div className="flex flex-wrap gap-2">
               {DIAS_SEMANA.map(dia => {
                 const active = diasSemana.includes(dia);
                 return (
@@ -1274,7 +1308,12 @@ export default function ProgramaForm() {
                   </button>
                 );
               })}
-            </div>
+            </div>}
+            {variavel && agendamentoVariavel === "dias" && (
+              <p style={{ fontSize: 10, color: "#92400E", marginTop: 8 }}>
+                Este programa terá prioridade sobre a programação fixa nos dias e horários selecionados.
+              </p>
+            )}
           </Field>
 
           <Field label="Selo (1080×1080 PNG alpha)">
@@ -1323,8 +1362,8 @@ export default function ProgramaForm() {
             </div>
           </Field>
 
-          {variavel && (
-            <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#B45309" }}><CalendarDays size={12} /> Data do Programa Variável</span>} span="md:col-span-2 lg:col-span-3">
+          {variavel && agendamentoVariavel === "data" && (
+            <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#B45309" }}><CalendarDays size={12} /> Data Específica do Programa Variável</span>} span="md:col-span-2 lg:col-span-3">
               <Popover>
                 <PopoverTrigger asChild>
                   <button style={{ ...pillSelectTrigger, borderColor: "#F59E0B" }}>
