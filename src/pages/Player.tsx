@@ -380,6 +380,7 @@ export default function PlayerPage() {
   const isTop10Mode = searchParams.get("top10") === "1";
   const navigate = useNavigate();
   const location = useLocation();
+  const isWatchRoute = location.pathname.includes("/player/watch") || searchParams.get("step") === "watch";
   const isPublicMode = !!userSlug && !userSlug.startsWith(":");
   usePublicHead(isPublicMode ? userSlug : null, "Player");
   const playerHomePath = useMemo(() => userSlug ? `/${userSlug}/player?step=home` : "/player?step=home", [userSlug]);
@@ -669,7 +670,9 @@ export default function PlayerPage() {
   const [prerollBackgroundUrl, setPrerollBackgroundUrl] = useState<string | null>(null);
   const [prerollAspectRatio, setPrerollAspectRatio] = useState<string>("16:9");
   const [prerollVideoPosition, setPrerollVideoPosition] = useState<string>("center");
-  const [prerollDone, setPrerollDone] = useState(!requestedChannelId); // Pre-roll enabled for catalog/deep-link channels
+  // O anúncio de abertura é exibido somente dentro da tela /player/watch.
+  // Assim, escolher um canal não inicia a campanha antes de entrar no player.
+  const [prerollDone, setPrerollDone] = useState(!(isWatchRoute && requestedChannelId));
   const [prerollShowing, setPrerollShowing] = useState(false);
   const prerollVideoRef = useRef<HTMLVideoElement>(null);
   const prerollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -787,9 +790,9 @@ export default function PlayerPage() {
     publicBootstrapRef.current = { slug: null, loaded: false };
     autoPlayedRef.current = false;
     warmedPrerollChannelIdRef.current = null;
-    setPrerollDone(!requestedChannelId);
+    setPrerollDone(!(isWatchRoute && requestedChannelId));
     stopAllPlayback(true);
-  }, [isPublicMode, requestedChannelId, stopAllPlayback, userSlug]);
+  }, [isPublicMode, isWatchRoute, requestedChannelId, stopAllPlayback, userSlug]);
 
   // HLS Quality selector state
   const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
@@ -1014,12 +1017,14 @@ export default function PlayerPage() {
           const initialChannel = requestedChannelId
             ? ownerChannels.find((channel) => channel.id === requestedChannelId)
             : ownerChannels.find((channel) => isAutoplayChannel(channel) && (channel.type === "audio_live" || channel.type === "audio")) || ownerChannels[0];
-          const prerolls = filterCampaignsByType(
-            data.prerolls || [],
-            now,
-            false,
-            initialChannel?.type === "audio_live" || initialChannel?.type === "audio",
-          );
+          const prerolls = isWatchRoute
+            ? filterCampaignsByType(
+                data.prerolls || [],
+                now,
+                false,
+                initialChannel?.type === "audio_live" || initialChannel?.type === "audio",
+              )
+            : [];
 
           if (prerolls.length > 0 && !prerollDone) {
             const selected = prerolls[Math.floor(Math.random() * prerolls.length)];
@@ -1065,7 +1070,7 @@ export default function PlayerPage() {
         // STAGE 1 — Critical: all data in a single parallel burst for faster hydration
         const [channelsRes, prerollRes, programasRes, apresentadoresRes, empresaRes] = await Promise.all([
           supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
-          !prerollDone
+          isWatchRoute && !prerollDone
             ? supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
           supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
@@ -1081,7 +1086,7 @@ export default function PlayerPage() {
           setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
         }
 
-        if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
+        if (isWatchRoute && !prerollDone && prerollRes.data && prerollRes.data.length > 0) {
           const initialChannel = requestedChannelId
             ? canaisData?.find((channel) => channel.id === requestedChannelId)
             : canaisData?.find((channel) => isAutoplayChannel(channel) && (channel.type === "audio_live" || channel.type === "audio")) || canaisData?.[0];
