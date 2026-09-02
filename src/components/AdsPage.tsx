@@ -719,7 +719,7 @@ export default function AdsPage() {
                     ) : isVideoMedia ? (
                       <video src={previewUrl} controls className="w-full max-h-[280px]" />
                     ) : previewMediaType === "audio" ? (
-                      <audio src={previewUrl} controls className="w-full px-4" />
+                      <audio key={previewUrl} src={previewUrl} controls autoPlay={chAudio} className="w-full px-4" />
                     ) : (
                       <img src={previewUrl} alt="preview" className="w-full max-h-[280px] object-contain" />
                     )}

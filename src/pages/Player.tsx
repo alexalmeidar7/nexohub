@@ -172,13 +172,18 @@ const campaignHasVideoPlacement = (campaign: any, isMidroll: boolean) => {
   return isMidroll ? placement.includes("midroll") || placement.includes("mid-roll") : !placement.includes("midroll") && !placement.includes("mid-roll");
 };
 
-const filterCampaignsByType = (campaigns: any[] | null | undefined, now: Date, isMidroll: boolean) => {
+const campaignHasAudioPlacement = (campaign: any) => {
+  const canais = Array.isArray(campaign.ads_canais) ? campaign.ads_canais as string[] : [];
+  return canais.some((canal) => canal.toLowerCase().startsWith("áudio"));
+};
+
+const filterCampaignsByType = (campaigns: any[] | null | undefined, now: Date, isMidroll: boolean, isAudioPreroll = false) => {
   const todayStr = now.toISOString().slice(0, 10);
   return (campaigns || []).filter((p: any) => {
     if (!matchesCampaignDay(p.dias_semana, now)) return false;
     if (p.data_inicial && todayStr < p.data_inicial) return false;
     if (p.data_final && todayStr > p.data_final) return false;
-    return campaignHasVideoPlacement(p, isMidroll);
+    return isAudioPreroll ? campaignHasAudioPlacement(p) : campaignHasVideoPlacement(p, isMidroll);
   });
 };
 
@@ -1006,7 +1011,15 @@ export default function PlayerPage() {
           }
 
           const now = new Date();
-          const prerolls = filterCampaignsByType(data.prerolls || [], now, false);
+          const initialChannel = requestedChannelId
+            ? ownerChannels.find((channel) => channel.id === requestedChannelId)
+            : ownerChannels.find((channel) => isAutoplayChannel(channel) && (channel.type === "audio_live" || channel.type === "audio")) || ownerChannels[0];
+          const prerolls = filterCampaignsByType(
+            data.prerolls || [],
+            now,
+            false,
+            initialChannel?.type === "audio_live" || initialChannel?.type === "audio",
+          );
 
           if (prerolls.length > 0 && !prerollDone) {
             const selected = prerolls[Math.floor(Math.random() * prerolls.length)];
@@ -1069,7 +1082,15 @@ export default function PlayerPage() {
         }
 
         if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
-          const matching = filterCampaignsByType(prerollRes.data || [], now, false);
+          const initialChannel = requestedChannelId
+            ? canaisData?.find((channel) => channel.id === requestedChannelId)
+            : canaisData?.find((channel) => isAutoplayChannel(channel) && (channel.type === "audio_live" || channel.type === "audio")) || canaisData?.[0];
+          const matching = filterCampaignsByType(
+            prerollRes.data || [],
+            now,
+            false,
+            initialChannel?.type === "audio_live" || initialChannel?.type === "audio",
+          );
           if (matching.length > 0) {
             const selected = matching[Math.floor(Math.random() * matching.length)];
             setPrerollUrl(selected.video_url);
@@ -2138,7 +2159,7 @@ export default function PlayerPage() {
     const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true });
 
     if (data && data.length > 0) {
-      const matching = filterCampaignsByType(data, now, false);
+      const matching = filterCampaignsByType(data, now, false, isAudio);
       if (matching.length > 0) {
         const selected = matching[Math.floor(Math.random() * matching.length)];
         setPrerollUrl(selected.video_url);
@@ -2151,7 +2172,7 @@ export default function PlayerPage() {
         setPrerollShowing(true);
       }
     }
-  }, [user, prerollShowing, isYoutube]);
+  }, [user, prerollShowing, isYoutube, isAudio]);
 
   useEffect(() => {
     if (!prerollDone || !playing || isYoutube) return;
