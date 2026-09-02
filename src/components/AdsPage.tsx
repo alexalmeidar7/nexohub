@@ -247,6 +247,29 @@ export default function AdsPage() {
 
   useEffect(() => { loadCampanhas(); }, [user?.id]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`comercial-campanhas-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "comercial_preroll", filter: `user_id=eq.${user.id}` },
+        () => { void loadCampanhas(); },
+      )
+      .subscribe();
+
+    const refreshOnFocus = () => {
+      if (!document.hidden) void loadCampanhas();
+    };
+
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   async function saveCampaign() {
     if (!user?.id) {
       toast({ title: "Sessão expirada", variant: "destructive" });

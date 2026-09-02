@@ -226,6 +226,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [audioAdPlaying, setAudioAdPlaying] = useState(false);
   const audioAdRef = useRef<HTMLAudioElement | null>(null);
   const audioAdPlayedRef = useRef<string | null>(null);
+  const audioAdViewTrackedRef = useRef<string | null>(null);
   const audioAdOwnerId = radioUserId || effectiveUserId;
 
   useEffect(() => {
@@ -289,15 +290,41 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       if (playing) void audioRef.current?.play().catch(() => {});
     };
 
+    const trackView = async () => {
+      const viewKey = `${audioAdCampaign.id}:${audioAdOwnerId || ""}:${canal?.id || "default"}`;
+      if (audioAdViewTrackedRef.current === viewKey) return;
+      audioAdViewTrackedRef.current = viewKey;
+
+      const { data, error } = await supabase
+        .from("comercial_preroll")
+        .select("views_count")
+        .eq("id", audioAdCampaign.id)
+        .maybeSingle();
+
+      if (error || !data) {
+        audioAdViewTrackedRef.current = null;
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from("comercial_preroll")
+        .update({ views_count: (Number(data.views_count) || 0) + 1 })
+        .eq("id", audioAdCampaign.id);
+
+      if (updateError) audioAdViewTrackedRef.current = null;
+    };
+
     ad.currentTime = 0;
     ad.muted = muted;
     ad.volume = Math.max(0, Math.min(1, volume / 100));
+    ad.addEventListener("playing", trackView, { once: true });
     ad.addEventListener("ended", resumeStream, { once: true });
     ad.addEventListener("error", resumeStream, { once: true });
     void ad.play().catch(resumeStream);
 
     return () => {
       ad.pause();
+      ad.removeEventListener("playing", trackView);
       ad.removeEventListener("ended", resumeStream);
       ad.removeEventListener("error", resumeStream);
     };
