@@ -171,7 +171,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         
       } catch (e) {
         if (e instanceof Error && e.message === "monthly_quota_exceeded") {
-          toast.error("Cota mensal de IA atingida (20/mês).");
           setAiEnabled(false);
         } else if (e instanceof Error && e.message === "ai_disabled") {
           setAiEnabled(false);
