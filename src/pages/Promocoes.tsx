@@ -562,27 +562,79 @@ export default function PromocoesKiosk() {
     return map;
   }, [programas]);
 
-  const mergeProgramList = (list: ProgramaGrade[]) => Array.from(
-    list
-      .slice()
-      .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
-      .reduce((map, programa) => {
-        const dedupeKey = normalizeProgramName(programa.nome);
-        const mergedIds = Array.from(new Set([...(programa.mergedIds || []), programa.id]));
-        const canonicalCover = canonicalCoverByName.get(dedupeKey) || programa.capa || "";
-        const existing = map.get(dedupeKey);
+  const normalizeCoverKey = (cover: string) => {
+    const value = cover.trim();
+    if (!value) return "";
+    if (value.startsWith("data:")) return value;
+
+    try {
+      const url = new URL(value, window.location.origin);
+      url.hash = "";
+      url.search = "";
+      return url.href.toLowerCase();
+    } catch {
+      return value.split("#")[0].split("?")[0].toLowerCase();
+    }
+  };
+
+  const mergeProgramList = (list: ProgramaGrade[]) => {
+    const mergedByName = Array.from(
+      list
+        .slice()
+        .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+        .reduce((map, programa) => {
+          const dedupeKey = normalizeProgramName(programa.nome);
+          const mergedIds = Array.from(new Set([...(programa.mergedIds || []), programa.id]));
+          const canonicalCover = canonicalCoverByName.get(dedupeKey) || programa.capa || "";
+          const existing = map.get(dedupeKey);
+
+          if (!existing) {
+            map.set(dedupeKey, {
+              ...programa,
+              capa: canonicalCover,
+              mergedIds,
+              apresentadoresIds: Array.from(new Set(programa.apresentadoresIds || [])),
+              diasSemana: Array.from(new Set(programa.diasSemana || [])),
+              schedules: [...programa.schedules],
+            });
+          } else {
+            existing.mergedIds = Array.from(new Set([...existing.mergedIds, ...mergedIds]));
+            existing.apresentadoresIds = Array.from(new Set([
+              ...existing.apresentadoresIds,
+              ...(programa.apresentadoresIds || []),
+            ]));
+            existing.diasSemana = Array.from(new Set([...existing.diasSemana, ...programa.diasSemana]));
+            existing.schedules = [...existing.schedules, ...programa.schedules];
+            if (canonicalCover) existing.capa = canonicalCover;
+          }
+
+          return map;
+        }, new Map<string, ProgramaGrade>())
+        .values(),
+    );
+
+    return Array.from(
+      mergedByName.reduce((map, programa) => {
+        const coverKey = normalizeCoverKey(programa.capa);
+        const visualKey = coverKey || `programa:${normalizeProgramName(programa.nome)}`;
+        const existing = map.get(visualKey);
+
         if (!existing) {
-          map.set(dedupeKey, { ...programa, capa: canonicalCover, mergedIds });
-        } else {
-          existing.mergedIds = Array.from(new Set([...existing.mergedIds, ...mergedIds]));
-          existing.diasSemana = [...new Set([...existing.diasSemana, ...programa.diasSemana])];
-          existing.schedules = [...existing.schedules, ...programa.schedules];
-          if (canonicalCover) existing.capa = canonicalCover;
+          map.set(visualKey, programa);
+          return map;
         }
+
+        existing.mergedIds = Array.from(new Set([...existing.mergedIds, ...programa.mergedIds]));
+        existing.apresentadoresIds = Array.from(new Set([
+          ...existing.apresentadoresIds,
+          ...programa.apresentadoresIds,
+        ]));
+        existing.diasSemana = Array.from(new Set([...existing.diasSemana, ...programa.diasSemana]));
+        existing.schedules = [...existing.schedules, ...programa.schedules];
         return map;
-      }, new Map<string, ProgramaGrade>())
-      .values(),
-  );
+      }, new Map<string, ProgramaGrade>()).values(),
+    );
+  };
 
   const todayDateStr = new Date().toISOString().split("T")[0];
   const programIdsWithTestemunhais = new Set(
