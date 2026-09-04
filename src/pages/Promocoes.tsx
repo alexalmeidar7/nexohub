@@ -76,6 +76,35 @@ function colorMix(color: string, amount: number, fallback: string) {
   return `color-mix(in srgb, ${color || fallback} ${amount}%, transparent)`;
 }
 
+function getBannerImageKey(imageUrl: string) {
+  const value = imageUrl.trim();
+  if (!value) return "";
+  if (value.startsWith("data:")) return value;
+
+  try {
+    const url = new URL(value, window.location.origin);
+    url.hash = "";
+    url.search = "";
+    return url.href.toLowerCase();
+  } catch {
+    return value.split("#")[0].split("?")[0].toLowerCase();
+  }
+}
+
+function getUniqueBanners(promocoes: Promocao[]) {
+  const uniqueBanners = new Map<string, Promocao>();
+
+  for (const promocao of promocoes) {
+    if (!promocao.imagem_url) continue;
+    const imageKey = getBannerImageKey(promocao.imagem_url);
+    if (imageKey && !uniqueBanners.has(imageKey)) {
+      uniqueBanners.set(imageKey, promocao);
+    }
+  }
+
+  return Array.from(uniqueBanners.values());
+}
+
 export default function PromocoesKiosk() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
@@ -362,7 +391,8 @@ export default function PromocoesKiosk() {
   const PROGRESS_INTERVAL = 50;
 
   useEffect(() => {
-    const banners = promocoes.filter(p => p.imagem_url);
+    const banners = getUniqueBanners(promocoes);
+    setCurrentBannerIndex((previousIndex) => banners.length > 0 ? previousIndex % banners.length : 0);
     if (banners.length <= 1) return;
     bannerTimerRef.current = 0;
     setBannerProgress(0);
@@ -658,7 +688,7 @@ export default function PromocoesKiosk() {
   );
 
   const allPromos = promocoes;
-  const banners = allPromos.filter(p => p.imagem_url);
+  const banners = getUniqueBanners(allPromos);
   // Se não tiver botão_url, usa o nome da promoção como fallback para exibir o botão
   const botoes = allPromos.filter(p => p.botao_url || p.nome);
 
