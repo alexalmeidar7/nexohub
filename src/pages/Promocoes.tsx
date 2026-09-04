@@ -504,9 +504,17 @@ export default function PromocoesKiosk() {
       .toUpperCase();
 
   const getTestemunhalProgramIds = (t: Testemunhal) => {
-    const list = Array.isArray(t.programa_ids) ? t.programa_ids.filter(Boolean) : [];
-    if (t.programa_id) list.push(t.programa_id);
-    return Array.from(new Set(list));
+    const currentIds = Array.isArray(t.programa_ids)
+      ? t.programa_ids.filter((id): id is string => typeof id === "string" && id.length > 0)
+      : [];
+
+    // programa_ids é a fonte atual da associação. programa_id permanece apenas
+    // como compatibilidade para registros antigos, evitando misturar vínculos obsoletos.
+    return currentIds.length > 0
+      ? Array.from(new Set(currentIds))
+      : t.programa_id
+        ? [t.programa_id]
+        : [];
   };
 
 
@@ -1234,13 +1242,22 @@ export default function PromocoesKiosk() {
                 <div
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
                   style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    if (currentProg) { 
-                      const progWithLatestIds = programas.find(p => normalizeProgramName(p.nome) === normalizeProgramName(currentProg.nome));
-                      setSelectedProgram(progWithLatestIds ? {...progWithLatestIds} : {...currentProg}); 
-                      stopAutoScroll(); 
-                    } 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (currentProg) {
+                      // Mantém a versão unificada do programa para que a busca da
+                      // citação considere todos os IDs das grades duplicadas.
+                      setSelectedProgram({
+                        ...currentProg,
+                        mergedIds: [...currentProg.mergedIds],
+                        diasSemana: [...currentProg.diasSemana],
+                        schedules: currentProg.schedules.map(schedule => ({
+                          ...schedule,
+                          dias: [...schedule.dias],
+                        })),
+                      });
+                      stopAutoScroll();
+                    }
                   }}
                   title="Citações"
                 >
