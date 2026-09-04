@@ -651,8 +651,13 @@ export default function PromocoesKiosk() {
 
     return Array.from(
       mergedByName.reduce((map, programa) => {
+        const normalizedName = normalizeProgramName(programa.nome);
         const coverKey = normalizeCoverKey(programa.capa);
-        const visualKey = coverKey || `programa:${normalizeProgramName(programa.nome)}`;
+        // As variações “Madruga” e “Madrugada Positiva” representam o mesmo
+        // programa no carrossel de Citações e devem ocupar apenas um card.
+        const visualKey = normalizedName.includes("MADRUGA")
+          ? "programa:MADRUGA-POSITIVA"
+          : coverKey || `programa:${normalizedName}`;
         const existing = map.get(visualKey);
 
         if (!existing) {
