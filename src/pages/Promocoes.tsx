@@ -526,14 +526,25 @@ export default function PromocoesKiosk() {
     return activeScrollTarget === "promo" ? modalScrollRef : programModalScrollRef;
   }, [activeScrollTarget]);
 
-  const normalizeProgramName = (name: string) =>
-    name
+  const normalizeProgramName = (name: string) => {
+    const normalized = name
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^\w\s]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .toUpperCase();
+      .toUpperCase()
+      .replace(/\s+\d+$/, "")
+      .trim();
+
+    // Unifica as diferentes grafias e cadastros do mesmo programa para que
+    // o carrossel de Citações exiba somente um card de Flash Back.
+    if (normalized.replace(/\s+/g, "").includes("FLASHBACK")) {
+      return "FLASHBACK";
+    }
+
+    return normalized;
+  };
 
   const getTestemunhalProgramIds = (t: Testemunhal) => {
     const currentIds = Array.isArray(t.programa_ids)
