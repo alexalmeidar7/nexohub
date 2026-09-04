@@ -65,6 +65,8 @@ const PROGRAMAS_VISIVEIS = [
   "PALCO POSITIVA",
 ];
 
+const REMOVED_PROGRAM_COVER_PATH = "/programas/d17e65af-e407-466f-9b60-b55c43399513/d40fca1b-5f5a-4588-8d4a-35323fe88b9f_capa.webp";
+
 function renderBoldMarkdown(text: string) {
   const parts = text.split(/\*([^*]+)\*/g);
   return parts.map((part, i) =>
@@ -607,9 +609,13 @@ export default function PromocoesKiosk() {
     }
   };
 
+  const isRemovedProgramCover = (cover: string) =>
+    normalizeCoverKey(cover).includes(REMOVED_PROGRAM_COVER_PATH);
+
   const mergeProgramList = (list: ProgramaGrade[]) => {
+    const visibleList = list.filter(programa => !isRemovedProgramCover(programa.capa));
     const mergedByName = Array.from(
-      list
+      visibleList
         .slice()
         .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
         .reduce((map, programa) => {
