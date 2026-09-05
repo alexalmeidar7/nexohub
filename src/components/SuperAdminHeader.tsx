@@ -1,0 +1,286 @@
+import { useState, useRef, useEffect } from "react";
+import logoNxo from "@/assets/logo-nxo.png";
+import {
+  Bell, Settings, Calendar, Search, ChevronDown, Radio, Users,
+  Package, Music, Layers, Smartphone, Palette, LogOut, Check
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+interface SuperAdminHeaderProps {
+  currentPage: string;
+  onNavigate: (page: any) => void;
+  onLogout?: () => void;
+  userEmail?: string;
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
+}
+
+export default function SuperAdminHeader({
+  currentPage,
+  onNavigate,
+  onLogout,
+  userEmail = "alex@nexobrasil.net",
+  searchQuery = "",
+  onSearchChange,
+}: SuperAdminHeaderProps) {
+  const [produtosOpen, setProdutosOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Dynamic current date formatted like "04 de Setembro/26"
+  const todayFormatted = (() => {
+    try {
+      const now = new Date();
+      const day = format(now, "dd");
+      const month = format(now, "MMMM", { locale: ptBR });
+      const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+      const year = format(now, "yy");
+      return `${day} de ${capitalizedMonth}/${year}`;
+    } catch {
+      return "04 de Setembro/26";
+    }
+  })();
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  return (
+    <header className="w-full pt-4 pb-2 px-4 lg:px-8 animate-fade-in font-sans">
+      <div className="max-w-[1600px] mx-auto space-y-4">
+        {/* Main Navbar Card (Pure white rounded bar) */}
+        <div className="bg-white rounded-full px-6 py-3.5 flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-slate-100/90">
+          {/* Left: NX. Logo */}
+          <div className="flex items-center gap-8">
+            <button
+              onClick={() => onNavigate("dashboard")}
+              className="flex items-center outline-none focus:opacity-80 transition-opacity"
+              title="Painel Super Admin Nexo"
+            >
+              <img
+                src={logoNxo}
+                alt="nx."
+                className="h-9 w-auto object-contain"
+              />
+            </button>
+          </div>
+
+          {/* Center: Navigation Links + Black Business Pill */}
+          <nav className="hidden md:flex items-center gap-7">
+            <button
+              onClick={() => onNavigate("dashboard")}
+              className={`text-sm font-semibold transition-colors ${
+                currentPage === "dashboard" ? "text-black font-bold" : "text-slate-700 hover:text-black"
+              }`}
+            >
+              home
+            </button>
+
+            <button
+              onClick={() => onNavigate("clientes")}
+              className={`text-sm font-semibold transition-colors ${
+                currentPage === "clientes" ? "text-black font-bold" : "text-slate-700 hover:text-black"
+              }`}
+            >
+              clientes
+            </button>
+
+            {/* Produtos Menu Dropdown */}
+            <Popover open={produtosOpen} onOpenChange={setProdutosOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  className={`text-sm font-semibold flex items-center gap-1 transition-colors ${
+                    ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
+                      ? "text-black font-bold"
+                      : "text-slate-700 hover:text-black"
+                  }`}
+                >
+                  produtos
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="center"
+                className="w-64 p-2.5 bg-[#14161a] border-0 rounded-2xl text-white shadow-2xl space-y-1"
+              >
+                <div className="text-[10px] font-bold uppercase tracking-wider text-white/40 px-2.5 py-1">
+                  Produtos da Agência
+                </div>
+
+                {/* House Mix Group */}
+                <div className="p-2 rounded-xl bg-white/5 space-y-1">
+                  <div className="text-xs font-bold text-[#00BFF0] flex items-center gap-1.5 px-1 py-0.5">
+                    <Radio className="w-3.5 h-3.5" /> House Mix
+                  </div>
+                  <button
+                    onClick={() => { onNavigate("modulos"); setProdutosOpen(false); }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                  >
+                    <Layers className="w-3.5 h-3.5 text-white/50" /> Módulos Rádio
+                  </button>
+                  <button
+                    onClick={() => { onNavigate("subusuarios"); setProdutosOpen(false); }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                  >
+                    <Users className="w-3.5 h-3.5 text-white/50" /> Subusuários
+                  </button>
+                  <button
+                    onClick={() => { onNavigate("pacotes"); setProdutosOpen(false); }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                  >
+                    <Package className="w-3.5 h-3.5 text-white/50" /> Pacotes
+                  </button>
+                  <button
+                    onClick={() => { onNavigate("admininfomusic"); setProdutosOpen(false); }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                  >
+                    <Music className="w-3.5 h-3.5 text-white/50" /> Info Music
+                  </button>
+                </div>
+
+                {/* TV App */}
+                <button
+                  onClick={() => { onNavigate("dashboard"); setProdutosOpen(false); }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-white/5 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-purple-400" /> TV App (Smart TVs)
+                </button>
+
+                {/* Social Design */}
+                <button
+                  onClick={() => { onNavigate("dashboard"); setProdutosOpen(false); }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-white/5 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                >
+                  <Palette className="w-3.5 h-3.5 text-pink-400" /> Social Design
+                </button>
+              </PopoverContent>
+            </Popover>
+
+            {/* Business Black Pill */}
+            <div className="bg-[#000000] rounded-full px-5 py-2.5 flex items-center gap-4 text-white shadow-sm">
+              <span className="font-extrabold text-sm tracking-tight text-white pr-1">
+                business
+              </span>
+              <button
+                onClick={() => onNavigate("financeiro")}
+                className={`text-xs transition-colors ${
+                  currentPage === "financeiro" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                }`}
+              >
+                financeiro
+              </button>
+              <button
+                onClick={() => onNavigate("financeiro")}
+                className="text-xs text-white/80 hover:text-white transition-colors"
+              >
+                service packs
+              </button>
+              <button
+                onClick={() => onNavigate("chatbot")}
+                className={`text-xs transition-colors ${
+                  currentPage === "chatbot" ? "text-[#9FCA1D] font-bold" : "text-white/80 hover:text-white"
+                }`}
+              >
+                chat bott
+              </button>
+              <button
+                onClick={() => onNavigate("propostas")}
+                className={`text-xs transition-colors ${
+                  currentPage === "propostas" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                }`}
+              >
+                orçamento
+              </button>
+            </div>
+          </nav>
+
+          {/* Right: Notifications, Settings, User Avatar */}
+          <div className="flex items-center gap-2.5">
+            {/* Blue Bell Button */}
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
+              className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/60 flex items-center justify-center text-[#0055ff] transition-all shadow-sm"
+              title="Notificações e Intercomunicador"
+            >
+              <Bell className="w-4 h-4 fill-[#0055ff]" />
+            </button>
+
+            {/* Settings Gear Button */}
+            <button
+              onClick={() => onNavigate("configuracoes")}
+              className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-sm"
+              title="Configurações da Empresa"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+
+            {/* User Avatar with Logout Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="w-10 h-10 rounded-full bg-[#0055ff] text-white flex items-center justify-center font-bold text-sm shadow-sm overflow-hidden ring-2 ring-white hover:opacity-90 transition-opacity"
+                  title={userEmail}
+                >
+                  <span className="select-none">A</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-48 p-2 bg-[#14161a] border-0 rounded-2xl text-white shadow-xl">
+                <div className="px-3 py-2 border-b border-white/10">
+                  <p className="text-xs font-bold text-white truncate">Super Admin</p>
+                  <p className="text-[10px] text-white/50 truncate">{userEmail}</p>
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="w-full mt-1 px-3 py-2 text-left text-xs text-red-400 hover:bg-white/5 rounded-xl flex items-center gap-2 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Sair do sistema
+                </button>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {/* Date Pill & Search Row (Matches screenshot under navbar) */}
+        <div className="flex items-center gap-2 px-1">
+          <div className="bg-white rounded-full px-4 py-2 flex items-center gap-2.5 border border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] text-xs text-slate-700 font-medium select-none">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <span>{todayFormatted}</span>
+            <span className="w-2 h-2 rounded-full bg-[#0055ff]" />
+          </div>
+
+          <div className="relative flex items-center">
+            {searchOpen ? (
+              <div className="flex items-center bg-white rounded-full pl-3 pr-2 py-1 border border-slate-200 shadow-sm animate-in fade-in zoom-in-95">
+                <Search className="w-3.5 h-3.5 text-slate-400 mr-2" />
+                <input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={e => onSearchChange?.(e.target.value)}
+                  placeholder="Buscar clientes, módulos, serviços..."
+                  className="h-7 text-xs bg-transparent outline-none w-56 text-slate-800 placeholder-slate-400"
+                  onBlur={() => { if (!searchQuery) setSearchOpen(false); }}
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="w-8 h-8 rounded-full bg-white hover:bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                title="Buscar"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

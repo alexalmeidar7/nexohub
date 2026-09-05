@@ -85,6 +85,7 @@ import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 import logoNxo from "@/assets/logo-nxo.png";
+import SuperAdminHeader from "./SuperAdminHeader";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot";
 
@@ -1040,16 +1041,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isDashboard = currentPage === "dashboard";
  
   return (
-    <div data-app-shell className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#e4fcff" }}>
+    <div data-app-shell className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "#e4fcff" }}>
       <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} />
 
       {/* Background layers (full page, behind sidebar) */}
       {isDashboard && (
-        <div className="absolute inset-0 z-0" style={{ backgroundColor: "#e4fcff" }} />
+        <div className="absolute inset-0 z-0" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "#e4fcff" }} />
       )}
 
 
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
+      {!isAdmin && (
       <div className="hidden lg:flex flex-shrink-0 z-[60] flex-col items-center py-3 pl-3 gap-2 overflow-visible">
         <img
           src={isAdmin ? logoNxo : nexoCantoLogo}
@@ -1294,6 +1296,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         </aside>
       </div>
+      )}
 
       <div className="flex-1 flex flex-col min-w-0 relative z-[1]">
 
@@ -1459,12 +1462,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         )}
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
-        <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
+        {isAdmin ? (
+          <SuperAdminHeader
+            currentPage={currentPage}
+            onNavigate={setCurrentPage}
+            onLogout={onLogout}
+            userEmail={user?.email || "alex@nexobrasil.net"}
+          />
+        ) : (
+          <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
-                  {isAdmin ? "Nexo Brasil" : (empresa.nome || "NexoHUB")}
+                  {empresa.nome || "NexoHUB"}
                 </h1>
 
                 {/* Notificações agora são centralizadas no topo via App.tsx */}
@@ -1552,6 +1563,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             `}</style>
           </div>
         </div>
+        )}
 
         {isDashboard && !isAdmin && displayedPill !== "Chatbot" && (
           <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
