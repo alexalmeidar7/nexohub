@@ -168,13 +168,6 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
     })();
   }, []);
 
-  const filtrados = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    if (!q) return clientes;
-    return clientes.filter(c =>
-      c.nome.toLowerCase().includes(q) || (c.plano || "").toLowerCase().includes(q));
-  }, [clientes, busca]);
-
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto animate-fade-in font-sans pb-12">
       {/* 1. RESUMO GERAL BANNER (Matches media_1788614596625.png) */}
@@ -257,10 +250,10 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
         </div>
       </div>
 
-      {/* 2. LOWER SECTION: INFO MUSIC CARD + CLIENTS GRID */}
-      <div className="flex flex-col lg:flex-row items-start gap-6">
+      {/* 2. LOWER SECTION: INFO MUSIC CARD (Matches media_1788614596625.png) */}
+      <div className="flex items-start">
         {/* Card Info Music (Exact match with reference) */}
-        <div className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between w-full lg:w-[320px] shrink-0 h-[280px]">
+        <div className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between w-full sm:w-[320px] shrink-0 h-[280px]">
           <div>
             <div className="flex items-start justify-between">
               <div>
@@ -288,96 +281,6 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
               infos pendentes: {pendentesInfoMusic}
             </button>
           </div>
-        </div>
-
-        {/* Clients Overview Grid */}
-        <div className="flex-1 w-full space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-[#002132]">Estações & Clientes Ativos</h3>
-              <p className="text-xs text-[#002132]/60">Gerenciamento de canais de streaming e módulos do House Mix</p>
-            </div>
-
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-              <input
-                value={busca}
-                onChange={e => setBusca(e.target.value)}
-                placeholder="Filtrar cliente..."
-                className="h-8 pl-8 pr-3 text-xs rounded-full bg-[#14161a] text-white placeholder-white/40 outline-none w-48"
-              />
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-2xl bg-[#14161a] p-4 animate-pulse space-y-3">
-                  <div className="h-8 bg-white/5 rounded-xl" />
-                  <div className="h-10 bg-white/5 rounded-xl" />
-                </div>
-              ))}
-            </div>
-          ) : filtrados.length === 0 ? (
-            <div className="rounded-2xl bg-[#14161a] p-8 text-center text-sm text-white/50">
-              Nenhum cliente encontrado.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {filtrados.map(c => (
-                <div
-                  key={c.user_id}
-                  className="rounded-2xl bg-[#14161a] p-4 flex flex-col justify-between gap-3 text-white transition-all hover:bg-[#181b20]"
-                >
-                  <div className="flex items-center gap-3">
-                    {c.logo ? (
-                      <img src={c.logo} alt={c.nome} className="w-10 h-10 rounded-xl object-contain bg-black/40 p-1 shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center shrink-0">
-                        <Building2 className="w-4 h-4 text-white/40" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold truncate leading-tight text-white">{c.nome}</div>
-                      <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#8ba832]/20 text-[#9FCA1D] text-[10px] font-medium max-w-full">
-                        <Layers className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{c.plano || "Nexo Max"}</span>
-                      </div>
-                    </div>
-                    <span className="shrink-0 w-2 h-2 rounded-full bg-[#9FCA1D]" />
-                  </div>
-
-                  {/* 4 Inner Metric Boxes */}
-                  <div className="grid grid-cols-4 gap-1.5">
-                    <Metric icon={Users} value={c.subUsers} label="subs" />
-                    <Metric icon={Radio} value={c.canaisAudio} label="áudio" />
-                    <Metric icon={MonitorPlay} value={c.canaisVideo} label="vídeo" />
-                    <Metric icon={Sparkles} value={compact(c.social)} label="social" />
-                  </div>
-
-                  {/* Card Footer */}
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-white/50">
-                    <span>{c.modules} módulos ativos</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onNavigate?.("modulos")}
-                        className="text-[#00BFF0] hover:underline"
-                      >
-                        Módulos
-                      </button>
-                      <span>•</span>
-                      <button
-                        onClick={() => onNavigate?.("financeiro")}
-                        className="text-[#9FCA1D] hover:underline"
-                      >
-                        Cobrança
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
