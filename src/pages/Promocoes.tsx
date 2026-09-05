@@ -623,8 +623,22 @@ export default function PromocoesKiosk() {
   const isRemovedProgramCover = (cover: string) =>
     normalizeCoverKey(cover).includes(REMOVED_PROGRAM_COVER_PATH);
 
+  const isRemovedCitationProgram = (programName: string) => {
+    const normalizedName = normalizeProgramName(programName);
+
+    if (normalizedName === "WHATSAPP POSITIVA" || normalizedName.startsWith("WHATSAPP POSITIVA SABADO")) {
+      return true;
+    }
+
+    return normalizedName.includes("SERTANEJO BOM DEMAIS")
+      && normalizedName.includes("EDICAO")
+      && normalizedName.includes("SABADO");
+  };
+
   const mergeProgramList = (list: ProgramaGrade[]) => {
-    const visibleList = list.filter(programa => !isRemovedProgramCover(programa.capa));
+    const visibleList = list.filter(programa =>
+      !isRemovedProgramCover(programa.capa) && !isRemovedCitationProgram(programa.nome)
+    );
     const mergedByName = Array.from(
       visibleList
         .slice()
