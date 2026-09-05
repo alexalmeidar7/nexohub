@@ -257,9 +257,20 @@ export default function PropostasPage() {
     pdf.save(`${selectedProposta.title}.pdf`);
   };
 
-  const shareWhatsApp = async () => {
-    const text = encodeURIComponent(`Olá, segue a proposta comercial: ${selectedProposta.title}`);
+  const shareWhatsApp = async (prop?: any) => {
+    const target = prop || selectedProposta;
+    if (!target) return;
+    const text = encodeURIComponent(`Olá! Segue nossa proposta comercial exclusiva: *${target.title}* da Nexo Agência.\n\nQualquer dúvida sobre os valores ou prazos estamos à disposição para conversar!`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
+
+  const shareEmailMarketing = (prop?: any) => {
+    const target = prop || selectedProposta;
+    if (!target) return;
+    const subject = `Proposta Comercial Exclusiva — ${target.title} | Nexo Agência`;
+    const body = `Olá!\n\nÉ um grande prazer apresentar nossa proposta comercial: "${target.title}".\n\nElaboramos uma solução sob medida com os produtos e serviços da Nexo para potencializar sua rádio e comunicação digital.\n\nEm anexo encaminhamos o documento completo em PDF com todos os itens, valores e condições especiais.\n\nFicamos à disposição para agendarmos uma apresentação ou tirar dúvidas!\n\nAtenciosamente,\nEquipe Nexo Agência\nhttps://nexobrasil.net`;
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
+    toast.success("E-mail marketing preparado para envio!");
   };
 
   const getStatusBadge = (status: Status) => {
@@ -1533,12 +1544,15 @@ export default function PropostasPage() {
                 )}
 
                 {p.status === "concluido" && (
-                  <div className="pt-2 border-t flex gap-2">
+                  <div className="pt-2 border-t flex flex-wrap gap-1.5">
                     <Button variant="outline" className="flex-1 h-8 text-[10px] font-bold" onClick={() => { setSelectedProposta(p); setTimeout(downloadPDF, 100); }}>
                       <Download size={12} className="mr-1" /> PDF
                     </Button>
-                    <Button variant="outline" className="h-8 w-8 p-0" onClick={() => { setSelectedProposta(p); shareWhatsApp(); }}>
-                      <MessageSquare size={12} />
+                    <Button variant="outline" className="h-8 px-2.5 text-[10px] font-bold text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => { setSelectedProposta(p); shareWhatsApp(p); }} title="Enviar via WhatsApp">
+                      <MessageSquare size={12} className="mr-1" /> WhatsApp
+                    </Button>
+                    <Button variant="outline" className="h-8 px-2.5 text-[10px] font-bold text-sky-600 border-sky-200 hover:bg-sky-50" onClick={() => shareEmailMarketing(p)} title="Enviar estilo E-mail Marketing">
+                      <Send size={12} className="mr-1" /> E-mail
                     </Button>
                   </div>
                 )}

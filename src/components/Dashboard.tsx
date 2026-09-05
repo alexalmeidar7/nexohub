@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, CloudRain } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, CloudRain, DollarSign, Package, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +60,7 @@ const CustomizableDashboard = lazyRetry(() => import("./CustomizableDashboard"))
 const AdminClientsDashboard = lazyRetry(() => import("./AdminClientsDashboard"));
 const AdminInfoMusicPage = lazyRetry(() => import("./AdminInfoMusicPage"));
 const ChatbotHome = lazyRetry(() => import("./ChatbotHome"));
+const FinanceiroSuperAdminPage = lazyRetry(() => import("./FinanceiroSuperAdminPage"));
 
 const PropostasPage = lazyRetry(() => import("./PropostasPage"));
 const ConfigTelaPromoPage = lazyRetry(() => import("./ConfigTelaPromoPage"));
@@ -83,8 +84,9 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
+import logoNxo from "@/assets/logo-nxo.png";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -166,20 +168,25 @@ const sidebarMenu: MenuItem[] = [
 ];
 
 
-// Menu exclusivo do super admin: apenas Cadastro > Clientes e o agrupador MODULOS
-// O submenu clientes deve estar liberado para todos os usuários que o possuem no pacote assinado.
+// Menu do super admin: Gestão de Produtos da Agência
+// House Mix agrupa: Módulos, Subusuários, Pacotes e Info Music
+// Além de Financeiro, Orçamentos, Chatbot e Clientes
 const adminSidebarMenu: MenuItem[] = [
   { icon: Home, label: "home", page: "dashboard" },
   {
-    icon: Users, label: "cadastros", children: [
-      { icon: Building2, label: "clientes", page: "clientes" },
+    icon: Radio,
+    label: "house mix",
+    children: [
+      { icon: Layers, label: "módulos", page: "modulos" },
       { icon: Users, label: "subusuários", page: "subusuarios" },
-      { icon: Layers, label: "pacotes", page: "pacotes" },
+      { icon: Package, label: "pacotes", page: "pacotes" },
+      { icon: Music, label: "info music", page: "admininfomusic" },
     ]
   },
-  { icon: Music, label: "info music", page: "admininfomusic" },
-  { icon: Layers, label: "módulos", page: "modulos" },
-  { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
+  { icon: DollarSign, label: "financeiro", page: "financeiro" },
+  { icon: FileText, label: "orçamentos", page: "propostas" },
+  { icon: MessageCircle, label: "chatbot", page: "chatbot" },
+  { icon: Building2, label: "clientes", page: "clientes" },
 ];
 
 
@@ -332,6 +339,8 @@ const pageTitle: Record<Page, string> = {
   subusuarios: "Subusuários",
   pacotes: "Pacotes",
   admininfomusic: "Info Music",
+  financeiro: "Gestão Financeira & Cobranças",
+  chatbot: "Chatbot & Atendimento",
 };
 
 interface DashboardProps {
@@ -1043,9 +1052,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
       <div className="hidden lg:flex flex-shrink-0 z-[60] flex-col items-center py-3 pl-3 gap-2 overflow-visible">
         <img
-          src={nexoCantoLogo}
-          alt="Nexo"
-          style={{ width: 40, height: "auto", display: "block", marginBottom: 4 }}
+          src={isAdmin ? logoNxo : nexoCantoLogo}
+          alt={isAdmin ? "NX." : "Nexo"}
+          style={{ width: isAdmin ? 42 : 40, height: "auto", display: "block", marginBottom: 4 }}
         />
         <aside
           className="flex flex-col items-center py-4 gap-2 rounded-full relative overflow-visible"
@@ -1333,7 +1342,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               }}
             >
               <div className="flex items-center justify-between px-4 pt-3 pb-2 sticky top-0 z-10" style={{ backgroundColor: layoutColors.navBg }}>
-                <img src={logoMenu} alt="nexohub" className="h-6 w-auto" />
+                <img src={isAdmin ? logoNxo : logoMenu} alt={isAdmin ? "nx." : "nexohub"} className="h-6 w-auto" />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-2 rounded-full active:scale-95 transition-transform"
@@ -1455,7 +1464,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
-                  {empresa.nome || "NexoHUB"}
+                  {isAdmin ? "Nexo Brasil" : (empresa.nome || "NexoHUB")}
                 </h1>
 
                 {/* Notificações agora são centralizadas no topo via App.tsx */}
@@ -1750,12 +1759,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
+                  {isAdmin ? <AdminClientsDashboard onNavigate={setCurrentPage} /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
                 </div>
               </div>
 
 
               {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
+              {currentPage === "financeiro" && <FinanceiroSuperAdminPage />}
+              {currentPage === "chatbot" && <ChatbotHome />}
               {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
                   <ApresentadorForm />

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Building2, Users, Radio, MonitorPlay, Layers, Search, Sparkles,
+  DollarSign, MessageCircle, FileText, Music, ChevronRight, CheckCircle2,
+  ExternalLink, ArrowUpRight
 } from "lucide-react";
 
 interface Empresa {
@@ -33,6 +35,7 @@ interface ClienteRow {
   canaisVideo: number;
   canaisAudio: number;
   social: number;
+  produtos: string[];
 }
 
 const isVideo = (t?: string | null) => (t || "").toLowerCase().startsWith("video");
@@ -43,13 +46,13 @@ const compact = (n: number) =>
 
 function KPI({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card px-4 py-3.5 flex items-center gap-3">
-      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4 text-primary" />
+    <div className="rounded-2xl bg-[#14161a] px-4 py-3.5 flex items-center gap-3.5 transition-all text-white">
+      <div className="w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center shrink-0">
+        <Icon className="w-4 h-4 text-[#9FCA1D]" />
       </div>
       <div className="min-w-0">
-        <div className="text-xl font-bold leading-none tabular-nums">{value}</div>
-        <div className="text-[11px] text-muted-foreground mt-1 truncate">{label}</div>
+        <div className="text-xl font-bold leading-none tabular-nums text-white">{value}</div>
+        <div className="text-[11px] text-white/50 mt-1 truncate">{label}</div>
       </div>
     </div>
   );
@@ -57,18 +60,23 @@ function KPI({ icon: Icon, label, value }: { icon: any; label: string; value: st
 
 function Metric({ icon: Icon, value, label }: { icon: any; value: string | number; label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-muted/40">
-      <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-      <div className="text-sm font-semibold leading-none tabular-nums">{value}</div>
-      <div className="text-[10px] text-muted-foreground leading-none">{label}</div>
+    <div className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl bg-[#1a1d22]">
+      <Icon className="w-3.5 h-3.5 text-white/40" />
+      <div className="text-xs font-semibold leading-none tabular-nums text-white">{value}</div>
+      <div className="text-[9px] text-white/40 leading-none">{label}</div>
     </div>
   );
 }
 
-export default function AdminClientsDashboard() {
+interface AdminClientsDashboardProps {
+  onNavigate?: (page: any) => void;
+}
+
+export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
   const [busca, setBusca] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<string>("all");
 
   useEffect(() => {
     (async () => {
@@ -102,8 +110,19 @@ export default function AdminClientsDashboard() {
 
         const canais = (chanRes.data as Canal[]) || [];
 
+        // Check local subscriptions overrides if any
+        let localOverrides: Record<string, any> = {};
+        try {
+          const saved = localStorage.getItem("nexo_superadmin_client_subs");
+          if (saved) localOverrides = JSON.parse(saved);
+        } catch { /* noop */ }
+
         const rows: ClienteRow[] = empresas.map(e => {
           const meus = canais.filter(c => c.user_id === e.user_id && c.active);
+          const override = localOverrides[e.user_id] || {};
+          const defaultProducts = ["house_mix"];
+          if ((e.plano || "").toLowerCase().includes("max")) defaultProducts.push("chatbot");
+
           return {
             user_id: e.user_id,
             nome: e.nome || emails.get(e.user_id) || "Sem nome",
@@ -114,6 +133,7 @@ export default function AdminClientsDashboard() {
             canaisVideo: meus.filter(c => isVideo(c.type)).length,
             canaisAudio: meus.filter(c => isAudio(c.type)).length,
             social: (e.instagram_subs || 0) + (e.youtube_subs || 0) + (e.facebook_subs || 0),
+            produtos: override.produtos || defaultProducts,
           };
         });
 
@@ -125,11 +145,15 @@ export default function AdminClientsDashboard() {
   }, []);
 
   const filtrados = useMemo(() => {
+    let list = clientes;
+    if (selectedProduct !== "all") {
+      list = list.filter(c => c.produtos.includes(selectedProduct));
+    }
     const q = busca.trim().toLowerCase();
-    if (!q) return clientes;
-    return clientes.filter(c =>
+    if (!q) return list;
+    return list.filter(c =>
       c.nome.toLowerCase().includes(q) || (c.plano || "").toLowerCase().includes(q));
-  }, [clientes, busca]);
+  }, [clientes, busca, selectedProduct]);
 
   const totais = useMemo(() => ({
     clientes: clientes.length,
@@ -139,29 +163,102 @@ export default function AdminClientsDashboard() {
   }), [clientes]);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="p-4 md:p-8 space-y-6 max-w-[1600px] mx-auto animate-fade-in font-sans">
+      {/* Top Header Bar (Flat design) */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-2xl bg-[#14161a] flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-[#9FCA1D]" />
           </div>
           <div>
-            <h1 className="text-lg md:text-xl font-bold tracking-tight leading-none">Painel Super Admin</h1>
-            <p className="text-xs text-muted-foreground mt-1.5">Clientes ativos</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg md:text-xl font-bold tracking-tight text-[#002132] leading-none">
+                Painel Super Admin
+              </h1>
+              <span className="px-2 py-0.5 rounded-full bg-[#14161a] text-[#9FCA1D] text-[10px] font-bold">
+                Gestão Geral
+              </span>
+            </div>
+            <p className="text-xs text-[#002132]/60 mt-1">Clientes ativos e produtos da agência</p>
           </div>
         </div>
 
+        {/* Search Bar (Rounded Flat) */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
           <input
             value={busca}
             onChange={e => setBusca(e.target.value)}
             placeholder="Buscar cliente ou pacote..."
-            className="h-9 pl-9 pr-3 text-sm rounded-full bg-muted/50 border border-border/60 outline-none focus:border-primary/60 w-60"
+            className="h-9 pl-9 pr-4 text-xs rounded-full bg-[#14161a] text-white placeholder-white/40 outline-none w-64 md:w-72"
           />
         </div>
       </div>
 
+      {/* Agency Products Navigation & Quick Management */}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <span className="text-[11px] font-bold text-[#002132]/70 uppercase tracking-wider mr-2">
+          Produtos da Agência:
+        </span>
+        
+        {/* House Mix Hub button */}
+        <button
+          onClick={() => onNavigate?.("modulos")}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#14161a] text-white text-xs font-semibold hover:bg-[#1c2026] transition-all"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#00BFF0]" />
+          <span>House Mix</span>
+          <span className="text-[10px] text-white/40 bg-white/10 px-1.5 py-0.5 rounded-md">Módulos & Rádio</span>
+        </button>
+
+        {/* Financeiro button */}
+        <button
+          onClick={() => onNavigate?.("financeiro")}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#14161a] text-white text-xs font-semibold hover:bg-[#1c2026] transition-all"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span>Financeiro</span>
+          <span className="text-[10px] text-emerald-400 bg-white/10 px-1.5 py-0.5 rounded-md">Cobranças & Packs</span>
+        </button>
+
+        {/* Chatbot button */}
+        <button
+          onClick={() => onNavigate?.("chatbot")}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#14161a] text-white text-xs font-semibold hover:bg-[#1c2026] transition-all"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#9FCA1D]" />
+          <span>Chatbot</span>
+          <span className="text-[10px] text-[#9FCA1D] bg-white/10 px-1.5 py-0.5 rounded-md">Atendimento IA</span>
+        </button>
+
+        {/* Orçamentos button */}
+        <button
+          onClick={() => onNavigate?.("propostas")}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#14161a] text-white text-xs font-semibold hover:bg-[#1c2026] transition-all"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#A855F7]" />
+          <span>Orçamentos</span>
+          <span className="text-[10px] text-white/40 bg-white/10 px-1.5 py-0.5 rounded-md">E-mail & PDF</span>
+        </button>
+
+        {/* Subusuários */}
+        <button
+          onClick={() => onNavigate?.("subusuarios")}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#14161a]/60 text-white/80 text-xs font-medium hover:bg-[#14161a] hover:text-white transition-all ml-auto"
+        >
+          <Users className="w-3.5 h-3.5 text-[#00BFF0]" /> Subusuários House Mix
+        </button>
+
+        {/* Info Music */}
+        <button
+          onClick={() => onNavigate?.("admininfomusic")}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#14161a]/60 text-white/80 text-xs font-medium hover:bg-[#14161a] hover:text-white transition-all"
+        >
+          <Music className="w-3.5 h-3.5 text-[#9FCA1D]" /> Info Music House Mix
+        </button>
+      </div>
+
+      {/* 4 Main KPI Cards (Exact Flat Dark Box as in reference) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KPI icon={Building2} label="Clientes ativos" value={totais.clientes} />
         <KPI icon={MonitorPlay} label="Canais de vídeo" value={totais.video} />
@@ -169,18 +266,19 @@ export default function AdminClientsDashboard() {
         <KPI icon={Users} label="Subusuários" value={totais.subs} />
       </div>
 
+      {/* Clients Cards Grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-border/60 bg-card p-4 animate-pulse space-y-3">
-              <div className="h-10 bg-muted rounded-xl" />
-              <div className="h-8 bg-muted rounded-xl" />
-              <div className="h-12 bg-muted rounded-xl" />
+            <div key={i} className="rounded-2xl bg-[#14161a] p-4 animate-pulse space-y-3">
+              <div className="h-10 bg-white/5 rounded-xl" />
+              <div className="h-8 bg-white/5 rounded-xl" />
+              <div className="h-12 bg-white/5 rounded-xl" />
             </div>
           ))}
         </div>
       ) : filtrados.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl bg-[#14161a] p-12 text-center text-sm text-white/50">
           Nenhum cliente ativo encontrado.
         </div>
       ) : (
@@ -188,26 +286,29 @@ export default function AdminClientsDashboard() {
           {filtrados.map(c => (
             <div
               key={c.user_id}
-              className="group rounded-2xl border border-border/60 bg-card p-4 flex flex-col gap-3 hover:border-primary/40 hover:shadow-md transition"
+              className="rounded-2xl bg-[#14161a] p-4 flex flex-col gap-3 text-white transition-all hover:bg-[#181b20]"
             >
+              {/* Card Header: Logo, Name, Plan Badge, Active Dot */}
               <div className="flex items-center gap-3">
                 {c.logo ? (
-                  <img src={c.logo} alt={c.nome} className="w-11 h-11 rounded-xl object-contain bg-muted/50 p-1" />
+                  <img src={c.logo} alt={c.nome} className="w-11 h-11 rounded-xl object-contain bg-black/40 p-1 shrink-0" />
                 ) : (
-                  <div className="w-11 h-11 rounded-xl bg-muted/50 flex items-center justify-center">
-                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                  <div className="w-11 h-11 rounded-xl bg-black/40 flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4 text-white/40" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold truncate leading-tight">{c.nome}</div>
-                  <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium max-w-full">
+                  <div className="text-sm font-semibold truncate leading-tight text-white">{c.nome}</div>
+                  <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#8ba832]/20 text-[#9FCA1D] text-[10px] font-medium max-w-full">
                     <Layers className="w-3 h-3 shrink-0" />
                     <span className="truncate">{c.plano || "sem pacote"}</span>
                   </div>
                 </div>
-                <span className="shrink-0 w-2 h-2 rounded-full bg-primary" />
+                {/* Active Indicator Dot */}
+                <span className="shrink-0 w-2 h-2 rounded-full bg-[#9FCA1D]" />
               </div>
 
+              {/* 4 Inner Metric Boxes */}
               <div className="grid grid-cols-4 gap-1.5">
                 <Metric icon={Users} value={c.subUsers} label="subs" />
                 <Metric icon={Radio} value={c.canaisAudio} label="áudio" />
@@ -215,8 +316,27 @@ export default function AdminClientsDashboard() {
                 <Metric icon={Sparkles} value={compact(c.social)} label="social" />
               </div>
 
-              <div className="mt-auto pt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+              {/* Card Footer: Modules + Shortcuts */}
+              <div className="mt-auto pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-white/50">
                 <span>{c.modules} módulos liberados</span>
+                
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onNavigate?.("modulos")}
+                    className="text-[10px] text-[#00BFF0] hover:underline"
+                    title="Gerenciar módulos deste cliente"
+                  >
+                    Módulos
+                  </button>
+                  <span>•</span>
+                  <button
+                    onClick={() => onNavigate?.("financeiro")}
+                    className="text-[10px] text-[#9FCA1D] hover:underline"
+                    title="Cobrança e assinatura"
+                  >
+                    Financeiro
+                  </button>
+                </div>
               </div>
             </div>
           ))}
