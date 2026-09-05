@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History, Star } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History, Star, Video, Bell, AlignLeft, Briefcase, Link as LinkIcon, List, Clock, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, isSameDay, addMinutes } from "date-fns";
@@ -418,6 +418,17 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const [pendingRecorrencia, setPendingRecorrencia] = useState<string>("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [savingEvent, setSavingEvent] = useState(false);
+  const [formTitulo, setFormTitulo] = useState("");
+  const [formDiaInteiro, setFormDiaInteiro] = useState(false);
+  const [formNotificacaoTempo, setFormNotificacaoTempo] = useState("30");
+  const [guestPermModificar, setGuestPermModificar] = useState(false);
+  const [guestPermConvidar, setGuestPermConvidar] = useState(true);
+  const [guestPermVerLista, setGuestPermVerLista] = useState(true);
+  const [eventModalTab, setEventModalTab] = useState<"detalhes" | "horario" | "materiais">("detalhes");
+  const [showVideoInput, setShowVideoInput] = useState(false);
+  const [guestSearchInput, setGuestSearchInput] = useState("");
+  const [selectedEventColor, setSelectedEventColor] = useState("#0055ff");
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
 
@@ -735,6 +746,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   };
 
   const resetForm = () => {
+    setFormTitulo("");
+    setFormDiaInteiro(false);
     setFormProgramaId("");
     setFormEstudioFilter("todos");
     setFormData(undefined);
@@ -744,18 +757,21 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     setFormTipoEvento("live");
     setFormPrioridade("normal");
     setFormStatus("ativo");
-    setFormParticipantes([{ nome: "", instagram: "" }]);
+    setFormParticipantes([]);
     setFormYoutubeUrl("");
     setFormArtesUrls([]);
     setFormYoutubeTitulo("");
     setFormYoutubeDescricao("");
     setFormEdicaoNotas("");
     setFormEdicaoConcluida(false);
-    setFormHorarioGravacao("");
-    setFormHorarioGravacaoFim("");
+    setFormHorarioGravacao("10:00");
+    setFormHorarioGravacaoFim("11:00");
     setFormPeriodoInicio("");
     setFormPeriodoFim("");
     setEditingId(null);
+    setEventModalTab("detalhes");
+    setShowVideoInput(false);
+    setGuestSearchInput("");
   };
 
   const handleRecorrenciaChange = (value: string) => {
@@ -778,21 +794,25 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
   const openNewDialog = () => {
     resetForm();
-    // Pré-preenche a data com o dia selecionado no calendário (ou hoje),
-    // para que o botão "Salvar Evento" não fique desabilitado quando o
-    // usuário escolhe uma recorrência (semanal/mensal) sem clicar de novo no calendário.
-    setFormData(selectedDate ?? new Date());
+    const baseDate = selectedDate ?? new Date();
+    setFormData(baseDate);
+    setFormHorarioGravacao("10:00");
+    setFormHorarioGravacaoFim("11:00");
+    if (programas.length > 0) {
+      setFormProgramaId(programas[0].id);
+    }
     setDialogOpen(true);
   };
 
   const startEdit = (evt: Evento) => {
     setEditingId(evt.id);
-    setFormProgramaId(evt.programa_id);
+    setFormTitulo(evt.youtube_titulo || evt.programa?.nome || evt.descricao || "");
+    setFormProgramaId(evt.programa_id || "");
     setFormEstudioFilter(evt.programa?.estudio || "todos");
     setFormData(new Date(evt.data + "T12:00:00"));
-    setFormLocal(evt.local);
-    setFormDescricao(evt.descricao);
-    setFormRecorrencia(evt.recorrencia);
+    setFormLocal(evt.local || "");
+    setFormDescricao(evt.descricao || "");
+    setFormRecorrencia(evt.recorrencia || "unico");
     setFormTipoEvento(evt.tipo_evento || "live");
     setFormPrioridade(evt.prioridade || "normal");
     setFormStatus(evt.status || "ativo");
@@ -802,81 +822,89 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     setFormYoutubeDescricao(evt.youtube_descricao || "");
     setFormEdicaoNotas(evt.edicao_notas || "");
     setFormEdicaoConcluida(!!evt.edicao_concluida);
-    setFormHorarioGravacao(evt.horario_gravacao || "");
-    setFormHorarioGravacaoFim(evt.horario_gravacao_fim || "");
+    setFormHorarioGravacao(evt.horario_gravacao || "10:00");
+    setFormHorarioGravacaoFim(evt.horario_gravacao_fim || "11:00");
+    setFormDiaInteiro(!evt.horario_gravacao && !evt.horario_gravacao_fim);
     setFormPeriodoInicio(((evt as any).periodo_inicio as string) || "");
     setFormPeriodoFim(((evt as any).periodo_fim as string) || "");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
-        : [{ nome: "", instagram: "" }]
+        : []
     );
+    setShowVideoInput(!!evt.youtube_url);
+    setEventModalTab("detalhes");
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
     const eventDate = formData ?? selectedDate ?? new Date();
-    if (!user || !formProgramaId || savingEvent) return;
+    if (!user || savingEvent) return;
+
+    const finalProgId = formProgramaId || (programas.length > 0 ? programas[0].id : null);
+    const selectedProg = programas.find(p => p.id === finalProgId);
+    const finalTitulo = formTitulo.trim() || (selectedProg?.nome ?? "Novo Evento");
+    const finalDescricao = formDescricao.trim() || finalTitulo;
 
     setSavingEvent(true);
     try {
       const payload = {
-      user_id: user.id,
-      programa_id: formProgramaId,
-      data: format(eventDate, "yyyy-MM-dd"),
-      local: formLocal,
-      descricao: formDescricao,
-      recorrencia: formRecorrencia,
-      prioridade: formPrioridade,
-      status: formStatus,
-      tipo_evento: formTipoEvento,
-      youtube_url: formTipoEvento === "live" ? formYoutubeUrl : "",
-      artes_urls: formTipoEvento === "live" ? formArtesUrls : [],
-      youtube_titulo: formTipoEvento === "live" ? formYoutubeTitulo.slice(0, 100) : "",
-      youtube_descricao: formTipoEvento === "live" ? formYoutubeDescricao : "",
-      edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
-      edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
-      horario_gravacao: formHorarioGravacao || null,
-      horario_gravacao_fim: formHorarioGravacaoFim || null,
-      periodo_inicio: formRecorrencia !== "unico" ? (formPeriodoInicio || null) : null,
-      periodo_fim: formRecorrencia !== "unico" ? (formPeriodoFim || null) : null,
-    } as any;
+        user_id: user.id,
+        programa_id: finalProgId,
+        data: format(eventDate, "yyyy-MM-dd"),
+        local: formLocal,
+        descricao: finalDescricao,
+        recorrencia: formRecorrencia,
+        prioridade: formPrioridade,
+        status: formStatus,
+        tipo_evento: formTipoEvento,
+        youtube_url: formYoutubeUrl || null,
+        artes_urls: formArtesUrls || [],
+        youtube_titulo: finalTitulo.slice(0, 100),
+        youtube_descricao: formYoutubeDescricao || finalDescricao,
+        edicao_notas: formEdicaoNotas || "",
+        edicao_concluida: formEdicaoConcluida,
+        horario_gravacao: formDiaInteiro ? null : (formHorarioGravacao || null),
+        horario_gravacao_fim: formDiaInteiro ? null : (formHorarioGravacaoFim || null),
+        periodo_inicio: formRecorrencia !== "unico" ? (formPeriodoInicio || null) : null,
+        periodo_fim: formRecorrencia !== "unico" ? (formPeriodoFim || null) : null,
+      } as any;
 
-    if (editingId) {
-      await supabase.from("agenda_eventos").update(payload).eq("id", editingId);
-      await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
-      const validParts = formParticipantes.filter((p) => p.nome.trim());
-      if (validParts.length) {
-        await supabase.from("agenda_participantes").insert(
-          validParts.map((p) => ({
-            evento_id: editingId,
-            user_id: user.id,
-            nome: p.nome,
-            instagram: p.instagram,
-          }))
-        );
+      if (editingId) {
+        await supabase.from("agenda_eventos").update(payload).eq("id", editingId);
+        await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
+        const validParts = formParticipantes.filter((p) => p.nome.trim());
+        if (validParts.length) {
+          await supabase.from("agenda_participantes").insert(
+            validParts.map((p) => ({
+              evento_id: editingId,
+              user_id: user.id,
+              nome: p.nome,
+              instagram: p.instagram,
+            }))
+          );
+        }
+      } else {
+        const { data: evt, error } = await supabase
+          .from("agenda_eventos")
+          .insert(payload)
+          .select()
+          .single();
+
+        if (error || !evt) return;
+
+        const validParts = formParticipantes.filter((p) => p.nome.trim());
+        if (validParts.length) {
+          await supabase.from("agenda_participantes").insert(
+            validParts.map((p) => ({
+              evento_id: evt.id,
+              user_id: user.id,
+              nome: p.nome,
+              instagram: p.instagram,
+            }))
+          );
+        }
       }
-    } else {
-      const { data: evt, error } = await supabase
-        .from("agenda_eventos")
-        .insert(payload)
-        .select()
-        .single();
-
-      if (error || !evt) return;
-
-      const validParts = formParticipantes.filter((p) => p.nome.trim());
-      if (validParts.length) {
-        await supabase.from("agenda_participantes").insert(
-          validParts.map((p) => ({
-            evento_id: evt.id,
-            user_id: user.id,
-            nome: p.nome,
-            instagram: p.instagram,
-          }))
-        );
-      }
-    }
 
       resetForm();
       setDialogOpen(false);
@@ -1422,7 +1450,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
     return {
       key: `${evt.id}-${dateStr}`,
-      title: evt.programa?.nome || evt.descricao || "Evento",
+      title: evt.youtube_titulo || evt.programa?.nome || evt.descricao || "Evento",
       subtitle: `${fmt(start)} – ${fmt(end)}`,
       note: note ? note.slice(0, 140) : undefined,
       startMin: start,
@@ -2073,834 +2101,663 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
 
 
-
-
-
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogContent
-            className="max-w-4xl p-0 flex flex-col bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden font-sans"
+            className="max-w-5xl w-full p-0 flex flex-col bg-white border border-slate-200/90 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.22)] overflow-hidden font-sans max-h-[92vh]"
           >
-            <style>{`
-              .agenda-form-input {
-                background-color: #f8fafc !important;
-                border: 1px solid rgba(226, 232, 240, 0.9) !important;
-                border-radius: 999px !important;
-                color: #0f172a !important;
-                transition: all 0.2s ease !important;
-              }
-              .agenda-form-input::placeholder { color: #94a3b8 !important; }
-              .agenda-form-input:hover:not(:focus):not(:focus-visible) {
-                border-color: #cbd5e1 !important;
-              }
-              .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active, .agenda-form-input[data-state="open"] {
-                outline: none !important;
-                border-color: #0055ff !important;
-                box-shadow: 0 0 0 3px rgba(0, 85, 255, 0.15) !important;
-                background-color: #ffffff !important;
-              }
-              .agenda-form-calendar .rdp { color: #0f172a !important; --rdp-cell-size: 40px; margin: 0 !important; }
-              .agenda-form-calendar .rdp-months { justify-content: center; }
-              .agenda-form-calendar .rdp-month { width: 100%; }
-              .agenda-form-calendar .rdp-caption { padding: 4px 4px 10px; }
-              .agenda-form-calendar .rdp-caption_label { color: #0f172a !important; font-weight: 800; font-size: 13px; text-transform: capitalize; letter-spacing: 0.02em; }
-              .agenda-form-calendar .rdp-head_cell { color: #64748b !important; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
-              .agenda-form-calendar .rdp-day { color: #0f172a !important; font-weight: 600; font-size: 12.5px; border-radius: 999px !important; transition: all 0.15s ease; }
-              .agenda-form-calendar .rdp-day:hover:not(.rdp-day_selected) { background-color: #f1f5f9 !important; color: #0055ff !important; }
-              .agenda-form-calendar .rdp-day_selected { background: #0055ff !important; color: #ffffff !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(0, 85, 255, 0.35) !important; }
-              .agenda-form-calendar .rdp-day_selected:hover { background: #0047e1 !important; color: #ffffff !important; }
-              .agenda-form-calendar .rdp-day_today:not(.rdp-day_selected) { background-color: transparent !important; color: #0055ff !important; font-weight: 800 !important; border: 1.5px solid #0055ff !important; }
-              .agenda-form-calendar .rdp-day_outside { color: #cbd5e1 !important; font-weight: 500; }
-              .agenda-form-calendar .rdp-nav_button { color: #0f172a !important; border-radius: 999px !important; width: 32px !important; height: 32px !important; }
-              .agenda-form-calendar .rdp-nav_button:hover { background-color: #f1f5f9 !important; color: #0055ff !important; }
-            `}</style>
-
-            {/* Header */}
-            <div className="px-6 py-5 bg-[#002132] text-white">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center text-[#00BFF0]">
-                  <CalendarIcon size={22} strokeWidth={2.5} />
-                </div>
-                <div>
-                  <DialogTitle className="text-base font-black uppercase tracking-wider m-0 text-white">
-                    {editingId ? "Editar Evento" : "Novo Evento"}
-                  </DialogTitle>
-                  <p className="text-[11px] mt-0.5 font-medium text-slate-300">
-                    Preencha os dados do evento ou programa
-                  </p>
+            {/* Top Bar: Close (X), Title input, Salvar Button */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setDialogOpen(false)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+                  title="Fechar formulário"
+                >
+                  <X size={20} />
+                </button>
+                <div className="flex-1 min-w-0 pr-4">
+                  <input
+                    type="text"
+                    value={formTitulo}
+                    onChange={(e) => setFormTitulo(e.target.value)}
+                    placeholder="Adicionar título"
+                    autoFocus
+                    className="w-full text-2xl lg:text-3xl font-semibold text-[#002132] placeholder:text-slate-300 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-[#0055ff] outline-none transition-all py-1"
+                  />
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={savingEvent}
+                className="h-10 px-8 rounded-full text-sm font-bold bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center gap-2 active:scale-95 shrink-0 disabled:opacity-60 cursor-pointer"
+              >
+                {savingEvent ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  <span>Salvar</span>
+                )}
+              </button>
             </div>
 
-            {/* Form body */}
-            <div className="agenda-dialog-scroll px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
-              <style>{`
-                .agenda-dialog-scroll::-webkit-scrollbar { width: 6px; }
-                .agenda-dialog-scroll::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
-                .agenda-dialog-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, white 30%)); border-radius: 10px; }
-                .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 80%, black 20%), var(--layout-accent-color, #2563eb)); }
-              `}</style>
+            {/* Scrollable Form Body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-6">
+              {/* Date & Time Row (Chips / Pills) */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Start Date Popover Chip */}
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                      >
+                        <CalendarIcon size={14} className="text-slate-500" />
+                        <span>
+                          {format(formData ?? selectedDate ?? new Date(), "dd 'de' MMM. 'de' yyyy", { locale: ptBR })}
+                        </span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 rounded-2xl border border-slate-100 shadow-2xl bg-white z-[120]" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData ?? selectedDate ?? new Date()}
+                        onSelect={(d) => { if (d) { setFormData(d); setDatePickerOpen(false); } }}
+                        locale={ptBR}
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
 
-              {/* Top area: calendar on the left, form on the right */}
-              <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-5">
-                {/* RIGHT column (form) — rendered second on lg via order */}
-                <div className="space-y-4 min-w-0 lg:order-2">
+                  {/* Start Time Chip */}
+                  {!formDiaInteiro && (
+                    <>
+                      <input
+                        type="time"
+                        value={formHorarioGravacao}
+                        onChange={(e) => setFormHorarioGravacao(e.target.value)}
+                        className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold outline-none focus:ring-2 focus:ring-[#0055ff]/20 transition-colors"
+                      />
 
-                  {/* Estúdio + Programa + Status */}
-                  <div className="grid grid-cols-1 sm:grid-cols-[0.9fr_1.4fr_1.3fr] gap-3">
-                    <div>
-                      <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Estúdio</Label>
-                      <Select value={formEstudioFilter} onValueChange={(v) => { setFormEstudioFilter(v); setFormProgramaId(""); }}>
-                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                          <SelectValue placeholder="Todos" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="todos">Todos os estúdios</SelectItem>
-                          {estudios.map((e) => (
-                            <SelectItem key={e} value={e}>{e}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <span className="text-xs font-medium text-slate-400">até</span>
+
+                      {/* End Time Chip */}
+                      <input
+                        type="time"
+                        value={formHorarioGravacaoFim}
+                        onChange={(e) => setFormHorarioGravacaoFim(e.target.value)}
+                        className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold outline-none focus:ring-2 focus:ring-[#0055ff]/20 transition-colors"
+                      />
+                    </>
+                  )}
+
+                  <span className="text-xs font-medium text-[#0055ff] ml-1">
+                    Fuso horário (GMT-03:00)
+                  </span>
+                </div>
+
+                {/* Second subrow: Dia inteiro + Recorrência */}
+                <div className="flex items-center gap-5 flex-wrap">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={formDiaInteiro}
+                      onChange={(e) => setFormDiaInteiro(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff] cursor-pointer"
+                    />
+                    <span>Dia inteiro</span>
+                  </label>
+
+                  <Select value={formRecorrencia} onValueChange={handleRecorrenciaChange}>
+                    <SelectTrigger className="h-8 w-auto min-w-[150px] text-xs font-semibold bg-slate-100 hover:bg-slate-200 border-none rounded-full px-3.5 text-slate-700 shadow-none gap-2">
+                      <SelectValue placeholder="Recorrência" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white">
+                      <SelectItem value="unico">Não se repete</SelectItem>
+                      <SelectItem value="semanal">Semanalmente</SelectItem>
+                      <SelectItem value="mensal">Mensalmente</SelectItem>
+                      <SelectItem value="programa_semanal">Segunda a sexta</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {formRecorrencia !== "unico" && (formPeriodoInicio || formPeriodoFim) && (
+                    <button
+                      type="button"
+                      onClick={() => { setPendingRecorrencia(formRecorrencia); setPeriodoDialogOpen(true); }}
+                      className="text-[11px] font-semibold text-[#0055ff] hover:underline cursor-pointer"
+                    >
+                      Período: {formPeriodoInicio ? format(new Date(formPeriodoInicio + "T12:00:00"), "dd/MM/yy") : "?"} → {formPeriodoFim ? format(new Date(formPeriodoFim + "T12:00:00"), "dd/MM/yy") : "?"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabs Bar (Detalhes do evento | Encontrar um horário | Materiais & Artes) */}
+              <div className="flex items-center gap-6 border-b border-slate-200 text-xs font-bold pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEventModalTab("detalhes")}
+                  className={`pb-2.5 transition-colors relative cursor-pointer ${
+                    eventModalTab === "detalhes" ? "text-[#0055ff]" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Detalhes do evento
+                  {eventModalTab === "detalhes" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0055ff] rounded-full" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEventModalTab("horario")}
+                  className={`pb-2.5 transition-colors relative cursor-pointer ${
+                    eventModalTab === "horario" ? "text-[#0055ff]" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  Encontrar um horário
+                  {eventModalTab === "horario" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0055ff] rounded-full" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEventModalTab("materiais")}
+                  className={`pb-2.5 transition-colors relative flex items-center gap-1.5 cursor-pointer ${
+                    eventModalTab === "materiais" ? "text-[#0055ff]" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <span>Materiais & Artes</span>
+                  {formArtesUrls.filter(Boolean).length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-blue-100 text-[#0055ff] text-[9px] font-bold flex items-center justify-center">
+                      {formArtesUrls.filter(Boolean).length}
+                    </span>
+                  )}
+                  {eventModalTab === "materiais" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0055ff] rounded-full" />
+                  )}
+                </button>
+              </div>
+
+              {/* Tab 1: Detalhes do Evento (Google 2-column layout) */}
+              {eventModalTab === "detalhes" && (
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_330px] gap-8 items-start">
+                  {/* Left Column: Event details */}
+                  <div className="space-y-4">
+                    {/* Row 1: Meet / Video Conferência */}
+                    <div className="flex items-start gap-3.5">
+                      <div className="pt-2 text-slate-400 shrink-0">
+                        <Video size={18} />
+                      </div>
+                      <div className="flex-1">
+                        {!showVideoInput && !formYoutubeUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowVideoInput(true)}
+                            className="h-9 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#0055ff] text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
+                          >
+                            <Plus size={13} /> Adicionar videoconferência ou transmissão ao vivo
+                          </button>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <div className="relative">
+                              <Input
+                                value={formYoutubeUrl}
+                                onChange={(e) => setFormYoutubeUrl(e.target.value)}
+                                placeholder="Link da transmissão (YouTube Live, Google Meet, URL)..."
+                                className="h-9 text-xs bg-slate-50 border-slate-200 rounded-xl pr-8"
+                              />
+                              {formYoutubeUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => setFormYoutubeUrl("")}
+                                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                >
+                                  <X size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
-                      <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                          <SelectValue placeholder="Selecione o programa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {programas
-                            .filter((p) => formEstudioFilter === "todos" || p.estudio === formEstudioFilter)
-                            .map((p) => (
+
+                    {/* Row 2: Local */}
+                    <div className="flex items-center gap-3.5">
+                      <div className="text-slate-400 shrink-0">
+                        <MapPin size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <Input
+                          value={formLocal}
+                          onChange={(e) => setFormLocal(e.target.value)}
+                          placeholder="Adicionar local (ex: Estúdio A, Externa, Auditório...)"
+                          className="h-9 text-xs bg-slate-50 border-slate-200 rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 3: Notificação */}
+                    <div className="flex items-center gap-3.5">
+                      <div className="text-slate-400 shrink-0">
+                        <Bell size={18} />
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-slate-700 font-medium">Notificação</span>
+                        <input
+                          type="number"
+                          value={formNotificacaoTempo}
+                          onChange={(e) => setFormNotificacaoTempo(e.target.value)}
+                          className="w-14 h-8 text-center text-xs font-semibold bg-slate-100 border border-slate-200 rounded-lg outline-none focus:border-[#0055ff]"
+                        />
+                        <span className="text-xs text-slate-600">minutos antes</span>
+                      </div>
+                    </div>
+
+                    {/* Row 4: Agenda / Programa + Dot Color */}
+                    <div className="flex items-center gap-3.5">
+                      <div className="text-slate-400 shrink-0">
+                        <CalendarIcon size={18} />
+                      </div>
+                      <div className="flex items-center gap-3 flex-1 flex-wrap">
+                        <Select
+                          value={formProgramaId}
+                          onValueChange={(val) => {
+                            setFormProgramaId(val);
+                            const prog = programas.find(p => p.id === val);
+                            if (prog && !formTitulo.trim()) {
+                              setFormTitulo(prog.nome);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-9 text-xs font-semibold bg-slate-50 border-slate-200 rounded-xl min-w-[200px]">
+                            <SelectValue placeholder="Selecione a Agenda / Programa" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white">
+                            {programas.map((p) => (
                               <SelectItem key={p.id} value={p.id}>
-                                {p.nome} ({p.horario_inicio} - {p.horario_fim})
+                                {p.nome} {p.estudio ? `(${p.estudio})` : ""}
                               </SelectItem>
                             ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Status</Label>
-                      <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="Status do evento">
-                        {statusOptions.map((s) => {
-                          const active = formStatus === s.value;
-                          return (
+                          </SelectContent>
+                        </Select>
+
+                        {/* Color Picker Dot */}
+                        <div className="flex items-center gap-1.5">
+                          {[
+                            { color: "#0055ff", label: "Azul" },
+                            { color: "#ef4444", label: "Vermelho" },
+                            { color: "#10b981", label: "Verde" },
+                            { color: "#8b5cf6", label: "Roxo" },
+                            { color: "#f59e0b", label: "Amarelo" },
+                            { color: "#00BFF0", label: "Ciano" },
+                          ].map((c) => (
                             <button
-                              key={s.value}
+                              key={c.color}
                               type="button"
-                              role="radio"
-                              aria-checked={active}
-                              onClick={() => setFormStatus(s.value)}
-                              className="relative flex items-center gap-1.5 h-[18px] px-2 py-0 rounded-lg text-[9.5px] font-bold uppercase tracking-wider transition-all overflow-hidden"
-                              style={{
-                                minHeight: "18px",
-                                height: "19px",
-                                border: `1.5px solid ${active ? s.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"}`,
-                                background: active
-                                  ? `linear-gradient(135deg, ${s.color} 0%, color-mix(in srgb, ${s.color} 82%, black) 100%)`
-                                  : "#f8faff",
-                                color: active ? "#ffffff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)",
-                                boxShadow: active
-                                  ? `0 3px 10px color-mix(in srgb, ${s.color} 35%, transparent)`
-                                  : "0 1px 2px rgba(10,37,64,0.04)",
-                                letterSpacing: "0.06em",
-                              }}
+                              onClick={() => setSelectedEventColor(c.color)}
+                              className={`w-5 h-5 rounded-full transition-transform cursor-pointer ${
+                                selectedEventColor === c.color ? "scale-125 ring-2 ring-offset-2 ring-slate-400" : "opacity-80 hover:opacity-100"
+                              }`}
+                              style={{ backgroundColor: c.color }}
+                              title={c.label}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row 5: Visibilidade / Tipo do Evento (Ao Vivo / Gravação) + Status */}
+                    <div className="flex items-center gap-3.5">
+                      <div className="text-slate-400 shrink-0">
+                        <Briefcase size={18} />
+                      </div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200">
+                          <button
+                            type="button"
+                            onClick={() => setFormTipoEvento("live")}
+                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+                              formTipoEvento === "live" ? "bg-white text-rose-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-rose-500" />
+                            AO VIVO
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormTipoEvento("gravacao")}
+                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+                              formTipoEvento === "gravacao" ? "bg-white text-purple-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-purple-500" />
+                            GRAVAÇÃO
+                          </button>
+                        </div>
+
+                        <Select value={formStatus} onValueChange={setFormStatus}>
+                          <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50 border-slate-200 rounded-xl w-[130px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white">
+                            <SelectItem value="ativo">Ativo</SelectItem>
+                            <SelectItem value="concluido">Concluído</SelectItem>
+                            <SelectItem value="cancelado">Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Row 6: Descrição com Toolbar */}
+                    <div className="flex items-start gap-3.5 pt-1">
+                      <div className="pt-2 text-slate-400 shrink-0">
+                        <AlignLeft size={18} />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 focus-within:bg-white focus-within:border-[#0055ff] transition-all">
+                          {/* Mini Formatting Toolbar */}
+                          <div className="px-3 py-1.5 border-b border-slate-200/80 bg-slate-100/70 flex items-center gap-1 text-slate-600">
+                            <button
+                              type="button"
+                              onClick={() => setFormDescricao(prev => prev + "**negrito** ")}
+                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center font-black text-xs cursor-pointer"
+                              title="Negrito"
                             >
-                              <span
-                                className="inline-block rounded-full shrink-0"
-                                style={{
-                                  width: 7,
-                                  height: 7,
-                                  backgroundColor: active ? "#ffffff" : s.color,
-                                  boxShadow: active ? "0 0 0 2px rgba(255,255,255,0.35)" : "none",
-                                }}
-                              />
-                              <span className="truncate">{s.label}</span>
+                              B
                             </button>
-                          );
-                        })}
+                            <button
+                              type="button"
+                              onClick={() => setFormDescricao(prev => prev + "*itálico* ")}
+                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center italic font-serif text-xs cursor-pointer"
+                              title="Itálico"
+                            >
+                              I
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormDescricao(prev => prev + "__sublinhado__ ")}
+                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center underline text-xs font-semibold cursor-pointer"
+                              title="Sublinhado"
+                            >
+                              U
+                            </button>
+                            <span className="w-px h-4 bg-slate-300 mx-1" />
+                            <button
+                              type="button"
+                              onClick={() => setFormDescricao(prev => prev + "\n• ")}
+                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center text-xs cursor-pointer"
+                              title="Lista com marcadores"
+                            >
+                              <List size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormDescricao(prev => prev + " [link](https://...) ")}
+                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center text-xs cursor-pointer"
+                              title="Inserir link"
+                            >
+                              <LinkIcon size={14} />
+                            </button>
+                          </div>
+
+                          <Textarea
+                            value={formDescricao}
+                            onChange={(e) => setFormDescricao(e.target.value)}
+                            placeholder="Adicionar uma descrição, pauta ou observações do evento..."
+                            rows={4}
+                            className="w-full text-xs p-3 bg-transparent border-0 shadow-none focus-visible:ring-0 resize-none"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {selectedPrograma && (
-                    <div className="space-y-3 -mt-2">
-                      <p className="text-[10px] px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                        ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                        {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
-                      </p>
-                      
-                      <div className="rounded-xl p-3 space-y-2.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
-                        <Label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>⏰ Horário deste evento especifico da agenda</Label>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-[8px] font-medium opacity-60 mb-1 block">Início</Label>
-                            <input
-                              type="time"
-                              value={formHorarioGravacao}
-                              onChange={(e) => setFormHorarioGravacao(e.target.value)}
-                              className="agenda-form-input h-8 w-full px-2 text-[11px]"
-                              style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "8px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-[8px] font-medium opacity-60 mb-1 block">Fim</Label>
-                            <input
-                              type="time"
-                              value={formHorarioGravacaoFim}
-                              onChange={(e) => setFormHorarioGravacaoFim(e.target.value)}
-                              className="agenda-form-input h-8 w-full px-2 text-[11px]"
-                              style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "8px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                  {/* Right Column: Convidados (Google Calendar Style) */}
+                  <div className="bg-slate-50/60 border border-slate-200/80 rounded-2xl p-5 space-y-4">
+                    <div className="border-b border-slate-200 pb-2 flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#002132]">Convidados</span>
+                      <span className="text-[11px] font-semibold text-slate-400">
+                        {formParticipantes.filter(p => p.nome.trim()).length} adicionados
+                      </span>
                     </div>
-                  )}
 
-                  {/* Tipo (cards visuais AO VIVO / GRAVAÇÃO) */}
-                  <div>
-                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tipo do evento</Label>
-                    <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Tipo do evento">
-                      {[
-                        { value: "live", label: "AO VIVO", desc: "Transmissão em tempo real", accent: "#ef4444", icon: "🔴", pulse: true },
-                        { value: "gravacao", label: "GRAVAÇÃO", desc: "Conteúdo pré-produzido", accent: "#8b5cf6", icon: "🎬", pulse: false },
-                      ].map((opt) => {
-                        const active = formTipoEvento === opt.value;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={active}
-                            onClick={() => setFormTipoEvento(opt.value)}
-                            className="relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-left transition-all overflow-hidden group"
-                            style={{
-                              border: `2px solid ${active ? opt.accent : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"}`,
-                              backgroundColor: active
-                                ? `color-mix(in srgb, ${opt.accent} 12%, #ffffff)`
-                                : "#f8faff",
-                              boxShadow: active
-                                ? `0 6px 18px color-mix(in srgb, ${opt.accent} 25%, transparent)`
-                                : "0 1px 2px rgba(10,37,64,0.04)",
-                              transform: active ? "translateY(-1px)" : "translateY(0)",
-                            }}
-                          >
-                            {/* Radio dot */}
-                            <span
-                              className="relative flex items-center justify-center rounded-full shrink-0"
-                              style={{
-                                width: 20,
-                                height: 20,
-                                border: `2px solid ${active ? opt.accent : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)"}`,
-                                backgroundColor: active ? opt.accent : "transparent",
-                              }}
-                            >
-                              {active && (
-                                <span className="rounded-full" style={{ width: 8, height: 8, backgroundColor: "#ffffff" }} />
-                              )}
-                              {opt.pulse && active && (
-                                <span
-                                  className="absolute inset-0 rounded-full animate-ping"
-                                  style={{ backgroundColor: opt.accent, opacity: 0.4 }}
-                                />
-                              )}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <div
-                                className="text-[12px] font-black uppercase tracking-wider leading-none"
-                                style={{
-                                  color: active ? opt.accent : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)",
-                                  letterSpacing: "0.08em",
+                    {/* Guest search/add input */}
+                    <div className="relative">
+                      <Input
+                        value={guestSearchInput}
+                        onChange={(e) => setGuestSearchInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && guestSearchInput.trim()) {
+                            e.preventDefault();
+                            setFormParticipantes(prev => [...prev.filter(p => p.nome.trim()), { nome: guestSearchInput.trim(), instagram: "" }]);
+                            setGuestSearchInput("");
+                          }
+                        }}
+                        placeholder="Adicionar convidados..."
+                        className="h-9 text-xs bg-white border-slate-200 rounded-xl"
+                      />
+
+                      {/* Dropdown suggestions from apresentadores */}
+                      {guestSearchInput.trim() && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto p-1 space-y-0.5">
+                          {apresentadores
+                            .filter(a => a.nome.toLowerCase().includes(guestSearchInput.toLowerCase()))
+                            .map(a => (
+                              <button
+                                key={a.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormParticipantes(prev => [...prev.filter(p => p.nome.trim()), { nome: a.nome, instagram: a.instagram || "" }]);
+                                  setGuestSearchInput("");
                                 }}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100 flex items-center justify-between cursor-pointer"
                               >
-                                {opt.label}
+                                <span className="font-semibold text-slate-800">{a.nome}</span>
+                                {a.instagram && <span className="text-[10px] text-slate-400">@{a.instagram}</span>}
+                              </button>
+                            ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormParticipantes(prev => [...prev.filter(p => p.nome.trim()), { nome: guestSearchInput.trim(), instagram: "" }]);
+                              setGuestSearchInput("");
+                            }}
+                            className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-blue-50 text-[#0055ff] font-bold cursor-pointer"
+                          >
+                            + Convidar "{guestSearchInput.trim()}"
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Guest Chips List */}
+                    <div className="space-y-1.5 max-h-44 overflow-y-auto">
+                      {formParticipantes.filter(p => p.nome.trim()).length === 0 ? (
+                        <p className="text-[11px] text-slate-400 py-2 text-center">Nenhum convidado adicionado ainda.</p>
+                      ) : (
+                        formParticipantes.filter(p => p.nome.trim()).map((part, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 shadow-sm"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-6 h-6 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                                {part.nome.charAt(0).toUpperCase()}
                               </div>
-                              <div
-                                className="text-[10px] mt-0.5 font-medium truncate"
-                                style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
-                              >
-                                {opt.desc}
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-slate-800 truncate">{part.nome}</p>
+                                {part.instagram && <p className="text-[9px] text-slate-400 truncate">@{part.instagram}</p>}
                               </div>
                             </div>
-                            <span className="text-lg leading-none opacity-80 shrink-0" aria-hidden>{opt.icon}</span>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormParticipantes(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Guest Permissions */}
+                    <div className="pt-2 border-t border-slate-200 space-y-2">
+                      <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Permissões de convidados</p>
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={guestPermModificar}
+                          onChange={(e) => setGuestPermModificar(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff]"
+                        />
+                        <span>Modificar evento</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={guestPermConvidar}
+                          onChange={(e) => setGuestPermConvidar(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff]"
+                        />
+                        <span>Convidar outras pessoas</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={guestPermVerLista}
+                          onChange={(e) => setGuestPermVerLista(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff]"
+                        />
+                        <span>Ver lista de convidados</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Encontrar um horário */}
+              {eventModalTab === "horario" && (
+                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-[#002132]">Programação para {format(formData ?? selectedDate ?? new Date(), "dd 'de' MMMM", { locale: ptBR })}</h4>
+                      <p className="text-xs text-slate-500">Confira a disponibilidade dos horários e estúdios para este dia</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto">
+                    {programas.map((prog) => (
+                      <div key={prog.id} className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">{prog.nome}</p>
+                          <p className="text-[10px] text-slate-400">{prog.estudio || "Estúdio Geral"}</p>
+                        </div>
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                          {prog.horario_inicio} - {prog.horario_fim}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Materiais & Artes */}
+              {eventModalTab === "materiais" && (
+                <div className="space-y-6">
+                  {/* Upload Artes Slots */}
+                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-[#002132]">Artes do Evento (Thumbnails & Redes)</h4>
+                        <p className="text-[11px] text-slate-500">Envie imagens nos formatos recomendados para divulgação</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { label: "16:9 YouTube / TV", slotIdx: 0 },
+                        { label: "1:1 Feed Instagram", slotIdx: 1 },
+                        { label: "9:16 Stories / Reels", slotIdx: 2 },
+                        { label: "Banner Geral", slotIdx: 3 },
+                      ].map(({ label, slotIdx }) => {
+                        const url = formArtesUrls[slotIdx];
+                        return (
+                          <div key={slotIdx} className="space-y-1.5 text-center">
+                            {url ? (
+                              <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group bg-slate-100">
+                                <img src={url} alt={label} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => removeArte(slotIdx)}
+                                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="aspect-video rounded-xl border-2 border-dashed border-slate-300 hover:border-[#0055ff] bg-white flex flex-col items-center justify-center cursor-pointer p-2 hover:bg-blue-50/50 transition-all">
+                                <Upload size={16} className="text-slate-400 mb-1" />
+                                <span className="text-[10px] font-bold text-slate-600">Upload</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleUploadArte(file, slotIdx);
+                                    e.target.value = "";
+                                  }}
+                                />
+                              </label>
+                            )}
+                            <span className="text-[10px] font-semibold text-slate-500 block">{label}</span>
+                          </div>
                         );
                       })}
                     </div>
                   </div>
 
-                  {/* Recorrência (linha inteira do form) */}
-                  <div>
-                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
-                    <Select value={formRecorrencia} onValueChange={handleRecorrenciaChange}>
-                      <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unico">Somente este dia</SelectItem>
-                        <SelectItem value="semanal">Toda semana</SelectItem>
-                        <SelectItem value="mensal">Todo mês</SelectItem>
-                        <SelectItem value="programa_semanal">Programa semanal (seg a sex)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {formRecorrencia !== "unico" && (formPeriodoInicio || formPeriodoFim) && (
-                      <button
-                        type="button"
-                        onClick={() => { setPendingRecorrencia(formRecorrencia); setPeriodoDialogOpen(true); }}
-                        className="mt-1.5 text-[10px] font-semibold underline decoration-dotted"
-                        style={{ color: NEXO_CYAN }}
-                      >
-                        Período: {formPeriodoInicio ? format(new Date(formPeriodoInicio + "T12:00:00"), "dd/MM/yy") : "?"} → {formPeriodoFim ? format(new Date(formPeriodoFim + "T12:00:00"), "dd/MM/yy") : "?"} (editar)
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Descrição — abaixo da Recorrência */}
-                  <div>
-                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Descrição</Label>
-                    <textarea
-                      value={formDescricao}
-                      onChange={(e) => setFormDescricao(e.target.value)}
-                      placeholder="Breve descrição do evento..."
+                  {/* Anotações da Edição */}
+                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#002132]">Anotações para a Produção / Edição</h4>
+                      <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={formEdicaoConcluida}
+                          onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
+                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span>Edição Concluída</span>
+                      </label>
+                    </div>
+                    <Textarea
+                      value={formEdicaoNotas}
+                      onChange={(e) => setFormEdicaoNotas(e.target.value)}
+                      placeholder="Instruções para o editor, cortes, pauta ou observações internas..."
                       rows={3}
-                      className="agenda-form-input w-full resize-none text-xs px-3 py-2.5"
-                      style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                      className="bg-white border-slate-200 rounded-xl text-xs"
                     />
                   </div>
-                </div>
 
-
-
-                {/* LEFT — calendar card */}
-                <div className="lg:order-1">
-
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Data do Evento</Label>
-                  <div
-                    className="agenda-form-calendar rounded-2xl overflow-hidden"
-                    style={{
-                      border: "1px solid color-mix(in srgb, var(--layout-accent-color, #00BFF0) 25%, transparent)",
-                      backgroundColor: "#ffffff",
-                      boxShadow: "0 8px 24px rgba(10,37,64,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
-                    }}
-                  >
-                    {/* Selected-date banner */}
-                    <div
-                      className="px-4 py-3"
-                      style={{
-                        background: "linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%)",
-                        color: "#ffffff",
-                      }}
+                  {/* Criar Roteiro Express (apenas se tiver programa selecionado) */}
+                  {formProgramaId && (
+                    <button
+                      type="button"
+                      onClick={handleCreateRoteiroFromEvento}
+                      disabled={creatingRoteiro}
+                      className="w-full h-10 text-xs font-semibold rounded-2xl transition-all border border-blue-200 text-[#0055ff] bg-blue-50/50 hover:bg-blue-50 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <div className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-80">Selecionado</div>
-                      <div className="text-sm font-black mt-0.5 capitalize leading-tight">
-                        {formData
-                          ? format(formData, "EEEE, dd 'de' MMMM", { locale: ptBR })
-                          : "Escolha uma data"}
-                      </div>
-                      {formData && (
-                        <div className="text-[10px] font-semibold opacity-85 mt-0.5">
-                          {format(formData, "yyyy", { locale: ptBR })}
-                        </div>
-                      )}
-                    </div>
-                    <Calendar
-                      mode="single"
-                      selected={formData}
-                      onSelect={setFormData}
-                      className={cn("p-3 pointer-events-auto w-full")}
-                      style={{ backgroundColor: "transparent" }}
-                      locale={ptBR}
-                    />
-                  </div>
-                </div>
-              </div>
-
-
-
-
-
-
-
-
-
-              {/* Live event extras: YouTube, Participants, Artwork uploads */}
-              {formTipoEvento === "live" && (
-                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #E2E8F0", boxShadow: "0 8px 24px -12px rgba(10, 37, 64, 0.12)" }}>
-                  {/* Header dark bar */}
-                  <div className="flex items-center justify-between gap-3 px-5 py-3.5" style={{ background: "linear-gradient(135deg, #0A2540 0%, #12365b 100%)" }}>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.14)", border: "1px solid rgba(239,68,68,0.35)" }}>
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-                        </span>
-                        <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-red-400">Ao Vivo</span>
-                      </div>
-                      <h3 className="text-white font-bold text-[13px] uppercase tracking-wide" style={{ fontFamily: "'Montserrat', sans-serif" }}>Configurações do Evento</h3>
-                    </div>
-                  </div>
-
-                  <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 bg-white">
-                    {/* LEFT column: YouTube + Participantes + WhatsApp */}
-                    <div className="lg:col-span-7 space-y-5">
-                      {/* YouTube section card */}
-                      <section className="rounded-xl p-4" style={{ backgroundColor: "rgba(214, 244, 251, 0.35)", border: "1px solid rgba(0, 191, 240, 0.2)" }}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="p-1.5 rounded-md" style={{ backgroundColor: "#ffffff" }}>
-                            <Youtube size={14} style={{ color: "#00BFF0" }} />
-                          </div>
-                          <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Transmissão YouTube</h4>
-                        </div>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="block text-[9px] font-bold uppercase tracking-wider mb-1 ml-0.5" style={{ color: "#64748B" }}>Link do YouTube</label>
-                            <Input
-                              value={formYoutubeUrl}
-                              onChange={(e) => setFormYoutubeUrl(e.target.value)}
-                              placeholder="https://youtube.com/watch?v=..."
-                              className="agenda-form-input h-10 text-xs"
-                              style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
-                            />
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
-                            <div>
-                              <div className="flex items-center justify-between mb-1 ml-0.5">
-                                <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#64748B" }}>Título da Live</label>
-                                <span className="text-[9px] font-mono" style={{ color: formYoutubeTitulo.length >= 100 ? "#ef4444" : "#94A3B8" }}>
-                                  {formYoutubeTitulo.length}/100
-                                </span>
-                              </div>
-                              <Input
-                                value={formYoutubeTitulo}
-                                onChange={(e) => setFormYoutubeTitulo(e.target.value.slice(0, 100))}
-                                maxLength={100}
-                                placeholder="Ex: Programa ao vivo desta semana"
-                                className="agenda-form-input h-10 text-xs"
-                                style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-[9px] font-bold uppercase tracking-wider mb-1 ml-0.5" style={{ color: "#64748B" }}>Descrição do Vídeo</label>
-                            <Textarea
-                              value={formYoutubeDescricao}
-                              onChange={(e) => setFormYoutubeDescricao(e.target.value)}
-                              placeholder="Descrição que aparecerá no YouTube..."
-                              className="agenda-form-input min-h-[80px] text-xs"
-                              style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
-                            />
-                          </div>
-                        </div>
-                      </section>
-
-                      {/* Participantes card */}
-                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(0, 191, 240, 0.12)" }}>
-                              <Users size={14} style={{ color: "#00BFF0" }} />
-                            </div>
-                            <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Participantes</h4>
-                          </div>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                type="button"
-                                size="sm"
-                                className="h-7 text-[10px] gap-1 px-3 font-bold uppercase tracking-wider hover:opacity-90"
-                                style={{ backgroundColor: "#00BFF0", color: "#ffffff", borderRadius: "8px" }}
-                              >
-                                <Plus size={12} /> Adicionar
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-72 p-2 border z-[60]"
-                              align="end"
-                              style={{
-                                background: "var(--layout-widget-bg, hsl(var(--card)))",
-                                color: "var(--layout-widget-text, hsl(var(--card-foreground)))",
-                                borderColor: "var(--layout-border-color, hsl(var(--border)))",
-                              }}
-                            >
-                              <ParticipanteSearchPicker
-                                apresentadores={apresentadores}
-                                existingNames={formParticipantes.map(p => p.nome.trim().toLowerCase()).filter(Boolean)}
-                                onSelect={(a) => {
-                                  setFormParticipantes(prev => {
-                                    const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
-                                    const newItem = { nome: a.nome, instagram: a.instagram || "" };
-                                    if (empty >= 0) {
-                                      const next = [...prev];
-                                      next[empty] = newItem;
-                                      return next;
-                                    }
-                                    return [...prev, newItem];
-                                  });
-                                }}
-                                onAddBlank={addParticipante}
-                                onRegisterGuest={async (nome, instagram, whatsapp) => {
-                                  if (!user) return;
-                                  const cleanInsta = instagram.replace(/^@/, "").trim();
-                                  const cleanWhats = whatsapp && whatsapp !== "+55" ? whatsapp : "";
-                                  const { data, error } = await supabase
-                                    .from("apresentadores")
-                                    .insert({ user_id: user.id, nome, instagram: cleanInsta, whatsapp: cleanWhats, cargo: "Convidado", ativo: true })
-                                    .select("id, nome, instagram, cargo, whatsapp")
-                                    .single();
-                                  if (error || !data) {
-                                    toast({ title: "Erro ao cadastrar convidado", description: error?.message, variant: "destructive" });
-                                    return;
-                                  }
-                                  setApresentadores(prev => [...prev, data as Apresentador]);
-                                  setFormParticipantes(prev => {
-                                    const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
-                                    const newItem = { nome: data.nome, instagram: data.instagram || "" };
-                                    if (empty >= 0) {
-                                      const next = [...prev];
-                                      next[empty] = newItem;
-                                      return next;
-                                    }
-                                    return [...prev, newItem];
-                                  });
-                                  toast({ title: "Convidado cadastrado!" });
-                                }}
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        <div className="space-y-2">
-                          {formParticipantes.map((p, idx) => (
-                            <div key={idx} className="flex gap-2 items-center">
-                              <div className="flex-1 grid grid-cols-2 gap-2">
-                                <Input
-                                  value={p.nome}
-                                  onChange={(e) => updateParticipante(idx, "nome", e.target.value)}
-                                  placeholder="Nome"
-                                  disabled={p.obrigatorio}
-                                  className="agenda-form-input h-9 text-xs"
-                                  style={{ borderColor: p.obrigatorio ? "rgba(239,68,68,0.3)" : "#E2E8F0", borderRadius: "10px", backgroundColor: p.obrigatorio ? "rgba(239,68,68,0.06)" : "#ffffff", color: "#0A2540" }}
-                                />
-                                <Input
-                                  value={p.instagram}
-                                  onChange={(e) => updateParticipante(idx, "instagram", e.target.value)}
-                                  placeholder="@instagram"
-                                  className="agenda-form-input h-9 text-xs"
-                                  style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
-                                />
-                              </div>
-                              {p.obrigatorio ? (
-                                <span className="text-[9px] font-bold px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(239,68,68,0.12)", color: "#ef4444" }} title="Apresentador do programa (obrigatório)">FIXO</span>
-                              ) : (
-                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeParticipante(idx)}>
-                                  <Trash2 size={14} className="text-destructive" />
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-[9px] mt-2 px-0.5" style={{ color: "#94A3B8" }}>
-                          Apresentadores marcados com <b style={{ color: "#ef4444" }}>FIXO</b> são obrigatórios e adicionados automaticamente do cadastro do programa.
-                        </p>
-                      </section>
-
-                      {/* WhatsApp invite card */}
-                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(37, 211, 102, 0.12)" }}>
-                            <MessageCircle size={14} style={{ color: "#25D366" }} />
-                          </div>
-                          <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Convite via WhatsApp</h4>
-                        </div>
-                        <p className="text-[10px] leading-relaxed mb-2" style={{ color: "#64748B" }}>
-                          Envia para cada participante a <b style={{ color: "#0A2540" }}>imagem do FEED</b> + mensagem com link do YouTube.
-                        </p>
-                        <div className="space-y-1.5">
-                          {formParticipantes.filter(p => p.nome.trim()).length === 0 ? (
-                            <p className="text-[10px] italic" style={{ color: "#94A3B8" }}>Adicione participantes acima.</p>
-                          ) : (
-                            formParticipantes.filter(p => p.nome.trim()).map((p, idx) => {
-                              const apre = apresentadores.find(a => a.nome.trim().toLowerCase() === p.nome.trim().toLowerCase());
-                              const whatsRaw = (apre?.whatsapp || "").replace(/\D/g, "");
-                              const normalizedPhone = whatsRaw ? (whatsRaw.startsWith("55") ? whatsRaw : `55${whatsRaw}`) : "";
-                              const hasWhats = normalizedPhone.length >= 12;
-                              const linkYt = formYoutubeUrl.trim();
-                              const feedUrl = formArtesUrls[1] || "";
-                              const participantKey = `${idx}-${normalizedPhone || p.nome}`;
-                              const isSending = sendingWhatsAppFor === participantKey;
-                              const sendWhats = async () => {
-                                if (!linkYt) {
-                                  toast({ title: "Link do YouTube vazio", description: "Preencha o link do YouTube acima.", variant: "destructive" });
-                                  return;
-                                }
-                                if (!feedUrl) {
-                                  toast({ title: "Imagem do FEED ausente", description: "Faça upload da arte do FEED para enviar a foto no WhatsApp.", variant: "destructive" });
-                                  return;
-                                }
-                                if (!hasWhats) {
-                                  toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome} para enviar a imagem com a mensagem.`, variant: "destructive" });
-                                  return;
-                                }
-
-                                const horarioLive = (selectedPrograma?.horario_inicio || "").slice(0, 5);
-                                const linhaHoje = horarioLive ? `\n\nHoje ${horarioLive}` : "";
-                                const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}${linhaHoje}`;
-
-                                setSendingWhatsAppFor(participantKey);
-                                try {
-                                  const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-                                    body: {
-                                      contatos: [{ nome: p.nome, whatsapp: normalizedPhone }],
-                                      mensagem: text,
-                                      mediaUrl: feedUrl,
-                                    },
-                                  });
-
-                                  if (error) throw error;
-                                  if (!data?.ok) {
-                                    throw new Error(data?.detalhes?.[0]?.error || data?.error || "Falha ao enviar a mensagem.");
-                                  }
-
-                                  toast({ title: "Convite enviado", description: `A arte do FEED foi enviada para ${p.nome} com a mensagem.` });
-                                } catch (err) {
-                                  console.error("Erro ao enviar convite via WhatsApp:", err);
-                                  toast({
-                                    title: "Erro ao enviar WhatsApp",
-                                    description: err instanceof Error ? err.message : "Não foi possível enviar a imagem com a mensagem.",
-                                    variant: "destructive",
-                                  });
-                                } finally {
-                                  setSendingWhatsAppFor(null);
-                                }
-                              };
-                              return (
-                                <div
-                                  key={idx}
-                                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
-                                  style={{ backgroundColor: "#F8FAFC", border: "1px solid #EEF2F6" }}
-                                >
-                                  {feedUrl ? (
-                                    <img src={feedUrl} alt="feed" className="w-8 h-8 rounded object-cover shrink-0" />
-                                  ) : (
-                                    <div className="w-8 h-8 rounded shrink-0 flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: "#00BFF0" }}>FEED</div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-xs font-semibold truncate" style={{ color: "#0A2540" }}>{p.nome}</div>
-                                    <div className="text-[10px] truncate" style={{ color: hasWhats ? "#64748B" : "#ef4444" }}>
-                                      {hasWhats ? `+${normalizedPhone}` : "Cadastre o WhatsApp do participante"}
-                                    </div>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={() => {
-                                      if (!hasWhats) {
-                                        toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome}.`, variant: "destructive" });
-                                        return;
-                                      }
-                                      const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
-                                      window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(text)}`, "_blank");
-                                    }}
-                                    className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
-                                    style={{ backgroundColor: "#25D366", color: "#fff" }}
-                                    title="Abrir no WhatsApp"
-                                  >
-                                    <MessageCircle size={11} />
-                                    WhatsApp
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={sendWhats}
-                                    disabled={isSending}
-                                    className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
-                                    style={{ backgroundColor: "#00BFF0", color: "#ffffff" }}
-                                    title="Enviar via API (com imagem)"
-                                  >
-                                    {isSending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-                                    {isSending ? "Enviando" : "API"}
-                                  </Button>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                        {!formArtesUrls[1] && (
-                          <p className="text-[9px] italic mt-2" style={{ color: "#f59e0b" }}>
-                            ⚠ Faça upload da imagem do FEED abaixo para incluí-la na mensagem.
-                          </p>
-                        )}
-                      </section>
-                    </div>
-
-                    {/* RIGHT column: Artes + Anotações */}
-                    <div className="lg:col-span-5 space-y-5">
-                      {/* Artes do Evento */}
-                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(0, 191, 240, 0.12)" }}>
-                              <ImageIcon size={14} style={{ color: "#00BFF0" }} />
-                            </div>
-                            <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Artes do Evento</h4>
-                          </div>
-                          <span className="text-[9px] font-semibold" style={{ color: "#94A3B8" }}>PNG / JPG</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          {["THUMB", "FEED", "STORIE", "CAPA AUDIO", "INSERT LIVE"].map((slotLabel, slotIdx) => {
-                            const url = formArtesUrls[slotIdx] || "";
-                            return (
-                              <div key={slotIdx} className="flex flex-col items-center gap-1">
-                                {url ? (
-                                  <div className="relative w-full aspect-square rounded-lg overflow-hidden group" style={{ border: "1px solid rgba(0, 191, 240, 0.25)" }}>
-                                    <img src={url} alt={slotLabel} className="w-full h-full object-cover" />
-                                    <button
-                                      type="button"
-                                      onClick={async () => {
-                                        try {
-                                          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-                                            const i = new Image();
-                                            i.crossOrigin = "anonymous";
-                                            i.onload = () => resolve(i);
-                                            i.onerror = reject;
-                                            i.src = url;
-                                          });
-                                          const canvas = document.createElement("canvas");
-                                          canvas.width = img.naturalWidth;
-                                          canvas.height = img.naturalHeight;
-                                          canvas.getContext("2d")?.drawImage(img, 0, 0);
-                                          const pngBlob: Blob = await new Promise((resolve) =>
-                                            canvas.toBlob((b) => resolve(b!), "image/png")
-                                          );
-                                          const blobUrl = URL.createObjectURL(pngBlob);
-                                          const a = document.createElement("a");
-                                          a.href = blobUrl;
-                                          a.download = `${slotLabel.toLowerCase().replace(/\s+/g, "-")}.png`;
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          document.body.removeChild(a);
-                                          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                                        } catch {
-                                          window.open(url, "_blank");
-                                        }
-                                      }}
-                                      title="Download original"
-                                      className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                      style={{ backgroundColor: "#00BFF0", color: "#fff" }}
-                                    >
-                                      <Download size={12} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => removeArte(slotIdx)}
-                                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                      style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
-                                    >
-                                      <X size={12} />
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <label
-                                    className="w-full aspect-square rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all hover:border-[#00BFF0] hover:bg-[rgba(0,191,240,0.06)]"
-                                    style={{
-                                      border: "1.5px dashed #CBD5E1",
-                                      backgroundColor: "#F8FAFC",
-                                      color: "#00BFF0",
-                                      opacity: uploadingArte ? 0.5 : 1,
-                                    }}
-                                  >
-                                    <Upload size={14} />
-                                    <span className="text-[8px] font-bold uppercase tracking-wider">{uploadingArte ? "..." : "Upload"}</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      className="hidden"
-                                      disabled={uploadingArte}
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) handleUploadArte(file, slotIdx);
-                                        e.target.value = "";
-                                      }}
-                                    />
-                                  </label>
-                                )}
-                                <span className="text-[8px] font-bold uppercase tracking-wider text-center leading-tight" style={{ color: "#64748B" }}>
-                                  {slotLabel}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </section>
-
-                      {/* Anotações de Edição */}
-                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(250, 204, 21, 0.18)" }}>
-                              <span className="text-[13px] leading-none">✂️</span>
-                            </div>
-                            <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Anotações da Edição</h4>
-                          </div>
-                          <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              checked={formEdicaoConcluida}
-                              onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
-                              className="w-3.5 h-3.5 rounded cursor-pointer"
-                              style={{ accentColor: "#10b981" }}
-                            />
-                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: formEdicaoConcluida ? "#10b981" : "#94A3B8" }}>
-                              {formEdicaoConcluida ? "✓ Concluída" : "Pendente"}
-                            </span>
-                          </label>
-                        </div>
-                        <div className="rounded-lg p-3" style={{ backgroundColor: "#FEFCE8", borderLeft: "4px solid #FACC15" }}>
-                          <Textarea
-                            value={formEdicaoNotas}
-                            onChange={(e) => setFormEdicaoNotas(e.target.value)}
-                            placeholder="Instruções para o editor, cortes, destaques, observações internas..."
-                            className="min-h-[180px] text-xs bg-transparent border-0 shadow-none focus-visible:ring-0 resize-none p-0"
-                            style={{ color: "#713F12" }}
-                          />
-                        </div>
-                      </section>
-                    </div>
-                  </div>
+                      {creatingRoteiro ? "Criando…" : (roteiroJaExiste ? "📝 Abrir/editar roteiro já existente" : "📝 Deseja criar/agendar o roteiro desse programa?")}
+                    </button>
+                  )}
                 </div>
               )}
-
-              {/* Criar Roteiro Express (apenas para gravação de podcast) */}
-              {formTipoEvento === "gravacao" && (
-                <button
-                  type="button"
-                  onClick={handleCreateRoteiroFromEvento}
-                  disabled={!formProgramaId || !formData || creatingRoteiro}
-                  className="w-full h-10 text-xs font-semibold rounded-[12px] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{
-                    border: "1.5px dashed color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent)",
-                    color: "var(--layout-accent-color, #2563eb)",
-                    backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 6%, transparent)",
-                  }}
-                >
-                  {creatingRoteiro ? "Criando…" : (roteiroJaExiste ? "📝 Abrir/editar roteiro já existente" : "📝 Deseja criar/agendar o roteiro desse programa?")}
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={!formProgramaId || savingEvent}
-                className="w-full h-11 rounded-full text-sm font-bold uppercase tracking-wider bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
-              >
-                {savingEvent ? (
-                  <>
-                    <Loader2 className="animate-spin" size={17} />
-                    Salvando seu evento
-                  </>
-                ) : (
-                  editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"
-                )}
-              </button>
             </div>
           </DialogContent>
         </Dialog>
