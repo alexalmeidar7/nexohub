@@ -827,20 +827,20 @@ export default function ClientesPage() {
         </div>
       </section>
 
-      {/* 2. Registered Clients Section (Centered, Clean Flat Modern Style) */}
-      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-4">
+      {/* 2. Registered Clients Section (Centered, Clean Flat Modern Style com Tons de Azul) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.03)] border border-[#d0deff]/80 space-y-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2.5 text-[#002132]">
-            <div className="w-9 h-9 rounded-xl bg-[#14161a] flex items-center justify-center text-[#9FCA1D]">
+          <div className="flex items-center gap-2.5 text-[#011c5b]">
+            <div className="w-10 h-10 rounded-2xl bg-[#d0deff]/40 flex items-center justify-center text-[#011c5b] border border-[#d0deff]">
               <Building2 size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#002132]">
+              <h3 className="text-sm font-black uppercase tracking-wider text-[#011c5b]">
                 Clientes Cadastrados
               </h3>
-              <p className="text-xs text-slate-400">Total de contas corporativas da agência</p>
+              <p className="text-xs text-slate-500 font-medium">Total de contas corporativas da agência</p>
             </div>
-            <span className="text-xs font-bold bg-[#f1f5f9] text-slate-700 px-3 py-1 rounded-full ml-1">
+            <span className="text-xs font-black bg-[#d0deff]/30 text-[#011c5b] border border-[#d0deff] px-3 py-1 rounded-full ml-1">
               {filtrados.length}
             </span>
           </div>
@@ -851,7 +851,7 @@ export default function ClientesPage() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar razão social, nome empresarial, CNPJ, cidade..."
-              className="w-72 md:w-80 h-10 rounded-full bg-[#f8fafc] border border-slate-200/80 pl-10 pr-4 text-xs text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-[#0055ff] transition-all font-sans"
+              className="w-72 md:w-80 h-10 rounded-full bg-slate-50 border border-slate-200/80 pl-10 pr-4 text-xs text-[#011c5b] placeholder-slate-400 outline-none focus:bg-white focus:border-[#0055ff] transition-all font-sans"
             />
           </div>
         </div>
@@ -861,10 +861,10 @@ export default function ClientesPage() {
             Nenhum cliente encontrado.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-slate-100">
+          <div className="overflow-x-auto rounded-2xl border border-[#d0deff]/70 shadow-xs">
             <table className="w-full border-collapse text-xs font-sans">
               <thead>
-                <tr className="bg-[#14161a] text-white">
+                <tr className="bg-slate-50/90 text-[#011c5b] border-b border-[#d0deff]">
                   {[
                     "Razão Social / Nome Empresarial", 
                     "CNPJ", 
@@ -877,7 +877,7 @@ export default function ClientesPage() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className={`p-3 text-[10px] font-bold uppercase tracking-wider ${
+                      className={`p-3.5 text-[10px] font-black uppercase tracking-wider ${
                         h === "Ações" ? "text-right pr-4" : "text-left pl-4"
                       }`}
                     >

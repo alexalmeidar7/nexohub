@@ -482,40 +482,40 @@ export default function FinanceiroSuperAdminPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
-      {/* Top Header Section (Card Branco Moderno) */}
-      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
+      {/* Top Header Section (Card Branco com Variações de Azul) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+          <h2 className="text-base md:text-lg font-black tracking-wider text-[#011c5b] uppercase leading-tight">
             Gestão Financeira & Cobranças da Agência
           </h2>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
             Controle de assinaturas de produtos, disparo mensal automatizado e packs de serviços
           </p>
         </div>
 
         {/* Top Actions & Tabs */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center p-1.5 rounded-full bg-[#f8fafc] border border-slate-200/80">
+          <div className="flex items-center p-1.5 rounded-full bg-[#d0deff]/20 border border-[#d0deff]/60">
             <button
               onClick={() => setActiveTab("cobrancas")}
-              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-                activeTab === "cobrancas" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
+              className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === "cobrancas" ? "bg-[#0055ff] text-white shadow-[0_4px_12px_rgba(0,85,255,0.25)]" : "text-[#011c5b]/70 hover:text-[#011c5b] hover:bg-white/60"
               }`}
             >
               Assinaturas & Cobrança
             </button>
             <button
               onClick={() => setActiveTab("packs")}
-              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-                activeTab === "packs" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
+              className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === "packs" ? "bg-[#0055ff] text-white shadow-[0_4px_12px_rgba(0,85,255,0.25)]" : "text-[#011c5b]/70 hover:text-[#011c5b] hover:bg-white/60"
               }`}
             >
               Packs de Serviços
             </button>
             <button
               onClick={() => setActiveTab("config")}
-              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-                activeTab === "config" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
+              className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === "config" ? "bg-[#0055ff] text-white shadow-[0_4px_12px_rgba(0,85,255,0.25)]" : "text-[#011c5b]/70 hover:text-[#011c5b] hover:bg-white/60"
               }`}
             >
               Disparo Automático
@@ -527,10 +527,10 @@ export default function FinanceiroSuperAdminPage() {
       {/* BOTÃO CADASTRAR COBRANÇA - DIRETAMENTE ACIMA DO BOX RECEITA MENSAL */}
       <div className="flex flex-wrap items-center justify-between gap-4 px-1">
         <div className="flex items-center gap-2.5">
-          <span className="text-xs font-black tracking-wider text-[#002132] uppercase">
+          <span className="text-xs font-black tracking-wider text-[#011c5b] uppercase">
             Fluxo & Painel Financeiro
           </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[10px] font-extrabold text-[#0055ff] uppercase tracking-wider border border-blue-100">
+          <span className="px-2.5 py-0.5 rounded-full bg-[#d0deff]/30 text-[10px] font-extrabold text-[#011c5b] uppercase tracking-wider border border-[#d0deff]">
             Nexo Live
           </span>
         </div>
@@ -553,68 +553,72 @@ export default function FinanceiroSuperAdminPage() {
             });
             setIsNovaCobrancaOpen(true);
           }}
-          className="h-11 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+          className="h-11 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:shadow-[0_6px_20px_rgba(0,85,255,0.35)] active:scale-95 cursor-pointer"
         >
-          <Plus className="w-4 h-4 text-black stroke-[3]" /> Cadastrar Cobrança
+          <Plus className="w-4 h-4 text-white stroke-[3]" /> Cadastrar Cobrança
         </button>
       </div>
 
-      {/* Top Summary KPI Cards (Flat Dark Style) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
-          <div>
-            <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Receita Mensal (MRR)</div>
-            <div className="text-2xl font-bold mt-1 text-[#00BFF0]">
+      {/* Top Summary KPI Cards (Design Elegante com Tons de Azul #011c5b e #d0deff) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Receita Mensal MRR (Destaque Nobre em Azul Escuro #011c5b) */}
+        <div className="rounded-3xl bg-gradient-to-br from-[#011c5b] via-[#042878] to-[#0055ff] p-5 flex items-center justify-between text-white border border-[#011c5b] shadow-[0_8px_24px_rgba(1,28,91,0.18)] relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="text-[11px] text-[#d0deff] uppercase font-black tracking-wider">Receita Mensal (MRR)</div>
+            <div className="text-2xl font-black mt-1 text-white tracking-tight">
               R$ {kpis.mrr.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
-            <div className="text-[10px] text-white/40 mt-1">Total de assinaturas ativas</div>
+            <div className="text-[10px] text-[#d0deff]/80 mt-1 font-medium">Total de assinaturas ativas</div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[#00BFF0]">
-            <DollarSign className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-inner shrink-0 relative z-10">
+            <DollarSign className="w-5 h-5 text-white" />
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
+        {/* Card 2: Clientes Faturados */}
+        <div className="rounded-3xl bg-white p-5 flex items-center justify-between text-[#011c5b] border border-[#d0deff] shadow-[0_4px_20px_rgba(1,28,91,0.04)]">
           <div>
-            <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Clientes Faturados</div>
-            <div className="text-2xl font-bold mt-1 text-white">{kpis.total}</div>
-            <div className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> {kpis.emDia} clientes em dia
+            <div className="text-[11px] text-slate-500 uppercase font-black tracking-wider">Clientes Faturados</div>
+            <div className="text-2xl font-black mt-1 text-[#011c5b] tracking-tight">{kpis.total}</div>
+            <div className="text-[10px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> {kpis.emDia} clientes em dia
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400">
-            <CheckCircle2 className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-2xl bg-[#d0deff]/40 text-[#011c5b] flex items-center justify-center border border-[#d0deff] shrink-0">
+            <CheckCircle2 className="w-5 h-5 text-[#0055ff]" />
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
+        {/* Card 3: Cobranças Pendentes */}
+        <div className="rounded-3xl bg-white p-5 flex items-center justify-between text-[#011c5b] border border-[#d0deff] shadow-[0_4px_20px_rgba(1,28,91,0.04)]">
           <div>
-            <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Cobranças Pendentes</div>
-            <div className="text-2xl font-bold mt-1 text-amber-400">{kpis.pendentes}</div>
-            <div className="text-[10px] text-white/40 mt-1">A vencer ou sem confirmação</div>
+            <div className="text-[11px] text-slate-500 uppercase font-black tracking-wider">Cobranças Pendentes</div>
+            <div className="text-2xl font-black mt-1 text-amber-600 tracking-tight">{kpis.pendentes}</div>
+            <div className="text-[10px] text-slate-400 font-medium mt-1">A vencer ou sem confirmação</div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-amber-400">
-            <Clock className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/80 shrink-0">
+            <Clock className="w-5 h-5 text-amber-500" />
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
+        {/* Card 4: Disparo Automático */}
+        <div className="rounded-3xl bg-white p-5 flex items-center justify-between text-[#011c5b] border border-[#d0deff] shadow-[0_4px_20px_rgba(1,28,91,0.04)]">
           <div>
-            <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Disparo Automático</div>
-            <div className="text-sm font-bold mt-1.5 flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${autoBillingConfig.autoDispatchEnabled ? "bg-emerald-400" : "bg-red-400"}`} />
-              <span className={autoBillingConfig.autoDispatchEnabled ? "text-emerald-400" : "text-red-400"}>
+            <div className="text-[11px] text-slate-500 uppercase font-black tracking-wider">Disparo Automático</div>
+            <div className="text-sm font-black mt-1 flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${autoBillingConfig.autoDispatchEnabled ? "bg-emerald-500" : "bg-red-400"}`} />
+              <span className={autoBillingConfig.autoDispatchEnabled ? "text-emerald-600 font-black" : "text-red-500 font-black"}>
                 {autoBillingConfig.autoDispatchEnabled ? "Ativo no Sistema" : "Pausado"}
               </span>
             </div>
-            <div className="text-[10px] text-white/40 mt-1">Chave PIX: {autoBillingConfig.pixKey}</div>
+            <div className="text-[10px] text-slate-400 font-medium mt-1">Chave: {autoBillingConfig.pixKey}</div>
           </div>
           <button
             onClick={handleBatchDispatch}
-            className="h-10 px-4 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+            className="h-10 px-4 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-[0_4px_12px_rgba(0,85,255,0.25)] active:scale-95 cursor-pointer shrink-0"
             title="Disparar cobranças agora"
           >
-            <Zap className="w-4 h-4 text-black" /> Disparar Mês
+            <Zap className="w-4 h-4 text-white" /> Disparar Mês
           </button>
         </div>
       </div>
@@ -622,20 +626,20 @@ export default function FinanceiroSuperAdminPage() {
       {/* TAB 1: Assinaturas & Cobranças */}
       {activeTab === "cobrancas" && (
         <div className="space-y-4">
-          {/* Controls Bar (Busca de cliente e filtros) */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#14161a] p-3 rounded-2xl border border-white/5">
+          {/* Controls Bar (Busca de cliente e filtros em Caixa Branca com Azul #d0deff) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-3xl border border-[#d0deff] shadow-[0_4px_20px_rgba(1,28,91,0.03)]">
             <div className="flex flex-wrap items-center gap-2 flex-1">
               <div className="relative flex-1 min-w-[240px] max-w-md">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#011c5b]/40" />
                 <input
                   value={busca}
                   onChange={e => setBusca(e.target.value)}
                   placeholder="Buscar cliente por nome, serviço ou plano..."
-                  className="w-full h-10 pl-10 pr-4 text-xs rounded-xl bg-white/5 text-white placeholder-white/40 outline-none border border-white/10 focus:border-[#0055ff] transition-all"
+                  className="w-full h-10 pl-10 pr-4 text-xs rounded-2xl bg-slate-50/90 text-[#011c5b] placeholder-slate-400 outline-none border border-slate-200/80 focus:border-[#0055ff] focus:bg-white transition-all font-medium"
                 />
               </div>
 
-              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+              <div className="flex items-center gap-1 bg-[#d0deff]/20 p-1 rounded-2xl border border-[#d0deff]/60">
                 {[
                   { key: "todos", label: "Todos" },
                   { key: "em_dia", label: "Em Dia" },
@@ -645,8 +649,8 @@ export default function FinanceiroSuperAdminPage() {
                   <button
                     key={st.key}
                     onClick={() => setStatusFiltro(st.key)}
-                    className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-                      statusFiltro === st.key ? "bg-[#0055ff] text-white shadow-sm" : "text-white/60 hover:text-white"
+                    className={`px-3.5 py-1.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                      statusFiltro === st.key ? "bg-[#0055ff] text-white shadow-sm" : "text-[#011c5b]/70 hover:text-[#011c5b] hover:bg-white/60"
                     }`}
                   >
                     {st.label}
@@ -657,30 +661,30 @@ export default function FinanceiroSuperAdminPage() {
 
             <button
               onClick={handleBatchDispatch}
-              className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold flex items-center gap-2 border border-white/10 transition-all cursor-pointer"
+              className="px-4.5 py-2.5 rounded-full bg-[#d0deff]/40 hover:bg-[#d0deff] text-[#011c5b] text-xs font-black uppercase tracking-wider flex items-center gap-2 border border-[#d0deff] transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              <Send className="w-3.5 h-3.5 text-[#00BFF0]" /> Disparar Cobrança em Lote
+              <Send className="w-3.5 h-3.5 text-[#0055ff]" /> Disparar Cobrança em Lote
             </button>
           </div>
 
-          {/* TABELA ÚNICA SOLICITADA PELO USUÁRIO */}
-          <div className="bg-[#14161a] rounded-3xl p-4 md:p-6 border border-white/5 shadow-sm overflow-hidden text-white">
+          {/* TABELA ÚNICA - Design Leve, Elegante e com Alto Contraste */}
+          <div className="bg-white rounded-3xl p-4 md:p-6 border border-[#d0deff] shadow-[0_8px_30px_rgba(1,28,91,0.04)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
-                  <tr className="border-b border-white/10 text-[11px] font-black uppercase tracking-wider text-white/40">
-                    <th className="py-3.5 px-4">Nome do Cliente</th>
-                    <th className="py-3.5 px-4">Serviço Assinado</th>
-                    <th className="py-3.5 px-4 text-center">Status da Assinatura</th>
-                    <th className="py-3.5 px-4 text-center">Status do Envio das Mensagens</th>
-                    <th className="py-3.5 px-4 text-right">Valor da Cobrança</th>
-                    <th className="py-3.5 px-4 text-center">Ações</th>
+                  <tr className="border-b border-[#d0deff]/70 text-[11px] font-black uppercase tracking-wider text-[#011c5b]/80 bg-slate-50/80 rounded-2xl">
+                    <th className="py-4 px-4 rounded-l-2xl">Nome do Cliente</th>
+                    <th className="py-4 px-4">Serviço Assinado</th>
+                    <th className="py-4 px-4 text-center">Status da Assinatura</th>
+                    <th className="py-4 px-4 text-center">Status do Envio</th>
+                    <th className="py-4 px-4 text-right">Valor da Cobrança</th>
+                    <th className="py-4 px-4 text-center rounded-r-2xl">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-xs text-white/90">
+                <tbody className="divide-y divide-slate-100 text-xs">
                   {filteredClients.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-white/40 font-medium">
+                      <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
                         Nenhum cliente ou cobrança encontrada com os filtros atuais.
                       </td>
                     </tr>
@@ -690,33 +694,33 @@ export default function FinanceiroSuperAdminPage() {
                       const isPendente = client.status === "pendente";
 
                       const statusBadge = isEmDia ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Em Dia
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-black uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Em Dia
                         </span>
                       ) : isPendente ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-black uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> A Vencer
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 text-[10px] font-black uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> A Vencer
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 text-[10px] font-black uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Atrasado
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 text-[10px] font-black uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Atrasado
                         </span>
                       );
 
                       const dispatchStatus = client.ultimaCobranca ? (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00BFF0]/15 text-[#00BFF0] text-[10px] font-bold">
-                          <CheckCircle2 className="w-3 h-3 text-[#00BFF0]" />
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#0055ff] border border-blue-200/70 text-[10px] font-bold">
+                          <CheckCircle2 className="w-3 h-3 text-[#0055ff]" />
                           <span>Disparado ({new Date(client.ultimaCobranca).toLocaleDateString("pt-BR")})</span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 text-white/40 text-[10px] font-medium">
-                          <Clock className="w-3 h-3 text-white/30" />
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200/70 text-[10px] font-medium">
+                          <Clock className="w-3 h-3 text-slate-400" />
                           <span>Aguardando Envio</span>
                         </div>
                       );
 
                       return (
-                        <tr key={client.user_id} className="hover:bg-white/[0.02] transition-colors group">
+                        <tr key={client.user_id} className="hover:bg-[#d0deff]/15 transition-colors group">
                           {/* Coluna 1: Nome do Cliente */}
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
@@ -724,18 +728,18 @@ export default function FinanceiroSuperAdminPage() {
                                 <img
                                   src={client.logo}
                                   alt={client.nome}
-                                  className="w-9 h-9 rounded-xl object-contain bg-white/5 p-1 shrink-0 border border-white/10"
+                                  className="w-10 h-10 rounded-2xl object-contain bg-slate-50 p-1 shrink-0 border border-slate-200/80 shadow-xs"
                                 />
                               ) : (
-                                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white/60 shrink-0">
+                                <div className="w-10 h-10 rounded-2xl bg-[#d0deff]/40 border border-[#d0deff] flex items-center justify-center font-black text-xs text-[#011c5b] shrink-0">
                                   {client.nome.charAt(0).toUpperCase()}
                                 </div>
                               )}
                               <div>
-                                <div className="font-bold text-white group-hover:text-[#00BFF0] transition-colors">
+                                <div className="font-black text-[#011c5b] group-hover:text-[#0055ff] transition-colors text-sm">
                                   {client.nome}
                                 </div>
-                                <div className="text-[10px] text-white/40 font-mono mt-0.5">
+                                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
                                   {client.telefone || client.email || "Sem contato cadastrado"}
                                 </div>
                               </div>
@@ -745,15 +749,15 @@ export default function FinanceiroSuperAdminPage() {
                           {/* Coluna 2: Serviço Assinado */}
                           <td className="py-4 px-4">
                             <div className="space-y-1">
-                              <div className="font-bold text-white/90 text-xs flex items-center gap-2">
+                              <div className="font-bold text-[#011c5b] text-xs flex items-center gap-2">
                                 <span>{client.plano}</span>
                                 {client.tipoCobranca === "avulsa" && (
-                                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                                     Avulso
                                   </span>
                                 )}
                               </div>
-                              <div className="flex flex-wrap gap-1 mt-1">
+                              <div className="flex flex-wrap gap-1.5 mt-1">
                                 {(client.produtos || []).slice(0, 3).map(prodId => {
                                   const std = AGENCY_PRODUCTS.find(p => p.id === prodId);
                                   const custom = storedProdutos.find(p => p.id === prodId || p.codigo === prodId);
@@ -762,7 +766,7 @@ export default function FinanceiroSuperAdminPage() {
                                   return (
                                     <span
                                       key={prodId}
-                                      className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-medium text-white/70 flex items-center gap-1"
+                                      className="px-2.5 py-0.5 rounded-full bg-[#d0deff]/30 border border-[#d0deff] text-[10px] font-bold text-[#011c5b] flex items-center gap-1.5"
                                     >
                                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
                                       {name}
@@ -777,7 +781,7 @@ export default function FinanceiroSuperAdminPage() {
                           <td className="py-4 px-4 text-center">
                             <div className="flex flex-col items-center gap-1">
                               {statusBadge}
-                              <span className="text-[10px] text-white/40 font-medium">
+                              <span className="text-[11px] text-slate-400 font-medium">
                                 {client.tipoCobranca === "avulsa" && client.dataVencimentoAvulsa
                                   ? `Vence em ${new Date(client.dataVencimentoAvulsa).toLocaleDateString("pt-BR")}`
                                   : `Vence todo dia ${client.diaVencimento}`}
@@ -792,10 +796,10 @@ export default function FinanceiroSuperAdminPage() {
 
                           {/* Coluna 5: Valor da Cobrança */}
                           <td className="py-4 px-4 text-right">
-                            <div className="font-extrabold text-sm text-[#00BFF0] font-mono">
+                            <div className="font-black text-sm text-[#011c5b] font-mono tracking-tight">
                               R$ {client.valorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </div>
-                            <div className="text-[9px] text-white/40 uppercase font-semibold mt-0.5">
+                            <div className="text-[10px] text-slate-400 uppercase font-black tracking-wider mt-0.5">
                               {client.tipoCobranca === "avulsa" ? "Pagamento Único" : "Mensalidade"}
                             </div>
                           </td>
@@ -805,14 +809,14 @@ export default function FinanceiroSuperAdminPage() {
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 onClick={() => handleDispatchSingle(client, "whatsapp")}
-                                className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 hover:text-black text-emerald-400 transition-all cursor-pointer"
+                                className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 border border-emerald-200/80 transition-all cursor-pointer shadow-xs"
                                 title="Disparar via WhatsApp"
                               >
                                 <Smartphone className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => handleDispatchSingle(client, "email")}
-                                className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 transition-all cursor-pointer"
+                                className="p-2.5 rounded-xl bg-blue-50 hover:bg-[#0055ff] hover:text-white text-[#0055ff] border border-[#d0deff] transition-all cursor-pointer shadow-xs"
                                 title="Disparar via E-mail"
                               >
                                 <Mail className="w-3.5 h-3.5" />
@@ -822,7 +826,7 @@ export default function FinanceiroSuperAdminPage() {
                                   setSelectedClient(client);
                                   setIsClientModalOpen(true);
                                 }}
-                                className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all cursor-pointer"
+                                className="p-2.5 rounded-xl bg-slate-100 hover:bg-[#011c5b] hover:text-white text-[#011c5b] border border-slate-200/80 transition-all cursor-pointer shadow-xs"
                                 title="Editar Valores & Detalhes"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -980,71 +984,71 @@ export default function FinanceiroSuperAdminPage() {
         </div>
       )}
 
-      {/* TAB 3: Configurações do Disparo Automático */}
+      {/* TAB 3: Configurações do Disparo Automático (Design Leve e Moderno) */}
       {activeTab === "config" && (
-        <div className="max-w-2xl bg-[#14161a] rounded-2xl p-6 text-white space-y-6 border border-white/5">
+        <div className="max-w-2xl bg-white rounded-3xl p-6 md:p-8 text-slate-800 space-y-6 border border-[#d0deff] shadow-[0_4px_24px_rgba(1,28,91,0.04)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#00BFF0]/20 flex items-center justify-center text-[#00BFF0]">
+            <div className="w-11 h-11 rounded-2xl bg-[#d0deff]/40 flex items-center justify-center text-[#0055ff] border border-[#d0deff]">
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Disparo Automático de Mensalidade</h2>
-              <p className="text-xs text-white/60">
+              <h2 className="text-base font-black text-[#011c5b] uppercase tracking-wide">Disparo Automático de Mensalidade</h2>
+              <p className="text-xs text-slate-500 font-medium">
                 Configure os parâmetros de cobrança automática por WhatsApp e E-mail
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
               <div>
-                <div className="text-xs font-semibold">Ativar Disparo Automático Mensal</div>
-                <div className="text-[11px] text-white/50">O sistema alertará os clientes automaticamente antes do vencimento</div>
+                <div className="text-xs font-black text-[#011c5b]">Ativar Disparo Automático Mensal</div>
+                <div className="text-[11px] text-slate-500 font-medium">O sistema alertará os clientes automaticamente antes do vencimento</div>
               </div>
               <input
                 type="checkbox"
                 checked={autoBillingConfig.autoDispatchEnabled}
                 onChange={e => setAutoBillingConfig({ ...autoBillingConfig, autoDispatchEnabled: e.target.checked })}
-                className="w-4 h-4 accent-[#00BFF0] cursor-pointer"
+                className="w-5 h-5 accent-[#0055ff] cursor-pointer"
               />
             </div>
 
             <div>
-              <label className="text-xs text-white/70 font-medium block mb-1">Dias de antecedência do envio</label>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">Dias de antecedência do envio</label>
               <input
                 type="number"
                 value={autoBillingConfig.daysBeforeDue}
                 onChange={e => setAutoBillingConfig({ ...autoBillingConfig, daysBeforeDue: Number(e.target.value) })}
-                className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all"
               />
             </div>
 
             <div>
-              <label className="text-xs text-white/70 font-medium block mb-1">Chave PIX da Agência</label>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">Chave PIX da Agência</label>
               <input
                 type="text"
                 value={autoBillingConfig.pixKey}
                 onChange={e => setAutoBillingConfig({ ...autoBillingConfig, pixKey: e.target.value })}
-                className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all"
               />
             </div>
 
             <div>
-              <label className="text-xs text-white/70 font-medium block mb-1">Mensagem de Cobrança Padrão</label>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">Mensagem de Cobrança Padrão</label>
               <textarea
                 rows={4}
                 value={autoBillingConfig.customMessage}
                 onChange={e => setAutoBillingConfig({ ...autoBillingConfig, customMessage: e.target.value })}
-                className="w-full p-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10 leading-relaxed"
+                className="w-full p-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-medium outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all leading-relaxed"
               />
-              <div className="text-[10px] text-white/40 mt-1">
+              <div className="text-[10px] text-slate-400 font-medium mt-1">
                 Tags disponíveis: &#123;cliente&#125;, &#123;valor&#125;, &#123;vencimento&#125;, &#123;pix&#125;
               </div>
             </div>
 
             <button
               onClick={() => saveConfig(autoBillingConfig)}
-              className="w-full py-2.5 rounded-xl bg-[#00BFF0] text-white font-semibold text-xs hover:brightness-110 transition-all cursor-pointer"
+              className="w-full py-3 rounded-2xl bg-[#0055ff] hover:bg-[#0047d4] text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_14px_rgba(0,85,255,0.25)] transition-all cursor-pointer active:scale-98"
             >
               Salvar Parâmetros de Cobrança
             </button>
@@ -1054,9 +1058,9 @@ export default function FinanceiroSuperAdminPage() {
 
       {/* MODAL SOLICITADO: Cadastrar Cobrança (Avulsa ou Assinatura Mensal) */}
       <Dialog open={isNovaCobrancaOpen} onOpenChange={setIsNovaCobrancaOpen}>
-        <DialogContent className="bg-[#14161a] text-white border-0 rounded-3xl max-w-lg p-6">
+        <DialogContent className="bg-white text-slate-800 border border-[#d0deff] rounded-3xl max-w-lg p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white text-base font-black tracking-wide uppercase flex items-center gap-2">
+            <DialogTitle className="text-[#011c5b] text-base font-black tracking-wide uppercase flex items-center gap-2">
               <Plus className="w-5 h-5 text-[#0055ff]" /> Cadastrar Nova Cobrança
             </DialogTitle>
           </DialogHeader>
@@ -1064,17 +1068,17 @@ export default function FinanceiroSuperAdminPage() {
           <div className="space-y-4 pt-3">
             {/* Seletor Tipo: Avulsa vs Assinatura Mensal */}
             <div>
-              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1.5">
+              <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">
                 Tipo de Cobrança
               </label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-[#d0deff]/20 rounded-2xl border border-[#d0deff]">
                 <button
                   type="button"
                   onClick={() => setNovaCobrancaData({ ...novaCobrancaData, tipo: "mensal" })}
-                  className={`py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                     novaCobrancaData.tipo === "mensal"
                       ? "bg-[#0055ff] text-white shadow-md"
-                      : "text-white/60 hover:text-white"
+                      : "text-[#011c5b]/70 hover:text-[#011c5b]"
                   }`}
                 >
                   Assinatura Mensal
@@ -1082,10 +1086,10 @@ export default function FinanceiroSuperAdminPage() {
                 <button
                   type="button"
                   onClick={() => setNovaCobrancaData({ ...novaCobrancaData, tipo: "avulsa" })}
-                  className={`py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                     novaCobrancaData.tipo === "avulsa"
                       ? "bg-purple-600 text-white shadow-md"
-                      : "text-white/60 hover:text-white"
+                      : "text-[#011c5b]/70 hover:text-[#011c5b]"
                   }`}
                 >
                   Cobrança Avulsa
@@ -1095,7 +1099,7 @@ export default function FinanceiroSuperAdminPage() {
 
             {/* Cliente */}
             <div>
-              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+              <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1">
                 Cliente
               </label>
               <div className="space-y-1.5">
@@ -1114,7 +1118,7 @@ export default function FinanceiroSuperAdminPage() {
                       setNovaCobrancaData({ ...novaCobrancaData, clienteId: "" });
                     }
                   }}
-                  className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
+                  className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white cursor-pointer"
                 >
                   <option value="">-- Selecionar Cliente Existente --</option>
                   {clients.map(c => (
@@ -1129,14 +1133,14 @@ export default function FinanceiroSuperAdminPage() {
                   value={novaCobrancaData.clienteNome}
                   onChange={e => setNovaCobrancaData({ ...novaCobrancaData, clienteNome: e.target.value, clienteId: "" })}
                   placeholder="Ou digite o nome de outro cliente..."
-                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                  className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-medium outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                 />
               </div>
             </div>
 
             {/* Produto / Serviço Selecionado */}
             <div>
-              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+              <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1">
                 Produto / Serviço
               </label>
               <select
@@ -1154,7 +1158,7 @@ export default function FinanceiroSuperAdminPage() {
                     valor: valor,
                   });
                 }}
-                className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
+                className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white cursor-pointer"
               >
                 <optgroup label="Produtos Cadastrados na Agência">
                   {storedProdutos.map(p => (
@@ -1176,7 +1180,7 @@ export default function FinanceiroSuperAdminPage() {
             {/* Valor da Cobrança & Vencimento */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1">
                   Valor da Cobrança (R$)
                 </label>
                 <input
@@ -1184,13 +1188,13 @@ export default function FinanceiroSuperAdminPage() {
                   step="0.01"
                   value={novaCobrancaData.valor}
                   onChange={e => setNovaCobrancaData({ ...novaCobrancaData, valor: Number(e.target.value) })}
-                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white font-bold font-mono outline-none border border-white/10"
+                  className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-black font-mono outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                 />
               </div>
 
               {novaCobrancaData.tipo === "mensal" ? (
                 <div>
-                  <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                  <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1">
                     Dia do Vencimento (1 a 31)
                   </label>
                   <input
@@ -1199,19 +1203,19 @@ export default function FinanceiroSuperAdminPage() {
                     max={31}
                     value={novaCobrancaData.diaVencimento}
                     onChange={e => setNovaCobrancaData({ ...novaCobrancaData, diaVencimento: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                    className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                  <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1">
                     Data de Vencimento
                   </label>
                   <input
                     type="date"
                     value={novaCobrancaData.dataVencimento}
                     onChange={e => setNovaCobrancaData({ ...novaCobrancaData, dataVencimento: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                    className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                   />
                 </div>
               )}
@@ -1219,13 +1223,13 @@ export default function FinanceiroSuperAdminPage() {
 
             {/* Status Inicial */}
             <div>
-              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+              <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1">
                 Status Inicial
               </label>
               <select
                 value={novaCobrancaData.status}
                 onChange={e => setNovaCobrancaData({ ...novaCobrancaData, status: e.target.value as any })}
-                className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
+                className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white cursor-pointer"
               >
                 <option value="em_dia">Em Dia</option>
                 <option value="pendente">A Vencer (Pendente)</option>
@@ -1234,18 +1238,18 @@ export default function FinanceiroSuperAdminPage() {
             </div>
 
             {/* Ações Modal */}
-            <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsNovaCobrancaOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-xs text-white/60 hover:text-white cursor-pointer"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-[#011c5b] cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleSaveNovaCobranca}
-                className="px-6 py-2.5 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md"
+                className="px-6 py-2.5 rounded-2xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,85,255,0.25)]"
               >
                 Salvar Cobrança
               </button>
@@ -1256,60 +1260,60 @@ export default function FinanceiroSuperAdminPage() {
 
       {/* MODAL: Criar / Editar Pack */}
       <Dialog open={isPackModalOpen} onOpenChange={setIsPackModalOpen}>
-        <DialogContent className="bg-[#14161a] text-white border-0 rounded-3xl max-w-lg p-6">
+        <DialogContent className="bg-white text-slate-800 border border-[#d0deff] rounded-3xl max-w-lg p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white text-base font-bold">
+            <DialogTitle className="text-[#011c5b] text-base font-black uppercase tracking-wider">
               {editingPack ? "Editar Pack de Serviços" : "Criar Novo Pack da Agência"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
             <div>
-              <label className="text-xs text-white/70 font-medium block mb-1">Nome do Pack</label>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Nome do Pack</label>
               <input
                 type="text"
                 value={packFormData.nome || ""}
                 onChange={e => setPackFormData({ ...packFormData, nome: e.target.value })}
                 placeholder="Ex: Pack Rádio + Chatbot Pro"
-                className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="text-xs text-white/70 font-medium block mb-1">Descrição</label>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Descrição</label>
               <input
                 type="text"
                 value={packFormData.descricao || ""}
                 onChange={e => setPackFormData({ ...packFormData, descricao: e.target.value })}
                 placeholder="Breve descrição da proposta de valor"
-                className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-medium outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-white/70 font-medium block mb-1">Preço Mensal (R$)</label>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Preço Mensal (R$)</label>
                 <input
                   type="number"
                   value={packFormData.precoMensal || 0}
                   onChange={e => setPackFormData({ ...packFormData, precoMensal: Number(e.target.value) })}
-                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                  className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-black font-mono outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                 />
               </div>
               <div>
-                <label className="text-xs text-white/70 font-medium block mb-1">Desconto Anual (%)</label>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Desconto Anual (%)</label>
                 <input
                   type="number"
                   value={packFormData.descontoAnual || 0}
                   onChange={e => setPackFormData({ ...packFormData, descontoAnual: Number(e.target.value) })}
-                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                  className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                 />
               </div>
             </div>
 
             {/* Products Selection - Suporta Produtos Cadastrados */}
             <div>
-              <label className="text-xs text-white/70 font-medium block mb-1.5">Produtos Inclusos no Pack</label>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">Produtos Inclusos no Pack</label>
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
                 {/* Catálogo Geral Cadastrado */}
                 {storedProdutos.map(prod => {
@@ -1323,8 +1327,8 @@ export default function FinanceiroSuperAdminPage() {
                         const next = selected ? cur.filter(p => p !== prod.id) : [...cur, prod.id];
                         setPackFormData({ ...packFormData, produtos: next });
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                        selected ? "bg-[#0055ff] text-white" : "bg-white/5 text-white/60 hover:text-white border border-white/5"
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        selected ? "bg-[#0055ff] text-white shadow-sm" : "bg-slate-100 text-[#011c5b] hover:bg-[#d0deff]/40 border border-slate-200/70"
                       }`}
                     >
                       {prod.nome}
@@ -1344,8 +1348,8 @@ export default function FinanceiroSuperAdminPage() {
                         const next = selected ? cur.filter(p => p !== prod.id) : [...cur, prod.id];
                         setPackFormData({ ...packFormData, produtos: next });
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                        selected ? "bg-[#00BFF0] text-black" : "bg-white/5 text-white/60 hover:text-white border border-white/5"
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        selected ? "bg-[#011c5b] text-white shadow-sm" : "bg-slate-100 text-[#011c5b] hover:bg-[#d0deff]/40 border border-slate-200/70"
                       }`}
                     >
                       {prod.name}
@@ -1355,11 +1359,11 @@ export default function FinanceiroSuperAdminPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsPackModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white cursor-pointer"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-[#011c5b] cursor-pointer"
               >
                 Cancelar
               </button>
@@ -1390,7 +1394,7 @@ export default function FinanceiroSuperAdminPage() {
                   }
                   setIsPackModalOpen(false);
                 }}
-                className="px-5 py-2 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-bold transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-2xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,85,255,0.25)]"
               >
                 Salvar Pack
               </button>
@@ -1401,9 +1405,9 @@ export default function FinanceiroSuperAdminPage() {
 
       {/* MODAL: Editar Assinatura do Cliente */}
       <Dialog open={isClientModalOpen} onOpenChange={setIsClientModalOpen}>
-        <DialogContent className="bg-[#14161a] text-white border-0 rounded-3xl max-w-md p-6">
+        <DialogContent className="bg-white text-slate-800 border border-[#d0deff] rounded-3xl max-w-md p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white text-base font-bold">
+            <DialogTitle className="text-[#011c5b] text-base font-black uppercase tracking-wider">
               Editar Assinatura: {selectedClient?.nome}
             </DialogTitle>
           </DialogHeader>
@@ -1411,33 +1415,33 @@ export default function FinanceiroSuperAdminPage() {
           {selectedClient && (
             <div className="space-y-4 pt-2">
               <div>
-                <label className="text-xs text-white/70 font-medium block mb-1">Valor Mensal da Assinatura (R$)</label>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Valor Mensal da Assinatura (R$)</label>
                 <input
                   type="number"
                   value={selectedClient.valorMensal}
                   onChange={e => setSelectedClient({ ...selectedClient, valorMensal: Number(e.target.value) })}
-                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                  className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-black font-mono outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-white/70 font-medium block mb-1">Dia do Vencimento Mensal</label>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Dia do Vencimento Mensal</label>
                 <input
                   type="number"
                   min={1}
                   max={31}
                   value={selectedClient.diaVencimento}
                   onChange={e => setSelectedClient({ ...selectedClient, diaVencimento: Number(e.target.value) })}
-                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                  className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-white/70 font-medium block mb-1">Status de Pagamento</label>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Status de Pagamento</label>
                 <select
                   value={selectedClient.status}
                   onChange={e => setSelectedClient({ ...selectedClient, status: e.target.value as any })}
-                  className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
+                  className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white cursor-pointer"
                 >
                   <option value="em_dia">Em Dia</option>
                   <option value="pendente">A Vencer (Pendente)</option>
@@ -1445,11 +1449,11 @@ export default function FinanceiroSuperAdminPage() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsClientModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-[#011c5b] cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -1461,7 +1465,7 @@ export default function FinanceiroSuperAdminPage() {
                     toast.success(`Assinatura de ${selectedClient.nome} atualizada!`);
                     setIsClientModalOpen(false);
                   }}
-                  className="px-5 py-2 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-bold transition-all cursor-pointer"
+                  className="px-6 py-2.5 rounded-2xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,85,255,0.25)]"
                 >
                   Salvar
                 </button>
