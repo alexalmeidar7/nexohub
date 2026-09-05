@@ -30,8 +30,25 @@ export default function SuperAdminHeader({
   onSearchChange,
 }: SuperAdminHeaderProps) {
   const [produtosOpen, setProdutosOpen] = useState(false);
+  const [businessOpen, setBusinessOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const businessRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close business submenu
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (businessRef.current && !businessRef.current.contains(event.target as Node)) {
+        setBusinessOpen(false);
+      }
+    }
+    if (businessOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [businessOpen]);
 
   // Dynamic current date formatted like "04 de Setembro/26"
   const todayFormatted = (() => {
@@ -93,18 +110,18 @@ export default function SuperAdminHeader({
               clientes
             </button>
 
-            {/* Produtos Menu Dropdown */}
+            {/* Produtos Menu Dropdown (abre apenas ao clicar) */}
             <Popover open={produtosOpen} onOpenChange={setProdutosOpen}>
               <PopoverTrigger asChild>
                 <button
-                  className={`text-sm font-semibold flex items-center gap-1 transition-colors ${
-                    ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
+                  className={`text-sm font-semibold flex items-center gap-1 transition-colors outline-none ${
+                    produtosOpen || ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
                       ? "text-black font-bold"
                       : "text-slate-700 hover:text-black"
                   }`}
                 >
-                  produtos
-                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                  <span>produtos</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${produtosOpen ? "rotate-180 opacity-100" : "opacity-60"}`} />
                 </button>
               </PopoverTrigger>
               <PopoverContent
@@ -164,41 +181,61 @@ export default function SuperAdminHeader({
               </PopoverContent>
             </Popover>
 
-            {/* Business Black Pill */}
-            <div className="bg-[#000000] rounded-full px-5 py-2.5 flex items-center gap-4 text-white shadow-sm">
-              <span className="font-extrabold text-sm tracking-tight text-white pr-1">
-                business
-              </span>
-              <button
-                onClick={() => onNavigate("financeiro")}
-                className={`text-xs transition-colors ${
-                  currentPage === "financeiro" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
-                }`}
-              >
-                financeiro
-              </button>
-              <button
-                onClick={() => onNavigate("financeiro")}
-                className="text-xs text-white/80 hover:text-white transition-colors"
-              >
-                service packs
-              </button>
-              <button
-                onClick={() => onNavigate("chatbot")}
-                className={`text-xs transition-colors ${
-                  currentPage === "chatbot" ? "text-[#9FCA1D] font-bold" : "text-white/80 hover:text-white"
-                }`}
-              >
-                chat bott
-              </button>
-              <button
-                onClick={() => onNavigate("propostas")}
-                className={`text-xs transition-colors ${
-                  currentPage === "propostas" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
-                }`}
-              >
-                orçamento
-              </button>
+            {/* Business Pill (fechado por padrão, abre submenu ao clicar) */}
+            <div ref={businessRef} className="relative">
+              {!businessOpen ? (
+                <button
+                  onClick={() => setBusinessOpen(true)}
+                  className={`bg-[#000000] text-white rounded-full px-5 py-2.5 flex items-center gap-1.5 text-sm font-extrabold tracking-tight hover:opacity-90 active:scale-95 transition-all shadow-sm ${
+                    ["financeiro", "chatbot", "propostas"].includes(currentPage) ? "ring-2 ring-[#0055ff]/40" : ""
+                  }`}
+                  title="Clique para abrir o submenu business"
+                >
+                  <span>business</span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                </button>
+              ) : (
+                <div className="bg-[#000000] rounded-full px-5 py-2.5 flex items-center gap-4 text-white shadow-md animate-in fade-in zoom-in-95 duration-200">
+                  <button
+                    onClick={() => setBusinessOpen(false)}
+                    className="font-extrabold text-sm tracking-tight text-white flex items-center gap-1 hover:opacity-80 transition-opacity"
+                    title="Fechar submenu business"
+                  >
+                    <span>business</span>
+                    <ChevronDown className="w-3.5 h-3.5 rotate-180 opacity-70" />
+                  </button>
+                  <button
+                    onClick={() => onNavigate("financeiro")}
+                    className={`text-xs transition-colors whitespace-nowrap ${
+                      currentPage === "financeiro" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                    }`}
+                  >
+                    financeiro
+                  </button>
+                  <button
+                    onClick={() => onNavigate("financeiro")}
+                    className="text-xs text-white/80 hover:text-white transition-colors whitespace-nowrap"
+                  >
+                    service packs
+                  </button>
+                  <button
+                    onClick={() => onNavigate("chatbot")}
+                    className={`text-xs transition-colors whitespace-nowrap ${
+                      currentPage === "chatbot" ? "text-[#9FCA1D] font-bold" : "text-white/80 hover:text-white"
+                    }`}
+                  >
+                    chat bott
+                  </button>
+                  <button
+                    onClick={() => onNavigate("propostas")}
+                    className={`text-xs transition-colors whitespace-nowrap ${
+                      currentPage === "propostas" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                    }`}
+                  >
+                    orçamento
+                  </button>
+                </div>
+              )}
             </div>
           </nav>
 
