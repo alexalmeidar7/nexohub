@@ -43,15 +43,51 @@ function Field({ label, children, className = "" }: { label: string; children: R
   );
 }
 
+interface ClienteMetadata {
+  nome_empresarial?: string;
+  cnpj?: string;
+  telefone?: string;
+  whatsapp_responsavel?: string;
+  endereco?: string;
+  cliente_desde?: string;
+  nome_contato?: string;
+  email_cobranca?: string;
+}
+
+const CLIENTES_METADATA_KEY = "nexohub_clientes_metadata_v1";
+
+function getStoredMetadata(): Record<string, ClienteMetadata> {
+  try {
+    const raw = localStorage.getItem(CLIENTES_METADATA_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStoredMetadata(key: string, meta: ClienteMetadata) {
+  try {
+    const all = getStoredMetadata();
+    all[key] = { ...(all[key] || {}), ...meta };
+    localStorage.setItem(CLIENTES_METADATA_KEY, JSON.stringify(all));
+  } catch (err) {
+    console.warn("Erro ao salvar metadata de cliente:", err);
+  }
+}
+
 interface Cliente {
   id: string;
   user_id: string;
   nome: string | null;
+  nome_empresarial?: string | null;
   cnpj: string | null;
   telefone_comercial: string | null;
+  whatsapp_responsavel?: string | null;
   endereco: string | null;
   cliente_desde: string | null;
-  executiva_venda: string | null;
+  nome_contato?: string | null;
+  executiva_venda?: string | null;
+  email_cobranca?: string | null;
   ativo: boolean | null;
   logo_url?: string | null;
 }
@@ -75,17 +111,21 @@ export default function ClientesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [novo, setNovo] = useState({
     nome: "",
+    nome_empresarial: "",
     cnpj: "",
-    endereco: "",
     telefone: "",
+    whatsapp_responsavel: "",
+    endereco: "",
     cliente_desde: "",
-    executiva_venda: ""
+    nome_contato: "",
+    email_cobranca: ""
   });
 
   const load = async () => {
     setLoading(true);
     try {
       const isAlex = user?.email?.toLowerCase().includes("alex");
+      const storedMeta = getStoredMetadata();
 
       const { data: logosData } = await supabase
         .from("logos_patrocinadores")
@@ -98,26 +138,62 @@ export default function ClientesPage() {
         .select("*");
 
       const uniqueClients: Cliente[] = [];
-      const seenNames = new Set();
+      const seenKeys = new Set<string>();
 
       (logosData || []).forEach(item => {
         const name = item.nome?.trim().toUpperCase();
         if (isAlex && item.user_id === user?.id) return;
 
-        if (name && !seenNames.has(name)) {
-          seenNames.add(name);
+        if (name && !seenKeys.has(name)) {
+          seenKeys.add(name);
+          seenKeys.add(item.id);
+
+          const meta = storedMeta[item.id] || storedMeta[name] || {};
+
           uniqueClients.push({
             id: item.id,
             user_id: item.user_id,
             nome: item.nome,
+            nome_empresarial: meta.nome_empresarial || "",
             logo_url: item.logo_url,
             ativo: item.ativo,
-            cnpj: "00.000.000/0000-00",
-            cliente_desde: item.created_at?.split('T')[0],
-            telefone_comercial: "(00) 0000-0000",
-            endereco: "Endereço não cadastrado",
-            executiva_venda: "Não atribuída"
+            cnpj: meta.cnpj || "00.000.000/0000-00",
+            cliente_desde: meta.cliente_desde || item.created_at?.split('T')[0] || "",
+            telefone_comercial: meta.telefone || "(00) 0000-0000",
+            whatsapp_responsavel: meta.whatsapp_responsavel || "",
+            endereco: meta.endereco || "Endereço não cadastrado",
+            nome_contato: meta.nome_contato || "",
+            executiva_venda: meta.nome_contato || "Não atribuído",
+            email_cobranca: meta.email_cobranca || ""
           });
+        }
+      });
+
+      // Também inclui registros locais salvos previamente caso ainda não estejam em logosData
+      Object.keys(storedMeta).forEach(key => {
+        if (!seenKeys.has(key)) {
+          const meta = storedMeta[key];
+          const candidateName = (key.startsWith("local_") ? meta.nome_empresarial : key) || "Cliente";
+          if (!seenKeys.has(candidateName.toUpperCase())) {
+            seenKeys.add(candidateName.toUpperCase());
+            seenKeys.add(key);
+            uniqueClients.push({
+              id: key,
+              user_id: user?.id || "",
+              nome: candidateName,
+              nome_empresarial: meta.nome_empresarial || "",
+              logo_url: null,
+              ativo: true,
+              cnpj: meta.cnpj || "00.000.000/0000-00",
+              cliente_desde: meta.cliente_desde || new Date().toISOString().split('T')[0],
+              telefone_comercial: meta.telefone || "(00) 0000-0000",
+              whatsapp_responsavel: meta.whatsapp_responsavel || "",
+              endereco: meta.endereco || "Endereço não cadastrado",
+              nome_contato: meta.nome_contato || "",
+              executiva_venda: meta.nome_contato || "Não atribuído",
+              email_cobranca: meta.email_cobranca || ""
+            });
+          }
         }
       });
 
@@ -135,40 +211,68 @@ export default function ClientesPage() {
   }, []);
 
   const handleSave = async () => {
-    if (!novo.nome || !novo.cnpj) {
-      toast.error("Razão Social e CNPJ são obrigatórios.");
+    if (!novo.nome.trim()) {
+      toast.error("Razão Social é obrigatória.");
       return;
     }
 
     setCriando(true);
     try {
       const isAlex = user?.email?.toLowerCase().includes("alex");
+      const cleanName = novo.nome.trim().toUpperCase();
+
+      const metaToSave: ClienteMetadata = {
+        nome_empresarial: novo.nome_empresarial.trim(),
+        cnpj: novo.cnpj.trim(),
+        telefone: novo.telefone.trim(),
+        whatsapp_responsavel: novo.whatsapp_responsavel.trim(),
+        endereco: novo.endereco.trim(),
+        cliente_desde: novo.cliente_desde,
+        nome_contato: novo.nome_contato.trim(),
+        email_cobranca: novo.email_cobranca.trim()
+      };
 
       if (editingId) {
-        const { error } = await supabase
-          .from("logos_patrocinadores")
-          .update({
-            nome: novo.nome.trim().toUpperCase(),
-          } as any)
-          .eq("id", editingId);
+        if (!editingId.startsWith("local_")) {
+          await supabase
+            .from("logos_patrocinadores")
+            .update({
+              nome: cleanName,
+            } as any)
+            .eq("id", editingId);
+        }
 
-        if (error) throw error;
-        toast.success("Dados do cliente da agência atualizados!");
+        saveStoredMetadata(editingId, metaToSave);
+        saveStoredMetadata(cleanName, metaToSave);
+        toast.success("Dados do cliente atualizados com sucesso!");
       } else {
-        const { error } = await supabase.from("logos_patrocinadores").insert({
-          nome: novo.nome.trim().toUpperCase(),
+        const { data: insertedData, error } = await supabase.from("logos_patrocinadores").insert({
+          nome: cleanName,
           user_id: user?.id,
           ativo: true,
           excluido: false,
           data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
-        } as any);
+        } as any).select().maybeSingle();
 
-        if (error) throw error;
-        toast.success(isAlex ? "Cliente da agência cadastrado com sucesso!" : "Cliente pré-cadastrado no sistema!");
+        const targetId = insertedData?.id || `local_${Date.now()}`;
+        saveStoredMetadata(targetId, metaToSave);
+        saveStoredMetadata(cleanName, metaToSave);
+
+        toast.success(isAlex ? "Cliente cadastrado com sucesso!" : "Cliente salvo com sucesso!");
       }
 
       setEditingId(null);
-      setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
+      setNovo({
+        nome: "",
+        nome_empresarial: "",
+        cnpj: "",
+        telefone: "",
+        whatsapp_responsavel: "",
+        endereco: "",
+        cliente_desde: "",
+        nome_contato: "",
+        email_cobranca: ""
+      });
       load();
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar cliente.");
@@ -181,20 +285,29 @@ export default function ClientesPage() {
     setEditingId(cliente.id);
     setNovo({
       nome: cliente.nome || "",
+      nome_empresarial: cliente.nome_empresarial || "",
       cnpj: cliente.cnpj || "",
-      endereco: cliente.endereco || "",
       telefone: cliente.telefone_comercial || "",
+      whatsapp_responsavel: cliente.whatsapp_responsavel || "",
+      endereco: cliente.endereco || "",
       cliente_desde: cliente.cliente_desde || "",
-      executiva_venda: cliente.executiva_venda || ""
+      nome_contato: cliente.nome_contato || cliente.executiva_venda || "",
+      email_cobranca: cliente.email_cobranca || ""
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const filtrados = useMemo(() => {
-    const q = busca.toLowerCase();
+    const q = busca.toLowerCase().trim();
+    if (!q) return clientes;
     return clientes.filter(c => 
       c.nome?.toLowerCase().includes(q) || 
-      (c.cnpj && c.cnpj.includes(q))
+      (c.nome_empresarial && c.nome_empresarial.toLowerCase().includes(q)) ||
+      (c.cnpj && c.cnpj.includes(q)) ||
+      (c.nome_contato && c.nome_contato.toLowerCase().includes(q)) ||
+      (c.email_cobranca && c.email_cobranca.toLowerCase().includes(q)) ||
+      (c.telefone_comercial && c.telefone_comercial.includes(q)) ||
+      (c.whatsapp_responsavel && c.whatsapp_responsavel.includes(q))
     );
   }, [clientes, busca]);
 
@@ -219,7 +332,7 @@ export default function ClientesPage() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
-              {editingId ? "Editar Cliente da Agência" : "Cadastro de Cliente da Agência"}
+              {editingId ? "Editar cliente" : "Cadastro de cliente"}
             </h2>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               Gestão de clientes corporativos e contratos da Nexo Agência
@@ -234,16 +347,24 @@ export default function ClientesPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-          <div className="lg:col-span-2">
-            <Field label="Razão Social">
-              <input 
-                style={inputStyle}
-                value={novo.nome} 
-                onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
-                placeholder="Nome da Empresa / Cliente Corporativo"
-              />
-            </Field>
-          </div>
+          <Field label="Razão Social">
+            <input 
+              style={inputStyle}
+              value={novo.nome} 
+              onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
+              placeholder="Nome da Empresa / Razão Social"
+            />
+          </Field>
+
+          <Field label="Nome Empresarial">
+            <input 
+              style={inputStyle}
+              value={novo.nome_empresarial} 
+              onChange={e => setNovo(n => ({...n, nome_empresarial: e.target.value}))}
+              placeholder="Nome Empresarial / Nome Fantasia"
+            />
+          </Field>
+
           <Field label="CNPJ">
             <input 
               style={inputStyle}
@@ -252,24 +373,25 @@ export default function ClientesPage() {
               placeholder="00.000.000/0000-00"
             />
           </Field>
+
           <Field label="Telefone">
             <input 
               style={inputStyle}
               value={novo.telefone} 
               onChange={e => setNovo(n => ({...n, telefone: e.target.value}))}
+              placeholder="(00) 0000-0000"
+            />
+          </Field>
+
+          <Field label="WhatsApp Responsável">
+            <input 
+              style={inputStyle}
+              value={novo.whatsapp_responsavel} 
+              onChange={e => setNovo(n => ({...n, whatsapp_responsavel: e.target.value}))}
               placeholder="(00) 00000-0000"
             />
           </Field>
-          <div className="lg:col-span-2">
-            <Field label="Endereço">
-              <input 
-                style={inputStyle}
-                value={novo.endereco} 
-                onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
-                placeholder="Rua, Número, Bairro, Cidade - UF"
-              />
-            </Field>
-          </div>
+
           <Field label="Cliente Desde">
             <input 
               type="date"
@@ -278,16 +400,34 @@ export default function ClientesPage() {
               onChange={e => setNovo(n => ({...n, cliente_desde: e.target.value}))}
             />
           </Field>
-          <div className="lg:col-span-2">
-            <Field label="Gerente Executiva Responsável">
-              <input 
-                style={inputStyle}
-                value={novo.executiva_venda} 
-                onChange={e => setNovo(n => ({...n, executiva_venda: e.target.value}))}
-                placeholder="Nome da gerente executiva"
-              />
-            </Field>
-          </div>
+
+          <Field label="Nome do Contato">
+            <input 
+              style={inputStyle}
+              value={novo.nome_contato} 
+              onChange={e => setNovo(n => ({...n, nome_contato: e.target.value}))}
+              placeholder="Nome do contato responsável"
+            />
+          </Field>
+
+          <Field label="E-mail Cobrança Financeira">
+            <input 
+              type="email"
+              style={inputStyle}
+              value={novo.email_cobranca} 
+              onChange={e => setNovo(n => ({...n, email_cobranca: e.target.value}))}
+              placeholder="financeiro@empresa.com.br"
+            />
+          </Field>
+
+          <Field label="Endereço">
+            <input 
+              style={inputStyle}
+              value={novo.endereco} 
+              onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
+              placeholder="Rua, Número, Bairro, Cidade - UF"
+            />
+          </Field>
         </div>
 
         <div className="mt-7 pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
@@ -295,7 +435,17 @@ export default function ClientesPage() {
             <button
               onClick={() => {
                 setEditingId(null);
-                setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
+                setNovo({
+                  nome: "",
+                  nome_empresarial: "",
+                  cnpj: "",
+                  telefone: "",
+                  whatsapp_responsavel: "",
+                  endereco: "",
+                  cliente_desde: "",
+                  nome_contato: "",
+                  email_cobranca: ""
+                });
               }}
               className="h-11 px-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer"
             >
@@ -326,7 +476,7 @@ export default function ClientesPage() {
             </div>
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#002132]">
-                Clientes da Agência Cadastrados
+                Clientes Cadastrados
               </h3>
               <p className="text-xs text-slate-400">Total de contas corporativas da agência</p>
             </div>
@@ -340,7 +490,7 @@ export default function ClientesPage() {
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar razão social ou CNPJ..."
+              placeholder="Buscar razão social, nome empresarial, CNPJ..."
               className="w-72 md:w-80 h-10 rounded-full bg-[#f8fafc] border border-slate-200/80 pl-10 pr-4 text-xs text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-[#0055ff] transition-all font-sans"
             />
           </div>
@@ -348,14 +498,22 @@ export default function ClientesPage() {
 
         {filtrados.length === 0 ? (
           <div className="py-12 text-center text-xs text-slate-400 font-medium">
-            Nenhum cliente da agência encontrado.
+            Nenhum cliente encontrado.
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-slate-100">
             <table className="w-full border-collapse text-xs font-sans">
               <thead>
                 <tr className="bg-[#14161a] text-white">
-                  {["Razão Social", "CNPJ", "Telefone", "Executiva Resp.", "Blitz/Eventos", "Ações"].map((h) => (
+                  {[
+                    "Razão Social / Nome Empresarial", 
+                    "CNPJ", 
+                    "Nome do Contato", 
+                    "Telefone / WhatsApp", 
+                    "E-mail Financeiro", 
+                    "Eventos", 
+                    "Ações"
+                  ].map((h) => (
                     <th
                       key={h}
                       className={`p-3 text-[10px] font-bold uppercase tracking-wider ${
@@ -373,16 +531,44 @@ export default function ClientesPage() {
                     key={cliente.id || idx}
                     className="hover:bg-slate-50/80 transition-colors"
                   >
-                    <td className="p-3 pl-4 font-semibold text-slate-800">
-                      {cliente.nome}
+                    <td className="p-3 pl-4">
+                      <div className="font-semibold text-slate-800">{cliente.nome}</div>
+                      {cliente.nome_empresarial && (
+                        <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                          {cliente.nome_empresarial}
+                        </div>
+                      )}
                     </td>
-                    <td className="p-3 text-slate-600 whitespace-nowrap">{cliente.cnpj}</td>
-                    <td className="p-3 text-slate-600 whitespace-nowrap">{cliente.telefone_comercial}</td>
+                    <td className="p-3 text-slate-600 whitespace-nowrap">{cliente.cnpj || "—"}</td>
                     <td className="p-3 text-slate-600">
                       <div className="flex items-center gap-1.5">
-                        <UserCog size={13} className="text-slate-400" />
-                        <span>{cliente.executiva_venda || "—"}</span>
+                        <UserCog size={13} className="text-slate-400 shrink-0" />
+                        <span>{cliente.nome_contato || cliente.executiva_venda || "—"}</span>
                       </div>
+                    </td>
+                    <td className="p-3 text-slate-600 whitespace-nowrap">
+                      {cliente.whatsapp_responsavel ? (
+                        <div className="flex flex-col text-[11px]">
+                          <span className="font-semibold text-emerald-600">
+                            {cliente.whatsapp_responsavel} <span className="text-[9px] font-normal uppercase text-slate-400">(Whats)</span>
+                          </span>
+                          {cliente.telefone_comercial && cliente.telefone_comercial !== "(00) 0000-0000" && (
+                            <span className="text-slate-400 text-[10px]">{cliente.telefone_comercial}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span>{cliente.telefone_comercial || "—"}</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-slate-600">
+                      {cliente.email_cobranca ? (
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                          <Mail size={12} className="text-slate-400 shrink-0" />
+                          <span className="truncate max-w-[180px]">{cliente.email_cobranca}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="p-3">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase">
