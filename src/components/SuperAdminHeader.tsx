@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import logoNxo from "@/assets/logo-nxo.png";
 import {
-  Bell, Settings, Calendar, Search, ChevronDown, Radio, Users,
-  Package, Music, Layers, Smartphone, Palette, LogOut, Check
+  Bell, Settings, Calendar as CalendarIcon, Search, ChevronDown, Radio, Users,
+  Package, Music, Layers, Smartphone, Palette, LogOut, Check, ArrowRight
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
@@ -31,10 +33,33 @@ export default function SuperAdminHeader({
 }: SuperAdminHeaderProps) {
   const [produtosOpen, setProdutosOpen] = useState(false);
   const [businessOpen, setBusinessOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
+  const [eventDates, setEventDates] = useState<Date[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const produtosRef = useRef<HTMLDivElement>(null);
   const businessRef = useRef<HTMLDivElement>(null);
+
+  // Load dates of registered events for dot markers
+  useEffect(() => {
+    async function loadEventDates() {
+      try {
+        const { data, error } = await supabase
+          .from("agenda_eventos")
+          .select("data");
+        if (data && !error) {
+          const dates = data
+            .map(e => e.data ? new Date(e.data + "T12:00:00") : null)
+            .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+          setEventDates(dates);
+        }
+      } catch {
+        /* noop */
+      }
+    }
+    loadEventDates();
+  }, []);
 
   // Click outside to close submenus
   useEffect(() => {
@@ -239,6 +264,16 @@ export default function SuperAdminHeader({
                 </div>
               )}
             </div>
+
+            {/* Agenda Link (ao lado de business) */}
+            <button
+              onClick={() => onNavigate("agenda")}
+              className={`text-sm font-semibold transition-colors outline-none ${
+                currentPage === "agenda" ? "text-black font-bold" : "text-slate-700 hover:text-black"
+              }`}
+            >
+              agenda
+            </button>
           </nav>
 
           {/* Right: Notifications, Settings, User Avatar */}
@@ -289,11 +324,85 @@ export default function SuperAdminHeader({
 
         {/* Date Pill & Search Row (Matches screenshot under navbar) */}
         <div className="flex items-center gap-2 px-1">
-          <div className="bg-white rounded-full px-4 py-2 flex items-center gap-2.5 border border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] text-xs text-slate-700 font-medium select-none">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>{todayFormatted}</span>
-            <span className="w-2 h-2 rounded-full bg-[#0055ff]" />
-          </div>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="bg-white hover:bg-slate-50 rounded-full px-4 py-2 flex items-center gap-2.5 border border-slate-200/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] text-xs text-slate-700 font-medium select-none cursor-pointer transition-all active:scale-95"
+                title="Abrir calendário"
+              >
+                <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+                <span>{todayFormatted}</span>
+                <span className="w-2 h-2 rounded-full bg-[#0055ff]" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="w-auto p-4 bg-white border border-slate-200/80 rounded-3xl shadow-xl text-slate-800"
+            >
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-[#0055ff]/10 flex items-center justify-center text-[#0055ff]">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 leading-tight">Calendário</h4>
+                    <p className="text-[10px] text-slate-400">Dias com eventos marcados em azul</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalendarOpen(false);
+                    onNavigate("agenda");
+                  }}
+                  className="text-xs font-semibold text-[#0055ff] hover:underline flex items-center gap-1 shrink-0"
+                >
+                  Abrir Agenda <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+
+              <div className="superadmin-mini-cal">
+                <Calendar
+                  mode="single"
+                  selected={selectedCalendarDate}
+                  onSelect={(date) => {
+                    setSelectedCalendarDate(date);
+                    if (date) {
+                      setCalendarOpen(false);
+                      onNavigate("agenda");
+                    }
+                  }}
+                  locale={ptBR}
+                  modifiers={{
+                    hasEvent: (date) => eventDates.some((ed) => isSameDay(ed, date)),
+                  }}
+                  modifiersClassNames={{
+                    hasEvent: "has-event-day",
+                  }}
+                  className="p-0 pointer-events-auto"
+                />
+              </div>
+
+              <style>{`
+                .superadmin-mini-cal .has-event-day {
+                  position: relative;
+                  font-weight: 700;
+                }
+                .superadmin-mini-cal .has-event-day::after {
+                  content: '';
+                  position: absolute;
+                  bottom: 3px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 5px;
+                  height: 5px;
+                  border-radius: 50%;
+                  background-color: #0055ff;
+                }
+              `}</style>
+            </PopoverContent>
+          </Popover>
 
           <div className="relative flex items-center">
             {searchOpen ? (
