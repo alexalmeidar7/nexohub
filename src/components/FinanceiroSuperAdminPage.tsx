@@ -322,55 +322,48 @@ export default function FinanceiroSuperAdminPage() {
   }, [clients]);
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-[1600px] mx-auto animate-fade-in font-sans">
-      {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      {/* Top Header Section (Card Branco Moderno) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#14161a] flex items-center justify-center text-[#00BFF0]">
-              <DollarSign className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#002132]">
-                Gestão Financeira & Cobranças
-              </h1>
-              <p className="text-xs text-[#002132]/60 mt-0.5">
-                Controle de assinaturas de produtos, disparo mensal automatizado e packs de serviços
-              </p>
-            </div>
-          </div>
+          <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+            Gestão Financeira & Cobranças da Agência
+          </h2>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Controle de assinaturas de produtos, disparo mensal automatizado e packs de serviços
+          </p>
         </div>
 
         {/* Top Actions & Tabs */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center p-1 rounded-2xl bg-[#14161a]">
+          <div className="flex items-center p-1.5 rounded-full bg-[#f8fafc] border border-slate-200/80">
             <button
               onClick={() => setActiveTab("cobrancas")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                activeTab === "cobrancas" ? "bg-[#00BFF0] text-white" : "text-white/60 hover:text-white"
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === "cobrancas" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
               }`}
             >
               Assinaturas & Cobrança
             </button>
             <button
               onClick={() => setActiveTab("packs")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                activeTab === "packs" ? "bg-[#00BFF0] text-white" : "text-white/60 hover:text-white"
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === "packs" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
               }`}
             >
-              Packs de Produtos & Serviços
+              Packs de Serviços
             </button>
             <button
               onClick={() => setActiveTab("config")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                activeTab === "config" ? "bg-[#00BFF0] text-white" : "text-white/60 hover:text-white"
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === "config" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
               }`}
             >
               Disparo Automático
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Top Summary KPI Cards (Flat Dark Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -424,10 +417,10 @@ export default function FinanceiroSuperAdminPage() {
           </div>
           <button
             onClick={handleBatchDispatch}
-            className="px-3 py-2 rounded-xl bg-[#00BFF0] text-white text-xs font-semibold flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition-all"
+            className="h-10 px-4 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
             title="Disparar cobranças agora"
           >
-            <Zap className="w-3.5 h-3.5" /> Disparar Mês
+            <Zap className="w-4 h-4 text-black" /> Disparar Mês
           </button>
         </div>
       </div>
@@ -616,9 +609,9 @@ export default function FinanceiroSuperAdminPage() {
                 });
                 setIsPackModalOpen(true);
               }}
-              className="px-4 py-2 rounded-xl bg-[#00BFF0] text-white text-xs font-semibold flex items-center gap-2 hover:brightness-110 transition-all"
+              className="h-11 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Criar Novo Pack
+              <Plus className="w-4 h-4 text-black" /> Criar Novo Pack
             </button>
           </div>
 

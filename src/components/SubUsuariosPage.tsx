@@ -145,19 +145,22 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
   };
 
   return (
-    <div className="animate-fade-in pb-12">
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      {/* 1. Header Section (Card Branco Moderno) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Subusuários</h2>
-          <p className="text-sm text-slate-500">
-            Arraste um módulo ou subitem para dentro do perfil desejado para liberar o acesso.
+          <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+            Gestão de Subusuários & Permissões
+          </h2>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Arraste um módulo ou subitem para dentro do perfil desejado para liberar o acesso das equipes
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={restoreDefaults}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+            className="h-11 px-6 rounded-full border border-slate-200/80 text-slate-700 bg-slate-50 hover:bg-slate-100 font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-sm"
           >
             <RotateCcw size={15} /> Restaurar padrão
           </button>
@@ -165,14 +168,12 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
             type="button"
             onClick={save}
             disabled={!dirty}
-            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-opacity"
-            style={{ backgroundColor: accentColor }}
+            className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-40"
           >
-            <Save size={16} /> Salvar perfis
+            <Save size={16} className="text-black" /> Salvar Perfis
           </button>
         </div>
-
-      </div>
+      </section>
 
       {/* Boxes dos perfis padrão (barra fixa no topo ao rolar) */}
       <div

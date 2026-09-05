@@ -219,65 +219,68 @@ export default function AdminInfoMusicPage() {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Music className="text-primary" size={20} />
+    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      {/* Header Section (Card Branco Moderno) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-bold text-foreground">Info Music</h1>
-            <p className="text-xs text-muted-foreground">
-              Músicas tocadas em todos os clientes — atualização em tempo real
-              {lastUpdate ? ` · ${lastUpdate.toLocaleTimeString("pt-BR")}` : ""}
+            <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+              Base de Dados — Info Music
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Músicas tocadas em todos os clientes com curiosidades cadastradas
+              {lastUpdate ? ` · Sincronizado às ${lastUpdate.toLocaleTimeString("pt-BR")}` : ""}
             </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-        {Object.entries(clientes).map(([userId, nome]) => {
-          const com = curiosidades.filter(c => c.user_id === userId).length;
-          const sem = semCuriosidade.filter(r => r.user_id === userId).length;
-          
-          if (com === 0 && sem === 0) return null;
-
-          return (
-            <div key={userId} className="bg-white dark:bg-card border border-border rounded-xl p-3 shadow-sm hover:shadow-md transition-all">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs font-black text-foreground truncate max-w-[140px]">{nome}</h3>
-                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-slate-50 dark:bg-muted/50 p-2 rounded-lg border border-border">
-                  <p className="text-[9px] font-bold text-primary uppercase mb-0.5">Com Curiosidade</p>
-                  <p className="text-lg font-black text-foreground leading-none">{com}</p>
-                </div>
-                <div className="bg-slate-50 dark:bg-muted/50 p-2 rounded-lg border border-border">
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase mb-0.5">Sem Curiosidade</p>
-                  <p className="text-lg font-black text-foreground leading-none">{sem}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-            <Input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar cliente, música ou artista"
-              className="pl-9 w-[280px]"
-            />
           </div>
-          <button
-            onClick={() => { setLoading(true); loadRows(); }}
-            className="h-10 px-3 rounded-full bg-secondary text-secondary-foreground flex items-center gap-2 text-xs font-semibold"
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Atualizar
-          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+              <input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar cliente, música ou artista..."
+                className="h-11 pl-10 pr-4 w-[280px] rounded-full border border-slate-200/80 bg-[#f8fafc] text-xs font-semibold outline-none focus:bg-white focus:border-[#0055ff] transition-all"
+              />
+            </div>
+            <button
+              onClick={() => { setLoading(true); loadRows(); }}
+              className="h-11 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg hover:shadow-blue-500/20"
+            >
+              <RefreshCw size={15} className={`text-black ${loading ? "animate-spin" : ""}`} /> Atualizar
+            </button>
+          </div>
         </div>
-      </div>
+
+        {/* Client stats cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Object.entries(clientes).map(([userId, nome]) => {
+            const com = curiosidades.filter(c => c.user_id === userId).length;
+            const sem = semCuriosidade.filter(r => r.user_id === userId).length;
+            
+            if (com === 0 && sem === 0) return null;
+
+            return (
+              <div key={userId} className="bg-[#f8fafc] border border-slate-200/70 rounded-2xl p-4 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xs font-black text-[#002132] truncate max-w-[140px]">{nome}</h3>
+                  <div className="h-2 w-2 rounded-full bg-[#0055ff]" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
+                    <p className="text-[9px] font-bold text-[#0055ff] uppercase mb-0.5">Com Curiosidade</p>
+                    <p className="text-lg font-black text-[#002132] leading-none">{com}</p>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">Sem Curiosidade</p>
+                    <p className="text-lg font-black text-slate-600 leading-none">{sem}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <SectionCard
         icon={<Music size={16} />}
@@ -333,11 +336,11 @@ export default function AdminInfoMusicPage() {
         count={curiosidadesFiltradas.length}
       >
         <div className="flex justify-end p-2 border-b border-border bg-slate-50/50">
-          <button 
+          <button
             onClick={handleDownloadCuriosidades}
-            className="text-[10px] font-bold px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+            className="h-9 px-4 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider transition-all shadow-sm active:scale-95"
           >
-            <RefreshCw size={10} className="rotate-90" /> BAIXAR EXCEL (CSV)
+            <RefreshCw size={12} className="rotate-90 text-black" /> BAIXAR EXCEL (CSV)
           </button>
         </div>
         <table className="w-full text-sm border-collapse">

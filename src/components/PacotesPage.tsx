@@ -212,46 +212,58 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
   }
 
   return (
-    <div className="animate-fade-in pb-12">
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Pacotes</h2>
-          <p className="text-sm text-slate-500">
-            Crie planos e defina quais módulos ficam liberados. O pacote é vinculado ao usuário master de cada cliente.
-          </p>
+    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      {/* 1. Criar novo pacote (Card Branco Moderno) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div>
+            <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+              Gestão de Pacotes
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Crie planos e defina quais módulos ficam liberados para os usuários
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Criar novo pacote */}
-      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 mb-6 flex flex-wrap items-end gap-3">
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Nome do pacote</label>
-          <input
-            value={novo.name}
-            onChange={(e) => setNovo((n) => ({ ...n, name: e.target.value }))}
-            placeholder="Ex.: Nexo Start"
-            className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:bg-white focus:border-slate-300"
-          />
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex-1 min-w-[240px]">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Nome do pacote
+            </label>
+            <input
+              value={novo.name}
+              onChange={(e) => setNovo((n) => ({ ...n, name: e.target.value }))}
+              placeholder="Ex.: Nexo Start, Nexo Max..."
+              className="w-full h-11 rounded-full border border-slate-200/80 bg-[#f8fafc] px-4 text-xs font-semibold outline-none focus:bg-white focus:border-[#0055ff] transition-all"
+            />
+          </div>
+          <div className="w-[180px]">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Valor Mensal (R$)
+            </label>
+            <input
+              value={novo.price}
+              onChange={(e) => setNovo((n) => ({ ...n, price: e.target.value.replace(/[^\d.,]/g, "") }))}
+              placeholder="0,00"
+              className="w-full h-11 rounded-full border border-slate-200/80 bg-[#f8fafc] px-4 text-xs font-semibold outline-none focus:bg-white focus:border-[#0055ff] transition-all"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={criar}
+            disabled={criando}
+            className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-50"
+          >
+            {criando ? (
+              <Loader2 size={16} className="animate-spin text-black" />
+            ) : (
+              <Plus size={16} className="text-black" />
+            )}
+            Criar Pacote
+          </button>
         </div>
-        <div className="w-[160px]">
-          <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Valor (R$)</label>
-          <input
-            value={novo.price}
-            onChange={(e) => setNovo((n) => ({ ...n, price: e.target.value.replace(/[^\d.,]/g, "") }))}
-            placeholder="0,00"
-            className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:bg-white focus:border-slate-300"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={criar}
-          disabled={criando}
-          className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-          style={{ backgroundColor: accentColor }}
-        >
-          {criando ? <Loader2 size={15} className="animate-spin" /> : <Plus size={16} />} Criar pacote
-        </button>
-      </div>
+      </section>
 
       {/* Lista de pacotes */}
       <div className="grid gap-5 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
@@ -455,22 +467,26 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
                   </div>
 
 
-                  <div className="flex items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                     <button
                       type="button"
                       onClick={() => excluir(p)}
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[12px] font-semibold text-red-500 hover:bg-red-50 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors"
                     >
-                      <Trash2 size={13} /> Excluir pacote
+                      <Trash2 size={14} /> Excluir pacote
                     </button>
                     <button
                       type="button"
                       onClick={() => salvar(p)}
                       disabled={saving === p.id}
-                      className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-                      style={{ backgroundColor: accentColor }}
+                      className="h-10 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50"
                     >
-                      {saving === p.id ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Salvar
+                      {saving === p.id ? (
+                        <Loader2 size={15} className="animate-spin text-black" />
+                      ) : (
+                        <Save size={15} className="text-black" />
+                      )}
+                      Salvar
                     </button>
                   </div>
                 </div>
@@ -481,7 +497,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
       </div>
 
       {planos.length === 0 && (
-        <div className="rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center text-sm text-slate-400">
+        <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">
           Nenhum pacote criado ainda.
         </div>
       )}

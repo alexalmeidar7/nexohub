@@ -308,9 +308,9 @@ export default function ClientesPage() {
             className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-50"
           >
             {criando ? (
-              <Loader2 className="animate-spin" size={16} />
+              <Loader2 className="animate-spin text-black" size={16} />
             ) : (
-              <Save size={16} />
+              <Save size={16} className="text-black" />
             )}
             {editingId ? "Atualizar Dados" : "Salvar Cliente"}
           </button>

@@ -25,20 +25,18 @@ export default function ChatbotHome() {
   const [tab, setTab] = useState<Tab>("inbox");
 
   return (
-    <div className="w-full h-full min-h-[70vh] px-4 py-6" style={{ fontFamily: "Montserrat, sans-serif" }}>
-      {/* Header + tabs */}
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-               style={{ background: "#9fca1d", boxShadow: "0 6px 18px rgba(159,202,29,0.35)" }}>
-            <MessageCircle size={20} color="#fff" />
-          </div>
-          <div>
-            <div className="text-lg font-bold" style={{ color: "#002132" }}>WhatsApp Bot</div>
-            <div className="text-[11px]" style={{ color: "#002132", opacity: 0.55 }}>Meta Cloud API oficial</div>
-          </div>
+    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      {/* Header + tabs (Card Branco Moderno) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+            Chatbot & Atendimento WhatsApp
+          </h2>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Meta Cloud API oficial — automações, disparos em massa e atendimento humano
+          </p>
         </div>
-        <div className="flex gap-2 ml-auto flex-wrap">
+        <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[#f8fafc] border border-slate-200/80 flex-wrap">
           {([
             ["inbox", "Caixa de Entrada", MessageCircle],
             ["flows", "Automações", Zap],
@@ -48,19 +46,17 @@ export default function ChatbotHome() {
             <button
               key={id}
               onClick={() => setTab(id as Tab)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all"
-              style={{
-                background: tab === id ? "#00BFF0" : "#D6F4FB",
-                color: tab === id ? "#fff" : "#002132",
-                border: `1px solid ${tab === id ? "#00BFF0" : "rgba(0,191,240,0.3)"}`,
-                boxShadow: tab === id ? "0 4px 14px rgba(0,191,240,0.35)" : "none",
-              }}
+              className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                tab === id
+                  ? "bg-[#0055ff] text-white shadow-sm"
+                  : "text-slate-600 hover:text-black"
+              }`}
             >
-              <Icon size={14} /> {label}
+              <Icon size={14} className={tab === id ? "text-black" : "text-slate-400"} /> {label}
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Body */}
       <div className="rounded-3xl overflow-hidden" style={{
