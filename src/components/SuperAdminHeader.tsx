@@ -359,10 +359,12 @@ export default function SuperAdminHeader({
                   classNames={{
                     months: "w-full",
                     month: "w-full space-y-2",
-                    caption: "flex justify-between pt-0 pb-1 relative items-center px-1 text-slate-800 font-bold text-xs capitalize",
-                    caption_label: "text-xs font-bold capitalize text-slate-800",
-                    nav: "flex items-center gap-1",
-                    nav_button: "h-6 w-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 border-0 flex items-center justify-center transition-colors",
+                    caption: "flex justify-center pt-0 pb-1 relative items-center text-slate-800 font-bold text-xs capitalize w-full",
+                    caption_label: "text-xs font-bold capitalize text-slate-800 text-center mx-auto block",
+                    nav: "flex items-center",
+                    nav_button: "h-6 w-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 border-0 flex items-center justify-center transition-colors absolute top-1/2 -translate-y-1/2",
+                    nav_button_previous: "left-1",
+                    nav_button_next: "right-1",
                     table: "w-full border-collapse",
                     head_row: "flex justify-between w-full mb-1",
                     head_cell: "text-slate-400 font-semibold text-[10px] w-8 text-center uppercase",
@@ -376,6 +378,31 @@ export default function SuperAdminHeader({
               </div>
 
               <style>{`
+                .superadmin-mini-cal .rdp-caption {
+                  display: flex !important;
+                  justify-content: center !important;
+                  align-items: center !important;
+                  position: relative !important;
+                  width: 100% !important;
+                  text-align: center !important;
+                }
+                .superadmin-mini-cal .rdp-caption_label {
+                  text-align: center !important;
+                  margin: 0 auto !important;
+                  display: block !important;
+                }
+                .superadmin-mini-cal .rdp-nav_button_previous {
+                  position: absolute !important;
+                  left: 4px !important;
+                  top: 50% !important;
+                  transform: translateY(-50%) !important;
+                }
+                .superadmin-mini-cal .rdp-nav_button_next {
+                  position: absolute !important;
+                  right: 4px !important;
+                  top: 50% !important;
+                  transform: translateY(-50%) !important;
+                }
                 .superadmin-mini-cal .has-event-day {
                   position: relative;
                   font-weight: 700;
