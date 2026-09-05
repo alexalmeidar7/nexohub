@@ -170,9 +170,28 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto animate-fade-in font-sans pb-12">
-      {/* 1. RESUMO GERAL BANNER (Matches media_1788614596625.png) */}
-      <div className="rounded-3xl p-6 lg:p-8 bg-gradient-to-r from-[#090b10] via-[#0d1424] to-[#0038b8] text-white shadow-md">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      {/* 1. RESUMO GERAL BANNER (Animated Bottom Blue Light Glow) */}
+      <div className="relative rounded-3xl p-6 lg:p-8 bg-[#090b10] text-white shadow-xl overflow-hidden border border-white/10">
+        {/* Animated Ambient Light Coming from the Bottom */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Subtle vertical vignette ensuring dominant black at the top and sides */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#090b10] via-[#090b10]/90 to-transparent z-[1]" />
+
+          {/* Primary rising blue beam from the bottom center */}
+          <div 
+            className="superadmin-ambient-glow absolute -bottom-32 left-1/2 w-[140%] h-64 rounded-[100%] bg-gradient-to-t from-[#0055ff] via-[#0038b8]/60 to-transparent blur-3xl pointer-events-none"
+          />
+
+          {/* Secondary drifting soft blue aura from the bottom right */}
+          <div 
+            className="superadmin-ambient-drift absolute -bottom-24 right-1/4 w-[90%] h-48 rounded-full bg-gradient-to-t from-[#0066ff]/50 via-[#0044cc]/30 to-transparent blur-2xl pointer-events-none"
+          />
+
+          {/* Subtle bottom edge line highlight */}
+          <div className="absolute bottom-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#0055ff]/80 to-transparent z-[2]" />
+        </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Left: Section Title */}
           <div className="shrink-0">
             <h2 className="text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">

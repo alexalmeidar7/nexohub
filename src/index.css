@@ -1871,13 +1871,55 @@ img, video, canvas, svg { max-width: 100%; }
 }
 
 
+/* ── Super Admin Home Banner: Elegant Bottom Blue Ambient Glow ── */
+@keyframes superadmin-banner-glow {
+  0% {
+    transform: translateX(-50%) translateY(24%) scaleX(0.95);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateX(-50%) translateY(8%) scaleX(1.12);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(-50%) translateY(24%) scaleX(0.95);
+    opacity: 0.65;
+  }
+}
+
+@keyframes superadmin-banner-drift {
+  0% {
+    transform: translateX(-15%) scale(0.92);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateX(15%) scale(1.1);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(-15%) scale(0.92);
+    opacity: 0.45;
+  }
+}
+
+.superadmin-ambient-glow {
+  animation: superadmin-banner-glow 7.5s ease-in-out infinite;
+}
+
+.superadmin-ambient-drift {
+  animation: superadmin-banner-drift 11s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nexo-source-active::before,
   .nexo-source-active::after,
   .nexo-track-anim,
   .nexo-cover-anim,
   .aurora-wave-bar,
-  .aurora-glow-bg { animation: none; }
+  .aurora-glow-bg,
+  .superadmin-ambient-glow,
+  .superadmin-ambient-drift { animation: none; }
 }
+
 
 
