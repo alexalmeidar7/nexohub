@@ -78,7 +78,7 @@ export default function PropostasPage() {
   const [itens, setItens] = useState<ItemOrcamento[]>([
     {
       id: "item-1",
-      codigo: "PRD-001",
+      codigo: "NXO-001",
       nome: "Spot Comercial 30s",
       descricao: "Produção de spot publicitário com locução profissional e trilha sincronizada.",
       tipo_medida: "tempo",
@@ -394,7 +394,7 @@ export default function PropostasPage() {
     const nextNum = itens.length + 1;
     const newItem: ItemOrcamento = {
       id: `item-${Date.now()}-${nextNum}`,
-      codigo: `PRD-${String(nextNum).padStart(3, "0")}`,
+      codigo: `NXO-${String(nextNum).padStart(3, "0")}`,
       nome: "",
       descricao: "",
       tipo_medida: "unidade",

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { 
   Package, Plus, Search, Trash2, Edit2, Image as ImageIcon, 
   Clock, Hash, Layers, Check, X, Tag, DollarSign, Upload, 
@@ -41,7 +41,7 @@ const DEFAULT_CATEGORIAS = [
 const DEFAULT_PRODUTOS: Produto[] = [
   {
     id: "prod-1",
-    codigo: "PRD-001",
+    codigo: "NXO-001",
     nome: "Spot Comercial 30s",
     categoria: "Áudio & Produção",
     tipo_medida: "tempo",
@@ -53,7 +53,7 @@ const DEFAULT_PRODUTOS: Produto[] = [
   },
   {
     id: "prod-2",
-    codigo: "PRD-002",
+    codigo: "NXO-002",
     nome: "Vinheta Cantada de Emissora",
     categoria: "Áudio & Produção",
     tipo_medida: "unidade",
@@ -64,7 +64,7 @@ const DEFAULT_PRODUTOS: Produto[] = [
   },
   {
     id: "prod-3",
-    codigo: "PRD-003",
+    codigo: "NXO-003",
     nome: "Plataforma House Mix Streaming",
     categoria: "Software & Plataforma",
     tipo_medida: "mensal",
@@ -75,7 +75,7 @@ const DEFAULT_PRODUTOS: Produto[] = [
   },
   {
     id: "prod-4",
-    codigo: "PRD-004",
+    codigo: "NXO-004",
     nome: "Chatbot WhatsApp IA Oficial",
     categoria: "Inteligência Artificial",
     tipo_medida: "mensal",
@@ -86,7 +86,7 @@ const DEFAULT_PRODUTOS: Produto[] = [
   },
   {
     id: "prod-5",
-    codigo: "PRD-005",
+    codigo: "NXO-005",
     nome: "Aplicativo Smart TV OTT Nexo",
     categoria: "Software & Plataforma",
     tipo_medida: "mensal",
@@ -97,7 +97,7 @@ const DEFAULT_PRODUTOS: Produto[] = [
   },
   {
     id: "prod-6",
-    codigo: "PRD-006",
+    codigo: "NXO-006",
     nome: "Pack 10 Artes Redes Sociais",
     categoria: "Design & Criativo",
     tipo_medida: "unidade",
@@ -115,7 +115,19 @@ export function getStoredProdutos(): Produto[] {
       localStorage.setItem(STORAGE_PRODUTOS_KEY, JSON.stringify(DEFAULT_PRODUTOS));
       return DEFAULT_PRODUTOS;
     }
-    return JSON.parse(raw);
+    const list: Produto[] = JSON.parse(raw);
+    let changed = false;
+    const updated = list.map(p => {
+      if (p.codigo && p.codigo.startsWith("PRD-")) {
+        changed = true;
+        return { ...p, codigo: p.codigo.replace("PRD-", "NXO-") };
+      }
+      return p;
+    });
+    if (changed) {
+      localStorage.setItem(STORAGE_PRODUTOS_KEY, JSON.stringify(updated));
+    }
+    return updated;
   } catch {
     return DEFAULT_PRODUTOS;
   }
@@ -132,14 +144,21 @@ export function saveStoredProdutos(produtos: Produto[]) {
 export function generateNextCodigo(produtos: Produto[]): string {
   let maxNum = 0;
   produtos.forEach(p => {
-    if (p.codigo && p.codigo.startsWith("PRD-")) {
-      const numPart = parseInt(p.codigo.replace("PRD-", ""), 10);
-      if (!isNaN(numPart) && numPart > maxNum) {
-        maxNum = numPart;
+    if (p.codigo) {
+      if (p.codigo.startsWith("NXO-")) {
+        const numPart = parseInt(p.codigo.replace("NXO-", ""), 10);
+        if (!isNaN(numPart) && numPart > maxNum) {
+          maxNum = numPart;
+        }
+      } else if (p.codigo.startsWith("PRD-")) {
+        const numPart = parseInt(p.codigo.replace("PRD-", ""), 10);
+        if (!isNaN(numPart) && numPart > maxNum) {
+          maxNum = numPart;
+        }
       }
     }
   });
-  return `PRD-${String(maxNum + 1).padStart(3, "0")}`;
+  return `NXO-${String(maxNum + 1).padStart(3, "0")}`;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -399,7 +418,7 @@ export default function ProdutosPage({
           <div className="flex items-center gap-3">
             <div className="text-[11px] font-bold text-slate-700 bg-[#f1f5f9] px-4 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5">
               <span>Código:</span>
-              <span className="text-[#0055ff] font-extrabold">{formData.codigo || "PRD-001"}</span>
+              <span className="text-[#0055ff] font-extrabold">{formData.codigo || "NXO-001"}</span>
             </div>
           </div>
         </div>
