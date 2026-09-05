@@ -148,7 +148,7 @@ export default function SuperAdminHeader({
                     setBusinessOpen(false);
                   }}
                   className={`text-sm font-semibold flex items-center gap-1 transition-colors outline-none ${
-                    ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
+                    ["housemix", "modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
                       ? "text-black font-bold"
                       : "text-slate-700 hover:text-black"
                   }`}
@@ -168,36 +168,15 @@ export default function SuperAdminHeader({
                     <ChevronDown className="w-3.5 h-3.5 rotate-180 opacity-70" />
                   </button>
                   <button
-                    onClick={() => { onNavigate("modulos"); setProdutosOpen(false); }}
-                    className={`text-xs transition-colors whitespace-nowrap ${
-                      currentPage === "modulos" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                    onClick={() => { onNavigate("housemix"); setProdutosOpen(false); }}
+                    className={`text-xs transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                      ["housemix", "modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
+                        ? "text-[#00BFF0] font-bold"
+                        : "text-white/80 hover:text-white"
                     }`}
                   >
-                    módulos rádio
-                  </button>
-                  <button
-                    onClick={() => { onNavigate("subusuarios"); setProdutosOpen(false); }}
-                    className={`text-xs transition-colors whitespace-nowrap ${
-                      currentPage === "subusuarios" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
-                    }`}
-                  >
-                    subusuários
-                  </button>
-                  <button
-                    onClick={() => { onNavigate("pacotes"); setProdutosOpen(false); }}
-                    className={`text-xs transition-colors whitespace-nowrap ${
-                      currentPage === "pacotes" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
-                    }`}
-                  >
-                    pacotes
-                  </button>
-                  <button
-                    onClick={() => { onNavigate("admininfomusic"); setProdutosOpen(false); }}
-                    className={`text-xs transition-colors whitespace-nowrap ${
-                      currentPage === "admininfomusic" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
-                    }`}
-                  >
-                    info music
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0055ff]" />
+                    house mix
                   </button>
                 </div>
               )}

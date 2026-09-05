@@ -76,6 +76,7 @@ const ClientesPage = lazyRetry(() => import("./ClientesPage"));
 const ModulosPage = lazyRetry(() => import("./ModulosPage"));
 const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
 const PacotesPage = lazyRetry(() => import("./PacotesPage"));
+const HouseMixPage = lazyRetry(() => import("./HouseMixPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
 
 
@@ -87,7 +88,7 @@ import nexoCantoLogo from "@/assets/nexo_canto.png";
 import logoNxo from "@/assets/logo-nxo.png";
 import SuperAdminHeader from "./SuperAdminHeader";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -342,6 +343,7 @@ const pageTitle: Record<Page, string> = {
   admininfomusic: "Info Music",
   financeiro: "Gestão Financeira & Cobranças",
   chatbot: "Chatbot & Atendimento",
+  housemix: "Gestão do Produto House Mix",
 };
 
 interface DashboardProps {
@@ -1776,7 +1778,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
 
 
-              {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
+              {!isAdmin && currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "financeiro" && <FinanceiroSuperAdminPage />}
               {currentPage === "chatbot" && <ChatbotHome />}
               {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
@@ -1895,11 +1897,54 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <SitePage effectiveUserId={effectiveUserId || user?.id || null} />
                 </div>
               )}
-              {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
-              {currentPage === "subusuarios" && (
+              {/* House Mix (Página dedicada de Gestão do Produto Principal) */}
+              {(currentPage === "housemix" || (isAdmin && ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage))) && (
+                <HouseMixPage
+                  initialTab={
+                    currentPage === "subusuarios"
+                      ? "subusuarios"
+                      : currentPage === "pacotes"
+                      ? "pacotes"
+                      : currentPage === "admininfomusic"
+                      ? "infomusic"
+                      : "modulos"
+                  }
+                  accentColor={layoutColors.accentColor}
+                  adminModulosGroups={adminModulosGroups as never}
+                  subUsuarioModulosGroups={subUsuarioModulosGroups as never}
+                  onSelectGroup={(g) => {
+                    const item = adminModulosGroups.find(i => i.label === g.label);
+                    if (item?.page) { setCurrentPage(item.page); return; }
+                    if (item?.children?.length) {
+                      const first = item.children[0];
+                      if (!first.page && first.children?.length) { handleChildClick(first.children[0], first.label); return; }
+                      handleChildClick(first, item.label);
+                      return;
+                    }
+                    handleChildClick({ label: g.label }, "modulos");
+                  }}
+                  onSelectChild={(c, parent) => {
+                    const findChild = (list: typeof adminModulosGroups[number]["children"]): { label: string; page?: Page } | undefined => {
+                      for (const ch of list ?? []) {
+                        if (ch.label === c.label) return ch;
+                        const deep = findChild(ch.children);
+                        if (deep) return deep;
+                      }
+                      return undefined;
+                    };
+                    const group = adminModulosGroups.find(i => i.label === parent)
+                      ?? adminModulosGroups.find(i => (i.children ?? []).some(ch => ch.label === parent));
+                    const child = findChild(group?.children) ?? { label: c.label };
+                    handleChildClick(child, parent);
+                  }}
+                  onNavigate={setCurrentPage}
+                />
+              )}
+              {!isAdmin && currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
+              {!isAdmin && currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
               )}
-              {currentPage === "modulos" && (
+              {!isAdmin && currentPage === "modulos" && (
                 <ModulosPage
                   groups={adminModulosGroups as never}
                   accentColor={layoutColors.accentColor}
