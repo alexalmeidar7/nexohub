@@ -630,9 +630,15 @@ export default function PromocoesKiosk() {
       return true;
     }
 
-    return normalizedName.includes("SERTANEJO BOM DEMAIS")
+    const isSertanejoSabado = normalizedName.includes("SERTANEJO BOM DEMAIS")
       && normalizedName.includes("EDICAO")
       && normalizedName.includes("SABADO");
+    const isPrimeiraEdicao = /(?:^|\s)1\s+EDICAO(?:\s|$)/.test(normalizedName)
+      || normalizedName.includes("PRIMEIRA EDICAO");
+    const isSegundaEdicao = /(?:^|\s)2\s+EDICAO(?:\s|$)/.test(normalizedName)
+      || normalizedName.includes("SEGUNDA EDICAO");
+
+    return isSertanejoSabado && (isPrimeiraEdicao || isSegundaEdicao);
   };
 
   const mergeProgramList = (list: ProgramaGrade[]) => {
