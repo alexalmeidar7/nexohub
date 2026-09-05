@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, memo } from "react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const NEXO_CYAN = "#00BFF0";
+const NEXO_CYAN = "#0055ff";
 const NEXO_DARK = "#0A2540";
 const HOUR_H = 48; // px per hour
 const START_HOUR = 0;

@@ -1995,26 +1995,31 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         </DialogContent>
       </Dialog>
 
-      <div style={{ background: NEXO_CARD_BG, borderRadius: 28, padding: "28px 32px 32px", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)", fontFamily: "'Montserrat', sans-serif" }}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div style={{ width: 40, height: 40, borderRadius: 999, background: NEXO_CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CalendarIcon size={20} style={{ color: "#FFFFFF" }} />
+      <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+        {/* Header Section (Card Branco Moderno) */}
+        <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-black to-slate-800 text-white flex items-center justify-center shadow-md shrink-0">
+              <CalendarIcon className="w-6 h-6 text-[#00BFF0]" />
             </div>
             <div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>Agenda de Eventos</h3>
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>Gerencie programas e participantes</p>
+              <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+                Agenda de Eventos
+              </h2>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                Gerencie programas e participantes da emissora
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-3 flex-wrap">
             {locais.length > 0 && (
               <Select value={filterLocal} onValueChange={setFilterLocal}>
-                <SelectTrigger className="w-[180px] h-10 text-xs" style={{ background: "#FFFFFF", color: NEXO_DARK, borderRadius: 999, border: `2px solid ${NEXO_CYAN}`, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", paddingLeft: 16 }}>
-                  <MapPin size={12} className="mr-1" style={{ color: NEXO_CYAN }} />
+                <SelectTrigger className="w-[180px] h-10 text-xs bg-[#f8fafc] border border-slate-200 text-slate-700 rounded-full font-semibold">
+                  <MapPin size={12} className="mr-1 text-slate-400" />
                   <SelectValue placeholder="Filtrar por local" />
                 </SelectTrigger>
-                <SelectContent style={{ backgroundColor: "#FFFFFF", color: NEXO_DARK, borderRadius: 16, border: `2px solid ${NEXO_CYAN}` }}>
+                <SelectContent className="bg-white rounded-2xl border border-slate-100 shadow-xl">
                   <SelectItem value="todos">Todos os locais</SelectItem>
                   {locais.map((l) => (
                     <SelectItem key={l} value={l}>{l}</SelectItem>
@@ -2022,15 +2027,16 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 </SelectContent>
               </Select>
             )}
+
             <button
               type="button"
               onClick={openNewDialog}
-              style={{ height: 40, padding: "0 22px", borderRadius: 999, background: NEXO_LIME, border: "none", color: NEXO_DARK, fontWeight: 800, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)", fontFamily: "'Montserrat', sans-serif" }}
+              className="h-10 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 cursor-pointer"
             >
               <Plus size={14} /> Novo Evento
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Banner de conflitos com feriados nacionais */}
         {holidayConflicts.length > 0 && (
@@ -2072,83 +2078,54 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogContent
-            className="max-w-4xl p-0 flex flex-col"
-
-            style={{
-              // Escopo local da paleta Nexo Form (padrão do sistema)
-              ["--layout-page-bg" as any]: "#D6F4FB",
-              ["--layout-page-text" as any]: "#0A2540",
-              ["--layout-accent-color" as any]: "#00BFF0",
-              ["--layout-header-bg" as any]: "#00BFF0",
-              ["--layout-header-text" as any]: "#ffffff",
-              ["--layout-icon-color" as any]: "#0A2540",
-              backgroundColor: "#D6F4FB",
-              borderRadius: "24px",
-              border: "none",
-              boxShadow: "0 24px 80px rgba(10,37,64,0.25)",
-              fontFamily: "Montserrat, sans-serif",
-              overflow: "hidden",
-            }}
+            className="max-w-4xl p-0 flex flex-col bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden font-sans"
           >
             <style>{`
               .agenda-form-input {
-                background-color: #ffffff !important;
-                border: 1.5px solid color-mix(in srgb, var(--layout-accent-color, #00BFF0) 22%, transparent) !important;
-                border-radius: 12px !important;
-                color: var(--layout-page-text, #1a1a1a) !important;
-                transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease !important;
+                background-color: #f8fafc !important;
+                border: 1px solid rgba(226, 232, 240, 0.9) !important;
+                border-radius: 999px !important;
+                color: #0f172a !important;
+                transition: all 0.2s ease !important;
               }
-              .agenda-form-input::placeholder { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent) !important; }
+              .agenda-form-input::placeholder { color: #94a3b8 !important; }
               .agenda-form-input:hover:not(:focus):not(:focus-visible) {
-                border-color: color-mix(in srgb, var(--layout-accent-color, #00BFF0) 45%, transparent) !important;
+                border-color: #cbd5e1 !important;
               }
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active, .agenda-form-input[data-state="open"] {
                 outline: none !important;
-                border-color: var(--layout-accent-color, #00BFF0) !important;
-                box-shadow: 0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #00BFF0) 22%, transparent) !important;
+                border-color: #0055ff !important;
+                box-shadow: 0 0 0 3px rgba(0, 85, 255, 0.15) !important;
                 background-color: #ffffff !important;
               }
-              .agenda-form-calendar .rdp { color: var(--layout-page-text, #1a1a1a) !important; --rdp-cell-size: 40px; margin: 0 !important; }
+              .agenda-form-calendar .rdp { color: #0f172a !important; --rdp-cell-size: 40px; margin: 0 !important; }
               .agenda-form-calendar .rdp-months { justify-content: center; }
               .agenda-form-calendar .rdp-month { width: 100%; }
               .agenda-form-calendar .rdp-caption { padding: 4px 4px 10px; }
-              .agenda-form-calendar .rdp-caption_label { color: var(--layout-page-text, #1a1a1a) !important; font-weight: 800; font-size: 13px; text-transform: capitalize; letter-spacing: 0.02em; }
-              .agenda-form-calendar .rdp-head_cell { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent) !important; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
-              .agenda-form-calendar .rdp-day { color: var(--layout-page-text, #1a1a1a) !important; font-weight: 600; font-size: 12.5px; border-radius: 10px !important; transition: all 0.15s ease; }
-              .agenda-form-calendar .rdp-day:hover:not(.rdp-day_selected) { background-color: color-mix(in srgb, var(--layout-accent-color, #00BFF0) 14%, transparent) !important; color: var(--layout-accent-color, #00BFF0) !important; transform: scale(1.05); }
-              .agenda-form-calendar .rdp-day_selected { background: linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%) !important; color: #ffffff !important; font-weight: 800 !important; box-shadow: 0 4px 12px color-mix(in srgb, #00BFF0 45%, transparent) !important; }
-              .agenda-form-calendar .rdp-day_selected:hover { background: linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%) !important; color: #ffffff !important; }
-              .agenda-form-calendar .rdp-day_today:not(.rdp-day_selected) { background-color: transparent !important; color: var(--layout-accent-color, #00BFF0) !important; font-weight: 800 !important; box-shadow: inset 0 0 0 2px var(--layout-accent-color, #00BFF0) !important; }
-              .agenda-form-calendar .rdp-day_outside { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 22%, transparent) !important; font-weight: 500; }
-              .agenda-form-calendar .rdp-nav_button { color: var(--layout-page-text, #1a1a1a) !important; border-radius: 10px !important; width: 32px !important; height: 32px !important; }
-              .agenda-form-calendar .rdp-nav_button:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #00BFF0) 15%, transparent) !important; color: var(--layout-accent-color, #00BFF0) !important; }
-              .agenda-form-calendar button[name="previous-month"],
-              .agenda-form-calendar button[name="next-month"] { color: var(--layout-page-text, #1a1a1a) !important; }
-
+              .agenda-form-calendar .rdp-caption_label { color: #0f172a !important; font-weight: 800; font-size: 13px; text-transform: capitalize; letter-spacing: 0.02em; }
+              .agenda-form-calendar .rdp-head_cell { color: #64748b !important; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+              .agenda-form-calendar .rdp-day { color: #0f172a !important; font-weight: 600; font-size: 12.5px; border-radius: 999px !important; transition: all 0.15s ease; }
+              .agenda-form-calendar .rdp-day:hover:not(.rdp-day_selected) { background-color: #f1f5f9 !important; color: #0055ff !important; }
+              .agenda-form-calendar .rdp-day_selected { background: #0055ff !important; color: #ffffff !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(0, 85, 255, 0.35) !important; }
+              .agenda-form-calendar .rdp-day_selected:hover { background: #0047e1 !important; color: #ffffff !important; }
+              .agenda-form-calendar .rdp-day_today:not(.rdp-day_selected) { background-color: transparent !important; color: #0055ff !important; font-weight: 800 !important; border: 1.5px solid #0055ff !important; }
+              .agenda-form-calendar .rdp-day_outside { color: #cbd5e1 !important; font-weight: 500; }
+              .agenda-form-calendar .rdp-nav_button { color: #0f172a !important; border-radius: 999px !important; width: 32px !important; height: 32px !important; }
+              .agenda-form-calendar .rdp-nav_button:hover { background-color: #f1f5f9 !important; color: #0055ff !important; }
             `}</style>
 
-            {/* Header — Nexo Form (cyan sólido, cantos superiores arredondados) */}
-            <div
-              className="px-6 pt-5 pb-5"
-              style={{
-                background: "linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%)",
-                borderRadius: "24px 24px 0 0",
-                color: "#ffffff",
-              }}
-            >
+            {/* Header */}
+            <div className="px-6 py-5 bg-[#002132] text-white">
               <div className="flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: "rgba(255,255,255,0.22)", backdropFilter: "blur(4px)" }}
-                >
+                <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center text-[#00BFF0]">
                   <CalendarIcon size={22} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <DialogTitle className="text-base font-black uppercase tracking-wider m-0" style={{ letterSpacing: "0.08em" }}>
+                  <DialogTitle className="text-base font-black uppercase tracking-wider m-0 text-white">
                     {editingId ? "Editar Evento" : "Novo Evento"}
                   </DialogTitle>
-                  <p className="text-[11px] mt-0.5 font-medium" style={{ opacity: 0.9 }}>
-                    Preencha os dados abaixo
+                  <p className="text-[11px] mt-0.5 font-medium text-slate-300">
+                    Preencha os dados do evento ou programa
                   </p>
                 </div>
               </div>
@@ -2909,12 +2886,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 </button>
               )}
 
-              <Button
-                variant="save"
+              <button
                 type="button"
                 onClick={handleSave}
                 disabled={!formProgramaId || savingEvent}
-                className="w-full h-11 rounded-full text-sm font-black uppercase tracking-wider transition-all duration-200"
+                className="w-full h-11 rounded-full text-sm font-bold uppercase tracking-wider bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
               >
                 {savingEvent ? (
                   <>
@@ -2924,7 +2900,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 ) : (
                   editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"
                 )}
-              </Button>
+              </button>
             </div>
           </DialogContent>
         </Dialog>
@@ -2957,165 +2933,188 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           <div className="w-full">
             <div className="w-full space-y-5">
               {/* Calendar */}
-              <div className="overflow-hidden w-full" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
-              <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
-                Calendário
-              </div>
+              <div className="overflow-hidden w-full bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+                <div className="px-5 py-3.5 border-b border-slate-100 bg-white flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#002132]">Calendário</span>
+                </div>
 
-              <div className="p-3">
-              <style>{`
-                .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
-                .agenda-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #2563eb) !important; color: #fff !important; }
-                .agenda-calendar .rdp-day_selected:hover { background-color: var(--layout-accent-color, #2563eb) !important; }
-                .agenda-calendar .rdp-day_today,
-                .agenda-calendar .rdp-day_today.rdp-day_selected,
-                .agenda-calendar [class*="day_today"] { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(198, 240, 60, 0.35) !important; }
-                .agenda-calendar .rdp-day_today:hover,
-                .agenda-calendar .rdp-day_today.rdp-day_selected:hover { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; }
-                .agenda-calendar .agenda-today-highlight,
-                .agenda-calendar .agenda-today-highlight.rdp-day_selected { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(198, 240, 60, 0.35) !important; }
-                .agenda-calendar .agenda-today-highlight:hover,
-                .agenda-calendar .agenda-today-highlight.rdp-day_selected:hover { background-color: ${NEXO_LIME} !important; color: ${NEXO_DARK} !important; }
-                .agenda-calendar .has-event-day { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; font-weight: bold; }
-                .agenda-calendar .is-feriado-day { position: relative; }
-                .agenda-calendar .is-feriado-day::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background-color: var(--layout-accent-color, #ef4444); }
-              `}</style>
-              <TooltipProvider>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className={cn("p-2 pointer-events-auto agenda-calendar")}
-                  locale={ptBR}
-                  modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates, isToday: (d: Date) => isSameDay(d, new Date()) }}
-                  modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day", isToday: "agenda-today-highlight" }}
-                  classNames={{
-                    caption_label: "text-[15px] font-medium",
-                    nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-muted border-0 flex items-center justify-center transition-colors",
-                    head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.85rem]",
-                    row: "flex w-full mt-2.5",
-                    cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                    day: "h-10 w-10 rounded-md p-0 font-normal text-sm aria-selected:opacity-100 hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground transition-colors",
-                  }}
-                  components={{
-                    DayContent: ({ date, ...props }) => {
-                      const feriado = getFeriadoNome(date);
-                      const content = <span>{date.getDate()}</span>;
-                      
-                      if (feriado) {
-                        return (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-white border-none z-[100]" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
-                              <p className="text-[10px] font-bold">{feriado}</p>
-                              <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      }
-                      return content;
+                <div className="p-4">
+                  <style>{`
+                    .agenda-calendar .rdp-day:hover { background-color: #f1f5f9 !important; color: #0055ff !important; }
+                    .agenda-calendar .rdp-day_selected { background-color: #0055ff !important; color: #fff !important; font-weight: 700 !important; }
+                    .agenda-calendar .rdp-day_selected:hover { background-color: #0047e1 !important; color: #fff !important; }
+                    .agenda-calendar .rdp-day_today,
+                    .agenda-calendar .rdp-day_today.rdp-day_selected,
+                    .agenda-calendar [class*="day_today"] {
+                      border: 1.5px solid #0055ff !important;
+                      color: #0055ff !important;
+                      font-weight: 800 !important;
+                      background-color: transparent !important;
+                      box-shadow: none !important;
                     }
-                  }}
-                />
-              </TooltipProvider>
-              {getFeriadoNome(selectedDate) && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="px-3 pb-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help" style={{ color: "var(--layout-accent-color, #ef4444)" }}>
-                        <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }} />
-                        {getFeriadoNome(selectedDate)}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
-                      <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
-                      <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-          </div>
-            {/* Upcoming 7 days */}
-            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
-              <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
-                Próximos 7 dias
+                    .agenda-calendar .rdp-day_today.rdp-day_selected {
+                      background-color: #0055ff !important;
+                      color: #fff !important;
+                    }
+                    .agenda-calendar .has-event-day { position: relative; font-weight: 700; }
+                    .agenda-calendar .has-event-day::after {
+                      content: '';
+                      position: absolute;
+                      bottom: 3px;
+                      left: 50%;
+                      transform: translateX(-50%);
+                      width: 4px;
+                      height: 4px;
+                      border-radius: 50%;
+                      background-color: #0055ff;
+                    }
+                    .agenda-calendar .is-feriado-day { position: relative; }
+                    .agenda-calendar .is-feriado-day::after {
+                      content: '';
+                      position: absolute;
+                      top: 3px;
+                      right: 3px;
+                      width: 4px;
+                      height: 4px;
+                      border-radius: 50%;
+                      background-color: #ef4444;
+                    }
+                  `}</style>
+                  <TooltipProvider>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      className={cn("p-0 pointer-events-auto agenda-calendar")}
+                      locale={ptBR}
+                      modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates, isToday: (d: Date) => isSameDay(d, new Date()) }}
+                      modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day", isToday: "agenda-today-highlight" }}
+                      classNames={{
+                        caption_label: "text-[15px] font-bold text-slate-800",
+                        nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-slate-100 border-0 flex items-center justify-center transition-colors",
+                        head_cell: "text-slate-400 rounded-md w-10 font-bold text-[0.75rem] uppercase",
+                        row: "flex w-full mt-2.5",
+                        cell: "h-10 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                        day: "h-10 w-10 rounded-full p-0 font-medium text-sm hover:bg-slate-100 hover:text-slate-900 transition-colors",
+                      }}
+                      components={{
+                        DayContent: ({ date, ...props }) => {
+                          const feriado = getFeriadoNome(date);
+                          const content = <span>{date.getDate()}</span>;
+                          
+                          if (feriado) {
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-white border-none z-[100] bg-rose-600 rounded-xl">
+                                  <p className="text-[10px] font-bold">{feriado}</p>
+                                  <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          }
+                          return content;
+                        }
+                      }}
+                    />
+                  </TooltipProvider>
+                  {getFeriadoNome(selectedDate) && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="px-3 pt-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help text-rose-600">
+                            <span className="w-2 h-2 rounded-full inline-block bg-rose-600" />
+                            {getFeriadoNome(selectedDate)}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-white border-none bg-rose-600 rounded-xl">
+                          <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
+                          <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
               </div>
 
-              <div className="p-3 space-y-3 max-h-[320px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
-                {upcomingEvents.length === 0 ? (
-                  <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                    Nenhum evento nos próximos dias.
-                  </p>
-                ) : (
-                  upcomingEvents.map(({ dateStr, date, events: dayEvents }) => (
-                    <div key={dateStr}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedDate(date)}
-                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer"
-                        style={{ color: "var(--layout-icon-color, #888888)" }}
-                      >
-                        <CalendarIcon size={10} />
-                        {format(date, "EEEE, dd/MM", { locale: ptBR })}
-                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
-                          {dayEvents.length}
-                        </span>
-                      </button>
-                      <div className="space-y-1.5">
-                        {dayEvents.map((evt) => (
-                          <div
-                            key={evt.id}
-                            className="rounded-xl px-3 py-2 cursor-pointer hover:shadow-sm transition-all"
-                            style={{ backgroundColor: "#FAFDFE", border: "1px solid #EEF6FA" }}
-                            onClick={() => {
-                              setViewingEvent(evt);
-                              setViewingOccurrenceDate(dateStr);
-                              setViewEventDialogOpen(true);
-                            }}
-                          >
-                            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                              {evt.programa?.nome || "Programa removido"}
-                            </p>
-                            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                              {evt.programa ? (
-                                evt.tipo_evento === "gravacao" && evt.horario_gravacao
-                                  ? `🎬 ${evt.horario_gravacao} (gravação)`
-                                  : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
-                              ) : ""}
-                              {evt.local ? ` • ${evt.local}` : ""}
-                            </p>
-                            {evt.recorrencia !== "unico" && (
-                              <span className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
-                                🔁 {recorrenciaLabels[evt.recorrencia]}
-                              </span>
-                            )}
-                          </div>
-                        ))}
+              {/* Upcoming 7 days */}
+              <div className="overflow-hidden bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+                <div className="px-5 py-3.5 border-b border-slate-100 bg-white flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#002132]">Próximos 7 dias</span>
+                </div>
+
+                <div className="p-4 space-y-3 max-h-[320px] overflow-y-auto">
+                  {upcomingEvents.length === 0 ? (
+                    <p className="text-xs py-4 text-center text-slate-400">
+                      Nenhum evento nos próximos dias.
+                    </p>
+                  ) : (
+                    upcomingEvents.map(({ dateStr, date, events: dayEvents }) => (
+                      <div key={dateStr}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDate(date)}
+                          className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer text-slate-500"
+                        >
+                          <CalendarIcon size={10} />
+                          {format(date, "EEEE, dd/MM", { locale: ptBR })}
+                          <span className="ml-auto text-[9px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-[#0055ff]">
+                            {dayEvents.length}
+                          </span>
+                        </button>
+                        <div className="space-y-1.5">
+                          {dayEvents.map((evt) => (
+                            <div
+                              key={evt.id}
+                              className="rounded-2xl px-3.5 py-2.5 cursor-pointer hover:shadow-sm transition-all bg-[#f8fafc] hover:bg-[#f1f5f9] border border-slate-100"
+                              onClick={() => {
+                                setViewingEvent(evt);
+                                setViewingOccurrenceDate(dateStr);
+                                setViewEventDialogOpen(true);
+                              }}
+                            >
+                              <p className="text-xs font-bold truncate text-slate-800">
+                                {evt.programa?.nome || "Programa removido"}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                {evt.programa ? (
+                                  evt.tipo_evento === "gravacao" && evt.horario_gravacao
+                                    ? `🎬 ${evt.horario_gravacao} (gravação)`
+                                    : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+                                ) : ""}
+                                {evt.local ? ` • ${evt.local}` : ""}
+                              </p>
+                              {evt.recorrencia !== "unico" && (
+                                <span className="inline-block text-[9px] font-semibold px-2 py-0.5 rounded-full mt-1 bg-blue-50 text-[#0055ff]">
+                                  🔁 {recorrenciaLabels[evt.recorrencia]}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
 
             {/* Datas Comemorativas + Aniversários de Cidades */}
             <DatasComemorativasCidades feriados={feriadosNacionais} />
 
             {/* Past Events */}
-            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
-              <div className="flex items-center justify-between gap-2" style={{ padding: "12px 18px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+            <div className="overflow-hidden bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 bg-white">
                 <div className="flex items-center gap-2 min-w-0">
-                  <History size={13} />
-                  <span className="truncate">Eventos Passados</span>
+                  <History size={13} className="text-slate-500" />
+                  <span className="text-xs font-black uppercase tracking-wider text-[#002132] truncate">Eventos Passados</span>
                 </div>
                 <Select value={pastMonthFilter} onValueChange={setPastMonthFilter}>
-                  <SelectTrigger className="h-7 w-[120px] text-[10px] bg-white/10 border-white/20 text-white hover:bg-white/20 transition-colors">
+                  <SelectTrigger className="h-7 w-[120px] text-[10px] bg-slate-50 border-slate-200 text-slate-700 rounded-full font-medium">
                     <SelectValue placeholder="Filtrar por mês" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl border border-slate-100 shadow-lg">
                     <SelectItem value="todos">Todos os meses</SelectItem>
                     {pastMonths.map(month => (
                       <SelectItem key={month} value={month.toLowerCase()}>
@@ -3125,9 +3124,9 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                   </SelectContent>
                 </Select>
               </div>
-              <div className="p-3 space-y-3 max-h-[320px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
+              <div className="p-4 space-y-3 max-h-[320px] overflow-y-auto">
                 {pastEvents.length === 0 ? (
-                  <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                  <p className="text-xs py-4 text-center text-slate-400">
                     Nenhum evento passado encontrado para o filtro selecionado.
                   </p>
                 ) : (
@@ -3136,12 +3135,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                       <button
                         type="button"
                         onClick={() => setSelectedDate(date)}
-                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer"
-                        style={{ color: "var(--layout-icon-color, #888888)" }}
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer text-slate-400"
                       >
                         <CalendarIcon size={10} />
                         {format(date, "EEEE, dd/MM", { locale: ptBR })}
-                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                        <span className="ml-auto text-[9px] font-normal px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                           {dayEvents.length}
                         </span>
                       </button>
@@ -3149,18 +3147,17 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                         {dayEvents.map((evt) => (
                           <div
                             key={evt.id}
-                            className="rounded-xl px-3 py-2 cursor-pointer hover:shadow-sm transition-all opacity-75"
-                            style={{ backgroundColor: "#FAFDFE", border: "1px solid #EEF6FA" }}
+                            className="rounded-2xl px-3.5 py-2.5 cursor-pointer hover:shadow-sm transition-all opacity-75 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-slate-100"
                             onClick={() => {
                               setViewingEvent(evt);
                               setViewingOccurrenceDate(dateStr);
                               setViewEventDialogOpen(true);
                             }}
                           >
-                            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                            <p className="text-xs font-bold truncate text-slate-700">
                               {evt.programa?.nome || "Programa removido"}
                             </p>
-                            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                            <p className="text-[10px] text-slate-400">
                               {evt.programa ? (
                                 evt.tipo_evento === "gravacao" && evt.horario_gravacao
                                   ? `🎬 ${evt.horario_gravacao} (gravação)`
@@ -3170,17 +3167,17 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               {evt.status === "concluido" && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
                                   CONCLUÍDO
                                 </span>
                               )}
                               {evt.status === "cancelado" && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">
                                   CANCELADO
                                 </span>
                               )}
                               {evt.recorrencia !== "unico" && (
-                                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                                   🔁 {recorrenciaLabels[evt.recorrencia]}
                                 </span>
                               )}
@@ -3199,22 +3196,20 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           {/* Events + Upcoming */}
           <div className="h-full flex flex-col space-y-4">
             {/* Week schedule (Mon-Sun) - Injected here */}
-            <div className="overflow-hidden h-full flex flex-col" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+            <div className="overflow-hidden h-full flex flex-col bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
               {/* Google Agenda style toolbar */}
-              <div className="flex items-center gap-2 flex-wrap px-4 py-3" style={{ borderBottom: "1px solid #EEF6FA", fontFamily: "'Montserrat', sans-serif" }}>
+              <div className="flex items-center gap-2 flex-wrap px-5 py-3.5 border-b border-slate-100 bg-white font-sans">
                 <button
                   type="button"
                   onClick={() => { setWeekOffset(0); setSelectedDate(new Date()); }}
-                  className="px-4 h-9 rounded-full text-xs font-bold transition-colors"
-                  style={{ border: "1px solid #D5E9F2", color: NEXO_DARK, background: "#FFFFFF" }}
+                  className="px-4 h-8 rounded-full text-xs font-bold border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
                 >
                   Hoje
                 </button>
                 <button
                   type="button"
                   onClick={() => setWeekOffset((w) => w - 1)}
-                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F1F9FB] transition-colors"
-                  style={{ color: NEXO_DARK }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-700 transition-colors text-base"
                   aria-label="Semana anterior"
                 >
                   ‹
@@ -3222,32 +3217,29 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 <button
                   type="button"
                   onClick={() => setWeekOffset((w) => w + 1)}
-                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F1F9FB] transition-colors"
-                  style={{ color: NEXO_DARK }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-700 transition-colors text-base"
                   aria-label="Próxima semana"
                 >
                   ›
                 </button>
-                <span className="text-base font-semibold capitalize ml-1" style={{ color: NEXO_DARK }}>
+                <span className="text-sm font-bold text-[#002132] capitalize ml-1">
                   {weekEvents.length > 0
                     ? format(weekEvents[0].date, "MMMM 'de' yyyy", { locale: ptBR })
                     : ""}
                 </span>
-                <span className="text-[11px] font-medium ml-1" style={{ color: "rgba(10,37,64,0.5)" }}>
+                <span className="text-[11px] font-medium text-slate-400 ml-1">
                   {weekEvents.length > 0 && `${format(weekEvents[0].date, "dd/MM")} – ${format(weekEvents[6].date, "dd/MM")}`}
                 </span>
                 <div className="ml-auto flex items-center gap-2">
                   <span
-                    className="px-3 h-8 inline-flex items-center rounded-full text-[11px] font-bold"
-                    style={{ background: "#F1F9FB", color: NEXO_DARK }}
+                    className="px-3.5 h-7 inline-flex items-center rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-100 text-slate-700"
                   >
                     Semana
                   </span>
                   <button
                     type="button"
                     onClick={handleExportFeriados}
-                    className="px-3 h-8 rounded-full text-[10px] font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity"
-                    style={{ border: "1px solid #D5E9F2", color: NEXO_DARK }}
+                    className="px-3.5 h-7 rounded-full text-[10px] font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
                     title="Exportar feriados para o Google Calendar"
                   >
                     <Download size={11} /> Exportar

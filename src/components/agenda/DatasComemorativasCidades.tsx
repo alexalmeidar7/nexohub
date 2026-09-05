@@ -75,75 +75,32 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
 
   return (
     <div
-      className="overflow-hidden"
-      style={{
-        backgroundColor: "#FFFFFF",
-        borderRadius: 20,
-        border: "1px solid #E5F5FB",
-        boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
-      }}
+      className="overflow-hidden bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] font-sans"
     >
       <div
-        className="flex items-center justify-between"
-        style={{
-          padding: "12px 18px",
-          background: NEXO_DARK,
-          color: "#FFFFFF",
-          fontWeight: 800,
-          fontSize: 12,
-          letterSpacing: 2,
-          textTransform: "uppercase",
-          fontFamily: "'Montserrat', sans-serif",
-        }}
+        className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <Star size={12} style={{ color: NEXO_LIME, fill: NEXO_LIME }} />
-          <span className="truncate" style={{ color: "#FFFFFF" }}>DATAS COMEMORATIVAS</span>
+          <Star size={13} className="text-[#0055ff] fill-[#0055ff]" />
+          <span className="truncate text-xs font-black uppercase tracking-wider text-[#002132]">Datas Comemorativas</span>
           <Popover open={ufOpen} onOpenChange={setUfOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 title={`Estado para aniversário de cidades: ${ufNome}`}
-                className="ml-1 inline-flex items-center justify-center transition-transform hover:rotate-45"
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "50%",
-                  background: "rgba(198, 240, 60, 0.15)",
-                  border: `1px solid ${NEXO_LIME}55`,
-                  color: NEXO_LIME,
-                  cursor: "pointer",
-                }}
+                className="ml-1 inline-flex items-center justify-center transition-transform hover:rotate-45 w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
               >
                 <Settings size={11} />
               </button>
             </PopoverTrigger>
             <PopoverContent
               align="start"
-              className="w-64 p-0 border-0"
-              style={{
-                background: "#FFFFFF",
-                borderRadius: 14,
-                boxShadow: "0 12px 40px rgba(10, 37, 64, 0.18)",
-                border: `1px solid ${NEXO_CYAN}40`,
-              }}
+              className="w-64 p-0 border border-slate-100 rounded-2xl shadow-xl bg-white overflow-hidden"
             >
               <div
-                style={{
-                  padding: "10px 14px",
-                  background: NEXO_DARK,
-                  color: "#FFFFFF",
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: 1.5,
-                  textTransform: "uppercase",
-                  borderTopLeftRadius: 14,
-                  borderTopRightRadius: 14,
-                  fontFamily: "'Montserrat', sans-serif",
-                }}
-                className="flex items-center gap-2"
+                className="px-4 py-2.5 bg-[#002132] text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-2"
               >
-                <MapPin size={11} style={{ color: NEXO_LIME }} />
+                <MapPin size={11} className="text-[#00BFF0]" />
                 Estado das cidades
               </div>
               <div className="p-2 max-h-72 overflow-y-auto">
@@ -158,38 +115,22 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
                         setUf(u.sigla);
                         setUfOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-md transition-colors"
-                      style={{
-                        background: active ? `${NEXO_CYAN}15` : "transparent",
-                        color: active ? NEXO_DARK : "#334155",
-                        fontFamily: "'Montserrat', sans-serif",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!active) e.currentTarget.style.background = "#F1F9FB";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!active) e.currentTarget.style.background = "transparent";
-                      }}
+                      className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg transition-colors ${
+                        active ? "bg-blue-50 text-[#0055ff] font-bold" : "hover:bg-slate-50 text-slate-700"
+                      }`}
                     >
                       <span className="flex items-center gap-2">
                         <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 800,
-                            padding: "2px 6px",
-                            borderRadius: 6,
-                            background: active ? NEXO_CYAN : "#E5F5FB",
-                            color: active ? "#FFFFFF" : NEXO_DARK,
-                            minWidth: 28,
-                            textAlign: "center",
-                          }}
+                          className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center ${
+                            active ? "bg-[#0055ff] text-white" : "bg-slate-100 text-slate-700"
+                          }`}
                         >
                           {u.sigla}
                         </span>
-                        <span style={{ fontSize: 12, fontWeight: active ? 700 : 500 }}>{u.nome}</span>
+                        <span className="text-xs">{u.nome}</span>
                       </span>
                       {!disponivel && (
-                        <span style={{ fontSize: 9, color: "#94A3B8", fontStyle: "italic" }}>vazio</span>
+                        <span className="text-[9px] text-slate-400 italic">vazio</span>
                       )}
                     </button>
                   );
@@ -199,15 +140,7 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
           </Popover>
         </div>
         <span
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: 1,
-            padding: "3px 8px",
-            borderRadius: 999,
-            background: `${NEXO_CYAN}30`,
-            color: "#FFFFFF",
-          }}
+          className="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 uppercase"
         >
           {uf}
         </span>
