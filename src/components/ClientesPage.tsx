@@ -305,7 +305,7 @@ export default function ClientesPage() {
           <button
             onClick={handleSave}
             disabled={criando}
-            className="h-11 px-8 rounded-full bg-[#9FCA1D] hover:brightness-105 active:scale-95 text-black font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+            className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-50"
           >
             {criando ? (
               <Loader2 className="animate-spin" size={16} />
