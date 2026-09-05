@@ -33,22 +33,26 @@ export default function SuperAdminHeader({
   const [businessOpen, setBusinessOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const produtosRef = useRef<HTMLDivElement>(null);
   const businessRef = useRef<HTMLDivElement>(null);
 
-  // Click outside to close business submenu
+  // Click outside to close submenus
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (businessRef.current && !businessRef.current.contains(event.target as Node)) {
         setBusinessOpen(false);
       }
+      if (produtosRef.current && !produtosRef.current.contains(event.target as Node)) {
+        setProdutosOpen(false);
+      }
     }
-    if (businessOpen) {
+    if (businessOpen || produtosOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [businessOpen]);
+  }, [businessOpen, produtosOpen]);
 
   // Dynamic current date formatted like "04 de Setembro/26"
   const todayFormatted = (() => {
@@ -110,92 +114,90 @@ export default function SuperAdminHeader({
               clientes
             </button>
 
-            {/* Produtos Menu Dropdown (abre apenas ao clicar) */}
-            <Popover open={produtosOpen} onOpenChange={setProdutosOpen}>
-              <PopoverTrigger asChild>
+            {/* Produtos Menu Dropdown / Inline Pill */}
+            <div ref={produtosRef} className="relative">
+              {!produtosOpen ? (
                 <button
+                  onClick={() => {
+                    setProdutosOpen(true);
+                    setBusinessOpen(false);
+                  }}
                   className={`text-sm font-semibold flex items-center gap-1 transition-colors outline-none ${
-                    produtosOpen || ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
+                    ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
                       ? "text-black font-bold"
                       : "text-slate-700 hover:text-black"
                   }`}
+                  title="Clique para abrir o submenu produtos"
                 >
                   <span>produtos</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${produtosOpen ? "rotate-180 opacity-100" : "opacity-60"}`} />
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="center"
-                className="w-64 p-2.5 bg-[#14161a] border-0 rounded-2xl text-white shadow-2xl space-y-1"
-              >
-                <div className="text-[10px] font-bold uppercase tracking-wider text-white/40 px-2.5 py-1">
-                  Produtos da Agência
-                </div>
-
-                {/* House Mix Group */}
-                <div className="p-2 rounded-xl bg-white/5 space-y-1">
-                  <div className="text-xs font-bold text-[#00BFF0] flex items-center gap-1.5 px-1 py-0.5">
-                    <Radio className="w-3.5 h-3.5" /> House Mix
-                  </div>
+              ) : (
+                <div className="bg-[#000000] rounded-full px-5 py-2 flex items-center gap-4 text-white shadow-md animate-in fade-in zoom-in-95 duration-200">
+                  <button
+                    onClick={() => setProdutosOpen(false)}
+                    className="font-extrabold text-sm tracking-tight text-white flex items-center gap-1 hover:opacity-80 transition-opacity"
+                    title="Fechar submenu produtos"
+                  >
+                    <span>produtos</span>
+                    <ChevronDown className="w-3.5 h-3.5 rotate-180 opacity-70" />
+                  </button>
                   <button
                     onClick={() => { onNavigate("modulos"); setProdutosOpen(false); }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                    className={`text-xs transition-colors whitespace-nowrap ${
+                      currentPage === "modulos" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                    }`}
                   >
-                    <Layers className="w-3.5 h-3.5 text-white/50" /> Módulos Rádio
+                    módulos rádio
                   </button>
                   <button
                     onClick={() => { onNavigate("subusuarios"); setProdutosOpen(false); }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                    className={`text-xs transition-colors whitespace-nowrap ${
+                      currentPage === "subusuarios" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                    }`}
                   >
-                    <Users className="w-3.5 h-3.5 text-white/50" /> Subusuários
+                    subusuários
                   </button>
                   <button
                     onClick={() => { onNavigate("pacotes"); setProdutosOpen(false); }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                    className={`text-xs transition-colors whitespace-nowrap ${
+                      currentPage === "pacotes" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                    }`}
                   >
-                    <Package className="w-3.5 h-3.5 text-white/50" /> Pacotes
+                    pacotes
                   </button>
                   <button
                     onClick={() => { onNavigate("admininfomusic"); setProdutosOpen(false); }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 text-white/80 hover:text-white transition-all flex items-center gap-2"
+                    className={`text-xs transition-colors whitespace-nowrap ${
+                      currentPage === "admininfomusic" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
+                    }`}
                   >
-                    <Music className="w-3.5 h-3.5 text-white/50" /> Info Music
+                    info music
                   </button>
                 </div>
+              )}
+            </div>
 
-                {/* TV App */}
-                <button
-                  onClick={() => { onNavigate("dashboard"); setProdutosOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-white/5 text-white/80 hover:text-white transition-all flex items-center gap-2"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-purple-400" /> TV App (Smart TVs)
-                </button>
-
-                {/* Social Design */}
-                <button
-                  onClick={() => { onNavigate("dashboard"); setProdutosOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-white/5 text-white/80 hover:text-white transition-all flex items-center gap-2"
-                >
-                  <Palette className="w-3.5 h-3.5 text-pink-400" /> Social Design
-                </button>
-              </PopoverContent>
-            </Popover>
-
-            {/* Business Pill (fechado por padrão, abre submenu ao clicar) */}
+            {/* Business Pill (fechado é texto simples, abre submenu em pílula preta ao clicar) */}
             <div ref={businessRef} className="relative">
               {!businessOpen ? (
                 <button
-                  onClick={() => setBusinessOpen(true)}
-                  className={`bg-[#000000] text-white rounded-full px-5 py-2.5 flex items-center gap-1.5 text-sm font-extrabold tracking-tight hover:opacity-90 active:scale-95 transition-all shadow-sm ${
-                    ["financeiro", "chatbot", "propostas"].includes(currentPage) ? "ring-2 ring-[#0055ff]/40" : ""
+                  onClick={() => {
+                    setBusinessOpen(true);
+                    setProdutosOpen(false);
+                  }}
+                  className={`text-sm font-semibold flex items-center gap-1 transition-colors outline-none ${
+                    ["financeiro", "chatbot", "propostas"].includes(currentPage)
+                      ? "text-black font-bold"
+                      : "text-slate-700 hover:text-black"
                   }`}
                   title="Clique para abrir o submenu business"
                 >
                   <span>business</span>
-                  <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </button>
               ) : (
-                <div className="bg-[#000000] rounded-full px-5 py-2.5 flex items-center gap-4 text-white shadow-md animate-in fade-in zoom-in-95 duration-200">
+                <div className="bg-[#000000] rounded-full px-5 py-2 flex items-center gap-4 text-white shadow-md animate-in fade-in zoom-in-95 duration-200">
                   <button
                     onClick={() => setBusinessOpen(false)}
                     className="font-extrabold text-sm tracking-tight text-white flex items-center gap-1 hover:opacity-80 transition-opacity"
@@ -205,7 +207,7 @@ export default function SuperAdminHeader({
                     <ChevronDown className="w-3.5 h-3.5 rotate-180 opacity-70" />
                   </button>
                   <button
-                    onClick={() => onNavigate("financeiro")}
+                    onClick={() => { onNavigate("financeiro"); setBusinessOpen(false); }}
                     className={`text-xs transition-colors whitespace-nowrap ${
                       currentPage === "financeiro" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
                     }`}
@@ -213,13 +215,13 @@ export default function SuperAdminHeader({
                     financeiro
                   </button>
                   <button
-                    onClick={() => onNavigate("financeiro")}
+                    onClick={() => { onNavigate("financeiro"); setBusinessOpen(false); }}
                     className="text-xs text-white/80 hover:text-white transition-colors whitespace-nowrap"
                   >
                     service packs
                   </button>
                   <button
-                    onClick={() => onNavigate("chatbot")}
+                    onClick={() => { onNavigate("chatbot"); setBusinessOpen(false); }}
                     className={`text-xs transition-colors whitespace-nowrap ${
                       currentPage === "chatbot" ? "text-[#9FCA1D] font-bold" : "text-white/80 hover:text-white"
                     }`}
@@ -227,7 +229,7 @@ export default function SuperAdminHeader({
                     chat bott
                   </button>
                   <button
-                    onClick={() => onNavigate("propostas")}
+                    onClick={() => { onNavigate("propostas"); setBusinessOpen(false); }}
                     className={`text-xs transition-colors whitespace-nowrap ${
                       currentPage === "propostas" ? "text-[#00BFF0] font-bold" : "text-white/80 hover:text-white"
                     }`}
