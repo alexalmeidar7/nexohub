@@ -44,6 +44,7 @@ function Field({ label, children, className = "" }: { label: string; children: R
 }
 
 interface ClienteMetadata {
+  razao_social?: string;
   nome_empresarial?: string;
   cnpj?: string;
   cep?: string;
@@ -59,10 +60,32 @@ interface ClienteMetadata {
 
 const CLIENTES_METADATA_KEY = "nexohub_clientes_metadata_v1";
 
+const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test((val || "").trim());
+
 function getStoredMetadata(): Record<string, ClienteMetadata> {
   try {
     const raw = localStorage.getItem(CLIENTES_METADATA_KEY);
-    return raw ? JSON.parse(raw) : {};
+    if (!raw) return {};
+    const meta = JSON.parse(raw);
+    
+    // Purge any raw UUID keys from localStorage that may have leaked
+    let cleaned = false;
+    Object.keys(meta).forEach(k => {
+      if (isUuid(k)) {
+        const item = meta[k];
+        const realName = item?.razao_social || item?.nome_empresarial;
+        if (realName && !meta[realName]) {
+          meta[realName] = item;
+        }
+        delete meta[k];
+        cleaned = true;
+      }
+    });
+    if (cleaned) {
+      localStorage.setItem(CLIENTES_METADATA_KEY, JSON.stringify(meta));
+    }
+
+    return meta;
   } catch {
     return {};
   }
@@ -71,7 +94,14 @@ function getStoredMetadata(): Record<string, ClienteMetadata> {
 function saveStoredMetadata(key: string, meta: ClienteMetadata) {
   try {
     const all = getStoredMetadata();
-    all[key] = { ...(all[key] || {}), ...meta };
+    // Never store with a UUID key to prevent duplicate listings
+    if (isUuid(key)) {
+      if (meta.razao_social) {
+        all[meta.razao_social] = { ...(all[meta.razao_social] || {}), ...meta };
+      }
+    } else {
+      all[key] = { ...(all[key] || {}), ...meta };
+    }
     localStorage.setItem(CLIENTES_METADATA_KEY, JSON.stringify(all));
   } catch (err) {
     console.warn("Erro ao salvar metadata de cliente:", err);
@@ -298,7 +328,6 @@ export default function ClientesPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const isAlex = user?.email?.toLowerCase().includes("alex");
       const storedMeta = getStoredMetadata();
 
       const { data: logosData } = await supabase
@@ -312,69 +341,97 @@ export default function ClientesPage() {
         .select("*");
 
       const uniqueClients: Cliente[] = [];
-      const seenKeys = new Set<string>();
+      const seenNames = new Set<string>();
+      const seenCnpjs = new Set<string>();
+      const seenIds = new Set<string>();
 
       (logosData || []).forEach(item => {
-        const name = item.nome?.trim().toUpperCase();
-        if (isAlex && item.user_id === user?.id) return;
+        let name = (item.nome || "").trim();
+        if (!name) return;
 
-        if (name && !seenKeys.has(name)) {
-          seenKeys.add(name);
-          seenKeys.add(item.id);
-
-          const meta = storedMeta[item.id] || storedMeta[name] || {};
-
-          uniqueClients.push({
-            id: item.id,
-            user_id: item.user_id,
-            nome: item.nome,
-            nome_empresarial: meta.nome_empresarial || "",
-            logo_url: item.logo_url,
-            ativo: item.ativo,
-            cnpj: meta.cnpj || "",
-            cep: meta.cep || "",
-            cliente_desde: meta.cliente_desde || item.created_at?.split('T')[0] || "",
-            telefone_comercial: meta.telefone || "(00) 0000-0000",
-            whatsapp_responsavel: meta.whatsapp_responsavel || "",
-            endereco: meta.endereco || "Endereço não cadastrado",
-            cidade: meta.cidade || "",
-            estado: meta.estado || "",
-            nome_contato: meta.nome_contato || "",
-            executiva_venda: meta.nome_contato || "Não atribuído",
-            email_cobranca: meta.email_cobranca || ""
-          });
-        }
-      });
-
-      // Também inclui registros locais salvos previamente caso ainda não estejam em logosData
-      Object.keys(storedMeta).forEach(key => {
-        if (!seenKeys.has(key)) {
-          const meta = storedMeta[key];
-          const candidateName = (key.startsWith("local_") ? meta.nome_empresarial : key) || "Cliente";
-          if (!seenKeys.has(candidateName.toUpperCase())) {
-            seenKeys.add(candidateName.toUpperCase());
-            seenKeys.add(key);
-            uniqueClients.push({
-              id: key,
-              user_id: user?.id || "",
-              nome: candidateName,
-              nome_empresarial: meta.nome_empresarial || "",
-              logo_url: null,
-              ativo: true,
-              cnpj: meta.cnpj || "",
-              cep: meta.cep || "",
-              cliente_desde: meta.cliente_desde || new Date().toISOString().split('T')[0],
-              telefone_comercial: meta.telefone || "(00) 0000-0000",
-              whatsapp_responsavel: meta.whatsapp_responsavel || "",
-              endereco: meta.endereco || "Endereço não cadastrado",
-              cidade: meta.cidade || "",
-              estado: meta.estado || "",
-              nome_contato: meta.nome_contato || "",
-              executiva_venda: meta.nome_contato || "Não atribuído",
-              email_cobranca: meta.email_cobranca || ""
-            });
+        // Never allow raw UUIDs as client names
+        if (isUuid(name)) {
+          const metaCandidate = storedMeta[name] || storedMeta[item.id] || {};
+          if (metaCandidate.razao_social || metaCandidate.nome_empresarial) {
+            name = (metaCandidate.razao_social || metaCandidate.nome_empresarial)!.trim();
+          } else {
+            // Ignore rogue UUID entries in Supabase
+            return;
           }
         }
+
+        const upperName = name.toUpperCase();
+        const meta = storedMeta[item.id] || storedMeta[name] || storedMeta[upperName] || {};
+        const cleanCnpj = (meta.cnpj || "").replace(/\D/g, "");
+
+        // Prevent duplicate company names or duplicate CNPJs
+        if (seenNames.has(upperName) || (cleanCnpj && seenCnpjs.has(cleanCnpj))) {
+          return;
+        }
+
+        seenNames.add(upperName);
+        seenIds.add(item.id);
+        if (cleanCnpj) seenCnpjs.add(cleanCnpj);
+
+        uniqueClients.push({
+          id: item.id,
+          user_id: item.user_id,
+          nome: name,
+          nome_empresarial: meta.nome_empresarial || "",
+          logo_url: item.logo_url,
+          ativo: item.ativo,
+          cnpj: meta.cnpj || "",
+          cep: meta.cep || "",
+          cliente_desde: meta.cliente_desde || item.created_at?.split('T')[0] || "",
+          telefone_comercial: meta.telefone || "(00) 0000-0000",
+          whatsapp_responsavel: meta.whatsapp_responsavel || "",
+          endereco: meta.endereco || "Endereço não cadastrado",
+          cidade: meta.cidade || "",
+          estado: meta.estado || "",
+          nome_contato: meta.nome_contato || "",
+          executiva_venda: meta.nome_contato || "Não atribuído",
+          email_cobranca: meta.email_cobranca || ""
+        });
+      });
+
+      // Include local offline clients from storedMeta only if not already in list
+      Object.keys(storedMeta).forEach(key => {
+        // Skip any UUID keys
+        if (isUuid(key)) return;
+
+        const meta = storedMeta[key];
+        const candidateName = (meta.razao_social || meta.nome_empresarial || (key.startsWith("local_") ? "" : key) || "").trim();
+        if (!candidateName || isUuid(candidateName)) return;
+
+        const upper = candidateName.toUpperCase();
+        const cleanCnpj = (meta.cnpj || "").replace(/\D/g, "");
+
+        if (seenNames.has(upper) || (cleanCnpj && seenCnpjs.has(cleanCnpj))) {
+          return;
+        }
+
+        seenNames.add(upper);
+        if (cleanCnpj) seenCnpjs.add(cleanCnpj);
+
+        uniqueClients.push({
+          id: key,
+          user_id: user?.id || "",
+          nome: candidateName,
+          nome_empresarial: meta.nome_empresarial || "",
+          logo_url: null,
+          ativo: true,
+          cnpj: meta.cnpj || "",
+          cep: meta.cep || "",
+          cliente_desde: meta.cliente_desde || new Date().toISOString().split('T')[0],
+          telefone_comercial: meta.telefone || "(00) 0000-0000",
+          whatsapp_responsavel: meta.whatsapp_responsavel || "",
+          endereco: meta.endereco || "Endereço não cadastrado",
+          cidade: meta.cidade || "",
+          estado: meta.estado || "",
+          nome_contato: meta.nome_contato || "",
+          executiva_venda: meta.nome_contato || "Não atribuído",
+          email_cobranca: meta.email_cobranca || ""
+        });
       });
 
       setClientes(uniqueClients);
@@ -398,10 +455,10 @@ export default function ClientesPage() {
 
     setCriando(true);
     try {
-      const isAlex = user?.email?.toLowerCase().includes("alex");
-      const cleanName = novo.nome.trim().toUpperCase();
+      const cleanName = novo.nome.trim();
 
       const metaToSave: ClienteMetadata = {
+        razao_social: cleanName,
         nome_empresarial: novo.nome_empresarial.trim(),
         cnpj: novo.cnpj.trim(),
         cep: novo.cep.trim(),
@@ -416,7 +473,7 @@ export default function ClientesPage() {
       };
 
       if (editingId) {
-        if (!editingId.startsWith("local_")) {
+        if (!editingId.startsWith("local_") && !isUuid(editingId)) {
           await supabase
             .from("logos_patrocinadores")
             .update({
@@ -425,7 +482,6 @@ export default function ClientesPage() {
             .eq("id", editingId);
         }
 
-        saveStoredMetadata(editingId, metaToSave);
         saveStoredMetadata(cleanName, metaToSave);
         toast.success("Dados do cliente atualizados com sucesso!");
       } else {
@@ -437,11 +493,8 @@ export default function ClientesPage() {
           data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
         } as any).select().maybeSingle();
 
-        const targetId = insertedData?.id || `local_${Date.now()}`;
-        saveStoredMetadata(targetId, metaToSave);
         saveStoredMetadata(cleanName, metaToSave);
-
-        toast.success(isAlex ? "Cliente cadastrado com sucesso!" : "Cliente salvo com sucesso!");
+        toast.success("Cliente cadastrado com sucesso!");
       }
 
       setEditingId(null);
@@ -487,6 +540,42 @@ export default function ClientesPage() {
       email_cobranca: cliente.email_cobranca || ""
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (cliente: Cliente) => {
+    if (!confirm(`Deseja realmente excluir o cadastro de "${cliente.nome}"?`)) return;
+
+    try {
+      // 1. Mark as excluded in Supabase if exists
+      if (cliente.id && !cliente.id.startsWith("local_")) {
+        await supabase
+          .from("logos_patrocinadores")
+          .update({ excluido: true } as any)
+          .eq("id", cliente.id);
+        
+        // In case it was inserted with nome = cliente.nome
+        if (cliente.nome) {
+          await supabase
+            .from("logos_patrocinadores")
+            .update({ excluido: true } as any)
+            .eq("nome", cliente.nome);
+        }
+      }
+
+      // 2. Remove from localStorage metadata
+      const storedMeta = getStoredMetadata();
+      delete storedMeta[cliente.id];
+      if (cliente.nome) delete storedMeta[cliente.nome];
+      if (cliente.nome_empresarial) delete storedMeta[cliente.nome_empresarial];
+      localStorage.setItem(CLIENTES_METADATA_KEY, JSON.stringify(storedMeta));
+
+      // 3. Update state
+      setClientes(prev => prev.filter(c => c.id !== cliente.id && c.nome !== cliente.nome));
+      toast.success("Cliente excluído com sucesso!");
+    } catch (err) {
+      console.error("Erro ao excluir cliente:", err);
+      toast.error("Erro ao excluir cliente.");
+    }
   };
 
   const filtrados = useMemo(() => {
@@ -872,6 +961,15 @@ export default function ClientesPage() {
                           title="Editar dados"
                         >
                           <UserCog size={15} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleDelete(cliente)}
+                          className="rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 h-8 w-8"
+                          title="Excluir cliente"
+                        >
+                          <Trash2 size={15} />
                         </Button>
                       </div>
                     </td>
