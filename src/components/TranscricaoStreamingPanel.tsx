@@ -265,38 +265,55 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
 
   return (
     <section className="mt-6">
-      <div className="rounded-2xl border border-border bg-card/80 p-5 shadow-xl shadow-black/20 space-y-5">
+      <div className="rounded-2xl p-5 space-y-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/10">
-            <Radio size={18} style={{ color: NEXO_CYAN }} />
+        <div
+          className="flex items-center justify-between mb-2 cursor-pointer group"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: NEXO_CYAN }} />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
+                <Radio size={18} style={{ color: NEXO_CYAN }} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: NEXO_CYAN }}>
+                  MONITOR DE TRANSCRIÇÃO DO STREAMING
+                </h3>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+                  Transcreve o canal de áudio e atualiza o texto em tempo real
+                </span>
+              </div>
+            </div>
+            <div className="ml-2 transition-transform duration-200" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", color: "#0A2540" }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="text-[13px] font-black uppercase tracking-[0.2em]" style={{ color: NEXO_CYAN }}>
-              Monitor de Transcrição do Streaming
-            </h4>
-            <p className="text-[11px] text-white/50 truncate">
-              Transcreve diretamente o canal de áudio selecionado e atualiza o texto em tempo real
-            </p>
-          </div>
-          {open && (
-            <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-white/70">
-              <span className="relative flex h-2.5 w-2.5">
-                {live && <span className="absolute inline-flex h-full w-full rounded-full animate-ping opacity-70" style={{ backgroundColor: NEXO_LIME }} />}
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ backgroundColor: live ? NEXO_LIME : "#64748b" }} />
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <span
+              className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5"
+              style={{ backgroundColor: live ? "#ECFDF5" : "#F1F5F9", color: live ? "#059669" : "#94A3B8" }}
+            >
+              <span className="relative flex h-2 w-2">
+                {live && <span className="absolute inline-flex h-full w-full rounded-full animate-ping opacity-75" style={{ backgroundColor: NEXO_LIME }} />}
+                <span className="relative inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: live ? NEXO_LIME : "#94A3B8" }} />
               </span>
               {live ? "Ao vivo" : "Offline"}
             </span>
-          )}
-          <Button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            variant="ghost"
-            size="icon"
-            aria-label={open ? "Fechar seção" : "Abrir seção"}
-          >
-            {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </Button>
+            {open && (
+              <button
+                type="button"
+                className="h-8 w-8 rounded-full flex items-center justify-center text-black/40 hover:text-black/70 hover:bg-black/5"
+                onClick={() => setOpen(false)}
+                title="Fechar seção"
+              >
+                <ChevronUp size={16} />
+              </button>
+            )}
+          </div>
         </div>
 
         {open && (

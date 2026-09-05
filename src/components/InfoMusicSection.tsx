@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus, Download, Upload, ImagePlus } from "lucide-react";
-import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -193,13 +193,13 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
       setTotalCount(count || 0);
 
-      // 1) Fetch playback history
+      // 1) Fetch playback history - strictly the last 50 songs played on air
       const { data: historyData, error: historyError } = await supabase
         .from("musicas_tocadas")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(50);
 
       if (historyError) throw historyError;
 
@@ -213,10 +213,44 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
 
       if (infoError) throw infoError;
 
-      setRows(infoData || []);
+      let currentRows = infoData || [];
+
+      // 3) Auto-register any played song without curiosity into infomusic
+      const missingToInsert: { user_id: string; artista: string; musica: string; curiosidade: string }[] = [];
+      const existingKeys = new Set(
+        currentRows.map(r => `${r.artista.trim().toLowerCase()}::${r.musica.trim().toLowerCase()}`)
+      );
+
+      (historyData || []).forEach(h => {
+        const artista = (h.artista || "").trim();
+        const musica = (h.musica || "").trim();
+        if (!artista || !musica) return;
+        const key = `${artista.toLowerCase()}::${musica.toLowerCase()}`;
+        if (!existingKeys.has(key)) {
+          existingKeys.add(key);
+          missingToInsert.push({
+            user_id: user.id,
+            artista,
+            musica,
+            curiosidade: ""
+          });
+        }
+      });
+
+      if (missingToInsert.length > 0) {
+        const { data: insertedRows, error: insertErr } = await supabase
+          .from("infomusic")
+          .insert(missingToInsert)
+          .select("*");
+        if (!insertErr && insertedRows) {
+          currentRows = [...insertedRows, ...currentRows];
+        }
+      }
+
+      setRows(currentRows);
 
       const historyWithCuriosities = (historyData || []).map(h => {
-        const match = (infoData || []).find(i => 
+        const match = currentRows.find(i => 
           i.artista.toLowerCase() === h.artista.toLowerCase() && 
           i.musica.toLowerCase() === h.musica.toLowerCase()
         );
@@ -335,6 +369,18 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   };
 
 
+
+  useEffect(() => {
+    if (music?.titulo || music?.artista) {
+      setNowPlaying((prev) => ({
+        musica: music.titulo || prev?.musica || "Sem título",
+        artista: music.artista || prev?.artista || "Desconhecido",
+        capa: music.capa || prev?.capa || "",
+        curiosity: curiosidade || prev?.curiosity || "",
+      }));
+      load();
+    }
+  }, [music?.titulo, music?.artista, music?.capa, curiosidade]);
 
   useEffect(() => {
     load();
@@ -561,16 +607,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           </div>
         </div>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => load()} 
-            disabled={loading}
-            className="rounded-full bg-white/50 border-black/5 hover:bg-white shadow-sm"
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin mr-2" : "mr-2"} />
-            Atualizar
-          </Button>
           {isOpen && (
             <Button
               variant="ghost"
@@ -608,10 +644,22 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             </div>
           </div>
           {nowPlaying.curiosity && (
-            <div className="hidden md:block flex-1 max-w-xl bg-white/40 p-3 rounded-lg border border-white/60 italic text-xs leading-relaxed opacity-90 shadow-sm">
-              <Sparkles size={14} className="text-[#00BFF0] mb-1 inline mr-2" />
-              "{nowPlaying.curiosity}"
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="hidden md:block flex-1 max-w-xl bg-white/40 p-3 rounded-lg border border-white/60 italic text-xs leading-relaxed opacity-90 shadow-sm line-clamp-2 cursor-pointer">
+                    <Sparkles size={14} className="text-[#00BFF0] mb-1 inline mr-2" />
+                    "{nowPlaying.curiosity}"
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-md p-3 text-xs leading-relaxed bg-[#0A2540] text-white border-none shadow-xl z-50">
+                  <div className="flex items-start gap-2">
+                    <Sparkles size={14} className="text-[#00BFF0] mt-0.5 shrink-0" />
+                    <span>{nowPlaying.curiosity}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button 
@@ -650,19 +698,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             >
               <Ban size={16} className="mr-2" />
               inserir essa música na lista de EXCEÇÕES
-            </Button>
-
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-[#00BFF0] hover:bg-[#00BFF0]/10"
-              onClick={() => {
-                setEditMusic({ musica: nowPlaying.musica, artista: nowPlaying.artista, id: "now-playing" });
-                setCuriosidadeText(nowPlaying.curiosity || "");
-              }}
-            >
-              <Plus size={16} className="mr-2" />
-              CADASTRAR CURIOSIDADE
             </Button>
           </div>
         </div>
@@ -707,9 +742,18 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                           <div style={{ fontWeight: 700, fontSize: 13 }}>{r.musica}</div>
                           <div style={{ opacity: 0.6, fontSize: 11 }}>{r.artista}</div>
                           {r.curiosidade && (
-                            <div className="mt-1 text-[10px] italic line-clamp-2" style={{ color: "#059669" }}>
-                              {r.curiosidade}
-                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="mt-1 text-[10px] italic line-clamp-2 cursor-pointer" style={{ color: "#059669" }}>
+                                    {r.curiosidade}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs p-2 text-xs bg-[#0A2540] text-white border-none shadow-lg z-50">
+                                  {r.curiosidade}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                         

@@ -37,12 +37,7 @@ try {
 //   2. only fall back to a hard reload after several failures in a short
 //      window, and only when the tab is *not* currently visible/interacting,
 //      to avoid interrupting a click.
-let chunkErrorCount = 0;
-let chunkErrorWindowStart = 0;
-const CHUNK_ERROR_WINDOW_MS = 30000;
-const CHUNK_ERROR_THRESHOLD = 4;
-const CHUNK_RELOAD_FLAG = "__chunk_reload_at__";
-const CHUNK_RELOAD_COOLDOWN_MS = 60000;
+import { recoverFromChunkFailure } from "@/lib/lazyRetry";
 
 const shouldReloadForChunkError = (errorText: string, source?: string) => {
   const fromBuiltAsset = (source || "").includes("/assets/");
@@ -51,33 +46,15 @@ const shouldReloadForChunkError = (errorText: string, source?: string) => {
     errorText.includes("Importing a module script failed") ||
     errorText.includes("Loading chunk") ||
     errorText.includes("ChunkLoadError") ||
+    errorText.includes("error loading dynamically imported module") ||
+    errorText.includes("Failed to load module script") ||
     (fromBuiltAsset && errorText.includes("Cannot read properties of undefined (reading 'default')"))
   );
 };
 
-const handleChunkError = () => {
-  const now = Date.now();
-  if (now - chunkErrorWindowStart > CHUNK_ERROR_WINDOW_MS) {
-    chunkErrorWindowStart = now;
-    chunkErrorCount = 0;
-  }
-  chunkErrorCount += 1;
-
-  // Only hard-reload if we've hit the threshold AND the tab is hidden — this
-  // avoids interrupting an in-flight click that would land the user back on
-  // Home.
-  if (chunkErrorCount < CHUNK_ERROR_THRESHOLD) return;
-  if (document.visibilityState === "visible") return;
-
-  const lastReloadAt = Number(sessionStorage.getItem(CHUNK_RELOAD_FLAG) || "0");
-  if (now - lastReloadAt < CHUNK_RELOAD_COOLDOWN_MS) return;
-  sessionStorage.setItem(CHUNK_RELOAD_FLAG, String(now));
-  window.location.reload();
-};
-
 window.addEventListener("vite:preloadError", (event) => {
   event.preventDefault();
-  handleChunkError();
+  recoverFromChunkFailure();
 });
 
 window.addEventListener("error", (event) => {
@@ -85,7 +62,7 @@ window.addEventListener("error", (event) => {
   const source = String(event.filename || "");
   if (shouldReloadForChunkError(message, source)) {
     event.preventDefault();
-    handleChunkError();
+    recoverFromChunkFailure();
   }
 });
 
@@ -93,7 +70,7 @@ window.addEventListener("unhandledrejection", (event) => {
   const reason = String((event.reason as Error | string | undefined) ?? "");
   if (shouldReloadForChunkError(reason)) {
     event.preventDefault();
-    handleChunkError();
+    recoverFromChunkFailure();
   }
 });
 

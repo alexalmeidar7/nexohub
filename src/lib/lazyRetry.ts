@@ -1,7 +1,9 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 
 const CHUNK_RECOVERY_KEY = "__chunk_recovery_at__";
-const CHUNK_RECOVERY_COOLDOWN_MS = 60_000;
+const CHUNK_COUNT_KEY = "__chunk_recovery_count__";
+const CHUNK_RECOVERY_WINDOW_MS = 15_000;
+const MAX_AUTO_RECOVERIES = 2;
 const IMPORT_RETRY_DELAYS_MS = [400, 1_000, 2_000];
 
 export const isChunkErrorMessage = (message?: string) => {
@@ -13,17 +15,31 @@ export const isChunkErrorMessage = (message?: string) => {
     normalized.includes("loading chunk") ||
     normalized.includes("loading css chunk") ||
     normalized.includes("chunkloaderror") ||
-    normalized.includes("dynamically imported module")
+    normalized.includes("dynamically imported module") ||
+    normalized.includes("failed to load module script") ||
+    normalized.includes("text/html") ||
+    normalized.includes("load failed") ||
+    normalized.includes("error resolving module specifier")
   );
 };
 
-export function recoverFromChunkFailure(): boolean {
+export function recoverFromChunkFailure(force = false): boolean {
   try {
     const now = Date.now();
     const last = Number(sessionStorage.getItem(CHUNK_RECOVERY_KEY) || "0");
-    if (now - last < CHUNK_RECOVERY_COOLDOWN_MS) return false;
+    let count = Number(sessionStorage.getItem(CHUNK_COUNT_KEY) || "0");
+
+    if (now - last > CHUNK_RECOVERY_WINDOW_MS) {
+      count = 0;
+    }
+
+    if (!force && count >= MAX_AUTO_RECOVERIES) {
+      return false; // Prevent infinite loop if files truly do not exist
+    }
 
     sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(now));
+    sessionStorage.setItem(CHUNK_COUNT_KEY, String(count + 1));
+
     const url = new URL(window.location.href);
     url.searchParams.set("_r", String(now));
     window.location.replace(url.toString());

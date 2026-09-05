@@ -1615,7 +1615,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 }}
               >
                 <Suspense fallback={null}>
-                  <OnAirWidget compact />
+                  <OnAirWidget compact nextProgram={nextProgram} />
                 </Suspense>
               </div>
               {/* LOCUTOR — foto sem box, encostada no bottom */}
@@ -1657,33 +1657,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     />
                   </>
                 )}
-
-                {onAirTimes && <ProgramProgressBar inicio={onAirTimes.inicio} fim={onAirTimes.fim} nowTick={nowTick} />}
-
-                {/* Seta: hover mostra apenas "A seguir" + programa + horário de início */}
-                {nextProgram && (
-                  <div
-                    className="absolute group/next"
-                    style={{ top: "12px", right: "12px", zIndex: 3 }}
-                  >
-                    <div
-                      aria-label="A seguir"
-                      className="rounded-full flex items-center justify-center transition-transform duration-300 group-hover/next:scale-110 shadow-md cursor-default"
-                      style={{ width: "34px", height: "34px", backgroundColor: "#d7faff", color: "#002132" }}
-                    >
-                      <ChevronRight size={18} />
-                    </div>
-                    <div
-                      className="absolute right-0 top-[42px] rounded-2xl px-4 py-3 shadow-xl opacity-0 translate-y-1 pointer-events-none transition-all duration-200 group-hover/next:opacity-100 group-hover/next:translate-y-0 whitespace-nowrap"
-                      style={{ backgroundColor: "rgba(0,33,50,0.92)", color: "#e4fcff", minWidth: "180px" }}
-                    >
-                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">A seguir</p>
-                      <p className="text-sm font-bold leading-tight">{nextProgram.programa}</p>
-                      <p className="text-[11px] opacity-75 mt-1">{nextProgram.inicio}</p>
-                    </div>
-                  </div>
-                )}
-
               </div>
             </div>
 
@@ -1820,7 +1793,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               )}
               {(currentPage === "programas" || (minimizedModules.includes("programas") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "programas" ? "block" : "none" }}>
-                  <ProgramaForm />
+                  <ProgramaForm effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
@@ -1829,7 +1802,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
               {(currentPage === "agenda" || (minimizedModules.includes("agenda") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "agenda" ? "block" : "none" }}>
-                  <AgendaPage />
+                  <AgendaPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}

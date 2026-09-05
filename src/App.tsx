@@ -119,6 +119,10 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
 
     const delay = AUTO_HEAL_DELAYS_MS[this.state.retryCount];
     if (delay === undefined) {
+      if (isChunkError) {
+        recoverFromChunkFailure(true);
+        return;
+      }
       // Out of in-place attempts: show the manual recovery UI.
       this.setState({ retryCount: AUTO_HEAL_DELAYS_MS.length });
       return;
@@ -156,7 +160,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
   };
 
   handleReload = () => {
-    if (!recoverFromChunkFailure()) window.location.reload();
+    if (!recoverFromChunkFailure(true)) window.location.reload();
   };
 
   render() {

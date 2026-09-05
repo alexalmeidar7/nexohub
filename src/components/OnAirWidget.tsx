@@ -74,10 +74,28 @@ function findNextPrograms(programas: Programa[], count: number): Programa[] {
   const diaAtual = DIAS_MAP[now.getDay()];
   const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  return programas
+  const todays = programas
     .filter(p => p.diasSemana.includes(diaAtual) && p.horarioInicio > horaAtual)
-    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
-    .slice(0, count);
+    .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+
+  if (todays.length >= count) {
+    return todays.slice(0, count);
+  }
+
+  const result = [...todays];
+  for (let i = 1; i <= 7 && result.length < count; i++) {
+    const nextDay = DIAS_MAP[(now.getDay() + i) % 7];
+    const dayProgs = programas
+      .filter(p => p.diasSemana.includes(nextDay))
+      .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
+    for (const p of dayProgs) {
+      if (!result.find(r => r.id === p.id)) {
+        result.push(p);
+        if (result.length >= count) break;
+      }
+    }
+  }
+  return result.slice(0, count);
 }
 
 interface ApresentadorInfo {
@@ -85,14 +103,49 @@ interface ApresentadorInfo {
   foto: string;
 }
 
-interface OnAirWidgetProps {
-  compact?: boolean;
+function useProgramProgress(inicio?: string, fim?: string): number {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!inicio || !fim) return 0;
+
+  const [sh = 0, sm = 0, ss = 0] = inicio.split(":").map(Number);
+  const [eh = 0, em = 0, es = 0] = fim.split(":").map(Number);
+  const nowDate = new Date(now);
+  const startDate = new Date(nowDate);
+  startDate.setHours(sh, sm, ss, 0);
+  const endDate = new Date(nowDate);
+  endDate.setHours(eh, em, es, 0);
+  if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
+
+  const totalMs = endDate.getTime() - startDate.getTime();
+  if (totalMs <= 0) return 0;
+  const elapsedMs = Math.min(Math.max(nowDate.getTime() - startDate.getTime(), 0), totalMs);
+  return (elapsedMs / totalMs) * 100;
 }
 
-export default function OnAirWidget({ compact = false }: OnAirWidgetProps) {
+export interface NextProgramProp {
+  foto?: string | null;
+  apresentador?: string;
+  programa: string;
+  inicio: string;
+  fim?: string;
+}
+
+interface OnAirWidgetProps {
+  compact?: boolean;
+  nextProgram?: NextProgramProp | null;
+}
+
+export default function OnAirWidget({ compact = false, nextProgram }: OnAirWidgetProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
+  const liveProgress = useProgramProgress(onAir?.programa?.horarioInicio, onAir?.programa?.horarioFim);
   const [apresentadoresAtuais, setApresentadoresAtuais] = useState<ApresentadorInfo[]>([]);
   const [apresentadorIndex, setApresentadorIndex] = useState(0);
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
@@ -274,7 +327,44 @@ export default function OnAirWidget({ compact = false }: OnAirWidgetProps) {
   const firstNext = nextPrograms[0] || null;
   const firstNextAp = firstNext ? nextApresentadores[firstNext.id] : null;
 
+  const targetNext = nextProgram
+    ? {
+        nome: nextProgram.programa,
+        horarioInicio: nextProgram.inicio,
+        horarioFim: nextProgram.fim || firstNext?.horarioFim,
+        classificacaoEtaria: firstNext?.nome === nextProgram.programa ? firstNext?.classificacaoEtaria : "",
+        apresentadorNome: nextProgram.apresentador || firstNextAp?.nome,
+      }
+    : firstNext
+    ? {
+        nome: firstNext.nome,
+        horarioInicio: firstNext.horarioInicio,
+        horarioFim: firstNext.horarioFim,
+        classificacaoEtaria: firstNext.classificacaoEtaria,
+        apresentadorNome: firstNextAp?.nome,
+      }
+    : null;
+
   if (loading) {
+    if (compact) {
+      return (
+        <div className="flex items-center gap-4 animate-pulse">
+          <span ref={anchorRef} className="hidden" aria-hidden="true" />
+          <div className="space-y-1.5 flex-1 max-w-[200px]">
+            <div className="w-14 h-3 rounded bg-white/20" />
+            <div className="w-28 h-5 rounded bg-white/20" />
+            <div className="w-20 h-3 rounded bg-white/20" />
+          </div>
+          <div className="w-px h-10 bg-white/10 shrink-0" />
+          <div className="space-y-1.5 flex-1 max-w-[200px]">
+            <div className="w-14 h-3 rounded bg-white/20" />
+            <div className="w-28 h-5 rounded bg-white/20" />
+            <div className="w-20 h-3 rounded bg-white/20" />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-full flex flex-col animate-pulse">
         <span ref={anchorRef} className="hidden" aria-hidden="true" />
@@ -305,6 +395,65 @@ export default function OnAirWidget({ compact = false }: OnAirWidgetProps) {
   }
 
   if (!onAir) {
+    if (compact) {
+      return (
+        <>
+          <div
+            className="animate-fade-in flex flex-row items-stretch gap-3 sm:gap-6 min-w-0"
+            style={{ color: "var(--layout-nav-text, #ffffff)" }}
+          >
+            <div className="min-w-0 flex-1 max-w-[280px] sm:max-w-[320px]">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Radio size={9} className="opacity-60 shrink-0" style={{ color: "var(--layout-accent-color)" }} />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-80" style={{ color: "var(--layout-accent-color)" }}>
+                  Ao vivo
+                </span>
+              </div>
+              <p className="text-base sm:text-lg font-bold leading-tight opacity-70">
+                Nenhum programa no ar
+              </p>
+            </div>
+            {targetNext?.nome && (
+              <>
+                <div
+                  className="w-px self-stretch my-0.5 shrink-0 opacity-25"
+                  style={{ backgroundColor: "currentColor" }}
+                />
+                <div
+                  className="min-w-0 flex-1 max-w-[280px] sm:max-w-[320px] cursor-pointer group/aseguir"
+                  onClick={() => setGradeOpen(true)}
+                  title="Clique para ver a grade de programação"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <ArrowRight size={10} className="shrink-0 transition-transform group-hover/aseguir:translate-x-0.5" style={{ color: "var(--layout-accent-color)" }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>
+                      A seguir
+                    </span>
+                  </div>
+                  <p className="text-base sm:text-lg font-bold leading-tight truncate group-hover/aseguir:opacity-90" title={targetNext.nome}>
+                    {targetNext.nome}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 text-xs">
+                    <span className="inline-flex items-center gap-1 opacity-75 shrink-0">
+                      <Clock size={11} /> {targetNext.horarioInicio}{targetNext.horarioFim ? ` — ${targetNext.horarioFim}` : ""}
+                    </span>
+                    {targetNext.apresentadorNome && targetNext.apresentadorNome !== "—" && (
+                      <span className="inline-flex items-center gap-1 font-semibold truncate max-w-[160px]">
+                        <Mic size={11} /> {targetNext.apresentadorNome}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <Suspense fallback={null}>
+            <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+          </Suspense>
+        </>
+      );
+    }
+
     return (
       <div className="h-full flex flex-col">
         <span ref={anchorRef} className="hidden" aria-hidden="true" />
@@ -322,28 +471,127 @@ export default function OnAirWidget({ compact = false }: OnAirWidgetProps) {
 
   if (compact) {
     const apresentadorAtual = apresentadoresAtuais[apresentadorIndex];
+    const hasNext = Boolean(targetNext?.nome);
 
     return (
       <>
-        <div className="animate-fade-in min-w-0" style={{ color: "var(--layout-nav-text, #ffffff)" }}>
-          <div className="flex items-center gap-1.5 mb-1">
-            <Radio size={9} className="animate-pulse" style={{ color: "var(--layout-accent-color)" }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Ao vivo</span>
-          </div>
-          <div className="flex items-center gap-2 min-w-0">
-            <p className="text-lg sm:text-xl font-bold leading-tight truncate">{programa.nome}</p>
-            {programa.classificacaoEtaria && (
-              <span className="shrink-0 rounded px-1 py-0.5 text-[8px] font-bold leading-none text-white" style={{ backgroundColor: programa.classificacaoEtaria === "L" ? "#00a651" : "rgba(0,33,50,0.6)" }}>
-                {programa.classificacaoEtaria}
+        <div
+          className="animate-fade-in flex flex-row items-stretch gap-3 sm:gap-6 min-w-0"
+          style={{ color: "var(--layout-nav-text, #ffffff)" }}
+        >
+          {/* Programa Ao Vivo */}
+          <div className="min-w-0 flex-1 max-w-[280px] sm:max-w-[320px]">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Radio size={9} className="animate-pulse shrink-0" style={{ color: "var(--layout-accent-color)" }} />
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>
+                Ao vivo
               </span>
-            )}
+            </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="text-base sm:text-lg font-bold leading-tight truncate" title={programa.nome}>
+                {programa.nome}
+              </p>
+              {programa.classificacaoEtaria && (
+                <span
+                  className="shrink-0 rounded px-1 py-0.5 text-[8px] font-bold leading-none text-white"
+                  style={{
+                    backgroundColor:
+                      programa.classificacaoEtaria === "L" ? "#00a651" :
+                      programa.classificacaoEtaria === "10" ? "#0095d9" :
+                      programa.classificacaoEtaria === "12" ? "#f5a623" :
+                      programa.classificacaoEtaria === "14" ? "#e67e22" :
+                      programa.classificacaoEtaria === "16" ? "#e74c3c" :
+                      programa.classificacaoEtaria === "18" ? "#1a1a1a" : "rgba(0,33,50,0.6)",
+                  }}
+                >
+                  {programa.classificacaoEtaria}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 text-xs">
+              <span className="inline-flex items-center gap-1 opacity-75 shrink-0">
+                <Clock size={11} /> {programa.horarioInicio} — {programa.horarioFim}
+              </span>
+              {apresentadorAtual?.nome && apresentadorAtual.nome !== "—" && (
+                <span className="inline-flex items-center gap-1 font-semibold truncate max-w-[160px]">
+                  <Mic size={11} /> {apresentadorAtual.nome}
+                </span>
+              )}
+            </div>
+
+            {/* Barra de progresso do programa ao vivo */}
+            <div
+              className="mt-2 w-full max-w-[240px] sm:max-w-[280px]"
+              title={`Progresso: ${Math.round(liveProgress)}%`}
+            >
+              <div
+                className="w-full h-[3px] rounded-full overflow-hidden"
+                style={{ backgroundColor: "rgba(255,255,255,0.22)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-1000 origin-left"
+                  style={{
+                    width: `${Math.max(1, Math.min(100, liveProgress))}%`,
+                    backgroundColor: "var(--layout-accent-color, #ffffff)",
+                  }}
+                />
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3 mt-1.5 text-xs">
-            <span className="inline-flex items-center gap-1 opacity-75"><Clock size={11} /> {programa.horarioInicio} — {programa.horarioFim}</span>
-            {apresentadorAtual?.nome && apresentadorAtual.nome !== "—" && (
-              <span className="inline-flex items-center gap-1 font-semibold truncate"><Mic size={11} /> {apresentadorAtual.nome}</span>
-            )}
-          </div>
+
+          {/* Divisor vertical e Programa A Seguir (ao lado) */}
+          {hasNext && targetNext && (
+            <>
+              <div
+                className="w-px self-stretch my-0.5 shrink-0 opacity-25"
+                style={{ backgroundColor: "currentColor" }}
+              />
+
+              <div
+                className="min-w-0 flex-1 max-w-[280px] sm:max-w-[320px] cursor-pointer group/aseguir"
+                onClick={() => setGradeOpen(true)}
+                title="Clique para ver a grade de programação"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <ArrowRight size={10} className="shrink-0 transition-transform group-hover/aseguir:translate-x-0.5" style={{ color: "var(--layout-accent-color)" }} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>
+                    A seguir
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <p className="text-base sm:text-lg font-bold leading-tight truncate group-hover/aseguir:opacity-90" title={targetNext.nome}>
+                    {targetNext.nome}
+                  </p>
+                  {targetNext.classificacaoEtaria && (
+                    <span
+                      className="shrink-0 rounded px-1 py-0.5 text-[8px] font-bold leading-none text-white"
+                      style={{
+                        backgroundColor:
+                          targetNext.classificacaoEtaria === "L" ? "#00a651" :
+                          targetNext.classificacaoEtaria === "10" ? "#0095d9" :
+                          targetNext.classificacaoEtaria === "12" ? "#f5a623" :
+                          targetNext.classificacaoEtaria === "14" ? "#e67e22" :
+                          targetNext.classificacaoEtaria === "16" ? "#e74c3c" :
+                          targetNext.classificacaoEtaria === "18" ? "#1a1a1a" : "rgba(0,33,50,0.6)",
+                      }}
+                    >
+                      {targetNext.classificacaoEtaria}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 text-xs">
+                  <span className="inline-flex items-center gap-1 opacity-75 shrink-0">
+                    <Clock size={11} /> {targetNext.horarioInicio}{targetNext.horarioFim ? ` — ${targetNext.horarioFim}` : ""}
+                  </span>
+                  {targetNext.apresentadorNome && targetNext.apresentadorNome !== "—" && (
+                    <span className="inline-flex items-center gap-1 font-semibold truncate max-w-[160px]">
+                      <Mic size={11} /> {targetNext.apresentadorNome}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
         <Suspense fallback={null}>
           <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />

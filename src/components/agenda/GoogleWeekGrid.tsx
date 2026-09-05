@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, memo } from "react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -78,7 +78,7 @@ function layoutColumns(events: GridEvent[]) {
   return result;
 }
 
-export default function GoogleWeekGrid<T>({
+function GoogleWeekGridComponent<T>({
   weekDays,
   now,
   selectedDate,
@@ -328,3 +328,6 @@ export default function GoogleWeekGrid<T>({
     </div>
   );
 }
+ 
+const GoogleWeekGrid = memo(GoogleWeekGridComponent) as typeof GoogleWeekGridComponent;
+export default GoogleWeekGrid;

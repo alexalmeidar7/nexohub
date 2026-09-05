@@ -9,8 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas-pro";
 import { confirmDialog } from "@/lib/confirmDialog";
 
 type Status = "rascunho" | "arte_final" | "aprovacao" | "concluido";
@@ -233,6 +231,7 @@ export default function PropostasPage() {
   const downloadPNG = async () => {
     const element = document.getElementById("proposal-render");
     if (!element) return;
+    const html2canvas = (await import("html2canvas-pro")).default;
     const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
     const link = document.createElement("a");
     link.download = `${selectedProposta.title}.png`;
@@ -243,6 +242,10 @@ export default function PropostasPage() {
   const downloadPDF = async () => {
     const element = document.getElementById("proposal-render");
     if (!element) return;
+    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+      import("html2canvas-pro"),
+      import("jspdf"),
+    ]);
     const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({

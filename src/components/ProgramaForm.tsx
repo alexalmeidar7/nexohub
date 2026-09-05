@@ -115,8 +115,12 @@ interface Programa {
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*");
+async function getProgramas(targetUserId?: string | null): Promise<Programa[]> {
+  let query = supabase.from("programas").select("*");
+  if (targetUserId) {
+    query = query.eq("user_id", targetUserId);
+  }
+  const { data } = await query;
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
@@ -377,8 +381,9 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
   );
 }
 
-export default function ProgramaForm() {
+export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [nome, setNome] = useState("");
   const nomeInputRef = useRef<HTMLInputElement>(null);
   const nomeDraftRef = useRef("");
@@ -485,7 +490,7 @@ export default function ProgramaForm() {
   const load = async () => {
     setLoadingData(true);
     try {
-      const [ap, pg] = await Promise.all([getApresentadores(), getProgramas()]);
+      const [ap, pg] = await Promise.all([getApresentadores(), getProgramas(targetUserId)]);
       setApresentadores(ap);
       pg.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
       setProgramas(pg);

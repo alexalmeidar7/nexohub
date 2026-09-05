@@ -391,8 +391,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  // Seção "Configuração das Origens" inicia fechada (expansível)
+  // Seção "Configuração das Origens" e "XML Musica no Ar" iniciam fechadas (expansíveis)
   const [showConfig, setShowConfig] = useState(false);
+  const [showXmlNoAr, setShowXmlNoAr] = useState(false);
   const [allExceptions, setAllExceptions] = useState<MusicException[]>([]);
 
   useEffect(() => {
@@ -715,6 +716,24 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               artista,
               musica: titulo,
             }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
+
+            // Also ensure the track exists in infomusic so it surfaces under "Músicas sem curiosidades"
+            const { data: existingInfo } = await supabase
+              .from("infomusic")
+              .select("id")
+              .eq("user_id", dataUserId)
+              .ilike("artista", artista)
+              .ilike("musica", titulo)
+              .maybeSingle();
+
+            if (!existingInfo) {
+              await supabase.from("infomusic").insert({
+                user_id: dataUserId,
+                artista,
+                musica: titulo,
+                curiosidade: "",
+              });
+            }
           } catch (e) {
             console.warn("[MusicaNoAr] musicas_tocadas insert failed:", e);
           }
@@ -846,7 +865,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
     const interval = setInterval(syncFromStorage, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY]);
 
   useEffect(() => {
     if (!isOnlineSelected || !hasValidOnlineUrl) return;
@@ -1171,19 +1190,59 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
   }, [isOnlineSelected, hasValidOnlineUrl, isLocalSelected, fetchXml, readLocalFile]);
 
+  // Keep startTime in a ref to avoid resetting timer interval on every state update
+  const startTimeRef = useRef<number | null>(startTime);
+  startTimeRef.current = startTime;
+  const musicRef = useRef<MusicData | null>(music);
+  musicRef.current = music;
+
+  // Real-time ticking interval that continuously advances elapsed and progress
   useEffect(() => {
-    if (!music || !startTime) return;
-    const tick = () => { const el = (Date.now() - startTime) / 1000; setElapsed(Math.min(el, music.duracao)); };
-    intervalRef.current = setInterval(tick, 50);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [music, startTime]);
+    if (!music || !music.duracao || music.duracao <= 0) return;
+
+    let st = startTimeRef.current;
+    if (!st || st <= 0) {
+      const storedVal = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
+      if (storedVal > 0) {
+        st = storedVal;
+      } else {
+        st = Date.now() - Math.max(0, elapsed) * 1000;
+        try {
+          localStorage.setItem(MUSIC_START_KEY, st.toString());
+        } catch {}
+      }
+      startTimeRef.current = st;
+      setStartTime(st);
+    }
+
+    const tick = () => {
+      // Re-read latest start time if available
+      const rawStart = localStorage.getItem(MUSIC_START_KEY);
+      const activeStart = (rawStart && parseInt(rawStart, 10)) || startTimeRef.current;
+      const currentMusic = musicRef.current;
+      if (!activeStart || !currentMusic || !currentMusic.duracao) return;
+      const el = (Date.now() - activeStart) / 1000;
+      setElapsed(Math.min(currentMusic.duracao, Math.max(0, el)));
+    };
+
+    tick();
+    const timerId = setInterval(tick, 200);
+    return () => clearInterval(timerId);
+  }, [music?.titulo, music?.artista, music?.duracao, MUSIC_START_KEY]);
+
 
   // Load music data from localStorage first, then try DB for start time persistence
   useEffect(() => {
     const stored = getMusicData(dataUserId || undefined);
     if (stored) {
       setMusic(stored.music);
-      const st = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
+      let st = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
+      if (!st || isNaN(st) || st <= 0) {
+        st = Date.now() - Math.max(0, stored.elapsed) * 1000;
+        try {
+          localStorage.setItem(MUSIC_START_KEY, st.toString());
+        } catch {}
+      }
       setStartTime(st);
       setElapsed(stored.elapsed);
     }
@@ -1460,18 +1519,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       {/* ═══ MAIN MUSIC CARD (Nexo Form style) ═══ */}
       <section
         style={{
-          background: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
+          background: NEXO_CARD_BG,
           borderRadius: 28,
-          padding: "28px 32px 32px",
-          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
-          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
+          padding: "24px 28px 28px",
+          boxShadow: "0 4px 18px rgba(0, 191, 240, 0.1)",
+          border: "1px solid rgba(0, 191, 240, 0.25)",
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div
-              className="flex items-center justify-center"
+              className="flex items-center justify-center shadow-sm"
               style={{ width: 40, height: 40, borderRadius: 999, background: "#FFFFFF", border: `2px solid ${NEXO_CYAN}` }}
             >
               <Music size={18} style={{ color: NEXO_CYAN }} />
@@ -1483,7 +1542,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <div className="flex items-center gap-2 mt-1 flex-wrap">
 
                 {bothActive && (
-                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #16a34a", color: "#16a34a" }}>
+                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #16a34a", color: "#16a34a" }}>
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ backgroundColor: "#22c55e" }} />
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
@@ -1492,17 +1551,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </span>
                 )}
                 {onlineError && (
-                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
+                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
                     <AlertTriangle size={10} className="shrink-0" /> Online: erro
                   </span>
                 )}
                 {!onlineError && onlineDelay && (
-                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #eab308", color: "#a16207" }}>
+                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #eab308", color: "#a16207" }}>
                     <AlertTriangle size={10} className="shrink-0" /> Online: sem resposta +30s
                   </span>
                 )}
                 {localError && (
-                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
+                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
                     <AlertTriangle size={10} className="shrink-0" /> Local: erro
                   </span>
                 )}
@@ -1512,133 +1571,202 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         </div>
 
 
-        {/* Song display with gradient progress */}
-        <div className="px-4 pb-4">
+        {/* Player card */}
+        <div className="w-full">
           <div
             key={`${displayTitulo}-${displayArtista}`}
-            className="rounded-2xl overflow-hidden relative group"
+            className="rounded-2xl overflow-hidden relative transition-all duration-700 shadow-xl"
             style={{ 
-              background: musicBoxBg,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
-              transition: "background 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
-              minHeight: "180px",
-              position: "relative"
+              background: musicBoxBg || "linear-gradient(135deg, #0A2540 0%, #0F2D4A 50%, #081B2E 100%)",
+              minHeight: "160px"
             }}
           >
-            {/* Background Gradient Layer (The one the user is referring to) */}
+            {/* Subtle scrim overlay to guarantee text legibility over any cover color */}
             <div 
-              className="absolute inset-0 transition-opacity duration-1000"
-              style={{ 
-                background: musicBoxBg,
-                opacity: 1,
-                zIndex: 0
-              }} 
-            />
-
-            {/* Background progress fill (discreet behind the content) */}
-            <div
-              className="absolute inset-y-0 left-0 pointer-events-none"
+              className="absolute inset-0 pointer-events-none"
               style={{
-                width: `${progress}%`,
-                background: `rgba(255, 255, 255, 0.08)`,
-                transition: sliderResetting ? "opacity 0.6s ease" : "width 0.5s linear",
-                zIndex: 1,
+                background: "linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.55) 100%)",
+                zIndex: 0
               }}
             />
 
+            <div className="relative z-10 p-5 md:p-6 flex flex-col md:flex-row gap-5 md:gap-6 items-center justify-between">
+              {/* Left Column: Cover + Info + Progress */}
+              <div className="flex items-center gap-5 min-w-0 flex-1 w-full">
+                {/* Cover image (Flat, clean, NO border, NO badge, NO glow) */}
+                <div 
+                  className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 overflow-hidden rounded-xl bg-transparent"
+                  style={{ border: "none", boxShadow: "none", outline: "none" }}
+                >
+                  {loadingCover && !isBreak && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
+                      <Loader2 className="animate-spin" size={24} style={{ color: NEXO_CYAN }} />
+                    </div>
+                  )}
+                  {isBreak ? (
+                    <div className="w-full h-full flex items-center justify-center bg-red-600">
+                      <span className="text-white font-black text-sm tracking-wider uppercase">Intervalo</span>
+                    </div>
+                  ) : displayCover ? (
+                    <img 
+                      key={displayCover} 
+                      src={displayCover} 
+                      alt="Capa" 
+                      className="nexo-cover-anim object-cover w-full h-full"
+                      style={{ border: "none", outline: "none", boxShadow: "none" }} 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-white/5 text-white/40">
+                      <Music size={28} />
+                      <span className="italic text-[9px]">{music ? "Sem capa" : "Aguardando..."}</span>
+                    </div>
+                  )}
+                </div>
 
-            {/* Scrim adaptativo por luminância do gradiente */}
-            {paletteContrast && (
-              <div 
-                className="absolute inset-0 pointer-events-none rounded-2xl" 
-                style={{ 
-                  background: paletteContrast.scrimBackground, 
-                  zIndex: 1,
-                  mixBlendMode: "multiply",
-                  opacity: 0.4
-                }} 
-              />
-            )}
+                {/* Song Info & Progress */}
+                <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
+                  <div className="space-y-1.5">
+                    <div 
+                      className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight truncate text-white"
+                      style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}
+                    >
+                      {displayTitulo}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-md bg-black/30 backdrop-blur-md text-white border border-white/10"
+                      >
+                        <User size={13} className="text-[#00BFF0] shrink-0" />
+                        <span className="truncate max-w-[320px] text-white font-bold">{displayArtista}</span>
+                      </span>
+                    </div>
+                  </div>
 
-            <div className="relative z-10 p-4 flex gap-4 items-center">
-              {/* Cover image */}
-              <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden group shadow-2xl transition-all duration-700 rounded-3xl" style={{ boxShadow: "0 12px 48px rgba(0,0,0,0.5)" }}>
-                {loadingCover && !isBreak && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 backdrop-blur-sm rounded-xl">
-                    <Loader2 className="animate-spin" size={28} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                  </div>
-                )}
-                {isBreak ? (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%)" }}>
-                    <span className="text-white font-black text-lg tracking-wider uppercase animate-pulse">Intervalo</span>
-                  </div>
-                ) : displayCover ? (
-                  <img key={displayCover} src={displayCover} alt="Capa" className="nexo-cover-anim object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }}>
-                    <Music size={36} />
-                    <span className="italic text-[10px]">{music ? "Sem capa" : "Aguardando..."}</span>
-                  </div>
-                )}
+                  {/* High-visibility Responsive Progress Bar */}
+                  {music && music.duracao > 0 && (
+                    <div className="space-y-1.5 mt-1 w-full max-w-xl">
+                      <div className="flex items-center justify-between text-xs font-mono font-bold">
+                        <span className="text-white flex items-center gap-1.5 drop-shadow-sm">
+                          <Clock size={13} className="text-[#C6F03C]" />
+                          <span className="text-white font-black text-sm tracking-wide">{formatTime(elapsed)}</span>
+                        </span>
+                        <span className="text-white/80 text-[11px] font-medium drop-shadow-sm">
+                          -{formatTime(Math.max(0, music.duracao - elapsed))}
+                        </span>
+                        <span className="text-white font-black text-sm tracking-wide drop-shadow-sm">
+                          {formatTime(music.duracao)}
+                        </span>
+                      </div>
+                      
+                      {/* Track with clear fill */}
+                      <div 
+                        className="w-full h-2.5 rounded-full overflow-hidden bg-black/40 border border-white/15"
+                      >
+                        <div 
+                          className="h-full rounded-full"
+                          style={{ 
+                            width: `${Math.max(1, Math.min(100, (elapsed / music.duracao) * 100))}%`,
+                            background: "linear-gradient(90deg, #00BFF0 0%, #C6F03C 100%)",
+                            transition: "width 0.2s linear"
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Song Info */}
-              <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
-                <div key={`${displayTitulo}|${displayArtista}`} className="nexo-track-anim space-y-1">
-                   <div className="text-xl lg:text-3xl font-black tracking-tight truncate m-0 text-white" style={{ color: "#FFFFFF", textShadow: "0 2px 4px rgba(0,0,0,0.5)", letterSpacing: 0 }}>
-                     {displayTitulo}
-                   </div>
-                  <div className="flex items-center gap-2">
-                    <span 
-                      className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full transition-all duration-1000" 
-                      style={{ 
-                        color: musicTextColor, 
-                        backgroundColor: paletteContrast?.scrimBackground || "rgba(255,255,255,0.15)",
-                        backdropFilter: "blur(4px)",
-                        border: `1px solid ${paletteContrast?.textColor}33` || "1px solid rgba(255,255,255,0.2)"
-                      }}
-                    >
-                      <User size={14} className="opacity-80" />
-                      {displayArtista}
-                    </span>
+              {/* Right Column: Aurora Soundwave Spectrum (Ultra-fine, high-density, elegant) */}
+              <div className="hidden lg:flex flex-col items-end justify-center gap-2.5 shrink-0 pl-6 border-l border-white/15">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#00BFF0] drop-shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-[#00BFF0] animate-ping" />
+                  Transmissão Ativa
+                </div>
+                
+                {/* Aurora Soundwave Container */}
+                <div 
+                  className="relative flex items-center justify-center h-16 w-56 px-3 py-1.5 rounded-xl overflow-hidden"
+                  style={{
+                    background: "rgba(0, 0, 0, 0.45)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)"
+                  }}
+                >
+                  {/* Organic Aurora Cloud Light Drift */}
+                  <div 
+                    className="absolute inset-0 pointer-events-none aurora-glow-bg"
+                    style={{
+                      background: "radial-gradient(circle at 60% 40%, rgba(0, 191, 240, 0.7) 0%, rgba(30, 80, 255, 0.5) 45%, rgba(0, 230, 150, 0.4) 75%, transparent 100%)",
+                      filter: "blur(10px)"
+                    }}
+                  />
+
+                  {/* 36 Fine, Elegant Waveform Bars with Smooth Harmonic Heights */}
+                  <div className="relative z-10 flex items-center justify-between w-full h-full gap-[2px]">
+                    {[
+                      { h: "20%", dur: "1.1s", delay: "0.15s" },
+                      { h: "32%", dur: "0.95s", delay: "0.4s" },
+                      { h: "48%", dur: "1.3s", delay: "0.05s" },
+                      { h: "64%", dur: "0.85s", delay: "0.55s" },
+                      { h: "78%", dur: "1.15s", delay: "0.2s" },
+                      { h: "90%", dur: "1.0s", delay: "0.45s" },
+                      { h: "100%", dur: "1.4s", delay: "0.1s" },
+                      { h: "92%", dur: "0.9s", delay: "0.3s" },
+                      { h: "82%", dur: "1.25s", delay: "0.6s" },
+                      { h: "68%", dur: "1.05s", delay: "0.25s" },
+                      { h: "55%", dur: "0.8s", delay: "0.5s" },
+                      { h: "72%", dur: "1.35s", delay: "0.15s" },
+                      { h: "88%", dur: "0.95s", delay: "0.35s" },
+                      { h: "98%", dur: "1.2s", delay: "0.0s" },
+                      { h: "85%", dur: "0.85s", delay: "0.4s" },
+                      { h: "70%", dur: "1.1s", delay: "0.2s" },
+                      { h: "80%", dur: "1.4s", delay: "0.5s" },
+                      { h: "94%", dur: "0.9s", delay: "0.1s" },
+                      { h: "100%", dur: "1.25s", delay: "0.3s" },
+                      { h: "92%", dur: "1.05s", delay: "0.6s" },
+                      { h: "82%", dur: "0.85s", delay: "0.25s" },
+                      { h: "74%", dur: "1.3s", delay: "0.45s" },
+                      { h: "88%", dur: "0.95s", delay: "0.05s" },
+                      { h: "96%", dur: "1.15s", delay: "0.35s" },
+                      { h: "78%", dur: "1.4s", delay: "0.15s" },
+                      { h: "65%", dur: "0.9s", delay: "0.5s" },
+                      { h: "75%", dur: "1.2s", delay: "0.2s" },
+                      { h: "86%", dur: "1.0s", delay: "0.4s" },
+                      { h: "72%", dur: "1.35s", delay: "0.1s" },
+                      { h: "58%", dur: "0.85s", delay: "0.3s" },
+                      { h: "44%", dur: "1.1s", delay: "0.55s" },
+                      { h: "52%", dur: "0.95s", delay: "0.25s" },
+                      { h: "40%", dur: "1.25s", delay: "0.45s" },
+                      { h: "30%", dur: "0.9s", delay: "0.1s" },
+                      { h: "22%", dur: "1.15s", delay: "0.35s" },
+                      { h: "15%", dur: "0.8s", delay: "0.2s" },
+                    ].map((bar, i) => (
+                      <div
+                        key={i}
+                        className="w-[1.5px] rounded-full aurora-wave-bar"
+                        style={{
+                          height: bar.h,
+                          animationDuration: bar.dur,
+                          animationDelay: bar.delay,
+                          background: i < 12 
+                            ? "linear-gradient(to top, rgba(0, 230, 150, 0.75), rgba(0, 191, 240, 1))" 
+                            : i < 24 
+                            ? "linear-gradient(to top, rgba(0, 191, 240, 0.85), rgba(59, 130, 246, 1))" 
+                            : "linear-gradient(to top, rgba(59, 130, 246, 0.85), rgba(139, 92, 246, 0.75))",
+                        }}
+                      />
+                    ))}
                   </div>
                 </div>
 
-
-                {music && music.duracao > 0 && (
-                  <div className="space-y-2 mt-2 max-w-md">
-                    <div className="flex items-center justify-between">
-                      <div 
-                        className="px-3 py-1 rounded-lg font-mono font-black text-xs shadow-inner min-w-[140px] text-center transition-all duration-1000" 
-                        style={{ 
-                          backgroundColor: "rgba(0,0,0,0.3)", 
-                          color: "#ffffff",
-                          backdropFilter: "blur(4px)",
-                          border: "1px solid rgba(255,255,255,0.1)"
-                        }}
-                      >
-                        {formatTime(elapsed)} / {formatTime(music.duracao)}
-                      </div>
-                    </div>
-                    
-                    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.2)" }}>
-                      <div 
-                        className="h-full rounded-full transition-all duration-500 linear"
-                        style={{ 
-                          width: `${progress}%`,
-                          background: "#ffffff",
-                          boxShadow: "0 0 8px rgba(255,255,255,0.3)"
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-
+                <div className="text-[9px] font-bold text-white/70 tracking-wider uppercase drop-shadow-sm">
+                  Áudio Master • Streaming ao Vivo
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
 
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
@@ -2017,25 +2145,74 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
 
 
-      {/* XML MUSICA AGORA */}
+      {/* ═══ XML MUSICA NO AR (EXPANSÍVEL) ═══ */}
       <section className="mt-8 mb-12">
-          <div className="rounded-2xl p-5 space-y-6" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
+        <div
+          className="rounded-2xl p-5 space-y-5"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
+          }}
+        >
+          <div
+            className="flex items-center justify-between mb-2 cursor-pointer group"
+            onClick={() => setShowXmlNoAr((v) => !v)}
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
-                <Music size={18} style={{ color: NEXO_CYAN }} />
+              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: NEXO_CYAN }} />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
+                  <Music size={18} style={{ color: NEXO_CYAN }} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: NEXO_CYAN }}>
+                    XML MUSICA NO AR
+                  </h3>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+                    Link XML e Payload de Transmissão
+                  </span>
+                </div>
               </div>
-              <h4 className="text-[13px] font-black uppercase tracking-[0.2em]" style={{ color: NEXO_CYAN }}>XML MUSICA NO AR</h4>
+              <div
+                className="ml-2 transition-transform duration-200"
+                style={{ transform: showXmlNoAr ? "rotate(180deg)" : "rotate(0deg)", color: NEXO_DARK }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </div>
-            
-            <div className="rounded-2xl p-6" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <span
+                className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
+                style={{ backgroundColor: "#ECFEFF", color: "#0891B2" }}
+              >
+                Link ativo
+              </span>
+              {showXmlNoAr && (
+                <button
+                  type="button"
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-black/40 hover:text-black/70 hover:bg-black/5"
+                  onClick={() => setShowXmlNoAr(false)}
+                  title="Fechar seção"
+                >
+                  <ChevronUp size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {showXmlNoAr && (
+            <div className="rounded-2xl p-6 animate-in fade-in slide-in-from-top-4 duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
               <XmlLinkRow 
                 label="XML MUSICA NO AR" 
                 scopeKey={dataUserId || undefined} 
                 xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} 
               />
             </div>
-          </div>
-        </section>
+          )}
+        </div>
+      </section>
 
       </div>
     </div>

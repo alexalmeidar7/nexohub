@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,7 +36,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
+import type { ExpressEditData } from "@/components/ProgramaExpressInline";
+const ProgramaExpressInline = lazy(() => import("@/components/ProgramaExpressInline"));
 import DatasComemorativasCidades from "@/components/agenda/DatasComemorativasCidades";
 import GoogleWeekGrid, { type GridEvent } from "@/components/agenda/GoogleWeekGrid";
 
@@ -360,8 +361,9 @@ const NEXO_CARD_BG = "#D6F4FB";
 const NEXO_DARK = "#0A2540";
 
 
-export default function AgendaPage() {
+export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const { toast } = useToast();
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
@@ -370,7 +372,7 @@ export default function AgendaPage() {
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
-    }, 30000);
+    }, 60000);
     return () => clearInterval(timer);
   }, []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -428,29 +430,29 @@ export default function AgendaPage() {
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
   const fetchProgramas = useCallback(async () => {
-    if (!user) return;
+    if (!targetUserId) return [];
     const { data } = await supabase
       .from("programas")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", targetUserId)
       .order("horario_inicio");
-    setProgramas((data as Programa[]) || []);
-  }, [user]);
+    const progs = (data as Programa[]) || [];
+    setProgramas(progs);
+    return progs;
+  }, [targetUserId]);
 
   const fetchApresentadores = useCallback(async () => {
-    if (!user) return;
+    if (!targetUserId) return;
     const { data } = await supabase
       .from("apresentadores")
       .select("id, nome, instagram, cargo, whatsapp")
-      .eq("user_id", user.id);
+      .eq("user_id", targetUserId);
     setApresentadores((data as Apresentador[]) || []);
-  }, [user]);
+  }, [targetUserId]);
 
-  const fetchEventos = useCallback(async () => {
-    if (!user) return;
+  const fetchEventos = useCallback(async (progsList?: Programa[]) => {
+    if (!targetUserId) return;
 
-    // Carrega somente a janela relevante da agenda e renderiza os eventos assim
-    // que chegam. Participantes e programas são enriquecidos em segundo plano.
     const dayStr = (offset: number) => {
       const d = new Date();
       d.setDate(d.getDate() + offset);
@@ -462,7 +464,7 @@ export default function AgendaPage() {
     const { data: evts } = await supabase
       .from("agenda_eventos")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", targetUserId)
       .gte("data", winStart)
       .lte("data", winEnd)
       .order("data");
@@ -472,62 +474,124 @@ export default function AgendaPage() {
       return;
     }
 
+    const currentProgs = progsList || programas;
+    const progsById = new Map(currentProgs.map((p) => [p.id, p]));
+
     const baseEvents: Evento[] = evts.map((e: any) => ({
       ...e,
       prioridade: e.prioridade || "normal",
+      programa: progsById.get(e.programa_id),
       participantes: [],
     }));
     setEventos(baseEvents);
 
     const eventIds = evts.map((e: any) => e.id);
-    const programaIds = Array.from(new Set(evts.map((e: any) => e.programa_id).filter(Boolean)));
-    const [{ data: parts }, { data: progs }, { data: profile }] = await Promise.all([
-      eventIds.length
-        ? supabase.from("agenda_participantes").select("*").in("evento_id", eventIds)
-        : Promise.resolve({ data: [] }),
-      programaIds.length
-        ? supabase.from("programas").select("*").in("id", programaIds)
-        : Promise.resolve({ data: [] }),
-      supabase.from("profiles").select("event_types_config").eq("user_id", user.id).maybeSingle(),
-    ]);
+    if (eventIds.length) {
+      const { data: parts } = await supabase
+        .from("agenda_participantes")
+        .select("*")
+        .in("evento_id", eventIds);
 
-    if (profile?.event_types_config) setEventTypesConfig(profile.event_types_config);
-
-    const partsByEvent = new Map<string, any[]>();
-    for (const p of parts || []) {
-      const arr = partsByEvent.get(p.evento_id) || [];
-      arr.push(p);
-      partsByEvent.set(p.evento_id, arr);
+      if (parts && parts.length) {
+        const partsByEvent = new Map<string, any[]>();
+        for (const p of parts) {
+          const arr = partsByEvent.get(p.evento_id) || [];
+          arr.push(p);
+          partsByEvent.set(p.evento_id, arr);
+        }
+        setEventos(prev => prev.map(e => ({
+          ...e,
+          participantes: partsByEvent.get(e.id) || e.participantes || [],
+        })));
+      }
     }
-    const progsById = new Map((progs || []).map((p: any) => [p.id, p]));
-
-    setEventos(evts.map((e: any) => ({
-      ...e,
-      prioridade: e.prioridade || "normal",
-      programa: progsById.get(e.programa_id),
-      participantes: partsByEvent.get(e.id) || [],
-    })));
-  }, [user]);
-
+  }, [user, programas]);
 
   useEffect(() => {
+    let active = true;
     const loadAll = async () => {
+      if (!targetUserId) return;
       setLoadingData(true);
-      // Crítico primeiro (grade + eventos) — libera a tela mais rápido
-      const [{ data: emp }] = await Promise.all([
-        supabase.from("empresa_config").select("timezone").eq("user_id", user.id).maybeSingle(),
-        fetchProgramas(),
-        fetchEventos(),
-      ]);
-      if (emp?.timezone && user) {
-        (user as any).timezone = emp.timezone;
+
+      const dayStr = (offset: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() + offset);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      const winStart = dayStr(-120);
+      const winEnd = dayStr(365);
+
+      try {
+        // Parallel fetch: everything needed for instant first render
+        const [empRes, progsRes, evtsRes, profileRes] = await Promise.all([
+          supabase.from("empresa_config").select("timezone").eq("user_id", targetUserId).maybeSingle(),
+          supabase.from("programas").select("*").eq("user_id", targetUserId).order("horario_inicio"),
+          supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId).gte("data", winStart).lte("data", winEnd).order("data"),
+          supabase.from("profiles").select("event_types_config").eq("user_id", targetUserId).maybeSingle(),
+        ]);
+
+        if (!active) return;
+
+        if (empRes?.data?.timezone && user) {
+          (user as any).timezone = empRes.data.timezone;
+        }
+        const progs = (progsRes.data as Programa[]) || [];
+        setProgramas(progs);
+
+        if (profileRes?.data?.event_types_config) {
+          setEventTypesConfig(profileRes.data.event_types_config);
+        }
+
+        const progsById = new Map(progs.map((p) => [p.id, p]));
+        const evts = evtsRes.data || [];
+        const baseEvents: Evento[] = evts.map((e: any) => ({
+          ...e,
+          prioridade: e.prioridade || "normal",
+          programa: progsById.get(e.programa_id),
+          participantes: [],
+        }));
+
+        // Render calendar and week grid instantly!
+        setEventos(baseEvents);
+        setLoadingData(false);
+
+        // Fetch presenters in background for form pickers
+        fetchApresentadores();
+
+        // Background enrichment: participants
+        const eventIds = evts.map((e: any) => e.id);
+        if (eventIds.length > 0) {
+          const { data: parts } = await supabase
+            .from("agenda_participantes")
+            .select("*")
+            .in("evento_id", eventIds);
+
+          if (!active || !parts || !parts.length) return;
+
+          const partsByEvent = new Map<string, any[]>();
+          for (const p of parts) {
+            const arr = partsByEvent.get(p.evento_id) || [];
+            arr.push(p);
+            partsByEvent.set(p.evento_id, arr);
+          }
+          setEventos((prev) =>
+            prev.map((e) => ({
+              ...e,
+              participantes: partsByEvent.get(e.id) || e.participantes || [],
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados da agenda:", err);
+        setLoadingData(false);
       }
-      setLoadingData(false);
-      // Secundário (apresentadores usados só nos formulários) carrega em background
-      fetchApresentadores();
     };
+
     loadAll();
-  }, [fetchProgramas, fetchEventos, fetchApresentadores]);
+    return () => {
+      active = false;
+    };
+  }, [user, fetchApresentadores]);
 
   // Focus event coming from dashboard agenda widget click
   useEffect(() => {
@@ -1099,10 +1163,13 @@ export default function AgendaPage() {
     return past.sort((a, b) => b.data.localeCompare(a.data)).slice(0, 50);
   }, [eventos, historyDateFilter, now, todayStr]);
 
-  const getEventDatesForCalendar = () => {
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const eventDates = useMemo(() => {
     const dates: Date[] = [];
-    const startMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    const startMonth = new Date(currentYear, currentMonth - 1, 1);
+    const endMonth = new Date(currentYear, currentMonth + 2, 0);
     for (const evt of eventos) {
       if (evt.status === "cancelado") continue;
       if (evt.recorrencia === "unico") {
@@ -1119,12 +1186,11 @@ export default function AgendaPage() {
       }
     }
     return dates;
-  };
-  const eventDates = getEventDatesForCalendar();
+  }, [eventos, currentYear, currentMonth]);
 
   // Feriados nacionais obrigatórios do Brasil
   const feriadosNacionais = useMemo(() => {
-    const year = now.getFullYear();
+    const year = currentYear;
     // Cálculo da Páscoa (algoritmo de Meeus)
     const a = year % 19;
     const b = Math.floor(year / 100);
@@ -1160,29 +1226,39 @@ export default function AgendaPage() {
       { date: new Date(year, 11, 25), nome: "Natal" },
     ];
     return fixos;
-  }, [now]);
+  }, [currentYear]);
 
   const feriadoDates = useMemo(() => feriadosNacionais.map(f => f.date), [feriadosNacionais]);
 
-  const getFeriadoNome = (date: Date | undefined) => {
+  const getFeriadoNome = useCallback((date: Date | undefined) => {
     if (!date) return null;
     const f = feriadosNacionais.find(
       h => h.date.getDate() === date.getDate() && h.date.getMonth() === date.getMonth()
     );
     return f ? f.nome : null;
-  };
+  }, [feriadosNacionais]);
+
+  const handleSelectDate = useCallback((d: Date) => {
+    setSelectedDate(d);
+  }, []);
+
+  const handleEventClick = useCallback((evt: Evento, dateStr: string) => {
+    setViewingEvent(evt);
+    setViewingOccurrenceDate(dateStr);
+    setViewEventDialogOpen(true);
+  }, []);
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
   const pastMonths = useMemo(() => {
     const months = new Set<string>();
-    const today = new Date(now);
+    const today = new Date(todayStr + "T00:00:00");
     for (let i = 0; i < 6; i++) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       months.add(format(d, "MMMM", { locale: ptBR }));
     }
     return Array.from(months);
-  }, [now]);
+  }, [todayStr]);
 
 
   // Upcoming events for the next 7 days
@@ -1215,13 +1291,12 @@ export default function AgendaPage() {
       }
     }
     return days;
-  }, [eventos, filterLocal, now]);
+  }, [eventos, filterLocal, now, todayStr]);
 
   // Conflitos com feriados nos próximos 14 dias (só programa_semanal / semanal, sem exceção definida)
   const holidayConflicts = useMemo(() => {
     const results: { evt: Evento; dateStr: string; date: Date; feriadoNome: string }[] = [];
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(todayStr + "T00:00:00");
     for (let i = 0; i < 14; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
@@ -1237,13 +1312,12 @@ export default function AgendaPage() {
       }
     }
     return results;
-  }, [eventos, now]);
+  }, [eventos, todayStr, feriadosNacionais]);
 
 
   // Past events from the last 6 months
   const pastEvents = useMemo(() => {
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(todayStr + "T00:00:00");
     
     const sixMonthsAgo = new Date(today);
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -1274,7 +1348,7 @@ export default function AgendaPage() {
       tempDate.setDate(tempDate.getDate() - 1);
     }
     return days;
-  }, [eventos, filterLocal, pastMonthFilter, now]);
+  }, [eventos, filterLocal, pastMonthFilter, todayStr]);
 
 
   // Week view: Monday to Sunday of the currently selected week
@@ -2861,12 +2935,19 @@ export default function AgendaPage() {
               <DialogTitle className="text-base font-bold">📝 Roteiro do Programa</DialogTitle>
             </DialogHeader>
             <div className="p-4">
-              <ProgramaExpressInline
-                programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio, tipo_programa: (p as any).tipo_programa }))}
-                estudios={estudios}
-                onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
-                editData={expressEditData}
-              />
+              <Suspense fallback={
+                <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <Loader2 className="w-7 h-7 animate-spin" style={{ color: "#00BFF0" }} />
+                  <span className="text-xs font-semibold">Carregando editor de roteiro...</span>
+                </div>
+              }>
+                <ProgramaExpressInline
+                  programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio, tipo_programa: (p as any).tipo_programa }))}
+                  estudios={estudios}
+                  onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
+                  editData={expressEditData}
+                />
+              </Suspense>
             </div>
           </DialogContent>
         </Dialog>
@@ -3179,12 +3260,8 @@ export default function AgendaPage() {
                 now={now}
                 selectedDate={selectedDate}
                 getFeriadoNome={getFeriadoNome}
-                onSelectDate={(d) => setSelectedDate(d)}
-                onEventClick={(evt, dateStr) => {
-                  setViewingEvent(evt);
-                  setViewingOccurrenceDate(dateStr);
-                  setViewEventDialogOpen(true);
-                }}
+                onSelectDate={handleSelectDate}
+                onEventClick={handleEventClick}
                 toGridEvent={toGridEvent}
               />
             </div>

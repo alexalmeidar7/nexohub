@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // This prevents a logout on one device from affecting another (multi-device support).
       if (!newUser && !manualSignOutRef.current) {
 
-        if (lastGoodSessionRef.current?.user) {
+        if (lastGoodSessionRef.current?.user && lastGoodSessionRef.current.access_token) {
           const restored = lastGoodSessionRef.current;
           if (prevUserIdRef.current !== restored.user.id) {
             prevUserIdRef.current = restored.user.id;
@@ -113,11 +113,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           setSession(restored);
           finishLoading();
-          // Try to refresh silently
-          supabase.auth.refreshSession().then(({ data: refreshed }) => {
-            if (refreshed.session && mounted) {
+
+          // Inform supabase.auth client of the restored tokens so all DB queries attach Authorization header
+          supabase.auth.setSession({
+            access_token: restored.access_token,
+            refresh_token: restored.refresh_token,
+          }).then(({ data: refreshed, error: setErr }) => {
+            if (setErr) {
+              console.warn("Auth: setSession failed with restored tokens", setErr.message);
+              if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
+                localStorage.removeItem('nexohub_backup_session');
+                lastGoodSessionRef.current = null;
+                if (mounted) {
+                  setUser(null);
+                  setSession(null);
+                  setRole(null);
+                }
+              }
+            } else if (refreshed.session && mounted) {
               lastGoodSessionRef.current = refreshed.session;
               setSession(refreshed.session);
+              setUser(refreshed.session.user);
+              try {
+                localStorage.setItem('nexohub_backup_session', JSON.stringify(refreshed.session));
+              } catch {}
             }
           }).catch(() => { /* keep current state */ });
           return;
@@ -213,10 +232,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (error || !session) {
           // If we have a backed-up session, restore it (covers transient network failures)
-          if (lastGoodSessionRef.current) {
-             console.log("Auth: No session found on start. Restoring last known good session.");
-             void updateAuth(lastGoodSessionRef.current);
-             return;
+          if (lastGoodSessionRef.current?.access_token) {
+            console.log("Auth: No session found on start. Restoring last known good session via setSession.");
+            supabase.auth.setSession({
+              access_token: lastGoodSessionRef.current.access_token,
+              refresh_token: lastGoodSessionRef.current.refresh_token,
+            }).then(({ data: setRes, error: setErr }) => {
+              if (!mounted) return;
+              if (setErr) {
+                console.warn("Auth: initial setSession failed", setErr.message);
+                if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
+                  localStorage.removeItem('nexohub_backup_session');
+                  lastGoodSessionRef.current = null;
+                  void updateAuth(null);
+                  return;
+                }
+              }
+              void updateAuth(setRes?.session || lastGoodSessionRef.current);
+            }).catch(() => {
+              if (mounted) void updateAuth(lastGoodSessionRef.current);
+            });
+            return;
           }
 
 
