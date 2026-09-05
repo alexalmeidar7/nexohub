@@ -1,1659 +1,1343 @@
-import { useState, useEffect } from "react";
-import { FileText, Plus, Check, Download, Send, Upload, Loader2, X, Eye, Image as ImageIcon, MessageSquare, Trash2, ChevronDown, Layout, Type, List, Pencil, DollarSign, GripVertical, AlignLeft, AlignCenter, AlignRight, Settings2, Type as TypeIcon, Copy, ClipboardCheck, Bold, Italic, Lock, Unlock } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { 
+  FileText, Plus, Trash2, Send, Mail, Smartphone, Printer, 
+  Search, Check, X, Building2, User, Phone, Calendar, 
+  DollarSign, Clock, RefreshCw, Sparkles, Eye, Download,
+  Layers, CheckCircle2, ChevronRight, Copy, AlertCircle, Briefcase, MapPin
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { confirmDialog } from "@/lib/confirmDialog";
+import { getStoredProdutos, type Produto, type TipoMedida } from "./ProdutosPage";
 
-type Status = "rascunho" | "arte_final" | "aprovacao" | "concluido";
+// Metadata storage key from ClientesPage
+const CLIENTES_METADATA_KEY = "nexohub_clientes_metadata_v1";
+const PROPOSTAS_STORAGE_KEY = "nexohub_orcamentos_salvos_v1";
+
+interface ClienteItem {
+  id: string;
+  user_id?: string;
+  nome: string;
+  nome_empresarial?: string;
+  cnpj?: string;
+  telefone?: string;
+  whatsapp_responsavel?: string;
+  endereco?: string;
+  cliente_desde?: string;
+  nome_contato?: string;
+  email_cobranca?: string;
+  logo_url?: string | null;
+}
+
+export interface ItemOrcamento {
+  id: string;
+  codigo: string;
+  nome: string;
+  descricao: string;
+  tipo_medida: TipoMedida;
+  tempo_duracao?: string;
+  quantidade: number;
+  valor: number;
+}
+
+export interface Orcamento {
+  id: string;
+  numero: string;
+  data: string;
+  validade_dias: number;
+  tipo_recorrencia: "unico" | "mensal";
+  cliente: ClienteItem;
+  itens: ItemOrcamento[];
+  desconto: number;
+  observacoes: string;
+  status: "rascunho" | "enviado" | "aprovado" | "recusado";
+  created_at: string;
+}
 
 export default function PropostasPage() {
-  const [propostas, setPropostas] = useState<any[]>([]);
-  const [mockups, setMockups] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedProposta, setSelectedProposta] = useState<any>(null);
-  const [selectedMockup, setSelectedMockup] = useState<any>(null);
-  const [isEditingMockup, setIsEditingMockup] = useState(false);
-  const [isNamingProject, setIsCreatingProject] = useState(false);
-  const [tempMockup, setTempMockup] = useState<any>(null);
-  const [formData, setFormData] = useState<any>({
-    descricaoStyle: { color: "#ffffff", fontSize: 12, fontWeight: "400" },
-    entregaComercialStyle: { color: "#ffffff", fontSize: 12, fontWeight: "400" },
-    entregaDigitalStyle: { color: "#ffffff", fontSize: 12, fontWeight: "400" },
-    valorStyle: { color: "#ffffff", fontSize: 14, fontWeight: "900" },
+  const [activeTab, setActiveTab] = useState<"novo" | "historico">("novo");
+  const [clientes, setClientes] = useState<ClienteItem[]>([]);
+  const [produtosCatalogo, setProdutosCatalogo] = useState<Produto[]>([]);
+  const [orcamentosSalvos, setOrcamentosSalvos] = useState<Orcamento[]>([]);
+
+  // Current Budget State
+  const [selectedCliente, setSelectedCliente] = useState<ClienteItem | null>(null);
+  const [clienteBusca, setClienteBusca] = useState("");
+  const [isBuscaAberta, setIsBuscaAberta] = useState(false);
+  const [tipoRecorrencia, setTipoRecorrencia] = useState<"unico" | "mensal">("unico");
+  const [validadeDias, setValidadeDias] = useState<number>(15);
+  const [desconto, setDesconto] = useState<number>(0);
+  const [observacoes, setObservacoes] = useState(
+    "Orçamento válido por 15 dias. Pagamento via PIX ou boleto bancário. Produção e entrega iniciadas após aprovação formal."
+  );
+
+  // Budget Items
+  const [itens, setItens] = useState<ItemOrcamento[]>([
+    {
+      id: "item-1",
+      codigo: "PRD-001",
+      nome: "Spot Comercial 30s",
+      descricao: "Produção de spot publicitário com locução profissional e trilha sincronizada.",
+      tipo_medida: "tempo",
+      tempo_duracao: "00:00:30",
+      quantidade: 1,
+      valor: 350.00,
+    }
+  ]);
+
+  // Autocomplete state for product rows
+  const [activeProdRowId, setActiveProdRowId] = useState<string | null>(null);
+
+  // Modal: Quick Client Registration (9 Fields identical to ClientesPage)
+  const [isNovoClienteModalOpen, setIsNovoClienteModalOpen] = useState(false);
+  const [novoClienteData, setNovoClienteData] = useState({
+    nome: "",
+    nome_empresarial: "",
+    cnpj: "",
+    telefone: "",
+    whatsapp_responsavel: "",
+    endereco: "",
+    cliente_desde: new Date().toISOString().split("T")[0],
+    nome_contato: "",
+    email_cobranca: "",
   });
-  const [overlayY, setOverlayY] = useState(5); // % from top
-  const [proposalItems, setProposalItems] = useState<any[]>([]);
-  const [editingDigital, setEditingDigital] = useState<{ id: string, type: 'digital_1' | 'digital_2' } | null>(null);
-  const [resizingItem, setResizingItem] = useState<{ id: string, startWidth: number, startX: number } | null>(null);
-  const [resizingHeight, setResizingHeight] = useState<{ id: string, startHeight: number, startY: number } | null>(null);
-  const [draggingItem, setDraggingItem] = useState<{ id: string, startX: number, startY: number, initialLeft: number, initialTop: number } | null>(null);
-  const [copiedStyle, setCopiedStyle] = useState<any>(null);
-  const [namingSection, setNamingSection] = useState<{ id: string, content: string } | null>(null);
 
+  // Modal: Enviar Orçamento (WhatsApp, E-mail, PDF)
+  const [isEnviarModalOpen, setIsEnviarModalOpen] = useState(false);
+  const [orcamentoParaEnvio, setOrcamentoParaEnvio] = useState<Orcamento | null>(null);
 
+  // Printable ref
+  const printAreaRef = useRef<HTMLDivElement>(null);
 
-
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [startOverlayY, setStartOverlayY] = useState(5);
-  const [uploadingArt, setUploadingArt] = useState(false);
-  const [editingItemStyle, setEditingItemStyle] = useState<string | null>(null);
-
-  const [customBg, setCustomBg] = useState<string | null>(null);
-  const [uploadingBg, setUploadingBg] = useState(false);
-  // Signed URLs for private proposal artwork (bucket "comercial-privado")
-  const [artUrls, setArtUrls] = useState<Record<string, string>>({});
-
-  const PRIVATE_BUCKET = "comercial-privado";
-
-  const signPrivate = async (path: string): Promise<string | null> => {
-    const { data, error } = await supabase.storage
-      .from(PRIVATE_BUCKET)
-      .createSignedUrl(path, 60 * 60);
-    if (error) return null;
-    return data?.signedUrl ?? null;
-  };
-
-  /** Resolves the displayable src for a proposal: legacy public URLs are used
-   * as-is, new private storage paths are resolved to short-lived signed URLs. */
-  const artSrc = (p: any): string | null => {
-    if (!p?.final_art_url) return null;
-    if (/^https?:\/\//.test(p.final_art_url)) return p.final_art_url;
-    return artUrls[p.id] || null;
-  };
-
-  const handleUploadBg = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingBg(true);
-    const { data: authData } = await supabase.auth.getUser();
-    const uid = authData?.user?.id;
-    if (!uid) {
-      toast.error("Não autenticado");
-      setUploadingBg(false);
-      return;
-    }
-    const fileName = `custom_bg_${Date.now()}.${file.name.split('.').pop()}`;
-    const path = `${uid}/propostas-bg/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage.from(PRIVATE_BUCKET).upload(path, file, { upsert: true });
-
-    if (uploadError) {
-      toast.error("Erro ao enviar imagem de fundo");
-      setUploadingBg(false);
-      return;
-    }
-
-    const signed = await signPrivate(path);
-    if (signed) setCustomBg(signed);
-    setUploadingBg(false);
-    toast.success("Imagem de fundo aplicada!");
-  };
-
+  // Load clients & products catalog
   useEffect(() => {
-    fetchData();
+    loadClientes();
+    setProdutosCatalogo(getStoredProdutos());
+    loadOrcamentosSalvos();
   }, []);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    const { data: m } = await supabase.from("comercial_mockups").select("*");
-    const { data: p } = await supabase.from("comercial_propostas").select("*, mockup:comercial_mockups(*)");
-    setMockups(m || []);
-    setPropostas(p || []);
+  const loadClientes = async () => {
+    try {
+      let storedMeta: Record<string, any> = {};
+      try {
+        const raw = localStorage.getItem(CLIENTES_METADATA_KEY);
+        if (raw) storedMeta = JSON.parse(raw);
+      } catch { /* noop */ }
 
-    // Resolve signed URLs for private artwork paths
-    const privateRows = (p || []).filter((row: any) => row.final_art_url && !/^https?:\/\//.test(row.final_art_url));
-    if (privateRows.length) {
-      const entries = await Promise.all(
-        privateRows.map(async (row: any) => [row.id, await signPrivate(row.final_art_url)] as const)
-      );
-      setArtUrls((prev) => {
-        const next = { ...prev };
-        entries.forEach(([id, url]) => { if (url) next[id] = url; });
-        return next;
+      // Fetch from Supabase logos_patrocinadores and empresa_config
+      const [logosRes, empRes] = await Promise.all([
+        supabase.from("logos_patrocinadores").select("id, user_id, nome, logo_url, ativo, created_at").eq("excluido", false),
+        supabase.from("empresa_config").select("user_id, nome, logo, telefone_comercial, ativo").eq("ativo", true),
+      ]);
+
+      const list: ClienteItem[] = [];
+      const seen = new Set<string>();
+
+      (logosRes.data || []).forEach(item => {
+        const name = item.nome?.trim();
+        if (name && !seen.has(name.toUpperCase())) {
+          seen.add(name.toUpperCase());
+          const meta = storedMeta[item.id] || storedMeta[name] || {};
+          list.push({
+            id: item.id,
+            user_id: item.user_id,
+            nome: item.nome,
+            nome_empresarial: meta.nome_empresarial || "",
+            cnpj: meta.cnpj || "",
+            telefone: meta.telefone || "",
+            whatsapp_responsavel: meta.whatsapp_responsavel || "",
+            endereco: meta.endereco || "",
+            cliente_desde: meta.cliente_desde || item.created_at?.split("T")[0] || "",
+            nome_contato: meta.nome_contato || "",
+            email_cobranca: meta.email_cobranca || "",
+            logo_url: item.logo_url,
+          });
+        }
       });
+
+      (empRes.data || []).forEach(emp => {
+        const name = emp.nome?.trim();
+        if (name && !seen.has(name.toUpperCase())) {
+          seen.add(name.toUpperCase());
+          const meta = storedMeta[emp.user_id] || storedMeta[name] || {};
+          list.push({
+            id: emp.user_id,
+            user_id: emp.user_id,
+            nome: emp.nome,
+            nome_empresarial: meta.nome_empresarial || "",
+            cnpj: meta.cnpj || "",
+            telefone: emp.telefone_comercial || meta.telefone || "",
+            whatsapp_responsavel: meta.whatsapp_responsavel || "",
+            endereco: meta.endereco || "",
+            cliente_desde: meta.cliente_desde || "",
+            nome_contato: meta.nome_contato || "",
+            email_cobranca: meta.email_cobranca || "",
+            logo_url: emp.logo,
+          });
+        }
+      });
+
+      // Include records saved purely in localStorage
+      Object.keys(storedMeta).forEach(key => {
+        const meta = storedMeta[key];
+        const cName = (key.startsWith("local_") ? meta.nome_empresarial : key) || meta.nome || "Cliente";
+        if (!seen.has(cName.toUpperCase())) {
+          seen.add(cName.toUpperCase());
+          list.push({
+            id: key,
+            nome: cName,
+            nome_empresarial: meta.nome_empresarial || "",
+            cnpj: meta.cnpj || "",
+            telefone: meta.telefone || "",
+            whatsapp_responsavel: meta.whatsapp_responsavel || "",
+            endereco: meta.endereco || "",
+            cliente_desde: meta.cliente_desde || "",
+            nome_contato: meta.nome_contato || "",
+            email_cobranca: meta.email_cobranca || "",
+          });
+        }
+      });
+
+      setClientes(list);
+    } catch (err) {
+      console.error("Erro ao carregar clientes para orçamento:", err);
     }
-    setIsLoading(false);
   };
 
+  const loadOrcamentosSalvos = () => {
+    try {
+      const raw = localStorage.getItem(PROPOSTAS_STORAGE_KEY);
+      if (raw) setOrcamentosSalvos(JSON.parse(raw));
+    } catch { /* noop */ }
+  };
 
-  const handleCreateProposta = async () => {
-    if (!selectedMockup) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    const { data, error } = await supabase.from("comercial_propostas").insert({
-      user_id: user.id,
-      mockup_id: selectedMockup.id,
-      title: formData.projeto || (formData.cliente ? `Proposta - ${formData.cliente}` : "Nova Proposta"),
-      data: {
-        ...formData,
-        proposalItems,
-        cliente: formData.cliente || "Cliente Não Informado"
+  const saveOrcamentoInStorage = (orc: Orcamento) => {
+    const next = [orc, ...orcamentosSalvos.filter(o => o.id !== orc.id)];
+    setOrcamentosSalvos(next);
+    localStorage.setItem(PROPOSTAS_STORAGE_KEY, JSON.stringify(next));
+  };
+
+  // Filtered clients for autocomplete
+  const filteredClientes = useMemo(() => {
+    if (!clienteBusca.trim()) return clientes.slice(0, 8);
+    const q = clienteBusca.toLowerCase();
+    return clientes.filter(c => 
+      c.nome?.toLowerCase().includes(q) ||
+      c.nome_empresarial?.toLowerCase().includes(q) ||
+      c.nome_contato?.toLowerCase().includes(q) ||
+      c.cnpj?.includes(q)
+    );
+  }, [clientes, clienteBusca]);
+
+  // Handle Quick Client Save
+  const handleSaveNovoCliente = async () => {
+    if (!novoClienteData.nome.trim()) {
+      toast.error("Informe pelo menos o Nome Fantasia do cliente.");
+      return;
+    }
+
+    const newId = `cli_${Date.now()}`;
+    const newClient: ClienteItem = {
+      id: newId,
+      nome: novoClienteData.nome.trim(),
+      nome_empresarial: novoClienteData.nome_empresarial.trim(),
+      cnpj: novoClienteData.cnpj.trim(),
+      telefone: novoClienteData.telefone.trim(),
+      whatsapp_responsavel: novoClienteData.whatsapp_responsavel.trim(),
+      endereco: novoClienteData.endereco.trim(),
+      cliente_desde: novoClienteData.cliente_desde,
+      nome_contato: novoClienteData.nome_contato.trim(),
+      email_cobranca: novoClienteData.email_cobranca.trim(),
+    };
+
+    // Save to localStorage metadata (so ClientesPage reads it)
+    try {
+      const raw = localStorage.getItem(CLIENTES_METADATA_KEY);
+      const all = raw ? JSON.parse(raw) : {};
+      all[newId] = {
+        nome_empresarial: newClient.nome_empresarial,
+        cnpj: newClient.cnpj,
+        telefone: newClient.telefone,
+        whatsapp_responsavel: newClient.whatsapp_responsavel,
+        endereco: newClient.endereco,
+        cliente_desde: newClient.cliente_desde,
+        nome_contato: newClient.nome_contato,
+        email_cobranca: newClient.email_cobranca,
+      };
+      all[newClient.nome] = all[newId];
+      localStorage.setItem(CLIENTES_METADATA_KEY, JSON.stringify(all));
+    } catch (err) {
+      console.warn("Erro ao gravar localStorage cliente:", err);
+    }
+
+    // Try Supabase insert
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user?.id) {
+        await supabase.from("logos_patrocinadores").insert({
+          user_id: authData.user.id,
+          nome: newClient.nome,
+          ativo: true,
+          excluido: false,
+        });
+      }
+    } catch { /* offline fallback */ }
+
+    // Update list & select client
+    setClientes(prev => [newClient, ...prev]);
+    setSelectedCliente(newClient);
+    setClienteBusca("");
+    setIsBuscaAberta(false);
+    setIsNovoClienteModalOpen(false);
+    toast.success(`Cliente ${newClient.nome} cadastrado e vinculado ao orçamento!`);
+  };
+
+  // Add Item Line
+  const handleAddItem = () => {
+    const nextNum = itens.length + 1;
+    const newItem: ItemOrcamento = {
+      id: `item-${Date.now()}-${nextNum}`,
+      codigo: `PRD-${String(nextNum).padStart(3, "0")}`,
+      nome: "",
+      descricao: "",
+      tipo_medida: "unidade",
+      quantidade: 1,
+      valor: 0,
+    };
+    setItens(prev => [...prev, newItem]);
+  };
+
+  // Remove Item Line
+  const handleRemoveItem = (id: string) => {
+    if (itens.length <= 1) {
+      toast.info("O orçamento deve conter pelo menos 1 produto.");
+      return;
+    }
+    setItens(prev => prev.filter(it => it.id !== id));
+  };
+
+  // Update Item field
+  const handleUpdateItem = (id: string, field: keyof ItemOrcamento, value: any) => {
+    setItens(prev => prev.map(it => {
+      if (it.id !== id) return it;
+      return { ...it, [field]: value };
+    }));
+  };
+
+  // Auto-complete product selection
+  const handleSelectProductForLine = (lineId: string, prod: Produto) => {
+    setItens(prev => prev.map(it => {
+      if (it.id !== lineId) return it;
+      return {
+        ...it,
+        codigo: prod.codigo || it.codigo,
+        nome: prod.nome,
+        descricao: prod.descricao || it.descricao,
+        tipo_medida: prod.tipo_medida || "unidade",
+        tempo_duracao: prod.tempo_duracao,
+        valor: prod.valor,
+      };
+    }));
+    setActiveProdRowId(null);
+    toast.info(`Produto ${prod.nome} preenchido.`);
+  };
+
+  // Budget Calculations
+  const subtotal = useMemo(() => {
+    return itens.reduce((acc, it) => acc + ((Number(it.valor) || 0) * (Number(it.quantidade) || 1)), 0);
+  }, [itens]);
+
+  const total = useMemo(() => {
+    const res = subtotal - (Number(desconto) || 0);
+    return res > 0 ? res : 0;
+  }, [subtotal, desconto]);
+
+  // Prepare Orcamento Object
+  const buildOrcamentoObject = (): Orcamento => {
+    const num = `ORC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    return {
+      id: `orc_${Date.now()}`,
+      numero: num,
+      data: new Date().toISOString().split("T")[0],
+      validade_dias: validadeDias,
+      tipo_recorrencia: tipoRecorrencia,
+      cliente: selectedCliente || {
+        id: "cli_avulso",
+        nome: clienteBusca || "Cliente Comercial",
       },
-      status: "arte_final"
-    }).select().single();
-
-    if (error) {
-      toast.error("Erro ao criar proposta");
-    } else {
-      toast.success("Proposta enviada para Arte Final!");
-      setSelectedMockup(null);
-      setFormData({});
-      fetchData();
-    }
+      itens,
+      desconto,
+      observacoes,
+      status: "enviado",
+      created_at: new Date().toISOString(),
+    };
   };
 
-  const handleUploadArt = async (e: React.ChangeEvent<HTMLInputElement>, propostaId: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingArt(true);
-    const { data: authData } = await supabase.auth.getUser();
-    const uid = authData?.user?.id;
-    if (!uid) {
-      toast.error("Não autenticado");
-      setUploadingArt(false);
+  // Handle Enviar Orçamento Click
+  const handleOpenEnviarModal = () => {
+    if (!selectedCliente && !clienteBusca.trim()) {
+      toast.error("Por favor, selecione ou informe o cliente do orçamento.");
       return;
     }
-    const fileName = `${propostaId}_art_${Date.now()}.${file.name.split('.').pop()}`;
-    // Private bucket: proposal artwork must never be publicly downloadable
-    const path = `${uid}/artes/${fileName}`;
+    if (itens.some(it => !it.nome.trim() || it.valor <= 0)) {
+      toast.warning("Verifique se todos os produtos possuem nome e valor preenchidos.");
+    }
 
-    const { error: uploadError } = await supabase.storage.from(PRIVATE_BUCKET).upload(path, file, { upsert: true });
+    const orc = buildOrcamentoObject();
+    setOrcamentoParaEnvio(orc);
+    saveOrcamentoInStorage(orc);
+    setIsEnviarModalOpen(true);
+  };
 
-    if (uploadError) {
-      toast.error("Erro ao enviar arte");
-      setUploadingArt(false);
+  // Formatted Message for WhatsApp
+  const generateWhatsAppMessage = (orc: Orcamento) => {
+    const itensLines = orc.itens.map(it => {
+      const descPart = it.descricao ? `\n  ${it.descricao}` : "";
+      return `• *${it.codigo} - ${it.nome}* (${it.tipo_medida})${descPart}\n  Qtd: ${it.quantidade} x R$ ${it.valor.toFixed(2)} = *R$ ${(it.quantidade * it.valor).toFixed(2)}*`;
+    }).join("\n\n");
+
+    const recurrenceText = orc.tipo_recorrencia === "mensal" ? "recorrente mensal (assinatura)" : "pagamento único";
+    const descText = orc.desconto > 0 ? `Subtotal: R$ ${subtotal.toFixed(2)}\nDesconto: - R$ ${orc.desconto.toFixed(2)}` : "";
+
+    const parts = [
+      `Olá, *${orc.cliente.nome_contato || orc.cliente.nome}*! 👋`,
+      "",
+      "Aqui está o *Orçamento Comercial Nexo Agência* preparado exclusivamente para a sua empresa:",
+      "",
+      `📋 *Proposta Comercial:* ${orc.numero}`,
+      `🏢 *Cliente:* ${orc.cliente.nome}${orc.cliente.nome_empresarial ? ` (${orc.cliente.nome_empresarial})` : ""}`,
+      `📅 *Validade:* ${orc.validade_dias} dias`,
+      "",
+      "*PRODUTOS & SERVIÇOS:*",
+      itensLines,
+      "",
+      "━━━━━━━━━━━━━━━━━━━━",
+      descText,
+      `*VALOR TOTAL:* *R$ ${total.toFixed(2)}* (${recurrenceText})`,
+      "━━━━━━━━━━━━━━━━━━━━",
+      "",
+      `📌 *Condições:* ${orc.observacoes}`,
+      "",
+      "Para aprovar este orçamento ou tirar dúvidas, basta responder por aqui. Estamos prontos para iniciar seu projeto! 🚀"
+    ];
+
+    return parts.filter(p => p !== undefined).join("\n");
+  };
+
+  // Dispatch via WhatsApp
+  const handleSendWhatsApp = () => {
+    if (!orcamentoParaEnvio) return;
+    const phone = (orcamentoParaEnvio.cliente.whatsapp_responsavel || orcamentoParaEnvio.cliente.telefone || "").replace(/\D/g, "");
+    if (!phone) {
+      toast.error("Este cliente não possui telefone ou WhatsApp cadastrado. Preencha no cadastro do cliente.");
       return;
     }
-
-    const { error: updateError } = await supabase.from("comercial_propostas").update({
-      final_art_url: path,
-      status: "aprovacao"
-    }).eq("id", propostaId);
-
-    if (updateError) {
-      toast.error("Erro ao atualizar status");
-    } else {
-      const signed = await signPrivate(path);
-      if (signed) setArtUrls((prev) => ({ ...prev, [propostaId]: signed }));
-      toast.success("Arte enviada para aprovação!");
-      fetchData();
-      if (selectedProposta?.id === propostaId) {
-        setSelectedProposta(prev => ({ ...prev, status: "aprovacao", final_art_url: path }));
-      }
-    }
-
-    setUploadingArt(false);
+    const fullPhone = phone.length <= 11 ? `55${phone}` : phone;
+    const msg = generateWhatsAppMessage(orcamentoParaEnvio);
+    window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, "_blank");
+    toast.success("Orçamento aberto no WhatsApp!");
   };
 
-  const handleDeleteProposta = async (propostaId: string) => {
-    if (!(await confirmDialog("Tem certeza que deseja excluir esta proposta? Esta ação não pode ser desfeita."))) return;
-
-    const { error } = await supabase.from("comercial_propostas").delete().eq("id", propostaId);
-
-    if (error) {
-      toast.error("Erro ao excluir proposta");
-    } else {
-      toast.success("Proposta excluída com sucesso");
-      fetchData();
-      if (selectedProposta?.id === propostaId) {
-        setSelectedProposta(null);
-      }
-    }
+  // Dispatch via E-mail
+  const handleSendEmail = () => {
+    if (!orcamentoParaEnvio) return;
+    const email = orcamentoParaEnvio.cliente.email_cobranca || "";
+    const subject = `Orçamento Comercial Nexo ${orcamentoParaEnvio.numero} - ${orcamentoParaEnvio.cliente.nome}`;
+    const body = generateWhatsAppMessage(orcamentoParaEnvio).replace(/\*/g, "");
+    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
+    toast.success("Orçamento preparado no cliente de e-mail!");
   };
 
-  const handleApprove = async (propostaId: string) => {
-    const { error } = await supabase.from("comercial_propostas").update({
-      status: "concluido"
-    }).eq("id", propostaId);
-
-    if (error) {
-      toast.error("Erro ao aprovar proposta");
-    } else {
-      toast.success("Proposta aprovada!");
-      fetchData();
-      if (selectedProposta?.id === propostaId) {
-        setSelectedProposta(prev => ({ ...prev, status: "concluido" }));
-      }
-    }
-  };
-
-  const downloadPNG = async () => {
-    const element = document.getElementById("proposal-render");
-    if (!element) return;
-    const html2canvas = (await import("html2canvas-pro")).default;
-    const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
-    const link = document.createElement("a");
-    link.download = `${selectedProposta.title}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  };
-
-  const downloadPDF = async () => {
-    const element = document.getElementById("proposal-render");
-    if (!element) return;
-    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-      import("html2canvas-pro"),
-      import("jspdf"),
-    ]);
-    const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "px",
-      format: [canvas.width, canvas.height]
-    });
-    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-    pdf.save(`${selectedProposta.title}.pdf`);
-  };
-
-  const shareWhatsApp = async (prop?: any) => {
-    const target = prop || selectedProposta;
-    if (!target) return;
-    const text = encodeURIComponent(`Olá! Segue nossa proposta comercial exclusiva: *${target.title}* da Nexo Agência.\n\nQualquer dúvida sobre os valores ou prazos estamos à disposição para conversar!`);
-    window.open(`https://wa.me/?text=${text}`, "_blank");
-  };
-
-  const shareEmailMarketing = (prop?: any) => {
-    const target = prop || selectedProposta;
-    if (!target) return;
-    const subject = `Proposta Comercial Exclusiva — ${target.title} | Nexo Agência`;
-    const body = `Olá!\n\nÉ um grande prazer apresentar nossa proposta comercial: "${target.title}".\n\nElaboramos uma solução sob medida com os produtos e serviços da Nexo para potencializar sua rádio e comunicação digital.\n\nEm anexo encaminhamos o documento completo em PDF com todos os itens, valores e condições especiais.\n\nFicamos à disposição para agendarmos uma apresentação ou tirar dúvidas!\n\nAtenciosamente,\nEquipe Nexo Agência\nhttps://nexobrasil.net`;
-    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
-    toast.success("E-mail marketing preparado para envio!");
-  };
-
-  const getStatusBadge = (status: Status) => {
-    switch (status) {
-      case "rascunho": return <Badge variant="outline">Rascunho</Badge>;
-      case "arte_final": return <Badge className="bg-orange-500">Arte Final</Badge>;
-      case "aprovacao": return <Badge style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>Aprovação</Badge>;
-      case "concluido": return <Badge style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>Aprovado</Badge>;
-    }
+  // Trigger Print / PDF
+  const handlePrintPDF = () => {
+    window.print();
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div>
-            <h2 className="text-sm font-bold uppercase" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Propostas Comerciais</h2>
-            <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Crie e gerencie suas propostas</p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  className="h-9 text-xs"
-                  style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}
-                >
-                  <Plus size={14} className="mr-1" />
-                  NOVA PROPOSTA
-                  <ChevronDown size={14} className="ml-1 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[260px] p-1.5" align="start" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)", border: "1px solid var(--layout-border-color, #e2e8f0)" }}>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2 pt-1">Selecione um mockup:</p>
-                <div className="flex flex-col gap-0.5">
-                  {mockups.map(m => (
-                    <button 
-                      key={m.id} 
-                      onClick={() => { setTempMockup(m); setIsCreatingProject(true); setIsEditingMockup(false); }}
-                      className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all hover:bg-sky-500/10 text-left"
-                      style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22";
-                        e.currentTarget.style.color = "var(--layout-accent-hex, #0ea5e9)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "var(--layout-widget-text, #1a1a1a)";
-                      }}
-                    >
-                      <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
-                      <Plus size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="h-9 text-xs"
-                  style={{ 
-                    backgroundColor: "var(--layout-widget-bg, #ffffff)",
-                    borderColor: "var(--layout-border-color, #e2e8f0)",
-                    color: "var(--layout-widget-text, #1a1a1a)"
-                  }}
-                >
-                  MOCKUPS
-                  <ChevronDown size={14} className="ml-1 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[260px] p-1.5" align="start" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)", border: "1px solid var(--layout-border-color, #e2e8f0)" }}>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 px-2 pt-1">Gerenciar Mockups:</p>
-                <div className="flex flex-col gap-0.5">
-                  <button 
-                    onClick={() => {
-                      const name = prompt("Nome do novo mockup:");
-                      if (name) {
-                        const newMockup = { 
-                          id: `temp-${Date.now()}`, 
-                          name, 
-                          image_url: '/mockup-bg-v5.png',
-                          config: { overlayY: 5 }
-                        };
-                        setMockups([...mockups, newMockup]);
-                        setSelectedMockup(newMockup);
-                        setIsEditingMockup(true);
-                        setOverlayY(5);
-                        setProposalItems([]);
-                        setCustomBg(null);
-                      }
-                    }}
-                    className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all text-left w-full"
-                    style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22"}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                  >
-                    <span className="text-[11px] font-bold uppercase">Criar Novo Mockup</span>
-                    <Plus size={12} />
-                  </button>
-                  <div className="border-t my-1 border-slate-100" />
-                  {mockups.map(m => (
-                    <button 
-                      key={m.id} 
-                      onClick={() => { 
-                        setSelectedMockup(m);
-                        setIsEditingMockup(true);
-                        setOverlayY(m.config?.overlayY || 5);
-                        setProposalItems(m.config?.proposalItems || []);
-                        setCustomBg(m.image_url);
-                      }}
-                      className="flex items-center justify-between group px-3 py-2.5 rounded-md transition-all text-left"
-                      style={{ color: "var(--layout-widget-text, #1a1a1a)" }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--layout-accent-hex, #0ea5e9)22"}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                    >
-                      <span className="text-[11px] font-bold uppercase truncate">{m.name}</span>
-                      <span className="text-[9px] opacity-50 uppercase">Editar</span>
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+    <div className="max-w-[1280px] mx-auto w-full space-y-6 pt-2 pb-16 font-sans animate-fade-in">
+      {/* Top Header Card */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+            Emissão de Orçamento Comercial
+          </h2>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Crie orçamentos limpos e inteligentes vinculados ao catálogo de produtos da agência
+          </p>
         </div>
-      </div>
 
-      <Dialog open={isNamingProject} onOpenChange={setIsCreatingProject}>
-        <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
-          <div className="p-8 space-y-6" style={{ backgroundColor: "var(--layout-widget-bg, #ffffff)" }}>
-            <div className="space-y-2 text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)15" }}>
-                <FileText size={24} style={{ color: "var(--layout-accent-hex, #0ea5e9)" }} />
-              </div>
-              <DialogTitle className="text-lg font-black uppercase tracking-tight" style={{ color: "var(--layout-widget-text, #1a1a1a)" }}>
-                Nomear Nova Proposta
-              </DialogTitle>
-              <p className="text-xs opacity-60" style={{ color: "var(--layout-widget-text, #1a1a1a)" }}>
-                Identifique seu projeto para facilitar o gerenciamento posterior.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold uppercase tracking-wider opacity-70" style={{ color: "var(--layout-widget-text, #1a1a1a)" }}>Título do Projeto</Label>
-                <Input 
-                  placeholder="Ex: Campanha Verão 2024 - Cliente XPTO" 
-                  value={formData.projeto || ""}
-                  onChange={e => setFormData({...formData, projeto: e.target.value})}
-                  className="h-12 text-sm bg-slate-500/5 border-slate-200 focus:ring-0 focus:ring-offset-0 focus:border-sky-500 transition-all"
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <Button 
-                  variant="ghost" 
-                  className="flex-1 h-11 text-[11px] font-bold uppercase" 
-                  onClick={() => setIsCreatingProject(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  className="flex-[2] h-11 text-[11px] font-bold uppercase shadow-lg transition-transform active:scale-95" 
-                  style={{ 
-                    backgroundColor: "var(--layout-accent-hex, #0ea5e9)",
-                    color: "white" 
-                  }}
-                  onClick={() => {
-                    if (!formData.projeto) {
-                      toast.error("Por favor, digite um nome para o projeto");
-                      return;
-                    }
-                    setSelectedMockup(tempMockup);
-                    setIsCreatingProject(false);
-                  }}
-                >
-                  <Check size={16} className="mr-2" />
-                  Iniciar Edição
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {isLoading ? (
-        <div className="flex justify-center p-12"><Loader2 className="animate-spin" style={{ color: "var(--layout-accent-hex, #0ea5e9)" }} /></div>
-      ) : selectedMockup ? (
-        <div className="animate-in fade-in zoom-in-95 duration-500 bg-slate-200 p-4 md:p-8 rounded-2xl border-4 border-dashed border-slate-300 min-h-[700px] flex flex-col items-center relative overflow-hidden group/overlay">
-          {/* Mockup Toolbar */}
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-3 p-3 bg-white/90 backdrop-blur shadow-2xl rounded-2xl border border-white/50">
-            <div 
-              draggable 
-              onDragStart={(e) => e.dataTransfer.setData("type", "section")}
-              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
-              title="CRIAR SEÇÃO"
+        <div className="flex items-center gap-2">
+          <div className="flex items-center p-1.5 rounded-full bg-[#f8fafc] border border-slate-200/80">
+            <button
+              onClick={() => setActiveTab("novo")}
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === "novo" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
+              }`}
             >
-              <Layout size={20} />
-              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">CRIAR SEÇÃO</span>
-            </div>
-            <div 
-              draggable 
-              onDragStart={(e) => e.dataTransfer.setData("type", "text")}
-              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
-              title="CAMPO DE TEXTO"
+              Novo Orçamento
+            </button>
+            <button
+              onClick={() => setActiveTab("historico")}
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                activeTab === "historico" ? "bg-[#0055ff] text-white shadow-sm" : "text-slate-600 hover:text-black"
+              }`}
             >
-              <Type size={20} />
-              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">CAMPO DE TEXTO</span>
-            </div>
-            <div 
-              draggable 
-              onDragStart={(e) => e.dataTransfer.setData("type", "commercial_line")}
-              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
-              title="LINHA COMERCIAL"
-            >
-              <List size={20} />
-              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">LINHA COMERCIAL</span>
-            </div>
-            <div 
-              draggable 
-              onDragStart={(e) => e.dataTransfer.setData("type", "digital_1")}
-              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
-              title="DIGITAL 1"
-            >
-              <div className="relative">
-                <Layout size={20} />
-                <Pencil size={10} className="absolute -bottom-1 -right-1" />
-              </div>
-              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">DIGITAL 1</span>
-            </div>
-            <div 
-              draggable 
-              onDragStart={(e) => e.dataTransfer.setData("type", "digital_2")}
-              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
-              title="DIGITAL 2"
-            >
-              <div className="relative">
-                <Layout size={20} className="opacity-70" />
-                <Pencil size={10} className="absolute -bottom-1 -right-1" />
-              </div>
-              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">DIGITAL 2</span>
-            </div>
-            <div 
-              draggable 
-              onDragStart={(e) => e.dataTransfer.setData("type", "value")}
-              className="p-3 bg-slate-50 hover:bg-sky-500 hover:text-white rounded-xl transition-all cursor-grab active:cursor-grabbing group/tool relative"
-              title="VALOR"
-            >
-              <DollarSign size={20} />
-              <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tool:opacity-100 whitespace-nowrap pointer-events-none transition-opacity font-bold uppercase">VALOR</span>
-            </div>
-          </div>
-
-          <div className="absolute top-4 right-4 z-20 flex gap-2">
-            <Label 
-              htmlFor="bg-upload" 
-              className="p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all cursor-pointer flex items-center justify-center"
-              title="Trocar imagem de fundo"
-            >
-              {uploadingBg ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
-              <input 
-                id="bg-upload" 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                onChange={handleUploadBg} 
-                disabled={uploadingBg}
-              />
-            </Label>
-            <button 
-              onClick={() => setSelectedMockup(null)} 
-              className="p-2 bg-white/80 hover:bg-white rounded-full shadow-md text-slate-500 transition-all"
-              title="Cancelar edição"
-            >
-              <X size={20} />
+              Histórico ({orcamentosSalvos.length})
             </button>
           </div>
+        </div>
+      </section>
 
-          <div className="w-full max-w-[1400px] mx-auto flex flex-col items-center">
-            <div 
-              className="bg-white shadow-2xl relative overflow-hidden w-full h-auto"
-              style={{ 
-                aspectRatio: "1920 / 1080",
-              }}
-            >
-              {/* Fundo da Proposta - Imagem Default e Temporária */}
-              <div 
-                className="absolute inset-0 w-full h-full"
-                style={{ 
-                  backgroundImage: `url('${customBg || '/mockup-bg-v5.png'}')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              />
+      {activeTab === "novo" ? (
+        <div className="bg-white rounded-3xl p-6 md:p-10 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-8">
+          {/* SEÇÃO 1: CLIENTE DO ORÇAMENTO */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black uppercase tracking-wider text-[#002132] flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#0055ff]" /> 1. Cliente da Proposta
+              </label>
 
-              {/* Editable Overlay */}
-              <div 
-                className="absolute inset-0 flex flex-col pointer-events-auto"
-                style={{ paddingTop: `${overlayY}%` }}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const type = e.dataTransfer.getData("type");
-                  if (type) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    const y = ((e.clientY - rect.top) / rect.height) * 100;
-                    
-                    const newItem = {
-                      id: `item-${Date.now()}`,
-                      type,
-                      content: type === 'commercial_line' ? { qty: '', time: '', desc: '' } : '',
-                      style: { 
-                        color: "#ffffff", 
-                        fontSizeVw: 1.2,
-                        fontWeight: "400",
-                        width: type === 'value' ? 15 : 40,
-                        height: type === 'text' ? 5 : (type === 'section' ? 2 : 'auto'),
-                        left: Math.max(0, Math.min(90, x)),
-                        top: Math.max(0, Math.min(90, y)),
-                        textAlign: 'left',
-                        padding: 0.5,
-                        borderRadius: 0,
-                        backgroundColor: type === 'section' ? '#ffffff' : 'transparent',
-                        borderColor: 'transparent',
-                        borderWidth: 0,
-                      }
-                    };
-                    setProposalItems([...proposalItems, newItem]);
-                  }
-                }}
-                onMouseMove={(e) => {
-                  if (resizingItem) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const currentX = ((e.clientX - rect.left) / rect.width) * 100;
-                    const deltaX = currentX - resizingItem.startX;
-                    const newWidth = Math.max(5, resizingItem.startWidth + deltaX);
-                    
-                    setProposalItems(prev => prev.map(item => 
-                      item.id === resizingItem.id 
-                        ? { ...item, style: { ...item.style, width: newWidth } }
-                        : item
-                    ));
-                  }
-                  if (resizingHeight) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const currentY = ((e.clientY - rect.top) / rect.height) * 100;
-                    const deltaY = currentY - resizingHeight.startY;
-                    const newHeight = Math.max(2, resizingHeight.startHeight + deltaY);
-                    
-                    setProposalItems(prev => prev.map(item => 
-                      item.id === resizingHeight.id 
-                        ? { ...item, style: { ...item.style, height: newHeight } }
-                        : item
-                    ));
-                  }
-                  if (draggingItem) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const currentX = ((e.clientX - rect.left) / rect.width) * 100;
-                    const currentY = ((e.clientY - rect.top) / rect.height) * 100;
-                    const deltaX = currentX - draggingItem.startX;
-                    const deltaY = currentY - draggingItem.startY;
-                    
-                    setProposalItems(prev => prev.map(item => 
-                      item.id === draggingItem.id && !item.locked 
-                        ? { ...item, style: { 
-                            ...item.style, 
-                            left: Math.max(0, Math.min(100 - (item.style.width || 0), draggingItem.initialLeft + deltaX)),
-                            top: Math.max(0, Math.min(100, draggingItem.initialTop + deltaY))
-                          }}
-                        : item
-                    ));
-                  }
-                }}
-                onMouseUp={() => {
-                  setResizingItem(null);
-                  setResizingHeight(null);
-                  setDraggingItem(null);
-                }}
-              >
-                <div 
-                  className="absolute top-0 left-0 right-0 h-8 cursor-ns-resize hover:bg-sky-500/20 flex items-center justify-center transition-colors z-10"
-                  onMouseDown={(e) => {
-                    setIsDragging(true);
-                    setStartY(e.clientY);
-                    setStartOverlayY(overlayY);
+              {selectedCliente && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCliente(null);
+                    setClienteBusca("");
                   }}
+                  className="text-xs font-bold text-[#0055ff] hover:underline cursor-pointer"
                 >
-                  <GripVertical size={16} className="text-sky-500 rotate-90" />
+                  Trocar Cliente
+                </button>
+              )}
+            </div>
+
+            {selectedCliente ? (
+              /* Cliente Selecionado Card */
+              <div className="p-5 rounded-2xl bg-[#f8fafc] border border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center font-black text-[#002132] text-sm shadow-sm">
+                    {selectedCliente.logo_url ? (
+                      <img src={selectedCliente.logo_url} alt="" className="w-full h-full object-contain p-1 rounded-2xl" />
+                    ) : (
+                      selectedCliente.nome.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-[#002132] flex items-center gap-2">
+                      <span>{selectedCliente.nome}</span>
+                      {selectedCliente.nome_empresarial && (
+                        <span className="text-xs font-normal text-slate-500">
+                          ({selectedCliente.nome_empresarial})
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 mt-1">
+                      {selectedCliente.cnpj && <span>CNPJ: {selectedCliente.cnpj}</span>}
+                      {selectedCliente.nome_contato && <span>• Contato: {selectedCliente.nome_contato}</span>}
+                      {selectedCliente.whatsapp_responsavel && (
+                        <span>• WhatsApp: {selectedCliente.whatsapp_responsavel}</span>
+                      )}
+                      {selectedCliente.email_cobranca && (
+                        <span>• E-mail: {selectedCliente.email_cobranca}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="w-full h-full relative">
-                  {proposalItems.length === 0 && (
-                    <div className="h-full flex items-center justify-center border-2 border-dashed border-white/20 rounded-2xl mx-[5%]">
-                      <p className="text-white/40 text-[1.5vw] font-bold uppercase">Arraste as ferramentas para aqui</p>
-                    </div>
-                  )}
-                  
-                  {proposalItems.map((item, index) => (
-                    <div 
-                      key={item.id} 
-                      className="absolute group/item border-none shadow-none"
-                      style={{ 
-                        left: `${item.style.left}%`, 
-                        top: `${item.style.top}%`,
-                        width: `${item.style.width}%`,
-                        zIndex: draggingItem?.id === item.id ? 50 : 10,
-                        backgroundColor: 'transparent',
-                        background: 'none'
-                      }}
-                    >
-                      {/* Controls */}
-                      <div className="absolute -top-8 left-0 opacity-0 group-hover/item:opacity-100 transition-opacity flex gap-1 z-50 bg-black/60 p-1 rounded-t-lg">
-                        <div 
-                          className={`p-1 bg-sky-500 rounded cursor-move ${item.locked ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
-                          onMouseDown={(e) => {
-                            if (item.locked) return;
-                            e.stopPropagation();
-                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
-                            if (!rect) return;
-                            setDraggingItem({
-                              id: item.id,
-                              startX: ((e.clientX - rect.left) / rect.width) * 100,
-                              startY: ((e.clientY - rect.top) / rect.height) * 100,
-                              initialLeft: item.style.left,
-                              initialTop: item.style.top
-                            });
-                          }}
-                        >
-                          <GripVertical size={12} className="text-white" />
-                        </div>
-                        <Popover open={editingItemStyle === item.id} onOpenChange={(open) => setEditingItemStyle(open ? item.id : null)}>
-                          <PopoverTrigger asChild>
-                            <button className="p-1 bg-slate-600 rounded text-white">
-                              <Settings2 size={12} />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-56 p-3 space-y-4 bg-slate-900 border-slate-700 text-white">
-                            <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
-                              <span className="text-[10px] font-bold uppercase opacity-50">Estilo do Item</span>
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => {
-                                    const newItems = [...proposalItems];
-                                    newItems[index].locked = !newItems[index].locked;
-                                    setProposalItems(newItems);
-                                    toast.success(newItems[index].locked ? "Item bloqueado!" : "Item desbloqueado!");
-                                  }}
-                                  className={`p-1.5 hover:bg-slate-800 rounded transition-colors ${item.locked ? 'text-amber-400' : 'text-white'}`}
-                                  title={item.locked ? "Desbloquear Item" : "Bloquear Item"}
-                                >
-                                  {item.locked ? <Lock size={12} /> : <Unlock size={12} />}
-                                </button>
-                                 {item.type === 'section' && (
-                                  <button 
-                                    onClick={() => {
-                                      setNamingSection({ id: item.id, content: item.content || "" });
-                                    }}
-                                    className="p-1.5 hover:bg-slate-800 rounded transition-colors text-white"
-                                    title="Nomear Seção"
-                                  >
-                                    <TypeIcon size={12} />
-                                  </button>
-                                )}
-                                <button 
-                                  onClick={() => {
-                                    setCopiedStyle({
-                                      fontFamily: item.style.fontFamily,
-                                      fontSizeVw: item.style.fontSizeVw,
-                                      color: item.style.color,
-                                      textAlign: item.style.textAlign,
-                                      padding: item.style.padding,
-                                      fontWeight: item.style.fontWeight,
-                                      fontStyle: item.style.fontStyle,
-                                      borderRadius: item.style.borderRadius,
-                                      backgroundColor: item.style.backgroundColor,
-                                      borderColor: item.style.borderColor,
-                                      borderWidth: item.style.borderWidth
-                                    });
-                                    toast.success("Estilo copiado!");
-                                  }}
-                                  className="p-1.5 hover:bg-slate-800 rounded transition-colors text-white"
-                                  title="Copiar Estilo"
-                                >
-                                  <Copy size={12} />
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    if (!copiedStyle) {
-                                      toast.error("Nenhum estilo copiado");
-                                      return;
-                                    }
-                                    const newItems = [...proposalItems];
-                                    newItems[index].style = {
-                                      ...newItems[index].style,
-                                      ...copiedStyle
-                                    };
-                                    setProposalItems(newItems);
-                                    toast.success("Estilo aplicado!");
-                                  }}
-                                  className={`p-1.5 hover:bg-slate-800 rounded transition-colors ${!copiedStyle ? 'opacity-30 cursor-not-allowed' : 'text-sky-400'}`}
-                                  title="Colar Estilo"
-                                  disabled={!copiedStyle}
-                                >
-                                  <ClipboardCheck size={12} />
-                                </button>
+                <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-wider border border-emerald-100 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Cliente Vinculado
+                </span>
+              </div>
+            ) : (
+              /* Campo de Busca com Autocomplete e Opção de Cadastro Rápido */
+              <div className="relative">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={clienteBusca}
+                    onChange={e => {
+                      setClienteBusca(e.target.value);
+                      setIsBuscaAberta(true);
+                    }}
+                    onFocus={() => setIsBuscaAberta(true)}
+                    placeholder="Digite o nome da empresa ou cliente..."
+                    className="w-full h-12 pl-11 pr-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs font-medium text-[#002132] outline-none focus:border-[#0055ff] transition-all"
+                  />
+                </div>
+
+                {/* Dropdown Resultados */}
+                {isBuscaAberta && (
+                  <div className="absolute top-14 left-0 right-0 z-30 bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden max-h-72 overflow-y-auto">
+                    {filteredClientes.length > 0 ? (
+                      <div className="divide-y divide-slate-100">
+                        {filteredClientes.map(cli => (
+                          <div
+                            key={cli.id}
+                            onClick={() => {
+                              setSelectedCliente(cli);
+                              setIsBuscaAberta(false);
+                            }}
+                            className="p-3.5 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-[#f8fafc] border border-slate-200 flex items-center justify-center font-bold text-xs text-[#002132]">
+                                {cli.nome.charAt(0).toUpperCase()}
                               </div>
-                            </div>
-                            <div className="space-y-4">
-                              {item.type !== 'section' ? (
-                                <>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Estilo do Texto</label>
-                                    <div className="flex gap-1">
-                                      <button
-                                        onClick={() => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.fontWeight = item.style.fontWeight === 'bold' ? 'normal' : 'bold';
-                                          setProposalItems(newItems);
-                                        }}
-                                        className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontWeight === 'bold' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
-                                      >
-                                        <Bold size={14} />
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.fontStyle = item.style.fontStyle === 'italic' ? 'normal' : 'italic';
-                                          setProposalItems(newItems);
-                                        }}
-                                        className={`flex-1 p-1.5 rounded flex justify-center ${item.style.fontStyle === 'italic' ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
-                                      >
-                                        <Italic size={14} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Fonte</label>
-                                    <select 
-                                      value={item.style.fontFamily || 'Inter'}
-                                      onChange={(e) => {
-                                        const newItems = [...proposalItems];
-                                        newItems[index].style.fontFamily = e.target.value;
-                                        setProposalItems(newItems);
-                                      }}
-                                      className="w-full bg-slate-800 border-none text-[11px] rounded p-1.5 focus:ring-1 focus:ring-sky-500"
-                                    >
-                                      {['Inter', 'Roboto', 'Montserrat', 'Open Sans', 'Poppins', 'Playfair Display', 'Oswald'].map(f => (
-                                        <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Tamanho (vw)</label>
-                                    <div className="flex items-center gap-2">
-                                      <input 
-                                        type="range" min="0.5" max="5" step="0.1"
-                                        value={item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.fontSizeVw = parseFloat(e.target.value);
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="flex-1 accent-sky-500"
-                                      />
-                                      <span className="text-[10px] w-8 text-right">{(item.style.fontSizeVw || (item.type === 'value' ? 1.8 : 1.0)).toFixed(1)}</span>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Cor do Fundo</label>
-                                    <div className="flex gap-2">
-                                      <div className="flex-1 flex gap-1 bg-slate-800 p-1 rounded">
-                                        <button 
-                                          onClick={() => {
-                                            const newItems = [...proposalItems];
-                                            newItems[index].style.backgroundColor = 'transparent';
-                                            setProposalItems(newItems);
-                                          }}
-                                          className={`flex-1 text-[9px] uppercase font-bold py-1 rounded transition-colors ${item.style.backgroundColor === 'transparent' ? 'bg-sky-500 text-white' : 'hover:bg-slate-700 text-slate-400'}`}
-                                        >
-                                          Transp.
-                                        </button>
-                                        <button 
-                                          onClick={() => {
-                                            const newItems = [...proposalItems];
-                                            if (item.style.backgroundColor === 'transparent') {
-                                              newItems[index].style.backgroundColor = '#ffffff';
-                                            }
-                                            setProposalItems(newItems);
-                                          }}
-                                          className={`flex-1 text-[9px] uppercase font-bold py-1 rounded transition-colors ${item.style.backgroundColor !== 'transparent' ? 'bg-sky-500 text-white' : 'hover:bg-slate-700 text-slate-400'}`}
-                                        >
-                                          Colorido
-                                        </button>
-                                      </div>
-                                      {item.style.backgroundColor !== 'transparent' && (
-                                        <input 
-                                          type="color"
-                                          value={item.style.backgroundColor || "#ffffff"}
-                                          onChange={(e) => {
-                                            const newItems = [...proposalItems];
-                                            newItems[index].style.backgroundColor = e.target.value;
-                                            setProposalItems(newItems);
-                                          }}
-                                          className="w-10 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
-                                        />
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Cor do Texto</label>
-                                    <div className="flex gap-2">
-                                      <input 
-                                        type="color"
-                                        value={item.style.color || "#ffffff"}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.color = e.target.value;
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
-                                      />
-                                      <input 
-                                        type="text"
-                                        value={item.style.color || "#ffffff"}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.color = e.target.value;
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="w-16 bg-slate-800 text-[10px] rounded px-1 border-none uppercase"
-                                      />
-                                    </div>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Título (Fonte e Tamanho)</label>
-                                    <div className="flex gap-2">
-                                      <select 
-                                        value={item.style.fontFamily || 'Inter'}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.fontFamily = e.target.value;
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="flex-1 bg-slate-800 border-none text-[11px] rounded p-1.5 focus:ring-1 focus:ring-sky-500"
-                                      >
-                                        {['Inter', 'Roboto', 'Montserrat', 'Open Sans', 'Poppins', 'Playfair Display', 'Oswald'].map(f => (
-                                          <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                                        ))}
-                                      </select>
-                                      <input 
-                                        type="number"
-                                        min="0.5" max="5" step="0.1"
-                                        value={item.style.fontSizeVw || 1.2}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.fontSizeVw = parseFloat(e.target.value);
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="w-12 bg-slate-800 text-[11px] rounded px-1 border-none"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Cantos Arredondados (px)</label>
-                                    <input 
-                                      type="range" min="0" max="100" step="1"
-                                      value={item.style.borderRadius || 0}
-                                      onChange={(e) => {
-                                        const newItems = [...proposalItems];
-                                        newItems[index].style.borderRadius = parseInt(e.target.value);
-                                        setProposalItems(newItems);
-                                      }}
-                                      className="w-full accent-sky-500"
-                                    />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Cor do Fundo</label>
-                                    <div className="flex gap-2">
-                                      <input 
-                                        type="color"
-                                        value={item.style.backgroundColor || "#ffffff"}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.backgroundColor = e.target.value;
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
-                                      />
-                                      <button 
-                                        onClick={() => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.backgroundColor = 'transparent';
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="px-2 bg-slate-800 rounded text-[10px] uppercase font-bold"
-                                      >
-                                        Transp.
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase opacity-50">Borda (Cor e Espessura)</label>
-                                    <div className="flex gap-2">
-                                      <input 
-                                        type="color"
-                                        value={item.style.borderColor || "transparent"}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.borderColor = e.target.value;
-                                          if (!item.style.borderWidth) newItems[index].style.borderWidth = 1;
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="flex-1 h-8 bg-slate-800 rounded p-0.5 cursor-pointer border-none"
-                                      />
-                                      <input 
-                                        type="number"
-                                        min="0" max="20"
-                                        value={item.style.borderWidth || 0}
-                                        onChange={(e) => {
-                                          const newItems = [...proposalItems];
-                                          newItems[index].style.borderWidth = parseInt(e.target.value);
-                                          setProposalItems(newItems);
-                                        }}
-                                        className="w-12 bg-slate-800 text-[11px] rounded px-1 border-none"
-                                      />
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                              
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase opacity-50">Alinhamento</label>
-                                <div className="flex gap-1">
-                                  {(['left', 'center', 'right'] as const).map((align) => (
-                                    <button
-                                      key={align}
-                                      onClick={() => {
-                                        const newItems = [...proposalItems];
-                                        newItems[index].style.textAlign = align;
-                                        setProposalItems(newItems);
-                                      }}
-                                      className={`flex-1 p-1.5 rounded flex justify-center ${item.style.textAlign === align ? 'bg-sky-500' : 'bg-slate-800 hover:bg-slate-700'}`}
-                                    >
-                                      {align === 'left' && <AlignLeft size={14} />}
-                                      {align === 'center' && <AlignCenter size={14} />}
-                                      {align === 'right' && <AlignRight size={14} />}
-                                    </button>
-                                  ))}
+                              <div>
+                                <div className="text-xs font-bold text-[#002132]">{cli.nome}</div>
+                                <div className="text-[10px] text-slate-400">
+                                  {cli.nome_empresarial || cli.nome_contato || cli.cnpj || "Sem razão social"}
                                 </div>
                               </div>
-                              <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase opacity-50">Espaçamento (vw)</label>
-                                <input 
-                                  type="range" min="0" max="5" step="0.1"
-                                  value={item.style.padding || 0.5}
-                                  onChange={(e) => {
-                                    const newItems = [...proposalItems];
-                                    newItems[index].style.padding = parseFloat(e.target.value);
-                                    setProposalItems(newItems);
-                                  }}
-                                  className="w-full accent-sky-500"
-                                />
-                              </div>
                             </div>
-                          </PopoverContent>
-                        </Popover>
-                        <button 
-                          onClick={() => setProposalItems(proposalItems.filter(i => i.id !== item.id))}
-                          className="p-1 bg-red-500 rounded text-white"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-
-                      {/* Resize Handle Width */}
-                      {!item.locked && (
-                        <div 
-                          className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
-                            if (!rect) return;
-                            setResizingItem({
-                              id: item.id,
-                              startWidth: item.style.width,
-                              startX: ((e.clientX - rect.left) / rect.width) * 100
-                            });
-                          }}
-                        />
-                      )}
-
-                      {/* Resize Handle Height (Only for Text fields or Sections) */}
-                      {(item.type === 'text' || item.type === 'section') && !item.locked && (
-                        <div 
-                          className="absolute left-0 right-0 -bottom-1 h-2 cursor-ns-resize opacity-0 group-hover/item:opacity-100 bg-sky-500/50 hover:bg-sky-500 transition-all z-50"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            const rect = e.currentTarget.closest('.pointer-events-auto')?.getBoundingClientRect();
-                            if (!rect) return;
-                            setResizingHeight({
-                              id: item.id,
-                              startHeight: typeof item.style.height === 'number' ? item.style.height : (item.type === 'section' ? 0.2 : 5),
-                              startY: ((e.clientY - rect.top) / rect.height) * 100
-                            });
-                          }}
-                        />
-                      )}
-
-
-                      {item.type === 'section' && (
-                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
-                          <div 
-                            className="w-full transition-all relative"
-                            style={{ 
-                              height: item.style.height ? `${item.style.height}vw` : '0.2vw',
-                              backgroundColor: item.style.backgroundColor || '#ffffff',
-                              borderRadius: `${item.style.borderRadius || 0}px`,
-                              border: item.style.borderWidth ? `${item.style.borderWidth}px solid ${item.style.borderColor || 'transparent'}` : 'none'
-                            }}
-                          >
-                            {item.content && (
-                              <div 
-                                className="absolute top-1 left-2 font-black uppercase whitespace-nowrap"
-                                style={{ 
-                                  color: item.style.color,
-                                  fontFamily: item.style.fontFamily || 'Inter',
-                                  fontSize: `${item.style.fontSizeVw || 1.2}vw`,
-                                  fontWeight: item.style.fontWeight || 'black',
-                                  fontStyle: item.style.fontStyle || 'normal',
-                                  transform: 'translateY(-120%)'
-                                }}
-                              >
-                                {item.content}
-                              </div>
-                            )}
+                            <span className="text-[10px] font-bold text-[#0055ff] uppercase">Vincular</span>
                           </div>
-                        </div>
-                      )}
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-xs text-slate-400">
+                        Nenhum cliente encontrado para "{clienteBusca}".
+                      </div>
+                    )}
 
-                      {item.type === 'text' && (
-                        <div style={{ 
-                          padding: `${item.style.padding || 0}vw`, 
-                          textAlign: item.style.textAlign as any, 
-                          background: 'transparent !important',
-                          backgroundColor: 'transparent !important',
-                          borderRadius: '0',
-                          border: 'none !important',
-                          boxShadow: 'none !important'
-                        }}>
-                          <textarea 
-                            value={item.content}
-                            onChange={(e) => {
-                              const newItems = [...proposalItems];
-                              newItems[index].content = e.target.value;
-                              setProposalItems(newItems);
-                            }}
-                            readOnly={item.locked}
-                            placeholder="DESCRIÇÃO DA PROPOSTA..."
-                            className="bg-transparent border-none w-full outline-none placeholder:text-white/20 resize-none shadow-none focus:ring-0 focus-visible:ring-0 focus:outline-none focus:bg-transparent p-0 m-0 ring-0 ring-offset-0 ring-transparent active:bg-transparent hover:bg-transparent selection:bg-sky-500/30 text-current !ring-0 !ring-offset-0 !outline-none !border-0 !border-transparent !bg-transparent !bg-none !shadow-none !bg-opacity-0 !appearance-none !box-shadow-none"
-                            style={{ 
-                              color: item.style.color, 
-                              textAlign: item.style.textAlign as any,
-                              fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
-                              height: item.style.height ? `${item.style.height}vw` : 'auto',
-                              fontWeight: item.style.fontWeight || 'normal',
-                              fontStyle: item.style.fontStyle || 'normal',
-                              background: 'none !important',
-                              backgroundColor: 'transparent !important',
-                              border: 'none !important',
-                              borderWidth: '0 !important',
-                              boxShadow: 'none !important',
-                              outline: 'none !important',
-                              appearance: 'none',
-                              WebkitAppearance: 'none',
-                              position: 'relative',
-                              zIndex: 1,
-                              resize: 'none',
-                              cursor: item.locked ? 'not-allowed' : 'text'
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {item.type === 'commercial_line' && (
-                        <div className="flex gap-[0.8vw] items-center bg-transparent" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
-                          <input 
-                            placeholder="QNT"
-                            className="bg-transparent border-none outline-none w-[3vw] text-center focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
-                            value={item.content.qty}
-                            onChange={(e) => {
-                              const newItems = [...proposalItems];
-                              newItems[index].content.qty = e.target.value;
-                              setProposalItems(newItems);
-                            }}
-                            style={{ 
-                              color: item.style.color,
-                              fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
-                              fontWeight: item.style.fontWeight || 'normal',
-                              fontStyle: item.style.fontStyle || 'normal',
-                              background: 'transparent'
-                            }}
-                          />
-                          <input 
-                            placeholder="TEMPO"
-                            className="bg-transparent border-none outline-none w-[5vw] text-center focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
-                            value={item.content.time}
-                            onChange={(e) => {
-                              const newItems = [...proposalItems];
-                              newItems[index].content.time = e.target.value;
-                              setProposalItems(newItems);
-                            }}
-                            style={{ 
-                              color: item.style.color,
-                              fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
-                              fontWeight: item.style.fontWeight || 'normal',
-                              fontStyle: item.style.fontStyle || 'normal',
-                              background: 'transparent'
-                            }}
-                          />
-                          <input 
-                            placeholder="DESCRIÇÃO"
-                            className="bg-transparent border-none outline-none flex-1 focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
-                            value={item.content.desc}
-                            onChange={(e) => {
-                              const newItems = [...proposalItems];
-                              newItems[index].content.desc = e.target.value;
-                              setProposalItems(newItems);
-                            }}
-                            style={{ 
-                              color: item.style.color, 
-                              textAlign: item.style.textAlign as any,
-                              fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.0}vw`,
-                              fontWeight: item.style.fontWeight || 'normal',
-                              fontStyle: item.style.fontStyle || 'normal',
-                              background: 'transparent'
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {(item.type === 'digital_1' || item.type === 'digital_2') && (
-                        <div style={{ padding: `${item.style.padding || 0.5}vw 0`, textAlign: item.style.textAlign as any }}>
-                          <button 
-                            onClick={() => setEditingDigital({ id: item.id, type: item.type })}
-                            className="flex items-center gap-2 bg-transparent w-full transition-all group/digital"
-                            style={{ justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}
-                          >
-                            <div style={{ color: item.style.color, textAlign: item.style.textAlign as any }}>
-                              <Pencil size={14} className="inline mr-2 opacity-50" />
-                              <span style={{ 
-                                fontFamily: item.style.fontFamily || 'Inter',
-                                fontSize: `${item.style.fontSizeVw || 1.0}vw`,
-                                fontWeight: item.style.fontWeight || 'medium',
-                                fontStyle: item.style.fontStyle || 'normal'
-                              }} className="uppercase">
-                                {item.content || (item.type === 'digital_1' ? 'ENTREGA DIGITAL 1' : 'ENTREGA DIGITAL 2')}
-                              </span>
-                            </div>
-                          </button>
-                        </div>
-                      )}
-
-                      {item.type === 'value' && (
-                        <div className="flex items-center gap-[0.3vw] bg-transparent w-full" style={{ padding: `${item.style.padding || 0.5}vw 0`, justifyContent: item.style.textAlign === 'center' ? 'center' : item.style.textAlign === 'right' ? 'flex-end' : 'flex-start' }}>
-                          <span className="font-black" style={{ 
-                            color: item.style.color,
-                            fontSize: `${(item.style.fontSizeVw || 1.8) * 0.8}vw`,
-                            fontWeight: item.style.fontWeight || 'black',
-                            fontStyle: item.style.fontStyle || 'normal'
-                          }}>R$</span>
-                          <input 
-                            type="number"
-                            value={item.content} 
-                            onChange={(e) => {
-                              const newItems = [...proposalItems];
-                              newItems[index].content = e.target.value;
-                              setProposalItems(newItems);
-                            }}
-                            placeholder="0,00"
-                            className="bg-transparent border-none outline-none w-full font-black placeholder:text-white/20 focus:ring-0 shadow-none focus:bg-transparent !appearance-none !box-shadow-none !border-0 !bg-none"
-                            style={{ 
-                              color: item.style.color, 
-                              textAlign: item.style.textAlign as any,
-                              fontFamily: item.style.fontFamily || 'Inter',
-                              fontSize: `${item.style.fontSizeVw || 1.8}vw`,
-                              fontWeight: item.style.fontWeight || 'black',
-                              fontStyle: item.style.fontStyle || 'normal',
-                              background: 'transparent'
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-
-                <Dialog open={!!editingDigital} onOpenChange={() => setEditingDigital(null)}>
-                  <DialogContent className="bg-white p-6">
-                    <DialogHeader>
-                      <DialogTitle className="uppercase font-black text-slate-800">
-                        {editingDigital?.type === 'digital_1' ? 'Configurar Digital 1' : 'Configurar Digital 2'}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                      <Label className="text-[10px] font-bold uppercase text-slate-400">Descrição da Entrega</Label>
-                      <Textarea 
-                        placeholder="Descreva aqui o que será entregue digitalmente..."
-                        className="min-h-[150px]"
-                        value={proposalItems.find(i => i.id === editingDigital?.id)?.content || ''}
-                        onChange={(e) => {
-                          const newItems = [...proposalItems];
-                          const idx = newItems.findIndex(i => i.id === editingDigital?.id);
-                          if (idx !== -1) {
-                            newItems[idx].content = e.target.value;
-                            setProposalItems(newItems);
-                          }
-                        }}
-                      />
-                      <Button variant="save" 
-                        onClick={() => setEditingDigital(null)}
-                        className="w-full bg-sky-500 text-white font-bold uppercase h-12"
-                      >
-                        Salvar Entrega Digital
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
-                <Dialog open={!!namingSection} onOpenChange={() => setNamingSection(null)}>
-                  <DialogContent className="bg-white p-6 max-w-sm">
-                    <DialogHeader>
-                      <DialogTitle className="uppercase font-black text-slate-800">
-                        Nome da Seção
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                      <Input 
-                        placeholder="Ex: Entrega Comercial"
-                        value={namingSection?.content || ''}
-                        onChange={(e) => setNamingSection(prev => prev ? { ...prev, content: e.target.value } : null)}
-                        autoFocus
-                      />
-                      <Button 
+                    {/* BOTÃO CADASTRO RÁPIDO SOLICITADO */}
+                    <div className="p-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Não encontrou a empresa na lista?
+                      </span>
+                      <button
+                        type="button"
                         onClick={() => {
-                          if (namingSection) {
-                            const newItems = [...proposalItems];
-                            const idx = newItems.findIndex(i => i.id === namingSection.id);
-                            if (idx !== -1) {
-                              newItems[idx].content = namingSection.content;
-                              setProposalItems(newItems);
-                            }
-                            setNamingSection(null);
-                          }
+                          setNovoClienteData({
+                            nome: clienteBusca,
+                            nome_empresarial: "",
+                            cnpj: "",
+                            telefone: "",
+                            whatsapp_responsavel: "",
+                            endereco: "",
+                            cliente_desde: new Date().toISOString().split("T")[0],
+                            nome_contato: "",
+                            email_cobranca: "",
+                          });
+                          setIsBuscaAberta(false);
+                          setIsNovoClienteModalOpen(true);
                         }}
-                        className="w-full bg-sky-500 text-white font-bold uppercase h-11"
+                        className="px-4 py-2 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
                       >
-                        Aplicar Nome
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
-                <div className="grid grid-cols-4 gap-[2%] h-full pb-[10%] px-[5%] text-white hidden">
-
-                  <div className="space-y-[1vw] relative group">
-...
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
-                      <input 
-                        type="color" 
-                        value={formData.entregaDigitalStyle?.color || "#ffffff"} 
-                        onChange={(e) => setFormData({...formData, entregaDigitalStyle: {...formData.entregaDigitalStyle, color: e.target.value}})}
-                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
-                      />
-                      <select 
-                        value={formData.entregaDigitalStyle?.fontSize || 14}
-                        onChange={(e) => setFormData({...formData, entregaDigitalStyle: {...formData.entregaDigitalStyle, fontSize: parseInt(e.target.value)}})}
-                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
-                      >
-                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
-                      </select>
-                      <button 
-                        onClick={() => setFormData({...formData, entregaDigitalStyle: {...formData.entregaDigitalStyle, fontWeight: formData.entregaDigitalStyle?.fontWeight === "900" ? "400" : "900"}})}
-                        className="bg-transparent text-[10px] text-white border border-white/20 rounded px-1"
-                      >
-                        B
+                        <Plus className="w-3.5 h-3.5 text-black stroke-[3]" /> Cadastrar Novo Cliente
                       </button>
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+          </div>
 
+          {/* SEÇÃO 2: TABELA DE PRODUTOS DO ORÇAMENTO */}
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-[#002132] flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#0055ff]" /> 2. Produtos & Serviços do Orçamento
+                </label>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                  Digite o nome do produto para autocompletar os dados com o catálogo oficial
+                </p>
+              </div>
 
-                  <div className="space-y-[1vw] relative group">
-                    <div className="flex items-center gap-[0.5vw] bg-transparent p-[1vw] rounded-xl border-none">
-                      <span className="text-[1.8vw] font-black" style={{ color: formData.valorStyle?.color || "#ffffff" }}>R$</span>
-                      <input 
-                        type="number"
-                        value={formData.valor || ""} 
-                        onChange={e => setFormData({...formData, valor: e.target.value})}
-                        placeholder="04 INVESTIMENTO"
-                        className="bg-transparent border-none outline-none w-full placeholder:text-white/40"
-                        style={{ 
-                          color: formData.valorStyle?.color || "#ffffff",
-                          fontSize: `${(formData.valorStyle?.fontSize || 14) / 14 * 2.2}vw`,
-                          fontWeight: formData.valorStyle?.fontWeight || "900"
-                        }}
-                      />
+              <button
+                type="button"
+                onClick={handleAddItem}
+                className="h-10 px-5 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-black stroke-[3]" /> Adicionar Produto
+              </button>
+            </div>
+
+            {/* TABELA DE PRODUTOS */}
+            <div className="border border-slate-200/90 rounded-2xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[850px]">
+                  <thead>
+                    <tr className="bg-[#f8fafc] border-b border-slate-200/90 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      <th className="py-3 px-4 w-28">Cód.</th>
+                      <th className="py-3 px-4 w-64">Nome do Produto</th>
+                      <th className="py-3 px-4">Descrição</th>
+                      <th className="py-3 px-4 w-32 text-center">Medida</th>
+                      <th className="py-3 px-4 w-20 text-center">Qtd.</th>
+                      <th className="py-3 px-4 w-36 text-right">Valor Unit. (R$)</th>
+                      <th className="py-3 px-4 w-14 text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs">
+                    {itens.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                        {/* Cód. Produto */}
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={item.codigo}
+                            onChange={e => handleUpdateItem(item.id, "codigo", e.target.value)}
+                            className="w-full h-9 px-2.5 rounded-lg bg-[#f8fafc] border border-slate-200 text-xs font-mono font-bold text-slate-700 outline-none uppercase"
+                          />
+                        </td>
+
+                        {/* Nome do Produto com Autocomplete */}
+                        <td className="py-3 px-4 relative">
+                          <input
+                            type="text"
+                            value={item.nome}
+                            onChange={e => {
+                              handleUpdateItem(item.id, "nome", e.target.value);
+                              setActiveProdRowId(item.id);
+                            }}
+                            onFocus={() => setActiveProdRowId(item.id)}
+                            placeholder="Digite ou escolha produto..."
+                            className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs font-bold text-[#002132] outline-none focus:border-[#0055ff]"
+                          />
+
+                          {/* Sugestões do Catálogo */}
+                          {activeProdRowId === item.id && (
+                            <div className="absolute left-4 right-4 top-12 z-20 bg-white rounded-xl shadow-xl border border-slate-200 max-h-48 overflow-y-auto divide-y divide-slate-100">
+                              {produtosCatalogo
+                                .filter(p => !item.nome || p.nome.toLowerCase().includes(item.nome.toLowerCase()) || p.codigo.toLowerCase().includes(item.nome.toLowerCase()))
+                                .map(prod => (
+                                  <div
+                                    key={prod.id}
+                                    onClick={() => handleSelectProductForLine(item.id, prod)}
+                                    className="p-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                  >
+                                    <div>
+                                      <div className="text-xs font-bold text-[#002132]">
+                                        <span className="text-[#0055ff] mr-1">{prod.codigo}</span> {prod.nome}
+                                      </div>
+                                      <div className="text-[10px] text-slate-400">
+                                        {prod.categoria} • Medida: {prod.tipo_medida}
+                                      </div>
+                                    </div>
+                                    <div className="text-xs font-extrabold text-[#002132] font-mono">
+                                      R$ {prod.valor.toFixed(2)}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Descrição */}
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={item.descricao}
+                            onChange={e => handleUpdateItem(item.id, "descricao", e.target.value)}
+                            placeholder="Detalhes ou entregas inclusas..."
+                            className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 outline-none"
+                          />
+                        </td>
+
+                        {/* Medida */}
+                        <td className="py-3 px-4 text-center">
+                          <select
+                            value={item.tipo_medida}
+                            onChange={e => handleUpdateItem(item.id, "tipo_medida", e.target.value as any)}
+                            className="h-9 px-2.5 rounded-lg bg-[#f8fafc] border border-slate-200 text-xs font-semibold text-slate-700 outline-none capitalize cursor-pointer w-full"
+                          >
+                            <option value="unidade">Unidade</option>
+                            <option value="tempo">Tempo (hh:mm:ss)</option>
+                            <option value="mensal">Mensal</option>
+                            <option value="hora">Hora</option>
+                            <option value="projeto">Projeto</option>
+                          </select>
+                        </td>
+
+                        {/* Quantidade */}
+                        <td className="py-3 px-4 text-center">
+                          <input
+                            type="number"
+                            min={1}
+                            value={item.quantidade}
+                            onChange={e => handleUpdateItem(item.id, "quantidade", Number(e.target.value) || 1)}
+                            className="w-full h-9 px-2 text-center rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 outline-none"
+                          />
+                        </td>
+
+                        {/* Valor Unitário */}
+                        <td className="py-3 px-4 text-right">
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={item.valor}
+                            onChange={e => handleUpdateItem(item.id, "valor", Number(e.target.value))}
+                            className="w-full h-9 px-3 text-right rounded-lg bg-white border border-slate-200 text-xs font-bold font-mono text-[#002132] outline-none"
+                          />
+                        </td>
+
+                        {/* Excluir Linha */}
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Excluir produto do orçamento"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* SEÇÃO 3: TIPO DE RECORRÊNCIA, CONDIÇÕES & TOTALIZAÇÃO */}
+          <div className="pt-6 border-t border-slate-100 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* Esquerda: Recorrência e Observações */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-[#002132] block mb-2">
+                  Tipo de Cobrança da Proposta
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setTipoRecorrencia("unico")}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+                      tipoRecorrencia === "unico"
+                        ? "border-[#0055ff] bg-blue-50/40 shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      tipoRecorrencia === "unico" ? "bg-[#0055ff] text-white" : "bg-slate-100 text-slate-400"
+                    }`}>
+                      <Clock className="w-4 h-4" />
                     </div>
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-2 rounded-bl-lg flex gap-2 z-30">
-                      <input 
-                        type="color" 
-                        value={formData.valorStyle?.color || "#ffffff"} 
-                        onChange={(e) => setFormData({...formData, valorStyle: {...formData.valorStyle, color: e.target.value}})}
-                        className="w-5 h-5 cursor-pointer bg-transparent border-none"
-                      />
-                      <select 
-                        value={formData.valorStyle?.fontSize || 14}
-                        onChange={(e) => setFormData({...formData, valorStyle: {...formData.valorStyle, fontSize: parseInt(e.target.value)}})}
-                        className="bg-transparent text-[10px] text-white border border-white/20 rounded"
-                      >
-                        {[10, 12, 14, 16, 18, 20, 24, 28, 32].map(s => <option key={s} value={s} className="bg-slate-800">{s}px</option>)}
-                      </select>
+                    <div>
+                      <div className="text-xs font-black text-[#002132] uppercase">Serviço Único</div>
+                      <div className="text-[10px] text-slate-400">Pagamento avulso / pontual</div>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setTipoRecorrencia("mensal")}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+                      tipoRecorrencia === "mensal"
+                        ? "border-[#0055ff] bg-blue-50/40 shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      tipoRecorrencia === "mensal" ? "bg-[#0055ff] text-white" : "bg-slate-100 text-slate-400"
+                    }`}>
+                      <RefreshCw className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-[#002132] uppercase">Recorrente Mensal</div>
+                      <div className="text-[10px] text-slate-400">Assinatura / Mensalidade</div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-[#002132] block mb-1">
+                  Validade da Proposta (Dias)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={validadeDias}
+                  onChange={e => setValidadeDias(Number(e.target.value) || 15)}
+                  className="w-32 h-10 px-3 rounded-xl bg-[#f8fafc] border border-slate-200 text-xs font-bold text-[#002132] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-[#002132] block mb-1">
+                  Observações & Termos Gerais
+                </label>
+                <textarea
+                  rows={3}
+                  value={observacoes}
+                  onChange={e => setObservacoes(e.target.value)}
+                  className="w-full p-3 rounded-xl bg-[#f8fafc] border border-slate-200 text-xs text-slate-700 outline-none leading-relaxed"
+                />
+              </div>
             </div>
 
-            <div className="w-full flex justify-end gap-3 mt-6">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  const saveMockup = async () => {
-                    try {
-                      const isNew = selectedMockup.id.toString().startsWith('temp-');
-                      const mockupData = {
-                        name: selectedMockup.name,
-                        image_url: customBg || selectedMockup.image_url,
-                        config: { 
-                          ...(selectedMockup.config || {}),
-                          overlayY,
-                          proposalItems 
-                        }
-                      };
+            {/* Direita: Totalizador & Botão de Envio */}
+            <div className="bg-[#f8fafc] p-6 rounded-3xl border border-slate-200/90 space-y-4">
+              <div className="text-xs font-black uppercase tracking-wider text-[#002132]">
+                Resumo de Valores do Orçamento
+              </div>
 
-                      console.log("Salvando mockup:", mockupData);
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center text-slate-500">
+                  <span>Subtotal ({itens.length} {itens.length === 1 ? 'item' : 'itens'}):</span>
+                  <span className="font-mono font-bold text-slate-700">R$ {subtotal.toFixed(2)}</span>
+                </div>
 
-                      if (isNew) {
-                        const { data, error } = await supabase.from("comercial_mockups").insert(mockupData).select().single();
-                        if (!error) {
-                          toast.success("Mockup criado com sucesso!");
-                          fetchData();
-                        } else {
-                          console.error("Erro insert mockup:", error);
-                          toast.error(`Erro ao criar mockup: ${error.message}`);
-                        }
-                      } else {
-                        const { error } = await supabase.from("comercial_mockups").update(mockupData).eq("id", selectedMockup.id);
-                        if (!error) {
-                          toast.success("Mockup atualizado com sucesso!");
-                          fetchData();
-                        } else {
-                          console.error("Erro update mockup:", error);
-                          toast.error(`Erro ao atualizar mockup: ${error.message}`);
-                        }
-                      }
-                    } catch (err) {
-                      console.error("Erro inesperado:", err);
-                      toast.error("Erro inesperado ao salvar");
-                    }
-                  };
-                  saveMockup();
-                }} 
-                className="h-12 px-6 font-bold uppercase text-[11px] bg-white shadow-xl"
-                style={{ borderColor: "var(--layout-accent-hex, #0ea5e9)", color: "var(--layout-accent-hex, #0ea5e9)" }}
-              >
-                SALVAR ALTERAÇÕES NO MOCKUP
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setSelectedMockup(null)} 
-                className="h-12 px-6 font-bold uppercase text-[11px] shadow-xl"
-                style={{ 
-                  backgroundColor: "var(--layout-widget-bg, #ffffff)",
-                  borderColor: "var(--layout-border-color, #e2e8f0)",
-                  color: "var(--layout-widget-text, #1a1a1a)"
-                }}
-              >
-                CANCELAR
-              </Button>
-              {!isEditingMockup && (
-                <Button 
-                  onClick={handleCreateProposta} 
-                  className="h-12 px-10 font-bold uppercase text-[11px] shadow-xl"
-                  style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}
+                <div className="flex justify-between items-center text-slate-500">
+                  <span>Desconto Comercial (R$):</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    value={desconto}
+                    onChange={e => setDesconto(Number(e.target.value))}
+                    className="w-28 h-8 px-2 text-right rounded-lg bg-white border border-slate-200 font-mono font-bold text-xs outline-none"
+                  />
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">
+                  <div>
+                    <span className="text-sm font-black uppercase tracking-wide text-[#002132]">
+                      Total do Orçamento
+                    </span>
+                    <div className="text-[10px] text-slate-400 font-semibold">
+                      {tipoRecorrencia === "mensal" ? "Cobrança Recorrente Mensal" : "Pagamento Único / Avulso"}
+                    </div>
+                  </div>
+
+                  <div className="text-2xl font-black text-[#0055ff] font-mono">
+                    R$ {total.toFixed(2)}
+                    {tipoRecorrencia === "mensal" && <span className="text-xs text-slate-400 font-sans ml-1">/mês</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* BOTÃO ENVIAR ORÇAMENTO */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleOpenEnviarModal}
+                  className="w-full h-12 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
                 >
-                  <Send size={16} className="mr-2" />
-                  SALVAR E ENVIAR PARA ARTE FINAL
-                </Button>
-              )}
+                  <Send className="w-4 h-4 text-black stroke-[3]" /> Enviar Orçamento
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      ) : propostas.length === 0 ? (
-        <div className="rounded-xl p-12 text-center border bg-slate-50/50">
-          <FileText size={40} className="mx-auto mb-4 text-slate-300" />
-          <p className="text-sm font-semibold text-slate-500">Nenhuma proposta cadastrada</p>
-          <p className="text-xs text-slate-400 mt-1">Clique em "NOVA PROPOSTA" e escolha um mockup para começar</p>
-        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {propostas.map(p => (
-            <div key={p.id} className="group relative rounded-xl border bg-white overflow-hidden transition-all hover:shadow-md">
-              <div className="aspect-[4/3] bg-slate-100 relative">
-                {artSrc(p) ? (
-                  <img src={artSrc(p) as string} className="w-full h-full object-cover" />
+        /* HISTÓRICO DE ORÇAMENTOS */
+        <div className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-black text-[#002132] uppercase">
+              Orçamentos Emitidos Recentemente
+            </h3>
+          </div>
 
-                ) : p.mockup?.image_url ? (
-                  <img src={p.mockup.image_url} className="w-full h-full object-cover opacity-50 grayscale" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center"><ImageIcon size={32} className="text-slate-300" /></div>
-                )}
-                <div className="absolute top-2 right-2">{getStatusBadge(p.status as Status)}</div>
-              </div>
-              
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold truncate pr-2">{p.title}</h3>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setSelectedProposta(p)} className="p-1.5 rounded-full hover:bg-slate-100" title="Visualizar"><Eye size={14} /></button>
-                    <button onClick={() => handleDeleteProposta(p.id)} className="p-1.5 rounded-full hover:bg-red-50 text-red-500" title="Excluir"><Trash2 size={14} /></button>
-                  </div>
-                </div>
-
-                {p.status === "arte_final" && (
-                  <div className="pt-2 border-t">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Ação: Enviar Arte Final</p>
-                    <Label htmlFor={`upload-${p.id}`} className="cursor-pointer">
-                      <div className="flex items-center justify-center gap-2 w-full py-2 border-2 border-dashed rounded-lg text-[10px] font-bold hover:bg-slate-50 transition-colors">
-                        {uploadingArt ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                        UPLOAD DA ARTE
-                      </div>
-                      <input 
-                        id={`upload-${p.id}`} 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*" 
-                        onChange={(e) => handleUploadArt(e, p.id)} 
-                        disabled={uploadingArt}
-                      />
-                    </Label>
-                  </div>
-                )}
-
-                {p.status === "aprovacao" && (
-                  <div className="pt-2 border-t">
-                    <Button onClick={() => handleApprove(p.id)} className="w-full h-8 text-[10px] font-bold" style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>
-                      <Check size={12} className="mr-1" /> APROVAR PROPOSTA
-                    </Button>
-                  </div>
-                )}
-
-                {p.status === "concluido" && (
-                  <div className="pt-2 border-t flex flex-wrap gap-1.5">
-                    <Button variant="outline" className="flex-1 h-8 text-[10px] font-bold" onClick={() => { setSelectedProposta(p); setTimeout(downloadPDF, 100); }}>
-                      <Download size={12} className="mr-1" /> PDF
-                    </Button>
-                    <Button variant="outline" className="h-8 px-2.5 text-[10px] font-bold text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => { setSelectedProposta(p); shareWhatsApp(p); }} title="Enviar via WhatsApp">
-                      <MessageSquare size={12} className="mr-1" /> WhatsApp
-                    </Button>
-                    <Button variant="outline" className="h-8 px-2.5 text-[10px] font-bold text-sky-600 border-sky-200 hover:bg-sky-50" onClick={() => shareEmailMarketing(p)} title="Enviar estilo E-mail Marketing">
-                      <Send size={12} className="mr-1" /> E-mail
-                    </Button>
-                  </div>
-                )}
-              </div>
+          {orcamentosSalvos.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs font-medium">
+              Nenhum orçamento emitido ainda. Comece criando um novo orçamento!
             </div>
-          ))}
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {orcamentosSalvos.map(orc => {
+                const totalOrc = orc.itens.reduce((acc, it) => acc + (it.valor * it.quantidade), 0) - (orc.desconto || 0);
+                return (
+                  <div key={orc.id} className="py-4 flex flex-wrap items-center justify-between gap-4 hover:bg-slate-50/60 p-3 rounded-2xl transition-colors">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-black text-[#0055ff]">{orc.numero}</span>
+                        <span className="text-xs font-bold text-[#002132]">{orc.cliente.nome}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                          orc.tipo_recorrencia === "mensal" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                        }`}>
+                          {orc.tipo_recorrencia === "mensal" ? "Mensal" : "Único"}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Emitido em {new Date(orc.data).toLocaleDateString("pt-BR")} • {orc.itens.length} itens inclusos
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-sm font-black text-[#002132] font-mono">
+                          R$ {totalOrc.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] text-slate-400">Validade: {orc.validade_dias} dias</div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOrcamentoParaEnvio(orc);
+                          setIsEnviarModalOpen(true);
+                        }}
+                        className="px-4 py-2 rounded-full bg-[#f8fafc] hover:bg-[#0055ff] hover:text-white text-[#002132] text-xs font-bold transition-all border border-slate-200 cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Send className="w-3 h-3" /> Reenviar / PDF
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      <Dialog open={!!selectedProposta} onOpenChange={(open) => !open && setSelectedProposta(null)}>
-        <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col p-0">
-          {selectedProposta && (
-            <>
-              <DialogHeader className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <DialogTitle className="text-sm font-bold">{selectedProposta.title}</DialogTitle>
-                    <p className="text-[10px] text-slate-500">ID: {selectedProposta.id}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    {getStatusBadge(selectedProposta.status)}
-                    <button onClick={() => setSelectedProposta(null)} className="p-1 rounded-full hover:bg-slate-100"><X size={16} /></button>
-                  </div>
-                </div>
-              </DialogHeader>
-              
-              <div className="flex-1 overflow-y-auto p-4 flex gap-6">
-                <div className="w-1/3 space-y-6">
-                  <div className="space-y-4">
-                    <p className="text-xs font-bold uppercase text-slate-400 border-b pb-1">Dados da Proposta</p>
-                    <div className="space-y-3">
-                      {Object.entries(selectedProposta.data || {}).map(([key, value]: [string, any]) => {
-                        const field = selectedProposta.mockup?.fields?.find((f: any) => f.name === key);
-                        return (
-                          <div key={key}>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase">{field?.label || key}</p>
-                            <p className="text-xs font-semibold">{String(value)}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+      {/* MODAL 1: CADASTRO RÁPIDO DE CLIENTE (9 CAMPOS DE CLIENTESPAGE) */}
+      <Dialog open={isNovoClienteModalOpen} onOpenChange={setIsNovoClienteModalOpen}>
+        <DialogContent className="bg-white rounded-3xl max-w-2xl p-6 md:p-8 border border-slate-200 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-[#0055ff]" /> Cadastro de Cliente
+            </DialogTitle>
+          </DialogHeader>
 
-                  {selectedProposta.status === "concluido" && (
-                    <div className="space-y-3 pt-4 border-t">
-                      <p className="text-[10px] font-bold uppercase text-slate-400">Downloads Disponíveis</p>
-                      <Button onClick={downloadPNG} className="w-full text-xs h-9" variant="secondary">
-                        <Download size={14} className="mr-2" /> Baixar PNG
-                      </Button>
-                      <Button onClick={downloadPDF} className="w-full text-xs h-9" variant="secondary">
-                        <Download size={14} className="mr-2" /> Baixar PDF
-                      </Button>
-                      <Button onClick={shareWhatsApp} className="w-full text-xs h-9" style={{ backgroundColor: "var(--layout-accent-hex, #0ea5e9)", color: "white" }}>
-                        <MessageSquare size={14} className="mr-2" /> Enviar WhatsApp
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="pt-6 border-t">
-                    <Button 
-                      onClick={() => handleDeleteProposta(selectedProposta.id)} 
-                      variant="ghost" 
-                      className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-bold uppercase h-8"
-                    >
-                      <Trash2 size={12} className="mr-2" /> Excluir permanentemente
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex-1 bg-slate-100 rounded-xl flex items-center justify-center p-8 overflow-hidden relative">
-                  <div 
-                    id="proposal-render" 
-                    className="relative bg-white shadow-2xl"
-                    style={{ width: "400px", aspectRatio: "1/1.414" }}
-                  >
-                    <img 
-                      src={artSrc(selectedProposta) || "/mockup-bg-v4.png"} 
-                      className="w-full h-full object-cover"
-                      crossOrigin="anonymous"
-                    />
-
-                    {!artSrc(selectedProposta) && (
-
-                      <div className="absolute inset-0 p-8 flex flex-col justify-center items-center text-center">
-                        <div className="bg-white/90 p-6 rounded-lg shadow-lg border">
-                          <p className="text-[10px] font-bold text-sky-600 uppercase mb-4">Pré-visualização de Dados</p>
-                          {Object.entries(selectedProposta.data || {}).map(([key, value]: [string, any]) => (
-                            <div key={key} className="mb-2">
-                              <p className="text-xs font-bold">{String(value)}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Nome Fantasia *
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.nome}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, nome: e.target.value })}
+                  placeholder="Ex: Rádio Clube FM"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] font-semibold outline-none"
+                />
               </div>
-            </>
+
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Nome Empresarial / Razão Social
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.nome_empresarial}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, nome_empresarial: e.target.value })}
+                  placeholder="Ex: Empresa de Radiodifusão LTDA"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  CNPJ
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.cnpj}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, cnpj: e.target.value })}
+                  placeholder="00.000.000/0001-00"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Telefone Comercial
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.telefone}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, telefone: e.target.value })}
+                  placeholder="(00) 0000-0000"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  WhatsApp Responsável
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.whatsapp_responsavel}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, whatsapp_responsavel: e.target.value })}
+                  placeholder="(00) 90000-0000"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Nome do Contato
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.nome_contato}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, nome_contato: e.target.value })}
+                  placeholder="Nome do diretor ou responsável comercial"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  E-mail Cobrança Financeira
+                </label>
+                <input
+                  type="email"
+                  value={novoClienteData.email_cobranca}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, email_cobranca: e.target.value })}
+                  placeholder="financeiro@empresa.com.br"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Endereço Comercial
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.endereco}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, endereco: e.target.value })}
+                  placeholder="Rua, Número, Bairro, Cidade - UF"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Cliente Desde
+                </label>
+                <input
+                  type="date"
+                  value={novoClienteData.cliente_desde}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, cliente_desde: e.target.value })}
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsNovoClienteModalOpen(false)}
+                className="px-5 py-2.5 rounded-full text-xs text-slate-500 hover:text-black font-semibold cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNovoCliente}
+                className="px-6 py-2.5 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer"
+              >
+                Salvar e Vincular Cliente
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 2: ENVIAR ORÇAMENTO (WHATSAPP, EMAIL E GERAR PDF) */}
+      <Dialog open={isEnviarModalOpen} onOpenChange={setIsEnviarModalOpen}>
+        <DialogContent className="bg-white rounded-3xl max-w-xl p-6 md:p-8 border border-slate-200 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase flex items-center gap-2">
+              <Send className="w-5 h-5 text-[#0055ff]" /> Enviar Orçamento Comercial
+            </DialogTitle>
+          </DialogHeader>
+
+          {orcamentoParaEnvio && (
+            <div className="space-y-6 pt-2">
+              <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-[#002132]">{orcamentoParaEnvio.cliente.nome}</div>
+                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                    Proposta {orcamentoParaEnvio.numero} • R$ {total.toFixed(2)} ({orcamentoParaEnvio.tipo_recorrencia === "mensal" ? "Mensal" : "Único"})
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider">
+                  Pronto para Envio
+                </span>
+              </div>
+
+              {/* 3 Opções de Envio */}
+              <div className="space-y-3">
+                {/* 1. WhatsApp */}
+                <button
+                  type="button"
+                  onClick={handleSendWhatsApp}
+                  className="w-full p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all flex items-center justify-between group cursor-pointer text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-black flex items-center justify-center font-bold">
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-[#002132] uppercase">Enviar via WhatsApp</div>
+                      <div className="text-[10px] text-slate-400">
+                        Dispara a mensagem formatada para {orcamentoParaEnvio.cliente.whatsapp_responsavel || orcamentoParaEnvio.cliente.telefone || "o contato"}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition-colors" />
+                </button>
+
+                {/* 2. E-mail */}
+                <button
+                  type="button"
+                  onClick={handleSendEmail}
+                  className="w-full p-4 rounded-2xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/40 transition-all flex items-center justify-between group cursor-pointer text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-[#002132] uppercase">Enviar via E-mail</div>
+                      <div className="text-[10px] text-slate-400">
+                        Prepara e-mail profissional para {orcamentoParaEnvio.cliente.email_cobranca || "o e-mail do cliente"}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-colors" />
+                </button>
+
+                {/* 3. Gerar PDF Formatado */}
+                <button
+                  type="button"
+                  onClick={handlePrintPDF}
+                  className="w-full p-4 rounded-2xl border border-slate-200 hover:border-[#002132] hover:bg-slate-50 transition-all flex items-center justify-between group cursor-pointer text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#002132] text-white flex items-center justify-center font-bold">
+                      <Printer className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-[#002132] uppercase">Gerar PDF Formatado do Orçamento</div>
+                      <div className="text-[10px] text-slate-400">
+                        Visualização e impressão pronta em papel timbrado Nexo Agência
+                      </div>
+                    </div>
+                  </div>
+                  <Download className="w-4 h-4 text-slate-300 group-hover:text-black transition-colors" />
+                </button>
+              </div>
+
+              {/* Botão Fechar */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsEnviarModalOpen(false)}
+                  className="px-5 py-2.5 rounded-full text-xs text-slate-500 hover:text-black font-semibold cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* VISUALIZAÇÃO DE IMPRESSÃO / PDF (Oculta na tela, renderizada no window.print) */}
+      <div className="hidden print:block print:fixed print:inset-0 print:bg-white print:p-8 print:z-[99999]" ref={printAreaRef}>
+        {orcamentoParaEnvio && (
+          <div className="max-w-[800px] mx-auto space-y-6 text-black font-sans">
+            {/* Cabeçalho do PDF */}
+            <div className="flex justify-between items-start border-b-2 border-black pb-4">
+              <div>
+                <h1 className="text-2xl font-black uppercase tracking-tight">NEXO AGÊNCIA</h1>
+                <p className="text-xs text-gray-600">Soluções em Radiodifusão, TV, IA & Mídia Digital</p>
+                <p className="text-[10px] text-gray-500">financeiro@nexobrasil.net • nexobrasil.net</p>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-black">{orcamentoParaEnvio.numero}</div>
+                <div className="text-xs text-gray-600">Data: {new Date(orcamentoParaEnvio.data).toLocaleDateString("pt-BR")}</div>
+                <div className="text-xs text-gray-600">Validade: {orcamentoParaEnvio.validade_dias} dias</div>
+              </div>
+            </div>
+
+            {/* Dados do Cliente */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="text-xs font-bold uppercase text-gray-500 mb-1">DADOS DO CLIENTE</div>
+              <div className="text-sm font-bold">{orcamentoParaEnvio.cliente.nome}</div>
+              {orcamentoParaEnvio.cliente.nome_empresarial && (
+                <div className="text-xs text-gray-600">Razão Social: {orcamentoParaEnvio.cliente.nome_empresarial}</div>
+              )}
+              <div className="text-xs text-gray-600 flex gap-4 mt-1">
+                {orcamentoParaEnvio.cliente.cnpj && <span>CNPJ: {orcamentoParaEnvio.cliente.cnpj}</span>}
+                {orcamentoParaEnvio.cliente.nome_contato && <span>Contato: {orcamentoParaEnvio.cliente.nome_contato}</span>}
+                {orcamentoParaEnvio.cliente.telefone && <span>Tel: {orcamentoParaEnvio.cliente.telefone}</span>}
+              </div>
+            </div>
+
+            {/* Tabela de Produtos */}
+            <table className="w-full text-left border-collapse border border-gray-200 text-xs">
+              <thead>
+                <tr className="bg-gray-100 border-b border-gray-200 text-gray-700">
+                  <th className="p-2 w-20">CÓD.</th>
+                  <th className="p-2">PRODUTO / SERVIÇO</th>
+                  <th className="p-2 w-24 text-center">MEDIDA</th>
+                  <th className="p-2 w-16 text-center">QTD</th>
+                  <th className="p-2 w-28 text-right">UNITÁRIO</th>
+                  <th className="p-2 w-28 text-right">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {orcamentoParaEnvio.itens.map(it => (
+                  <tr key={it.id}>
+                    <td className="p-2 font-mono font-bold">{it.codigo}</td>
+                    <td className="p-2">
+                      <div className="font-bold">{it.nome}</div>
+                      {it.descricao && <div className="text-[10px] text-gray-500">{it.descricao}</div>}
+                    </td>
+                    <td className="p-2 text-center capitalize">{it.tipo_medida}</td>
+                    <td className="p-2 text-center">{it.quantidade}</td>
+                    <td className="p-2 text-right font-mono">R$ {it.valor.toFixed(2)}</td>
+                    <td className="p-2 text-right font-mono font-bold">R$ {(it.valor * it.quantidade).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Totalizador */}
+            <div className="flex justify-end">
+              <div className="w-64 space-y-1 text-xs text-right">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span className="font-mono">R$ {subtotal.toFixed(2)}</span>
+                </div>
+                {orcamentoParaEnvio.desconto > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Desconto:</span>
+                    <span className="font-mono">- R$ {orcamentoParaEnvio.desconto.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-black text-sm border-t border-black pt-1">
+                  <span>TOTAL:</span>
+                  <span className="font-mono">
+                    R$ {total.toFixed(2)} {orcamentoParaEnvio.tipo_recorrencia === "mensal" ? "/mês" : ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Observações */}
+            <div className="pt-4 border-t border-gray-200 text-xs">
+              <div className="font-bold text-gray-700 uppercase mb-1">CONDIÇÕES GERAIS</div>
+              <p className="text-gray-600 leading-relaxed">{orcamentoParaEnvio.observacoes}</p>
+            </div>
+
+            {/* Assinaturas */}
+            <div className="pt-12 grid grid-cols-2 gap-12 text-center text-xs">
+              <div>
+                <div className="border-t border-black pt-2">Nexo Agência</div>
+              </div>
+              <div>
+                <div className="border-t border-black pt-2">De acordo: {orcamentoParaEnvio.cliente.nome}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

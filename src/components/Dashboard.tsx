@@ -75,20 +75,21 @@ const SitePage = lazyRetry(() => import("./site/SitePage"));
 const ClientesPage = lazyRetry(() => import("./ClientesPage"));
 const ModulosPage = lazyRetry(() => import("./ModulosPage"));
 const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
-const PacotesPage = lazyRetry(() => import("./PacotesPage"));
 const HouseMixPage = lazyRetry(() => import("./HouseMixPage"));
+const ProdutosPage = lazyRetry(() => import("./ProdutosPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
 
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import AgendaPageSkeleton from "./skeletons/AgendaPageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 import logoNxo from "@/assets/logo-nxo.png";
 import SuperAdminHeader from "./SuperAdminHeader";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -1829,7 +1830,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
               {(currentPage === "agenda" || (minimizedModules.includes("agenda") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "agenda" ? "block" : "none" }}>
-                  <AgendaPage effectiveUserId={effectiveUserId} />
+                  <Suspense fallback={<AgendaPageSkeleton />}>
+                    <AgendaPage effectiveUserId={effectiveUserId} />
+                  </Suspense>
                 </div>
               )}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
@@ -1899,18 +1902,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <SitePage effectiveUserId={effectiveUserId || user?.id || null} />
                 </div>
               )}
-              {/* House Mix (Página dedicada de Gestão do Produto Principal) */}
-              {(currentPage === "housemix" || (isAdmin && ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage))) && (
-                <HouseMixPage
-                  initialTab={
-                    currentPage === "subusuarios"
-                      ? "subusuarios"
-                      : currentPage === "pacotes"
-                      ? "pacotes"
-                      : currentPage === "admininfomusic"
-                      ? "infomusic"
-                      : "modulos"
-                  }
+              {/* Produtos (Página de Gestão de Produtos com House Mix integrado) */}
+              {(currentPage === "produtos" || currentPage === "housemix" || (isAdmin && ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage))) && (
+                <ProdutosPage
                   accentColor={layoutColors.accentColor}
                   adminModulosGroups={adminModulosGroups as never}
                   subUsuarioModulosGroups={subUsuarioModulosGroups as never}

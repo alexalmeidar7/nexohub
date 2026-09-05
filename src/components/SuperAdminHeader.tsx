@@ -167,49 +167,17 @@ export default function SuperAdminHeader({
               clientes
             </button>
 
-            {/* Produtos Menu Dropdown (Mouse over abrindo para baixo) */}
-            <div
-              ref={produtosRef}
-              className="relative"
-              onMouseEnter={handleProdutosMouseEnter}
-              onMouseLeave={handleProdutosMouseLeave}
+            {/* Produtos Direct Button */}
+            <button
+              onClick={() => onNavigate("produtos")}
+              className={`text-sm font-semibold transition-colors px-3 py-1.5 rounded-full ${
+                ["produtos", "housemix", "modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
+                  ? "text-black font-bold"
+                  : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+              }`}
             >
-              <button
-                type="button"
-                onClick={() => setProdutosOpen(prev => !prev)}
-                className={`text-sm font-semibold flex items-center gap-1 px-3 py-1.5 rounded-full transition-all outline-none ${
-                  produtosOpen
-                    ? "bg-black text-white shadow-sm"
-                    : ["housemix", "modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
-                    ? "text-black font-bold bg-slate-100"
-                    : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                }`}
-              >
-                <span>produtos</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${produtosOpen ? "rotate-180 opacity-100" : "opacity-60"}`} />
-              </button>
-
-              {produtosOpen && (
-                <div className="absolute top-full left-0 pt-2 z-[9999] animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[200px] space-y-1">
-                    <button
-                      onClick={() => { onNavigate("housemix"); setProdutosOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors ${
-                        ["housemix", "modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage)
-                          ? "text-white bg-white/15 font-bold"
-                          : "text-white/85 hover:text-white hover:bg-white/10"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#0055ff]" />
-                        <span>house mix</span>
-                      </div>
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider">gestão</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              produtos
+            </button>
 
             {/* Business Dropdown (Mouse over abrindo para baixo) */}
             <div
@@ -245,12 +213,6 @@ export default function SuperAdminHeader({
                       }`}
                     >
                       <span>financeiro</span>
-                    </button>
-                    <button
-                      onClick={() => { onNavigate("financeiro"); setBusinessOpen(false); }}
-                      className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold text-white/85 hover:text-white hover:bg-white/10 transition-colors flex items-center justify-between"
-                    >
-                      <span>service packs</span>
                     </button>
                     <button
                       onClick={() => { onNavigate("chatbot"); setBusinessOpen(false); }}

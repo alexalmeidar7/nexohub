@@ -4,11 +4,13 @@ import { toast } from "sonner";
 import {
   DollarSign, Send, CheckCircle2, AlertCircle, Clock, Plus, Trash2,
   Edit2, Smartphone, Mail, Sparkles, Filter, Search, Layers,
-  ChevronRight, ArrowUpRight, Zap, ShieldCheck, RefreshCw, Eye
+  ChevronRight, ArrowUpRight, Zap, ShieldCheck, RefreshCw, Eye, Calendar,
+  User, FileText, Check, X
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getStoredProdutos, type Produto } from "./ProdutosPage";
 
-// Available Agency Products
+// Available Agency Predefined Products
 export const AGENCY_PRODUCTS = [
   { id: "house_mix", name: "House Mix", tag: "Rádio & Streaming", color: "#00BFF0" },
   { id: "chatbot", name: "Chatbot IA", tag: "Atendimento & WhatsApp", color: "#9FCA1D" },
@@ -29,6 +31,8 @@ export interface ClientSubscription {
   diaVencimento: number;
   status: "em_dia" | "pendente" | "atrasado";
   ultimaCobranca?: string;
+  tipoCobranca?: "mensal" | "avulsa";
+  dataVencimentoAvulsa?: string;
 }
 
 export interface ServicePack {
@@ -106,6 +110,9 @@ export default function FinanceiroSuperAdminPage() {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<string>("todos");
 
+  // Dynamic Registered Products from ProdutosPage
+  const [storedProdutos, setStoredProdutos] = useState<Produto[]>([]);
+
   // Pack modal states
   const [isPackModalOpen, setIsPackModalOpen] = useState(false);
   const [editingPack, setEditingPack] = useState<ServicePack | null>(null);
@@ -123,14 +130,45 @@ export default function FinanceiroSuperAdminPage() {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientSubscription | null>(null);
 
+  // Nova Cobrança Modal (Avulsa ou Mensal)
+  const [isNovaCobrancaOpen, setIsNovaCobrancaOpen] = useState(false);
+  const [novaCobrancaData, setNovaCobrancaData] = useState<{
+    tipo: "mensal" | "avulsa";
+    clienteId: string;
+    clienteNome: string;
+    produtoId: string;
+    produtoNome: string;
+    valor: number;
+    diaVencimento: number;
+    dataVencimento: string;
+    status: "em_dia" | "pendente" | "atrasado";
+    obs: string;
+  }>({
+    tipo: "mensal",
+    clienteId: "",
+    clienteNome: "",
+    produtoId: "",
+    produtoNome: "",
+    valor: 590,
+    diaVencimento: 10,
+    dataVencimento: new Date().toISOString().split("T")[0],
+    status: "em_dia",
+    obs: "",
+  });
+
   // Automatic Dispatch Settings
   const [autoBillingConfig, setAutoBillingConfig] = useState({
     autoDispatchEnabled: true,
     daysBeforeDue: 3,
     pixKey: "financeiro@nexobrasil.net",
     bankInfo: "Banco Inter - Chave PIX: financeiro@nexobrasil.net - Nexo Agência",
-    customMessage: "Olá {cliente}! Sua mensalidade Nexo no valor de R$ {valor} vence em {vencimento}. Chave PIX: {pix}. Qualquer dúvida estamos à disposição!",
+    customMessage: "Olá {cliente}! Sua fatura Nexo no valor de R$ {valor} vence em {vencimento}. Chave PIX: {pix}. Qualquer dúvida estamos à disposição!",
   });
+
+  // Refresh stored products from ProdutosPage
+  useEffect(() => {
+    setStoredProdutos(getStoredProdutos());
+  }, []);
 
   // Load clients and stored data
   useEffect(() => {
@@ -159,12 +197,13 @@ export default function FinanceiroSuperAdminPage() {
         }
 
         // Fetch real clients from Supabase
-        const [empRes, profRes] = await Promise.all([
+        const [empRes, profRes, logosRes] = await Promise.all([
           supabase.from("empresa_config")
             .select("user_id, nome, logo, plano, telefone_comercial, telefone_participacao, ativo")
             .eq("ativo", true)
             .order("nome"),
           supabase.from("profiles").select("user_id, email"),
+          supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("excluido", false)
         ]);
 
         const emails = new Map<string, string>();
@@ -179,11 +218,12 @@ export default function FinanceiroSuperAdminPage() {
         }
 
         const empresas = empRes.data || [];
+        const seenNames = new Set<string>();
+
         const mappedClients: ClientSubscription[] = empresas.map(emp => {
           const override = localOverrides[emp.user_id] || {};
           const planName = emp.plano || "House Mix";
           
-          // Defaults based on plan
           let defaultPrice = 590;
           let defaultProducts = ["house_mix"];
           if (planName.toLowerCase().includes("max")) {
@@ -194,19 +234,69 @@ export default function FinanceiroSuperAdminPage() {
             defaultProducts = ["house_mix", "chatbot", "tv_app", "business"];
           }
 
+          const clientName = emp.nome || emails.get(emp.user_id) || "Cliente Sem Nome";
+          seenNames.add(clientName.toUpperCase());
+
           return {
             user_id: emp.user_id,
-            nome: emp.nome || emails.get(emp.user_id) || "Cliente Sem Nome",
+            nome: clientName,
             logo: emp.logo,
             email: emails.get(emp.user_id) || "",
             telefone: emp.telefone_comercial || emp.telefone_participacao || "",
-            plano: emp.plano || "Nexo Max",
+            plano: override.plano || emp.plano || "Nexo Max",
             produtos: override.produtos || defaultProducts,
             valorMensal: override.valorMensal !== undefined ? override.valorMensal : defaultPrice,
             diaVencimento: override.diaVencimento || 10,
             status: override.status || "em_dia",
             ultimaCobranca: override.ultimaCobranca || undefined,
+            tipoCobranca: override.tipoCobranca || "mensal",
+            dataVencimentoAvulsa: override.dataVencimentoAvulsa || undefined,
           };
+        });
+
+        // Also add logos_patrocinadores that might not have empresa_config
+        (logosRes.data || []).forEach((lg: any) => {
+          if (lg.nome && !seenNames.has(lg.nome.toUpperCase())) {
+            seenNames.add(lg.nome.toUpperCase());
+            const override = localOverrides[lg.id] || {};
+            mappedClients.push({
+              user_id: lg.id,
+              nome: lg.nome,
+              logo: lg.logo_url || null,
+              email: "",
+              telefone: "",
+              plano: override.plano || "Spot Comercial / Avulso",
+              produtos: override.produtos || ["prod-1"],
+              valorMensal: override.valorMensal !== undefined ? override.valorMensal : 350,
+              diaVencimento: override.diaVencimento || 15,
+              status: override.status || "em_dia",
+              ultimaCobranca: override.ultimaCobranca || undefined,
+              tipoCobranca: override.tipoCobranca || "avulsa",
+              dataVencimentoAvulsa: override.dataVencimentoAvulsa || undefined,
+            });
+          }
+        });
+
+        // Include any custom overrides that are independent
+        Object.keys(localOverrides).forEach(k => {
+          if (k.startsWith("custom_") && !mappedClients.some(c => c.user_id === k)) {
+            const ov = localOverrides[k] as any;
+            mappedClients.push({
+              user_id: k,
+              nome: ov.nome || "Cliente Avulso",
+              logo: null,
+              email: ov.email || "",
+              telefone: ov.telefone || "",
+              plano: ov.plano || "Serviço Avulso",
+              produtos: ov.produtos || [],
+              valorMensal: ov.valorMensal || 0,
+              diaVencimento: ov.diaVencimento || 10,
+              status: ov.status || "em_dia",
+              ultimaCobranca: ov.ultimaCobranca || undefined,
+              tipoCobranca: ov.tipoCobranca || "avulsa",
+              dataVencimentoAvulsa: ov.dataVencimentoAvulsa || undefined,
+            });
+          }
         });
 
         setClients(mappedClients);
@@ -223,14 +313,18 @@ export default function FinanceiroSuperAdminPage() {
   // Save subs changes to localStorage
   const saveClientSubs = (updatedClients: ClientSubscription[]) => {
     setClients(updatedClients);
-    const overrides: Record<string, Partial<ClientSubscription>> = {};
+    const overrides: Record<string, any> = {};
     updatedClients.forEach(c => {
       overrides[c.user_id] = {
+        nome: c.nome,
+        plano: c.plano,
         produtos: c.produtos,
         valorMensal: c.valorMensal,
         diaVencimento: c.diaVencimento,
         status: c.status,
         ultimaCobranca: c.ultimaCobranca,
+        tipoCobranca: c.tipoCobranca,
+        dataVencimentoAvulsa: c.dataVencimentoAvulsa,
       };
     });
     localStorage.setItem(STORAGE_SUBS_KEY, JSON.stringify(overrides));
@@ -251,7 +345,10 @@ export default function FinanceiroSuperAdminPage() {
 
   // Dispatch single client billing
   const handleDispatchSingle = (client: ClientSubscription, channel: "whatsapp" | "email") => {
-    const formattedDate = `${client.diaVencimento}/${new Date().toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" })}`;
+    const formattedDate = client.tipoCobranca === "avulsa" && client.dataVencimentoAvulsa
+      ? new Date(client.dataVencimentoAvulsa).toLocaleDateString("pt-BR")
+      : `${client.diaVencimento}/${new Date().toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" })}`;
+
     const msg = autoBillingConfig.customMessage
       .replace("{cliente}", client.nome)
       .replace("{valor}", client.valorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
@@ -277,7 +374,7 @@ export default function FinanceiroSuperAdminPage() {
         toast.error(`Cliente ${client.nome} não possui e-mail cadastrado.`);
         return;
       }
-      const subject = `Fatura Mensalidade Nexo - Vencimento ${formattedDate}`;
+      const subject = `Fatura Nexo Agência - Vencimento ${formattedDate}`;
       const mailUrl = `mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
       window.open(mailUrl, "_blank");
 
@@ -292,7 +389,6 @@ export default function FinanceiroSuperAdminPage() {
     const clientsToBill = clients.filter(c => c.status !== "em_dia");
     const count = clientsToBill.length > 0 ? clientsToBill.length : clients.length;
     
-    // update timestamps
     const now = new Date().toISOString();
     const updated = clients.map(c => ({
       ...c,
@@ -300,7 +396,7 @@ export default function FinanceiroSuperAdminPage() {
     }));
     saveClientSubs(updated);
 
-    toast.success(`Disparo automático efetuado com sucesso para ${count} clientes!`);
+    toast.success(`Disparo efetuado com sucesso para ${count} clientes!`);
   };
 
   // Filter clients
@@ -314,12 +410,75 @@ export default function FinanceiroSuperAdminPage() {
 
   // Financial KPIs
   const kpis = useMemo(() => {
-    const mrr = clients.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
+    const mrr = clients.filter(c => c.tipoCobranca !== "avulsa").reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const emDia = clients.filter(c => c.status === "em_dia").length;
     const pendentes = clients.filter(c => c.status === "pendente").length;
     const atrasados = clients.filter(c => c.status === "atrasado").length;
     return { mrr, total: clients.length, emDia, pendentes, atrasados };
   }, [clients]);
+
+  // Handler for Nova Cobrança submission
+  const handleSaveNovaCobranca = () => {
+    if (!novaCobrancaData.clienteNome.trim()) {
+      toast.error("Informe ou selecione o cliente.");
+      return;
+    }
+    if (!novaCobrancaData.valor || novaCobrancaData.valor <= 0) {
+      toast.error("Informe um valor válido para a cobrança.");
+      return;
+    }
+
+    const existingIndex = clients.findIndex(c => 
+      (novaCobrancaData.clienteId && c.user_id === novaCobrancaData.clienteId) ||
+      c.nome.trim().toLowerCase() === novaCobrancaData.clienteNome.trim().toLowerCase()
+    );
+
+    let updated: ClientSubscription[];
+
+    if (existingIndex >= 0) {
+      const existing = clients[existingIndex];
+      const nextProds = novaCobrancaData.produtoId && !existing.produtos.includes(novaCobrancaData.produtoId)
+        ? [...existing.produtos, novaCobrancaData.produtoId]
+        : existing.produtos;
+
+      const updatedClient: ClientSubscription = {
+        ...existing,
+        plano: novaCobrancaData.produtoNome || existing.plano,
+        produtos: nextProds,
+        valorMensal: novaCobrancaData.valor,
+        tipoCobranca: novaCobrancaData.tipo,
+        diaVencimento: novaCobrancaData.tipo === "mensal" ? novaCobrancaData.diaVencimento : existing.diaVencimento,
+        dataVencimentoAvulsa: novaCobrancaData.tipo === "avulsa" ? novaCobrancaData.dataVencimento : undefined,
+        status: novaCobrancaData.status,
+      };
+
+      updated = [...clients];
+      updated[existingIndex] = updatedClient;
+      toast.success(`Cobrança de ${updatedClient.nome} atualizada com sucesso!`);
+    } else {
+      const newId = `custom_${Date.now()}`;
+      const newClient: ClientSubscription = {
+        user_id: newId,
+        nome: novaCobrancaData.clienteNome,
+        logo: null,
+        email: "",
+        telefone: "",
+        plano: novaCobrancaData.produtoNome || (novaCobrancaData.tipo === "mensal" ? "Assinatura Mensal" : "Cobrança Avulsa"),
+        produtos: novaCobrancaData.produtoId ? [novaCobrancaData.produtoId] : [],
+        valorMensal: novaCobrancaData.valor,
+        diaVencimento: novaCobrancaData.diaVencimento || 10,
+        dataVencimentoAvulsa: novaCobrancaData.tipo === "avulsa" ? novaCobrancaData.dataVencimento : undefined,
+        status: novaCobrancaData.status,
+        tipoCobranca: novaCobrancaData.tipo,
+      };
+
+      updated = [newClient, ...clients];
+      toast.success(`Nova cobrança para ${newClient.nome} cadastrada com sucesso!`);
+    }
+
+    saveClientSubs(updated);
+    setIsNovaCobrancaOpen(false);
+  };
 
   return (
     <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
@@ -365,9 +524,44 @@ export default function FinanceiroSuperAdminPage() {
         </div>
       </section>
 
+      {/* BOTÃO CADASTRAR COBRANÇA - DIRETAMENTE ACIMA DO BOX RECEITA MENSAL */}
+      <div className="flex flex-wrap items-center justify-between gap-4 px-1">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xs font-black tracking-wider text-[#002132] uppercase">
+            Fluxo & Painel Financeiro
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[10px] font-extrabold text-[#0055ff] uppercase tracking-wider border border-blue-100">
+            Nexo Live
+          </span>
+        </div>
+
+        <button
+          onClick={() => {
+            const firstClient = clients[0];
+            const prods = getStoredProdutos();
+            setNovaCobrancaData({
+              tipo: "mensal",
+              clienteId: firstClient?.user_id || "",
+              clienteNome: firstClient?.nome || "",
+              produtoId: prods[0]?.id || "prod-3",
+              produtoNome: prods[0]?.nome || "Plataforma House Mix Streaming",
+              valor: prods[0]?.valor || 590,
+              diaVencimento: 10,
+              dataVencimento: new Date().toISOString().split("T")[0],
+              status: "em_dia",
+              obs: "",
+            });
+            setIsNovaCobrancaOpen(true);
+          }}
+          className="h-11 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+        >
+          <Plus className="w-4 h-4 text-black stroke-[3]" /> Cadastrar Cobrança
+        </button>
+      </div>
+
       {/* Top Summary KPI Cards (Flat Dark Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white">
+        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
           <div>
             <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Receita Mensal (MRR)</div>
             <div className="text-2xl font-bold mt-1 text-[#00BFF0]">
@@ -380,7 +574,7 @@ export default function FinanceiroSuperAdminPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white">
+        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
           <div>
             <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Clientes Faturados</div>
             <div className="text-2xl font-bold mt-1 text-white">{kpis.total}</div>
@@ -393,18 +587,18 @@ export default function FinanceiroSuperAdminPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white">
+        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
           <div>
             <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Cobranças Pendentes</div>
             <div className="text-2xl font-bold mt-1 text-amber-400">{kpis.pendentes}</div>
-            <div className="text-[10px] text-white/40 mt-1">Vencendo nos próximos 5 dias</div>
+            <div className="text-[10px] text-white/40 mt-1">A vencer ou sem confirmação</div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-amber-400">
             <Clock className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white">
+        <div className="rounded-2xl bg-[#14161a] p-4 flex items-center justify-between text-white border border-white/5">
           <div>
             <div className="text-[11px] text-white/50 uppercase font-medium tracking-wider">Disparo Automático</div>
             <div className="text-sm font-bold mt-1.5 flex items-center gap-2">
@@ -428,29 +622,34 @@ export default function FinanceiroSuperAdminPage() {
       {/* TAB 1: Assinaturas & Cobranças */}
       {activeTab === "cobrancas" && (
         <div className="space-y-4">
-          {/* Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          {/* Controls Bar (Busca de cliente e filtros) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#14161a] p-3 rounded-2xl border border-white/5">
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              <div className="relative flex-1 min-w-[240px] max-w-md">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
                 <input
                   value={busca}
                   onChange={e => setBusca(e.target.value)}
-                  placeholder="Buscar cliente por nome ou pacote..."
-                  className="h-9 pl-9 pr-3 text-xs rounded-xl bg-[#14161a] text-white placeholder-white/40 outline-none w-64 md:w-80"
+                  placeholder="Buscar cliente por nome, serviço ou plano..."
+                  className="w-full h-10 pl-10 pr-4 text-xs rounded-xl bg-white/5 text-white placeholder-white/40 outline-none border border-white/10 focus:border-[#0055ff] transition-all"
                 />
               </div>
 
-              <div className="flex items-center gap-1 bg-[#14161a] p-1 rounded-xl">
-                {["todos", "em_dia", "pendente", "atrasado"].map(st => (
+              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                {[
+                  { key: "todos", label: "Todos" },
+                  { key: "em_dia", label: "Em Dia" },
+                  { key: "pendente", label: "A Vencer" },
+                  { key: "atrasado", label: "Atrasados" },
+                ].map(st => (
                   <button
-                    key={st}
-                    onClick={() => setStatusFiltro(st)}
-                    className={`px-2.5 py-1 text-[11px] font-medium rounded-lg capitalize transition-all ${
-                      statusFiltro === st ? "bg-[#00BFF0] text-white" : "text-white/60 hover:text-white"
+                    key={st.key}
+                    onClick={() => setStatusFiltro(st.key)}
+                    className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                      statusFiltro === st.key ? "bg-[#0055ff] text-white shadow-sm" : "text-white/60 hover:text-white"
                     }`}
                   >
-                    {st.replace("_", " ")}
+                    {st.label}
                   </button>
                 ))}
               </div>
@@ -458,126 +657,185 @@ export default function FinanceiroSuperAdminPage() {
 
             <button
               onClick={handleBatchDispatch}
-              className="px-4 py-2 rounded-xl bg-[#14161a] text-white text-xs font-medium flex items-center gap-2 hover:bg-[#1a1e24] transition-all"
+              className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold flex items-center gap-2 border border-white/10 transition-all cursor-pointer"
             >
               <Send className="w-3.5 h-3.5 text-[#00BFF0]" /> Disparar Cobrança em Lote
             </button>
           </div>
 
-          {/* Clients Subscriptions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {filteredClients.map(client => {
-              const statusColor =
-                client.status === "em_dia" ? "bg-emerald-500/20 text-emerald-400" :
-                client.status === "pendente" ? "bg-amber-500/20 text-amber-400" :
-                "bg-red-500/20 text-red-400";
-              const statusLabel =
-                client.status === "em_dia" ? "Em Dia" :
-                client.status === "pendente" ? "A Vencer" : "Atrasado";
+          {/* TABELA ÚNICA SOLICITADA PELO USUÁRIO */}
+          <div className="bg-[#14161a] rounded-3xl p-4 md:p-6 border border-white/5 shadow-sm overflow-hidden text-white">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[900px]">
+                <thead>
+                  <tr className="border-b border-white/10 text-[11px] font-black uppercase tracking-wider text-white/40">
+                    <th className="py-3.5 px-4">Nome do Cliente</th>
+                    <th className="py-3.5 px-4">Serviço Assinado</th>
+                    <th className="py-3.5 px-4 text-center">Status da Assinatura</th>
+                    <th className="py-3.5 px-4 text-center">Status do Envio das Mensagens</th>
+                    <th className="py-3.5 px-4 text-right">Valor da Cobrança</th>
+                    <th className="py-3.5 px-4 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-xs text-white/90">
+                  {filteredClients.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-white/40 font-medium">
+                        Nenhum cliente ou cobrança encontrada com os filtros atuais.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredClients.map(client => {
+                      const isEmDia = client.status === "em_dia";
+                      const isPendente = client.status === "pendente";
 
-              return (
-                <div
-                  key={client.user_id}
-                  className="rounded-2xl bg-[#14161a] p-4 flex flex-col justify-between text-white space-y-4 hover:ring-1 hover:ring-[#00BFF0]/40 transition-all"
-                >
-                  <div>
-                    {/* Header: Logo, Name, Plan, Status */}
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {client.logo ? (
-                          <img src={client.logo} alt={client.nome} className="w-10 h-10 rounded-xl object-contain bg-white/5 p-1 shrink-0" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 shrink-0">
-                            {client.nome.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-semibold truncate leading-tight">{client.nome}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] text-white/50">{client.plano}</span>
-                            <span className="text-[10px] text-white/30">•</span>
-                            <span className="text-[10px] text-white/50">Vence dia {client.diaVencimento}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 flex flex-col items-end gap-1">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${statusColor}`}>
-                          {statusLabel}
+                      const statusBadge = isEmDia ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Em Dia
                         </span>
-                        <div className="text-sm font-bold text-[#00BFF0]">
-                          R$ {client.valorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      ) : isPendente ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-black uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> A Vencer
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 text-[10px] font-black uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Atrasado
+                        </span>
+                      );
+
+                      const dispatchStatus = client.ultimaCobranca ? (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00BFF0]/15 text-[#00BFF0] text-[10px] font-bold">
+                          <CheckCircle2 className="w-3 h-3 text-[#00BFF0]" />
+                          <span>Disparado ({new Date(client.ultimaCobranca).toLocaleDateString("pt-BR")})</span>
                         </div>
-                      </div>
-                    </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 text-white/40 text-[10px] font-medium">
+                          <Clock className="w-3 h-3 text-white/30" />
+                          <span>Aguardando Envio</span>
+                        </div>
+                      );
 
-                    {/* Products Subscribed */}
-                    <div className="mt-4 pt-3 border-t border-white/5">
-                      <div className="text-[10px] text-white/40 uppercase font-semibold tracking-wider mb-2">
-                        Produtos Assinados
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {AGENCY_PRODUCTS.map(prod => {
-                          const isSubscribed = client.produtos.includes(prod.id);
-                          return (
-                            <button
-                              key={prod.id}
-                              onClick={() => {
-                                const nextProds = isSubscribed
-                                  ? client.produtos.filter(p => p !== prod.id)
-                                  : [...client.produtos, prod.id];
-                                const updated = clients.map(c => c.user_id === client.user_id ? { ...c, produtos: nextProds } : c);
-                                saveClientSubs(updated);
-                                toast.success(`Produtos de ${client.nome} atualizados!`);
-                              }}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all flex items-center gap-1 ${
-                                isSubscribed
-                                  ? "bg-white/10 text-white font-semibold"
-                                  : "bg-white/[0.03] text-white/30 hover:text-white/60"
-                              }`}
-                              title={isSubscribed ? "Clique para remover este produto" : "Clique para adicionar este produto"}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isSubscribed ? prod.color : "gray" }} />
-                              {prod.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                      return (
+                        <tr key={client.user_id} className="hover:bg-white/[0.02] transition-colors group">
+                          {/* Coluna 1: Nome do Cliente */}
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3">
+                              {client.logo ? (
+                                <img
+                                  src={client.logo}
+                                  alt={client.nome}
+                                  className="w-9 h-9 rounded-xl object-contain bg-white/5 p-1 shrink-0 border border-white/10"
+                                />
+                              ) : (
+                                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white/60 shrink-0">
+                                  {client.nome.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <div className="font-bold text-white group-hover:text-[#00BFF0] transition-colors">
+                                  {client.nome}
+                                </div>
+                                <div className="text-[10px] text-white/40 font-mono mt-0.5">
+                                  {client.telefone || client.email || "Sem contato cadastrado"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
 
-                  {/* Actions & Dispatch Bar */}
-                  <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedClient(client);
-                        setIsClientModalOpen(true);
-                      }}
-                      className="text-[11px] text-white/60 hover:text-white flex items-center gap-1 py-1"
-                    >
-                      <Edit2 className="w-3 h-3" /> Editar Valores
-                    </button>
+                          {/* Coluna 2: Serviço Assinado */}
+                          <td className="py-4 px-4">
+                            <div className="space-y-1">
+                              <div className="font-bold text-white/90 text-xs flex items-center gap-2">
+                                <span>{client.plano}</span>
+                                {client.tipoCobranca === "avulsa" && (
+                                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                    Avulso
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {(client.produtos || []).slice(0, 3).map(prodId => {
+                                  const std = AGENCY_PRODUCTS.find(p => p.id === prodId);
+                                  const custom = storedProdutos.find(p => p.id === prodId || p.codigo === prodId);
+                                  const name = std?.name || custom?.nome || prodId;
+                                  const color = std?.color || "#0055ff";
+                                  return (
+                                    <span
+                                      key={prodId}
+                                      className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-medium text-white/70 flex items-center gap-1"
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                                      {name}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </td>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleDispatchSingle(client, "whatsapp")}
-                        className="px-2.5 py-1.5 rounded-xl bg-[#9FCA1D]/20 text-[#9FCA1D] hover:bg-[#9FCA1D] hover:text-black transition-all text-xs font-semibold flex items-center gap-1"
-                        title="Enviar cobrança via WhatsApp"
-                      >
-                        <Smartphone className="w-3.5 h-3.5" /> WhatsApp
-                      </button>
-                      <button
-                        onClick={() => handleDispatchSingle(client, "email")}
-                        className="px-2.5 py-1.5 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all text-xs font-semibold flex items-center gap-1"
-                        title="Enviar cobrança via E-mail"
-                      >
-                        <Mail className="w-3.5 h-3.5" /> E-mail
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                          {/* Coluna 3: Status da Assinatura */}
+                          <td className="py-4 px-4 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              {statusBadge}
+                              <span className="text-[10px] text-white/40 font-medium">
+                                {client.tipoCobranca === "avulsa" && client.dataVencimentoAvulsa
+                                  ? `Vence em ${new Date(client.dataVencimentoAvulsa).toLocaleDateString("pt-BR")}`
+                                  : `Vence todo dia ${client.diaVencimento}`}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Coluna 4: Status do Envio dos Disparos */}
+                          <td className="py-4 px-4 text-center">
+                            {dispatchStatus}
+                          </td>
+
+                          {/* Coluna 5: Valor da Cobrança */}
+                          <td className="py-4 px-4 text-right">
+                            <div className="font-extrabold text-sm text-[#00BFF0] font-mono">
+                              R$ {client.valorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            </div>
+                            <div className="text-[9px] text-white/40 uppercase font-semibold mt-0.5">
+                              {client.tipoCobranca === "avulsa" ? "Pagamento Único" : "Mensalidade"}
+                            </div>
+                          </td>
+
+                          {/* Coluna 6: Ações */}
+                          <td className="py-4 px-4 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => handleDispatchSingle(client, "whatsapp")}
+                                className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 hover:text-black text-emerald-400 transition-all cursor-pointer"
+                                title="Disparar via WhatsApp"
+                              >
+                                <Smartphone className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDispatchSingle(client, "email")}
+                                className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 transition-all cursor-pointer"
+                                title="Disparar via E-mail"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedClient(client);
+                                  setIsClientModalOpen(true);
+                                }}
+                                className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all cursor-pointer"
+                                title="Editar Valores & Detalhes"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -591,7 +849,7 @@ export default function FinanceiroSuperAdminPage() {
                 Packs e Combos Comerciais da Agência
               </h2>
               <p className="text-xs text-[#002132]/60">
-                Monte pacotes de produtos e serviços para apresentar a clientes e futuras propostas
+                Monte pacotes de produtos e serviços vinculados ao catálogo cadastrado da agência
               </p>
             </div>
 
@@ -620,7 +878,7 @@ export default function FinanceiroSuperAdminPage() {
             {packs.map(pack => (
               <div
                 key={pack.id}
-                className="rounded-2xl bg-[#14161a] p-5 text-white flex flex-col justify-between space-y-4 relative overflow-hidden"
+                className="rounded-2xl bg-[#14161a] p-5 text-white flex flex-col justify-between space-y-4 relative overflow-hidden border border-white/5"
               >
                 {pack.destaque && (
                   <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[#00BFF0] text-black text-[9px] font-bold uppercase tracking-wider">
@@ -652,14 +910,17 @@ export default function FinanceiroSuperAdminPage() {
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {pack.produtos.map(prodId => {
-                        const prod = AGENCY_PRODUCTS.find(p => p.id === prodId);
+                        const std = AGENCY_PRODUCTS.find(p => p.id === prodId);
+                        const custom = storedProdutos.find(p => p.id === prodId || p.codigo === prodId);
+                        const name = std?.name || custom?.nome || prodId;
+                        const color = std?.color || "#00BFF0";
                         return (
                           <span
                             key={prodId}
-                            className="px-2 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-medium flex items-center gap-1"
+                            className="px-2 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-medium flex items-center gap-1 border border-white/5"
                           >
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prod?.color || "#00BFF0" }} />
-                            {prod?.name || prodId}
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                            {name}
                           </span>
                         );
                       })}
@@ -694,7 +955,7 @@ export default function FinanceiroSuperAdminPage() {
                         setPackFormData({ ...pack });
                         setIsPackModalOpen(true);
                       }}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all"
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all cursor-pointer"
                       title="Editar Pack"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -706,7 +967,7 @@ export default function FinanceiroSuperAdminPage() {
                           toast.success("Pack excluído!");
                         }
                       }}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-all"
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-all cursor-pointer"
                       title="Excluir Pack"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -721,7 +982,7 @@ export default function FinanceiroSuperAdminPage() {
 
       {/* TAB 3: Configurações do Disparo Automático */}
       {activeTab === "config" && (
-        <div className="max-w-2xl bg-[#14161a] rounded-2xl p-6 text-white space-y-6">
+        <div className="max-w-2xl bg-[#14161a] rounded-2xl p-6 text-white space-y-6 border border-white/5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#00BFF0]/20 flex items-center justify-center text-[#00BFF0]">
               <Zap className="w-5 h-5" />
@@ -783,7 +1044,7 @@ export default function FinanceiroSuperAdminPage() {
 
             <button
               onClick={() => saveConfig(autoBillingConfig)}
-              className="w-full py-2.5 rounded-xl bg-[#00BFF0] text-white font-semibold text-xs hover:brightness-110 transition-all"
+              className="w-full py-2.5 rounded-xl bg-[#00BFF0] text-white font-semibold text-xs hover:brightness-110 transition-all cursor-pointer"
             >
               Salvar Parâmetros de Cobrança
             </button>
@@ -791,9 +1052,211 @@ export default function FinanceiroSuperAdminPage() {
         </div>
       )}
 
+      {/* MODAL SOLICITADO: Cadastrar Cobrança (Avulsa ou Assinatura Mensal) */}
+      <Dialog open={isNovaCobrancaOpen} onOpenChange={setIsNovaCobrancaOpen}>
+        <DialogContent className="bg-[#14161a] text-white border-0 rounded-3xl max-w-lg p-6">
+          <DialogHeader>
+            <DialogTitle className="text-white text-base font-black tracking-wide uppercase flex items-center gap-2">
+              <Plus className="w-5 h-5 text-[#0055ff]" /> Cadastrar Nova Cobrança
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-3">
+            {/* Seletor Tipo: Avulsa vs Assinatura Mensal */}
+            <div>
+              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1.5">
+                Tipo de Cobrança
+              </label>
+              <div className="grid grid-cols-2 gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setNovaCobrancaData({ ...novaCobrancaData, tipo: "mensal" })}
+                  className={`py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    novaCobrancaData.tipo === "mensal"
+                      ? "bg-[#0055ff] text-white shadow-md"
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  Assinatura Mensal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNovaCobrancaData({ ...novaCobrancaData, tipo: "avulsa" })}
+                  className={`py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    novaCobrancaData.tipo === "avulsa"
+                      ? "bg-purple-600 text-white shadow-md"
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  Cobrança Avulsa
+                </button>
+              </div>
+            </div>
+
+            {/* Cliente */}
+            <div>
+              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                Cliente
+              </label>
+              <div className="space-y-1.5">
+                <select
+                  value={novaCobrancaData.clienteId}
+                  onChange={e => {
+                    const selId = e.target.value;
+                    const found = clients.find(c => c.user_id === selId);
+                    if (found) {
+                      setNovaCobrancaData({
+                        ...novaCobrancaData,
+                        clienteId: found.user_id,
+                        clienteNome: found.nome,
+                      });
+                    } else {
+                      setNovaCobrancaData({ ...novaCobrancaData, clienteId: "" });
+                    }
+                  }}
+                  className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
+                >
+                  <option value="">-- Selecionar Cliente Existente --</option>
+                  {clients.map(c => (
+                    <option key={c.user_id} value={c.user_id}>
+                      {c.nome} {c.plano ? `(${c.plano})` : ""}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  value={novaCobrancaData.clienteNome}
+                  onChange={e => setNovaCobrancaData({ ...novaCobrancaData, clienteNome: e.target.value, clienteId: "" })}
+                  placeholder="Ou digite o nome de outro cliente..."
+                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                />
+              </div>
+            </div>
+
+            {/* Produto / Serviço Selecionado */}
+            <div>
+              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                Produto / Serviço
+              </label>
+              <select
+                value={novaCobrancaData.produtoId}
+                onChange={e => {
+                  const selId = e.target.value;
+                  const custom = storedProdutos.find(p => p.id === selId);
+                  const std = AGENCY_PRODUCTS.find(p => p.id === selId);
+                  const nome = custom?.nome || std?.name || "";
+                  const valor = custom?.valor || 590;
+                  setNovaCobrancaData({
+                    ...novaCobrancaData,
+                    produtoId: selId,
+                    produtoNome: nome,
+                    valor: valor,
+                  });
+                }}
+                className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
+              >
+                <optgroup label="Produtos Cadastrados na Agência">
+                  {storedProdutos.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.codigo} - {p.nome} (R$ {p.valor.toFixed(2)})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Serviços Base">
+                  {AGENCY_PRODUCTS.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} - {p.tag}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Valor da Cobrança & Vencimento */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                  Valor da Cobrança (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={novaCobrancaData.valor}
+                  onChange={e => setNovaCobrancaData({ ...novaCobrancaData, valor: Number(e.target.value) })}
+                  className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white font-bold font-mono outline-none border border-white/10"
+                />
+              </div>
+
+              {novaCobrancaData.tipo === "mensal" ? (
+                <div>
+                  <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                    Dia do Vencimento (1 a 31)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={novaCobrancaData.diaVencimento}
+                    onChange={e => setNovaCobrancaData({ ...novaCobrancaData, diaVencimento: Number(e.target.value) })}
+                    className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                    Data de Vencimento
+                  </label>
+                  <input
+                    type="date"
+                    value={novaCobrancaData.dataVencimento}
+                    onChange={e => setNovaCobrancaData({ ...novaCobrancaData, dataVencimento: e.target.value })}
+                    className="w-full h-10 px-3 rounded-xl bg-white/5 text-xs text-white outline-none border border-white/10"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Status Inicial */}
+            <div>
+              <label className="text-[11px] text-white/60 font-bold uppercase tracking-wider block mb-1">
+                Status Inicial
+              </label>
+              <select
+                value={novaCobrancaData.status}
+                onChange={e => setNovaCobrancaData({ ...novaCobrancaData, status: e.target.value as any })}
+                className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
+              >
+                <option value="em_dia">Em Dia</option>
+                <option value="pendente">A Vencer (Pendente)</option>
+                <option value="atrasado">Atrasado</option>
+              </select>
+            </div>
+
+            {/* Ações Modal */}
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setIsNovaCobrancaOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-xs text-white/60 hover:text-white cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNovaCobranca}
+                className="px-6 py-2.5 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md"
+              >
+                Salvar Cobrança
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* MODAL: Criar / Editar Pack */}
       <Dialog open={isPackModalOpen} onOpenChange={setIsPackModalOpen}>
-        <DialogContent className="bg-[#14161a] text-white border-0 rounded-2xl max-w-lg">
+        <DialogContent className="bg-[#14161a] text-white border-0 rounded-3xl max-w-lg p-6">
           <DialogHeader>
             <DialogTitle className="text-white text-base font-bold">
               {editingPack ? "Editar Pack de Serviços" : "Criar Novo Pack da Agência"}
@@ -844,10 +1307,32 @@ export default function FinanceiroSuperAdminPage() {
               </div>
             </div>
 
-            {/* Products Selection */}
+            {/* Products Selection - Suporta Produtos Cadastrados */}
             <div>
-              <label className="text-xs text-white/70 font-medium block mb-1.5">Produtos Inclusos</label>
-              <div className="flex flex-wrap gap-2">
+              <label className="text-xs text-white/70 font-medium block mb-1.5">Produtos Inclusos no Pack</label>
+              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
+                {/* Catálogo Geral Cadastrado */}
+                {storedProdutos.map(prod => {
+                  const selected = (packFormData.produtos || []).includes(prod.id);
+                  return (
+                    <button
+                      key={prod.id}
+                      type="button"
+                      onClick={() => {
+                        const cur = packFormData.produtos || [];
+                        const next = selected ? cur.filter(p => p !== prod.id) : [...cur, prod.id];
+                        setPackFormData({ ...packFormData, produtos: next });
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        selected ? "bg-[#0055ff] text-white" : "bg-white/5 text-white/60 hover:text-white border border-white/5"
+                      }`}
+                    >
+                      {prod.nome}
+                    </button>
+                  );
+                })}
+
+                {/* Serviços Padrão */}
                 {AGENCY_PRODUCTS.map(prod => {
                   const selected = (packFormData.produtos || []).includes(prod.id);
                   return (
@@ -859,8 +1344,8 @@ export default function FinanceiroSuperAdminPage() {
                         const next = selected ? cur.filter(p => p !== prod.id) : [...cur, prod.id];
                         setPackFormData({ ...packFormData, produtos: next });
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                        selected ? "bg-[#00BFF0] text-white" : "bg-white/5 text-white/50 hover:text-white"
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        selected ? "bg-[#00BFF0] text-black" : "bg-white/5 text-white/60 hover:text-white border border-white/5"
                       }`}
                     >
                       {prod.name}
@@ -874,7 +1359,7 @@ export default function FinanceiroSuperAdminPage() {
               <button
                 type="button"
                 onClick={() => setIsPackModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white"
+                className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white cursor-pointer"
               >
                 Cancelar
               </button>
@@ -905,7 +1390,7 @@ export default function FinanceiroSuperAdminPage() {
                   }
                   setIsPackModalOpen(false);
                 }}
-                className="px-5 py-2 rounded-xl bg-[#00BFF0] text-white text-xs font-bold hover:brightness-110"
+                className="px-5 py-2 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-bold transition-all cursor-pointer"
               >
                 Salvar Pack
               </button>
@@ -916,7 +1401,7 @@ export default function FinanceiroSuperAdminPage() {
 
       {/* MODAL: Editar Assinatura do Cliente */}
       <Dialog open={isClientModalOpen} onOpenChange={setIsClientModalOpen}>
-        <DialogContent className="bg-[#14161a] text-white border-0 rounded-2xl max-w-md">
+        <DialogContent className="bg-[#14161a] text-white border-0 rounded-3xl max-w-md p-6">
           <DialogHeader>
             <DialogTitle className="text-white text-base font-bold">
               Editar Assinatura: {selectedClient?.nome}
@@ -952,7 +1437,7 @@ export default function FinanceiroSuperAdminPage() {
                 <select
                   value={selectedClient.status}
                   onChange={e => setSelectedClient({ ...selectedClient, status: e.target.value as any })}
-                  className="w-full h-10 px-3 rounded-xl bg-[#1a1e24] text-xs text-white outline-none border border-white/10"
+                  className="w-full h-10 px-3 rounded-xl bg-[#1e2229] text-xs text-white outline-none border border-white/10 cursor-pointer"
                 >
                   <option value="em_dia">Em Dia</option>
                   <option value="pendente">A Vencer (Pendente)</option>
@@ -964,7 +1449,7 @@ export default function FinanceiroSuperAdminPage() {
                 <button
                   type="button"
                   onClick={() => setIsClientModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs text-white/60 hover:text-white cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -976,7 +1461,7 @@ export default function FinanceiroSuperAdminPage() {
                     toast.success(`Assinatura de ${selectedClient.nome} atualizada!`);
                     setIsClientModalOpen(false);
                   }}
-                  className="px-5 py-2 rounded-xl bg-[#00BFF0] text-white text-xs font-bold hover:brightness-110"
+                  className="px-5 py-2 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-bold transition-all cursor-pointer"
                 >
                   Salvar
                 </button>
