@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { 
   Building2, Search, Users, Mail, Phone, Calendar, 
   UserCog, Trash2, Plus, Loader2, X, MapPin, 
-  Briefcase, Activity, Save 
+  Briefcase, Activity, Save, Sparkles, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -46,9 +46,12 @@ function Field({ label, children, className = "" }: { label: string; children: R
 interface ClienteMetadata {
   nome_empresarial?: string;
   cnpj?: string;
+  cep?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
   telefone?: string;
   whatsapp_responsavel?: string;
-  endereco?: string;
   cliente_desde?: string;
   nome_contato?: string;
   email_cobranca?: string;
@@ -81,9 +84,12 @@ interface Cliente {
   nome: string | null;
   nome_empresarial?: string | null;
   cnpj: string | null;
+  cep?: string | null;
+  endereco: string | null;
+  cidade?: string | null;
+  estado?: string | null;
   telefone_comercial: string | null;
   whatsapp_responsavel?: string | null;
-  endereco: string | null;
   cliente_desde: string | null;
   nome_contato?: string | null;
   executiva_venda?: string | null;
@@ -109,17 +115,185 @@ export default function ClientesPage() {
   const [busca, setBusca] = useState("");
   const [criando, setCriando] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Loading states for auto-fetching
+  const [loadingCnpj, setLoadingCnpj] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
+
+  // Form State: CNPJ is 1st, then Razão Social, Nome Empresarial, CEP, Endereço, Cidade, Estado, Telefone...
   const [novo, setNovo] = useState({
-    nome: "",
-    nome_empresarial: "",
     cnpj: "",
+    nome: "", // Razão Social
+    nome_empresarial: "", // Nome Fantasia
+    cep: "",
+    endereco: "",
+    cidade: "",
+    estado: "",
     telefone: "",
     whatsapp_responsavel: "",
-    endereco: "",
     cliente_desde: "",
     nome_contato: "",
     email_cobranca: ""
   });
+
+  // Formatting helpers
+  const formatCnpj = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 14);
+    return digits
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const formatCep = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 8);
+    return digits.replace(/^(\d{5})(\d)/, "$1-$2");
+  };
+
+  const formatPhone = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 10) {
+      return digits.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+    }
+    return digits.replace(/^(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+  };
+
+  // Buscar dados da empresa pelo CNPJ
+  const buscarCnpj = async (rawCnpj: string) => {
+    const clean = rawCnpj.replace(/\D/g, "");
+    if (clean.length !== 14) return;
+
+    setLoadingCnpj(true);
+    try {
+      let data: any = null;
+
+      // 1. MinhaReceita API
+      try {
+        const res = await fetch(`https://minhareceita.org/${clean}`);
+        if (res.ok) data = await res.json();
+      } catch { /* fallback */ }
+
+      // 2. Fallback Publica CNPJ WS
+      if (!data) {
+        try {
+          const res2 = await fetch(`https://publica.cnpj.ws/cnpj/${clean}`);
+          if (res2.ok) data = await res2.json();
+        } catch { /* fallback */ }
+      }
+
+      // 3. Fallback BrasilAPI
+      if (!data) {
+        try {
+          const res3 = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${clean}`);
+          if (res3.ok) data = await res3.json();
+        } catch { /* noop */ }
+      }
+
+      if (data) {
+        const razao = data.razao_social || data.razao || data.nome || "";
+        const fantasia = data.nome_fantasia || data.fantasia || razao;
+        const cepRaw = data.cep ? String(data.cep).replace(/\D/g, "") : "";
+        const logradouro = data.logradouro || data.descricao_tipo_de_logradouro 
+          ? `${data.descricao_tipo_de_logradouro || ""} ${data.logradouro || ""}`.trim() 
+          : "";
+        const numero = data.numero && data.numero !== "SN" && data.numero !== "S/N" ? `, ${data.numero}` : "";
+        const bairro = data.bairro ? ` - ${data.bairro}` : "";
+        const fullEndereco = logradouro ? `${logradouro}${numero}${bairro}` : "";
+        const municipio = data.municipio || "";
+        const uf = data.uf || "";
+        const ddd = data.ddd_telefone_1 || data.telefone || "";
+
+        setNovo(prev => ({
+          ...prev,
+          nome: razao || prev.nome,
+          nome_empresarial: fantasia || prev.nome_empresarial || razao,
+          cep: cepRaw ? formatCep(cepRaw) : prev.cep,
+          endereco: fullEndereco || prev.endereco,
+          cidade: municipio || prev.cidade,
+          estado: uf || prev.estado,
+          telefone: prev.telefone || (ddd ? formatPhone(ddd) : ""),
+          email_cobranca: prev.email_cobranca || (data.email || ""),
+        }));
+
+        toast.success(`Razão Social localizada: ${razao || fantasia}`);
+      } else {
+        toast.info("CNPJ não encontrado nas bases públicas ou indisponível no momento.");
+      }
+    } catch (err) {
+      console.error("Erro ao buscar CNPJ:", err);
+    } finally {
+      setLoadingCnpj(false);
+    }
+  };
+
+  // Buscar dados de endereço pelo CEP
+  const buscarCep = async (rawCep: string) => {
+    const clean = rawCep.replace(/\D/g, "");
+    if (clean.length !== 8) return;
+
+    setLoadingCep(true);
+    try {
+      let data: any = null;
+
+      // 1. ViaCEP
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+        if (res.ok) {
+          const json = await res.json();
+          if (!json.erro) data = json;
+        }
+      } catch { /* fallback */ }
+
+      // 2. Fallback BrasilAPI
+      if (!data) {
+        try {
+          const res2 = await fetch(`https://brasilapi.com.br/api/cep/v1/${clean}`);
+          if (res2.ok) data = await res2.json();
+        } catch { /* noop */ }
+      }
+
+      if (data) {
+        const street = data.logradouro || data.street || "";
+        const bairro = data.bairro || data.neighborhood || "";
+        const city = data.localidade || data.city || "";
+        const state = data.uf || data.state || "";
+
+        setNovo(prev => ({
+          ...prev,
+          endereco: street ? `${street}${bairro ? ` - ${bairro}` : ""}` : prev.endereco,
+          cidade: city || prev.cidade,
+          estado: state || prev.estado,
+        }));
+
+        toast.success(`Endereço localizado: ${city} - ${state}`);
+      } else {
+        toast.info("CEP não localizado na base dos Correios.");
+      }
+    } catch (err) {
+      console.error("Erro ao buscar CEP:", err);
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  const handleCnpjChange = (val: string) => {
+    const formatted = formatCnpj(val);
+    setNovo(prev => ({ ...prev, cnpj: formatted }));
+    const clean = formatted.replace(/\D/g, "");
+    if (clean.length === 14) {
+      buscarCnpj(clean);
+    }
+  };
+
+  const handleCepChange = (val: string) => {
+    const formatted = formatCep(val);
+    setNovo(prev => ({ ...prev, cep: formatted }));
+    const clean = formatted.replace(/\D/g, "");
+    if (clean.length === 8) {
+      buscarCep(clean);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -157,11 +331,14 @@ export default function ClientesPage() {
             nome_empresarial: meta.nome_empresarial || "",
             logo_url: item.logo_url,
             ativo: item.ativo,
-            cnpj: meta.cnpj || "00.000.000/0000-00",
+            cnpj: meta.cnpj || "",
+            cep: meta.cep || "",
             cliente_desde: meta.cliente_desde || item.created_at?.split('T')[0] || "",
             telefone_comercial: meta.telefone || "(00) 0000-0000",
             whatsapp_responsavel: meta.whatsapp_responsavel || "",
             endereco: meta.endereco || "Endereço não cadastrado",
+            cidade: meta.cidade || "",
+            estado: meta.estado || "",
             nome_contato: meta.nome_contato || "",
             executiva_venda: meta.nome_contato || "Não atribuído",
             email_cobranca: meta.email_cobranca || ""
@@ -184,11 +361,14 @@ export default function ClientesPage() {
               nome_empresarial: meta.nome_empresarial || "",
               logo_url: null,
               ativo: true,
-              cnpj: meta.cnpj || "00.000.000/0000-00",
+              cnpj: meta.cnpj || "",
+              cep: meta.cep || "",
               cliente_desde: meta.cliente_desde || new Date().toISOString().split('T')[0],
               telefone_comercial: meta.telefone || "(00) 0000-0000",
               whatsapp_responsavel: meta.whatsapp_responsavel || "",
               endereco: meta.endereco || "Endereço não cadastrado",
+              cidade: meta.cidade || "",
+              estado: meta.estado || "",
               nome_contato: meta.nome_contato || "",
               executiva_venda: meta.nome_contato || "Não atribuído",
               email_cobranca: meta.email_cobranca || ""
@@ -224,9 +404,12 @@ export default function ClientesPage() {
       const metaToSave: ClienteMetadata = {
         nome_empresarial: novo.nome_empresarial.trim(),
         cnpj: novo.cnpj.trim(),
+        cep: novo.cep.trim(),
+        endereco: novo.endereco.trim(),
+        cidade: novo.cidade.trim(),
+        estado: novo.estado.trim(),
         telefone: novo.telefone.trim(),
         whatsapp_responsavel: novo.whatsapp_responsavel.trim(),
-        endereco: novo.endereco.trim(),
         cliente_desde: novo.cliente_desde,
         nome_contato: novo.nome_contato.trim(),
         email_cobranca: novo.email_cobranca.trim()
@@ -263,12 +446,15 @@ export default function ClientesPage() {
 
       setEditingId(null);
       setNovo({
+        cnpj: "",
         nome: "",
         nome_empresarial: "",
-        cnpj: "",
+        cep: "",
+        endereco: "",
+        cidade: "",
+        estado: "",
         telefone: "",
         whatsapp_responsavel: "",
-        endereco: "",
         cliente_desde: "",
         nome_contato: "",
         email_cobranca: ""
@@ -283,13 +469,19 @@ export default function ClientesPage() {
 
   const handleEdit = (cliente: Cliente) => {
     setEditingId(cliente.id);
+    const storedMeta = getStoredMetadata();
+    const meta = storedMeta[cliente.id] || storedMeta[cliente.nome || ""] || {};
+
     setNovo({
+      cnpj: cliente.cnpj || meta.cnpj || "",
       nome: cliente.nome || "",
-      nome_empresarial: cliente.nome_empresarial || "",
-      cnpj: cliente.cnpj || "",
-      telefone: cliente.telefone_comercial || "",
+      nome_empresarial: cliente.nome_empresarial || meta.nome_empresarial || "",
+      cep: cliente.cep || meta.cep || "",
+      endereco: cliente.endereco !== "Endereço não cadastrado" ? (cliente.endereco || meta.endereco || "") : (meta.endereco || ""),
+      cidade: cliente.cidade || meta.cidade || "",
+      estado: cliente.estado || meta.estado || "",
+      telefone: cliente.telefone_comercial !== "(00) 0000-0000" ? (cliente.telefone_comercial || "") : "",
       whatsapp_responsavel: cliente.whatsapp_responsavel || "",
-      endereco: cliente.endereco || "",
       cliente_desde: cliente.cliente_desde || "",
       nome_contato: cliente.nome_contato || cliente.executiva_venda || "",
       email_cobranca: cliente.email_cobranca || ""
@@ -304,6 +496,7 @@ export default function ClientesPage() {
       c.nome?.toLowerCase().includes(q) || 
       (c.nome_empresarial && c.nome_empresarial.toLowerCase().includes(q)) ||
       (c.cnpj && c.cnpj.includes(q)) ||
+      (c.cidade && c.cidade.toLowerCase().includes(q)) ||
       (c.nome_contato && c.nome_contato.toLowerCase().includes(q)) ||
       (c.email_cobranca && c.email_cobranca.toLowerCase().includes(q)) ||
       (c.telefone_comercial && c.telefone_comercial.includes(q)) ||
@@ -320,7 +513,7 @@ export default function ClientesPage() {
   if (loading) {
     return (
       <div className="p-12 flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#00BFF0]" size={32} />
+        <Loader2 className="animate-spin text-[#0055ff]" size={32} />
       </div>
     );
   }
@@ -346,88 +539,163 @@ export default function ClientesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-          <Field label="Razão Social">
-            <input 
-              style={inputStyle}
-              value={novo.nome} 
-              onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
-              placeholder="Nome da Empresa / Razão Social"
-            />
-          </Field>
+        <div className="space-y-4">
+          {/* LINHA 1: CNPJ (1º CAMPO) + RAZÃO SOCIAL (PREENCHIDA PELO CNPJ) + NOME EMPRESARIAL */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field label="CNPJ (1º Campo)">
+              <div className="relative">
+                <input 
+                  style={inputStyle}
+                  value={novo.cnpj} 
+                  onChange={e => handleCnpjChange(e.target.value)}
+                  onBlur={() => buscarCnpj(novo.cnpj)}
+                  placeholder="00.000.000/0000-00"
+                  maxLength={18}
+                />
+                {loadingCnpj ? (
+                  <Loader2 size={16} className="animate-spin text-[#0055ff] absolute right-4 top-1/2 -translate-y-1/2" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => buscarCnpj(novo.cnpj)}
+                    title="Buscar dados do CNPJ"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0055ff] transition-colors p-1"
+                  >
+                    <Search size={14} />
+                  </button>
+                )}
+              </div>
+            </Field>
 
-          <Field label="Nome Empresarial">
-            <input 
-              style={inputStyle}
-              value={novo.nome_empresarial} 
-              onChange={e => setNovo(n => ({...n, nome_empresarial: e.target.value}))}
-              placeholder="Nome Empresarial / Nome Fantasia"
-            />
-          </Field>
+            <Field label="Razão Social (Preenchida pelo CNPJ)">
+              <input 
+                style={inputStyle}
+                value={novo.nome} 
+                onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
+                placeholder="Nome da Empresa / Razão Social"
+              />
+            </Field>
 
-          <Field label="CNPJ">
-            <input 
-              style={inputStyle}
-              value={novo.cnpj} 
-              onChange={e => setNovo(n => ({...n, cnpj: e.target.value}))}
-              placeholder="00.000.000/0000-00"
-            />
-          </Field>
+            <Field label="Nome Empresarial">
+              <input 
+                style={inputStyle}
+                value={novo.nome_empresarial} 
+                onChange={e => setNovo(n => ({...n, nome_empresarial: e.target.value}))}
+                placeholder="Nome Empresarial / Nome Fantasia"
+              />
+            </Field>
+          </div>
 
-          <Field label="Telefone">
-            <input 
-              style={inputStyle}
-              value={novo.telefone} 
-              onChange={e => setNovo(n => ({...n, telefone: e.target.value}))}
-              placeholder="(00) 0000-0000"
-            />
-          </Field>
+          {/* LINHA 2: ENDEREÇO (ANTES DO TELEFONE) -> CEP + ENDEREÇO + CIDADE + ESTADO */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+            <Field label="CEP" className="md:col-span-3">
+              <div className="relative">
+                <input 
+                  style={inputStyle}
+                  value={novo.cep} 
+                  onChange={e => handleCepChange(e.target.value)}
+                  onBlur={() => buscarCep(novo.cep)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {loadingCep ? (
+                  <Loader2 size={16} className="animate-spin text-[#0055ff] absolute right-4 top-1/2 -translate-y-1/2" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => buscarCep(novo.cep)}
+                    title="Buscar endereço via CEP"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0055ff] transition-colors p-1"
+                  >
+                    <Search size={14} />
+                  </button>
+                )}
+              </div>
+            </Field>
 
-          <Field label="WhatsApp Responsável">
-            <input 
-              style={inputStyle}
-              value={novo.whatsapp_responsavel} 
-              onChange={e => setNovo(n => ({...n, whatsapp_responsavel: e.target.value}))}
-              placeholder="(00) 00000-0000"
-            />
-          </Field>
+            <Field label="Endereço (Preenchido pelo CEP)" className="md:col-span-4">
+              <input 
+                style={inputStyle}
+                value={novo.endereco} 
+                onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
+                placeholder="Rua, Avenida, Número, Bairro"
+              />
+            </Field>
 
-          <Field label="Cliente Desde">
-            <input 
-              type="date"
-              style={inputStyle}
-              value={novo.cliente_desde} 
-              onChange={e => setNovo(n => ({...n, cliente_desde: e.target.value}))}
-            />
-          </Field>
+            <Field label="Cidade (Preenchida pelo CEP)" className="md:col-span-3">
+              <input 
+                style={inputStyle}
+                value={novo.cidade} 
+                onChange={e => setNovo(n => ({...n, cidade: e.target.value}))}
+                placeholder="Cidade"
+              />
+            </Field>
 
-          <Field label="Nome do Contato">
-            <input 
-              style={inputStyle}
-              value={novo.nome_contato} 
-              onChange={e => setNovo(n => ({...n, nome_contato: e.target.value}))}
-              placeholder="Nome do contato responsável"
-            />
-          </Field>
+            <Field label="Estado" className="md:col-span-2">
+              <input 
+                style={inputStyle}
+                value={novo.estado} 
+                onChange={e => setNovo(n => ({...n, estado: e.target.value.toUpperCase()}))}
+                placeholder="UF"
+                maxLength={2}
+                className="uppercase"
+              />
+            </Field>
+          </div>
 
-          <Field label="E-mail Cobrança Financeira">
-            <input 
-              type="email"
-              style={inputStyle}
-              value={novo.email_cobranca} 
-              onChange={e => setNovo(n => ({...n, email_cobranca: e.target.value}))}
-              placeholder="financeiro@empresa.com.br"
-            />
-          </Field>
+          {/* LINHA 3: TELEFONE + WHATSAPP + NOME DO CONTATO */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field label="Telefone Comercial">
+              <input 
+                style={inputStyle}
+                value={novo.telefone} 
+                onChange={e => setNovo(n => ({...n, telefone: formatPhone(e.target.value)}))}
+                placeholder="(00) 0000-0000"
+                maxLength={15}
+              />
+            </Field>
 
-          <Field label="Endereço">
-            <input 
-              style={inputStyle}
-              value={novo.endereco} 
-              onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
-              placeholder="Rua, Número, Bairro, Cidade - UF"
-            />
-          </Field>
+            <Field label="WhatsApp Responsável">
+              <input 
+                style={inputStyle}
+                value={novo.whatsapp_responsavel} 
+                onChange={e => setNovo(n => ({...n, whatsapp_responsavel: formatPhone(e.target.value)}))}
+                placeholder="(00) 90000-0000"
+                maxLength={15}
+              />
+            </Field>
+
+            <Field label="Nome do Contato">
+              <input 
+                style={inputStyle}
+                value={novo.nome_contato} 
+                onChange={e => setNovo(n => ({...n, nome_contato: e.target.value}))}
+                placeholder="Nome do contato responsável"
+              />
+            </Field>
+          </div>
+
+          {/* LINHA 4: E-MAIL COBRANÇA FINANCEIRA + CLIENTE DESDE */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field label="E-mail Cobrança Financeira" className="md:col-span-2">
+              <input 
+                type="email"
+                style={inputStyle}
+                value={novo.email_cobranca} 
+                onChange={e => setNovo(n => ({...n, email_cobranca: e.target.value}))}
+                placeholder="financeiro@empresa.com.br"
+              />
+            </Field>
+
+            <Field label="Cliente Desde">
+              <input 
+                type="date"
+                style={inputStyle}
+                value={novo.cliente_desde} 
+                onChange={e => setNovo(n => ({...n, cliente_desde: e.target.value}))}
+              />
+            </Field>
+          </div>
         </div>
 
         <div className="mt-7 pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
@@ -436,12 +704,15 @@ export default function ClientesPage() {
               onClick={() => {
                 setEditingId(null);
                 setNovo({
+                  cnpj: "",
                   nome: "",
                   nome_empresarial: "",
-                  cnpj: "",
+                  cep: "",
+                  endereco: "",
+                  cidade: "",
+                  estado: "",
                   telefone: "",
                   whatsapp_responsavel: "",
-                  endereco: "",
                   cliente_desde: "",
                   nome_contato: "",
                   email_cobranca: ""
@@ -490,7 +761,7 @@ export default function ClientesPage() {
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar razão social, nome empresarial, CNPJ..."
+              placeholder="Buscar razão social, nome empresarial, CNPJ, cidade..."
               className="w-72 md:w-80 h-10 rounded-full bg-[#f8fafc] border border-slate-200/80 pl-10 pr-4 text-xs text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-[#0055ff] transition-all font-sans"
             />
           </div>
@@ -508,6 +779,7 @@ export default function ClientesPage() {
                   {[
                     "Razão Social / Nome Empresarial", 
                     "CNPJ", 
+                    "Endereço / Cidade",
                     "Nome do Contato", 
                     "Telefone / WhatsApp", 
                     "E-mail Financeiro", 
@@ -539,7 +811,21 @@ export default function ClientesPage() {
                         </div>
                       )}
                     </td>
-                    <td className="p-3 text-slate-600 whitespace-nowrap">{cliente.cnpj || "—"}</td>
+                    <td className="p-3 text-slate-600 whitespace-nowrap font-mono">{cliente.cnpj || "—"}</td>
+                    <td className="p-3 text-slate-600">
+                      <div>
+                        {cliente.endereco && cliente.endereco !== "Endereço não cadastrado" ? (
+                          <span>{cliente.endereco}</span>
+                        ) : (
+                          <span className="text-slate-400">Endereço não cadastrado</span>
+                        )}
+                        {cliente.cidade && (
+                          <div className="text-[11px] text-slate-400 mt-0.5">
+                            {cliente.cidade}{cliente.estado ? ` - ${cliente.estado}` : ""}
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-3 text-slate-600">
                       <div className="flex items-center gap-1.5">
                         <UserCog size={13} className="text-slate-400 shrink-0" />

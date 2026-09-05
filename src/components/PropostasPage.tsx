@@ -20,9 +20,12 @@ interface ClienteItem {
   nome: string;
   nome_empresarial?: string;
   cnpj?: string;
+  cep?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
   telefone?: string;
   whatsapp_responsavel?: string;
-  endereco?: string;
   cliente_desde?: string;
   nome_contato?: string;
   email_cobranca?: string;
@@ -88,19 +91,107 @@ export default function PropostasPage() {
   // Autocomplete state for product rows
   const [activeProdRowId, setActiveProdRowId] = useState<string | null>(null);
 
-  // Modal: Quick Client Registration (9 Fields identical to ClientesPage)
+  // Modal: Quick Client Registration (com CNPJ e CEP inteligentes)
   const [isNovoClienteModalOpen, setIsNovoClienteModalOpen] = useState(false);
+  const [loadingCnpjModal, setLoadingCnpjModal] = useState(false);
+  const [loadingCepModal, setLoadingCepModal] = useState(false);
+
   const [novoClienteData, setNovoClienteData] = useState({
+    cnpj: "",
     nome: "",
     nome_empresarial: "",
-    cnpj: "",
+    cep: "",
+    endereco: "",
+    cidade: "",
+    estado: "",
     telefone: "",
     whatsapp_responsavel: "",
-    endereco: "",
     cliente_desde: new Date().toISOString().split("T")[0],
     nome_contato: "",
     email_cobranca: "",
   });
+
+  const formatCnpjQuick = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 14);
+    return digits
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const formatCepQuick = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 8);
+    return digits.replace(/^(\d{5})(\d)/, "$1-$2");
+  };
+
+  const buscarCnpjModal = async (rawCnpj: string) => {
+    const clean = rawCnpj.replace(/\D/g, "");
+    if (clean.length !== 14) return;
+    setLoadingCnpjModal(true);
+    try {
+      let data: any = null;
+      try {
+        const res = await fetch(`https://minhareceita.org/${clean}`);
+        if (res.ok) data = await res.json();
+      } catch { /* fallback */ }
+
+      if (!data) {
+        try {
+          const res2 = await fetch(`https://publica.cnpj.ws/cnpj/${clean}`);
+          if (res2.ok) data = await res2.json();
+        } catch { /* fallback */ }
+      }
+
+      if (data) {
+        const razao = data.razao_social || data.nome || "";
+        const fantasia = data.nome_fantasia || data.fantasia || razao;
+        const cepRaw = data.cep ? String(data.cep).replace(/\D/g, "") : "";
+        const logradouro = data.logradouro || data.descricao_tipo_de_logradouro ? `${data.descricao_tipo_de_logradouro || ""} ${data.logradouro || ""}`.trim() : "";
+        const num = data.numero && data.numero !== "SN" && data.numero !== "S/N" ? `, ${data.numero}` : "";
+        const bairro = data.bairro ? ` - ${data.bairro}` : "";
+        const fullEnd = logradouro ? `${logradouro}${num}${bairro}` : "";
+
+        setNovoClienteData(prev => ({
+          ...prev,
+          nome: razao || prev.nome,
+          nome_empresarial: fantasia || prev.nome_empresarial || razao,
+          cep: cepRaw ? formatCepQuick(cepRaw) : prev.cep,
+          endereco: fullEnd || prev.endereco,
+          cidade: data.municipio || prev.cidade,
+          estado: data.uf || prev.estado,
+          telefone: prev.telefone || (data.ddd_telefone_1 || ""),
+          email_cobranca: prev.email_cobranca || (data.email || ""),
+        }));
+        toast.success(`Razão Social localizada: ${razao || fantasia}`);
+      }
+    } catch { /* noop */ } finally {
+      setLoadingCnpjModal(false);
+    }
+  };
+
+  const buscarCepModal = async (rawCep: string) => {
+    const clean = rawCep.replace(/\D/g, "");
+    if (clean.length !== 8) return;
+    setLoadingCepModal(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      if (res.ok) {
+        const json = await res.json();
+        if (!json.erro) {
+          setNovoClienteData(prev => ({
+            ...prev,
+            endereco: json.logradouro ? `${json.logradouro}${json.bairro ? ` - ${json.bairro}` : ""}` : prev.endereco,
+            cidade: json.localidade || prev.cidade,
+            estado: json.uf || prev.estado,
+          }));
+          toast.success(`Endereço localizado: ${json.localidade} - ${json.uf}`);
+        }
+      }
+    } catch { /* noop */ } finally {
+      setLoadingCepModal(false);
+    }
+  };
 
   // Modal: Enviar Orçamento (WhatsApp, E-mail, PDF)
   const [isEnviarModalOpen, setIsEnviarModalOpen] = useState(false);
@@ -242,9 +333,12 @@ export default function PropostasPage() {
       nome: novoClienteData.nome.trim(),
       nome_empresarial: novoClienteData.nome_empresarial.trim(),
       cnpj: novoClienteData.cnpj.trim(),
+      cep: novoClienteData.cep.trim(),
+      endereco: novoClienteData.endereco.trim(),
+      cidade: novoClienteData.cidade.trim(),
+      estado: novoClienteData.estado.trim(),
       telefone: novoClienteData.telefone.trim(),
       whatsapp_responsavel: novoClienteData.whatsapp_responsavel.trim(),
-      endereco: novoClienteData.endereco.trim(),
       cliente_desde: novoClienteData.cliente_desde,
       nome_contato: novoClienteData.nome_contato.trim(),
       email_cobranca: novoClienteData.email_cobranca.trim(),
@@ -257,9 +351,12 @@ export default function PropostasPage() {
       all[newId] = {
         nome_empresarial: newClient.nome_empresarial,
         cnpj: newClient.cnpj,
+        cep: newClient.cep,
+        endereco: newClient.endereco,
+        cidade: newClient.cidade,
+        estado: newClient.estado,
         telefone: newClient.telefone,
         whatsapp_responsavel: newClient.whatsapp_responsavel,
-        endereco: newClient.endereco,
         cliente_desde: newClient.cliente_desde,
         nome_contato: newClient.nome_contato,
         email_cobranca: newClient.email_cobranca,
@@ -992,48 +1089,128 @@ export default function PropostasPage() {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* LINHA 1: CNPJ (1º CAMPO) + RAZÃO SOCIAL (PREENCHIDA PELO CNPJ) + NOME EMPRESARIAL */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
-                  Nome Fantasia *
+                  CNPJ (1º Campo)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={novoClienteData.cnpj}
+                    onChange={e => {
+                      const formatted = formatCnpjQuick(e.target.value);
+                      setNovoClienteData({ ...novoClienteData, cnpj: formatted });
+                      if (formatted.replace(/\D/g, "").length === 14) buscarCnpjModal(formatted);
+                    }}
+                    onBlur={() => buscarCnpjModal(novoClienteData.cnpj)}
+                    placeholder="00.000.000/0001-00"
+                    maxLength={18}
+                    className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] font-semibold outline-none"
+                  />
+                  {loadingCnpjModal && (
+                    <Loader2 size={16} className="animate-spin text-[#0055ff] absolute right-4 top-1/2 -translate-y-1/2" />
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Razão Social *
                 </label>
                 <input
                   type="text"
                   value={novoClienteData.nome}
                   onChange={e => setNovoClienteData({ ...novoClienteData, nome: e.target.value })}
-                  placeholder="Ex: Rádio Clube FM"
+                  placeholder="Nome da Empresa / Razão Social"
                   className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] font-semibold outline-none"
                 />
               </div>
 
               <div>
                 <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
-                  Nome Empresarial / Razão Social
+                  Nome Empresarial / Fantasia
                 </label>
                 <input
                   type="text"
                   value={novoClienteData.nome_empresarial}
                   onChange={e => setNovoClienteData({ ...novoClienteData, nome_empresarial: e.target.value })}
-                  placeholder="Ex: Empresa de Radiodifusão LTDA"
+                  placeholder="Nome Fantasia da Empresa"
                   className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
+            {/* LINHA 2: ENDEREÇO ANTES DE TELEFONE -> CEP + ENDEREÇO + CIDADE + ESTADO */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+              <div className="md:col-span-3">
                 <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
-                  CNPJ
+                  CEP
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={novoClienteData.cep}
+                    onChange={e => {
+                      const formatted = formatCepQuick(e.target.value);
+                      setNovoClienteData({ ...novoClienteData, cep: formatted });
+                      if (formatted.replace(/\D/g, "").length === 8) buscarCepModal(formatted);
+                    }}
+                    onBlur={() => buscarCepModal(novoClienteData.cep)}
+                    placeholder="00000-000"
+                    maxLength={9}
+                    className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                  />
+                  {loadingCepModal && (
+                    <Loader2 size={16} className="animate-spin text-[#0055ff] absolute right-4 top-1/2 -translate-y-1/2" />
+                  )}
+                </div>
+              </div>
+
+              <div className="md:col-span-4">
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Endereço
                 </label>
                 <input
                   type="text"
-                  value={novoClienteData.cnpj}
-                  onChange={e => setNovoClienteData({ ...novoClienteData, cnpj: e.target.value })}
-                  placeholder="00.000.000/0001-00"
+                  value={novoClienteData.endereco}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, endereco: e.target.value })}
+                  placeholder="Rua, Avenida, Número, Bairro"
                   className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
                 />
               </div>
 
+              <div className="md:col-span-3">
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Cidade
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.cidade}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, cidade: e.target.value })}
+                  placeholder="Cidade"
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
+                  Estado
+                </label>
+                <input
+                  type="text"
+                  value={novoClienteData.estado}
+                  onChange={e => setNovoClienteData({ ...novoClienteData, estado: e.target.value.toUpperCase() })}
+                  placeholder="UF"
+                  maxLength={2}
+                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none uppercase"
+                />
+              </div>
+            </div>
+
+            {/* LINHA 3: TELEFONE + WHATSAPP + CONTATO */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
                   Telefone Comercial
@@ -1059,9 +1236,7 @@ export default function PropostasPage() {
                   className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
                   Nome do Contato
@@ -1074,8 +1249,11 @@ export default function PropostasPage() {
                   className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
                 />
               </div>
+            </div>
 
-              <div>
+            {/* LINHA 4: E-MAIL FINANCEIRO + CLIENTE DESDE */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
                 <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
                   E-mail Cobrança Financeira
                 </label>
@@ -1084,21 +1262,6 @@ export default function PropostasPage() {
                   value={novoClienteData.email_cobranca}
                   onChange={e => setNovoClienteData({ ...novoClienteData, email_cobranca: e.target.value })}
                   placeholder="financeiro@empresa.com.br"
-                  className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
-                  Endereço Comercial
-                </label>
-                <input
-                  type="text"
-                  value={novoClienteData.endereco}
-                  onChange={e => setNovoClienteData({ ...novoClienteData, endereco: e.target.value })}
-                  placeholder="Rua, Número, Bairro, Cidade - UF"
                   className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
                 />
               </div>
