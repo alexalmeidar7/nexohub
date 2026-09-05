@@ -128,10 +128,10 @@ export default function SuperAdminHeader({
   }, [searchOpen]);
 
   return (
-    <header className="w-full pt-4 pb-2 px-4 lg:px-8 animate-fade-in font-sans">
+    <header className="w-full pt-4 pb-2 px-4 lg:px-8 animate-fade-in font-sans relative z-50">
       <div className="max-w-[1600px] mx-auto space-y-4">
         {/* Main Navbar Card (Pure white rounded bar) */}
-        <div className="bg-white rounded-full px-6 py-3.5 flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-slate-100/90">
+        <div className="bg-white rounded-full px-6 py-3.5 flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-slate-100/90 relative z-40">
           {/* Left: NX. Logo */}
           <div className="flex items-center gap-8">
             <button
@@ -190,8 +190,8 @@ export default function SuperAdminHeader({
               </button>
 
               {produtosOpen && (
-                <div className="absolute top-full left-0 pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.28)] min-w-[200px] space-y-1">
+                <div className="absolute top-full left-0 pt-2 z-[9999] animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[200px] space-y-1">
                     <button
                       onClick={() => { onNavigate("housemix"); setProdutosOpen(false); }}
                       className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors ${
@@ -234,8 +234,8 @@ export default function SuperAdminHeader({
               </button>
 
               {businessOpen && (
-                <div className="absolute top-full left-0 pt-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.28)] min-w-[200px] space-y-1">
+                <div className="absolute top-full left-0 pt-2 z-[9999] animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[200px] space-y-1">
                     <button
                       onClick={() => { onNavigate("financeiro"); setBusinessOpen(false); }}
                       className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between ${

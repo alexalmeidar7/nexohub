@@ -1465,12 +1465,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
         {isAdmin ? (
-          <SuperAdminHeader
-            currentPage={currentPage}
-            onNavigate={setCurrentPage}
-            onLogout={onLogout}
-            userEmail={user?.email || "alex@nexobrasil.net"}
-          />
+          <div className="relative z-50">
+            <SuperAdminHeader
+              currentPage={currentPage}
+              onNavigate={setCurrentPage}
+              onLogout={onLogout}
+              userEmail={user?.email || "alex@nexobrasil.net"}
+            />
+          </div>
         ) : (
           <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
           <div className="flex items-center gap-4">
