@@ -481,7 +481,7 @@ export default function FinanceiroSuperAdminPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* Top Header Section (Card Branco com Variações de Azul) */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] flex flex-wrap items-center justify-between gap-4">
         <div>

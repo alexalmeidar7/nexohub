@@ -1713,7 +1713,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
         {/* ===== MAIN CONTENT AREA ===== */}
-        <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
+        <div className={`flex-1 min-h-0 pb-4 relative z-[1] ${isAdmin ? "w-full px-4 lg:px-8 flex flex-col" : "px-3 lg:px-6"}`}>
           {currentPage !== "dashboard" && !isAdmin && (
             <div className="flex items-center justify-between mb-6 ml-1">
               <div className="flex items-center gap-4">
@@ -1766,8 +1766,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div id="module-actions-portal" className="flex items-center gap-2" />
             </div>
           )}
-          <div className="relative flex-1 h-full">
-            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
+          <div className={`relative flex-1 h-full ${isAdmin ? "max-w-[1600px] mx-auto w-full flex flex-col" : ""}`}>
+            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden ${isAdmin ? "rounded-3xl" : "rounded-2xl"} ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: isAdmin ? "1.5rem" : "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
               <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>

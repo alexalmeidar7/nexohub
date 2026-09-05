@@ -551,7 +551,7 @@ export default function PropostasPage() {
   };
 
   return (
-    <div className="max-w-[1280px] mx-auto w-full space-y-6 pt-2 pb-16 font-sans animate-fade-in">
+    <div className="w-full space-y-6 pt-2 pb-16 font-sans animate-fade-in">
       {/* Top Header Card */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
         <div>
