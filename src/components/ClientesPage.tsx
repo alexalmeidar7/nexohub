@@ -8,42 +8,29 @@ import {
   Briefcase, Activity, Save 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
-
-const pillInput: React.CSSProperties = {
+const inputStyle: React.CSSProperties = {
   width: "100%",
   height: 44,
   borderRadius: 999,
-  background: "#FFFFFF",
-  border: `2px solid ${CYAN}`,
+  background: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
   padding: "0 20px",
   fontFamily: "'Montserrat', sans-serif",
-  fontSize: 13,
-  color: DARK,
+  fontSize: 12,
+  color: "#0f172a",
   outline: "none",
+  transition: "all 0.2s ease",
 };
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Montserrat', sans-serif",
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: DARK,
-  marginBottom: 8,
+  color: "#64748b",
+  marginBottom: 6,
   display: "block",
 };
 
@@ -55,7 +42,6 @@ function Field({ label, children, className = "" }: { label: string; children: R
     </div>
   );
 }
-
 
 interface Cliente {
   id: string;
@@ -86,7 +72,6 @@ export default function ClientesPage() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [busca, setBusca] = useState("");
   const [criando, setCriando] = useState(false);
-  const [novoOpen, setNovoOpen] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [novo, setNovo] = useState({
     nome: "",
@@ -102,10 +87,6 @@ export default function ClientesPage() {
     try {
       const isAlex = user?.email?.toLowerCase().includes("alex");
 
-      // Se for Alex, não fazemos o pré-cadastro automático via logos
-      // Se não for Alex, mantemos a regra de carregar logos como clientes por enquanto
-      // até que a tabela definitiva esteja 100% operacional em todas as instâncias.
-      
       const { data: logosData } = await supabase
         .from("logos_patrocinadores")
         .select("id, user_id, nome, logo_url, ativo, created_at")
@@ -121,7 +102,6 @@ export default function ClientesPage() {
 
       (logosData || []).forEach(item => {
         const name = item.nome?.trim().toUpperCase();
-        // Filtro para não aplicar a regra automática no Alex
         if (isAlex && item.user_id === user?.id) return;
 
         if (name && !seenNames.has(name)) {
@@ -165,7 +145,6 @@ export default function ClientesPage() {
       const isAlex = user?.email?.toLowerCase().includes("alex");
 
       if (editingId) {
-        // Lógica de edição
         const { error } = await supabase
           .from("logos_patrocinadores")
           .update({
@@ -174,9 +153,8 @@ export default function ClientesPage() {
           .eq("id", editingId);
 
         if (error) throw error;
-        toast.success("Dados do cliente atualizados!");
+        toast.success("Dados do cliente da agência atualizados!");
       } else {
-        // Lógica de inserção
         const { error } = await supabase.from("logos_patrocinadores").insert({
           nome: novo.nome.trim().toUpperCase(),
           user_id: user?.id,
@@ -186,10 +164,9 @@ export default function ClientesPage() {
         } as any);
 
         if (error) throw error;
-        toast.success(isAlex ? "Cliente cadastrado manualmente." : "Cliente pré-cadastrado no sistema!");
+        toast.success(isAlex ? "Cliente da agência cadastrado com sucesso!" : "Cliente pré-cadastrado no sistema!");
       }
 
-      setNovoOpen(false);
       setEditingId(null);
       setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
       load();
@@ -210,7 +187,7 @@ export default function ClientesPage() {
       cliente_desde: cliente.cliente_desde || "",
       executiva_venda: cliente.executiva_venda || ""
     });
-    setNovoOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const filtrados = useMemo(() => {
@@ -229,324 +206,200 @@ export default function ClientesPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-cyan-500" size={32} />
+      <div className="p-12 flex items-center justify-center">
+        <Loader2 className="animate-spin text-[#00BFF0]" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      {/* Header handled by Dashboard Portal */}
-      <div id="module-header-title" style={{ display: "none" }}>
-        Cadastro de Clientes
-      </div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      </div>
-
-      {novoOpen && (
-        <section
-          style={{
-            background: CARD_BG,
-            borderRadius: 28,
-            padding: "28px 32px 32px",
-            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
-          }}
-          className="animate-in fade-in slide-in-from-top-4 duration-300"
-        >
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-            <h3
-              style={{
-                fontSize: 18,
-                fontWeight: 800,
-                letterSpacing: 2,
-                color: DARK,
-                textTransform: "uppercase",
-                margin: 0,
-              }}
-            >
-              {editingId ? "Editar Cliente" : "Cadastro de Cliente"}
-            </h3>
-            <div className="flex items-center gap-3">
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: DARK,
-                  background: "#FFFFFF",
-                  padding: "6px 16px",
-                  borderRadius: 999,
-                  border: `2px solid ${CYAN}`,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                }}
-              >
-                Data do cadastro: <span style={{ color: CYAN }}>{editingId ? "—" : new Date().toLocaleDateString("pt-BR")}</span>
-              </div>
-            </div>
+    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      {/* 1. Form Section (Centered, Clean Flat Modern Style) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div>
+            <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+              {editingId ? "Editar Cliente da Agência" : "Cadastro de Cliente da Agência"}
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Gestão de clientes corporativos e contratos da Nexo Agência
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
-            <div className="lg:col-span-2">
-              <Field label="Razão Social">
-                <input 
-                  style={pillInput}
-                  value={novo.nome} 
-                  onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
-                  placeholder="Nome da Empresa"
-                />
-              </Field>
-            </div>
-            <Field label="CNPJ">
-              <input 
-                style={pillInput}
-                value={novo.cnpj} 
-                onChange={e => setNovo(n => ({...n, cnpj: e.target.value}))}
-                placeholder="00.000.000/0000-00"
-              />
-            </Field>
-            <Field label="Telefone">
-              <input 
-                style={pillInput}
-                value={novo.telefone} 
-                onChange={e => setNovo(n => ({...n, telefone: e.target.value}))}
-                placeholder="(00) 00000-0000"
-              />
-            </Field>
-            <div className="lg:col-span-2">
-              <Field label="Endereço">
-                <input 
-                  style={pillInput}
-                  value={novo.endereco} 
-                  onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
-                  placeholder="Rua, Número, Bairro, Cidade - UF"
-                />
-              </Field>
-            </div>
-            <Field label="Cliente Desde">
-              <input 
-                type="date"
-                style={pillInput}
-                value={novo.cliente_desde} 
-                onChange={e => setNovo(n => ({...n, cliente_desde: e.target.value}))}
-              />
-            </Field>
-            <div className="lg:col-span-2">
-              <Field label="Gerente Executiva Responsável">
-                <input 
-                  style={pillInput}
-                  value={novo.executiva_venda} 
-                  onChange={e => setNovo(n => ({...n, executiva_venda: e.target.value}))}
-                  placeholder="Nome da gerente"
-                />
-              </Field>
+          <div className="flex items-center gap-3">
+            <div className="text-[11px] font-bold text-slate-700 bg-[#f1f5f9] px-4 py-1.5 rounded-full uppercase tracking-wider">
+              Data do cadastro: <span className="text-[#0055ff]">{editingId ? "—" : new Date().toLocaleDateString("pt-BR")}</span>
             </div>
           </div>
+        </div>
 
-          <div className="mt-8 flex items-center justify-end gap-3">
-            {editingId && (
-              <button
-                onClick={() => { setNovoOpen(false); setEditingId(null); }}
-                style={{
-                  height: 44,
-                  padding: "0 22px",
-                  borderRadius: 999,
-                  background: "#FFFFFF",
-                  border: `2px solid ${CYAN}`,
-                  color: DARK,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  letterSpacing: 1.5,
-                  textTransform: "uppercase",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                }}
-              >
-                <X size={16} /> Cancelar
-              </button>
-            )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+          <div className="lg:col-span-2">
+            <Field label="Razão Social">
+              <input 
+                style={inputStyle}
+                value={novo.nome} 
+                onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
+                placeholder="Nome da Empresa / Cliente Corporativo"
+              />
+            </Field>
+          </div>
+          <Field label="CNPJ">
+            <input 
+              style={inputStyle}
+              value={novo.cnpj} 
+              onChange={e => setNovo(n => ({...n, cnpj: e.target.value}))}
+              placeholder="00.000.000/0000-00"
+            />
+          </Field>
+          <Field label="Telefone">
+            <input 
+              style={inputStyle}
+              value={novo.telefone} 
+              onChange={e => setNovo(n => ({...n, telefone: e.target.value}))}
+              placeholder="(00) 00000-0000"
+            />
+          </Field>
+          <div className="lg:col-span-2">
+            <Field label="Endereço">
+              <input 
+                style={inputStyle}
+                value={novo.endereco} 
+                onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
+                placeholder="Rua, Número, Bairro, Cidade - UF"
+              />
+            </Field>
+          </div>
+          <Field label="Cliente Desde">
+            <input 
+              type="date"
+              style={inputStyle}
+              value={novo.cliente_desde} 
+              onChange={e => setNovo(n => ({...n, cliente_desde: e.target.value}))}
+            />
+          </Field>
+          <div className="lg:col-span-2">
+            <Field label="Gerente Executiva Responsável">
+              <input 
+                style={inputStyle}
+                value={novo.executiva_venda} 
+                onChange={e => setNovo(n => ({...n, executiva_venda: e.target.value}))}
+                placeholder="Nome da gerente executiva"
+              />
+            </Field>
+          </div>
+        </div>
+
+        <div className="mt-7 pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          {editingId && (
             <button
-              onClick={handleSave}
-              disabled={criando}
-              style={{
-                height: 44,
-                padding: "0 28px",
-                borderRadius: 999,
-                background: LIME,
-                border: "none",
-                color: DARK,
-                fontWeight: 800,
-                fontSize: 12,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
+              onClick={() => {
+                setEditingId(null);
+                setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
               }}
-              className="hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-11 px-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer"
             >
-              {criando ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                <Save size={18} />
-              )}
-              {editingId ? "Atualizar Dados" : "Salvar Cliente"}
+              <X size={15} /> Cancelar
             </button>
-          </div>
-        </section>
-      )}
+          )}
+          <button
+            onClick={handleSave}
+            disabled={criando}
+            className="h-11 px-8 rounded-full bg-[#9FCA1D] hover:brightness-105 active:scale-95 text-black font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            {criando ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <Save size={16} />
+            )}
+            {editingId ? "Atualizar Dados" : "Salvar Cliente"}
+          </button>
+        </div>
+      </section>
 
-
-      <section
-        style={{
-          background: "#D6F4FB",
-          borderRadius: 28,
-          padding: "20px 24px 28px",
-          border: "1px solid #E5F5FB",
-          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
-        }}
-      >
-        <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
-          <div className="flex items-center gap-2" style={{ color: "#0A2540" }}>
-            <Building2 size={18} style={{ color: "#00BFF0" }} />
-            <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
-              Clientes Cadastrados
-            </h3>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                background: "#D6F4FB",
-                color: "#0A2540",
-                padding: "3px 12px",
-                borderRadius: 999,
-              }}
-            >
+      {/* 2. Registered Clients Section (Centered, Clean Flat Modern Style) */}
+      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2.5 text-[#002132]">
+            <div className="w-9 h-9 rounded-xl bg-[#14161a] flex items-center justify-center text-[#9FCA1D]">
+              <Building2 size={18} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#002132]">
+                Clientes da Agência Cadastrados
+              </h3>
+              <p className="text-xs text-slate-400">Total de contas corporativas da agência</p>
+            </div>
+            <span className="text-xs font-bold bg-[#f1f5f9] text-slate-700 px-3 py-1 rounded-full ml-1">
               {filtrados.length}
             </span>
           </div>
 
-          <div style={{ position: "relative" }}>
-            <Search size={14} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "#00BFF0" }} />
+          <div className="relative">
+            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar razão social ou CNPJ..."
-              style={{
-                width: 360,
-                height: 40,
-                borderRadius: 999,
-                background: "#FFFFFF",
-                border: "2px solid #00BFF0",
-                padding: "0 20px 0 40px",
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: 12,
-                color: "#0A2540",
-                outline: "none",
-              }}
+              className="w-72 md:w-80 h-10 rounded-full bg-[#f8fafc] border border-slate-200/80 pl-10 pr-4 text-xs text-slate-800 placeholder-slate-400 outline-none focus:bg-white focus:border-[#0055ff] transition-all font-sans"
             />
           </div>
         </div>
 
         {filtrados.length === 0 ? (
-          <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", padding: "40px 0", fontFamily: "'Montserrat', sans-serif" }}>
-            Nenhum cliente encontrado.
-          </p>
+          <div className="py-12 text-center text-xs text-slate-400 font-medium">
+            Nenhum cliente da agência encontrado.
+          </div>
         ) : (
-          <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #D6F4FB" }}>
-            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+          <div className="overflow-x-auto rounded-2xl border border-slate-100">
+            <table className="w-full border-collapse text-xs font-sans">
               <thead>
-                <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
+                <tr className="bg-[#14161a] text-white">
                   {["Razão Social", "CNPJ", "Telefone", "Executiva Resp.", "Blitz/Eventos", "Ações"].map((h) => (
                     <th
                       key={h}
-                      style={{
-                        padding: "12px 14px",
-                        textAlign: h === "Ações" ? "right" : "left",
-                        fontWeight: 800,
-                        letterSpacing: 1.2,
-                        textTransform: "uppercase",
-                        fontSize: 10,
-                        whiteSpace: "nowrap",
-                        position: h === "Ações" ? "sticky" : undefined,
-                        right: h === "Ações" ? 0 : undefined,
-                        background: h === "Ações" ? "#00BFF0" : undefined,
-                        zIndex: h === "Ações" ? 2 : undefined,
-                      }}
+                      className={`p-3 text-[10px] font-bold uppercase tracking-wider ${
+                        h === "Ações" ? "text-right pr-4" : "text-left pl-4"
+                      }`}
                     >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {filtrados.map((cliente, idx) => (
                   <tr
                     key={cliente.id || idx}
-                    style={{
-                      background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
-                      color: "#0A2540",
-                    }}
+                    className="hover:bg-slate-50/80 transition-colors"
                   >
-                    <td style={{ padding: "12px 14px", minWidth: 200, fontWeight: 700, fontSize: 13 }}>
+                    <td className="p-3 pl-4 font-semibold text-slate-800">
                       {cliente.nome}
                     </td>
-                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{cliente.cnpj}</td>
-                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{cliente.telefone_comercial}</td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <div className="flex items-center gap-2">
-                        <UserCog size={14} className="text-slate-400" />
-                        {cliente.executiva_venda || "—"}
+                    <td className="p-3 text-slate-600 whitespace-nowrap">{cliente.cnpj}</td>
+                    <td className="p-3 text-slate-600 whitespace-nowrap">{cliente.telefone_comercial}</td>
+                    <td className="p-3 text-slate-600">
+                      <div className="flex items-center gap-1.5">
+                        <UserCog size={13} className="text-slate-400" />
+                        <span>{cliente.executiva_venda || "—"}</span>
                       </div>
                     </td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          padding: "4px 10px",
-                          borderRadius: 999,
-                          background: "#D6F4FB",
-                          color: "#0A2540",
-                          fontSize: 10,
-                          fontWeight: 800,
-                          letterSpacing: 0.6,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        <Activity size={12} />
+                    <td className="p-3">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase">
+                        <Activity size={11} className="text-[#0055ff]" />
                         {getEventosCliente(cliente.nome)} Eventos
                       </span>
                     </td>
-                    <td
-                      style={{
-                        padding: "12px 14px",
-                        textAlign: "right",
-                        position: "sticky",
-                        right: 0,
-                        background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
-                        zIndex: 1,
-                      }}
-                    >
+                    <td className="p-3 pr-4 text-right">
                       <div className="flex justify-end gap-1">
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           onClick={() => handleEdit(cliente)}
-                          className="rounded-full text-slate-400 hover:text-cyan-600 h-8 w-8"
+                          className="rounded-full text-slate-400 hover:text-[#0055ff] hover:bg-slate-100 h-8 w-8"
+                          title="Editar dados"
                         >
-                          <UserCog size={16} />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="rounded-full text-slate-400 hover:text-red-500 h-8 w-8"
-                        >
-                          <Trash2 size={16} />
+                          <UserCog size={15} />
                         </Button>
                       </div>
                     </td>
@@ -557,7 +410,6 @@ export default function ClientesPage() {
           </div>
         )}
       </section>
-
     </div>
   );
 }

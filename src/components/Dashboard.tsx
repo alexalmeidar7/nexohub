@@ -1709,7 +1709,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* ===== MAIN CONTENT AREA ===== */}
         <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
-          {currentPage !== "dashboard" && (
+          {currentPage !== "dashboard" && !isAdmin && (
             <div className="flex items-center justify-between mb-6 ml-1">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
