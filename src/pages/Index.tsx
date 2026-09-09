@@ -11,6 +11,15 @@ const SIGNED_OUT_FLAG = "nexohub_signed_out";
 
 export default function Index() {
   const { user, loading } = useAuth();
+  const explicitlySignedOut = (() => {
+    try {
+      return new URLSearchParams(window.location.search).get("signed_out") === "1" ||
+        localStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
+        sessionStorage.getItem(SIGNED_OUT_FLAG) === "true";
+    } catch {
+      return false;
+    }
+  })();
   const [isChecking, setIsChecking] = useState(true);
   const [hasUser, setHasUser] = useState(false);
   usePageTitle("Login");
@@ -19,8 +28,8 @@ export default function Index() {
     let mounted = true;
     
     // Se o hook de auth já terminou, usamos o valor dele
-    if (!loading) {
-      setHasUser(!!user);
+    if (!loading || explicitlySignedOut) {
+      setHasUser(explicitlySignedOut ? false : !!user);
       setIsChecking(false);
       return;
     }
@@ -28,7 +37,7 @@ export default function Index() {
     // Fallback: verificação rápida direta no Supabase para evitar travar no "Sincronizando"
     const quickCheck = async () => {
       try {
-        if (localStorage.getItem(SIGNED_OUT_FLAG) === "true") {
+        if (explicitlySignedOut) {
           if (mounted) {
             setHasUser(false);
             setIsChecking(false);
@@ -60,13 +69,13 @@ export default function Index() {
       mounted = false;
       clearTimeout(timer);
     };
-  }, [user, loading]);
+  }, [user, loading, explicitlySignedOut]);
 
   if (loading && isChecking && !hasUser) {
     return <LoadingSpinner fullscreen />;
   }
 
-  if (!user && !hasUser) {
+  if (explicitlySignedOut || (!user && !hasUser)) {
     return (
       <Suspense fallback={<LoadingSpinner fullscreen />}>
         <LoginScreen />

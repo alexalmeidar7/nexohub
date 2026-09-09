@@ -131,6 +131,10 @@ export default function LoginScreen() {
     setError("");
     // Só um novo envio explícito do formulário pode encerrar o bloqueio pós-logout.
     localStorage.removeItem(SIGNED_OUT_FLAG);
+    sessionStorage.removeItem(SIGNED_OUT_FLAG);
+    if (new URLSearchParams(window.location.search).get("signed_out") === "1") {
+      window.history.replaceState({}, "", "/");
+    }
     localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
     if (keepConnected) {
       localStorage.setItem(REMEMBERED_USER_KEY, email.trim());
