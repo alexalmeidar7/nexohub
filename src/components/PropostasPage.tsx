@@ -3,7 +3,7 @@ import {
   FileText, Plus, Trash2, Send, Mail, Smartphone, Printer, 
   Search, Check, X, Building2, User, Phone, Calendar, 
   DollarSign, Clock, RefreshCw, Sparkles, Eye, Download,
-  Layers, CheckCircle2, ChevronRight, Copy, AlertCircle, Briefcase, MapPin
+  Layers, CheckCircle2, ChevronRight, Copy, AlertCircle, Briefcase, MapPin, Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
