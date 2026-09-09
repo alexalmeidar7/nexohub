@@ -346,6 +346,7 @@ const pageTitle: Record<Page, string> = {
   financeiro: "Gestão Financeira & Cobranças",
   chatbot: "Chatbot & Atendimento",
   housemix: "Gestão do Produto House Mix",
+  produtos: "Produtos",
 };
 
 interface DashboardProps {
