@@ -209,16 +209,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Depois de um logout explícito, ignoramos sessões residuais
       // (broker do preview, outra aba, cache) até um novo login de fato.
+      try {
+        signedOutIntentionally = localStorage.getItem(SIGNED_OUT_FLAG) === "true";
+      } catch { /* ignore */ }
       if (signedOutIntentionally) {
-        if (event === "SIGNED_IN" && session) {
-          signedOutIntentionally = false;
-          manualSignOutRef.current = false;
-          try { localStorage.removeItem(SIGNED_OUT_FLAG); } catch { /* ignore */ }
-        } else {
-          if (session) purgeStoredAuth();
-          void updateAuth(null);
-          return;
-        }
+        if (session) purgeStoredAuth();
+        lastGoodSessionRef.current = null;
+        void updateAuth(null);
+        return;
+      }
+      if (event === "SIGNED_IN" && session) {
+        manualSignOutRef.current = false;
       }
 
       // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
@@ -422,7 +423,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null);
     if (shouldRedirect) {
       // Hard redirect to login so any cached state is cleared
-      window.location.href = "/";
+      window.location.replace("/");
     }
   };
 

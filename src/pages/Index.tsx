@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { supabase } from "@/integrations/supabase/client";
 
 const LoginScreen = lazyRetry(() => import("@/components/LoginScreen"));
+const SIGNED_OUT_FLAG = "nexohub_signed_out";
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -27,6 +28,13 @@ export default function Index() {
     // Fallback: verificação rápida direta no Supabase para evitar travar no "Sincronizando"
     const quickCheck = async () => {
       try {
+        if (localStorage.getItem(SIGNED_OUT_FLAG) === "true") {
+          if (mounted) {
+            setHasUser(false);
+            setIsChecking(false);
+          }
+          return;
+        }
         const { data } = await supabase.auth.getSession();
         if (mounted) {
           if (data.session?.user) {
