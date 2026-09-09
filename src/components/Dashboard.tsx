@@ -77,6 +77,7 @@ const ModulosPage = lazyRetry(() => import("./ModulosPage"));
 const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
 const HouseMixPage = lazyRetry(() => import("./HouseMixPage"));
 const ProdutosPage = lazyRetry(() => import("./ProdutosPage"));
+const PacotesPage = lazyRetry(() => import("./PacotesPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
 
 
@@ -345,6 +346,7 @@ const pageTitle: Record<Page, string> = {
   financeiro: "Gestão Financeira & Cobranças",
   chatbot: "Chatbot & Atendimento",
   housemix: "Gestão do Produto House Mix",
+  produtos: "Produtos",
 };
 
 interface DashboardProps {
@@ -1933,7 +1935,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     const child = findChild(group?.children) ?? { label: c.label };
                     handleChildClick(child, parent);
                   }}
-                  onNavigate={setCurrentPage}
+                  onNavigate={(p) => setCurrentPage(p as Page)}
                 />
               )}
               {!isAdmin && currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}

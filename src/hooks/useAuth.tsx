@@ -5,6 +5,21 @@ import { ensureMusicScopeForUser } from "@/lib/musicStorageKeys";
 
 type AppRole = "admin" | "user";
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
+const SIGNED_OUT_FLAG = "nexohub_signed_out";
+
+/** Remove qualquer token de sessão persistido (local e session storage). */
+function purgeStoredAuth() {
+  const isAuthKey = (k: string) =>
+    k === "nexohub_backup_session" ||
+    (k.startsWith("sb-") && k.includes("auth-token")) ||
+    k.startsWith("supabase.auth.");
+  try {
+    Object.keys(localStorage).filter(isAuthKey).forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+  try {
+    Object.keys(sessionStorage).filter(isAuthKey).forEach((k) => sessionStorage.removeItem(k));
+  } catch { /* ignore */ }
+}
 
 interface AuthContextType {
   user: User | null;
@@ -41,10 +56,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Se o usuário saiu explicitamente, não restauramos nada até um novo login.
+    let signedOutIntentionally = false;
+    try {
+      signedOutIntentionally = localStorage.getItem(SIGNED_OUT_FLAG) === "true";
+    } catch { /* ignore */ }
+    if (signedOutIntentionally) {
+      manualSignOutRef.current = true;
+      purgeStoredAuth();
+      void supabase.auth.signOut({ scope: "local" }).catch(() => { /* ignore */ });
+    }
+
     // Always try to restore the last known good session from backup on boot,
     // so a hard refresh keeps the user signed in and on the welcome screen
     // without requiring an explicit "keep connected" opt-in.
-    if (!lastGoodSessionRef.current) {
+    if (!signedOutIntentionally && !lastGoodSessionRef.current) {
       const backup = localStorage.getItem('nexohub_backup_session');
       if (backup) {
         try {
@@ -181,6 +207,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`Auth event: ${event}`);
 
+      // Depois de um logout explícito, ignoramos sessões residuais
+      // (broker do preview, outra aba, cache) até um novo login de fato.
+      if (signedOutIntentionally) {
+        if (event === "SIGNED_IN" && session) {
+          signedOutIntentionally = false;
+          manualSignOutRef.current = false;
+          try { localStorage.removeItem(SIGNED_OUT_FLAG); } catch { /* ignore */ }
+        } else {
+          if (session) purgeStoredAuth();
+          void updateAuth(null);
+          return;
+        }
+      }
+
       // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
       // hard refresh keeps the user on the welcome screen.
       if (event === "INITIAL_SESSION" && !session) {
@@ -192,9 +232,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (event === "SIGNED_OUT") {
-        // Manual logout should always work
+        // Manual logout should always work (flag stays set until the reload)
         if (manualSignOutRef.current) {
-          manualSignOutRef.current = false;
           void updateAuth(null);
           return;
         }
@@ -364,15 +403,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async (options?: { redirect?: boolean }) => {
     const shouldRedirect = options?.redirect !== false;
     manualSignOutRef.current = true;
-    // Clear keep-connected flag and cached session so the user actually logs out
-    localStorage.setItem(KEEP_CONNECTED_KEY, "false");
-    localStorage.removeItem('nexohub_backup_session');
+    // Marca o logout como intencional e apaga tudo que possa restaurar a sessão
+    try {
+      localStorage.setItem(KEEP_CONNECTED_KEY, "false");
+      localStorage.setItem(SIGNED_OUT_FLAG, "true");
+    } catch { /* ignore */ }
+    purgeStoredAuth();
     lastGoodSessionRef.current = null;
     prevUserIdRef.current = null;
     try {
       // scope: 'local' evita revogar a sessão em outros dispositivos/abas
       await supabase.auth.signOut({ scope: 'local' });
     } catch { /* ignore */ }
+    // A chamada acima pode falhar por rede; garantimos a limpeza de novo
+    purgeStoredAuth();
     setUser(null);
     setSession(null);
     setRole(null);

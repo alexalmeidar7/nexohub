@@ -3,7 +3,7 @@ import {
   FileText, Plus, Trash2, Send, Mail, Smartphone, Printer, 
   Search, Check, X, Building2, User, Phone, Calendar, 
   DollarSign, Clock, RefreshCw, Sparkles, Eye, Download,
-  Layers, CheckCircle2, ChevronRight, Copy, AlertCircle, Briefcase, MapPin
+  Layers, CheckCircle2, ChevronRight, Copy, AlertCircle, Briefcase, MapPin, Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -376,6 +376,7 @@ export default function PropostasPage() {
           nome: newClient.nome,
           ativo: true,
           excluido: false,
+          data_final: "2099-12-31",
         });
       }
     } catch { /* offline fallback */ }
@@ -713,6 +714,9 @@ export default function PropostasPage() {
                             telefone: "",
                             whatsapp_responsavel: "",
                             endereco: "",
+                            cep: "",
+                            cidade: "",
+                            estado: "",
                             cliente_desde: new Date().toISOString().split("T")[0],
                             nome_contato: "",
                             email_cobranca: "",
