@@ -5,6 +5,21 @@ import { ensureMusicScopeForUser } from "@/lib/musicStorageKeys";
 
 type AppRole = "admin" | "user";
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
+const SIGNED_OUT_FLAG = "nexohub_signed_out";
+
+/** Remove qualquer token de sessão persistido (local e session storage). */
+function purgeStoredAuth() {
+  const isAuthKey = (k: string) =>
+    k === "nexohub_backup_session" ||
+    (k.startsWith("sb-") && k.includes("auth-token")) ||
+    k.startsWith("supabase.auth.");
+  try {
+    Object.keys(localStorage).filter(isAuthKey).forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+  try {
+    Object.keys(sessionStorage).filter(isAuthKey).forEach((k) => sessionStorage.removeItem(k));
+  } catch { /* ignore */ }
+}
 
 interface AuthContextType {
   user: User | null;
