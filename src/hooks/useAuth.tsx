@@ -7,6 +7,16 @@ type AppRole = "admin" | "user";
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
 const SIGNED_OUT_FLAG = "nexohub_signed_out";
 
+function hasExplicitSignOut() {
+  try {
+    return new URLSearchParams(window.location.search).get("signed_out") === "1" ||
+      localStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
+      sessionStorage.getItem(SIGNED_OUT_FLAG) === "true";
+  } catch {
+    return false;
+  }
+}
+
 /** Remove qualquer token de sessão persistido (local e session storage). */
 function purgeStoredAuth() {
   const isAuthKey = (k: string) =>
@@ -57,12 +67,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     // Se o usuário saiu explicitamente, não restauramos nada até um novo login.
-    let signedOutIntentionally = false;
-    try {
-      signedOutIntentionally = localStorage.getItem(SIGNED_OUT_FLAG) === "true";
-    } catch { /* ignore */ }
+    let signedOutIntentionally = hasExplicitSignOut();
     if (signedOutIntentionally) {
       manualSignOutRef.current = true;
+      try {
+        localStorage.setItem(SIGNED_OUT_FLAG, "true");
+        sessionStorage.setItem(SIGNED_OUT_FLAG, "true");
+      } catch { /* ignore */ }
       purgeStoredAuth();
       void supabase.auth.signOut({ scope: "local" }).catch(() => { /* ignore */ });
     }
@@ -209,9 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Depois de um logout explícito, ignoramos sessões residuais
       // (broker do preview, outra aba, cache) até um novo login de fato.
-      try {
-        signedOutIntentionally = localStorage.getItem(SIGNED_OUT_FLAG) === "true";
-      } catch { /* ignore */ }
+      signedOutIntentionally = hasExplicitSignOut();
       if (signedOutIntentionally) {
         if (session) purgeStoredAuth();
         lastGoodSessionRef.current = null;
@@ -408,6 +417,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(KEEP_CONNECTED_KEY, "false");
       localStorage.setItem(SIGNED_OUT_FLAG, "true");
+      sessionStorage.setItem(SIGNED_OUT_FLAG, "true");
     } catch { /* ignore */ }
     purgeStoredAuth();
     lastGoodSessionRef.current = null;
@@ -423,7 +433,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null);
     if (shouldRedirect) {
       // Hard redirect to login so any cached state is cleared
-      window.location.replace("/");
+      window.location.replace("/?signed_out=1");
     }
   };
 
