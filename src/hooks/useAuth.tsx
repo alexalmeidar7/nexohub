@@ -207,6 +207,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`Auth event: ${event}`);
 
+      // Depois de um logout explícito, ignoramos sessões residuais
+      // (broker do preview, outra aba, cache) até um novo login de fato.
+      if (signedOutIntentionally) {
+        if (event === "SIGNED_IN" && session) {
+          signedOutIntentionally = false;
+          manualSignOutRef.current = false;
+          try { localStorage.removeItem(SIGNED_OUT_FLAG); } catch { /* ignore */ }
+        } else {
+          if (session) purgeStoredAuth();
+          void updateAuth(null);
+          return;
+        }
+      }
+
       // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
       // hard refresh keeps the user on the welcome screen.
       if (event === "INITIAL_SESSION" && !session) {
