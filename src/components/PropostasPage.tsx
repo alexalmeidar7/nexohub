@@ -376,6 +376,7 @@ export default function PropostasPage() {
           nome: newClient.nome,
           ativo: true,
           excluido: false,
+          data_final: "2099-12-31",
         });
       }
     } catch { /* offline fallback */ }
