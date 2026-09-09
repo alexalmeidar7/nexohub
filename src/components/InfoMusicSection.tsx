@@ -7,6 +7,7 @@ import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface InfoMusicRow {
   id: string;
