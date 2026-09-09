@@ -9,6 +9,7 @@ const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
 const REMEMBERED_USER_KEY = "nexohub_remembered_user";
+const SIGNED_OUT_FLAG = "nexohub_signed_out";
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -128,6 +129,8 @@ export default function LoginScreen() {
     if (loading) return;
     setLoading(true);
     setError("");
+    // Só um novo envio explícito do formulário pode encerrar o bloqueio pós-logout.
+    localStorage.removeItem(SIGNED_OUT_FLAG);
     localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
     if (keepConnected) {
       localStorage.setItem(REMEMBERED_USER_KEY, email.trim());
