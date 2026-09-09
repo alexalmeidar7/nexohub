@@ -192,9 +192,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (event === "SIGNED_OUT") {
-        // Manual logout should always work
+        // Manual logout should always work (flag stays set until the reload)
         if (manualSignOutRef.current) {
-          manualSignOutRef.current = false;
           void updateAuth(null);
           return;
         }
