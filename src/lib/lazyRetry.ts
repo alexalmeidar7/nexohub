@@ -2,10 +2,15 @@ import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 
 const CHUNK_RECOVERY_KEY = "__chunk_recovery_at__";
 const CHUNK_COUNT_KEY = "__chunk_recovery_count__";
-const CHUNK_RECOVERY_WINDOW_MS = 15_000;
-const MAX_AUTO_RECOVERIES = 2;
-const IMPORT_RETRY_DELAYS_MS = [400, 1_000, 2_000];
+const CHUNK_RECOVERY_WINDOW_MS = 120_000;
+const MAX_AUTO_RECOVERIES = 1;
+const IMPORT_RETRY_DELAYS_MS = [400, 1_000, 2_000, 4_000];
 
+/**
+ * Only messages that unambiguously describe a failed ES module/chunk import.
+ * Generic network wording ("load failed", "text/html") used to match here and
+ * turned any unrelated failed request into a full page reload loop.
+ */
 export const isChunkErrorMessage = (message?: string) => {
   const normalized = (message || "").toLowerCase();
   return (
@@ -15,11 +20,7 @@ export const isChunkErrorMessage = (message?: string) => {
     normalized.includes("loading chunk") ||
     normalized.includes("loading css chunk") ||
     normalized.includes("chunkloaderror") ||
-    normalized.includes("dynamically imported module") ||
-    normalized.includes("failed to load module script") ||
-    normalized.includes("text/html") ||
-    normalized.includes("load failed") ||
-    normalized.includes("error resolving module specifier")
+    normalized.includes("failed to load module script")
   );
 };
 
@@ -33,8 +34,14 @@ export function recoverFromChunkFailure(force = false): boolean {
       count = 0;
     }
 
-    if (!force && count >= MAX_AUTO_RECOVERIES) {
-      return false; // Prevent infinite loop if files truly do not exist
+    if (count >= MAX_AUTO_RECOVERIES) {
+      return false; // Prevent reload loops
+    }
+
+    // Never interrupt the user while the tab is in the foreground unless the
+    // caller explicitly forces it (error boundary with a broken screen).
+    if (!force && document.visibilityState === "visible") {
+      return false;
     }
 
     sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(now));
@@ -48,6 +55,7 @@ export function recoverFromChunkFailure(force = false): boolean {
     return false;
   }
 }
+
 
 /**
  * React.lazy caches a rejected import forever. Retrying the same mounted lazy
