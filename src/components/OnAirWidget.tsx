@@ -30,12 +30,15 @@ async function getProgramas(userId?: string): Promise<Programa[]> {
     .from("programas")
     .select("*, thumb, apresentador_id, apresentadores_ids")
     .eq("ativo", true)
+    // No Ar mostra somente a grade do estúdio FM (ignora podcast/TV)
+    .ilike("estudio", "%fm%")
     .order("horario_inicio");
 
   if (userId) query = query.eq("user_id", userId);
 
   const { data } = await query;
   if (!data) return [];
+
   return data.map(p => ({
     id: p.id,
     nome: p.nome,
