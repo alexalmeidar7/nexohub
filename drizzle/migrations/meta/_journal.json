@@ -29,6 +29,13 @@
       "when": 1788974582748,
       "tag": "0003_parent_user_id_fallback_sub_users",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788974594834,
+      "tag": "0004_public_read_comercial_promos",
+      "breakpoints": true
     }
   ]
 }
