@@ -1935,7 +1935,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     const child = findChild(group?.children) ?? { label: c.label };
                     handleChildClick(child, parent);
                   }}
-                  onNavigate={setCurrentPage}
+                  onNavigate={(p) => setCurrentPage(p as Page)}
                 />
               )}
               {!isAdmin && currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
