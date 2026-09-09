@@ -403,15 +403,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async (options?: { redirect?: boolean }) => {
     const shouldRedirect = options?.redirect !== false;
     manualSignOutRef.current = true;
-    // Clear keep-connected flag and cached session so the user actually logs out
-    localStorage.setItem(KEEP_CONNECTED_KEY, "false");
-    localStorage.removeItem('nexohub_backup_session');
+    // Marca o logout como intencional e apaga tudo que possa restaurar a sessão
+    try {
+      localStorage.setItem(KEEP_CONNECTED_KEY, "false");
+      localStorage.setItem(SIGNED_OUT_FLAG, "true");
+    } catch { /* ignore */ }
+    purgeStoredAuth();
     lastGoodSessionRef.current = null;
     prevUserIdRef.current = null;
     try {
       // scope: 'local' evita revogar a sessão em outros dispositivos/abas
       await supabase.auth.signOut({ scope: 'local' });
     } catch { /* ignore */ }
+    // A chamada acima pode falhar por rede; garantimos a limpeza de novo
+    purgeStoredAuth();
     setUser(null);
     setSession(null);
     setRole(null);
