@@ -56,10 +56,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Se o usuário saiu explicitamente, não restauramos nada até um novo login.
+    let signedOutIntentionally = false;
+    try {
+      signedOutIntentionally = localStorage.getItem(SIGNED_OUT_FLAG) === "true";
+    } catch { /* ignore */ }
+    if (signedOutIntentionally) {
+      manualSignOutRef.current = true;
+      purgeStoredAuth();
+      void supabase.auth.signOut({ scope: "local" }).catch(() => { /* ignore */ });
+    }
+
     // Always try to restore the last known good session from backup on boot,
     // so a hard refresh keeps the user signed in and on the welcome screen
     // without requiring an explicit "keep connected" opt-in.
-    if (!lastGoodSessionRef.current) {
+    if (!signedOutIntentionally && !lastGoodSessionRef.current) {
       const backup = localStorage.getItem('nexohub_backup_session');
       if (backup) {
         try {
