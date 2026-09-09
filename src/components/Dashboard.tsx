@@ -77,6 +77,7 @@ const ModulosPage = lazyRetry(() => import("./ModulosPage"));
 const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
 const HouseMixPage = lazyRetry(() => import("./HouseMixPage"));
 const ProdutosPage = lazyRetry(() => import("./ProdutosPage"));
+const PacotesPage = lazyRetry(() => import("./PacotesPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
 
 
