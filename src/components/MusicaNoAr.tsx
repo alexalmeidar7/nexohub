@@ -338,6 +338,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const prevProgressRef = useRef(0);
   const [loadingCover, setLoadingCover] = useState(false);
   const [presenterFallback, setPresenterFallback] = useState<{ nome: string; foto: string } | null>(null);
+  // Evita a página ficar "presa" no esqueleto quando nenhuma leitura chega:
+  // após 2.5s a interface completa aparece com "Aguardando leitura...".
+  const [bootWaiting, setBootWaiting] = useState(true);
+  useEffect(() => {
+    const t = window.setTimeout(() => setBootWaiting(false), 2500);
+    return () => window.clearTimeout(t);
+  }, []);
+
   const [curiosidade, setCuriosidade] = useState<string>("");
   const curiosidadeFetchedKeyRef = useRef<string>("");
   const curiosityShownAtRef = useRef<number | null>(null);
