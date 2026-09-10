@@ -5,6 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Cache of the live video ID discovered per YouTube channel (slow HTML scrape).
+const liveVideoIdCache = new Map<string, { videoId: string; at: number }>();
+const LIVE_ID_CACHE_MS = 5 * 60 * 1000;
+
 // Simple XML text extractor
 function extractTag(xml: string, ...tags: string[]): string {
   for (const tag of tags) {
@@ -260,25 +264,42 @@ Deno.serve(async (req) => {
     const youtubeUrl = empresaConfig?.youtube;
 
     if (channelId) {
-      try {
-        // Resolve current live video ID from channel
-        const r = await fetch(`https://www.youtube.com/channel/${channelId}/live?_t=${Date.now()}`, {
-          headers: { "User-Agent": "Mozilla/5.0" },
-          signal: AbortSignal.timeout(4000),
-        });
-        if (r.ok) {
-          const text = await r.text();
-          const m = text.match(/\"videoId\":\"([a-zA-Z0-9_-]{11})\"/);
-          if (m?.[1]) {
-            videoId = m[1];
-          } else {
-            // Secondary regex for videoId in case of different response structure
-            const m2 = text.match(/\\\"videoId\\\":\\\"([a-zA-Z0-9_-]{11})\\\"/);
-            if (m2?.[1]) videoId = m2[1];
+      // Reuse a recently discovered live video ID: YouTube HTML pages are slow
+      // and frequently exceed the request budget, which used to leave the chat empty.
+      const cached = liveVideoIdCache.get(channelId);
+      if (cached && Date.now() - cached.at < LIVE_ID_CACHE_MS) {
+        videoId = cached.videoId;
+      }
+
+      if (!videoId) {
+        for (const timeoutMs of [9000, 9000]) {
+          try {
+            const r = await fetch(`https://www.youtube.com/channel/${channelId}/live?_t=${Date.now()}`, {
+              headers: { "User-Agent": "Mozilla/5.0" },
+              signal: AbortSignal.timeout(timeoutMs),
+            });
+            if (r.ok) {
+              const text = await r.text();
+              const m = text.match(/\"videoId\":\"([a-zA-Z0-9_-]{11})\"/);
+              if (m?.[1]) {
+                videoId = m[1];
+              } else {
+                // Secondary regex for videoId in case of different response structure
+                const m2 = text.match(/\\\"videoId\\\":\\\"([a-zA-Z0-9_-]{11})\\\"/);
+                if (m2?.[1]) videoId = m2[1];
+              }
+            }
+            if (videoId) break;
+          } catch (err) {
+            console.error("YouTube live ID discovery error:", err);
           }
         }
-      } catch (err) {
-        console.error("YouTube live ID discovery error:", err);
+      }
+
+      if (videoId) {
+        liveVideoIdCache.set(channelId, { videoId, at: Date.now() });
+      } else if (cached) {
+        videoId = cached.videoId; // stale but better than an empty chat
       }
     } else if (youtubeUrl) {
       // Fallback to URL parsing if channel ID is not set
@@ -297,7 +318,7 @@ Deno.serve(async (req) => {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
           },
-          signal: AbortSignal.timeout(6000),
+          signal: AbortSignal.timeout(12000),
         });
 
         if (ytResp.ok) {
