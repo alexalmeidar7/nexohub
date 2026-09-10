@@ -1489,7 +1489,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const xmlCuriosidade = curiosidade ? escapeXml(curiosidade) : "";
 
-  if (!music && !presenterFallback) {
+  if (!music && !presenterFallback && bootWaiting) {
     return (
       <div className="animate-pulse">
         <div className="rounded-2xl overflow-hidden p-5" style={{ background: "var(--layout-header-bg, #0d0446)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
