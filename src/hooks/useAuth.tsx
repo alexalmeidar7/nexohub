@@ -17,6 +17,21 @@ function hasExplicitSignOut() {
   }
 }
 
+/** Cancela o bloqueio de logout (novo login realizado). */
+export function clearSignOutFlag() {
+  try {
+    localStorage.removeItem(SIGNED_OUT_FLAG);
+    sessionStorage.removeItem(SIGNED_OUT_FLAG);
+  } catch { /* ignore */ }
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("signed_out") === "1") {
+      url.searchParams.delete("signed_out");
+      window.history.replaceState({}, "", url.toString());
+    }
+  } catch { /* ignore */ }
+}
+
 /** Remove qualquer token de sessão persistido (local e session storage). */
 function purgeStoredAuth() {
   const isAuthKey = (k: string) =>
@@ -220,6 +235,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Depois de um logout explícito, ignoramos sessões residuais
       // (broker do preview, outra aba, cache) até um novo login de fato.
+      // Um novo login bem-sucedido sempre cancela o bloqueio de logout,
+      // independente da tela usada (player, Google, TP, vMix...).
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+        clearSignOutFlag();
+      }
+
       signedOutIntentionally = hasExplicitSignOut();
       if (signedOutIntentionally) {
         if (session) purgeStoredAuth();
