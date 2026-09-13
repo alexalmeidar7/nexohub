@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { clearSignOutFlag } from "@/hooks/useAuth";
 import { UserCircle, Pencil, LogIn, Star, Plus } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -810,6 +811,7 @@ export default function WelcomeScreen({
       try { sessionStorage.setItem("nexohub_player_signup_check", "1"); } catch { /* ignore */ }
       setOAuthReturnPath(getCurrentReturnPath());
 
+      clearSignOutFlag();
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { clearSignOutFlag } from "@/hooks/useAuth";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -30,6 +31,7 @@ export default function PairPage() {
     setSigningIn(true);
     try {
       setOAuthReturnPath(`/${userSlug}/pair${code ? `?code=${code}` : ""}`);
+      clearSignOutFlag();
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },
