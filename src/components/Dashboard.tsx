@@ -79,6 +79,7 @@ const HouseMixPage = lazyRetry(() => import("./HouseMixPage"));
 const ProdutosPage = lazyRetry(() => import("./ProdutosPage"));
 const PacotesPage = lazyRetry(() => import("./PacotesPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
+const BackupPage = lazyRetry(() => import("./BackupPage"));
 
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
