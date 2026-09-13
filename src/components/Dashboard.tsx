@@ -91,7 +91,7 @@ import nexoCantoLogo from "@/assets/nexo_canto.png";
 import logoNxo from "@/assets/logo-nxo.png";
 import SuperAdminHeader from "./SuperAdminHeader";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -164,6 +164,7 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
@@ -247,6 +248,7 @@ export const adminModulosGroups: MenuItem[] = [
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
@@ -348,6 +350,7 @@ const pageTitle: Record<Page, string> = {
   chatbot: "Chatbot & Atendimento",
   housemix: "Gestão do Produto House Mix",
   produtos: "Produtos",
+  backup: "Ferramentas — Backup / Importar",
 };
 
 interface DashboardProps {
@@ -1872,6 +1875,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <CortesVideoPage />
                 </div>
               )}
+              {currentPage === "backup" && <BackupPage effectiveUserId={effectiveUserId} />}
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
