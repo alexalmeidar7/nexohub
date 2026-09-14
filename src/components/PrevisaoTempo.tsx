@@ -702,7 +702,7 @@ export default function PrevisaoTempo() {
           <XmlSection title="XML Tempo">
             <XmlLinkRow
               label="XML TEMPO"
-              permanentUrl={`http://housemix.nexobrasil.net/xml/${userSlug || "p"}/tempo.xml`}
+              permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/xml-files/${uid ? `xml-tempo-${uid}.xml` : "xml-tempo.xml"}`}
               xmlContent={(() => {
               if (!weather) return "";
               const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
