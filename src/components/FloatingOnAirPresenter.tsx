@@ -1,0 +1,763 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Clock, User, Plus } from "lucide-react";
+import { useAlbumColors } from "@/hooks/useAlbumColors";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { getProgramas, getProgramasSync, findCurrentProgram } from "@/components/OnAirWidget";
+import { getApresentadores } from "@/components/ApresentadorForm";
+import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
+import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
+
+export interface FloatingOnAirPresenterProps {
+  isBehindPages?: boolean;
+  effectiveUserId?: string | null;
+}
+
+interface OnAirDisplayState {
+  programaNome: string;
+  horarioInicio: string;
+  horarioFim: string;
+  locutorNome: string;
+  locutorFoto: string;
+}
+
+type AnimPhase = "idle" | "exiting" | "entering-prep";
+
+function formatHour(h: string): string {
+  if (!h) return "";
+  const clean = String(h).trim();
+  return clean.length >= 5 ? clean.slice(0, 5) : clean;
+}
+
+export default function FloatingOnAirPresenter({
+  isBehindPages = false,
+  effectiveUserId,
+}: FloatingOnAirPresenterProps) {
+  const { user } = useAuth();
+  const targetUid = effectiveUserId || user?.id;
+  const targetEmail = user?.email;
+
+  // 1. Synchronous initial state from station database cache (instant render)
+  const [onAirInfo, setOnAirInfo] = useState<OnAirDisplayState>(() => {
+    const syncDb = getStationDatabaseSync(targetUid || user?.email);
+    const syncPrograms = getProgramasSync(targetUid, user?.email);
+    const current = findCurrentProgram(syncPrograms);
+
+    const progNome = current?.programa?.nome || syncDb?.currentProgram?.nome || "Programação Normal";
+    const hInicio = current?.programa?.horarioInicio || syncDb?.currentProgram?.horario_inicio || "00:00";
+    const hFim = current?.programa?.horarioFim || syncDb?.currentProgram?.horario_fim || "23:59";
+    const apNome = syncDb?.currentPresenter?.nome || "—";
+    const apFoto = syncDb?.currentPresenter?.foto || "";
+
+    return {
+      programaNome: progNome,
+      horarioInicio: hInicio,
+      horarioFim: hFim,
+      locutorNome: apNome,
+      locutorFoto: apFoto,
+    };
+  });
+
+  const [showNextProg, setShowNextProg] = useState(false);
+  const [nextProgInfo, setNextProgInfo] = useState<OnAirDisplayState | null>(() => {
+    const syncPrograms = getProgramasSync(targetUid, user?.email);
+    if (syncPrograms && syncPrograms.length > 0) {
+      const mapped = syncPrograms.map((p) => ({
+        ...p,
+        dias_semana: p.diasSemana,
+        horario_inicio: p.horarioInicio,
+        horario_fim: p.horarioFim,
+      }));
+      const { next } = resolveEffectiveOnAir(mapped, new Date());
+      if (next) {
+        return {
+          programaNome: next.nome || "A Seguir",
+          horarioInicio: next.horario_inicio || next.horarioInicio || "00:00",
+          horarioFim: next.horario_fim || next.horarioFim || "23:59",
+          locutorNome: "—",
+          locutorFoto: "",
+        };
+      }
+    }
+    return null;
+  });
+
+  const [timezone, setTimezone] = useState<string | null>(null);
+  const [animPhase, setAnimPhase] = useState<AnimPhase>("idle");
+  const lastKeyRef = useRef<string>("");
+  const animTimerRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  // Load timezone
+  useEffect(() => {
+    if (!targetUid) return;
+    supabase
+      .from("empresa_config")
+      .select("timezone")
+      .eq("user_id", targetUid)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.timezone) setTimezone(data.timezone);
+      });
+  }, [targetUid]);
+
+  // 2. Resolve program & locutor asynchronously and keep refreshed
+  const resolveOnAir = useCallback(async () => {
+    try {
+      const uid = targetUid || user?.id;
+      const [programasData, apresentadoresData] = await Promise.all([
+        getProgramas(uid, targetEmail),
+        getApresentadores(uid, targetEmail),
+      ]);
+
+      // Use resolveEffectiveOnAir with timezone, fallback to findCurrentProgram
+      let activeProg: any = null;
+      let nextProg: any = null;
+      if (programasData.length > 0) {
+        const mapped = programasData.map((p) => ({
+          ...p,
+          dias_semana: p.diasSemana,
+          horario_inicio: p.horarioInicio,
+          horario_fim: p.horarioFim,
+        }));
+        const resolved = resolveEffectiveOnAir(mapped, new Date(), timezone);
+        activeProg = resolved.current;
+        nextProg = resolved.next;
+        if (!activeProg) {
+          const fallback = findCurrentProgram(programasData);
+          if (fallback) {
+            activeProg = {
+              ...fallback.programa,
+              horario_inicio: fallback.programa.horarioInicio,
+              horario_fim: fallback.programa.horarioFim,
+            };
+          }
+        }
+      }
+
+      if (nextProg) {
+        const nextApId =
+          nextProg.apresentador_id ||
+          nextProg.apresentadorId ||
+          nextProg.apresentadores_ids?.[0] ||
+          nextProg.apresentadoresIds?.[0];
+
+        let nextAp = apresentadoresData.find((a) => a.id === nextApId);
+        if (!nextAp && nextProg.nome) {
+          nextAp = apresentadoresData.find(
+            (a) =>
+              a.nome &&
+              (nextProg.nome.toLowerCase().includes(a.nome.toLowerCase()) ||
+                a.nome.toLowerCase().includes(nextProg.nome.toLowerCase()))
+          );
+        }
+
+        if (!nextAp || !nextAp.foto) {
+          const apWithPhoto = apresentadoresData.find((a) => a.foto && a.foto.trim() !== "");
+          if (apWithPhoto) {
+            nextAp = apWithPhoto;
+          }
+        }
+
+        setNextProgInfo({
+          programaNome: nextProg.nome || "A Seguir",
+          horarioInicio: nextProg.horario_inicio || nextProg.horarioInicio || "00:00",
+          horarioFim: nextProg.horario_fim || nextProg.horarioFim || "23:59",
+          locutorNome: nextAp?.nome || "—",
+          locutorFoto: nextAp?.foto || "",
+        });
+      }
+
+      if (activeProg) {
+        const apId =
+          activeProg.apresentador_id ||
+          activeProg.apresentadorId ||
+          activeProg.apresentadores_ids?.[0] ||
+          activeProg.apresentadoresIds?.[0];
+
+        let ap = apresentadoresData.find((a) => a.id === apId);
+        if (!ap && activeProg.nome) {
+          ap = apresentadoresData.find(
+            (a) =>
+              a.nome &&
+              (activeProg.nome.toLowerCase().includes(a.nome.toLowerCase()) ||
+                a.nome.toLowerCase().includes(activeProg.nome.toLowerCase()))
+          );
+        }
+
+        // If program has no specific presenter (e.g. musical block), select the station's featured presenter with photo
+        if (!ap || !ap.foto) {
+          const syncDb = getStationDatabaseSync(uid || targetEmail);
+          if (syncDb?.currentPresenter?.foto) {
+            ap = syncDb.currentPresenter as any;
+          } else {
+            const apWithPhoto = apresentadoresData.find((a) => a.foto && a.foto.trim() !== "");
+            if (apWithPhoto) {
+              ap = apWithPhoto;
+            }
+          }
+        }
+
+        const nextState: OnAirDisplayState = {
+          programaNome: activeProg.nome || "Programação Normal",
+          horarioInicio: activeProg.horario_inicio || activeProg.horarioInicio || "00:00",
+          horarioFim: activeProg.horario_fim || activeProg.horarioFim || "23:59",
+          locutorNome: ap?.nome || "—",
+          locutorFoto: ap?.foto || "",
+        };
+
+        const key = `${nextState.programaNome}:::${nextState.locutorNome}:::${nextState.horarioInicio}`;
+        if (!lastKeyRef.current) {
+          lastKeyRef.current = key;
+          setOnAirInfo(nextState);
+        } else if (lastKeyRef.current !== key) {
+          lastKeyRef.current = key;
+          if (animTimerRef.current) clearTimeout(animTimerRef.current);
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+          // Exit transition
+          setAnimPhase("exiting");
+          animTimerRef.current = window.setTimeout(() => {
+            setOnAirInfo(nextState);
+            setAnimPhase("entering-prep");
+            rafRef.current = requestAnimationFrame(() => {
+              rafRef.current = requestAnimationFrame(() => {
+                setAnimPhase("idle");
+              });
+            });
+          }, 220);
+        }
+      } else {
+        // Fallback to station DB
+        const syncDb = getStationDatabaseSync(uid || targetEmail);
+        if (syncDb?.currentPresenter) {
+          setOnAirInfo((prev) => ({
+            ...prev,
+            locutorNome: syncDb.currentPresenter?.nome || prev.locutorNome,
+            locutorFoto: syncDb.currentPresenter?.foto || prev.locutorFoto,
+          }));
+        }
+      }
+    } catch {}
+  }, [targetUid, user, targetEmail, timezone]);
+
+  useEffect(() => {
+    resolveOnAir();
+    const iv = setInterval(resolveOnAir, 15000); // refresh every 15s
+    return () => clearInterval(iv);
+  }, [resolveOnAir]);
+
+  // Realtime subscription for instant updates on schedules or presenter changes
+  useEffect(() => {
+    if (!targetUid) return;
+    const channel = supabase
+      .channel(`floating-onair-${targetUid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas" }, () => resolveOnAir())
+      .on("postgres_changes", { event: "*", schema: "public", table: "apresentadores" }, () => resolveOnAir())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [targetUid, resolveOnAir]);
+
+  // Clean up animation timers on unmount
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  // 3. Dynamic colors extracted from the locutor's photo
+  const locutorColors = useAlbumColors(onAirInfo.locutorFoto || null);
+  const primaryColor = locutorColors[0] || "#0055ff";
+  const secondaryColor = locutorColors[1] || "#7c3aed";
+
+  // Animation styles based on phase:
+  const photoAnimStyle: React.CSSProperties =
+    animPhase === "exiting"
+      ? {
+          opacity: 0,
+          transform: "scale(0.9) rotate(-1.5deg)",
+          filter: "blur(3px)",
+          transition: "transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease, filter 0.2s ease",
+        }
+      : animPhase === "entering-prep"
+      ? {
+          opacity: 0,
+          transform: "scale(1.08) rotate(1.5deg)",
+          filter: "blur(3px)",
+          transition: "none",
+        }
+      : {
+          opacity: 1,
+          transform: "scale(1) rotate(0deg)",
+          filter: "blur(0px)",
+          transition: "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease",
+        };
+
+  const textAnimStyle: React.CSSProperties =
+    animPhase === "exiting"
+      ? {
+          opacity: 0,
+          transform: "translateY(-8px)",
+          transition: "transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease",
+        }
+      : animPhase === "entering-prep"
+      ? {
+          opacity: 0,
+          transform: "translateY(10px)",
+          transition: "none",
+        }
+      : {
+          opacity: 1,
+          transform: "translateY(0)",
+          transition: "transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease",
+        };
+
+  const formattedStart = formatHour(onAirInfo.horarioInicio);
+  const formattedEnd = formatHour(onAirInfo.horarioFim);
+  const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
+
+  // Dynamic colors and hours for Next Program ('A SEGUIR')
+  const nextColors = useAlbumColors(nextProgInfo?.locutorFoto || null);
+  const nextPrimaryColor = nextColors[0] || "#38bdf8";
+  const nextSecondaryColor = nextColors[1] || "#6366f1";
+  const formattedNextStart = formatHour(nextProgInfo?.horarioInicio || "");
+  const formattedNextEnd = formatHour(nextProgInfo?.horarioFim || "");
+  const nextHoursStr =
+    formattedNextStart && formattedNextEnd ? `${formattedNextStart} às ${formattedNextEnd}` : "Em Breve";
+
+  return (
+    <div
+      data-floating-onair-presenter
+      className={`fixed bottom-6 left-0 right-0 select-none ${
+        isBehindPages
+          ? "z-[2] pointer-events-none opacity-0 invisible"
+          : "z-30 pointer-events-none opacity-100 visible"
+      }`}
+      style={{
+        transition: "z-index 0.2s ease, opacity 0.25s ease, visibility 0.25s ease",
+      }}
+    >
+      <div className="max-w-[1600px] mx-auto px-4 lg:px-8 w-full flex items-center justify-end pointer-events-none">
+        {/* 1. Current Program Box ('NO AR') */}
+        <div
+          data-testid="onair-current-program-box"
+          className={`${
+            isBehindPages ? "pointer-events-none" : "pointer-events-auto"
+          } hidden sm:flex items-center gap-3.5 relative group`}
+          style={{
+            userSelect: "none",
+            height: 100,
+            boxSizing: "border-box",
+            background: `linear-gradient(135deg, ${primaryColor}33 0%, rgba(5, 9, 18, 0.95) 100%)`,
+            backdropFilter: "blur(24px) saturate(1.5)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.5)",
+            borderRadius: 20,
+            padding: "10px 18px",
+            border: `1px solid ${primaryColor}40`,
+            boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${primaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
+            minWidth: 240,
+            maxWidth: "min(400px, calc(100vw - 120px))",
+            transition: "box-shadow 0.4s ease, border-color 0.4s ease, transform 0.25s ease",
+            marginRight: 10,
+          }}
+        >
+          {/* Inner rounded box with gradient background matching locutor photo colors */}
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 18,
+              overflow: "hidden",
+              position: "relative",
+              flexShrink: 0,
+              background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+              boxShadow: `0 8px 20px ${primaryColor}40, 0 2px 6px rgba(0,0,0,0.35)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid rgba(255,255,255,0.15)",
+            }}
+          >
+            {onAirInfo.locutorFoto ? (
+              <img
+                key={onAirInfo.locutorFoto}
+                src={onAirInfo.locutorFoto}
+                alt={onAirInfo.locutorNome || "Locutor no ar"}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "top center",
+                  ...photoAnimStyle,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  ...photoAnimStyle,
+                }}
+              >
+                <User size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
+              </div>
+            )}
+          </div>
+
+          {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
+          <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            {/* 1. 'no ar' badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  backgroundColor: "#ef4444",
+                  boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
+                  animation: "fmp-pulse 1.8s ease-in-out infinite",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#ef4444",
+                  lineHeight: 1,
+                }}
+              >
+                NO AR
+              </span>
+            </div>
+
+            {/* 2. Embaixo de 'no ar': O nome do programa */}
+            <p
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: "#ffffff",
+                lineHeight: 1.15,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                margin: 0,
+                letterSpacing: "-0.01em",
+                textTransform: "uppercase",
+                textShadow: "0 2px 8px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.9)",
+                ...textAnimStyle,
+              }}
+              title={onAirInfo.programaNome}
+            >
+              {onAirInfo.programaNome}
+            </p>
+
+            {/* 3. Embaixo do nome do programa: Horário inicial e final do programa */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                marginTop: 2,
+                ...textAnimStyle,
+              }}
+            >
+              <Clock size={11} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.65)",
+                  lineHeight: 1.2,
+                  letterSpacing: "0.02em",
+                  textTransform: "uppercase",
+                  textShadow: "0 2px 6px rgba(0,0,0,0.85)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {hoursStr}
+              </span>
+            </div>
+
+            {/* 4. Embaixo do horário: O nome do locutor */}
+            {onAirInfo.locutorNome && onAirInfo.locutorNome !== "—" && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginTop: 2,
+                  ...textAnimStyle,
+                }}
+              >
+                <User size={10} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    color: "rgba(255,255,255,0.85)",
+                    lineHeight: 1.2,
+                    letterSpacing: "0.03em",
+                    textTransform: "uppercase",
+                    textShadow: "0 2px 6px rgba(0,0,0,0.85)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={onAirInfo.locutorNome}
+                >
+                  {onAirInfo.locutorNome}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2. Toggle '+' button to reveal / hide next program (on the right side of NO AR box) */}
+        <button
+          type="button"
+          data-testid="toggle-next-program-button"
+          onClick={() => setShowNextProg((prev) => !prev)}
+          className={`${
+            isBehindPages ? "pointer-events-none" : "pointer-events-auto"
+          } hidden sm:flex items-center justify-center relative cursor-pointer group/btn transition-all duration-300 hover:scale-110 active:scale-95`}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: showNextProg
+              ? "rgba(239, 68, 68, 0.2)"
+              : "rgba(15, 23, 42, 0.8)",
+            border: showNextProg
+              ? "1px solid rgba(239, 68, 68, 0.45)"
+              : "1px solid rgba(255, 255, 255, 0.18)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            boxShadow: showNextProg
+              ? "0 8px 24px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255,255,255,0.15)"
+              : "0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+            outline: "none",
+            flexShrink: 0,
+            marginRight: showNextProg ? 10 : 0,
+            transition: "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, margin-right 0.35s ease",
+          }}
+          title={showNextProg ? "Ocultar próximo programa" : "Ver programa a seguir"}
+        >
+          <Plus
+            size={18}
+            style={{
+              color: showNextProg ? "#fca5a5" : "rgba(255, 255, 255, 0.85)",
+              transform: showNextProg ? "rotate(45deg)" : "rotate(0deg)",
+              transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease",
+            }}
+          />
+        </button>
+
+        {/* 3. Next Program Box ('A SEGUIR') with fluid entrance / exit animation on the right side */}
+        <div
+          data-testid="next-program-animated-box"
+          style={{
+            maxWidth: showNextProg ? 420 : 0,
+            opacity: showNextProg ? 1 : 0,
+            transform: showNextProg ? "translateX(0) scale(1)" : "translateX(-24px) scale(0.96)",
+            transition:
+              "max-width 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            pointerEvents: showNextProg && !isBehindPages ? "auto" : "none",
+          }}
+        >
+          <div
+            className="flex items-center gap-3.5 relative"
+            style={{
+              userSelect: "none",
+              height: 100,
+              boxSizing: "border-box",
+              background: `linear-gradient(135deg, ${nextPrimaryColor}33 0%, rgba(5, 9, 18, 0.95) 100%)`,
+              backdropFilter: "blur(24px) saturate(1.5)",
+              WebkitBackdropFilter: "blur(24px) saturate(1.5)",
+              borderRadius: 20,
+              padding: "10px 18px",
+              border: `1px solid ${nextPrimaryColor}40`,
+              boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${nextPrimaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
+              minWidth: 260,
+              maxWidth: "min(380px, calc(100vw - 120px))",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {/* Inner rounded box with gradient background matching next locutor photo */}
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 18,
+                overflow: "hidden",
+                position: "relative",
+                flexShrink: 0,
+                background: `linear-gradient(135deg, ${nextPrimaryColor} 0%, ${nextSecondaryColor} 100%)`,
+                boxShadow: `0 8px 20px ${nextPrimaryColor}40, 0 2px 6px rgba(0,0,0,0.35)`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              {nextProgInfo?.locutorFoto ? (
+                <img
+                  src={nextProgInfo.locutorFoto}
+                  alt={nextProgInfo.locutorNome || "Próximo locutor"}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "top center",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <User size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
+                </div>
+              )}
+            </div>
+
+            {/* Info beside photo: 'A SEGUIR' -> Nome do Programa -> Horário -> Nome do Locutor */}
+            <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              {/* 1. 'A SEGUIR' badge with site layout blue (#0055ff) */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    backgroundColor: "#0055ff",
+                    boxShadow: "0 0 10px rgba(0, 85, 255, 0.9)",
+                    animation: "fmp-pulse 1.8s ease-in-out infinite",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "#0055ff",
+                    lineHeight: 1,
+                  }}
+                >
+                  A SEGUIR
+                </span>
+              </div>
+
+              {/* 2. Embaixo de 'A SEGUIR': O nome do programa */}
+              <p
+                style={{
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: "#ffffff",
+                  lineHeight: 1.15,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  margin: 0,
+                  letterSpacing: "-0.01em",
+                  textTransform: "uppercase",
+                  textShadow: "0 2px 8px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.9)",
+                }}
+                title={nextProgInfo?.programaNome || "A Seguir"}
+              >
+                {nextProgInfo?.programaNome || "A Seguir"}
+              </p>
+
+              {/* 3. Embaixo do nome: Horário */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  marginTop: 2,
+                }}
+              >
+                <Clock size={11} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.65)",
+                    lineHeight: 1.2,
+                    letterSpacing: "0.02em",
+                    textTransform: "uppercase",
+                    textShadow: "0 2px 6px rgba(0,0,0,0.85)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {nextHoursStr}
+                </span>
+              </div>
+
+              {/* 4. Embaixo do horário: O nome do locutor */}
+              {nextProgInfo?.locutorNome && nextProgInfo.locutorNome !== "—" && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    marginTop: 2,
+                  }}
+                >
+                  <User size={10} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: "rgba(255,255,255,0.85)",
+                      lineHeight: 1.2,
+                      letterSpacing: "0.03em",
+                      textTransform: "uppercase",
+                      textShadow: "0 2px 6px rgba(0,0,0,0.85)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={nextProgInfo.locutorNome}
+                  >
+                    {nextProgInfo.locutorNome}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes fmp-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.45; transform: scale(0.8); }
+        }
+      `}</style>
+    </div>
+  );
+}

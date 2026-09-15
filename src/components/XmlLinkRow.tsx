@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Code2, Copy, Check, Loader2 } from "lucide-react";
+import { Code2, Copy, Check, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface XmlLinkRowProps {
   label: string;
@@ -18,6 +19,12 @@ interface XmlLinkRowProps {
    * tenant's public XML in shared storage.
    */
   scopeKey?: string;
+  /** Exibe a URL formatada abaixo do título */
+  showUrl?: boolean;
+  /** Descrição opcional do feed */
+  description?: string;
+  /** URL do feed direto no Supabase (mantido para redundância) */
+  supabaseUrl?: string;
 }
 
 function sanitizeFileName(label: string, scopeKey?: string): string {
@@ -36,12 +43,13 @@ function sanitizeFolder(id: string): string {
 }
 
 function prettifyLabel(label: string): string {
+  if (label === "APENAS XML" || label.toLowerCase() === "apenas xml") return "Apenas XML";
   const cleaned = label.replace(/^xml\s+/i, "").trim();
   if (!cleaned) return label;
   return cleaned
     .toLowerCase()
     .split(/\s+/)
-    .map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : w))
+    .map((w) => (w.toLowerCase() === "xml" ? "XML" : (w.length ? w[0].toUpperCase() + w.slice(1) : w)))
     .join(" ");
 }
 
@@ -51,6 +59,9 @@ export default function XmlLinkRow({
   permanentUrl: externalUrl,
   scopeKey,
   kicker,
+  showUrl = false,
+  description,
+  supabaseUrl,
 }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string>(externalUrl || "");
@@ -114,6 +125,7 @@ export default function XmlLinkRow({
     if (!url) return;
     navigator.clipboard.writeText(url);
     setCopied(true);
+    toast.success(`URL copiada: ${displayName}`);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -132,12 +144,12 @@ export default function XmlLinkRow({
         }
       }}
       title={url || "Gerando link..."}
-      className="group flex items-center gap-3 cursor-pointer transition-all"
+      className="group flex items-center gap-3 cursor-pointer transition-all hover:border-[#0055ff] hover:shadow-xs"
       style={{
         background: "#ffffff",
-        border: "1.5px solid #00BFF0",
-        borderRadius: 999,
-        padding: "10px 10px 10px 14px",
+        border: "1px solid rgba(226, 232, 240, 0.9)",
+        borderRadius: showUrl ? 18 : 999,
+        padding: showUrl ? "10px 14px" : "10px 10px 10px 16px",
         fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif",
       }}
     >
@@ -145,58 +157,132 @@ export default function XmlLinkRow({
       <div
         className="shrink-0 flex items-center justify-center"
         style={{
-          width: 32,
-          height: 32,
+          width: 34,
+          height: 34,
           borderRadius: 999,
-          background: "rgba(0,191,240,0.15)",
+          background: "rgba(0, 85, 255, 0.08)",
         }}
       >
-        <Code2 size={15} style={{ color: "#00BFF0" }} strokeWidth={2.5} />
+        <Code2 size={16} style={{ color: "#0055ff" }} strokeWidth={2.5} />
       </div>
 
       {/* Textos */}
       <div className="flex-1 min-w-0 leading-tight">
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: "#6b7280",
-          }}
-        >
-          {displayKicker}
+        <div className="flex items-center gap-2">
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#64748b",
+            }}
+          >
+            {displayKicker}
+          </span>
+          {description && (
+            <span
+              className="text-[10px] text-slate-400 font-medium truncate hidden sm:inline"
+            >
+              • {description}
+            </span>
+          )}
         </div>
         <div
           className="truncate"
           style={{
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 700,
             color: "#0f172a",
           }}
         >
           {displayName}
         </div>
+        {showUrl && url && (
+          <div
+            className="truncate select-all"
+            style={{
+              fontSize: 11,
+              fontWeight: 500,
+              color: "#64748b",
+              marginTop: 2,
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+            }}
+          >
+            {url}
+          </div>
+        )}
+        {supabaseUrl && (
+          <div
+            className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100 text-[10px] text-slate-400 font-mono"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="font-bold text-blue-600/70 uppercase tracking-wider text-[9px] shrink-0">
+              Supabase:
+            </span>
+            <span className="truncate flex-1 select-all hover:text-slate-600" title={supabaseUrl}>
+              {supabaseUrl}
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(supabaseUrl);
+                toast.success(`URL Supabase copiada: ${displayName}`);
+              }}
+              title="Copiar URL do Supabase"
+              className="p-1 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0055ff] transition shrink-0"
+            >
+              <Copy size={11} />
+            </button>
+            <a
+              href={supabaseUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title="Abrir feed do Supabase em nova aba"
+              className="p-1 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0055ff] transition shrink-0"
+            >
+              <ExternalLink size={11} />
+            </a>
+          </div>
+        )}
       </div>
 
-      {/* Botão copiar (pílula lime) */}
-      <div
-        className="shrink-0 flex items-center justify-center transition-transform group-hover:scale-105"
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 999,
-          background: copied ? "#22c55e" : "#C6F03C",
-          boxShadow: "0 2px 6px rgba(198,240,60,0.4)",
-        }}
-      >
-        {!ready ? (
-          <Loader2 size={16} className="animate-spin" style={{ color: "#0f172a" }} />
-        ) : copied ? (
-          <Check size={16} style={{ color: "#ffffff" }} strokeWidth={3} />
-        ) : (
-          <Copy size={16} style={{ color: "#0f172a" }} strokeWidth={2.5} />
+      {/* Ações à direita */}
+      <div className="shrink-0 flex items-center gap-1.5">
+        {ready && url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            title="Abrir feed XML em nova aba"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#0055ff] hover:bg-blue-50 transition-colors cursor-pointer"
+          >
+            <ExternalLink size={14} />
+          </a>
         )}
+
+        {/* Botão copiar (azul #0055ff) */}
+        <div
+          className="shrink-0 flex items-center justify-center transition-transform group-hover:scale-105"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 999,
+            background: copied ? "#16a34a" : "#0055ff",
+            boxShadow: copied ? "0 2px 8px rgba(22, 163, 74, 0.3)" : "0 2px 8px rgba(0, 85, 255, 0.25)",
+          }}
+        >
+          {!ready ? (
+            <Loader2 size={16} className="animate-spin text-white" />
+          ) : copied ? (
+            <Check size={16} className="text-white" strokeWidth={3} />
+          ) : (
+            <Copy size={16} className="text-white" strokeWidth={2.5} />
+          )}
+        </div>
       </div>
     </div>
   );

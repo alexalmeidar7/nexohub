@@ -7,33 +7,37 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { findCurrentProgram } from "./OnAirWidget";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { getProgramas } from "./ProgramaForm";
+import { getApresentadores } from "./ApresentadorForm";
+import { getStoredOuvintes } from "@/lib/ouvintesUpsert";
 
 
-// Palette (nexo-form-design-system)
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+// Palette (nexo-form-design-system - ClientesPage style)
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#ffffff";
+const DARK = "#002132";
 const FONT = "'Montserrat', sans-serif";
 
 const pillInput: React.CSSProperties = {
   width: "100%",
   height: 44,
   borderRadius: 999,
-  background: "#FFFFFF",
-  border: `2px solid ${CYAN}`,
+  background: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
   padding: "0 20px",
   fontFamily: FONT,
-  fontSize: 13,
-  color: DARK,
+  fontSize: 12,
+  color: "#0f172a",
   outline: "none",
+  textTransform: "uppercase",
 };
 
 const pillSelect: React.CSSProperties = {
   ...pillInput,
   appearance: "none",
   backgroundImage:
-    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2300BFF0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230055ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
   backgroundRepeat: "no-repeat",
   backgroundPosition: "right 18px center",
   paddingRight: 44,
@@ -60,23 +64,30 @@ const cardStyle: React.CSSProperties = {
 const primaryBtn: React.CSSProperties = {
   height: 44,
   borderRadius: 999,
-  background: CYAN,
+  background: "#0055ff",
   color: "#fff",
-  padding: "0 22px",
+  padding: "0 24px",
   fontFamily: FONT,
   fontWeight: 800,
   fontSize: 12,
-  letterSpacing: 1,
+  letterSpacing: 1.5,
   textTransform: "uppercase",
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
   border: "none",
   cursor: "pointer",
+  boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
 };
 
-const limeBtn: React.CSSProperties = { ...primaryBtn, background: LIME, color: DARK };
-const ghostBtn: React.CSSProperties = { ...primaryBtn, background: "#fff", color: DARK, border: `2px solid ${CYAN}` };
+const limeBtn: React.CSSProperties = { ...primaryBtn };
+const ghostBtn: React.CSSProperties = {
+  ...primaryBtn,
+  background: "#f8fafc",
+  color: "#334155",
+  border: "1px solid #cbd5e1",
+  boxShadow: "none",
+};
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -139,11 +150,87 @@ interface ProgramaLite {
   classificacaoEtaria?: string;
 }
 
+export interface PremioPrograma {
+  id: string;
+  premio_id: string;
+  programa_id: string;
+  quantidade: number;
+}
+
+export const getLocalStoragePremiosKey = (uId: string) => `nexohub_premios_${uId}`;
+export const getLocalStorageSorteiosKey = (uId: string) => `nexohub_sorteios_${uId}`;
+export const getLocalStorageLinksKey = (uId: string) => `nexohub_sorteio_links_${uId}`;
+
+const generateId = (prefix = "id") => {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+};
+
+export function getStoredPremios(userId?: string | null): Premio[] {
+  if (!userId) return [];
+  try {
+    const raw = localStorage.getItem(getLocalStoragePremiosKey(userId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+export function saveStoredPremios(userId: string | null | undefined, list: Premio[]): void {
+  if (!userId) return;
+  try {
+    localStorage.setItem(getLocalStoragePremiosKey(userId), JSON.stringify(list));
+  } catch {}
+}
+
+export function getStoredSorteios(userId?: string | null): Sorteio[] {
+  if (!userId) return [];
+  try {
+    const raw = localStorage.getItem(getLocalStorageSorteiosKey(userId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+export function saveStoredSorteios(userId: string | null | undefined, list: Sorteio[]): void {
+  if (!userId) return;
+  try {
+    localStorage.setItem(getLocalStorageSorteiosKey(userId), JSON.stringify(list));
+  } catch {}
+}
+
+export function getStoredLinks(userId?: string | null): PremioPrograma[] {
+  if (!userId) return [];
+  try {
+    const raw = localStorage.getItem(getLocalStorageLinksKey(userId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+export function saveStoredLinks(userId: string | null | undefined, list: PremioPrograma[]): void {
+  if (!userId) return;
+  try {
+    localStorage.setItem(getLocalStorageLinksKey(userId), JSON.stringify(list));
+  } catch {}
+}
+
 type Tab = "premios" | "lista" | "sorteio" | "entrega";
 
 
-export default function SorteiosPage() {
+export default function SorteiosPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const { toast } = useToast();
   const [tab, setTab] = useState<Tab>("premios");
   const [loading, setLoading] = useState(true);
@@ -154,29 +241,89 @@ export default function SorteiosPage() {
   const [apresentadores, setApresentadores] = useState<Array<{ id: string; nome: string }>>([]);
 
   const refreshPremios = async () => {
-    const { data, error } = await supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false });
-    if (!error) setPremios((data as any) || []);
+    if (!targetUserId) return;
+    try {
+      const { data, error } = await supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false });
+      let pData: Premio[] = (!error && data && data.length > 0) ? (data as any) : [];
+      const localP = getStoredPremios(targetUserId);
+      const pMap = new Map<string, Premio>();
+      pData.forEach((p: any) => pMap.set(p.id, p));
+      localP.forEach(p => { if (!pMap.has(p.id)) pMap.set(p.id, p); });
+      const merged = Array.from(pMap.values());
+      setPremios(merged);
+      saveStoredPremios(targetUserId, merged);
+    } catch {
+      const localP = getStoredPremios(targetUserId);
+      if (localP.length > 0) setPremios(localP);
+    }
   };
 
-  const load = async () => {
-    setLoading(true);
-    // Expire overdue drawings before fetching
-    if (user?.id) {
-      await supabase.rpc("expire_overdue_sorteios", { _user_id: user.id });
-    }
-    const [p, s, o, pr, ap] = await Promise.all([
-      supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
-      supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
-      supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
-      supabase.from("programas").select("*, apresentadores_ids").ilike("estudio", "%fm%").order("nome"),
-      supabase.from("apresentadores").select("id, nome"),
-    ]);
-    if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
-    else setPremios((p.data as any) || []);
-    if (s.error) toast({ title: "Erro ao carregar sorteios", description: s.error.message, variant: "destructive" });
-    else setSorteios((s.data as any) || []);
-    if (!o.error) setOuvintes((o.data as any) || []);
-    if (!pr.error) setProgramas(((pr.data as any) || []).map((x: any) => ({
+  const load = async (showSkeleton = false) => {
+    if (!targetUserId) return;
+    if (showSkeleton) setLoading(true);
+    try {
+      if (user?.id) {
+        await supabase.rpc("expire_overdue_sorteios", { _user_id: user.id });
+      }
+    } catch {}
+
+    let pData: any[] = [];
+    let sData: any[] = [];
+    let oData: any[] = [];
+    let prData: any[] = [];
+    let apData: any[] = [];
+
+    try {
+      const [p, s, o, pr, ap] = await Promise.all([
+        supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
+        supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
+        supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
+        supabase.from("programas").select("*, apresentadores_ids").order("nome"),
+        supabase.from("apresentadores").select("id, nome"),
+      ]);
+      if (p.data) pData = p.data;
+      if (s.data) sData = s.data;
+      if (o.data) oData = o.data;
+      if (pr.data) prData = pr.data;
+      if (ap.data) apData = ap.data;
+    } catch {}
+
+    // Fallback and merge for Premios
+    const localP = getStoredPremios(targetUserId);
+    const pMap = new Map<string, Premio>();
+    pData.forEach((x: any) => pMap.set(x.id, x));
+    localP.forEach(x => { if (!pMap.has(x.id)) pMap.set(x.id, x); });
+    const mergedPremios = Array.from(pMap.values());
+    setPremios(mergedPremios);
+    saveStoredPremios(targetUserId, mergedPremios);
+
+    // Fallback and merge for Sorteios
+    const localS = getStoredSorteios(targetUserId);
+    const sMap = new Map<string, Sorteio>();
+    sData.forEach((x: any) => sMap.set(x.id, x));
+    localS.forEach(x => { if (!sMap.has(x.id)) sMap.set(x.id, x); });
+    const nowMs = Date.now();
+    const mergedSorteios = Array.from(sMap.values()).map(s => {
+      let isExpirado = !!s.expirado;
+      if (!s.entregue && s.data_expiracao) {
+        if (new Date(s.data_expiracao).getTime() <= nowMs) {
+          isExpirado = true;
+        }
+      }
+      return { ...s, expirado: isExpirado };
+    });
+    setSorteios(mergedSorteios);
+    saveStoredSorteios(targetUserId, mergedSorteios);
+
+    // Fallback and merge for Ouvintes
+    const localO = getStoredOuvintes(targetUserId);
+    const oMap = new Map<string, any>();
+    (oData || []).forEach((x: any) => oMap.set(x.id, x));
+    localO.forEach((x: any) => oMap.set(x.id, x));
+    setOuvintes(Array.from(oMap.values()) as any);
+
+    // Fallback for Programas
+    let mappedProgs: ProgramaLite[] = prData.map((x: any) => ({
       id: x.id,
       nome: x.nome,
       apresentadorId: x.apresentador_id || "",
@@ -187,25 +334,56 @@ export default function SorteiosPage() {
       horarioFim: x.horario_fim,
       estudio: x.estudio || "",
       classificacaoEtaria: x.classificacao_etaria || ""
-    })));
-    if (!ap.error) setApresentadores((ap.data as any) || []);
+    }));
+
+    if (mappedProgs.length === 0) {
+      try {
+        const fallbackP = await getProgramas(targetUserId, user?.email);
+        if (fallbackP && fallbackP.length > 0) {
+          mappedProgs = fallbackP.map((x: any) => ({
+            id: x.id,
+            nome: x.nome,
+            apresentadorId: x.apresentador_id || "",
+            apresentadoresIds: x.apresentadores_ids || [],
+            selo: x.selo || "",
+            diasSemana: Array.isArray(x.dias_semana) ? x.dias_semana : (x.dias_semana ? x.dias_semana.split(",") : []),
+            horarioInicio: x.horario_inicio,
+            horarioFim: x.horario_fim,
+            estudio: x.estudio || "",
+            classificacaoEtaria: x.classificacao_etaria || ""
+          }));
+        }
+      } catch {}
+    }
+    setProgramas(mappedProgs);
+
+    // Fallback for Apresentadores
+    if (apData.length === 0) {
+      try {
+        const fallbackAp = await getApresentadores(targetUserId);
+        if (fallbackAp && fallbackAp.length > 0) {
+          apData = fallbackAp.map((a: any) => ({ id: a.id, nome: a.nome }));
+        }
+      } catch {}
+    }
+    setApresentadores(apData);
+
     setLoading(false);
   };
 
-
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(true); }, [targetUserId]);
 
   if (loading) return <ModulePageSkeleton />;
 
   return (
-    <div style={{ fontFamily: FONT }}>
+    <div className="max-w-6xl mx-auto w-full space-y-6" style={{ fontFamily: FONT }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Sorteios
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="flex justify-center items-center gap-2 mb-6 flex-wrap w-full">
         {([
           { k: "premios", label: "Prêmios & Estoque", icon: Package },
           { k: "lista", label: "Lista de Prêmios", icon: Radio },
@@ -228,10 +406,10 @@ export default function SorteiosPage() {
         ))}
       </div>
 
-      {tab === "premios" && <PremiosTab premios={premios} userId={user?.id} onReload={load} />}
-      {tab === "lista" && <ListaPremiosTab premios={premios} programas={programas} userId={user?.id} onStockChanged={refreshPremios} />}
-      {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} sorteios={sorteios} programas={programas} apresentadores={apresentadores} userId={user?.id} onReload={load} onGoTo={setTab} />}
-      {tab === "entrega" && <EntregaTab sorteios={sorteios} premios={premios} onReload={load} />}
+      {tab === "premios" && <PremiosTab premios={premios} userId={targetUserId} onReload={load} />}
+      {tab === "lista" && <ListaPremiosTab premios={premios} programas={programas} userId={targetUserId} onStockChanged={refreshPremios} />}
+      {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} sorteios={sorteios} programas={programas} apresentadores={apresentadores} userId={targetUserId} onReload={load} onGoTo={setTab} />}
+      {tab === "entrega" && <EntregaTab sorteios={sorteios} premios={premios} userId={targetUserId} onReload={load} />}
     </div>
   );
 }
@@ -247,27 +425,54 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
 
   const reset = () => { setForm({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1", dias_validade: "7" }); setEditingId(null); };
 
-
   const save = async () => {
-    if (!userId) return;
+    if (!userId) {
+      toast({ title: "Usuário não identificado", variant: "destructive" });
+      return;
+    }
     if (!form.nome.trim()) { toast({ title: "Nome do prêmio é obrigatório", variant: "destructive" }); return; }
     setSaving(true);
-    const payload = {
-      user_id: userId,
+    const targetId = editingId || generateId("premio");
+    const payload: Premio = {
+      id: targetId,
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || null,
       imagem_url: form.imagem_url || null,
       quantidade_estoque: parseInt(form.quantidade_estoque || "0", 10) || 0,
       dias_validade: Math.max(1, parseInt(form.dias_validade || "7", 10) || 7),
+      ativo: true,
+      created_at: editingId ? (premios.find(p => p.id === editingId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
+      programa_id: null,
     };
 
-    const q = editingId
-      ? supabase.from("sorteio_premios").update(payload).eq("id", editingId)
-      : supabase.from("sorteio_premios").insert(payload);
-    const { error } = await q;
+    // 1) Grava imediatamente no storage local da emissora
+    const currentList = getStoredPremios(userId);
+    const updatedList = editingId
+      ? currentList.map(p => p.id === editingId ? payload : p)
+      : [payload, ...currentList.filter(p => p.id !== targetId)];
+    saveStoredPremios(userId, updatedList);
+
+    // 2) Tenta sincronizar com o Supabase silenciosamente
+    try {
+      const dbPayload = {
+        user_id: userId,
+        nome: payload.nome,
+        descricao: payload.descricao,
+        imagem_url: payload.imagem_url,
+        quantidade_estoque: payload.quantidade_estoque,
+        dias_validade: payload.dias_validade,
+      };
+      if (editingId) {
+        await supabase.from("sorteio_premios").update(dbPayload).eq("id", editingId);
+      } else {
+        await supabase.from("sorteio_premios").insert({ id: targetId, ...dbPayload });
+      }
+    } catch (err) {
+      console.warn("Aviso ao salvar sorteio_premios no Supabase:", err);
+    }
+
     setSaving(false);
-    if (error) { toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
-    toast({ title: editingId ? "Prêmio atualizado" : "Prêmio cadastrado" });
+    toast({ title: editingId ? "Prêmio atualizado com sucesso!" : "Prêmio cadastrado com sucesso!" });
     reset();
     onReload();
   };
@@ -277,17 +482,53 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
     setUploading(true);
     const ext = file.name.split(".").pop();
     const path = `${userId}/sorteios/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("comercial").upload(path, file, { upsert: true });
-    if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); setUploading(false); return; }
-    const { data } = supabase.storage.from("comercial").getPublicUrl(path);
-    setForm(f => ({ ...f, imagem_url: data.publicUrl }));
-    setUploading(false);
+
+    try {
+      const { error } = await supabase.storage.from("comercial").upload(path, file, { upsert: true });
+      if (!error) {
+        const { data } = supabase.storage.from("comercial").getPublicUrl(path);
+        if (data?.publicUrl) {
+          setForm(f => ({ ...f, imagem_url: data.publicUrl }));
+          setUploading(false);
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback: conversão local para base64 data URL
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setForm(f => ({ ...f, imagem_url: reader.result as string }));
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setUploading(false);
+      toast({ title: "Erro ao processar imagem", variant: "destructive" });
+    }
   };
 
   const del = async (id: string) => {
     if (!(await confirmDialog("Excluir este prêmio?"))) return;
-    const { error } = await supabase.from("sorteio_premios").delete().eq("id", id);
-    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
+
+    // 1) Remove do storage local
+    const currentList = getStoredPremios(userId);
+    const updatedList = currentList.filter(p => p.id !== id);
+    saveStoredPremios(userId, updatedList);
+
+    const currentLinks = getStoredLinks(userId);
+    const updatedLinks = currentLinks.filter(l => l.premio_id !== id);
+    saveStoredLinks(userId, updatedLinks);
+
+    // 2) Tenta remover no Supabase silenciosamente
+    try {
+      await supabase.from("sorteio_premios").delete().eq("id", id);
+      await supabase.from("sorteio_premio_programas").delete().eq("premio_id", id);
+    } catch (err) {
+      console.warn("Aviso ao excluir prêmio no Supabase:", err);
+    }
+
     toast({ title: "Prêmio excluído" });
     onReload();
   };
@@ -333,19 +574,53 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
             </Field>
           </div>
 
-          <Field label="Imagem do prêmio">
-            <div className="flex items-center gap-3">
-              {form.imagem_url && (
-                <img src={form.imagem_url} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover", border: `2px solid ${CYAN}` }} />
+          <Field label="Imagem do produto / prêmio">
+            <div className="flex items-center gap-4 flex-wrap">
+              {form.imagem_url ? (
+                <div className="relative group w-16 h-16 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-50 flex-shrink-0">
+                  <img src={form.imagem_url} alt="Produto" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <ImageIcon size={18} className="text-white" />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/80 flex flex-col items-center justify-center text-slate-400 flex-shrink-0">
+                  <ImageIcon size={22} className="text-slate-300 stroke-[1.5]" />
+                  <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Sem foto</span>
+                </div>
               )}
-              <label style={{ ...ghostBtn, cursor: "pointer" }}>
-                {uploading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                {form.imagem_url ? "Trocar" : "Enviar"}
-                <input type="file" accept="image/*" hidden onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
-              </label>
-              {form.imagem_url && (
-                <button style={ghostBtn} onClick={() => setForm({ ...form, imagem_url: "" })}><X size={16} /></button>
-              )}
+
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <label className="h-11 px-5 rounded-full bg-[#0055ff] hover:bg-[#0042cc] text-white text-xs font-bold uppercase tracking-wider shadow-sm hover:shadow transition-all inline-flex items-center gap-2 cursor-pointer active:scale-95 select-none">
+                    {uploading ? (
+                      <Loader2 size={16} className="animate-spin text-white" />
+                    ) : (
+                      <ImageIcon size={16} className="text-white" />
+                    )}
+                    <span>{uploading ? "Enviando imagem..." : form.imagem_url ? "Trocar Imagem" : "Adicionar Imagem"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
+                    />
+                  </label>
+
+                  {form.imagem_url && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, imagem_url: "" })}
+                      className="h-11 px-4 rounded-full bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 border border-slate-200/80 text-xs font-bold uppercase tracking-wider transition-all inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                      title="Remover imagem"
+                    >
+                      <Trash2 size={14} />
+                      <span>Remover</span>
+                    </button>
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium">Formatos suportados: PNG, JPG ou WEBP</span>
+              </div>
             </div>
           </Field>
           <div className="flex gap-2 pt-2">
@@ -368,12 +643,12 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
         ) : (
           <div className="grid gap-3">
             {premios.map(p => (
-              <div key={p.id} className="flex items-center gap-4" style={{ background: "#fff", borderRadius: 16, padding: 12, border: `1px solid ${CYAN}33` }}>
+              <div key={p.id} className="flex items-center gap-4 bg-white rounded-2xl p-3.5 border border-slate-200/80 hover:border-slate-300 shadow-xs hover:shadow-sm transition-all">
                 {p.imagem_url ? (
-                  <img src={p.imagem_url} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover" }} />
+                  <img src={p.imagem_url} alt="" className="w-14 h-14 rounded-2xl object-cover border border-slate-200/80 shadow-xs shrink-0" />
                 ) : (
-                  <div style={{ width: 56, height: 56, borderRadius: 12, background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Gift size={22} color={CYAN} />
+                  <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#0055ff] shrink-0">
+                    <Gift size={22} />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -388,9 +663,23 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
                   <div style={{ fontSize: 9, color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Estoque</div>
                 </div>
 
-                <div className="flex gap-1">
-                  <button style={{ ...ghostBtn, height: 36, padding: "0 12px" }} onClick={() => edit(p)}><Pencil size={14} /></button>
-                  <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(p.id)}><Trash2 size={14} /></button>
+                <div className="flex gap-1.5 items-center">
+                  <button
+                    type="button"
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-[#0055ff]/10 text-slate-500 hover:text-[#0055ff] flex items-center justify-center transition-all cursor-pointer"
+                    onClick={() => edit(p)}
+                    title="Editar"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 flex items-center justify-center transition-all cursor-pointer"
+                    onClick={() => del(p.id)}
+                    title="Excluir"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -402,8 +691,6 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
 }
 
 /* ═════════════════════ LISTA DE PRÊMIOS (drag & drop) ═════════════════════ */
-interface PremioPrograma { id: string; premio_id: string; programa_id: string; quantidade: number; }
-
 function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premios: Premio[]; programas: ProgramaLite[]; userId?: string; onStockChanged?: () => void }) {
   const { toast } = useToast();
   const [links, setLinks] = useState<PremioPrograma[]>([]);
@@ -471,8 +758,25 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
   const loadLinks = async () => {
     if (!userId) return;
     setLoadingLinks(true);
-    const { data, error } = await supabase.from("sorteio_premio_programas").select("*").eq("user_id", userId);
-    if (!error) setLinks((data as any) || []);
+    let loadedLinks: PremioPrograma[] = [];
+    try {
+      const { data, error } = await supabase.from("sorteio_premio_programas").select("*").eq("user_id", userId);
+      if (!error && data && data.length > 0) {
+        loadedLinks = data as any;
+      }
+    } catch (err) {
+      console.warn("Aviso ao carregar sorteio_premio_programas do Supabase:", err);
+    }
+
+    const localLinks = getStoredLinks(userId);
+    const map = new Map<string, PremioPrograma>();
+    loadedLinks.forEach(l => map.set(l.id, l));
+    localLinks.forEach(l => {
+      if (!map.has(l.id)) map.set(l.id, l);
+    });
+    const finalLinks = Array.from(map.values());
+    setLinks(finalLinks);
+    saveStoredLinks(userId, finalLinks);
     setLoadingLinks(false);
   };
   useEffect(() => { loadLinks(); }, [userId]);
@@ -503,87 +807,158 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
     const { premio, programa, existing } = pendingDrop;
     const prevQty = existing?.quantidade ?? 0;
     const delta = qty - prevQty; // >0 debita, <0 devolve
-    setSavingQty(true);
-    // Ler estoque atual do banco para evitar estado obsoleto
-    const { data: fresh, error: eRead } = await supabase
-      .from("sorteio_premios")
-      .select("quantidade_estoque")
-      .eq("id", premio.id)
-      .maybeSingle();
-    if (eRead) { setSavingQty(false); toast({ title: "Erro ao ler estoque", description: eRead.message, variant: "destructive" }); return; }
-    const estoqueAtual = fresh?.quantidade_estoque ?? 0;
+
+    // Ler estoque atual (local ou props)
+    const currentPremios = getStoredPremios(userId);
+    const freshPremio = currentPremios.find(p => p.id === premio.id) || premios.find(p => p.id === premio.id) || premio;
+    const estoqueAtual = freshPremio?.quantidade_estoque ?? 0;
+
     if (delta > 0 && estoqueAtual < delta) {
-      setSavingQty(false);
       toast({ title: "Estoque insuficiente", description: `Disponível: ${estoqueAtual}. Necessário: ${delta}.`, variant: "destructive" });
       return;
     }
-    const q = existing
-      ? supabase.from("sorteio_premio_programas").update({ quantidade: qty }).eq("id", existing.id)
-      : supabase.from("sorteio_premio_programas").insert({ user_id: userId, premio_id: premio.id, programa_id: programa.id, quantidade: qty });
-    const { error } = await q;
-    if (error) { setSavingQty(false); toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" }); return; }
+
+    setSavingQty(true);
+
+    // 1) Atualiza os vínculos localmente
+    const currentLinks = getStoredLinks(userId);
+    const targetLinkId = existing?.id || generateId("link");
+    const updatedLinks = existing
+      ? currentLinks.map(l => l.id === existing.id ? { ...l, quantidade: qty } : l)
+      : [...currentLinks, { id: targetLinkId, premio_id: premio.id, programa_id: programa.id, quantidade: qty }];
+    saveStoredLinks(userId, updatedLinks);
+    setLinks(updatedLinks);
+
+    // 2) Atualiza estoque do prêmio localmente
     if (delta !== 0) {
       const novoEstoque = Math.max(0, estoqueAtual - delta);
-      const { error: eStock } = await supabase.from("sorteio_premios").update({ quantidade_estoque: novoEstoque }).eq("id", premio.id);
-      if (eStock) { setSavingQty(false); toast({ title: "Erro no estoque", description: eStock.message, variant: "destructive" }); return; }
+      const updatedPremios = currentPremios.map(p => p.id === premio.id ? { ...p, quantidade_estoque: novoEstoque } : p);
+      saveStoredPremios(userId, updatedPremios);
     }
+
+    // 3) Tenta sincronizar com o Supabase silenciosamente
+    try {
+      const q = existing
+        ? supabase.from("sorteio_premio_programas").update({ quantidade: qty }).eq("id", existing.id)
+        : supabase.from("sorteio_premio_programas").insert({ id: targetLinkId, user_id: userId, premio_id: premio.id, programa_id: programa.id, quantidade: qty });
+      await q;
+
+      if (delta !== 0) {
+        const novoEstoque = Math.max(0, estoqueAtual - delta);
+        await supabase.from("sorteio_premios").update({ quantidade_estoque: novoEstoque }).eq("id", premio.id);
+      }
+    } catch (err) {
+      console.warn("Aviso ao salvar vínculo no Supabase:", err);
+    }
+
     setSavingQty(false);
-    toast({ title: existing ? "Quantidade atualizada" : "Prêmio vinculado ao programa", description: delta > 0 ? `Baixa de ${delta} unidade(s) no estoque` : delta < 0 ? `Devolvido ${Math.abs(delta)} ao estoque` : undefined });
+    toast({
+      title: existing ? "Quantidade atualizada" : "Prêmio vinculado ao programa",
+      description: delta > 0 ? `Baixa de ${delta} unidade(s) no estoque` : delta < 0 ? `Devolvido ${Math.abs(delta)} ao estoque` : undefined,
+    });
     setPendingDrop(null);
-    loadLinks();
     onStockChanged?.();
   };
 
   const removeLink = async (linkId: string) => {
-    const link = links.find(l => l.id === linkId);
-    const { error } = await supabase.from("sorteio_premio_programas").delete().eq("id", linkId);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    const currentLinks = getStoredLinks(userId);
+    const link = currentLinks.find(l => l.id === linkId) || links.find(l => l.id === linkId);
+    const updatedLinks = currentLinks.filter(l => l.id !== linkId);
+    saveStoredLinks(userId, updatedLinks);
+    setLinks(updatedLinks);
+
     if (link) {
-      const premio = premios.find(p => p.id === link.premio_id);
+      const currentPremios = getStoredPremios(userId);
+      const premio = currentPremios.find(p => p.id === link.premio_id) || premios.find(p => p.id === link.premio_id);
       if (premio) {
-        await supabase.from("sorteio_premios").update({ quantidade_estoque: (premio.quantidade_estoque ?? 0) + link.quantidade }).eq("id", premio.id);
+        const novoEstoque = (premio.quantidade_estoque ?? 0) + link.quantidade;
+        const updatedPremios = currentPremios.map(p => p.id === premio.id ? { ...p, quantidade_estoque: novoEstoque } : p);
+        saveStoredPremios(userId, updatedPremios);
       }
     }
+
+    try {
+      await supabase.from("sorteio_premio_programas").delete().eq("id", linkId);
+      if (link) {
+        const premio = premios.find(p => p.id === link.premio_id);
+        if (premio) {
+          await supabase.from("sorteio_premios").update({ quantidade_estoque: (premio.quantidade_estoque ?? 0) + link.quantidade }).eq("id", premio.id);
+        }
+      }
+    } catch (err) {
+      console.warn("Aviso ao remover vínculo no Supabase:", err);
+    }
+
     toast({ title: "Prêmio removido", description: link ? `Devolvido ${link.quantidade} ao estoque` : undefined });
-    loadLinks();
     onStockChanged?.();
   };
 
   const clearPrograma = async (programa: ProgramaLite) => {
     if (!userId) return;
     if (!(await confirmDialog(`Limpar todos os prêmios de "${programa.nome}"? As quantidades voltarão ao estoque.`))) return;
-    const toReturn = links.filter(l => l.programa_id === programa.id);
-    const { error } = await supabase.from("sorteio_premio_programas").delete().eq("user_id", userId).eq("programa_id", programa.id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    const currentLinks = getStoredLinks(userId);
+    const toReturn = currentLinks.filter(l => l.programa_id === programa.id);
+    const updatedLinks = currentLinks.filter(l => l.programa_id !== programa.id);
+    saveStoredLinks(userId, updatedLinks);
+    setLinks(updatedLinks);
+
     // devolve estoque agregando por prêmio
     const agg = new Map<string, number>();
     for (const l of toReturn) agg.set(l.premio_id, (agg.get(l.premio_id) || 0) + l.quantidade);
-    for (const [premioId, qty] of agg) {
-      const premio = premios.find(p => p.id === premioId);
-      if (premio) await supabase.from("sorteio_premios").update({ quantidade_estoque: (premio.quantidade_estoque ?? 0) + qty }).eq("id", premioId);
+    const currentPremios = getStoredPremios(userId);
+    const updatedPremios = currentPremios.map(p => {
+      const extra = agg.get(p.id) || 0;
+      return extra > 0 ? { ...p, quantidade_estoque: (p.quantidade_estoque ?? 0) + extra } : p;
+    });
+    saveStoredPremios(userId, updatedPremios);
+
+    try {
+      await supabase.from("sorteio_premio_programas").delete().eq("user_id", userId).eq("programa_id", programa.id);
+      for (const [premioId, qty] of agg) {
+        const premio = premios.find(p => p.id === premioId);
+        if (premio) await supabase.from("sorteio_premios").update({ quantidade_estoque: (premio.quantidade_estoque ?? 0) + qty }).eq("id", premioId);
+      }
+    } catch (err) {
+      console.warn("Aviso ao limpar programa no Supabase:", err);
     }
+
     toast({ title: "Lista limpa", description: toReturn.length ? "Quantidades devolvidas ao estoque" : undefined });
-    loadLinks();
     onStockChanged?.();
   };
 
   const updateQty = async (linkId: string, qty: number) => {
     const newQty = Math.max(1, qty);
-    const link = links.find(l => l.id === linkId);
+    const currentLinks = getStoredLinks(userId);
+    const link = currentLinks.find(l => l.id === linkId) || links.find(l => l.id === linkId);
     if (!link) return;
     const delta = newQty - link.quantidade;
-    const premio = premios.find(p => p.id === link.premio_id);
+    const currentPremios = getStoredPremios(userId);
+    const premio = currentPremios.find(p => p.id === link.premio_id) || premios.find(p => p.id === link.premio_id);
+
     if (delta > 0 && premio && (premio.quantidade_estoque ?? 0) < delta) {
       toast({ title: "Estoque insuficiente", description: `Disponível: ${premio.quantidade_estoque}.`, variant: "destructive" });
-      loadLinks();
       return;
     }
-    const { error } = await supabase.from("sorteio_premio_programas").update({ quantidade: newQty }).eq("id", linkId);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+
+    const updatedLinks = currentLinks.map(l => l.id === linkId ? { ...l, quantidade: newQty } : l);
+    saveStoredLinks(userId, updatedLinks);
+    setLinks(updatedLinks);
+
     if (delta !== 0 && premio) {
-      await supabase.from("sorteio_premios").update({ quantidade_estoque: Math.max(0, (premio.quantidade_estoque ?? 0) - delta) }).eq("id", premio.id);
+      const novoEstoque = Math.max(0, (premio.quantidade_estoque ?? 0) - delta);
+      const updatedPremios = currentPremios.map(p => p.id === premio.id ? { ...p, quantidade_estoque: novoEstoque } : p);
+      saveStoredPremios(userId, updatedPremios);
     }
-    loadLinks();
+
+    try {
+      await supabase.from("sorteio_premio_programas").update({ quantidade: newQty }).eq("id", linkId);
+      if (delta !== 0 && premio) {
+        await supabase.from("sorteio_premios").update({ quantidade_estoque: Math.max(0, (premio.quantidade_estoque ?? 0) - delta) }).eq("id", premio.id);
+      }
+    } catch (err) {
+      console.warn("Aviso ao atualizar quantidade no Supabase:", err);
+    }
+
     onStockChanged?.();
   };
 
@@ -915,8 +1290,16 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
   useEffect(() => {
     if (!userId) return;
     (async () => {
-      const { data } = await supabase.from("sorteio_premio_programas").select("*").eq("user_id", userId);
-      setLinks((data as any) || []);
+      let lList: any[] = [];
+      try {
+        const { data } = await supabase.from("sorteio_premio_programas").select("*").eq("user_id", userId);
+        if (data && data.length > 0) lList = data as any;
+      } catch {}
+      const local = getStoredLinks(userId);
+      const map = new Map<string, any>();
+      lList.forEach(l => map.set(l.id, l));
+      local.forEach(l => { if (!map.has(l.id)) map.set(l.id, l); });
+      setLinks(Array.from(map.values()));
     })();
   }, [userId, programaNoAr?.id]);
 
@@ -965,19 +1348,74 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
     ctxParts.push(`Sorteio em ${now.toLocaleString("pt-BR")}`);
     if (programaNoAr) ctxParts.push(`Programa no ar: ${programaNoAr.nome} (${programaNoAr.horarioInicio}—${programaNoAr.horarioFim})`);
     const obsFinal = [obs.trim(), ctxParts.join(" · ")].filter(Boolean).join("\n");
-    const { error } = await supabase.from("sorteio_sorteios").insert({
-      user_id: userId,
+
+    const newId = generateId("sorteio");
+    const token = (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10));
+    const pin = String(Math.floor(1000 + Math.random() * 9000));
+    const premioObj = premioMap[premioId];
+    const validadeDias = premioObj?.dias_validade ?? 7;
+    const dataExpiracao = new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString();
+
+    const newRecord: Sorteio = {
+      id: newId,
       premio_id: premioId,
       ouvinte_id: ganhador?.id || null,
       nome_ganhador: nome,
       telefone_ganhador: tel,
+      data_sorteio: new Date().toISOString(),
+      entregue: false,
+      data_entrega: null,
       observacoes: obsFinal || null,
-      programa_id: programaNoAr?.id || null,
+      expirado: false,
+      data_expiracao: dataExpiracao,
+      entrega_token: token,
+      entrega_pin: pin,
       programa_nome: programaNoAr?.nome || null,
-      apresentador_nome: apresentadorNoAr || null,
-    } as any);
+    };
+
+    // 1) Grava localmente
+    const currentSorteios = getStoredSorteios(userId);
+    saveStoredSorteios(userId, [newRecord, ...currentSorteios]);
+
+    // 2) Dá baixa no vínculo do programa ou no estoque geral
+    const currentLinks = getStoredLinks(userId);
+    const prgLink = currentLinks.find(l => l.programa_id === programaNoAr?.id && l.premio_id === premioId);
+    if (prgLink) {
+      if (prgLink.quantidade > 1) {
+        saveStoredLinks(userId, currentLinks.map(l => l.id === prgLink.id ? { ...l, quantidade: l.quantidade - 1 } : l));
+      } else {
+        saveStoredLinks(userId, currentLinks.filter(l => l.id !== prgLink.id));
+      }
+    } else {
+      const currentPremios = getStoredPremios(userId);
+      const pr = currentPremios.find(p => p.id === premioId);
+      if (pr && (pr.quantidade_estoque ?? 0) > 0) {
+        saveStoredPremios(userId, currentPremios.map(p => p.id === premioId ? { ...p, quantidade_estoque: p.quantidade_estoque - 1 } : p));
+      }
+    }
+
+    // 3) Sincroniza silenciosamente com o Supabase
+    try {
+      await supabase.from("sorteio_sorteios").insert({
+        id: newId,
+        user_id: userId,
+        premio_id: premioId,
+        ouvinte_id: ganhador?.id || null,
+        nome_ganhador: nome,
+        telefone_ganhador: tel,
+        observacoes: obsFinal || null,
+        programa_id: programaNoAr?.id || null,
+        programa_nome: programaNoAr?.nome || null,
+        apresentador_nome: apresentadorNoAr || null,
+        entrega_token: token,
+        entrega_pin: pin,
+        data_expiracao: dataExpiracao,
+      } as any);
+    } catch (err) {
+      console.warn("Aviso ao salvar sorteio no Supabase:", err);
+    }
+
     setSaving(false);
-    if (error) { toast({ title: "Erro ao registrar", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Sorteio registrado", description: "Acompanhe a entrega na aba Entregas." });
     setGanhador(null); setManual({ nome: "", telefone: "" }); setObs("");
     onReload();
@@ -1274,7 +1712,7 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
 
 
 /* ═════════════════════ ENTREGA ═════════════════════ */
-function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; premios: Premio[]; onReload: () => void }) {
+function EntregaTab({ sorteios, premios, userId, onReload }: { sorteios: Sorteio[]; premios: Premio[]; userId?: string; onReload: () => void }) {
   const { toast } = useToast();
   const [filter, setFilter] = useState<"pendentes" | "entregues" | "expirados" | "todos">("pendentes");
   const [search, setSearch] = useState("");
@@ -1291,6 +1729,9 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
       const pending = sorteios.filter(s => s.foto_entrega_url && !thumbs[s.id]);
       if (pending.length === 0) return;
       const entries = await Promise.all(pending.map(async s => {
+        if (s.foto_entrega_url?.startsWith("data:") || s.foto_entrega_url?.startsWith("http")) {
+          return [s.id, s.foto_entrega_url] as const;
+        }
         const { data } = await supabase.storage.from("entregas").createSignedUrl(s.foto_entrega_url as string, 3600);
         return [s.id, data?.signedUrl || ""] as const;
       }));
@@ -1311,6 +1752,10 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
 
   const verFoto = async (s: Sorteio) => {
     if (!s.foto_entrega_url) return;
+    if (s.foto_entrega_url.startsWith("data:") || s.foto_entrega_url.startsWith("http")) {
+      setFotoUrl(s.foto_entrega_url);
+      return;
+    }
     if (thumbs[s.id]) { setFotoUrl(thumbs[s.id]); return; }
     const { data, error } = await supabase.storage.from("entregas").createSignedUrl(s.foto_entrega_url, 300);
     if (error || !data?.signedUrl) { toast({ title: "Erro", description: error?.message || "Foto indisponível", variant: "destructive" }); return; }
@@ -1320,6 +1765,15 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
   const baixarFoto = async (s: Sorteio) => {
     if (!s.foto_entrega_url) return;
     try {
+      if (s.foto_entrega_url.startsWith("data:")) {
+        const a = document.createElement("a");
+        a.href = s.foto_entrega_url;
+        a.download = `entrega-${s.id}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
       const { data, error } = await supabase.storage.from("entregas").download(s.foto_entrega_url);
       if (error || !data) throw error || new Error("Foto indisponível");
       const ext = (s.foto_entrega_url.split(".").pop() || "jpg").split("?")[0];
@@ -1351,35 +1805,81 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
 
 
   const marcarEntregue = async (s: Sorteio, entregue: boolean) => {
-    const { error } = await supabase.from("sorteio_sorteios")
-      .update({ entregue, data_entrega: entregue ? new Date().toISOString() : null })
-      .eq("id", s.id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (userId) {
+      const current = getStoredSorteios(userId);
+      const updated = current.map(item => item.id === s.id ? {
+        ...item,
+        entregue,
+        data_entrega: entregue ? new Date().toISOString() : null,
+      } : item);
+      saveStoredSorteios(userId, updated);
+    }
+
+    try {
+      await supabase.from("sorteio_sorteios")
+        .update({ entregue, data_entrega: entregue ? new Date().toISOString() : null })
+        .eq("id", s.id);
+    } catch (err) {
+      console.warn("Aviso ao marcar entrega no Supabase:", err);
+    }
+
     toast({ title: entregue ? "Marcado como entregue — estoque atualizado" : "Entrega revertida — estoque restaurado" });
     onReload();
   };
 
   const excluir = async (id: string) => {
     if (!(await confirmDialog("Excluir este registro de sorteio?"))) return;
-    const { error } = await supabase.from("sorteio_sorteios").delete().eq("id", id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (userId) {
+      const current = getStoredSorteios(userId);
+      saveStoredSorteios(userId, current.filter(item => item.id !== id));
+    }
+    try {
+      await supabase.from("sorteio_sorteios").delete().eq("id", id);
+    } catch (err) {
+      console.warn("Aviso ao excluir sorteio no Supabase:", err);
+    }
     onReload();
   };
 
   return (
     <div style={cardStyle}>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        {(["pendentes", "entregues", "expirados", "todos"] as const).map(k => (
-          <button key={k} onClick={() => setFilter(k)}
-            style={{ ...primaryBtn, height: 36, background: filter === k ? CYAN : "#fff", color: filter === k ? "#fff" : DARK, border: filter === k ? "none" : `2px solid ${CYAN}` }}>
-            {k === "pendentes" ? "Pendentes" : k === "entregues" ? "Entregues" : k === "expirados" ? "Não retirados" : "Todos"}
-          </button>
-        ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(["pendentes", "entregues", "expirados", "todos"] as const).map(k => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setFilter(k)}
+              className={`h-9 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer active:scale-95 shadow-xs ${
+                filter === k
+                  ? "bg-[#0055ff] text-white shadow-[#0055ff]/20"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200/90 hover:bg-slate-50"
+              }`}
+            >
+              {k === "pendentes" ? "Pendentes" : k === "entregues" ? "Entregues" : k === "expirados" ? "Não retirados" : "Todos"}
+            </button>
+          ))}
+        </div>
 
         <div className="flex-1" />
-        <div style={{ position: "relative", minWidth: 240 }}>
-          <Search size={16} style={{ position: "absolute", top: 14, left: 14, color: CYAN }} />
-          <input style={{ ...pillInput, paddingLeft: 40 }} placeholder="Buscar ganhador/prêmio..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="relative min-w-[260px]">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0055ff] pointer-events-none z-10" />
+          <input
+            className="w-full h-10 rounded-full bg-[#f8fafc] border border-slate-200/90 pl-11 pr-8 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0055ff] focus:ring-1 focus:ring-[#0055ff] transition-all shadow-xs uppercase"
+            placeholder="Buscar ganhador/prêmio..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              title="Limpar busca"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 

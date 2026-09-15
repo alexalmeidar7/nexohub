@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<programaExpress>
+  <programa>Primeira Hora Positiva</programa>
+  <estudio>Estudio FM</estudio>
+  <data>2026-04-16</data>
+  <participantes>
+    <item>
+      <nome>Alysson Lima</nome>
+      <cargo>Jornalista</cargo>
+      <instagram>@alyssonlima</instagram>
+    </item>
+    <item>
+      <nome>Jane Borges</nome>
+      <cargo>Jornalista</cargo>
+      <instagram>@janeborges</instagram>
+    </item>
+  </participantes>
+  <bloco numero="1">
+    <noticia ordem="1">
+      <titulo>Moradores de Anápolis vão poder se inscrever para mais 768 apartamentos do Construindo Sonhos em quatro bairros</titulo>
+      <imagem>https://portal6.com.br/wp-content/uploads/2026/09/831790-20260913-221718-41f91d.jpeg</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="2">
+      <titulo>Caiado recebe alta após três dias internado em São Paulo</titulo>
+      <imagem>https://aredacao.com.br/wp-content/uploads/2026/09/caiado1-1.png</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="3">
+      <titulo>Eleitores com deficiência têm até esta segunda (14) para solicitar transporte especial para votação</titulo>
+      <imagem>https://cdn.diariodegoias.com.br/wp-content/uploads/2020/11/urna-eletronica-foto-divulgacao-educa-mais-1.jpg</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="4">
+      <titulo>André Mendonça é afastado, e presidente do STF assume relatoria do processo contra Alexandre de Moraes</titulo>
+      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/55505357682_b099ae6386_k-1789302941.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="5">
+      <titulo>Mercado espera que &quot;superquarta&quot; reajuste juros no Brasil e EUA</titulo>
+      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/06/ChatGPT-Image-16-de-jun.-de-2026-22_00_23.png?w=1200&amp;h=630&amp;crop=1</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="6">
+      <titulo>PF diz que conteúdo do celular de Vorcaro está protegido e que pode fornecer cópia aos ministros</titulo>
+      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/foto-2026-09-13t120338-697-1789311890.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="7">
+      <titulo>PRTB tem até 14 de setembro para substituir Marçal ao Planalto</titulo>
+      <imagem>https://uploads.maisgoias.com.br/2025/11/06214241/1200-800-67.png</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="8">
+      <titulo>Correios recorrem ao TST para encerrar greve nacional</titulo>
+      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/pzzb6168-1789238734-scaled.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="9">
+      <titulo>Ondas de calor: Brasil prevê 6 eventos extremos até 2026</titulo>
+      <imagem>https://istoe.com.br/wp-content/uploads/2026/09/Onda-de-Calor-no-Brasil-1-1200x630.png</imagem>
+      <escalada>false</escalada>
+    </noticia>
+  </bloco>
+</programaExpress>

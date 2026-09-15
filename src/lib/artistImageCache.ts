@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 const LS_PREFIX = "nexo:artistImg:v1:";
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const NEG_TTL_MS = 6 * 60 * 60 * 1000; // cache "não achou" por 6h para não martelar
-const LS_MAX = 300;
+const LS_MAX = 100;
 
 type Entry = { url: string | null; ts: number };
 
@@ -37,12 +37,19 @@ function lsGet(key: string): Entry | null {
 function lsSet(key: string, entry: Entry) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(LS_PREFIX + key, JSON.stringify(entry));
     const keys = Object.keys(window.localStorage).filter(k => k.startsWith(LS_PREFIX));
-    if (keys.length > LS_MAX) {
-      keys.slice(0, Math.floor(LS_MAX * 0.25)).forEach(k => window.localStorage.removeItem(k));
+    if (keys.length >= LS_MAX) {
+      keys.slice(0, Math.floor(LS_MAX * 0.4)).forEach(k => {
+        try { window.localStorage.removeItem(k); } catch {}
+      });
     }
-  } catch { /* quota */ }
+    window.localStorage.setItem(LS_PREFIX + key, JSON.stringify(entry));
+  } catch {
+    try {
+      const keys = Object.keys(window.localStorage).filter(k => k.startsWith(LS_PREFIX));
+      keys.slice(0, 50).forEach(k => window.localStorage.removeItem(k));
+    } catch {}
+  }
 }
 
 function isFresh(entry: Entry): boolean {

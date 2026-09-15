@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { confirmDialog } from "@/lib/confirmDialog";
 import {
   Plus, Trash2, Loader2, Users, Eye, EyeOff, Save, ChevronDown, ChevronUp,
   ShieldCheck, Key, Shield, Settings, X, Headphones, Mic, Clapperboard,
@@ -334,7 +335,14 @@ export default function PermissoesSection() {
   };
 
   const handleDelete = async (subUser: SubUser) => {
-    if (!confirm(`Deseja realmente excluir o sub-usuário ${subUser.email}?`)) return;
+    const confirmed = await confirmDialog({
+      title: "Excluir Sub-usuário",
+      message: `Deseja realmente excluir o sub-usuário ${subUser.email}?`,
+      destructive: true,
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar"
+    });
+    if (!confirmed) return;
     const { data, error } = await supabase.functions.invoke("manage-sub-users", {
       body: { action: "delete", sub_user_id: subUser.id },
     });

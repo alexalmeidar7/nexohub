@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<previsao>
+  <emissora>Nexo Brasil Super Admin</emissora>
+  <cidade>Goiânia - GO</cidade>
+  <atualizacao>2026-09-15T14:20:54.334Z</atualizacao>
+  <atual date="Agora">
+    <cidade>Goiânia - GO</cidade>
+    <temperatura>26ºC</temperatura>
+    <descricao>Tempo Firme e Ensolarado</descricao>
+    <umidade>52%</umidade>
+    <vento>11 km/h</vento>
+  </atual>
+  <hoje>
+    <temperatura_atual>26ºC</temperatura_atual>
+    <maxima>32°</maxima>
+    <minima>21°</minima>
+    <descricao_tempo>Ensolarado</descricao_tempo>
+    <umidade>52%</umidade>
+    <vento>11 km/h</vento>
+  </hoje>
+  <amanha>
+    <maxima>31°</maxima>
+    <minima>20°</minima>
+    <descricao_tempo>Parcialmente Nublado</descricao_tempo>
+  </amanha>
+  <proximos_dias>
+    <dia data="2026-09-16" dia_semana="Quarta">
+      <maxima>30°</maxima>
+      <minima>20°</minima>
+      <descricao>Pancadas Isoladas</descricao>
+    </dia>
+    <dia data="2026-09-17" dia_semana="Quinta">
+      <maxima>29°</maxima>
+      <minima>19°</minima>
+      <descricao>Sol entre Nuvens</descricao>
+    </dia>
+  </proximos_dias>
+</previsao>

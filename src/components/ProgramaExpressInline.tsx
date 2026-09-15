@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import NoticiasFontesPopup from "./NoticiasFontesPopup";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 
 const AgendarRoteiroPopup = lazyRetry(() => import("./AgendarRoteiroPopup"));
 
@@ -36,16 +37,15 @@ const BLOCK_COLORS = [
   "#2ec1f7", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316",
 ];
 
-// === Nexo Form Design System (mesmo do Cadastro de Participante) ===
-const NEXO_CYAN = "#00BFF0";
-const NEXO_LIME = "#C6F03C";
-const NEXO_CARD_BG = "#D6F4FB";
-const NEXO_DARK = "#0A2540";
+// === Nexo Form Design System (mesmo padrão Blitz / ClientesPage) ===
+const NEXO_CYAN = "#268ffa";
+const NEXO_LIME = "#268ffa";
+const NEXO_CARD_BG = "#ffffff";
+const NEXO_DARK = "#002132";
 const nexoPillGhost: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: 6,
-  fontFamily: "'Montserrat', sans-serif",
+  justifyContent: "center",
   fontSize: 11,
   fontWeight: 800,
   letterSpacing: 1,
@@ -90,18 +90,28 @@ interface Programa {
   nome: string;
   estudio: string;
   tipo_programa?: string | null;
+  horario_inicio?: string | null;
+  horario_fim?: string | null;
+  dias_semana?: string[] | string | null;
+  apresentador_id?: string | null;
+  apresentadores_ids?: string[] | null;
+  capa?: string | null;
+  selo?: string | null;
 }
 
 export interface ExpressEditData {
   roteiroId: string;
   estudio: string;
   programaId: string;
+  programaNome?: string;
   blocos: Bloco[];
   participantes?: Participante[];
   escaladaList?: {titulo: string; imagemUrl: string}[];
   existingXmlPath?: string;
   podcastData?: PodcastData;
   agendaEventoId?: string;
+  horario?: string;
+  dataPrograma?: string;
 }
 
 interface Props {
@@ -116,6 +126,7 @@ interface Props {
   onNovoOpenChange?: (v: boolean) => void;
   hideNovoToggle?: boolean;
   renderAsModal?: boolean;
+  effectiveUserId?: string | null;
 }
 
 const emptyNewsItem = (): NewsItem => ({ titulo: "", imagemUrl: "", escalada: false });
@@ -194,7 +205,7 @@ function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, us
           <Pencil size={9} className="shrink-0" />
         </button>
       )}
-      <span className="text-[10px] truncate min-w-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+      <span className="text-[10px] truncate min-w-0" style={{ color: "#268ffa" }}>
         {participante.instagram ? `@${participante.instagram.replace("@", "")}` : "..."}
       </span>
       <button onClick={onRemove} className="p-0.5 rounded hover:opacity-70 shrink-0" style={{ color: "#ef4444" }}>
@@ -360,10 +371,36 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
 }
 
 
-export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed, novoOpen, onNovoOpenChange, hideNovoToggle, renderAsModal }: Props) {
+export default function ProgramaExpressInline({ programas, estudios, onFinish, editData, afterHeader, externalPasteText, onExternalPasteConsumed, novoOpen, onNovoOpenChange, hideNovoToggle, renderAsModal, effectiveUserId }: Props) {
   const { user } = useAuth();
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
+  const [selectedProgTipo, setSelectedProgTipo] = useState<string | null>(null);
+  const [cachedApresentadores, setCachedApresentadores] = useState<Apresentador[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const targetId = effectiveUserId || user?.id;
+    const targetEmail = user?.email;
+    if (!targetId && !targetEmail) return;
+    const reloadAps = () => {
+      getApresentadores(targetId, targetEmail).then(list => {
+        if (active && Array.isArray(list)) {
+          setCachedApresentadores(list);
+        }
+      }).catch(() => {});
+    };
+    reloadAps();
+
+    window.addEventListener("nexohub:programas-updated", reloadAps);
+    window.addEventListener("housemix:programas-updated", reloadAps);
+    return () => {
+      active = false;
+      window.removeEventListener("nexohub:programas-updated", reloadAps);
+      window.removeEventListener("housemix:programas-updated", reloadAps);
+    };
+  }, [effectiveUserId, user]);
+
   const [blocos, setBlocos] = useState<Bloco[]>([{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
   const [fetchingLink, setFetchingLink] = useState<string | null>(null);
   const [showSchedulePopup, setShowSchedulePopup] = useState(false);
@@ -468,17 +505,205 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [savingContact, setSavingContact] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const filteredProgramas = estudio ? programas.filter(p => p.estudio === estudio) : programas;
-  const programaNome = programas.find(p => p.id === programaId)?.nome || "";
+  // Scroll indicator for modal
+  const modalScrollRef = useRef<HTMLDivElement>(null);
+  const [modalScrollProgress, setModalScrollProgress] = useState(0);
+  const [showModalScrollIndicator, setShowModalScrollIndicator] = useState(false);
+  const [isModalScrollDragging, setIsModalScrollDragging] = useState(false);
+
+  const updateModalScrollIndicator = useCallback(() => {
+    const el = modalScrollRef.current;
+    if (!el || !renderAsModal) {
+      setShowModalScrollIndicator(false);
+      return;
+    }
+    const maxScroll = Math.max(el.scrollHeight - el.clientHeight, 0);
+    if (maxScroll <= 4) {
+      setShowModalScrollIndicator(false);
+      setModalScrollProgress(0);
+      return;
+    }
+    setShowModalScrollIndicator(true);
+    setModalScrollProgress(Math.min(Math.max(el.scrollTop / maxScroll, 0), 1));
+  }, [renderAsModal]);
+
+  useEffect(() => {
+    if (!renderAsModal || !novoRoteiroOpen) return;
+    const el = modalScrollRef.current;
+    if (!el) return;
+
+    let frame = 0;
+    const syncIndicator = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateModalScrollIndicator);
+    };
+
+    syncIndicator();
+    el.addEventListener("scroll", syncIndicator, { passive: true });
+    window.addEventListener("resize", syncIndicator);
+
+    const ro = new ResizeObserver(syncIndicator);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("scroll", syncIndicator);
+      window.removeEventListener("resize", syncIndicator);
+      ro.disconnect();
+    };
+  }, [renderAsModal, novoRoteiroOpen, updateModalScrollIndicator, blocos, escaladaList, participantes]);
+
+
+  const filteredProgramas = useMemo(() => {
+    if (!estudio) return programas;
+    const estNorm = (estudio || "").trim().toLowerCase();
+    const list = programas.filter(p => (p.estudio || "").trim().toLowerCase() === estNorm);
+    if (programaId && !list.some(p => p.id === programaId)) {
+      const selected = programas.find(p => p.id === programaId);
+      if (selected) list.unshift(selected);
+    }
+    return list;
+  }, [estudio, programas, programaId]);
+
+  const programaNome = programas.find(p => p.id === programaId)?.nome || editData?.programaNome || "";
+
+  const loadPresentersForProg = useCallback(async (selectedProgId: string, applyEstudio: boolean = true) => {
+    if (!selectedProgId) return;
+
+    let prog = programas.find(p => p.id === selectedProgId);
+
+    // Consulta em tempo real no Supabase para garantir os dados mais atualizados do programa
+    let freshProg: any = null;
+    try {
+      const { data } = await supabase
+        .from("programas")
+        .select("*")
+        .eq("id", selectedProgId)
+        .maybeSingle();
+      if (data) {
+        freshProg = data;
+        prog = { ...(prog || {}), ...data };
+      }
+    } catch {}
+
+    if (!prog && !freshProg) return;
+
+    const resolvedTipo = freshProg?.tipo_programa || prog?.tipo_programa || "Musical";
+    setSelectedProgTipo(resolvedTipo);
+
+    if (applyEstudio && prog?.estudio && !estudio) {
+      setEstudio(prog.estudio);
+    }
+
+    const rawIds: string[] = [];
+    const sourceApsIds = freshProg?.apresentadores_ids || prog?.apresentadores_ids;
+    if (Array.isArray(sourceApsIds)) {
+      rawIds.push(...sourceApsIds);
+    } else if (typeof sourceApsIds === "string") {
+      try {
+        const parsed = JSON.parse(sourceApsIds);
+        if (Array.isArray(parsed)) rawIds.push(...parsed);
+        else rawIds.push(sourceApsIds);
+      } catch {
+        rawIds.push(sourceApsIds);
+      }
+    }
+    const singleApId = freshProg?.apresentador_id || prog?.apresentador_id;
+    if (singleApId) {
+      rawIds.push(singleApId);
+    }
+    const uniqueIds = Array.from(new Set(rawIds.filter(Boolean)));
+
+    if (uniqueIds.length === 0) {
+      if (!editingId) {
+        setParticipantes([]);
+      }
+      return;
+    }
+
+    const targetId = effectiveUserId || user?.id;
+    let apsList = await getApresentadores(targetId, user?.email).catch(() => cachedApresentadores);
+    if (Array.isArray(apsList) && apsList.length > 0) {
+      setCachedApresentadores(apsList);
+    } else {
+      apsList = cachedApresentadores;
+    }
+
+    const matchedPresenters = uniqueIds
+      .map(id => apsList?.find(a => a.id === id || (a.nome && a.nome.toLowerCase().trim() === id.toLowerCase().trim())))
+      .filter(Boolean) as Apresentador[];
+
+    if (matchedPresenters.length < uniqueIds.length) {
+      const missingIds = uniqueIds.filter(id => !matchedPresenters.some(m => m.id === id || (m.nome && m.nome.toLowerCase().trim() === id.toLowerCase().trim())));
+      if (missingIds.length > 0) {
+        try {
+          const { data } = await supabase
+            .from("apresentadores")
+            .select("id, nome, cargo, instagram, categoria, whatsapp, foto, ativo")
+            .in("id", missingIds);
+          if (data && data.length > 0) {
+            data.forEach((d: any) => {
+              matchedPresenters.push({
+                id: d.id,
+                nome: d.nome,
+                cargo: d.cargo || "",
+                categoria: d.categoria || "",
+                instagram: d.instagram || "",
+                whatsapp: d.whatsapp || "",
+                foto: d.foto || "",
+                ativo: true,
+              });
+            });
+          }
+        } catch {}
+      }
+    }
+
+    if (matchedPresenters.length > 0) {
+      const mapped: Participante[] = matchedPresenters.map(a => {
+        let cargo = a.cargo || "";
+        if (!cargo) {
+          cargo = a.categoria === "Apresentador" ? "Locutor / Apresentador" : (a.categoria || "Locutor");
+        }
+        return {
+          nome: a.nome,
+          cargo,
+          instagram: a.instagram ? (a.instagram.startsWith("@") ? a.instagram : `@${a.instagram.replace(/^@/, "")}`) : "",
+        };
+      });
+      setParticipantes(mapped);
+      markEdited("participantes");
+    } else if (!editingId) {
+      setParticipantes([]);
+    }
+  }, [programas, effectiveUserId, user, cachedApresentadores, estudio, editingId, markEdited]);
 
   // Search apresentadores
   useEffect(() => {
     if (!searchNome.trim() || !user) { setSearchResults([]); setNoResults(false); return; }
     const timer = setTimeout(async () => {
+      const lower = searchNome.toLowerCase();
+      const localMatches = (cachedApresentadores || [])
+        .filter(a => a.nome && a.nome.toLowerCase().includes(lower))
+        .slice(0, 5)
+        .map(a => ({
+          nome: a.nome,
+          cargo: a.cargo || (a.categoria === "Apresentador" ? "Locutor / Apresentador" : a.categoria || ""),
+          instagram: a.instagram || ""
+        }));
+
+      if (localMatches.length > 0) {
+        setSearchResults(localMatches);
+        setNoResults(false);
+        return;
+      }
+
+      const targetId = effectiveUserId || user.id;
       const { data } = await supabase
         .from("apresentadores")
         .select("nome, cargo, instagram")
-        .eq("user_id", user.id)
+        .eq("user_id", targetId)
         .ilike("nome", `%${searchNome}%`)
         .limit(5);
       if (data && data.length > 0) {
@@ -490,7 +715,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchNome, user]);
+  }, [searchNome, user, cachedApresentadores, effectiveUserId]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -504,18 +729,45 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   useEffect(() => {
     if (editData) {
       console.log("Loading editData:", editData);
-      setEstudio(editData.estudio || "");
-      setProgramaId(editData.programaId || "");
+      
+      // Localiza o programa por ID ou por nome normalizado
+      let matchedProg = editData.programaId ? programas.find(p => p.id === editData.programaId) : null;
+      if (!matchedProg && editData.programaNome) {
+        const normSearch = editData.programaNome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^programa\s*express\s*[-—:]*\s*/i, "").trim();
+        matchedProg = programas.find(p => {
+          const pNorm = (p.nome || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^programa\s*express\s*[-—:]*\s*/i, "").trim();
+          return pNorm === normSearch || (normSearch && pNorm.includes(normSearch)) || (pNorm && normSearch.includes(pNorm));
+        });
+      }
+      const finalProgId = matchedProg?.id || editData.programaId || "";
+      const rawEstudio = editData.estudio || matchedProg?.estudio || "";
+      const estNorm = rawEstudio.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      const finalEstudio = estudios.find(e => e.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() === estNorm)
+        || (matchedProg?.estudio && estudios.find(e => e.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() === matchedProg.estudio.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase()))
+        || matchedProg?.estudio
+        || rawEstudio;
+      const finalTipo = matchedProg?.tipo_programa || (editData.podcastData ? "Podcast" : "Jornalístico");
+
+      setEstudio(finalEstudio);
+      setProgramaId(finalProgId);
+      setSelectedProgTipo(finalTipo);
       setBlocos(normalizeBlocos(editData.blocos));
-      setParticipantes(
-        Array.isArray(editData.participantes)
-          ? editData.participantes.filter(Boolean).map((participante) => ({
-              nome: typeof participante?.nome === "string" ? participante.nome : "",
-              cargo: typeof participante?.cargo === "string" ? participante.cargo : "",
-              instagram: typeof participante?.instagram === "string" ? participante.instagram : "",
-            }))
-          : [],
-      );
+
+      const hasParticipantes = Array.isArray(editData.participantes) && editData.participantes.some(p => p && typeof p.nome === "string" && p.nome.trim());
+      if (hasParticipantes) {
+        setParticipantes(
+          (editData.participantes || []).filter(Boolean).map((participante) => ({
+            nome: typeof participante?.nome === "string" ? participante.nome : "",
+            cargo: typeof participante?.cargo === "string" ? participante.cargo : "",
+            instagram: typeof participante?.instagram === "string" ? participante.instagram : "",
+          }))
+        );
+      } else if (finalProgId) {
+        loadPresentersForProg(finalProgId, false);
+      } else {
+        setParticipantes([]);
+      }
+
       setEscaladaList(
         Array.isArray(editData.escaladaList)
           ? editData.escaladaList.filter(Boolean).map((item) => ({
@@ -559,7 +811,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
       setInitialized(true);
     }
-  }, [editData, user]);
+  }, [editData, user, programas, loadPresentersForProg]);
 
   const savePromptAsTemplate = async () => {
     if (!templateName.trim() || !configuracoes.prompt_ai.trim() || !user) return;
@@ -631,6 +883,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
+        const nowIso = new Date().toISOString();
         await supabase.from("roteiros").update({ 
           programa_nome: pNome, 
           estudio, 
@@ -640,7 +893,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           participantes: blocosJson, 
           tickertitulos: autoTickerTitulos,
           configuracoes: configuracoes as any,
-          updated_at: new Date().toISOString(),
+          xml_pushed_at: nowIso,
+          updated_at: nowIso,
         } as any).eq("id", editingId);
 
         setLastAutoSaved(Date.now());
@@ -650,6 +904,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingId, estudio, programaId, blocos, participantes, escaladaList, initialized]);
+
+  const handleSelectPrograma = async (selectedProgId: string) => {
+    setProgramaId(selectedProgId);
+    if (editingId) markEdited("programa");
+    if (!selectedProgId) {
+      if (!editingId) setParticipantes([]);
+      setSelectedProgTipo(null);
+      return;
+    }
+    await loadPresentersForProg(selectedProgId, true);
+  };
 
   const addParticipante = (p: Participante) => {
     if (participantes.some(x => x.nome === p.nome)) { toast.info("Participante já adicionado"); return; }
@@ -675,9 +940,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const saveNewContact = async () => {
     if (!user || !newContact.nome.trim()) return;
     setSavingContact(true);
+    const targetOwner = effectiveUserId || user.id;
     try {
       const { error } = await supabase.from("apresentadores").insert({
-        user_id: user.id,
+        user_id: targetOwner,
         nome: newContact.nome.trim(),
         cargo: newContact.cargo.trim(),
         instagram: newContact.instagram.trim(),
@@ -696,6 +962,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const reset = () => {
     setEstudio("");
     setProgramaId("");
+    setSelectedProgTipo(null);
     setBlocos([{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
     setFetchingLink(null);
     setSaving(false);
@@ -1036,8 +1303,27 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const escXml = (value: string | null | undefined) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
   const generateXml = (): string => {
+    const now = new Date();
+    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const progObj = programas.find(p => p.id === programaId);
+    const targetDate = editData?.dataPrograma || localDateStr;
+    const targetHorario = progObj?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5) || localTimeStr;
+    const targetHorarioFim = progObj?.horario_fim?.slice(0, 5) || "";
+    const nowIso = now.toISOString();
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
-    xml += `  <programa>${programaNome}</programa>\n  <estudio>${estudio}</estudio>\n  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
+    xml += `  <programa>${escXml(programaNome)}</programa>\n`;
+    xml += `  <estudio>${escXml(estudio)}</estudio>\n`;
+    xml += `  <data>${targetDate}</data>\n`;
+    xml += `  <horario>${targetHorario}</horario>\n`;
+    xml += `  <hora>${targetHorario}</hora>\n`;
+    xml += `  <hora_inicio>${targetHorario}</hora_inicio>\n`;
+    if (targetHorarioFim) {
+      xml += `  <hora_fim>${targetHorarioFim}</hora_fim>\n`;
+    }
+    xml += `  <horario_geracao>${localTimeStr}</horario_geracao>\n`;
+    xml += `  <atualizado_em>${nowIso}</atualizado_em>\n`;
     if (participantes.length > 0) { xml += `  <participantes>\n`; participantes.forEach((p) => { xml += `    <item>\n      <nome>${escXml(p.nome)}</nome>\n      <cargo>${escXml(p.cargo)}</cargo>\n      <instagram>${escXml(p.instagram)}</instagram>\n    </item>\n`; }); xml += `  </participantes>\n`; }
     if (isPodcast) {
       xml += `  <roteiro>\n`;
@@ -1267,44 +1553,211 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const allTitles = (blocos || []).flatMap(b => (b?.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()));
       const tickertitulos = allTitles.join("  •  ");
 
-      const selectedProg = programas.find(p => p.id === programaId);
-      const tipoProg = selectedProg?.tipo_programa || "Jornalístico";
+      const now = new Date();
+      const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const nowIso = now.toISOString();
 
-      let roteiroId = editingId;
+      const ownerId = effectiveUserId || user.id;
+      const selectedProg = programas.find(p => p.id === programaId);
+      const tipoProg = selectedProgTipo || selectedProg?.tipo_programa || "Jornalístico";
+      const targetDataPrograma = editData?.dataPrograma || localDateStr;
+      const targetHorario = selectedProg?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5) || localTimeStr;
+
+      let roteiroId = editingId ? editingId.replace(/^express_/, "").replace(/^rot_/, "") : null;
+      const isCleanUuid = (id: string | null): id is string => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (!isCleanUuid(roteiroId)) {
+        roteiroId = null;
+      }
+
+      let dbSaveSuccess = false;
       if (!roteiroId) {
-        // Insert first to get a stable ID for the XML path
-        const { data: inserted, error } = await supabase.from("roteiros").insert({ user_id: user.id, programa_nome: programaNome, estudio, titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`, subtitulo: "", tipo_programa: tipoProg, data_programa: new Date().toISOString().split("T")[0], horario: new Date().toTimeString().slice(0, 5), conteudo_html: html, participantes: blocosJson, status: "feito", tickertitulos } as any).select("id").single();
-        if (error || !inserted) throw error || new Error("Falha ao criar roteiro");
-        roteiroId = inserted.id;
-        setEditingId(roteiroId);
+        // Try finding existing record in DB for this program & studio
+        try {
+          const { data: existingProg } = await supabase
+            .from("roteiros")
+            .select("id")
+            .eq("programa_nome", programaNome)
+            .eq("estudio", estudio)
+            .is("agendado_para_envio", null)
+            .maybeSingle();
+          if (existingProg?.id && isCleanUuid(existingProg.id)) {
+            roteiroId = existingProg.id;
+            setEditingId(roteiroId);
+          }
+        } catch {}
+      }
+
+      if (!roteiroId) {
+        // Try insert with user.id (respecting RLS)
+        let insertRes = await supabase.from("roteiros").insert({
+          user_id: user.id,
+          programa_nome: programaNome,
+          estudio,
+          titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
+          subtitulo: "",
+          tipo_programa: tipoProg,
+          data_programa: targetDataPrograma,
+          horario: targetHorario,
+          conteudo_html: html,
+          participantes: blocosJson,
+          status: "feito",
+          tickertitulos,
+          xml_pushed_at: nowIso,
+          updated_at: nowIso,
+        } as any).select("id").single();
+
+        if (insertRes.error && ownerId !== user.id) {
+          insertRes = await supabase.from("roteiros").insert({
+            user_id: ownerId,
+            programa_nome: programaNome,
+            estudio,
+            titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
+            subtitulo: "",
+            tipo_programa: tipoProg,
+            data_programa: targetDataPrograma,
+            horario: targetHorario,
+            conteudo_html: html,
+            participantes: blocosJson,
+            status: "feito",
+            tickertitulos,
+            xml_pushed_at: nowIso,
+            updated_at: nowIso,
+          } as any).select("id").single();
+        }
+
+        if (insertRes.data?.id) {
+          roteiroId = insertRes.data.id;
+          dbSaveSuccess = true;
+          setEditingId(roteiroId);
+        } else {
+          roteiroId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `rot_${ownerId}_${Date.now()}`;
+          setEditingId(roteiroId);
+        }
       }
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
-      const filePath = editingXmlPath || `express/${user.id}/express_${roteiroId}.xml`;
+      const storageUid = user.id;
+      const filePath = editingXmlPath || `express/${storageUid}/express_${roteiroId}.xml`;
       if (!editingXmlPath) setEditingXmlPath(filePath);
-      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
-      const xmlUrl = urlData.publicUrl;
+      let xmlUrl = "";
+      try {
+        await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+        const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
+        xmlUrl = urlData?.publicUrl || "";
+      } catch (eStorage) {
+        console.warn("Storage upload XML notice:", eStorage);
+      }
 
       const scheduledDateTime = schedule
         ? new Date(`${schedule.data}T${schedule.horario}:00`).toISOString()
         : undefined;
-      const updatePayload: any = {
+
+      // Base roteiro payload (always registered in "roteiros cadastrados" with status: "feito" and agendado_para_envio: null)
+      const baseUpdatePayload: any = {
         programa_nome: programaNome,
         estudio,
         titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
-        subtitulo: `express_xml::${xmlUrl}`,
+        subtitulo: xmlUrl ? `express_xml::${xmlUrl}` : "",
+        tipo_programa: tipoProg,
         conteudo_html: html,
         participantes: blocosJson,
         tickertitulos,
-        updated_at: new Date().toISOString(),
+        data_programa: targetDataPrograma,
+        horario: targetHorario,
+        status: "feito",
+        agendado_para_envio: null,
+        xml_pushed_at: schedule ? ((editData as any)?.xml_pushed_at || nowIso) : nowIso,
+        updated_at: nowIso,
       };
-      if (scheduledDateTime) {
-        updatePayload.agendado_para_envio = scheduledDateTime;
-        updatePayload.enviado_agendamento = false;
+
+      if (dbSaveSuccess || editingId) {
+        try {
+          await supabase.from("roteiros").update(baseUpdatePayload).eq("id", roteiroId);
+        } catch (updErr) {
+          console.warn("Supabase update roteiro notice:", updErr);
+        }
       }
-      const { error: updErr } = await supabase.from("roteiros").update(updatePayload).eq("id", roteiroId);
-      if (updErr) throw updErr;
+
+      // RESILIENT LOCAL STORAGE: Always save base roteiro so the program box is never lost
+      const fullBaseRecord = {
+        id: roteiroId,
+        user_id: ownerId,
+        ...baseUpdatePayload,
+        created_at: nowIso,
+      };
+
+      const storageKey = `nexohub_roteiros_${ownerId}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      const list = Array.isArray(existing) ? existing : [];
+      const idx = list.findIndex((r: any) => r.id === roteiroId || (r.programa_nome === programaNome && r.estudio === estudio && !r.agendado_para_envio));
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], ...fullBaseRecord };
+      } else {
+        list.unshift(fullBaseRecord);
+      }
+
+      // If scheduled: also create a separate scheduled roteiro record so it appears in "roteiros agendados"
+      if (schedule && scheduledDateTime) {
+        let scheduledRoteiroId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `rot_sched_${ownerId}_${Date.now()}`;
+        const schedPayload: any = {
+          user_id: ownerId,
+          programa_nome: programaNome,
+          estudio,
+          titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
+          subtitulo: xmlUrl ? `express_xml::${xmlUrl}` : "",
+          tipo_programa: tipoProg,
+          conteudo_html: html,
+          participantes: blocosJson,
+          tickertitulos,
+          data_programa: schedule.data,
+          horario: schedule.horario,
+          status: "feito",
+          agendado_para_envio: scheduledDateTime,
+          enviado_agendamento: false,
+          xml_pushed_at: null,
+          created_at: nowIso,
+          updated_at: nowIso,
+        };
+
+        try {
+          let insSched = await supabase.from("roteiros").insert(schedPayload).select("id").single();
+          if (insSched.data?.id) {
+            scheduledRoteiroId = insSched.data.id;
+          } else if (insSched.error && ownerId !== user.id) {
+            const insRetry = await supabase.from("roteiros").insert({ ...schedPayload, user_id: user.id }).select("id").single();
+            if (insRetry.data?.id) scheduledRoteiroId = insRetry.data.id;
+          }
+        } catch (eSched) {
+          console.warn("Supabase insert scheduled roteiro notice:", eSched);
+        }
+
+        const fullSchedRecord = {
+          id: scheduledRoteiroId,
+          ...schedPayload,
+        };
+        list.unshift(fullSchedRecord);
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(list));
+      if (user?.id && user.id !== ownerId) {
+        localStorage.setItem(`nexohub_roteiros_${user.id}`, JSON.stringify(list));
+      }
+      window.dispatchEvent(new CustomEvent("nexohub:roteiros-updated", { detail: { roteiro: fullBaseRecord } }));
+
+      // If saving without schedule (button "Salvar"): automatically push to XML
+      if (!schedule) {
+        try {
+          const urlMatch = import.meta.env.VITE_SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/);
+          const projectId = urlMatch ? urlMatch[1] : "";
+          if (projectId && roteiroId) {
+            const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${roteiroId}&force=1&persist=1&t=${Date.now()}`;
+            await fetch(fnUrl, { method: "GET" });
+          }
+        } catch (eXmlFn) {
+          console.warn("[ProgramaExpress] roteiro-xml invoke error:", eXmlFn);
+        }
+      }
 
       // Create or update agenda event when podcast is scheduled
       if (isPodcast && podcastData.agendamentoData) {
@@ -1317,7 +1770,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             const { data: eventosExistentes } = await supabase
               .from("agenda_eventos")
               .select("id, horario_gravacao")
-              .eq("user_id", user.id)
+              .eq("user_id", ownerId)
               .eq("programa_id", programaId)
               .eq("data", podcastData.agendamentoData)
               .eq("tipo_evento", "gravacao")
@@ -1329,7 +1782,6 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           }
 
           if (targetEventoId) {
-            // Update existing event (e.g. when editing a "gravacao" event from Agenda)
             await supabase.from("agenda_eventos").update({
               data: podcastData.agendamentoData,
               local: estudio || "Podcast",
@@ -1340,8 +1792,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             } as any).eq("id", targetEventoId);
             toast.success("Evento da agenda atualizado 📅", { duration: 2500 });
           } else {
-            await supabase.from("agenda_eventos").insert({
-              user_id: user.id,
+            let agendaInsert = await supabase.from("agenda_eventos").insert({
+              user_id: ownerId,
               data: podcastData.agendamentoData,
               local: estudio || "Podcast",
               descricao,
@@ -1351,14 +1803,31 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               tipo_evento: "gravacao",
               horario_gravacao: horario,
             } as any);
+            if (agendaInsert.error && ownerId !== user.id) {
+              await supabase.from("agenda_eventos").insert({
+                user_id: user.id,
+                data: podcastData.agendamentoData,
+                local: estudio || "Podcast",
+                descricao,
+                prioridade: "alta",
+                programa_id: programaId,
+                recorrencia: "unico",
+                tipo_evento: "gravacao",
+                horario_gravacao: horario,
+              } as any);
+            }
             toast.success("Evento adicionado à agenda 📅", { duration: 2500 });
           }
         } catch (e) { console.warn("Falha ao salvar evento na agenda:", e); }
       }
 
       try { sessionStorage.removeItem("roteiro_auto_generated"); } catch {}
-      isAutoGenRef.current = false;
-      toast.success(schedule ? "Roteiro salvo e agendado ✨" : "Roteiro salvo ✨", { duration: 3000, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } });
+      toast.success(
+        schedule
+          ? "Roteiro agendado e salvo em cadastrados ✨"
+          : "Roteiro salvo e enviado para o XML ✨",
+        { duration: 3500, style: { background: "#22c55e", color: "#fff", fontWeight: 600, borderRadius: "12px", boxShadow: "0 8px 32px rgba(34,197,94,0.35)" } }
+      );
       if (schedule) await fetchScheduledRoteiros();
       reset();
       onFinish();
@@ -1374,32 +1843,55 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
   };
 
-  // === Nexo Form Design System (mesmo do Cadastro de Participante) ===
-  const NEXO_CYAN = "#00BFF0";
-  const NEXO_CARD_BG = "#D6F4FB";
-  const NEXO_DARK = "#0A2540";
+  // === Nexo Form Design System (mesmo padrão Blitz / ClientesPage) ===
+  const NEXO_CYAN = "#268ffa";
+  const NEXO_CARD_BG = "#ffffff";
+  const NEXO_DARK = "#002132";
   const inputStyle = {
-    backgroundColor: "#FFFFFF",
-    border: `2px solid ${NEXO_CYAN}`,
-    color: NEXO_DARK,
-    borderRadius: 10,
+    backgroundColor: "#f8fafc",
+    border: "1px solid rgba(226, 232, 240, 0.9)",
+    color: "#0f172a",
+    borderRadius: 999,
     fontFamily: "'Montserrat', sans-serif",
   } as React.CSSProperties;
   if (renderAsModal && !novoRoteiroOpen) return null;
 
   const card = (
-    <div className="rounded-2xl overflow-hidden" style={{ background: renderAsModal ? NEXO_CARD_BG : "#ffffff", boxShadow: renderAsModal ? "0 20px 60px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.08)", width: "100%", fontFamily: "'Montserrat', sans-serif" }}>
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: renderAsModal ? NEXO_CARD_BG : "#ffffff",
+        boxShadow: renderAsModal ? "0 20px 60px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.08)",
+        width: "100%",
+        fontFamily: "'Montserrat', sans-serif",
+        ...(renderAsModal
+          ? {
+              maxHeight: "calc(100vh - 48px)",
+              display: "flex",
+              flexDirection: "column",
+              position: "relative",
+            }
+          : {}),
+      }}
+    >
       {renderAsModal && (
         <button
           onClick={() => setNovoRoteiroOpen(false)}
           aria-label="Fechar"
-          style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
+          style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
         >
           <XIcon size={16} style={{ color: "#0A2540" }} />
         </button>
       )}
       {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between" style={{ background: renderAsModal ? NEXO_CARD_BG : "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))", color: renderAsModal ? NEXO_DARK : "#ffffff", borderBottom: renderAsModal ? `1px solid rgba(10,37,64,0.08)` : "none" }}>
+      <div
+        className="px-6 py-4 flex items-center justify-between flex-shrink-0"
+        style={{
+          background: renderAsModal ? NEXO_CARD_BG : "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))",
+          color: renderAsModal ? NEXO_DARK : "#ffffff",
+          borderBottom: renderAsModal ? `1px solid rgba(10,37,64,0.08)` : "none",
+        }}
+      >
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: renderAsModal ? NEXO_CYAN : "rgba(255,255,255,0.15)", color: renderAsModal ? "#FFFFFF" : "inherit" }}>
             <Zap size={18} />
@@ -1547,7 +2039,12 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       )}
 
       {novoRoteiroOpen && (
-      <div className="space-y-5" style={{ padding: renderAsModal ? "28px 32px 32px" : "24px" }}>
+      <div className="relative flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+        <div
+          ref={modalScrollRef}
+          className={`space-y-5 ${renderAsModal ? "flex-1 min-h-0 overflow-y-auto roteiro-modal-scroll pr-8" : ""}`}
+          style={{ padding: renderAsModal ? "28px 32px 32px" : "24px" }}
+        >
 
         {/* Seção movida para RoteiroPrograma.tsx ou gerenciada via afterHeader se preferir, 
             mas o usuário pediu para colocar ABAIXO da seção de automatização no Roteiro de Programa.
@@ -1556,9 +2053,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
         {/* Paste Script */}
         {showPastePopup && (
-          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid #268ffa", backgroundColor: "color-mix(in srgb, #268ffa 6%, transparent)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "#268ffa" }}>
                 <ClipboardPaste size={14} /> Colar Roteiro
               </p>
               <button onClick={() => { setShowPastePopup(false); setPasteText(""); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}>
@@ -1581,7 +2078,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               rows={10}
               style={inputStyle}
             />
-            <button onClick={parsePastedScript} disabled={!pasteText.trim()} className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40" style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}>
+            <button onClick={parsePastedScript} disabled={!pasteText.trim()} className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40" style={{ backgroundColor: "#268ffa", color: "var(--layout-header-text, #fff)" }}>
               <Check size={12} /> {editingId ? "Atualizar Roteiro" : "Importar Roteiro"}
             </button>
           </div>
@@ -1593,18 +2090,24 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Estúdio {editedFields.has("estudio") && <EditedCheck />}</label>
-              <Select value={estudio} onValueChange={v => { setEstudio(v); setProgramaId(""); if (editingId) markEdited("estudio"); }}>
+              <Select value={estudio} onValueChange={v => { setEstudio(v); setProgramaId(""); if (!editingId) setParticipantes([]); if (editingId) markEdited("estudio"); }}>
                 <SelectTrigger className="w-full text-xs h-10">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {estudios.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                  {(() => {
+                    const list = [...estudios];
+                    if (estudio && !list.some(e => e.toLowerCase() === estudio.toLowerCase())) {
+                      list.unshift(estudio);
+                    }
+                    return list.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>);
+                  })()}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Programa {editedFields.has("programa") && <EditedCheck />}</label>
-              <Select value={programaId} onValueChange={v => { setProgramaId(v); if (editingId) markEdited("programa"); }}>
+              <Select value={programaId} onValueChange={handleSelectPrograma}>
                 <SelectTrigger className="w-full text-xs h-10">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
@@ -1613,8 +2116,37 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                 </SelectContent>
               </Select>
               {programaId && (() => {
-                const tp = programas.find(p => p.id === programaId)?.tipo_programa;
-                return tp ? <p className="text-[10px] mt-1 font-semibold" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>{tp}</p> : null;
+                const prog = programas.find(p => p.id === programaId);
+                const tp = selectedProgTipo || prog?.tipo_programa;
+                const hInicio = prog?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5);
+                const hFim = prog?.horario_fim?.slice(0, 5);
+                const dias = Array.isArray(prog?.dias_semana) ? prog.dias_semana.join(", ") : (prog?.dias_semana || "");
+                return (
+                  <div className="mt-2 p-2.5 rounded-lg text-[11px] space-y-1" style={{ backgroundColor: "color-mix(in srgb, #268ffa 8%, transparent)", border: "1px solid color-mix(in srgb, #268ffa 20%, transparent)" }}>
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      {tp && (
+                        <span className="font-bold text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, #268ffa 18%, transparent)", color: "#268ffa" }}>
+                          🎙️ {tp}
+                        </span>
+                      )}
+                      {(hInicio || hFim) && (
+                        <span className="font-semibold text-[10px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          ⏰ Horário: <strong style={{ color: "#268ffa" }}>{hInicio}{hFim ? ` às ${hFim}` : ""}</strong>
+                        </span>
+                      )}
+                    </div>
+                    {dias && (
+                      <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
+                        📅 <strong>Dias:</strong> {dias}
+                      </p>
+                    )}
+                    {prog?.estudio && (
+                      <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
+                        🏢 <strong>Estúdio:</strong> {prog.estudio}
+                      </p>
+                    )}
+                  </div>
+                );
               })()}
             </div>
           </div>
@@ -1623,9 +2155,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }} />
 
         {/* Participantes */}
-        <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+        <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, #268ffa 4%, transparent)" }}>
           <p className="text-xs font-bold flex items-center gap-1.5 mb-3" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            <Users size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+            <Users size={14} style={{ color: "#268ffa" }} />
             Participantes {editedFields.has("participantes") && <EditedCheck />}
           </p>
           {participantes.length > 0 && (
@@ -1648,7 +2180,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   <button key={i} onClick={() => addParticipante(r)} className="w-full text-left px-3 py-2 text-[11px] hover:opacity-80 transition-all flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)", borderBottom: i < searchResults.length - 1 ? "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" : "none" }}>
                     <span className="font-semibold flex-1 truncate">{r.nome}</span>
                     {r.cargo && <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{r.cargo}</span>}
-                    {r.instagram && <span className="text-[10px]" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{r.instagram.replace("@", "")}</span>}
+                    {r.instagram && <span className="text-[10px]" style={{ color: "#268ffa" }}>@{r.instagram.replace("@", "")}</span>}
                   </button>
                 ))}
               </div>
@@ -1656,7 +2188,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             {showResults && noResults && searchNome.trim().length > 1 && (
               <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)" }}>
                 <p className="text-[11px] mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nenhum resultado para "<strong>{searchNome}</strong>".</p>
-                <button onClick={openNewContactPopup} className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 12%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}>
+                <button onClick={openNewContactPopup} className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all" style={{ backgroundColor: "color-mix(in srgb, #268ffa 12%, transparent)", color: "#268ffa" }}>
                   <UserPlus size={12} /> Vamos salvar esse contato?
                 </button>
               </div>
@@ -1679,9 +2211,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
         {/* New Contact */}
         {showNewContact && (
-          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid #268ffa", backgroundColor: "color-mix(in srgb, #268ffa 6%, transparent)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}><UserPlus size={14} /> Novo Participante</p>
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "#268ffa" }}><UserPlus size={14} /> Novo Participante</p>
               <button onClick={() => setShowNewContact(false)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}><XIcon size={14} /></button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -2044,7 +2576,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </>
         )}
 
-        {/* Save / Finish editing / Schedule */}
+        {/* Save / Schedule */}
         <div className="flex gap-3 w-full">
           <button 
             onClick={() => setShowSchedulePopup(true)} 
@@ -2053,7 +2585,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             style={{ ...nexoPillSecondary, padding: "14px 24px", fontSize: 13, backgroundColor: "#C6F03C", color: "#0A2540" }}
           >
             <Calendar size={16} />
-            Agendar Roteiro
+            Agendar
           </button>
           
           <button 
@@ -2065,11 +2597,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             {saving ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
-              editingId ? <Check size={16} /> : <Zap size={16} />
+              <Check size={16} />
             )}
-            {saving 
-              ? (editingId ? "Finalizando..." : "Salvando...") 
-              : (editingId ? "Finalizar Edição" : "Finalizar Programa Express")}
+            {saving ? "Salvando..." : "Salvar"}
           </button>
         </div>
 
@@ -2084,7 +2614,86 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         </Suspense>
 
       </div>
+
+      {/* Lateral Interactive Scrollbar */}
+      {renderAsModal && showModalScrollIndicator && (
+        <div
+          className="absolute inset-y-4 right-1.5 z-30 flex flex-col items-center justify-between pointer-events-auto select-none group/scroll"
+          style={{ width: "24px" }}
+        >
+          {/* Botão Top Quick Scroll */}
+          <button
+            type="button"
+            onClick={() => modalScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
+            className="w-5 h-5 rounded-full bg-white hover:bg-[#d0deff] text-[#0055ff] border border-[#d0deff] shadow-xs flex items-center justify-center opacity-0 group-hover/scroll:opacity-100 transition-all duration-200 cursor-pointer active:scale-90 shrink-0"
+            title="Rolar para o topo"
+          >
+            <ChevronUp className="w-3 h-3 stroke-[2.5]" />
+          </button>
+
+          {/* Trilho Interativo com Drag Suave e Tons de Azul */}
+          <div
+            className="relative flex-1 w-full flex items-stretch justify-center my-1 cursor-pointer"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setIsModalScrollDragging(true);
+              const track = e.currentTarget;
+              const rect = track.getBoundingClientRect();
+              const scrollEl = modalScrollRef.current;
+              if (!scrollEl) return;
+              const thumbHeight = 44;
+              const availableHeight = Math.max(rect.height - thumbHeight, 1);
+              const setScrollFromY = (clientY: number) => {
+                const offsetY = clientY - rect.top - (thumbHeight / 2);
+                const ratio = Math.min(Math.max(offsetY / availableHeight, 0), 1);
+                scrollEl.scrollTop = ratio * (scrollEl.scrollHeight - scrollEl.clientHeight);
+              };
+              setScrollFromY(e.clientY);
+              const onMove = (ev: MouseEvent) => { ev.preventDefault(); setScrollFromY(ev.clientY); };
+              const onUp = () => {
+                setIsModalScrollDragging(false);
+                window.removeEventListener("mousemove", onMove);
+                window.removeEventListener("mouseup", onUp);
+              };
+              window.addEventListener("mousemove", onMove);
+              window.addEventListener("mouseup", onUp);
+            }}
+          >
+            {/* Linha do Trilho em Azul Suave (#d0deff) que expande no hover */}
+            <div className="absolute top-0 bottom-0 w-[4px] group-hover/scroll:w-[8px] rounded-full bg-[#d0deff]/50 group-hover/scroll:bg-[#d0deff]/80 transition-all duration-200" />
+
+            {/* Cursor de Rolagem em Azul Sólido (#0055ff) sem gradiente, expande no hover */}
+            <div
+              className={`absolute transition-all duration-200 rounded-full bg-[#0055ff] ${
+                isModalScrollDragging
+                  ? "w-[14px] bg-[#0042cc] shadow-[0_0_12px_rgba(0,85,255,0.5)] ring-2 ring-[#d0deff] cursor-grabbing"
+                  : "w-[6px] group-hover/scroll:w-[12px] hover:bg-[#0042cc] group-hover/scroll:shadow-[0_2px_10px_rgba(0,85,255,0.35)] cursor-grab"
+              }`}
+              style={{
+                height: "44px",
+                top: `calc(${modalScrollProgress} * (100% - 44px))`,
+                left: "50%",
+                transform: "translateX(-50%)",
+              }}
+            />
+          </div>
+
+          {/* Botão Bottom Quick Scroll */}
+          <button
+            type="button"
+            onClick={() => {
+              const el = modalScrollRef.current;
+              if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+            }}
+            className="w-5 h-5 rounded-full bg-white hover:bg-[#d0deff] text-[#0055ff] border border-[#d0deff] shadow-xs flex items-center justify-center opacity-0 group-hover/scroll:opacity-100 transition-all duration-200 cursor-pointer active:scale-90 shrink-0"
+            title="Rolar para o final"
+          >
+            <ChevronDown className="w-3 h-3 stroke-[2.5]" />
+          </button>
+        </div>
       )}
+    </div>
+    )}
     </div>
   );
 
@@ -2092,9 +2701,31 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     return createPortal(
       <div
         onMouseDown={(e) => { if (e.target === e.currentTarget) setNovoRoteiroOpen(false); }}
-        style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10, 37, 64, 0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 60,
+          background: "rgba(10, 37, 64, 0.55)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px 16px",
+          overflow: "hidden",
+        }}
       >
-        <div style={{ position: "relative", width: "100%", maxWidth: 980 }}>{card}</div>
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            maxWidth: 980,
+            maxHeight: "calc(100vh - 48px)",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {card}
+        </div>
       </div>,
       document.body
     );
@@ -2165,7 +2796,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <p className="text-[10px] font-bold uppercase shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Notícia {ni + 1}</p>
           <p className="text-[12px] truncate font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{noticia.titulo}</p>
-          {noticia.escalada && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}>ESCALADA</span>}
+          {noticia.escalada && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, #268ffa 15%, transparent)", color: "#268ffa" }}>ESCALADA</span>}
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
           <button onClick={(e) => { e.stopPropagation(); onMove(bi, ni, -1); }} disabled={!canMoveUp} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para cima (Alt+↑)"><ArrowUp size={12} /></button>
@@ -2301,7 +2932,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
       </div>
       {noticia.imagemUrl && noticia.imagemUrl.startsWith("http") && <img src={noticia.imagemUrl} alt="" className="w-16 h-10 object-cover rounded" onError={e => (e.currentTarget.style.display = "none")} />}
       <label className="flex items-center gap-2 cursor-pointer select-none">
-        <div onClick={() => onUpdate(bi, ni, "escalada", !noticia.escalada)} className="w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer" style={{ borderColor: noticia.escalada ? "var(--layout-accent-color, #2ec1f7)" : "color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", backgroundColor: noticia.escalada ? "var(--layout-accent-color, #2ec1f7)" : "transparent" }}>
+        <div onClick={() => onUpdate(bi, ni, "escalada", !noticia.escalada)} className="w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer" style={{ borderColor: noticia.escalada ? "#268ffa" : "color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)", backgroundColor: noticia.escalada ? "#268ffa" : "transparent" }}>
           {noticia.escalada && <Check size={10} style={{ color: "var(--layout-header-text, #fff)" }} />}
         </div>
         <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Escalada</span>

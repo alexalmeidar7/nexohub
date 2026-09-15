@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History, Star, Video, Bell, AlignLeft, Briefcase, Link as LinkIcon, List, Clock, Eye } from "lucide-react";
+import { CalendarIcon, CalendarDays, Plus, Trash2, MapPin, Users, User, Instagram, Pencil, X, AlertTriangle, History, Star, Video, Bell, AlignLeft, Briefcase, Link as LinkIcon, List, Clock, Eye, Radio, Repeat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, isSameDay, addMinutes } from "date-fns";
@@ -37,6 +37,10 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import type { ExpressEditData } from "@/components/ProgramaExpressInline";
+import { getClientHouseMixPrograms, getClientHouseMixProgramsSync, normalizeClientKey, saveCustomStudio } from "@/lib/houseMixProgramasService";
+import { getProgramas } from "@/components/ProgramaForm";
+import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { getSnapshotApresentadores, getSnapshotProgramas } from "@/lib/supabaseDatabaseSnapshot";
 const ProgramaExpressInline = lazy(() => import("@/components/ProgramaExpressInline"));
 import DatasComemorativasCidades from "@/components/agenda/DatasComemorativasCidades";
 import GoogleWeekGrid, { type GridEvent } from "@/components/agenda/GoogleWeekGrid";
@@ -45,6 +49,24 @@ import AgendaPageSkeleton from "@/components/skeletons/AgendaPageSkeleton";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { getStoredMetadata, DEFAULT_AGENCY_CLIENTS } from "@/components/ClientesPage";
+
+export interface AgendaCliente {
+  id: string;
+  user_id?: string;
+  nome: string;
+  nome_empresarial: string;
+  logo_url?: string | null;
+  categoria?: string;
+  email?: string;
+  cnpj?: string;
+  aliases?: string[];
+}
+
+const isUuid = (val?: string | null): boolean => {
+  if (!val || typeof val !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
+};
 
 function ParticipanteSearchPicker({
   apresentadores,
@@ -78,6 +100,7 @@ function ParticipanteSearchPicker({
     if (local.length > 7) formatted += "-" + local.slice(7, 11);
     return formatted;
   };
+
   const filtered = apresentadores
     .filter(a => !existingNames.includes(a.nome.trim().toLowerCase()))
     .filter(a => !q.trim() || a.nome.toLowerCase().includes(q.toLowerCase()) || (a.instagram || "").toLowerCase().includes(q.toLowerCase()))
@@ -88,18 +111,11 @@ function ParticipanteSearchPicker({
   return (
     <div className="space-y-2 rounded-xl p-2" style={{ backgroundColor: "var(--layout-widget-bg, hsl(var(--card)))", color: "var(--layout-widget-text, hsl(var(--card-foreground)))" }}>
       <div className="relative">
-        <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 opacity-60" style={{ color: "var(--layout-icon-color, var(--layout-widget-text, hsl(var(--muted-foreground))))" }} />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <Input
-          autoFocus
+          placeholder="Buscar apresentador ou convidado..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar participante..."
-          className="h-8 text-xs pl-7"
-          style={{
-            backgroundColor: "var(--layout-page-bg, hsl(var(--background)))",
-            color: "var(--layout-page-text, hsl(var(--foreground)))",
-            borderColor: "var(--layout-border-color, hsl(var(--border)))",
-          }}
         />
       </div>
       <div className="max-h-60 overflow-y-auto space-y-0.5">
@@ -254,10 +270,20 @@ interface Programa {
   nome: string;
   horario_inicio: string;
   horario_fim: string;
+  horarioInicio?: string;
+  horarioFim?: string;
   estudio: string;
   dias_semana: string[];
+  diasSemana?: string[];
   apresentador_id?: string | null;
+  apresentadorId?: string | null;
   apresentadores_ids?: string[] | null;
+  apresentadoresIds?: string[] | null;
+  capa?: string | null;
+  selo?: string | null;
+  thumb?: string | null;
+  tipo_programa?: string | null;
+  tipoPrograma?: string | null;
 }
 
 interface Apresentador {
@@ -266,6 +292,8 @@ interface Apresentador {
   instagram?: string | null;
   cargo?: string | null;
   whatsapp?: string | null;
+  foto?: string | null;
+  foto_url?: string | null;
 }
 
 interface Participante {
@@ -280,6 +308,7 @@ export interface EventoExcecao {
   data: string; // YYYY-MM-DD
   acao: ExcecaoAcao;
   programa_id?: string | null;
+  cor?: string | null;
 }
 
 interface Evento {
@@ -292,6 +321,7 @@ interface Evento {
   prioridade: string;
   status?: string;
   tipo_evento?: string;
+  cor?: string;
   youtube_url?: string;
   artes_urls?: string[];
   youtube_titulo?: string;
@@ -303,16 +333,58 @@ interface Evento {
   periodo_inicio?: string | null;
   periodo_fim?: string | null;
   excecoes?: EventoExcecao[];
+  dias_semana?: number[];
   programa?: Programa;
   participantes?: Participante[];
 }
 
-const recorrenciaLabels: Record<string, string> = {
-  unico: "Somente este dia",
-  semanal: "Toda semana neste dia",
-  mensal: "Todo mês neste dia",
-  programa_semanal: "Programa semanal",
+export const DIAS_DA_SEMANA = [
+  { id: 1, label: "SEG" },
+  { id: 2, label: "TER" },
+  { id: 3, label: "QUA" },
+  { id: 4, label: "QUI" },
+  { id: 5, label: "SEX" },
+  { id: 6, label: "SÁB" },
+  { id: 0, label: "DOM" },
+];
+
+export const getRecorrenciaLabel = (rec?: string, dias?: number[]): string => {
+  if (!rec || rec === "unico") return "Não se repete";
+  if (rec === "semanal") return "Semanalmente";
+  if (rec === "mensal") return "Mensalmente";
+  if (rec === "programa_semanal" || rec.startsWith("programa_semanal:") || rec.startsWith("dias:")) {
+    let days = dias;
+    if ((!days || !days.length) && rec.startsWith("programa_semanal:")) {
+      days = rec.slice(17).split(",").map(Number).filter((n) => !isNaN(n));
+    } else if ((!days || !days.length) && rec.startsWith("dias:")) {
+      days = rec.slice(5).split(",").map(Number).filter((n) => !isNaN(n));
+    }
+    if (days && days.length > 0 && (days.length !== 5 || ![1, 2, 3, 4, 5].every((d) => days!.includes(d)))) {
+      const labels = DIAS_DA_SEMANA.filter((d) => days!.includes(d.id)).map((d) => d.label);
+      return labels.join(", ");
+    }
+    return "Selecione";
+  }
+  return rec;
 };
+
+const recorrenciaLabels: Record<string, string> = new Proxy(
+  {
+    unico: "Não se repete",
+    semanal: "Semanalmente",
+    mensal: "Mensalmente",
+    programa_semanal: "Selecione",
+  },
+  {
+    get(target, prop: string) {
+      if (prop in target) return (target as any)[prop];
+      if (typeof prop === "string" && (prop.startsWith("programa_semanal:") || prop.startsWith("dias:"))) {
+        return getRecorrenciaLabel(prop);
+      }
+      return prop;
+    },
+  }
+);
 
 
 const statusOptions = [
@@ -337,23 +409,42 @@ const studioColors = (name?: string) => {
     text: `hsl(${h} 70% 28%)`,
   };
 };
-const feriadosNacionais = [
-  { dia: 1, mes: 1, nome: "Confraternização Universal" },
-  { dia: 21, mes: 4, nome: "Tiradentes" },
-  { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
-  { dia: 7, mes: 9, nome: "Independência do Brasil" },
-  { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
-  { dia: 2, mes: 11, nome: "Finados" },
-  { dia: 15, mes: 11, nome: "Proclamação da República" },
-  { dia: 20, mes: 11, nome: "Consciência Negra" },
-  { dia: 25, mes: 12, nome: "Natal" },
-];
+export function getFeriadosNacionaisDoAno(year: number) {
+  // Cálculo da Páscoa (algoritmo de Meeus)
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const pascoa = new Date(year, month - 1, day);
+  const carnaval = new Date(pascoa.getTime() - 47 * 86400000);
+  const sextaSanta = new Date(pascoa.getTime() - 2 * 86400000);
+  const corpusChristi = new Date(pascoa.getTime() + 60 * 86400000);
 
-const getFeriadoNome = (date?: Date) => {
-  if (!date) return null;
-  const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
-  return f ? f.nome : null;
-};
+  return [
+    { date: new Date(year, 0, 1), nome: "Confraternização Universal" },
+    { date: carnaval, nome: "Carnaval" },
+    { date: sextaSanta, nome: "Sexta-feira Santa" },
+    { date: new Date(year, 3, 21), nome: "Tiradentes" },
+    { date: new Date(year, 4, 1), nome: "Dia do Trabalho" },
+    { date: corpusChristi, nome: "Corpus Christi" },
+    { date: new Date(year, 8, 7), nome: "Independência do Brasil" },
+    { date: new Date(year, 9, 12), nome: "N. Sra. Aparecida" },
+    { date: new Date(year, 10, 2), nome: "Finados" },
+    { date: new Date(year, 10, 15), nome: "Proclamação da República" },
+    { date: new Date(year, 10, 20), nome: "Dia da Consciência Negra" },
+    { date: new Date(year, 11, 25), nome: "Natal" },
+  ];
+}
 
 // Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
 const NEXO_CYAN = "#00BFF0";
@@ -361,14 +452,324 @@ const NEXO_LIME = "#C6F03C";
 const NEXO_CARD_BG = "#D6F4FB";
 const NEXO_DARK = "#0A2540";
 
+export const LOCAL_AGENDA_EVENTS_KEY = "nexohub_agenda_local_events_v2";
+
+function getAgendaStorageKey(targetUserId?: string | null): string {
+  const norm = (targetUserId || "default").trim().toLowerCase();
+  return `${LOCAL_AGENDA_EVENTS_KEY}_${norm}`;
+}
+
+export function getStoredAgendaEvents(targetUserId?: string | null): Evento[] {
+  try {
+    const key = getAgendaStorageKey(targetUserId);
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    // Check fallback global key
+    const fallbackRaw = localStorage.getItem(LOCAL_AGENDA_EVENTS_KEY);
+    if (fallbackRaw) {
+      const parsed = JSON.parse(fallbackRaw);
+      if (Array.isArray(parsed)) {
+        if (targetUserId) {
+          const userEvents = parsed.filter(e => e.user_id === targetUserId || !e.user_id || e.user_id === "local");
+          if (userEvents.length > 0) return userEvents;
+        }
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn("Erro ao ler eventos do storage:", err);
+  }
+  return [];
+}
+
+export function saveStoredAgendaEvent(evt: Evento, targetUserId?: string | null) {
+  if (!evt || !evt.id) return;
+  try {
+    const effectiveUid = targetUserId || evt.user_id || "default";
+    const key = getAgendaStorageKey(effectiveUid);
+    const existing = getStoredAgendaEvents(effectiveUid);
+    const filtered = existing.filter((e) => e.id !== evt.id);
+    const updated = [evt, ...filtered];
+    localStorage.setItem(key, JSON.stringify(updated));
+
+    // Also update global fallback storage for resiliency
+    try {
+      const fallbackRaw = localStorage.getItem(LOCAL_AGENDA_EVENTS_KEY);
+      const fallbackList: Evento[] = fallbackRaw ? JSON.parse(fallbackRaw) : [];
+      const filteredFallback = (Array.isArray(fallbackList) ? fallbackList : []).filter((e) => e.id !== evt.id);
+      localStorage.setItem(LOCAL_AGENDA_EVENTS_KEY, JSON.stringify([evt, ...filteredFallback]));
+    } catch {}
+  } catch (err) {
+    console.warn("Erro ao salvar evento no storage:", err);
+  }
+}
+
+export function deleteStoredAgendaEvent(id: string, targetUserId?: string | null) {
+  if (!id) return;
+  try {
+    const key = getAgendaStorageKey(targetUserId);
+    const existing = getStoredAgendaEvents(targetUserId);
+    const updated = existing.filter((e) => e.id !== id);
+    localStorage.setItem(key, JSON.stringify(updated));
+
+    // Also remove from fallback
+    try {
+      const fallbackRaw = localStorage.getItem(LOCAL_AGENDA_EVENTS_KEY);
+      if (fallbackRaw) {
+        const fallbackList: Evento[] = JSON.parse(fallbackRaw);
+        if (Array.isArray(fallbackList)) {
+          const filteredFallback = fallbackList.filter((e) => e.id !== id);
+          localStorage.setItem(LOCAL_AGENDA_EVENTS_KEY, JSON.stringify(filteredFallback));
+        }
+      }
+    } catch {}
+  } catch (err) {
+    console.warn("Erro ao remover evento do storage:", err);
+  }
+}
+
+export const EVENT_COLORS_KEY = "nexohub_agenda_event_colors_v1";
+
+export function getStoredEventColor(id?: string | null): string | null {
+  if (!id) return null;
+  try {
+    const raw = localStorage.getItem(EVENT_COLORS_KEY);
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    return map[id] || null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveStoredEventColor(id: string, color: string) {
+  if (!id || !color) return;
+  try {
+    const raw = localStorage.getItem(EVENT_COLORS_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    map[id] = color;
+    localStorage.setItem(EVENT_COLORS_KEY, JSON.stringify(map));
+  } catch {}
+}
+
+export function unifyAgendaClients(rawList: AgendaCliente[]): AgendaCliente[] {
+  const unified: AgendaCliente[] = [];
+
+  for (const item of rawList) {
+    const rawNome = (item.nome || "").trim();
+    const rawEmp = (item.nome_empresarial || "").trim();
+    const displayName = rawEmp || rawNome || item.id || "";
+    if (!displayName) continue;
+
+    const email = (item.email || "").trim().toLowerCase();
+    const cnpj = (item.cnpj || "").replace(/\D/g, "");
+    const canonicalKey = normalizeClientKey(displayName);
+    const slug = canonicalKey
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+
+    // Procura se o cliente já existe na lista unificada
+    const existingIndex = unified.findIndex((u) => {
+      // 1. Cruzamento por Email (se ambos tiverem email preenchido)
+      if (email && u.email && email === u.email.toLowerCase()) {
+        return true;
+      }
+      // 2. Cruzamento por CNPJ (se ambos tiverem CNPJ válido)
+      if (cnpj && u.cnpj && cnpj.length >= 8 && cnpj === u.cnpj.replace(/\D/g, "")) {
+        return true;
+      }
+      // 3. Cruzamento por slug / chave canônica (ex: CULTURA FM / culturafm)
+      const uRawNome = (u.nome || "").trim();
+      const uRawEmp = (u.nome_empresarial || "").trim();
+      const uDisplayName = uRawEmp || uRawNome || u.id || "";
+      const uCanonicalKey = normalizeClientKey(uDisplayName);
+      const uSlug = uCanonicalKey
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "");
+
+      if (slug && uSlug && slug === uSlug) {
+        return true;
+      }
+
+      // 4. Comparação exata de nome normalizado
+      if (displayName.toUpperCase() === uDisplayName.toUpperCase()) {
+        return true;
+      }
+
+      // 5. Cruzamento por ID / User ID / Alias existente
+      if (
+        (item.user_id && (item.user_id === u.user_id || item.user_id === u.id)) ||
+        (item.id && (item.id === u.id || item.id === u.user_id)) ||
+        (u.aliases && (u.aliases.includes(item.id) || (item.user_id && u.aliases.includes(item.user_id))))
+      ) {
+        return true;
+      }
+
+      return false;
+    });
+
+    if (existingIndex >= 0) {
+      const existing = unified[existingIndex];
+      const aliases = new Set(existing.aliases || [existing.id]);
+      if (existing.user_id) aliases.add(existing.user_id);
+      if (item.id) aliases.add(item.id);
+      if (item.user_id) aliases.add(item.user_id);
+      existing.aliases = Array.from(aliases);
+
+      if (!existing.logo_url && item.logo_url) {
+        existing.logo_url = item.logo_url;
+      }
+      if (!existing.email && item.email) {
+        existing.email = item.email;
+      }
+      if (!existing.cnpj && item.cnpj) {
+        existing.cnpj = item.cnpj;
+      }
+      if ((!existing.categoria || existing.categoria === "OUTROS") && item.categoria) {
+        existing.categoria = item.categoria;
+      }
+      // Prefere o nome empresarial mais completo e legível
+      if (
+        item.nome_empresarial &&
+        item.nome_empresarial.length > (existing.nome_empresarial?.length || 0) &&
+        !item.id.startsWith("local_")
+      ) {
+        existing.nome_empresarial = item.nome_empresarial.toUpperCase();
+      }
+      if (
+        item.nome &&
+        item.nome.length > (existing.nome?.length || 0) &&
+        !item.id.startsWith("local_")
+      ) {
+        existing.nome = item.nome.toUpperCase();
+      }
+    } else {
+      unified.push({
+        id: item.id,
+        user_id: item.user_id,
+        nome: rawNome ? rawNome.toUpperCase() : displayName.toUpperCase(),
+        nome_empresarial: rawEmp ? rawEmp.toUpperCase() : displayName.toUpperCase(),
+        logo_url: item.logo_url || null,
+        categoria: (item.categoria || "EMISSORA DE RÁDIO").toUpperCase(),
+        email: email || undefined,
+        cnpj: cnpj || undefined,
+        aliases: [item.id, ...(item.user_id ? [item.user_id] : [])],
+      });
+    }
+  }
+
+  unified.sort((a, b) => (a.nome_empresarial || a.nome).localeCompare(b.nome_empresarial || b.nome));
+  return unified;
+}
+
+export function getInitialClientesList(): AgendaCliente[] {
+  try {
+    const storedMeta = getStoredMetadata();
+    const rawList: AgendaCliente[] = [];
+
+    // 1. DEFAULT_AGENCY_CLIENTS
+    Object.entries(DEFAULT_AGENCY_CLIENTS).forEach(([key, def]) => {
+      const display = (def.nome_empresarial || def.razao_social || key).trim().toUpperCase();
+      if (!display) return;
+      rawList.push({
+        id: key,
+        nome: display,
+        nome_empresarial: display,
+        logo_url: (def as any).logo_url || null,
+        categoria: (def.categoria || "EMISSORA DE RÁDIO").toUpperCase(),
+        email: def.email_cobranca || (def as any).email || "",
+        cnpj: def.cnpj || "",
+      });
+    });
+
+    // 2. storedMeta
+    Object.entries(storedMeta).forEach(([key, meta]) => {
+      const candidate = (meta.nome_empresarial || meta.razao_social || (key.startsWith("local_") ? "" : key) || "").trim();
+      if (!candidate) return;
+      const display = candidate.toUpperCase();
+      rawList.push({
+        id: key,
+        nome: display,
+        nome_empresarial: display,
+        logo_url: meta.logo_url || meta.logo || null,
+        categoria: (meta.categoria || "").toUpperCase(),
+        email: meta.email_cobranca || (meta as any).email || "",
+        cnpj: meta.cnpj || "",
+      });
+    });
+
+    return unifyAgendaClients(rawList);
+  } catch {
+    return [];
+  }
+}
+
+export const normalizeProgs = (list: any[]): Programa[] => {
+  return (list || []).map((p: any) => {
+    const hInicio = (p.horario_inicio || p.horarioInicio || "").slice(0, 5) || "08:00";
+    const hFim = (p.horario_fim || p.horarioFim || "").slice(0, 5) || "10:00";
+    const rawDias = p.dias_semana || p.diasSemana || ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+    const dias = Array.isArray(rawDias)
+      ? rawDias
+      : typeof rawDias === "string"
+        ? rawDias.split(",")
+        : ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+
+    return {
+      id: p.id,
+      nome: p.nome,
+      horario_inicio: hInicio,
+      horario_fim: hFim,
+      horarioInicio: hInicio,
+      horarioFim: hFim,
+      estudio: p.estudio || "Estúdio Principal",
+      dias_semana: dias,
+      diasSemana: dias,
+      apresentador_id: p.apresentador_id || p.apresentadorId || null,
+      apresentadorId: p.apresentador_id || p.apresentadorId || null,
+      apresentadores_ids: p.apresentadores_ids || p.apresentadoresIds || (p.apresentador_id ? [p.apresentador_id] : []),
+      apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || (p.apresentador_id ? [p.apresentador_id] : []),
+      capa: p.capa || null,
+      selo: p.selo || null,
+      thumb: p.thumb || null,
+      tipo_programa: p.tipo_programa || p.tipoPrograma || "Musical",
+      tipoPrograma: p.tipo_programa || p.tipoPrograma || "Musical",
+    };
+  });
+};
 
 export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
   const targetUserId = effectiveUserId || user?.id;
   const { toast } = useToast();
-  const [programas, setProgramas] = useState<Programa[]>([]);
-  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [programas, setProgramas] = useState<Programa[]>(() => {
+    const syncDb = getStationDatabaseSync(effectiveUserId || "positivafm@positivafm.com.br");
+    if (syncDb?.programas && syncDb.programas.length > 0) {
+      return normalizeProgs(syncDb.programas);
+    }
+    return [];
+  });
+  const [eventos, setEventos] = useState<Evento[]>(() => getStoredAgendaEvents(effectiveUserId || user?.id || "d17e65af-e407-466f-9b60-b55c43399513"));
   const [now, setNow] = useState(new Date());
+
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const feriadosNacionais = useMemo(() => getFeriadosNacionaisDoAno(currentYear), [currentYear]);
+  const feriadoDates = useMemo(() => feriadosNacionais.map(f => f.date), [feriadosNacionais]);
+  const getFeriadoNome = useCallback((date: Date | undefined) => {
+    if (!date) return null;
+    const f = feriadosNacionais.find(
+      h => h.date.getDate() === date.getDate() && h.date.getMonth() === date.getMonth()
+    );
+    return f ? f.nome : null;
+  }, [feriadosNacionais]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -390,9 +791,15 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [pastMonthFilter, setPastMonthFilter] = useState<string>("todos");
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [datasModalOpen, setDatasModalOpen] = useState(false);
+  const [pastEventsModalOpen, setPastEventsModalOpen] = useState(false);
 
 
   // Form
+  const [clientesList, setClientesList] = useState<AgendaCliente[]>(() => getInitialClientesList());
+  const [formClienteId, setFormClienteId] = useState<string>("");
+  const [formEstudio, setFormEstudio] = useState<string>("");
   const [formProgramaId, setFormProgramaId] = useState("");
   const [formEstudioFilter, setFormEstudioFilter] = useState<string>("todos");
   const [formData, setFormData] = useState<Date | undefined>(undefined);
@@ -417,6 +824,18 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const [formPeriodoFim, setFormPeriodoFim] = useState<string>("");
   const [periodoDialogOpen, setPeriodoDialogOpen] = useState(false);
   const [pendingRecorrencia, setPendingRecorrencia] = useState<string>("");
+  const [formDiasSemana, setFormDiasSemana] = useState<number[]>([1, 2, 3, 4, 5]);
+
+  const toggleDiaSemana = (diaId: number) => {
+    setFormDiasSemana((prev) =>
+      prev.includes(diaId)
+        ? prev.filter((d) => d !== diaId)
+        : [...prev, diaId].sort((a, b) => {
+            const order = [1, 2, 3, 4, 5, 6, 0];
+            return order.indexOf(a) - order.indexOf(b);
+          })
+    );
+  };
   const [uploadingArte, setUploadingArte] = useState(false);
   const [savingEvent, setSavingEvent] = useState(false);
   const [formTitulo, setFormTitulo] = useState("");
@@ -425,15 +844,30 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const [guestPermModificar, setGuestPermModificar] = useState(false);
   const [guestPermConvidar, setGuestPermConvidar] = useState(true);
   const [guestPermVerLista, setGuestPermVerLista] = useState(true);
-  const [eventModalTab, setEventModalTab] = useState<"detalhes" | "horario" | "materiais">("detalhes");
+  const [eventModalTab, setEventModalTab] = useState<"detalhes" | "materiais">("detalhes");
   const [showVideoInput, setShowVideoInput] = useState(false);
   const [guestSearchInput, setGuestSearchInput] = useState("");
   const [selectedEventColor, setSelectedEventColor] = useState("#0055ff");
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [apresentadores, setApresentadores] = useState<Apresentador[]>(() => {
+    const syncDb = getStationDatabaseSync(effectiveUserId || user?.id || user?.email || "positivafm@positivafm.com.br");
+    const snapshotAps = getSnapshotApresentadores(effectiveUserId || "positivafm@positivafm.com.br") || [];
+    const baseList = (syncDb?.apresentadores as Apresentador[]) || [];
+    const map = new Map<string, Apresentador>();
+    snapshotAps.forEach((a: any) => map.set(a.id, a));
+    baseList.forEach((a: any) => {
+      const existing = map.get(a.id);
+      map.set(a.id, {
+        ...a,
+        foto: a.foto || a.foto_url || existing?.foto || existing?.foto_url,
+        foto_url: a.foto_url || a.foto || existing?.foto_url || existing?.foto
+      });
+    });
+    return Array.from(map.values());
+  });
   const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
 
-  const [loadingData, setLoadingData] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
   const [expressOpen, setExpressOpen] = useState(false);
   const [expressEditData, setExpressEditData] = useState<ExpressEditData | null>(null);
   const [creatingRoteiro, setCreatingRoteiro] = useState(false);
@@ -441,29 +875,303 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const [sendingWhatsAppFor, setSendingWhatsAppFor] = useState<string | null>(null);
   const estudios = Array.from(new Set(programas.map(p => p.estudio).filter(Boolean)));
 
+  const fetchClientes = useCallback(async () => {
+    try {
+      const storedMeta = getStoredMetadata();
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+      const queryPromise = Promise.all([
+        supabase
+          .from("logos_patrocinadores")
+          .select("id, user_id, nome, logo_url, ativo")
+          .eq("excluido", false)
+          .order("nome"),
+        supabase
+          .from("empresa_config")
+          .select("user_id, nome, logo, ativo")
+          .order("nome"),
+      ]);
+
+      const res = await Promise.race([queryPromise, timeoutPromise]);
+      const [logosRes, empRes] = (res || [ { data: [] }, { data: [] } ]) as any;
+
+      const rawList: AgendaCliente[] = [];
+
+      // 1. DEFAULT_AGENCY_CLIENTS first
+      Object.entries(DEFAULT_AGENCY_CLIENTS).forEach(([key, def]) => {
+        const display = (def.nome_empresarial || def.razao_social || key).trim().toUpperCase();
+        if (!display) return;
+        rawList.push({
+          id: key,
+          nome: display,
+          nome_empresarial: display,
+          logo_url: (def as any).logo_url || null,
+          categoria: (def.categoria || "EMISSORA DE RÁDIO").toUpperCase(),
+          email: def.email_cobranca || (def as any).email || "",
+          cnpj: def.cnpj || "",
+        });
+      });
+
+      // 2. logos_patrocinadores
+      (logosRes?.data || []).forEach((item: any) => {
+        const rawName = (item.nome || "").trim();
+        if (!rawName) return;
+        const meta = storedMeta[item.id] || storedMeta[rawName] || storedMeta[rawName.toUpperCase()] || {};
+        const nomeEmpresarial = (meta.nome_empresarial || "").trim().toUpperCase();
+        const nomeFinal = (rawName || "").trim().toUpperCase();
+        const display = nomeEmpresarial || nomeFinal;
+        const logo = item.logo_url || meta.logo_url || meta.logo || null;
+        if (!display) return;
+        rawList.push({
+          id: item.id,
+          user_id: item.user_id,
+          nome: nomeFinal,
+          nome_empresarial: nomeEmpresarial || nomeFinal,
+          logo_url: logo,
+          categoria: (meta.categoria || "").toUpperCase(),
+          email: meta.email_cobranca || meta.email || (item as any).email || "",
+          cnpj: meta.cnpj || "",
+        });
+      });
+
+      // 3. empresa_config
+      (empRes?.data || []).forEach((emp: any) => {
+        const rawName = (emp.nome || "").trim();
+        if (!rawName) return;
+        const meta = storedMeta[emp.user_id] || storedMeta[rawName] || storedMeta[rawName.toUpperCase()] || {};
+        const nomeEmpresarial = (meta.nome_empresarial || "").trim().toUpperCase();
+        const nomeFinal = rawName.toUpperCase();
+        const display = nomeEmpresarial || nomeFinal;
+        const logo = emp.logo || meta.logo_url || meta.logo || null;
+        if (!display) return;
+        rawList.push({
+          id: emp.user_id,
+          user_id: emp.user_id,
+          nome: nomeFinal,
+          nome_empresarial: nomeEmpresarial || nomeFinal,
+          logo_url: logo,
+          categoria: (meta.categoria || "EMISSORA DE RÁDIO").toUpperCase(),
+          email: meta.email_cobranca || meta.email || (emp as any).email || "",
+          cnpj: meta.cnpj || "",
+        });
+      });
+
+      // 4. Stored metadata in localStorage
+      Object.keys(storedMeta).forEach((key) => {
+        const meta = storedMeta[key];
+        const candidate = (meta.nome_empresarial || meta.razao_social || (key.startsWith("local_") ? "" : key) || "").trim();
+        if (!candidate) return;
+        const nomeEmpresarial = (meta.nome_empresarial || candidate).trim().toUpperCase();
+        const logo = meta.logo_url || meta.logo || null;
+        rawList.push({
+          id: key,
+          user_id: user?.id,
+          nome: candidate.toUpperCase(),
+          nome_empresarial: nomeEmpresarial,
+          logo_url: logo,
+          categoria: (meta.categoria || "").toUpperCase(),
+          email: meta.email_cobranca || meta.email || "",
+          cnpj: meta.cnpj || "",
+        });
+      });
+
+      const unified = unifyAgendaClients(rawList);
+      setClientesList(unified);
+    } catch (err) {
+      console.error("Erro ao carregar clientes na agenda:", err);
+    }
+  }, [user]);
+
+  const selectedClienteObj = useMemo(() => {
+    if (!formClienteId) return null;
+    return clientesList.find(c => c.id === formClienteId || (c.aliases && c.aliases.includes(formClienteId))) || null;
+  }, [clientesList, formClienteId]);
+
+  const isEmissoraRadio = useMemo(() => {
+    if (!selectedClienteObj) return false;
+    const cat = (selectedClienteObj.categoria || "").trim().toUpperCase();
+    if (cat === "EMISSORA DE RÁDIO" || cat === "EMISSORA DE RADIO" || cat.includes("RÁDIO") || cat.includes("RADIO")) return true;
+    const name = (selectedClienteObj.nome_empresarial || selectedClienteObj.nome || "").trim().toUpperCase();
+    return name.includes("FM") || name.includes("RÁDIO") || name.includes("RADIO");
+  }, [selectedClienteObj]);
+
+  const clientHouseMixData = useMemo(() => {
+    if (!selectedClienteObj) return { programas: [], estudios: [] };
+    return getClientHouseMixProgramsSync(selectedClienteObj, programas);
+  }, [selectedClienteObj, programas]);
+
+  const clientProgramas = useMemo(() => {
+    return (clientHouseMixData.programas || []) as unknown as Programa[];
+  }, [clientHouseMixData]);
+
+  const clientEstudios = useMemo(() => {
+    return clientHouseMixData.estudios || [];
+  }, [clientHouseMixData]);
+
+  const handleClienteChange = (clienteId: string) => {
+    setFormClienteId(clienteId);
+    setFormEstudio("");
+    setFormProgramaId("");
+    const cli = clientesList.find(c => c.id === clienteId);
+    if (cli) {
+      const baseName = cli.nome_empresarial || cli.nome || "";
+      setFormLocal(baseName);
+    }
+  };
+
+  const availableEstudios = useMemo(() => {
+    if (clientEstudios.length > 0) return clientEstudios;
+    if (selectedClienteObj && isEmissoraRadio) {
+      return [
+        "ESTÚDIO FM",
+        "ESTÚDIO GRAVAÇÃO & PODCAST",
+      ];
+    }
+    return [];
+  }, [clientEstudios, selectedClienteObj, isEmissoraRadio]);
+
+  const availableProgramas = useMemo(() => {
+    if (!selectedClienteObj) return [];
+    const baseList = clientProgramas.length > 0 ? clientProgramas : [];
+    if (!formEstudio || formEstudio === "todos" || formEstudio === "__all__") return baseList;
+    const target = formEstudio.trim().toUpperCase();
+    const filtered = baseList.filter(p => {
+      if (!p.estudio) return false;
+      const est = p.estudio.trim().toUpperCase();
+      return est === target || est.includes(target) || target.includes(est);
+    });
+    return filtered;
+  }, [selectedClienteObj, clientProgramas, formEstudio]);
+
+  const displayProgramas = useMemo(() => {
+    if (availableProgramas && availableProgramas.length > 0) return availableProgramas;
+    if (programas && programas.length > 0) return programas;
+    const syncDb = getStationDatabaseSync(targetUserId || user?.email || "positivafm@positivafm.com.br");
+    if (syncDb?.programas && syncDb.programas.length > 0) {
+      return normalizeProgs(syncDb.programas);
+    }
+    return [];
+  }, [availableProgramas, programas, targetUserId, user]);
+
+  const selectedProgPresenters = useMemo(() => {
+    if (!formProgramaId) return [];
+    const prog = displayProgramas.find(p => p.id === formProgramaId);
+    if (!prog) return [];
+
+    const syncAps = ((getStationDatabaseSync(targetUserId || user?.email || "positivafm@positivafm.com.br")?.apresentadores as Apresentador[]) || []);
+    const snapshotAps = ((getSnapshotApresentadores(targetUserId || user?.email || "positivafm@positivafm.com.br") as Apresentador[]) || []);
+
+    const allPresentersMap = new Map<string, Apresentador>();
+    snapshotAps.forEach(a => allPresentersMap.set(a.id, a));
+    syncAps.forEach(a => {
+      const ex = allPresentersMap.get(a.id);
+      allPresentersMap.set(a.id, { ...a, foto: a.foto || a.foto_url || ex?.foto || ex?.foto_url, foto_url: a.foto_url || a.foto || ex?.foto_url || ex?.foto });
+    });
+    apresentadores.forEach(a => {
+      const ex = allPresentersMap.get(a.id);
+      allPresentersMap.set(a.id, { ...a, foto: a.foto || a.foto_url || ex?.foto || ex?.foto_url, foto_url: a.foto_url || a.foto || ex?.foto_url || ex?.foto });
+    });
+
+    const allPresenters = Array.from(allPresentersMap.values());
+    const matched: Apresentador[] = [];
+    const matchedIds = new Set<string>();
+
+    const progIds = [
+      ...(prog.apresentadores_ids || []),
+      ...(prog.apresentadoresIds || []),
+      ...(prog.apresentador_id ? [prog.apresentador_id] : []),
+      ...(prog.apresentadorId ? [prog.apresentadorId] : []),
+    ].filter(Boolean);
+
+    progIds.forEach(id => {
+      const found = allPresenters.find(a => a.id === id);
+      if (found && !matchedIds.has(found.id)) {
+        matchedIds.add(found.id);
+        matched.push(found);
+      }
+    });
+
+    if (matched.length === 0) {
+      allPresenters.forEach(a => {
+        if (!a.nome) return;
+        const pNome = prog.nome.toLowerCase();
+        const aNome = a.nome.toLowerCase();
+        if (pNome.includes(aNome) || aNome.includes(pNome)) {
+          if (!matchedIds.has(a.id)) {
+            matchedIds.add(a.id);
+            matched.push(a);
+          }
+        }
+      });
+    }
+
+    return matched;
+  }, [formProgramaId, displayProgramas, apresentadores, targetUserId, user]);
+
   const fetchProgramas = useCallback(async () => {
-    if (!targetUserId) return [];
-    const { data } = await supabase
-      .from("programas")
-      .select("*")
-      .eq("user_id", targetUserId)
-      .order("horario_inicio");
-    const progs = (data as Programa[]) || [];
-    setProgramas(progs);
-    return progs;
-  }, [targetUserId]);
+    try {
+      let query = supabase.from("programas").select("*").order("horario_inicio");
+      if (targetUserId) {
+        query = query.eq("user_id", targetUserId);
+      }
+      const { data } = await query;
+      let progs = (data as Programa[]) || [];
+      if (progs.length === 0) {
+        const syncDb = getStationDatabaseSync(targetUserId || user?.email || "positivafm@positivafm.com.br");
+        if (syncDb?.programas && syncDb.programas.length > 0) {
+          progs = normalizeProgs(syncDb.programas);
+        }
+      }
+      setProgramas(progs);
+      return progs;
+    } catch (err) {
+      console.error("Erro ao buscar programas:", err);
+      const syncDb = getStationDatabaseSync(targetUserId || user?.email || "positivafm@positivafm.com.br");
+      if (syncDb?.programas && syncDb.programas.length > 0) {
+        const progs = normalizeProgs(syncDb.programas);
+        setProgramas(progs);
+        return progs;
+      }
+      return [];
+    }
+  }, [targetUserId, user]);
 
   const fetchApresentadores = useCallback(async () => {
+    const syncDb = getStationDatabaseSync(targetUserId || user?.email || "positivafm@positivafm.com.br");
+    let baseList = (syncDb?.apresentadores as Apresentador[]) || [];
+    if (baseList.length > 0) {
+      setApresentadores(baseList);
+    }
     if (!targetUserId) return;
-    const { data } = await supabase
-      .from("apresentadores")
-      .select("id, nome, instagram, cargo, whatsapp")
-      .eq("user_id", targetUserId);
-    setApresentadores((data as Apresentador[]) || []);
-  }, [targetUserId]);
+    try {
+      const { data } = await supabase
+        .from("apresentadores")
+        .select("id, nome, foto, foto_url, instagram, cargo, whatsapp")
+        .eq("user_id", targetUserId);
+      if (data && data.length > 0) {
+        const merged = data.map((item: any) => {
+          const match = baseList.find(b => b.id === item.id || b.nome?.trim().toLowerCase() === item.nome?.trim().toLowerCase());
+          return {
+            ...item,
+            foto: item.foto || item.foto_url || match?.foto || match?.foto_url || null,
+            foto_url: item.foto_url || item.foto || match?.foto_url || match?.foto || null,
+          };
+        });
+        setApresentadores(merged);
+      }
+    } catch (err) {
+      console.warn("Erro ao buscar apresentadores:", err);
+    }
+  }, [targetUserId, user]);
 
   const fetchEventos = useCallback(async (progsList?: Programa[]) => {
-    if (!targetUserId) return;
+    const rawProgs = progsList || programas;
+    const currentProgs = normalizeProgs(rawProgs);
+    const progsById = new Map(currentProgs.map((p) => [p.id, p]));
+
+    if (!targetUserId) {
+      setEventos([]);
+      return;
+    }
 
     const dayStr = (offset: number) => {
       const d = new Date();
@@ -473,56 +1181,102 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     const winStart = dayStr(-120);
     const winEnd = dayStr(365);
 
-    const { data: evts } = await supabase
-      .from("agenda_eventos")
-      .select("*")
-      .eq("user_id", targetUserId)
-      .gte("data", winStart)
-      .lte("data", winEnd)
-      .order("data");
+    try {
+      const map = new Map<string, Evento>();
 
-    if (!evts) {
-      setEventos([]);
-      return;
-    }
-
-    const currentProgs = progsList || programas;
-    const progsById = new Map(currentProgs.map((p) => [p.id, p]));
-
-    const baseEvents: Evento[] = evts.map((e: any) => ({
-      ...e,
-      prioridade: e.prioridade || "normal",
-      programa: progsById.get(e.programa_id),
-      participantes: [],
-    }));
-    setEventos(baseEvents);
-
-    const eventIds = evts.map((e: any) => e.id);
-    if (eventIds.length) {
-      const { data: parts } = await supabase
-        .from("agenda_participantes")
-        .select("*")
-        .in("evento_id", eventIds);
-
-      if (parts && parts.length) {
-        const partsByEvent = new Map<string, any[]>();
-        for (const p of parts) {
-          const arr = partsByEvent.get(p.evento_id) || [];
-          arr.push(p);
-          partsByEvent.set(p.evento_id, arr);
+      // 1. Preload locally stored events first
+      const localStored = getStoredAgendaEvents(targetUserId);
+      localStored.forEach((le) => {
+        if (le && le.id) {
+          const prog = progsById.get(le.programa_id);
+          map.set(le.id, {
+            ...le,
+            horario_gravacao: le.horario_gravacao || prog?.horario_inicio,
+            horario_gravacao_fim: le.horario_gravacao_fim || prog?.horario_fim,
+            programa: le.programa || prog,
+          });
         }
-        setEventos(prev => prev.map(e => ({
+      });
+
+      const { data: evts } = await supabase
+        .from("agenda_eventos")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .gte("data", winStart)
+        .lte("data", winEnd)
+        .order("data");
+
+      (evts || []).forEach((e: any) => {
+        const prog = progsById.get(e.programa_id);
+        const parsedDias = e.dias_semana || (e.recorrencia?.startsWith("dias:")
+          ? e.recorrencia.slice(5).split(",").map(Number).filter((n: any) => !isNaN(n))
+          : e.recorrencia?.startsWith("programa_semanal:")
+          ? e.recorrencia.slice(17).split(",").map(Number).filter((n: any) => !isNaN(n))
+          : e.recorrencia === "programa_semanal"
+          ? [1, 2, 3, 4, 5]
+          : undefined);
+
+        // Extract color
+        const rawExc = e.excecoes;
+        let dbColor: string | null = null;
+        if (Array.isArray(rawExc)) {
+          const meta = rawExc.find((x: any) => x && (x.data === "__meta__" || x._type === "meta"));
+          if (meta?.cor) dbColor = meta.cor;
+        } else if (rawExc && typeof rawExc === "object") {
+          if ((rawExc as any).cor) dbColor = (rawExc as any).cor;
+        }
+        const localColor = getStoredEventColor(e.id) || (e.programa_id ? getStoredEventColor(`prog_${e.programa_id}`) : null);
+        const finalEvtColor = localColor || dbColor || (e as any).cor || undefined;
+
+        const existingLocal = map.get(e.id);
+        const mergedEvt: Evento = {
+          ...existingLocal,
           ...e,
-          participantes: partsByEvent.get(e.id) || e.participantes || [],
-        })));
+          cor: finalEvtColor,
+          dias_semana: parsedDias,
+          horario_gravacao: e.horario_gravacao || prog?.horario_inicio || existingLocal?.horario_gravacao,
+          horario_gravacao_fim: e.horario_gravacao_fim || prog?.horario_fim || existingLocal?.horario_gravacao_fim,
+          prioridade: e.prioridade || existingLocal?.prioridade || "normal",
+          programa: prog || existingLocal?.programa,
+          participantes: existingLocal?.participantes || [],
+        };
+        map.set(e.id, mergedEvt);
+        saveStoredAgendaEvent(mergedEvt, targetUserId);
+      });
+
+      const baseEvents = Array.from(map.values());
+      setEventos(baseEvents);
+
+      const dbEventIds = (evts || []).map((e: any) => e.id);
+      if (dbEventIds.length) {
+        const { data: parts } = await supabase
+          .from("agenda_participantes")
+          .select("*")
+          .in("evento_id", dbEventIds);
+
+        if (parts && parts.length) {
+          const partsByEvent = new Map<string, any[]>();
+          for (const p of parts) {
+            const arr = partsByEvent.get(p.evento_id) || [];
+            arr.push(p);
+            partsByEvent.set(p.evento_id, arr);
+          }
+          setEventos(prev => prev.map(e => ({
+            ...e,
+            participantes: partsByEvent.get(e.id) || e.participantes || [],
+          })));
+        }
       }
+    } catch (err) {
+      console.warn("Erro ao buscar eventos do Supabase, mantendo eventos locais:", err);
+      const localStored = getStoredAgendaEvents(targetUserId);
+      if (localStored.length > 0) setEventos(localStored);
     }
-  }, [user, programas]);
+  }, [user, programas, targetUserId]);
 
   useEffect(() => {
     let active = true;
     const loadAll = async () => {
-      if (!targetUserId) return;
       setLoadingData(true);
 
       const dayStr = (offset: number) => {
@@ -534,20 +1288,52 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
       const winEnd = dayStr(365);
 
       try {
-        // Parallel fetch: everything needed for instant first render
-        const [empRes, progsRes, evtsRes, profileRes] = await Promise.all([
+        if (!targetUserId) {
+          if (!active) return;
+          setEventos([]);
+          setLoadingData(false);
+          fetchClientes();
+          return;
+        }
+
+        // Parallel fetch with 2.5s timeout: everything needed for instant first render
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+        const queryPromise = Promise.all([
           supabase.from("empresa_config").select("timezone").eq("user_id", targetUserId).maybeSingle(),
           supabase.from("programas").select("*").eq("user_id", targetUserId).order("horario_inicio"),
           supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId).gte("data", winStart).lte("data", winEnd).order("data"),
           supabase.from("profiles").select("event_types_config").eq("user_id", targetUserId).maybeSingle(),
         ]);
 
+        const raceRes = await Promise.race([queryPromise, timeoutPromise]);
+        const [empRes, progsRes, evtsRes, profileRes] = (raceRes || [
+          { data: null },
+          { data: [] },
+          { data: [] },
+          { data: null },
+        ]) as any;
+
         if (!active) return;
 
         if (empRes?.data?.timezone && user) {
           (user as any).timezone = empRes.data.timezone;
         }
-        const progs = (progsRes.data as Programa[]) || [];
+        let rawProgs = (progsRes?.data as any[]) || [];
+        if (rawProgs.length === 0) {
+          try {
+            const fallbackP = await getProgramas(targetUserId, user?.email);
+            if (fallbackP && fallbackP.length > 0) {
+              rawProgs = fallbackP as any[];
+            }
+          } catch {}
+        }
+        if (rawProgs.length === 0) {
+          const syncDb = getStationDatabaseSync(targetUserId || user?.email);
+          if (syncDb?.programas && syncDb.programas.length > 0) {
+            rawProgs = syncDb.programas as any[];
+          }
+        }
+        const progs = normalizeProgs(rawProgs);
         setProgramas(progs);
 
         if (profileRes?.data?.event_types_config) {
@@ -555,20 +1341,70 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         }
 
         const progsById = new Map(progs.map((p) => [p.id, p]));
-        const evts = evtsRes.data || [];
-        const baseEvents: Evento[] = evts.map((e: any) => ({
-          ...e,
-          prioridade: e.prioridade || "normal",
-          programa: progsById.get(e.programa_id),
-          participantes: [],
-        }));
+        const evts = evtsRes?.data || [];
 
-        // Render calendar and week grid instantly!
+        const map = new Map<string, Evento>();
+
+        // 1. Preload locally stored events first
+        const localStored = getStoredAgendaEvents(targetUserId);
+        localStored.forEach((le) => {
+          if (le && le.id) {
+            const prog = progsById.get(le.programa_id);
+            map.set(le.id, {
+              ...le,
+              horario_gravacao: le.horario_gravacao || prog?.horario_inicio,
+              horario_gravacao_fim: le.horario_gravacao_fim || prog?.horario_fim,
+              programa: le.programa || prog,
+            });
+          }
+        });
+
+        // 2. Overlay online Supabase events
+        evts.forEach((e: any) => {
+          const prog = progsById.get(e.programa_id);
+          const parsedDias = e.dias_semana || (e.recorrencia?.startsWith("dias:")
+            ? e.recorrencia.slice(5).split(",").map(Number).filter((n: any) => !isNaN(n))
+            : e.recorrencia?.startsWith("programa_semanal:")
+            ? e.recorrencia.slice(17).split(",").map(Number).filter((n: any) => !isNaN(n))
+            : e.recorrencia === "programa_semanal"
+            ? [1, 2, 3, 4, 5]
+            : undefined);
+
+          // Extract color
+          const rawExc = e.excecoes;
+          let dbColor: string | null = null;
+          if (Array.isArray(rawExc)) {
+            const meta = rawExc.find((x: any) => x && (x.data === "__meta__" || x._type === "meta"));
+            if (meta?.cor) dbColor = meta.cor;
+          } else if (rawExc && typeof rawExc === "object") {
+            if ((rawExc as any).cor) dbColor = (rawExc as any).cor;
+          }
+          const localColor = getStoredEventColor(e.id) || (e.programa_id ? getStoredEventColor(`prog_${e.programa_id}`) : null);
+          const finalEvtColor = localColor || dbColor || (e as any).cor || null;
+
+          const existingLocal = map.get(e.id);
+          const mergedEvt: Evento = {
+            ...existingLocal,
+            ...e,
+            cor: finalEvtColor || undefined,
+            dias_semana: parsedDias,
+            horario_gravacao: e.horario_gravacao || prog?.horario_inicio || existingLocal?.horario_gravacao,
+            horario_gravacao_fim: e.horario_gravacao_fim || prog?.horario_fim || existingLocal?.horario_gravacao_fim,
+            prioridade: e.prioridade || existingLocal?.prioridade || "normal",
+            programa: prog || existingLocal?.programa,
+            participantes: existingLocal?.participantes || [],
+          };
+          map.set(e.id, mergedEvt);
+          saveStoredAgendaEvent(mergedEvt, targetUserId);
+        });
+
+        const baseEvents: Evento[] = Array.from(map.values());
         setEventos(baseEvents);
         setLoadingData(false);
 
-        // Fetch presenters in background for form pickers
+        // Fetch presenters and clients in background for form pickers
         fetchApresentadores();
+        fetchClientes();
 
         // Background enrichment: participants
         const eventIds = evts.map((e: any) => e.id);
@@ -594,8 +1430,12 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           );
         }
       } catch (err) {
-        console.error("Erro ao carregar dados da agenda:", err);
+        console.error("Erro ao carregar dados da agenda, mantendo eventos locais:", err);
+        const localStored = getStoredAgendaEvents(targetUserId);
+        if (localStored.length > 0) setEventos(localStored);
         setLoadingData(false);
+      } finally {
+        if (active) setLoadingData(false);
       }
     };
 
@@ -603,7 +1443,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     return () => {
       active = false;
     };
-  }, [user, fetchApresentadores]);
+  }, [user, targetUserId, fetchApresentadores, fetchClientes]);
 
   // Focus event coming from dashboard agenda widget click
   useEffect(() => {
@@ -749,6 +1589,9 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const resetForm = () => {
     setFormTitulo("");
     setFormDiaInteiro(false);
+    setFormDiasSemana([1, 2, 3, 4, 5]);
+    setFormClienteId("");
+    setFormEstudio("");
     setFormProgramaId("");
     setFormEstudioFilter("todos");
     setFormData(undefined);
@@ -773,6 +1616,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     setEventModalTab("detalhes");
     setShowVideoInput(false);
     setGuestSearchInput("");
+    setSelectedEventColor("#0055ff");
   };
 
   const handleRecorrenciaChange = (value: string) => {
@@ -799,21 +1643,40 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     setFormData(baseDate);
     setFormHorarioGravacao("10:00");
     setFormHorarioGravacaoFim("11:00");
-    if (programas.length > 0) {
-      setFormProgramaId(programas[0].id);
-    }
+    setFormDiasSemana([1, 2, 3, 4, 5]);
+    setFormClienteId("");
+    setFormEstudio("");
+    setFormProgramaId("");
     setDialogOpen(true);
   };
 
-  const startEdit = (evt: Evento) => {
+  const startEdit = useCallback((evt: Evento, occurrenceDateStr?: string) => {
     setEditingId(evt.id);
+    const targetDateStr = occurrenceDateStr || evt.data;
+    setFormData(targetDateStr ? new Date(targetDateStr + "T12:00:00") : new Date());
     setFormTitulo(evt.youtube_titulo || evt.programa?.nome || evt.descricao || "");
     setFormProgramaId(evt.programa_id || "");
     setFormEstudioFilter(evt.programa?.estudio || "todos");
-    setFormData(new Date(evt.data + "T12:00:00"));
     setFormLocal(evt.local || "");
     setFormDescricao(evt.descricao || "");
-    setFormRecorrencia(evt.recorrencia || "unico");
+
+    const rec = evt.recorrencia || "unico";
+    if (rec.startsWith("programa_semanal") || rec.startsWith("dias:")) {
+      setFormRecorrencia("programa_semanal");
+      if (evt.dias_semana && Array.isArray(evt.dias_semana) && evt.dias_semana.length > 0) {
+        setFormDiasSemana(evt.dias_semana);
+      } else if (rec.startsWith("programa_semanal:")) {
+        setFormDiasSemana(rec.slice(17).split(",").map(Number).filter(n => !isNaN(n)));
+      } else if (rec.startsWith("dias:")) {
+        setFormDiasSemana(rec.slice(5).split(",").map(Number).filter(n => !isNaN(n)));
+      } else {
+        setFormDiasSemana([1, 2, 3, 4, 5]);
+      }
+    } else {
+      setFormRecorrencia(rec);
+      setFormDiasSemana([1, 2, 3, 4, 5]);
+    }
+
     setFormTipoEvento(evt.tipo_evento || "live");
     setFormPrioridade(evt.prioridade || "normal");
     setFormStatus(evt.status || "ativo");
@@ -825,7 +1688,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     setFormEdicaoConcluida(!!evt.edicao_concluida);
     setFormHorarioGravacao(evt.horario_gravacao || "10:00");
     setFormHorarioGravacaoFim(evt.horario_gravacao_fim || "11:00");
-    setFormDiaInteiro(!evt.horario_gravacao && !evt.horario_gravacao_fim);
+    setFormDiaInteiro(false);
     setFormPeriodoInicio(((evt as any).periodo_inicio as string) || "");
     setFormPeriodoFim(((evt as any).periodo_fim as string) || "");
     setFormParticipantes(
@@ -835,89 +1698,210 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     );
     setShowVideoInput(!!evt.youtube_url);
     setEventModalTab("detalhes");
+
+    // Vincula o cliente do evento
+    let matchedClient = clientesList.find(c => c.user_id === evt.programa?.user_id || c.id === evt.programa?.user_id);
+    if (!matchedClient && evt.local) {
+      matchedClient = clientesList.find(c =>
+        evt.local!.toUpperCase().includes(c.nome_empresarial.toUpperCase()) ||
+        evt.local!.toUpperCase().includes(c.nome.toUpperCase())
+      );
+    }
+    if (!matchedClient && (evt as any).user_id) {
+      matchedClient = clientesList.find(c => c.id === (evt as any).user_id || c.user_id === (evt as any).user_id);
+    }
+    if (matchedClient) {
+      setFormClienteId(matchedClient.id);
+    }
+    setFormEstudio(evt.programa?.estudio || "");
+    const currentEventColor = evt.cor || getStoredEventColor(evt.id) || (evt.programa_id ? getStoredEventColor(`prog_${evt.programa_id}`) : null) || "#0055ff";
+    setSelectedEventColor(currentEventColor);
     setDialogOpen(true);
-  };
+  }, [clientesList]);
 
   const handleSave = async () => {
     const eventDate = formData ?? selectedDate ?? new Date();
-    if (!user || savingEvent) return;
-
-    const finalProgId = formProgramaId || (programas.length > 0 ? programas[0].id : null);
-    const selectedProg = programas.find(p => p.id === finalProgId);
-    const finalTitulo = formTitulo.trim() || (selectedProg?.nome ?? "Novo Evento");
-    const finalDescricao = formDescricao.trim() || finalTitulo;
+    if ((!user && !targetUserId) || savingEvent) return;
 
     setSavingEvent(true);
     try {
-      const payload = {
-        user_id: user.id,
-        programa_id: finalProgId,
+      const finalProgId = formProgramaId || null;
+      const validProgId = finalProgId && isUuid(finalProgId) ? finalProgId : null;
+      const selectedProg = clientProgramas.find(p => p.id === finalProgId) || programas.find(p => p.id === finalProgId);
+      const finalTitulo = formTitulo.trim() || (selectedProg?.nome ?? (formLocal ? `Evento - ${formLocal}` : "Novo Evento"));
+      const finalDescricao = formDescricao.trim() || finalTitulo;
+
+      const selectedCli = clientesList.find(c => c.id === formClienteId);
+      const cliDisplayName = selectedCli?.nome_empresarial || selectedCli?.nome || "";
+      const finalLocal = formEstudio && formEstudio !== "todos" && formEstudio !== "__all__"
+        ? (cliDisplayName ? `${cliDisplayName} - ${formEstudio}` : formEstudio)
+        : (cliDisplayName || formLocal);
+
+      const validParts = formParticipantes.filter((p) => p.nome.trim());
+      const finalEventId = editingId || `evt_local_${Date.now()}`;
+
+      const isCustomDays = formRecorrencia === "programa_semanal" && (
+        formDiasSemana.length !== 5 || ![1, 2, 3, 4, 5].every((d) => formDiasSemana.includes(d))
+      );
+      const finalRecorrencia = formRecorrencia === "programa_semanal"
+        ? (isCustomDays ? `dias:${formDiasSemana.join(",")}` : "programa_semanal")
+        : formRecorrencia;
+
+      const baseEventData: Evento = {
+        id: finalEventId,
+        user_id: targetUserId || user?.id || "local",
+        programa_id: validProgId || undefined,
         data: format(eventDate, "yyyy-MM-dd"),
-        local: formLocal,
+        local: finalLocal,
         descricao: finalDescricao,
-        recorrencia: formRecorrencia,
+        recorrencia: finalRecorrencia,
+        dias_semana: formRecorrencia === "programa_semanal" ? formDiasSemana : undefined,
         prioridade: formPrioridade,
         status: formStatus,
         tipo_evento: formTipoEvento,
-        youtube_url: formYoutubeUrl || null,
+        cor: selectedEventColor,
+        youtube_url: formYoutubeUrl || undefined,
         artes_urls: formArtesUrls || [],
         youtube_titulo: finalTitulo.slice(0, 100),
         youtube_descricao: formYoutubeDescricao || finalDescricao,
         edicao_notas: formEdicaoNotas || "",
         edicao_concluida: formEdicaoConcluida,
-        horario_gravacao: formDiaInteiro ? null : (formHorarioGravacao || null),
-        horario_gravacao_fim: formDiaInteiro ? null : (formHorarioGravacaoFim || null),
+        horario_gravacao: formDiaInteiro ? undefined : (formHorarioGravacao || undefined),
+        horario_gravacao_fim: formDiaInteiro ? undefined : (formHorarioGravacaoFim || undefined),
         periodo_inicio: formRecorrencia !== "unico" ? (formPeriodoInicio || null) : null,
         periodo_fim: formRecorrencia !== "unico" ? (formPeriodoFim || null) : null,
-      } as any;
+        programa: selectedProg,
+        participantes: validParts.map((p, idx) => ({ id: p.id || `part_${Date.now()}_${idx}`, nome: p.nome, instagram: p.instagram })),
+      };
 
-      if (editingId) {
-        await supabase.from("agenda_eventos").update(payload).eq("id", editingId);
-        await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
-        const validParts = formParticipantes.filter((p) => p.nome.trim());
-        if (validParts.length) {
-          await supabase.from("agenda_participantes").insert(
-            validParts.map((p) => ({
-              evento_id: editingId,
-              user_id: user.id,
-              nome: p.nome,
-              instagram: p.instagram,
-            }))
-          );
+      // Salva localmente primeiro para garantir que o usuário nunca perca dados nem trave com erro de rede
+      saveStoredAgendaEvent(baseEventData, targetUserId);
+      saveStoredEventColor(finalEventId, selectedEventColor);
+      if (validProgId) saveStoredEventColor(`prog_${validProgId}`, selectedEventColor);
+      setEventos(prev => {
+        const filtered = prev.filter(e => e.id !== finalEventId);
+        return [baseEventData, ...filtered];
+      });
+
+      try {
+        const existingEvent = editingId ? eventos.find(e => e.id === editingId) : null;
+        const existingExcecoes = (Array.isArray(existingEvent?.excecoes) ? existingEvent.excecoes : []).filter((x: any) => x && x.data !== "__meta__");
+        const finalPayloadExcecoes = [
+          ...existingExcecoes,
+          { data: "__meta__", acao: "manter", cor: selectedEventColor }
+        ];
+
+        const payload = {
+          user_id: targetUserId || user?.id,
+          programa_id: validProgId,
+          data: format(eventDate, "yyyy-MM-dd"),
+          local: finalLocal,
+          descricao: finalDescricao,
+          recorrencia: finalRecorrencia,
+          prioridade: formPrioridade,
+          status: formStatus,
+          tipo_evento: formTipoEvento,
+          excecoes: finalPayloadExcecoes,
+          youtube_url: formYoutubeUrl || null,
+          artes_urls: formArtesUrls || [],
+          youtube_titulo: finalTitulo.slice(0, 100),
+          youtube_descricao: formYoutubeDescricao || finalDescricao,
+          edicao_notas: formEdicaoNotas || "",
+          edicao_concluida: formEdicaoConcluida,
+          horario_gravacao: formDiaInteiro ? null : (formHorarioGravacao || null),
+          horario_gravacao_fim: formDiaInteiro ? null : (formHorarioGravacaoFim || null),
+          periodo_inicio: formRecorrencia !== "unico" ? (formPeriodoInicio || null) : null,
+          periodo_fim: formRecorrencia !== "unico" ? (formPeriodoFim || null) : null,
+        } as any;
+
+        if (editingId) {
+          saveStoredEventColor(editingId, selectedEventColor);
+          const { error: updErr } = await supabase.from("agenda_eventos").update(payload).eq("id", editingId);
+          if (!updErr) {
+            try {
+              await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
+              if (validParts.length) {
+                await supabase.from("agenda_participantes").insert(
+                  validParts.map((p) => ({
+                    evento_id: editingId,
+                    user_id: targetUserId || user?.id,
+                    nome: p.nome,
+                    instagram: p.instagram,
+                  }))
+                );
+              }
+            } catch {}
+          }
+        } else {
+          const { data: evt, error } = await supabase
+            .from("agenda_eventos")
+            .insert(payload)
+            .select()
+            .single();
+
+          if (!error && evt) {
+            deleteStoredAgendaEvent(finalEventId, targetUserId);
+            saveStoredEventColor(evt.id, selectedEventColor);
+            const syncedEvent: Evento = {
+              ...baseEventData,
+              id: evt.id,
+              cor: selectedEventColor,
+            };
+            saveStoredAgendaEvent(syncedEvent, targetUserId);
+            setEventos(prev => {
+              const filtered = prev.filter(e => e.id !== finalEventId && e.id !== evt.id);
+              return [syncedEvent, ...filtered];
+            });
+
+            if (validParts.length) {
+              try {
+                await supabase.from("agenda_participantes").insert(
+                  validParts.map((p) => ({
+                    evento_id: evt.id,
+                    user_id: targetUserId || user?.id,
+                    nome: p.nome,
+                    instagram: p.instagram,
+                  }))
+                );
+              } catch {}
+            }
+          }
         }
-      } else {
-        const { data: evt, error } = await supabase
-          .from("agenda_eventos")
-          .insert(payload)
-          .select()
-          .single();
-
-        if (error || !evt) return;
-
-        const validParts = formParticipantes.filter((p) => p.nome.trim());
-        if (validParts.length) {
-          await supabase.from("agenda_participantes").insert(
-            validParts.map((p) => ({
-              evento_id: evt.id,
-              user_id: user.id,
-              nome: p.nome,
-              instagram: p.instagram,
-            }))
-          );
-        }
+      } catch (err) {
+        console.warn("Supabase network error, evento salvo localmente:", err);
       }
 
+      try {
+        window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: finalEventId } }));
+      } catch {}
+
+      toast({ title: editingId ? "Evento atualizado com sucesso!" : "Evento criado com sucesso!" });
       resetForm();
       setDialogOpen(false);
-      await fetchEventos();
+    } catch (err: any) {
+      console.error("Erro geral ao salvar evento:", err);
+      toast({
+        title: "Erro ao salvar",
+        description: err?.message || "Ocorreu um erro ao salvar o evento.",
+        variant: "destructive",
+      });
     } finally {
       setSavingEvent(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("agenda_participantes").delete().eq("evento_id", id);
-    await supabase.from("agenda_eventos").delete().eq("id", id);
+    deleteStoredAgendaEvent(id, targetUserId);
+    setEventos(prev => prev.filter(e => e.id !== id));
+    try {
+      await supabase.from("agenda_participantes").delete().eq("evento_id", id);
+      await supabase.from("agenda_eventos").delete().eq("id", id);
+    } catch (err) {
+      console.warn("Supabase delete failed:", err);
+    }
+    try {
+      window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: id } }));
+    } catch {}
     fetchEventos();
   };
 
@@ -926,14 +1910,21 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     const current: EventoExcecao[] = Array.isArray(evt.excecoes) ? [...evt.excecoes] : [];
     const idx = current.findIndex(x => x && x.data === exc.data);
     if (idx >= 0) current[idx] = exc; else current.push(exc);
-    const { error } = await supabase
-      .from("agenda_eventos")
-      .update({ excecoes: current as any })
-      .eq("id", evt.id);
-    if (error) {
-      toast({ title: "Erro ao salvar exceção", description: error.message, variant: "destructive" });
-      return false;
-    }
+    const updatedEvt: Evento = { ...evt, excecoes: current };
+    saveStoredAgendaEvent(updatedEvt, targetUserId);
+    setEventos(prev => prev.map(e => e.id === evt.id ? updatedEvt : e));
+    try {
+      const { error } = await supabase
+        .from("agenda_eventos")
+        .update({ excecoes: current as any })
+        .eq("id", evt.id);
+      if (error) {
+        console.warn("Supabase update excecao aviso:", error.message);
+      }
+    } catch {}
+    try {
+      window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: evt.id } }));
+    } catch {}
     await fetchEventos();
     return true;
   };
@@ -1085,13 +2076,22 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
 
   const handleClearAllPast = async () => {
-    if (!user) return;
+    if (!user && !targetUserId) return;
     const pastIds = pastEventos.map(e => e.id);
     if (!pastIds.length) return;
     for (const id of pastIds) {
-      await supabase.from("agenda_participantes").delete().eq("evento_id", id);
+      deleteStoredAgendaEvent(id, targetUserId);
+      try {
+        await supabase.from("agenda_participantes").delete().eq("evento_id", id);
+      } catch {}
     }
-    await supabase.from("agenda_eventos").delete().in("id", pastIds);
+    setEventos(prev => prev.filter(e => !pastIds.includes(e.id)));
+    try {
+      await supabase.from("agenda_eventos").delete().in("id", pastIds);
+    } catch {}
+    try {
+      window.dispatchEvent(new CustomEvent("nexohub:agenda-updated"));
+    } catch {}
     toast({ title: "Histórico limpo", description: `${pastIds.length} evento(s) removido(s).` });
     fetchEventos();
   };
@@ -1103,23 +2103,52 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     return list.find(x => x && x.data === dateStr);
   };
 
+  const DIAS_INDEX_MAP: Record<number, string[]> = {
+    0: ["domingo", "dom"],
+    1: ["segunda", "seg", "segunda-feira"],
+    2: ["terca", "terça", "ter", "terca-feira", "terça-feira"],
+    3: ["quarta", "qua", "quarta-feira"],
+    4: ["quinta", "qui", "quinta-feira"],
+    5: ["sexta", "sex", "sexta-feira"],
+    6: ["sabado", "sábado", "sab", "sábado"],
+  };
+
   const eventMatchesDate = (evt: Evento, dateStr: string) => {
     let matches = false;
-    if (evt.data === dateStr) {
+    if (evt.data === dateStr && evt.recorrencia === "unico") {
       matches = true;
     } else {
-      const evtDate = new Date(evt.data + "T12:00:00");
       const checkDate = new Date(dateStr + "T12:00:00");
-      if (checkDate < evtDate) return false;
-      if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") {
-        matches = evtDate.getDay() === checkDate.getDay();
-        // programa_semanal = segunda a sexta
-        if (evt.recorrencia === "programa_semanal") {
-          const dow = checkDate.getDay();
-          matches = dow >= 1 && dow <= 5;
+      const evtDate = new Date((evt.data || dateStr) + "T12:00:00");
+      if (checkDate < evtDate && evt.recorrencia === "unico") return false;
+
+      const dow = checkDate.getDay(); // 0 = Domingo, 1 = Segunda, ... 6 = Sábado
+      const dowNames = DIAS_INDEX_MAP[dow] || [];
+
+      const progDays = evt.programa?.dias_semana || (evt.programa as any)?.diasSemana;
+      const isCustomRec = evt.recorrencia === "programa_semanal"
+        || evt.recorrencia?.startsWith("programa_semanal:")
+        || evt.recorrencia?.startsWith("dias:");
+
+      if (progDays && Array.isArray(progDays) && progDays.length > 0) {
+        const normalizedDays = progDays.map(d => String(d).trim().toLowerCase());
+        matches = normalizedDays.some(d => dowNames.some(dn => d.includes(dn)));
+      } else if (isCustomRec) {
+        let activeDays: number[] = [1, 2, 3, 4, 5];
+        if (evt.dias_semana && Array.isArray(evt.dias_semana) && evt.dias_semana.length > 0) {
+          activeDays = evt.dias_semana;
+        } else if (evt.recorrencia.startsWith("programa_semanal:")) {
+          activeDays = evt.recorrencia.slice(17).split(",").map(Number).filter((n) => !isNaN(n));
+        } else if (evt.recorrencia.startsWith("dias:")) {
+          activeDays = evt.recorrencia.slice(5).split(",").map(Number).filter((n) => !isNaN(n));
         }
+        matches = activeDays.includes(dow);
+      } else if (evt.recorrencia === "semanal") {
+        matches = evtDate.getDay() === dow;
       } else if (evt.recorrencia === "mensal") {
         matches = evtDate.getDate() === checkDate.getDate();
+      } else if (evt.data === dateStr) {
+        matches = true;
       }
     }
     if (!matches) return false;
@@ -1149,20 +2178,15 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
       // Hide CANCELADO or CONCLUIDO events from agenda
       if (e.status === "cancelado" || e.status === "concluido") return false;
 
-      // Hide events where recording has ended (only for today)
-      if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) {
-        return false;
-      }
-
       // Base date check for unique events (historical go to history)
       const isHistorical = e.recorrencia === "unico" && e.data < todayStr;
       if (isHistorical) return false;
 
-      const programaAtivo = !e.programa_id || programas.find(p => p.id === e.programa_id) !== undefined;
+      const programaAtivo = !e.programa_id || programas.some(p => p.id === e.programa_id) || displayProgramas.some(p => p.id === e.programa_id) || !!e.programa;
 
       return matchDate && matchLocal && programaAtivo;
     });
-  }, [eventos, selectedDate, filterLocal, todayStr, now, programas]);
+  }, [eventos, selectedDate, filterLocal, todayStr, now, programas, displayProgramas]);
 
   // Past events
   const pastEventos = useMemo(() => {
@@ -1192,9 +2216,6 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     return past.sort((a, b) => b.data.localeCompare(a.data)).slice(0, 50);
   }, [eventos, historyDateFilter, now, todayStr]);
 
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-
   const eventDates = useMemo(() => {
     const dates: Date[] = [];
     const startMonth = new Date(currentYear, currentMonth - 1, 1);
@@ -1217,65 +2238,13 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     return dates;
   }, [eventos, currentYear, currentMonth]);
 
-  // Feriados nacionais obrigatórios do Brasil
-  const feriadosNacionais = useMemo(() => {
-    const year = currentYear;
-    // Cálculo da Páscoa (algoritmo de Meeus)
-    const a = year % 19;
-    const b = Math.floor(year / 100);
-    const c = year % 100;
-    const d = Math.floor(b / 4);
-    const e = b % 4;
-    const f = Math.floor((b + 8) / 25);
-    const g = Math.floor((b - f + 1) / 3);
-    const h = (19 * a + b - d - g + 15) % 30;
-    const i = Math.floor(c / 4);
-    const k = c % 4;
-    const l = (32 + 2 * e + 2 * i - h - k) % 7;
-    const m = Math.floor((a + 11 * h + 22 * l) / 451);
-    const month = Math.floor((h + l - 7 * m + 114) / 31);
-    const day = ((h + l - 7 * m + 114) % 31) + 1;
-    const pascoa = new Date(year, month - 1, day);
-    const carnaval = new Date(pascoa.getTime() - 47 * 86400000);
-    const sextaSanta = new Date(pascoa.getTime() - 2 * 86400000);
-    const corpusChristi = new Date(pascoa.getTime() + 60 * 86400000);
-
-    const fixos = [
-      { date: new Date(year, 0, 1), nome: "Confraternização Universal" },
-      { date: carnaval, nome: "Carnaval" },
-      { date: sextaSanta, nome: "Sexta-feira Santa" },
-      { date: new Date(year, 3, 21), nome: "Tiradentes" },
-      { date: new Date(year, 4, 1), nome: "Dia do Trabalho" },
-      { date: corpusChristi, nome: "Corpus Christi" },
-      { date: new Date(year, 8, 7), nome: "Independência do Brasil" },
-      { date: new Date(year, 9, 12), nome: "N. Sra. Aparecida" },
-      { date: new Date(year, 10, 2), nome: "Finados" },
-      { date: new Date(year, 10, 15), nome: "Proclamação da República" },
-      { date: new Date(year, 10, 20), nome: "Dia da Consciência Negra" },
-      { date: new Date(year, 11, 25), nome: "Natal" },
-    ];
-    return fixos;
-  }, [currentYear]);
-
-  const feriadoDates = useMemo(() => feriadosNacionais.map(f => f.date), [feriadosNacionais]);
-
-  const getFeriadoNome = useCallback((date: Date | undefined) => {
-    if (!date) return null;
-    const f = feriadosNacionais.find(
-      h => h.date.getDate() === date.getDate() && h.date.getMonth() === date.getMonth()
-    );
-    return f ? f.nome : null;
-  }, [feriadosNacionais]);
-
   const handleSelectDate = useCallback((d: Date) => {
     setSelectedDate(d);
   }, []);
 
-  const handleEventClick = useCallback((evt: Evento, dateStr: string) => {
-    setViewingEvent(evt);
-    setViewingOccurrenceDate(dateStr);
-    setViewEventDialogOpen(true);
-  }, []);
+  const handleEventClick = useCallback((evt: Evento, dateStr?: string) => {
+    startEdit(evt, dateStr);
+  }, [startEdit]);
 
   const selectedPrograma = programas.find((p) => p.id === formProgramaId);
 
@@ -1290,38 +2259,6 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   }, [todayStr]);
 
 
-  // Upcoming events for the next 7 days
-  const upcomingEvents = useMemo(() => {
-    const today = now;
-    const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(today);
-      d.setDate(d.getDate() + i);
-      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const dayEvents = eventos.filter((e) => {
-        const matchLocal = filterLocal === "todos" || e.local === filterLocal;
-        const isMatch = matchLocal && eventMatchesDate(e, ds);
-        if (!isMatch) return false;
-
-        // Hide CANCELADO or CONCLUIDO events
-        if (e.status === "cancelado" || e.status === "concluido") return false;
-
-        // Hide events where recording has ended (only for today)
-        const isToday = ds === todayStr;
-        const currentTime = format(now, "HH:mm");
-        if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) {
-          return false;
-        }
-
-        return true;
-      });
-      if (dayEvents.length > 0) {
-        days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
-      }
-    }
-    return days;
-  }, [eventos, filterLocal, now, todayStr]);
-
   // Conflitos com feriados nos próximos 14 dias (só programa_semanal / semanal, sem exceção definida)
   const holidayConflicts = useMemo(() => {
     const results: { evt: Evento; dateStr: string; date: Date; feriadoNome: string }[] = [];
@@ -1333,7 +2270,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
       if (!feriadoNome) continue;
       const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       for (const evt of eventos) {
-        if (evt.recorrencia !== "programa_semanal" && evt.recorrencia !== "semanal") continue;
+        const isRecCheck = evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal" || evt.recorrencia?.startsWith("programa_semanal:") || evt.recorrencia?.startsWith("dias:");
+        if (!isRecCheck) continue;
         if (evt.status === "cancelado" || evt.status === "concluido") continue;
         if (!eventMatchesDate(evt, ds)) continue;
         if (getExcecao(evt, ds)) continue; // já resolvido
@@ -1380,18 +2318,16 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   }, [eventos, filterLocal, pastMonthFilter, todayStr]);
 
 
-  // Week view: Monday to Sunday of the currently selected week
+  // Week view: 7 days starting from the current day (now) or offset
   const weekEvents = useMemo(() => {
-    const ref = selectedDate ? new Date(selectedDate) : now;
-    const dow = ref.getDay(); // 0=Sun..6=Sat
-    const diffToMonday = dow === 0 ? -6 : 1 - dow;
-    const monday = new Date(ref);
-    monday.setDate(ref.getDate() + diffToMonday + weekOffset * 7);
-    monday.setHours(0, 0, 0, 0);
+    const baseDate = new Date(now);
+    baseDate.setDate(now.getDate() + weekOffset * 7);
+    baseDate.setHours(0, 0, 0, 0);
+
     const days: { dateStr: string; date: Date; events: Evento[] }[] = [];
     for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
+      const d = new Date(baseDate);
+      d.setDate(baseDate.getDate() + i);
       const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const dayEvents = eventos.filter((e) => {
         const matchLocal = filterLocal === "todos" || e.local === filterLocal;
@@ -1401,19 +2337,12 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         // Hide CANCELADO or CONCLUIDO events
         if (e.status === "cancelado" || e.status === "concluido") return false;
 
-        // Hide events where recording has ended (only for today)
-        const isToday = ds === todayStr;
-        const currentTime = format(now, "HH:mm");
-        if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) {
-          return false;
-        }
-
         return true;
       });
       days.push({ dateStr: ds, date: new Date(d), events: dayEvents });
     }
     return days;
-  }, [eventos, filterLocal, selectedDate, weekOffset, now]);
+  }, [eventos, filterLocal, weekOffset, now]);
 
   // Map an Evento to a positioned block in the Google-style week grid
   const toGridEvent = useCallback((evt: Evento, dateStr: string): GridEvent | null => {
@@ -1430,13 +2359,16 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     if (end == null || end <= start) end = start + 60;
 
     const color =
-      evt.prioridade === "alta"
+      evt.cor ||
+      getStoredEventColor(evt.id) ||
+      (evt.programa_id ? getStoredEventColor(`prog_${evt.programa_id}`) : null) ||
+      (evt.prioridade === "alta"
         ? "#EF4444"
         : isGravacao
           ? "#7C6CF0"
           : evt.tipo_evento === "externo"
             ? "#F59E0B"
-            : NEXO_CYAN;
+            : "#0055ff");
 
     const fmt = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
     const statusOption = statusOptions.find((s) => s.value === evt.status);
@@ -1469,13 +2401,159 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     };
   }, []);
 
+  const getClientForEvent = useCallback((evt: Evento): AgendaCliente | undefined => {
+    if (!clientesList || clientesList.length === 0) return undefined;
+
+    // 1. Check if evt.local matches or contains a client name/nome_empresarial
+    if (evt.local) {
+      const localUpper = evt.local.toUpperCase();
+      const foundByLocal = clientesList.find(c => {
+        const nameUpper = c.nome?.toUpperCase();
+        const empUpper = c.nome_empresarial?.toUpperCase();
+        return (empUpper && localUpper.includes(empUpper)) || (nameUpper && localUpper.includes(nameUpper));
+      });
+      if (foundByLocal) return foundByLocal;
+    }
+
+    // 2. Check if programa's user_id matches client's user_id, id or aliases
+    if (evt.programa) {
+      const progUserId = (evt.programa as any).user_id;
+      if (progUserId) {
+        const foundByProg = clientesList.find(c => c.id === progUserId || c.user_id === progUserId || c.aliases?.includes(progUserId));
+        if (foundByProg) return foundByProg;
+      }
+    }
+
+    // 3. Check if evt.user_id matches client
+    if (evt.user_id) {
+      const foundByUser = clientesList.find(c => c.id === evt.user_id || c.user_id === evt.user_id || c.aliases?.includes(evt.user_id));
+      if (foundByUser) return foundByUser;
+    }
+
+    return undefined;
+  }, [clientesList]);
+
+  const getPresenterForEvent = useCallback((evt: Evento): Apresentador | undefined => {
+    // 1. Resolve program
+    const prog = displayProgramas.find(p => p.id === evt.programa_id || (p.nome && evt.programa_id && p.nome.toLowerCase() === evt.programa_id.toLowerCase()))
+      || programas.find(p => p.id === evt.programa_id || (p.nome && evt.programa_id && p.nome.toLowerCase() === evt.programa_id.toLowerCase()))
+      || (evt.programa?.id ? displayProgramas.find(p => p.id === evt.programa?.id) : null)
+      || (evt.programa?.nome ? displayProgramas.find(p => p.nome && p.nome.toLowerCase() === evt.programa.nome.toLowerCase()) : null)
+      || evt.programa;
+
+    // 2. Gather presenters from all sources
+    const syncAps = ((getStationDatabaseSync(targetUserId || user?.email || "positivafm@positivafm.com.br")?.apresentadores as Apresentador[]) || []);
+    const snapshotAps = ((getSnapshotApresentadores(targetUserId || user?.email || "positivafm@positivafm.com.br") as Apresentador[]) || []);
+    const interativaAps = ((getSnapshotApresentadores("interativafmgynaovivo@gmail.com") as Apresentador[]) || []);
+
+    const allPresentersMap = new Map<string, Apresentador>();
+    snapshotAps.forEach(a => allPresentersMap.set(a.id, a));
+    interativaAps.forEach(a => {
+      const ex = allPresentersMap.get(a.id);
+      allPresentersMap.set(a.id, {
+        ...a,
+        foto: a.foto || a.foto_url || ex?.foto || ex?.foto_url,
+        foto_url: a.foto_url || a.foto || ex?.foto_url || ex?.foto,
+      });
+    });
+    syncAps.forEach(a => {
+      const ex = allPresentersMap.get(a.id);
+      allPresentersMap.set(a.id, {
+        ...a,
+        foto: a.foto || a.foto_url || ex?.foto || ex?.foto_url,
+        foto_url: a.foto_url || a.foto || ex?.foto_url || ex?.foto,
+      });
+    });
+    apresentadores.forEach(a => {
+      const ex = allPresentersMap.get(a.id);
+      allPresentersMap.set(a.id, {
+        ...a,
+        foto: a.foto || a.foto_url || ex?.foto || ex?.foto_url,
+        foto_url: a.foto_url || a.foto || ex?.foto_url || ex?.foto,
+      });
+    });
+
+    const allPresenters = Array.from(allPresentersMap.values());
+
+    if (prog) {
+      const progIds = [
+        ...(prog.apresentador_id ? [prog.apresentador_id] : []),
+        ...(prog.apresentadorId ? [prog.apresentadorId] : []),
+        ...(prog.apresentadores_ids || []),
+        ...(prog.apresentadoresIds || []),
+      ].filter(Boolean);
+
+      for (const id of progIds) {
+        const found = allPresenters.find(a => a.id === id);
+        if (found) return found;
+      }
+
+      if (prog.nome) {
+        const pNome = prog.nome.toLowerCase();
+        for (const a of allPresenters) {
+          if (!a.nome) continue;
+          const aNome = a.nome.toLowerCase();
+          if (pNome.includes(aNome) || aNome.includes(pNome)) {
+            return a;
+          }
+        }
+      }
+    }
+
+    // 3. Fallback: match participants with known presenters that have a photo
+    if (evt.participantes && evt.participantes.length > 0) {
+      for (const p of evt.participantes) {
+        if (!p.nome) continue;
+        const pNome = p.nome.toLowerCase();
+        const found = allPresenters.find(a => a.nome && (a.nome.toLowerCase() === pNome || a.nome.toLowerCase().includes(pNome) || pNome.includes(a.nome.toLowerCase())));
+        if (found && (found.foto || found.foto_url)) {
+          return found;
+        }
+      }
+    }
+
+    return undefined;
+  }, [displayProgramas, programas, apresentadores, targetUserId, user]);
+
+  // Feed events for the currently selected day (or today), sorted earliest to latest
+  const selectedDayFeedEvents = useMemo(() => {
+    const targetDate = selectedDate || now;
+    const targetDs = format(targetDate, "yyyy-MM-dd");
+
+    return eventos
+      .filter((e) => {
+        const matchLocal = filterLocal === "todos" || e.local === filterLocal;
+        if (!matchLocal) return false;
+        if (!eventMatchesDate(e, targetDs)) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const toMinutes = (hhmm?: string | null) => {
+          if (!hhmm) return 9999;
+          const m = hhmm.match(/^(\d{1,2}):(\d{2})/);
+          if (!m) return 9999;
+          return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+        };
+        const startA = toMinutes(a.horario_gravacao || a.programa?.horario_inicio);
+        const startB = toMinutes(b.horario_gravacao || b.programa?.horario_inicio);
+        if (startA !== startB) return startA - startB;
+        return (a.programa?.nome || "").localeCompare(b.programa?.nome || "");
+      });
+  }, [eventos, selectedDate, filterLocal, now]);
 
 
-  const renderEventCard = (evt: Evento, inactive = false) => (
+
+  const renderEventCard = (evt: Evento, inactive = false) => {
+    const evtColor = evt.cor || getStoredEventColor(evt.id) || (evt.programa_id ? getStoredEventColor(`prog_${evt.programa_id}`) : null);
+    return (
     <div
       key={evt.id}
       className={`rounded-xl p-4 space-y-2 ${inactive ? "opacity-50 grayscale" : ""}`}
-      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}
+      style={{
+        backgroundColor: "var(--layout-page-bg, #ffffff)",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)",
+        borderLeft: evtColor ? `4px solid ${evtColor}` : undefined,
+      }}
     >
       <div className="flex items-start justify-between">
         <div>
@@ -1554,14 +2632,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         </div>
       )}
     </div>
-  );
-
-  if (loadingData) {
-    return <AgendaPageSkeleton />;
-  }
+    );
+  };
 
   return (
-    <div className="nexo-scope space-y-4">
+    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Agenda
@@ -1570,32 +2645,88 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
       {/* Diálogo: Período da recorrência */}
       <Dialog open={periodoDialogOpen} onOpenChange={setPeriodoDialogOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "#ffffff", borderRadius: 20, border: "none" }}>
-          <div className="flex flex-col">
-            <div className="px-6 py-4" style={{ background: `linear-gradient(135deg, ${NEXO_CYAN} 0%, #0AA9D8 100%)`, color: "#fff" }}>
-              <DialogTitle className="text-base font-bold m-0">Período da recorrência</DialogTitle>
-              <p className="text-[11px] mt-1 opacity-90">
-                {pendingRecorrencia === "semanal" && "Repete no mesmo dia da semana"}
-                {pendingRecorrencia === "mensal" && "Repete no mesmo dia de cada mês"}
-                {pendingRecorrencia === "programa_semanal" && "Repete de segunda a sexta-feira"}
-              </p>
+        <DialogContent
+          closeButtonClassName="top-6 right-6"
+          className="max-w-md w-full p-0 overflow-hidden bg-white border border-slate-200/90 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.22)] font-sans"
+          style={{ fontFamily: "'Montserrat', sans-serif" }}
+        >
+          <div className="flex flex-col bg-white">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white relative">
+              <div className="flex items-center gap-3 pr-10">
+                <div className="w-1.5 h-6 rounded-full bg-[#0055ff]" />
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-50 text-[#0055ff] shadow-xs shrink-0">
+                  <Repeat size={18} />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-black uppercase tracking-tight m-0 text-[#002132]">
+                    Período da Recorrência
+                  </DialogTitle>
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-0.5 m-0">
+                    {pendingRecorrencia === "semanal" && "Repete no mesmo dia da semana"}
+                    {pendingRecorrencia === "mensal" && "Repete no mesmo dia de cada mês"}
+                    {pendingRecorrencia === "programa_semanal" && (
+                      formDiasSemana.length === 5 && [1, 2, 3, 4, 5].every(d => formDiasSemana.includes(d))
+                        ? "Repete de segunda a sexta-feira"
+                        : formDiasSemana.length === 7
+                        ? "Repete todos os dias"
+                        : formDiasSemana.length === 0
+                        ? "Selecione ao menos um dia da semana"
+                        : `Repete em: ${DIAS_DA_SEMANA.filter(d => formDiasSemana.includes(d.id)).map(d => d.label).join(", ")}`
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="px-6 py-5 space-y-4" style={{ backgroundColor: NEXO_CARD_BG }}>
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data inicial</Label>
+
+            {/* Form Body */}
+            <div className="p-6 space-y-5 bg-white">
+              {pendingRecorrencia === "programa_semanal" && (
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-black uppercase tracking-wider text-[#002132] block">
+                    Dias da Semana
+                  </Label>
+                  <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+                    {DIAS_DA_SEMANA.map((d) => {
+                      const isSelected = formDiasSemana.includes(d.id);
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => toggleDiaSemana(d.id)}
+                          className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer border text-center ${
+                            isSelected
+                              ? "bg-[#0055ff] border-[#0055ff] text-white shadow-sm hover:bg-blue-600"
+                              : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-black uppercase tracking-wider text-[#002132] block">
+                  Data Inicial
+                </Label>
                 <input
                   type="date"
                   value={formPeriodoInicio}
                   onChange={(e) => setFormPeriodoInicio(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none"
-                  style={{ borderColor: `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`, backgroundColor: "#ffffff", color: NEXO_DARK }}
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white text-sm font-semibold text-[#002132] outline-none shadow-xs transition-all focus:border-[#0055ff] focus:ring-4 focus:ring-[#0055ff]/10"
                 />
               </div>
+
               {(() => {
                 const hasInvalidRange = !!formPeriodoInicio && !!formPeriodoFim && formPeriodoFim < formPeriodoInicio;
                 return (
-                  <div>
-                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data final</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] font-black uppercase tracking-wider text-[#002132] block">
+                      Data Final
+                    </Label>
                     <input
                       type="date"
                       value={formPeriodoFim}
@@ -1603,39 +2734,42 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                       onChange={(e) => setFormPeriodoFim(e.target.value)}
                       aria-invalid={hasInvalidRange}
                       aria-describedby={hasInvalidRange ? "periodo-fim-error" : undefined}
-                      className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none transition-colors"
-                      style={{
-                        borderColor: hasInvalidRange ? "#ef4444" : `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`,
-                        backgroundColor: hasInvalidRange ? "rgba(239,68,68,0.05)" : "#ffffff",
-                        color: NEXO_DARK,
-                        boxShadow: hasInvalidRange ? "0 0 0 3px rgba(239,68,68,0.15)" : "none",
-                      }}
+                      className={`w-full h-11 px-4 rounded-xl border text-sm font-semibold outline-none shadow-xs transition-all ${
+                        hasInvalidRange
+                          ? "border-red-400 bg-red-50/50 text-red-600 focus:ring-4 focus:ring-red-500/10"
+                          : "border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white text-[#002132] focus:border-[#0055ff] focus:ring-4 focus:ring-[#0055ff]/10"
+                      }`}
                     />
                     {hasInvalidRange && (
-                      <p id="periodo-fim-error" role="alert" className="mt-1.5 text-[11px] font-semibold flex items-center gap-1" style={{ color: "#ef4444" }}>
-                        <span aria-hidden="true">⚠</span>
-                        A data final deve ser igual ou posterior à data inicial.
+                      <p id="periodo-fim-error" role="alert" className="mt-1.5 text-[11px] font-semibold flex items-center gap-1.5 text-red-600">
+                        <AlertTriangle size={13} className="shrink-0" />
+                        <span>A data final deve ser igual ou posterior à data inicial.</span>
                       </p>
                     )}
                   </div>
                 );
               })()}
 
-              <div className="flex gap-2 pt-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => { setPeriodoDialogOpen(false); setFormRecorrencia("unico"); setFormPeriodoInicio(""); setFormPeriodoFim(""); }}
-                  className="flex-1 h-10 rounded-xl text-xs font-bold uppercase tracking-wider"
-                  style={{ backgroundColor: "#ffffff", color: NEXO_DARK, border: `1px solid color-mix(in srgb, ${NEXO_DARK} 20%, transparent)` }}
+                  onClick={() => {
+                    setPeriodoDialogOpen(false);
+                    setFormRecorrencia("unico");
+                    setFormPeriodoInicio("");
+                    setFormPeriodoFim("");
+                    setFormDiasSemana([1, 2, 3, 4, 5]);
+                  }}
+                  className="flex-1 h-11 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider transition-all shadow-xs active:scale-[0.98] cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
-                  disabled={!formPeriodoInicio || !formPeriodoFim || formPeriodoFim < formPeriodoInicio}
+                  disabled={!formPeriodoInicio || !formPeriodoFim || formPeriodoFim < formPeriodoInicio || (pendingRecorrencia === "programa_semanal" && formDiasSemana.length === 0)}
                   onClick={() => setPeriodoDialogOpen(false)}
-                  className="flex-1 h-10 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50"
-                  style={{ background: `linear-gradient(135deg, ${NEXO_LIME} 0%, #A8D82C 100%)`, color: NEXO_DARK }}
+                  className="flex-1 h-11 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-md hover:brightness-105 active:scale-[0.98] cursor-pointer"
                 >
                   Confirmar
                 </button>
@@ -1902,7 +3036,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         </DialogContent>
       </Dialog>
 
-      <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+      <div className="w-full space-y-4 pb-12 font-sans animate-fade-in">
         {/* Header Section (Card Branco Moderno) */}
         <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
@@ -1935,12 +3069,66 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
               </Select>
             )}
 
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarModalOpen(true)}
+                    className="w-10 h-10 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
+                    aria-label="Calendário"
+                  >
+                    <CalendarIcon size={16} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-slate-900 text-white border-0 text-xs rounded-lg px-2.5 py-1">
+                  Calendário
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setDatasModalOpen(true)}
+                    className="w-10 h-10 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
+                    aria-label="Datas Comemorativas"
+                  >
+                    <CalendarDays size={16} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-slate-900 text-white border-0 text-xs rounded-lg px-2.5 py-1">
+                  Datas Comemorativas
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setPastEventsModalOpen(true)}
+                    className="w-10 h-10 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
+                    aria-label="Eventos Passados"
+                  >
+                    <History size={16} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-slate-900 text-white border-0 text-xs rounded-lg px-2.5 py-1">
+                  Eventos Passados
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             <button
               type="button"
               onClick={openNewDialog}
-              className="h-10 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 cursor-pointer"
+              className="group h-10 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 cursor-pointer"
             >
-              <Plus size={14} /> Novo Evento
+              <Plus size={14} className="text-black group-hover:text-white transition-colors" /> Novo Evento
             </button>
           </div>
         </section>
@@ -1982,36 +3170,27 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogContent
-            className="max-w-5xl w-full p-0 flex flex-col bg-white border border-slate-200/90 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.22)] overflow-hidden font-sans max-h-[92vh]"
+            closeButtonClassName="top-5 right-5"
+            className="max-w-3xl w-full p-0 flex flex-col bg-white border border-slate-200/90 rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.22)] overflow-hidden font-sans max-h-[92vh]"
           >
-            {/* Top Bar: Close (X), Title input, Salvar Button */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => setDialogOpen(false)}
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
-                  title="Fechar formulário"
-                >
-                  <X size={20} />
-                </button>
-                <div className="flex-1 min-w-0 pr-4">
-                  <input
-                    type="text"
-                    value={formTitulo}
-                    onChange={(e) => setFormTitulo(e.target.value)}
-                    placeholder="Adicionar título"
-                    autoFocus
-                    className="w-full text-2xl lg:text-3xl font-semibold text-[#002132] placeholder:text-slate-300 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-[#0055ff] outline-none transition-all py-1"
-                  />
-                </div>
+            {/* Top Bar: Title input (with border), Salvar Button, Close (X) */}
+            <div className="px-6 pr-16 py-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0 relative">
+              <div className="flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={formTitulo}
+                  onChange={(e) => setFormTitulo(e.target.value)}
+                  placeholder="Adicionar título"
+                  autoFocus
+                  className="w-full text-base sm:text-lg font-bold text-[#0055ff] placeholder:text-[#0055ff]/50 placeholder:font-bold bg-slate-50/70 hover:bg-slate-50 focus:bg-white border-2 border-slate-200 hover:border-[#0055ff]/40 focus:border-[#0055ff] rounded-2xl outline-none transition-all px-4 py-2.5 shadow-xs focus:ring-4 focus:ring-[#0055ff]/10"
+                />
               </div>
 
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={savingEvent}
-                className="h-10 px-8 rounded-full text-sm font-bold bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center gap-2 active:scale-95 shrink-0 disabled:opacity-60 cursor-pointer"
+                className="h-10 px-7 rounded-full text-sm font-bold bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center gap-2 active:scale-95 shrink-0 disabled:opacity-60 cursor-pointer"
               >
                 {savingEvent ? (
                   <>
@@ -2026,6 +3205,111 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
             {/* Scrollable Form Body */}
             <div className="overflow-y-auto flex-1 p-6 space-y-6">
+              {/* Campo Programa (DropDown com programas cadastrados) - Logo abaixo do título */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                  <span>Programa</span>
+                  {formProgramaId && (
+                    <span className="text-[10px] font-semibold text-[#0055ff] truncate max-w-[200px]">
+                      {displayProgramas.find(p => p.id === formProgramaId)?.nome}
+                    </span>
+                  )}
+                </label>
+                <Select
+                  value={formProgramaId}
+                  onValueChange={(val) => {
+                    setFormProgramaId(val);
+                    const prog = displayProgramas.find(p => p.id === val);
+                    if (prog) {
+                      if (!formTitulo || formTitulo.trim() === "" || displayProgramas.some(p => p.nome === formTitulo)) {
+                        setFormTitulo(prog.nome);
+                      }
+                      if (prog.estudio) {
+                        setFormEstudio(prog.estudio);
+                      }
+                      if (prog.horario_inicio) {
+                        setFormHorarioGravacao(prog.horario_inicio.slice(0, 5));
+                      }
+                      if (prog.horario_fim) {
+                        setFormHorarioGravacaoFim(prog.horario_fim.slice(0, 5));
+                      }
+                      setFormLocal(prog.estudio ? `${prog.estudio} - ${prog.nome}` : prog.nome);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-10 text-xs font-medium bg-slate-50 border-slate-200 rounded-xl w-full">
+                    <SelectValue placeholder={displayProgramas.length === 0 ? "Nenhum programa cadastrado" : "Selecione o Programa..."} />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white max-h-64">
+                    {displayProgramas.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        <div className="flex flex-col text-left py-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-slate-800 text-xs">{p.nome}</span>
+                            {p.estudio && (
+                              <span className="text-[10px] font-semibold text-[#0055ff] bg-[#0055ff]/10 px-1.5 py-0.5 rounded-md">
+                                {p.estudio}
+                              </span>
+                            )}
+                          </div>
+                          {(p.horario_inicio || p.horario_fim) && (
+                            <span className="text-[11px] text-slate-400 font-medium">
+                              {p.horario_inicio ? p.horario_inicio.slice(0, 5) : "--:--"} às {p.horario_fim ? p.horario_fim.slice(0, 5) : "--:--"}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Locutores / Apresentadores do programa em círculos com fundo #0055ff (mesma cor do botão Salvar) */}
+                {selectedProgPresenters.length > 0 && (
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    <div className="flex items-center -space-x-2 overflow-hidden py-0.5">
+                      {selectedProgPresenters.map((locutor) => {
+                        const photoUrl = locutor.foto || locutor.foto_url;
+                        return (
+                          <TooltipProvider key={locutor.id} delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 cursor-pointer transition-transform hover:scale-110 hover:z-10"
+                                  style={{ backgroundColor: "#0055ff" }}
+                                >
+                                  {photoUrl ? (
+                                    <img
+                                      src={photoUrl}
+                                      alt={locutor.nome}
+                                      className="w-full h-full object-cover object-top"
+                                    />
+                                  ) : (
+                                    <span className="text-white font-bold text-xs uppercase">
+                                      {locutor.nome ? locutor.nome.charAt(0) : "L"}
+                                    </span>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-xs bg-slate-900 text-white py-1 px-2.5 rounded-lg font-semibold shadow-xl z-50">
+                                <p className="font-bold">{locutor.nome}</p>
+                                {locutor.cargo && <p className="text-[10px] text-slate-300 font-normal">{locutor.cargo}</p>}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-slate-700">
+                        {selectedProgPresenters.map(p => p.nome).join(", ")}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {selectedProgPresenters.length === 1 ? "Locutor(a) do programa" : "Locutores do programa"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
               {/* Date & Time Row (Chips / Pills) */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -2080,17 +3364,9 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                   </span>
                 </div>
 
-                {/* Second subrow: Dia inteiro + Recorrência */}
-                <div className="flex items-center gap-5 flex-wrap">
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={formDiaInteiro}
-                      onChange={(e) => setFormDiaInteiro(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff] cursor-pointer"
-                    />
-                    <span>Dia inteiro</span>
-                  </label>
+                {/* Second subrow: Frequência + Recorrência */}
+                <div className="flex items-center gap-4 flex-wrap">
+                  <span className="text-xs font-semibold text-slate-700">Frequência</span>
 
                   <Select value={formRecorrencia} onValueChange={handleRecorrenciaChange}>
                     <SelectTrigger className="h-8 w-auto min-w-[150px] text-xs font-semibold bg-slate-100 hover:bg-slate-200 border-none rounded-full px-3.5 text-slate-700 shadow-none gap-2">
@@ -2100,7 +3376,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                       <SelectItem value="unico">Não se repete</SelectItem>
                       <SelectItem value="semanal">Semanalmente</SelectItem>
                       <SelectItem value="mensal">Mensalmente</SelectItem>
-                      <SelectItem value="programa_semanal">Segunda a sexta</SelectItem>
+                      <SelectItem value="programa_semanal">Selecione</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -2111,12 +3387,17 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                       className="text-[11px] font-semibold text-[#0055ff] hover:underline cursor-pointer"
                     >
                       Período: {formPeriodoInicio ? format(new Date(formPeriodoInicio + "T12:00:00"), "dd/MM/yy") : "?"} → {formPeriodoFim ? format(new Date(formPeriodoFim + "T12:00:00"), "dd/MM/yy") : "?"}
+                      {formRecorrencia === "programa_semanal" && formDiasSemana.length > 0 && formDiasSemana.length < 7 && (
+                        <span className="ml-1 text-slate-500 font-normal">
+                          ({DIAS_DA_SEMANA.filter(d => formDiasSemana.includes(d.id)).map(d => d.label).join(", ")})
+                        </span>
+                      )}
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Tabs Bar (Detalhes do evento | Encontrar um horário | Materiais & Artes) */}
+              {/* Tabs Bar (Detalhes do evento | Materiais & Artes) */}
               <div className="flex items-center gap-6 border-b border-slate-200 text-xs font-bold pt-2">
                 <button
                   type="button"
@@ -2127,18 +3408,6 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 >
                   Detalhes do evento
                   {eventModalTab === "detalhes" && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0055ff] rounded-full" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEventModalTab("horario")}
-                  className={`pb-2.5 transition-colors relative cursor-pointer ${
-                    eventModalTab === "horario" ? "text-[#0055ff]" : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  Encontrar um horário
-                  {eventModalTab === "horario" && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0055ff] rounded-full" />
                   )}
                 </button>
@@ -2161,391 +3430,170 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 </button>
               </div>
 
-              {/* Tab 1: Detalhes do Evento (Google 2-column layout) */}
+              {/* Tab 1: Detalhes do Evento */}
               {eventModalTab === "detalhes" && (
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_330px] gap-8 items-start">
-                  {/* Left Column: Event details */}
-                  <div className="space-y-4">
-                    {/* Row 1: Meet / Video Conferência */}
-                    <div className="flex items-start gap-3.5">
-                      <div className="pt-2 text-slate-400 shrink-0">
-                        <Video size={18} />
-                      </div>
-                      <div className="flex-1">
-                        {!showVideoInput && !formYoutubeUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowVideoInput(true)}
-                            className="h-9 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#0055ff] text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
-                          >
-                            <Plus size={13} /> Adicionar videoconferência ou transmissão ao vivo
-                          </button>
-                        ) : (
-                          <div className="space-y-1.5">
-                            <div className="relative">
-                              <Input
-                                value={formYoutubeUrl}
-                                onChange={(e) => setFormYoutubeUrl(e.target.value)}
-                                placeholder="Link da transmissão (YouTube Live, Google Meet, URL)..."
-                                className="h-9 text-xs bg-slate-50 border-slate-200 rounded-xl pr-8"
-                              />
-                              {formYoutubeUrl && (
-                                <button
-                                  type="button"
-                                  onClick={() => setFormYoutubeUrl("")}
-                                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                                >
-                                  <X size={14} />
-                                </button>
-                              )}
+                <div className="space-y-4">
+                    {/* Notificação, Tipo do Evento, Status e Cor */}
+                    <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/80 space-y-3">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        {/* Status */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-slate-600">Status:</span>
+                          <Select value={formStatus} onValueChange={setFormStatus}>
+                            <SelectTrigger className="h-8 text-xs font-semibold bg-white border-slate-200 rounded-xl w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white">
+                              <SelectItem value="ativo">Ativo</SelectItem>
+                              <SelectItem value="concluido">Concluído</SelectItem>
+                              <SelectItem value="cancelado">Cancelado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Controles de Tipo do Evento (Ao Vivo / Gravação) e Seletor de Cor */}
+                        <TooltipProvider delayDuration={100}>
+                          <div className="flex items-center gap-2">
+                            {/* Botões redondos de Tipo do Evento (Ao Vivo & Gravação) */}
+                            <div className="flex items-center gap-1.5 p-0.5 bg-slate-200/50 rounded-full border border-slate-200/80">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => setFormTipoEvento("live")}
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                                      formTipoEvento === "live"
+                                        ? "bg-rose-500 text-white shadow-sm ring-2 ring-offset-1 ring-rose-400 scale-105"
+                                        : "bg-white text-slate-400 hover:text-rose-500 hover:border-rose-200 border border-slate-200"
+                                    }`}
+                                  >
+                                    <Radio size={12} strokeWidth={2.5} />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="text-xs bg-slate-900 text-white py-1 px-2.5 rounded-lg font-semibold shadow-xl z-50">
+                                  Ao Vivo
+                                </TooltipContent>
+                              </Tooltip>
+
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => setFormTipoEvento("gravacao")}
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                                      formTipoEvento === "gravacao"
+                                        ? "bg-purple-600 text-white shadow-sm ring-2 ring-offset-1 ring-purple-400 scale-105"
+                                        : "bg-white text-slate-400 hover:text-purple-600 hover:border-purple-200 border border-slate-200"
+                                    }`}
+                                  >
+                                    <Video size={12} strokeWidth={2.5} />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="text-xs bg-slate-900 text-white py-1 px-2.5 rounded-lg font-semibold shadow-xl z-50">
+                                  Gravação
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+
+                            {/* Separador vertical sutil */}
+                            <div className="h-4 w-px bg-slate-200 mx-0.5" />
+
+                            {/* Bolinhas de Cor */}
+                            <div className="flex items-center gap-1.5 p-0.5 bg-slate-200/50 rounded-full border border-slate-200/80">
+                              {[
+                                { color: "#0055ff", label: "Azul" },
+                                { color: "#ef4444", label: "Vermelho" },
+                                { color: "#10b981", label: "Verde" },
+                                { color: "#8b5cf6", label: "Roxo" },
+                                { color: "#f59e0b", label: "Amarelo" },
+                                { color: "#00BFF0", label: "Ciano" },
+                              ].map((c) => (
+                                <Tooltip key={c.color}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedEventColor(c.color)}
+                                      className={`w-6 h-6 rounded-full transition-all cursor-pointer flex items-center justify-center ${
+                                        selectedEventColor === c.color
+                                          ? "scale-110 ring-2 ring-offset-1 ring-slate-500 shadow-sm"
+                                          : "opacity-80 hover:opacity-100 hover:scale-105"
+                                      }`}
+                                      style={{ backgroundColor: c.color }}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent className="text-xs bg-slate-900 text-white py-1 px-2.5 rounded-lg font-semibold shadow-xl z-50">
+                                    Cor {c.label}
+                                  </TooltipContent>
+                                </Tooltip>
+                              ))}
                             </div>
                           </div>
-                        )}
+                        </TooltipProvider>
                       </div>
                     </div>
 
-                    {/* Row 2: Local */}
-                    <div className="flex items-center gap-3.5">
-                      <div className="text-slate-400 shrink-0">
-                        <MapPin size={18} />
-                      </div>
-                      <div className="flex-1">
-                        <Input
-                          value={formLocal}
-                          onChange={(e) => setFormLocal(e.target.value)}
-                          placeholder="Adicionar local (ex: Estúdio A, Externa, Auditório...)"
-                          className="h-9 text-xs bg-slate-50 border-slate-200 rounded-xl"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Row 3: Notificação */}
-                    <div className="flex items-center gap-3.5">
-                      <div className="text-slate-400 shrink-0">
-                        <Bell size={18} />
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs text-slate-700 font-medium">Notificação</span>
-                        <input
-                          type="number"
-                          value={formNotificacaoTempo}
-                          onChange={(e) => setFormNotificacaoTempo(e.target.value)}
-                          className="w-14 h-8 text-center text-xs font-semibold bg-slate-100 border border-slate-200 rounded-lg outline-none focus:border-[#0055ff]"
-                        />
-                        <span className="text-xs text-slate-600">minutos antes</span>
-                      </div>
-                    </div>
-
-                    {/* Row 4: Agenda / Programa + Dot Color */}
-                    <div className="flex items-center gap-3.5">
-                      <div className="text-slate-400 shrink-0">
-                        <CalendarIcon size={18} />
-                      </div>
-                      <div className="flex items-center gap-3 flex-1 flex-wrap">
-                        <Select
-                          value={formProgramaId}
-                          onValueChange={(val) => {
-                            setFormProgramaId(val);
-                            const prog = programas.find(p => p.id === val);
-                            if (prog && !formTitulo.trim()) {
-                              setFormTitulo(prog.nome);
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="h-9 text-xs font-semibold bg-slate-50 border-slate-200 rounded-xl min-w-[200px]">
-                            <SelectValue placeholder="Selecione a Agenda / Programa" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white">
-                            {programas.map((p) => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.nome} {p.estudio ? `(${p.estudio})` : ""}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        {/* Color Picker Dot */}
-                        <div className="flex items-center gap-1.5">
-                          {[
-                            { color: "#0055ff", label: "Azul" },
-                            { color: "#ef4444", label: "Vermelho" },
-                            { color: "#10b981", label: "Verde" },
-                            { color: "#8b5cf6", label: "Roxo" },
-                            { color: "#f59e0b", label: "Amarelo" },
-                            { color: "#00BFF0", label: "Ciano" },
-                          ].map((c) => (
-                            <button
-                              key={c.color}
-                              type="button"
-                              onClick={() => setSelectedEventColor(c.color)}
-                              className={`w-5 h-5 rounded-full transition-transform cursor-pointer ${
-                                selectedEventColor === c.color ? "scale-125 ring-2 ring-offset-2 ring-slate-400" : "opacity-80 hover:opacity-100"
-                              }`}
-                              style={{ backgroundColor: c.color }}
-                              title={c.label}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Row 5: Visibilidade / Tipo do Evento (Ao Vivo / Gravação) + Status */}
-                    <div className="flex items-center gap-3.5">
-                      <div className="text-slate-400 shrink-0">
-                        <Briefcase size={18} />
-                      </div>
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200">
+                    {/* Descrição com Toolbar */}
+                    <div className="space-y-1.5 pt-1">
+                      <label className="text-xs font-bold text-slate-700">Descrição / Observações / Pauta</label>
+                      <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 focus-within:bg-white focus-within:border-[#0055ff] transition-all">
+                        {/* Mini Formatting Toolbar */}
+                        <div className="px-3 py-1.5 border-b border-slate-200/80 bg-slate-100/70 flex items-center gap-1 text-slate-600">
                           <button
                             type="button"
-                            onClick={() => setFormTipoEvento("live")}
-                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                              formTipoEvento === "live" ? "bg-white text-rose-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
-                            }`}
+                            onClick={() => setFormDescricao(prev => prev + "**negrito** ")}
+                            className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center font-black text-xs cursor-pointer"
+                            title="Negrito"
                           >
-                            <span className="w-2 h-2 rounded-full bg-rose-500" />
-                            AO VIVO
+                            B
                           </button>
                           <button
                             type="button"
-                            onClick={() => setFormTipoEvento("gravacao")}
-                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                              formTipoEvento === "gravacao" ? "bg-white text-purple-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
-                            }`}
+                            onClick={() => setFormDescricao(prev => prev + "*itálico* ")}
+                            className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center italic font-serif text-xs cursor-pointer"
+                            title="Itálico"
                           >
-                            <span className="w-2 h-2 rounded-full bg-purple-500" />
-                            GRAVAÇÃO
+                            I
                           </button>
-                        </div>
-
-                        <Select value={formStatus} onValueChange={setFormStatus}>
-                          <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50 border-slate-200 rounded-xl w-[130px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white">
-                            <SelectItem value="ativo">Ativo</SelectItem>
-                            <SelectItem value="concluido">Concluído</SelectItem>
-                            <SelectItem value="cancelado">Cancelado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Row 6: Descrição com Toolbar */}
-                    <div className="flex items-start gap-3.5 pt-1">
-                      <div className="pt-2 text-slate-400 shrink-0">
-                        <AlignLeft size={18} />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 focus-within:bg-white focus-within:border-[#0055ff] transition-all">
-                          {/* Mini Formatting Toolbar */}
-                          <div className="px-3 py-1.5 border-b border-slate-200/80 bg-slate-100/70 flex items-center gap-1 text-slate-600">
-                            <button
-                              type="button"
-                              onClick={() => setFormDescricao(prev => prev + "**negrito** ")}
-                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center font-black text-xs cursor-pointer"
-                              title="Negrito"
-                            >
-                              B
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormDescricao(prev => prev + "*itálico* ")}
-                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center italic font-serif text-xs cursor-pointer"
-                              title="Itálico"
-                            >
-                              I
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormDescricao(prev => prev + "__sublinhado__ ")}
-                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center underline text-xs font-semibold cursor-pointer"
-                              title="Sublinhado"
-                            >
-                              U
-                            </button>
-                            <span className="w-px h-4 bg-slate-300 mx-1" />
-                            <button
-                              type="button"
-                              onClick={() => setFormDescricao(prev => prev + "\n• ")}
-                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center text-xs cursor-pointer"
-                              title="Lista com marcadores"
-                            >
-                              <List size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormDescricao(prev => prev + " [link](https://...) ")}
-                              className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center text-xs cursor-pointer"
-                              title="Inserir link"
-                            >
-                              <LinkIcon size={14} />
-                            </button>
-                          </div>
-
-                          <Textarea
-                            value={formDescricao}
-                            onChange={(e) => setFormDescricao(e.target.value)}
-                            placeholder="Adicionar uma descrição, pauta ou observações do evento..."
-                            rows={4}
-                            className="w-full text-xs p-3 bg-transparent border-0 shadow-none focus-visible:ring-0 resize-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Convidados (Google Calendar Style) */}
-                  <div className="bg-slate-50/60 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <div className="border-b border-slate-200 pb-2 flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#002132]">Convidados</span>
-                      <span className="text-[11px] font-semibold text-slate-400">
-                        {formParticipantes.filter(p => p.nome.trim()).length} adicionados
-                      </span>
-                    </div>
-
-                    {/* Guest search/add input */}
-                    <div className="relative">
-                      <Input
-                        value={guestSearchInput}
-                        onChange={(e) => setGuestSearchInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && guestSearchInput.trim()) {
-                            e.preventDefault();
-                            setFormParticipantes(prev => [...prev.filter(p => p.nome.trim()), { nome: guestSearchInput.trim(), instagram: "" }]);
-                            setGuestSearchInput("");
-                          }
-                        }}
-                        placeholder="Adicionar convidados..."
-                        className="h-9 text-xs bg-white border-slate-200 rounded-xl"
-                      />
-
-                      {/* Dropdown suggestions from apresentadores */}
-                      {guestSearchInput.trim() && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto p-1 space-y-0.5">
-                          {apresentadores
-                            .filter(a => a.nome.toLowerCase().includes(guestSearchInput.toLowerCase()))
-                            .map(a => (
-                              <button
-                                key={a.id}
-                                type="button"
-                                onClick={() => {
-                                  setFormParticipantes(prev => [...prev.filter(p => p.nome.trim()), { nome: a.nome, instagram: a.instagram || "" }]);
-                                  setGuestSearchInput("");
-                                }}
-                                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100 flex items-center justify-between cursor-pointer"
-                              >
-                                <span className="font-semibold text-slate-800">{a.nome}</span>
-                                {a.instagram && <span className="text-[10px] text-slate-400">@{a.instagram}</span>}
-                              </button>
-                            ))}
                           <button
                             type="button"
-                            onClick={() => {
-                              setFormParticipantes(prev => [...prev.filter(p => p.nome.trim()), { nome: guestSearchInput.trim(), instagram: "" }]);
-                              setGuestSearchInput("");
-                            }}
-                            className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-blue-50 text-[#0055ff] font-bold cursor-pointer"
+                            onClick={() => setFormDescricao(prev => prev + "__sublinhado__ ")}
+                            className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center underline text-xs font-semibold cursor-pointer"
+                            title="Sublinhado"
                           >
-                            + Convidar "{guestSearchInput.trim()}"
+                            U
+                          </button>
+                          <span className="w-px h-4 bg-slate-300 mx-1" />
+                          <button
+                            type="button"
+                            onClick={() => setFormDescricao(prev => prev + "\n• ")}
+                            className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center text-xs cursor-pointer"
+                            title="Lista com marcadores"
+                          >
+                            <List size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormDescricao(prev => prev + " [link](https://...) ")}
+                            className="w-7 h-7 rounded hover:bg-slate-200 flex items-center justify-center text-xs cursor-pointer"
+                            title="Inserir link"
+                          >
+                            <LinkIcon size={14} />
                           </button>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Guest Chips List */}
-                    <div className="space-y-1.5 max-h-44 overflow-y-auto">
-                      {formParticipantes.filter(p => p.nome.trim()).length === 0 ? (
-                        <p className="text-[11px] text-slate-400 py-2 text-center">Nenhum convidado adicionado ainda.</p>
-                      ) : (
-                        formParticipantes.filter(p => p.nome.trim()).map((part, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 shadow-sm"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-6 h-6 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                                {part.nome.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-xs font-semibold text-slate-800 truncate">{part.nome}</p>
-                                {part.instagram && <p className="text-[9px] text-slate-400 truncate">@{part.instagram}</p>}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setFormParticipantes(prev => prev.filter((_, i) => i !== idx))}
-                              className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                            >
-                              <X size={13} />
-                            </button>
-                          </div>
-                        ))
-                      )}
+                        <Textarea
+                          value={formDescricao}
+                          onChange={(e) => setFormDescricao(e.target.value)}
+                          placeholder="Adicionar uma descrição, pauta ou observações do evento..."
+                          rows={4}
+                          className="w-full text-xs p-3 bg-transparent border-0 shadow-none focus-visible:ring-0 resize-none"
+                        />
+                      </div>
                     </div>
-
-                    {/* Guest Permissions */}
-                    <div className="pt-2 border-t border-slate-200 space-y-2">
-                      <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Permissões de convidados</p>
-                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={guestPermModificar}
-                          onChange={(e) => setGuestPermModificar(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff]"
-                        />
-                        <span>Modificar evento</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={guestPermConvidar}
-                          onChange={(e) => setGuestPermConvidar(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff]"
-                        />
-                        <span>Convidar outras pessoas</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={guestPermVerLista}
-                          onChange={(e) => setGuestPermVerLista(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#0055ff] focus:ring-[#0055ff]"
-                        />
-                        <span>Ver lista de convidados</span>
-                      </label>
-                    </div>
-                  </div>
                 </div>
               )}
 
-              {/* Tab 2: Encontrar um horário */}
-              {eventModalTab === "horario" && (
-                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-bold text-[#002132]">Programação para {format(formData ?? selectedDate ?? new Date(), "dd 'de' MMMM", { locale: ptBR })}</h4>
-                      <p className="text-xs text-slate-500">Confira a disponibilidade dos horários e estúdios para este dia</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto">
-                    {programas.map((prog) => (
-                      <div key={prog.id} className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-bold text-slate-800">{prog.nome}</p>
-                          <p className="text-[10px] text-slate-400">{prog.estudio || "Estúdio Geral"}</p>
-                        </div>
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
-                          {prog.horario_inicio} - {prog.horario_fim}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 3: Materiais & Artes */}
+              {/* Tab 2: Materiais & Artes */}
               {eventModalTab === "materiais" && (
                 <div className="space-y-6">
                   {/* Upload Artes Slots */}
@@ -2654,281 +3702,310 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 </div>
               }>
                 <ProgramaExpressInline
-                  programas={programas.map(p => ({ id: p.id, nome: p.nome, estudio: p.estudio, tipo_programa: (p as any).tipo_programa }))}
+                  programas={programas.map(p => ({
+                    id: p.id,
+                    nome: p.nome,
+                    estudio: p.estudio,
+                    tipo_programa: (p as any).tipo_programa,
+                    apresentador_id: (p as any).apresentador_id || (p as any).apresentadorId || null,
+                    apresentadores_ids: (p as any).apresentadores_ids || (p as any).apresentadoresIds || ((p as any).apresentador_id ? [(p as any).apresentador_id] : (p as any).apresentadorId ? [(p as any).apresentadorId] : null),
+                  }))}
                   estudios={estudios}
                   onFinish={() => { setExpressOpen(false); setExpressEditData(null); }}
                   editData={expressEditData}
+                  effectiveUserId={targetUserId}
                 />
               </Suspense>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Calendar + Events Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-5 items-stretch">
-          <div className="w-full">
-            <div className="w-full space-y-5">
-              {/* Calendar */}
-              <div className="overflow-hidden w-full bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
-                <div className="px-5 py-3.5 border-b border-slate-100 bg-white flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#002132]">Calendário</span>
-                </div>
+        {/* Modal: Calendário */}
+        <Dialog open={calendarModalOpen} onOpenChange={setCalendarModalOpen}>
+          <DialogContent className="max-w-md p-0 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-2xl">
+            <DialogHeader className="px-6 py-4 border-b border-slate-100 bg-white flex flex-row items-center justify-between">
+              <DialogTitle className="text-sm font-black uppercase tracking-wider text-[#002132] flex items-center gap-2">
+                <CalendarIcon size={16} className="text-[#0055ff]" />
+                Calendário
+              </DialogTitle>
+            </DialogHeader>
 
-                <div className="p-4">
-                  <style>{`
-                    .agenda-calendar .rdp-day:hover { background-color: #f1f5f9 !important; color: #0055ff !important; }
-                    .agenda-calendar .rdp-day_selected { background-color: #0055ff !important; color: #fff !important; font-weight: 700 !important; }
-                    .agenda-calendar .rdp-day_selected:hover { background-color: #0047e1 !important; color: #fff !important; }
-                    .agenda-calendar .rdp-day_today,
-                    .agenda-calendar .rdp-day_today.rdp-day_selected,
-                    .agenda-calendar [class*="day_today"] {
-                      border: 1.5px solid #0055ff !important;
-                      color: #0055ff !important;
-                      font-weight: 800 !important;
-                      background-color: transparent !important;
-                      box-shadow: none !important;
+            <div className="p-4">
+              <style>{`
+                .agenda-calendar { width: 100% !important; }
+                .agenda-calendar .rdp-months,
+                .agenda-calendar .rdp-month { width: 100% !important; }
+                .agenda-calendar .rdp-caption {
+                  display: flex !important;
+                  justify-content: center !important;
+                  position: relative !important;
+                  align-items: center !important;
+                  width: 100% !important;
+                }
+                .agenda-calendar .rdp-table {
+                  width: 100% !important;
+                  max-width: 100% !important;
+                  display: table !important;
+                  table-layout: fixed !important;
+                }
+                .agenda-calendar .rdp-head_row,
+                .agenda-calendar .rdp-row {
+                  display: flex !important;
+                  width: 100% !important;
+                }
+                .agenda-calendar .rdp-head_cell,
+                .agenda-calendar th {
+                  background: transparent !important;
+                  background-color: transparent !important;
+                  color: #94a3b8 !important;
+                  font-size: 10px !important;
+                  font-weight: 700 !important;
+                  letter-spacing: 0.06em !important;
+                  text-transform: uppercase !important;
+                  border-radius: 0 !important;
+                  box-shadow: none !important;
+                  border: none !important;
+                }
+                .agenda-calendar .rdp-head_cell,
+                .agenda-calendar .rdp-cell {
+                  flex: 1 1 0% !important;
+                  width: auto !important;
+                  min-width: 0 !important;
+                  display: flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
+                  text-align: center !important;
+                }
+                .agenda-calendar .rdp-day {
+                  margin: 0 auto !important;
+                }
+                .agenda-calendar .rdp-day:hover { background-color: #f1f5f9 !important; color: #0055ff !important; }
+                .agenda-calendar .rdp-day_selected { background-color: #0055ff !important; color: #fff !important; font-weight: 700 !important; }
+                .agenda-calendar .rdp-day_selected:hover { background-color: #0047e1 !important; color: #fff !important; }
+                .agenda-calendar .rdp-day_today,
+                .agenda-calendar .rdp-day_today.rdp-day_selected,
+                .agenda-calendar [class*="day_today"] {
+                  border: 1.5px solid #0055ff !important;
+                  color: #0055ff !important;
+                  font-weight: 800 !important;
+                  background-color: transparent !important;
+                  box-shadow: none !important;
+                }
+                .agenda-calendar .rdp-day_today.rdp-day_selected {
+                  background-color: #0055ff !important;
+                  color: #fff !important;
+                }
+                .agenda-calendar .has-event-day { position: relative; font-weight: 700; }
+                .agenda-calendar .has-event-day::after {
+                  content: '';
+                  position: absolute;
+                  bottom: 3px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 4px;
+                  height: 4px;
+                  border-radius: 50%;
+                  background-color: #0055ff;
+                }
+                .agenda-calendar .is-feriado-day { position: relative; }
+                .agenda-calendar .is-feriado-day::after {
+                  content: '';
+                  position: absolute;
+                  top: 3px;
+                  right: 3px;
+                  width: 4px;
+                  height: 4px;
+                  border-radius: 50%;
+                  background-color: #ef4444;
+                }
+              `}</style>
+              <TooltipProvider>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    if (date) {
+                      const diffTime = date.getTime() - now.getTime();
+                      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                      const offset = Math.floor(diffDays / 7);
+                      setWeekOffset(offset);
                     }
-                    .agenda-calendar .rdp-day_today.rdp-day_selected {
-                      background-color: #0055ff !important;
-                      color: #fff !important;
+                  }}
+                  className={cn("p-0 pointer-events-auto agenda-calendar w-full")}
+                  locale={ptBR}
+                  modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates, isToday: (d: Date) => isSameDay(d, new Date()) }}
+                  modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day", isToday: "agenda-today-highlight" }}
+                  classNames={{
+                    months: "w-full",
+                    month: "w-full space-y-4",
+                    caption: "flex justify-center pt-1 relative items-center w-full",
+                    caption_label: "text-[15px] font-bold text-slate-800",
+                    nav: "space-x-1 flex items-center",
+                    nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-slate-100 border-0 flex items-center justify-center transition-colors",
+                    nav_button_previous: "absolute left-1",
+                    nav_button_next: "absolute right-1",
+                    table: "w-full border-collapse space-y-1",
+                    head_row: "flex w-full",
+                    head_cell: "text-slate-400 bg-transparent flex-1 text-center font-bold text-[10px] tracking-wider uppercase",
+                    row: "flex w-full mt-2.5",
+                    cell: "flex-1 h-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex items-center justify-center",
+                    day: "h-10 w-10 rounded-full p-0 font-medium text-sm hover:bg-slate-100 hover:text-slate-900 transition-colors flex items-center justify-center mx-auto",
+                  }}
+                  components={{
+                    DayContent: ({ date, ...props }) => {
+                      const feriado = getFeriadoNome(date);
+                      const content = <span>{date.getDate()}</span>;
+                      
+                      if (feriado) {
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-white border-none z-[100] bg-rose-600 rounded-xl">
+                              <p className="text-[10px] font-bold">{feriado}</p>
+                              <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+                      return content;
                     }
-                    .agenda-calendar .has-event-day { position: relative; font-weight: 700; }
-                    .agenda-calendar .has-event-day::after {
-                      content: '';
-                      position: absolute;
-                      bottom: 3px;
-                      left: 50%;
-                      transform: translateX(-50%);
-                      width: 4px;
-                      height: 4px;
-                      border-radius: 50%;
-                      background-color: #0055ff;
-                    }
-                    .agenda-calendar .is-feriado-day { position: relative; }
-                    .agenda-calendar .is-feriado-day::after {
-                      content: '';
-                      position: absolute;
-                      top: 3px;
-                      right: 3px;
-                      width: 4px;
-                      height: 4px;
-                      border-radius: 50%;
-                      background-color: #ef4444;
-                    }
-                  `}</style>
-                  <TooltipProvider>
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      className={cn("p-0 pointer-events-auto agenda-calendar")}
-                      locale={ptBR}
-                      modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates, isToday: (d: Date) => isSameDay(d, new Date()) }}
-                      modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day", isToday: "agenda-today-highlight" }}
-                      classNames={{
-                        caption_label: "text-[15px] font-bold text-slate-800",
-                        nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-slate-100 border-0 flex items-center justify-center transition-colors",
-                        head_cell: "text-slate-400 rounded-md w-10 font-bold text-[0.75rem] uppercase",
-                        row: "flex w-full mt-2.5",
-                        cell: "h-10 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-                        day: "h-10 w-10 rounded-full p-0 font-medium text-sm hover:bg-slate-100 hover:text-slate-900 transition-colors",
-                      }}
-                      components={{
-                        DayContent: ({ date, ...props }) => {
-                          const feriado = getFeriadoNome(date);
-                          const content = <span>{date.getDate()}</span>;
-                          
-                          if (feriado) {
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-white border-none z-[100] bg-rose-600 rounded-xl">
-                                  <p className="text-[10px] font-bold">{feriado}</p>
-                                  <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          }
-                          return content;
-                        }
-                      }}
-                    />
-                  </TooltipProvider>
-                  {getFeriadoNome(selectedDate) && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="px-3 pt-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help text-rose-600">
-                            <span className="w-2 h-2 rounded-full inline-block bg-rose-600" />
-                            {getFeriadoNome(selectedDate)}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="text-white border-none bg-rose-600 rounded-xl">
-                          <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
-                          <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
-              </div>
-
-              {/* Upcoming 7 days */}
-              <div className="overflow-hidden bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
-                <div className="px-5 py-3.5 border-b border-slate-100 bg-white flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#002132]">Próximos 7 dias</span>
-                </div>
-
-                <div className="p-4 space-y-3 max-h-[320px] overflow-y-auto">
-                  {upcomingEvents.length === 0 ? (
-                    <p className="text-xs py-4 text-center text-slate-400">
-                      Nenhum evento nos próximos dias.
-                    </p>
-                  ) : (
-                    upcomingEvents.map(({ dateStr, date, events: dayEvents }) => (
-                      <div key={dateStr}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDate(date)}
-                          className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer text-slate-500"
-                        >
-                          <CalendarIcon size={10} />
-                          {format(date, "EEEE, dd/MM", { locale: ptBR })}
-                          <span className="ml-auto text-[9px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-[#0055ff]">
-                            {dayEvents.length}
-                          </span>
-                        </button>
-                        <div className="space-y-1.5">
-                          {dayEvents.map((evt) => (
-                            <div
-                              key={evt.id}
-                              className="rounded-2xl px-3.5 py-2.5 cursor-pointer hover:shadow-sm transition-all bg-[#f8fafc] hover:bg-[#f1f5f9] border border-slate-100"
-                              onClick={() => {
-                                setViewingEvent(evt);
-                                setViewingOccurrenceDate(dateStr);
-                                setViewEventDialogOpen(true);
-                              }}
-                            >
-                              <p className="text-xs font-bold truncate text-slate-800">
-                                {evt.programa?.nome || "Programa removido"}
-                              </p>
-                              <p className="text-[10px] text-slate-400">
-                                {evt.programa ? (
-                                  evt.tipo_evento === "gravacao" && evt.horario_gravacao
-                                    ? `🎬 ${evt.horario_gravacao} (gravação)`
-                                    : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
-                                ) : ""}
-                                {evt.local ? ` • ${evt.local}` : ""}
-                              </p>
-                              {evt.recorrencia !== "unico" && (
-                                <span className="inline-block text-[9px] font-semibold px-2 py-0.5 rounded-full mt-1 bg-blue-50 text-[#0055ff]">
-                                  🔁 {recorrenciaLabels[evt.recorrencia]}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                  }}
+                />
+              </TooltipProvider>
+              {getFeriadoNome(selectedDate) && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="px-3 pt-2 text-[10px] font-semibold flex items-center gap-1.5 cursor-help text-rose-600">
+                        <span className="w-2 h-2 rounded-full inline-block bg-rose-600" />
+                        {getFeriadoNome(selectedDate)}
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-            {/* Datas Comemorativas + Aniversários de Cidades */}
-            <DatasComemorativasCidades feriados={feriadosNacionais} />
-
-            {/* Past Events */}
-            <div className="overflow-hidden bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
-              <div className="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-slate-100 bg-white">
-                <div className="flex items-center gap-2 min-w-0">
-                  <History size={13} className="text-slate-500" />
-                  <span className="text-xs font-black uppercase tracking-wider text-[#002132] truncate">Eventos Passados</span>
-                </div>
-                <Select value={pastMonthFilter} onValueChange={setPastMonthFilter}>
-                  <SelectTrigger className="h-7 w-[120px] text-[10px] bg-slate-50 border-slate-200 text-slate-700 rounded-full font-medium">
-                    <SelectValue placeholder="Filtrar por mês" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border border-slate-100 shadow-lg">
-                    <SelectItem value="todos">Todos os meses</SelectItem>
-                    {pastMonths.map(month => (
-                      <SelectItem key={month} value={month.toLowerCase()}>
-                        {month.charAt(0).toUpperCase() + month.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="p-4 space-y-3 max-h-[320px] overflow-y-auto">
-                {pastEvents.length === 0 ? (
-                  <p className="text-xs py-4 text-center text-slate-400">
-                    Nenhum evento passado encontrado para o filtro selecionado.
-                  </p>
-                ) : (
-                  pastEvents.map(({ dateStr, date, events: dayEvents }) => (
-                    <div key={dateStr}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedDate(date)}
-                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer text-slate-400"
-                      >
-                        <CalendarIcon size={10} />
-                        {format(date, "EEEE, dd/MM", { locale: ptBR })}
-                        <span className="ml-auto text-[9px] font-normal px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                          {dayEvents.length}
-                        </span>
-                      </button>
-                      <div className="space-y-1.5">
-                        {dayEvents.map((evt) => (
-                          <div
-                            key={evt.id}
-                            className="rounded-2xl px-3.5 py-2.5 cursor-pointer hover:shadow-sm transition-all opacity-75 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-slate-100"
-                            onClick={() => {
-                              setViewingEvent(evt);
-                              setViewingOccurrenceDate(dateStr);
-                              setViewEventDialogOpen(true);
-                            }}
-                          >
-                            <p className="text-xs font-bold truncate text-slate-700">
-                              {evt.programa?.nome || "Programa removido"}
-                            </p>
-                            <p className="text-[10px] text-slate-400">
-                              {evt.programa ? (
-                                evt.tipo_evento === "gravacao" && evt.horario_gravacao
-                                  ? `🎬 ${evt.horario_gravacao} (gravação)`
-                                  : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
-                              ) : ""}
-                              {evt.local ? ` • ${evt.local}` : ""}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              {evt.status === "concluido" && (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                                  CONCLUÍDO
-                                </span>
-                              )}
-                              {evt.status === "cancelado" && (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">
-                                  CANCELADO
-                                </span>
-                              )}
-                              {evt.recorrencia !== "unico" && (
-                                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                  🔁 {recorrenciaLabels[evt.recorrencia]}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-white border-none bg-rose-600 rounded-xl">
+                      <p className="text-[10px] font-bold">{getFeriadoNome(selectedDate)}</p>
+                      <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
-          </div>
-          </div>
+          </DialogContent>
+        </Dialog>
 
+        {/* Modal: Datas Comemorativas */}
+        <Dialog open={datasModalOpen} onOpenChange={setDatasModalOpen}>
+          <DialogContent className="max-w-md p-0 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-2xl">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Datas Comemorativas</DialogTitle>
+            </DialogHeader>
+            <DatasComemorativasCidades feriados={feriadosNacionais} />
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal: Eventos Passados */}
+        <Dialog open={pastEventsModalOpen} onOpenChange={setPastEventsModalOpen}>
+          <DialogContent className="max-w-md p-0 overflow-hidden bg-white rounded-3xl border border-slate-100 shadow-2xl">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Eventos Passados</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center justify-between gap-2 pl-6 pr-12 py-4 border-b border-slate-100 bg-white">
+              <div className="flex items-center gap-2 min-w-0">
+                <History size={16} className="text-[#0055ff]" />
+                <span className="text-sm font-black uppercase tracking-wider text-[#002132] truncate">Eventos Passados</span>
+              </div>
+              <Select value={pastMonthFilter} onValueChange={setPastMonthFilter}>
+                <SelectTrigger className="h-8 w-[130px] text-xs bg-slate-50 border-slate-200 text-slate-700 rounded-full font-medium">
+                  <SelectValue placeholder="Filtrar por mês" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border border-slate-100 shadow-lg">
+                  <SelectItem value="todos">Todos os meses</SelectItem>
+                  {pastMonths.map(month => (
+                    <SelectItem key={month} value={month.toLowerCase()}>
+                      {month.charAt(0).toUpperCase() + month.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="p-4 space-y-3 max-h-[420px] overflow-y-auto">
+              {pastEvents.length === 0 ? (
+                <p className="text-xs py-8 text-center text-slate-400">
+                  Nenhum evento passado encontrado para o filtro selecionado.
+                </p>
+              ) : (
+                pastEvents.map(({ dateStr, date, events: dayEvents }) => (
+                  <div key={dateStr}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDate(date);
+                        const diffTime = date.getTime() - now.getTime();
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        const offset = Math.floor(diffDays / 7);
+                        setWeekOffset(offset);
+                        setPastEventsModalOpen(false);
+                      }}
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer text-slate-400"
+                    >
+                      <CalendarIcon size={10} />
+                      {format(date, "EEEE, dd/MM", { locale: ptBR })}
+                      <span className="ml-auto text-[9px] font-normal px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        {dayEvents.length}
+                      </span>
+                    </button>
+                    <div className="space-y-1.5">
+                      {dayEvents.map((evt) => (
+                        <div
+                          key={evt.id}
+                          className="rounded-2xl px-3.5 py-2.5 cursor-pointer hover:shadow-sm transition-all opacity-75 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-slate-100"
+                          onClick={() => {
+                            handleEventClick(evt, dateStr);
+                            setPastEventsModalOpen(false);
+                          }}
+                        >
+                          <p className="text-xs font-bold truncate text-slate-700">
+                            {evt.programa?.nome || "Programa removido"}
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            {evt.programa ? (
+                              evt.tipo_evento === "gravacao" && evt.horario_gravacao
+                                ? `🎬 ${evt.horario_gravacao} (gravação)`
+                                : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+                            ) : ""}
+                            {evt.local ? ` • ${evt.local}` : ""}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {evt.status === "concluido" && (
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                CONCLUÍDO
+                              </span>
+                            )}
+                            {evt.status === "cancelado" && (
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">
+                                CANCELADO
+                              </span>
+                            )}
+                            {evt.recorrencia !== "unico" && (
+                              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                🔁 {recorrenciaLabels[evt.recorrencia]}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Calendar + Events Grid + Today's Feed */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] 2xl:grid-cols-[1fr_360px] gap-5 items-stretch">
           {/* Events + Upcoming */}
           <div className="h-full flex flex-col space-y-4">
             {/* Week schedule (Mon-Sun) - Injected here */}
@@ -2998,6 +4075,197 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
           </div>
 
+          {/* Today's Agenda Timeline Feed (Right side) */}
+          <div className="w-full flex flex-col">
+            <div className="overflow-hidden h-full flex flex-col bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-100 bg-white flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#002132]">
+                    Eventos do Dia
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700">
+                    {selectedDayFeedEvents.length}
+                  </span>
+                </div>
+                {isSameDay(selectedDate || now, now) && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 border border-blue-200/60 uppercase tracking-wider">
+                    Hoje
+                  </span>
+                )}
+              </div>
+
+              {/* Subheader: Selected Date display + Quick Add */}
+              <div className="px-5 py-2.5 bg-slate-50/60 border-b border-slate-100/80 flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700 capitalize">
+                  {format(selectedDate || now, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                </span>
+                <button
+                  type="button"
+                  onClick={openNewDialog}
+                  className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Plus size={12} /> Novo
+                </button>
+              </div>
+
+              {/* Feed Content */}
+              <div className="p-5 flex-1 overflow-y-auto max-h-[780px] space-y-6 relative">
+                {selectedDayFeedEvents.length === 0 ? (
+                  <div className="h-48 flex flex-col items-center justify-center text-center p-4 text-slate-400">
+                    <CalendarIcon className="w-9 h-9 stroke-[1.5] text-slate-300 mb-2" />
+                    <p className="text-xs font-semibold text-slate-600">Nenhum evento agendado</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Nenhum compromisso para esta data.</p>
+                    <button
+                      type="button"
+                      onClick={openNewDialog}
+                      className="mt-3 px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[#002132] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus size={12} /> Agendar Evento
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative pl-6 space-y-5">
+                    {/* Vertical timeline continuous line */}
+                    <div className="absolute left-2.5 top-2 bottom-2 w-[2px] bg-slate-100 -translate-x-1/2" />
+
+                    {selectedDayFeedEvents.map((evt, idx) => {
+                      const startTime = evt.horario_gravacao || evt.programa?.horario_inicio || "Dia Inteiro";
+                      const endTime = evt.horario_gravacao_fim || evt.programa?.horario_fim || "";
+                      const timeDisplay = endTime ? `${startTime} - ${endTime}` : startTime;
+                      const studioOrLocal = evt.local || evt.programa?.estudio || "Estúdio";
+
+                      // Rotating timeline dot colors (blue, amber, emerald, purple, cyan)
+                      const dotColors = [
+                        "bg-blue-600 ring-blue-100",
+                        "bg-amber-500 ring-amber-100",
+                        "bg-emerald-500 ring-emerald-100",
+                        "bg-purple-600 ring-purple-100",
+                        "bg-cyan-500 ring-cyan-100",
+                      ];
+                      const dotColor = dotColors[idx % dotColors.length];
+
+                      const eventDateStr = format(selectedDate || now, "yyyy-MM-dd");
+                      const evtColor = evt.cor || getStoredEventColor(evt.id) || (evt.programa_id ? getStoredEventColor(`prog_${evt.programa_id}`) : null);
+
+                      const presenter = getPresenterForEvent(evt);
+                      const presenterPhoto = presenter?.foto || presenter?.foto_url;
+                      const presenterInitial = (presenter?.nome || "A").trim().slice(0, 1).toUpperCase();
+
+                      return (
+                        <div
+                          key={evt.id}
+                          onClick={() => handleEventClick(evt, eventDateStr)}
+                          className="relative group cursor-pointer transition-all"
+                        >
+                          {/* Timeline dot marker on the vertical line */}
+                          <div
+                            className={cn(
+                              "absolute -left-6 top-1.5 w-3 h-3 rounded-full border-2 border-white ring-4 transition-transform group-hover:scale-125 z-10",
+                              !evtColor && dotColor
+                            )}
+                            style={evtColor ? { backgroundColor: evtColor, boxShadow: `0 0 0 4px ${evtColor}33` } : undefined}
+                          />
+
+                          {/* Event body card */}
+                          <div
+                            className="bg-white group-hover:bg-slate-50/90 rounded-2xl p-3 border border-slate-100 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.02)] group-hover:shadow-md space-y-2.5"
+                            style={evtColor ? { borderLeft: `4px solid ${evtColor}` } : undefined}
+                          >
+                            {/* Title & Time/Location */}
+                            <div>
+                              <h4 className="text-xs md:text-[13px] font-black text-[#002132] group-hover:text-blue-600 transition-colors leading-snug line-clamp-2">
+                                {evt.youtube_titulo || evt.programa?.nome || evt.descricao || "Evento sem título"}
+                              </h4>
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium mt-1">
+                                <span className="font-semibold text-slate-700">{timeDisplay}</span>
+                                <span>•</span>
+                                <span className="truncate max-w-[150px]">{studioOrLocal}</span>
+                              </div>
+                            </div>
+
+                            {/* Círculo com a foto do apresentador do programa e círculos com a inicial do participante ao lado */}
+                            <div className="pt-2 border-t border-slate-100/80 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {/* Círculo com a foto do apresentador do programa */}
+                                {presenterPhoto ? (
+                                  <img
+                                    src={presenterPhoto}
+                                    alt={presenter?.nome || "Apresentador"}
+                                    title={presenter?.nome ? `Apresentador: ${presenter.nome}` : "Apresentador"}
+                                    className="w-7 h-7 rounded-full object-cover border border-slate-200 shadow-sm shrink-0 bg-white ring-2 ring-white"
+                                  />
+                                ) : (
+                                  <div
+                                    title={presenter?.nome ? `Apresentador: ${presenter.nome}` : "Apresentador"}
+                                    className="w-7 h-7 rounded-full bg-[#0055ff] text-white text-[10px] font-black flex items-center justify-center border border-white shadow-sm shrink-0 ring-2 ring-white"
+                                  >
+                                    {presenter ? presenterInitial : <User size={13} className="text-white" />}
+                                  </div>
+                                )}
+
+                                {/* Círculo com a letra inicial do participante ao lado */}
+                                {evt.participantes && evt.participantes.length > 0 && (
+                                  <div
+                                    className="flex -space-x-1.5 overflow-hidden shrink-0"
+                                    title={`${evt.participantes.length} participante(s)`}
+                                  >
+                                    {evt.participantes.slice(0, 4).map((p, pIdx) => {
+                                      const pInitial = (p.nome || "?").trim().slice(0, 1).toUpperCase();
+                                      return (
+                                        <div
+                                          key={pIdx}
+                                          className="inline-flex items-center justify-center w-6 h-6 rounded-full ring-2 ring-white bg-slate-200 text-slate-700 text-[9px] font-bold"
+                                          title={`Participante: ${p.nome}`}
+                                        >
+                                          {pInitial}
+                                        </div>
+                                      );
+                                    })}
+                                    {evt.participantes.length > 4 && (
+                                      <div className="inline-flex items-center justify-center w-6 h-6 rounded-full ring-2 ring-white bg-slate-300 text-slate-800 text-[8px] font-black">
+                                        +{evt.participantes.length - 4}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Tag badge (like image 1) */}
+                            {(evt.tipo_evento || evt.status) && (
+                              <div className="pt-0.5">
+                                <span
+                                  className={cn(
+                                    "text-[10px] font-semibold px-2.5 py-1 rounded-lg inline-flex items-center gap-1 leading-none",
+                                    evt.tipo_evento === "gravacao"
+                                      ? "bg-purple-50 text-purple-700 border border-purple-200/60"
+                                      : evt.tipo_evento === "externo"
+                                        ? "bg-amber-50 text-amber-700 border border-amber-200/60"
+                                        : evt.status === "cancelado"
+                                          ? "bg-rose-50 text-rose-700 border border-rose-200/60"
+                                          : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                                  )}
+                                >
+                                  {evt.tipo_evento === "gravacao"
+                                    ? "🎬 Gravação"
+                                    : evt.tipo_evento === "externo"
+                                      ? "📍 Externo"
+                                      : evt.status === "cancelado"
+                                        ? "✕ Cancelado"
+                                        : "🔴 Ao Vivo"}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 text-[10px] text-center opacity-50">

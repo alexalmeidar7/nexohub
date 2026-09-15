@@ -15,7 +15,7 @@ interface Participante {
 }
 
 const BLOCK_COLORS = [
-  "#2ec1f7", // azul
+  "#268ffa", // azul
   "#f59e0b", // amarelo
   "#10b981", // verde
   "#ef4444", // vermelho
@@ -112,7 +112,7 @@ function ParticipanteRow({ participante, inputStyle, onRemove, onUpdateCargo, us
         </button>
       )}
 
-      <span className="text-[10px] truncate min-w-0" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+      <span className="text-[10px] truncate min-w-0" style={{ color: "#268ffa" }}>
         {participante.instagram ? `@${participante.instagram.replace("@", "")}` : "..."}
       </span>
 
@@ -649,13 +649,13 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+              <Zap size={20} style={{ color: "#268ffa" }} />
               {editingId ? "Monte seu Roteiro" : "Monte seu Roteiro"}
             </DialogTitle>
             <button
               onClick={() => setShowPastePopup(true)}
               className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all mr-6"
-              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 12%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}
+              style={{ backgroundColor: "color-mix(in srgb, #268ffa 12%, transparent)", color: "#268ffa" }}
             >
               <ClipboardPaste size={13} /> Colar Roteiro
             </button>
@@ -664,9 +664,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
         {/* Paste Script Popup */}
         {showPastePopup && (
-          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+          <div className="rounded-xl p-3 space-y-2" style={{ border: "2px solid #268ffa", backgroundColor: "color-mix(in srgb, #268ffa 6%, transparent)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "#268ffa" }}>
                 <ClipboardPaste size={14} /> Colar Roteiro
               </p>
               <button onClick={() => { setShowPastePopup(false); setPasteText(""); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}>
@@ -693,7 +693,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
               onClick={parsePastedScript}
               disabled={!pasteText.trim()}
               className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
-              style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
+              style={{ backgroundColor: "#268ffa", color: "var(--layout-header-text, #fff)" }}
             >
               <Check size={12} /> Importar Roteiro
             </button>
@@ -727,9 +727,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         </div>
 
         {/* Participantes */}
-        <div className="mt-4 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+        <div className="mt-4 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)", backgroundColor: "color-mix(in srgb, #268ffa 4%, transparent)" }}>
           <p className="text-xs font-bold flex items-center gap-1.5 mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            <Users size={14} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
+            <Users size={14} style={{ color: "#268ffa" }} />
             Participantes
           </p>
 
@@ -744,7 +744,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
             </div>
           )}
 
-          {/* Search input */}
+          {/* Search bar */}
           <div ref={searchRef} className="relative">
             <div className="flex gap-1.5 items-center">
               <div className="relative flex-1">
@@ -759,6 +759,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 />
               </div>
             </div>
+
+            {/* Dropdown results */}
             {showResults && searchResults.length > 0 && (
               <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)" }}>
                 {searchResults.map((r, i) => (
@@ -766,11 +768,14 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                     key={i}
                     onClick={() => addParticipante(r)}
                     className="w-full text-left px-3 py-2 text-[11px] hover:opacity-80 transition-all flex items-center gap-2"
-                    style={{ color: "var(--layout-page-text, #1a1a1a)", borderBottom: i < searchResults.length - 1 ? "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" : "none" }}
+                    style={{
+                      color: "var(--layout-page-text, #1a1a1a)",
+                      borderBottom: i < searchResults.length - 1 ? "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 10%, transparent)" : "none"
+                    }}
                   >
                     <span className="font-semibold flex-1 truncate">{r.nome}</span>
                     {r.cargo && <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{r.cargo}</span>}
-                    {r.instagram && <span className="text-[10px]" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>@{r.instagram.replace("@", "")}</span>}
+                    {r.instagram && <span className="text-[10px]" style={{ color: "#268ffa" }}>@{r.instagram.replace("@", "")}</span>}
                   </button>
                 ))}
               </div>
@@ -783,7 +788,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 <button
                   onClick={openNewContactPopup}
                   className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-lg hover:opacity-80 transition-all"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 12%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}
+                  style={{ backgroundColor: "color-mix(in srgb, #268ffa 12%, transparent)", color: "#268ffa" }}
                 >
                   <UserPlus size={12} /> Vamos salvar esse contato?
                 </button>
@@ -794,9 +799,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
         {/* New Contact Popup */}
         {showNewContact && (
-          <div className="rounded-xl p-3 mt-2 space-y-2" style={{ border: "2px solid var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 6%, transparent)" }}>
+          <div className="rounded-xl p-3 mt-2 space-y-2" style={{ border: "2px solid #268ffa", backgroundColor: "color-mix(in srgb, #268ffa 6%, transparent)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "var(--layout-accent-color, #2ec1f7)" }}>
+              <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: "#268ffa" }}>
                 <UserPlus size={14} /> Novo Participante
               </p>
               <button onClick={() => setShowNewContact(false)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-page-text)" }}>
@@ -918,7 +923,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                       canRemove={bloco.noticias.length > 1}
                     />
                   ))}
-                  <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "var(--layout-accent-color, #2ec1f7)", border: "1px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)" }}>
+                  <button onClick={() => addNoticia(bi)} className="flex items-center gap-1 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all" style={{ color: "#268ffa", border: "1px dashed color-mix(in srgb, #268ffa 40%, transparent)" }}>
                     <Plus size={12} /> Adicionar notícia
                   </button>
                 </div>
@@ -927,7 +932,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           ))}
         </div>
 
-        <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80 mt-2" style={{ border: "2px dashed color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 40%, transparent)", color: "var(--layout-accent-color, #2ec1f7)", backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 4%, transparent)" }}>
+        <button onClick={addBloco} className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:opacity-80 mt-2" style={{ border: "2px dashed color-mix(in srgb, #268ffa 40%, transparent)", color: "#268ffa", backgroundColor: "color-mix(in srgb, #268ffa 4%, transparent)" }}>
           <Plus size={14} className="inline mr-1" /> Adicionar Bloco {blocos.length + 1}
         </button>
 
@@ -939,7 +944,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           style={{ borderRadius: "12px" }}
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-          {saving ? "Salvando..." : "Finalizar Programa Express"}
+          {saving ? "Salvando..." : "Salvar"}
         </button>
       </DialogContent>
     </Dialog>
@@ -989,7 +994,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
             {noticia.titulo}
           </p>
           {noticia.escalada && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, #268ffa 15%, transparent)", color: "#268ffa" }}>
               ESCALADA
             </span>
           )}
@@ -1043,7 +1048,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           onClick={() => handlePasteLink(linkInput)}
           disabled={isFetching || !linkInput}
           className="px-2 py-1.5 rounded-lg text-[10px] font-bold disabled:opacity-30 shrink-0"
-          style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
+          style={{ backgroundColor: "#268ffa", color: "var(--layout-header-text, #fff)" }}
         >
           {isFetching ? <Loader2 size={12} className="animate-spin" /> : "Buscar"}
         </button>
@@ -1103,8 +1108,8 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           onClick={() => onUpdate(bi, ni, "escalada", !noticia.escalada)}
           className="w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer"
           style={{
-            borderColor: noticia.escalada ? "var(--layout-accent-color, #2ec1f7)" : "color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
-            backgroundColor: noticia.escalada ? "var(--layout-accent-color, #2ec1f7)" : "transparent",
+            borderColor: noticia.escalada ? "#268ffa" : "color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
+            backgroundColor: noticia.escalada ? "#268ffa" : "transparent",
           }}
         >
           {noticia.escalada && <Check size={10} style={{ color: "var(--layout-header-text, #fff)" }} />}

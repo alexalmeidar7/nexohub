@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, scrollToForm } from "@/lib/utils";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
@@ -33,22 +33,23 @@ const POSICOES = [
   { value: "rodape", label: "Rodapé" },
 ];
 
-/* Nexo form palette */
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const BG = "#D6F4FB";
+/* Nexo form palette (ClientesPage style) */
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const BG = "#ffffff";
 const INK = "#002132";
 
 const inputCls =
-  "w-full h-11 px-4 rounded-full text-sm bg-white outline-none transition-all " +
-  "border-2 border-[#00BFF0]/30 focus:border-[#00BFF0] focus:ring-4 focus:ring-[#00BFF0]/15 " +
-  "placeholder:text-[#002132]/40 text-[#002132]";
+  "w-full h-11 px-5 rounded-full text-xs font-semibold uppercase bg-[#f8fafc] outline-none transition-all " +
+  "border border-slate-200/90 focus:bg-white focus:border-[#0055ff] " +
+  "placeholder:text-slate-400 text-[#0f172a]";
 
 const labelCls =
   "text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 text-[#002132]";
 
 export default function AdsSitePage() {
   const { user } = useAuth();
+  const formRef = useRef<HTMLFormElement>(null);
   const [items, setItems] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -135,7 +136,7 @@ export default function AdsSitePage() {
     setDataInicial(b.data_inicial ? new Date(b.data_inicial + "T00:00:00") : undefined);
     setDataFinal(b.data_final ? new Date(b.data_final + "T00:00:00") : undefined);
     setImagePreview(b.image_url); setImageFile(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   }
 
   async function remove(id: string) {
@@ -171,7 +172,7 @@ export default function AdsSitePage() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <form ref={formRef} onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* LEFT: Image dropzone */}
           <div className="lg:col-span-1">
             <div className="rounded-2xl bg-white p-4 h-full flex flex-col" style={{ boxShadow: "0 4px 20px rgba(0,33,50,0.06)" }}>

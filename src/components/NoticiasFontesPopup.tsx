@@ -5,9 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check, ChevronLeft, ChevronRight, Eye, Play, Pause, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 
-const NEXO_CYAN = "#00BFF0";
-const NEXO_CARD_BG = "#D6F4FB";
-const NEXO_DARK = "#0A2540";
+const NEXO_BLUE = "#268ffa";
+const NEXO_CYAN = "#268ffa";
+const NEXO_CARD_BG = "#FFFFFF";
+const NEXO_DARK = "#002132";
+const NEXO_MUTED = "#64748B";
+const NEXO_BORDER = "rgba(10,37,64,0.08)";
+const NEXO_BG_SUBTLE = "#F8FAFC";
 
 const PROXY = "https://api.allorigins.win/raw?url=";
 
@@ -549,17 +553,17 @@ function NewsHorizontalScroller({
         <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, #FAFCFD, rgba(250,252,253,0))" }} />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, #FAFCFD, rgba(250,252,253,0))" }} />
 
-        <button onClick={() => nudge(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition" style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }} aria-label="Anterior">
+        <button onClick={() => nudge(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-md hover:scale-105 transition" style={{ background: "#fff", color: NEXO_DARK, border: "1px solid #E2E8F0" }} aria-label="Anterior">
           <ChevronLeft size={18} />
         </button>
-        <button onClick={() => nudge(1)} className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition" style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }} aria-label="Próximo">
+        <button onClick={() => nudge(1)} className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-md hover:scale-105 transition" style={{ background: "#fff", color: NEXO_DARK, border: "1px solid #E2E8F0" }} aria-label="Próximo">
           <ChevronRight size={18} />
         </button>
 
         <button
           onClick={() => setAutoScroll((v) => !v)}
-          className="absolute right-2 top-2 z-20 h-8 px-3 rounded-full flex items-center gap-1.5 text-xs font-semibold shadow-md hover:scale-105 transition"
-          style={{ background: autoScroll ? NEXO_CYAN : "#fff", color: autoScroll ? "#fff" : NEXO_DARK, border: `1px solid ${NEXO_CYAN}66` }}
+          className="absolute right-2 top-2 z-20 h-8 px-3 rounded-full flex items-center gap-1.5 text-xs font-semibold shadow-sm hover:scale-105 transition"
+          style={{ background: autoScroll ? NEXO_BLUE : "#fff", color: autoScroll ? "#fff" : NEXO_DARK, border: `1px solid ${autoScroll ? NEXO_BLUE : "#E2E8F0"}` }}
           aria-label={autoScroll ? "Pausar rolagem automática" : "Ativar rolagem automática"}
           title={autoScroll ? "Pausar auto-rolagem" : "Ativar auto-rolagem"}
         >
@@ -574,19 +578,19 @@ function NewsHorizontalScroller({
               ref={progressBarRef}
               onClick={(e) => seekToProgress(e.clientX)}
               className="relative flex-1 h-1.5 rounded-full overflow-hidden cursor-pointer pointer-events-auto group"
-              style={{ background: `${NEXO_DARK}22` }}
+              style={{ background: "#E2E8F0" }}
               title="Clique para navegar"
             >
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-150 ease-out"
-                style={{ width: `${Math.round(scrollProgress * 100)}%`, background: `linear-gradient(90deg, ${NEXO_CYAN}, ${NEXO_DARK})` }}
+                style={{ width: `${Math.round(scrollProgress * 100)}%`, background: `linear-gradient(90deg, ${NEXO_BLUE}, #0055ff)` }}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ left: `${Math.round(scrollProgress * 100)}%`, background: "#fff", border: `2px solid ${NEXO_CYAN}` }}
+                style={{ left: `${Math.round(scrollProgress * 100)}%`, background: "#fff", border: `2px solid ${NEXO_BLUE}` }}
               />
             </div>
-            <span className="text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full pointer-events-none" style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}>
+            <span className="text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full pointer-events-none" style={{ background: "#fff", color: NEXO_DARK, border: "1px solid #E2E8F0" }}>
               {visibleIndex}/{items.length}
             </span>
           </div>
@@ -623,45 +627,46 @@ function NewsHorizontalScroller({
                 className="group shrink-0 rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition cursor-grab active:cursor-grabbing"
                 style={{
                   width: 280,
-                  background: NEXO_CARD_BG,
-                  boxShadow: "0 6px 18px rgba(10,37,64,0.10)",
+                  background: "#FFFFFF",
+                  border: "1px solid #E2E8F0",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
                   fontFamily: "'Montserrat', sans-serif",
                 }}
               >
-                <div className="w-full overflow-hidden" style={{ background: `${NEXO_DARK}0A`, aspectRatio: "4/3" }}>
+                <div className="w-full overflow-hidden" style={{ background: "#F1F5F9", aspectRatio: "4/3" }}>
                   {n.thumbnail ? (
                     <img src={n.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" referrerPolicy="no-referrer"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ color: `${NEXO_DARK}55` }}>
+                    <div className="w-full h-full flex items-center justify-center" style={{ color: "#94A3B8" }}>
                       <Newspaper size={38} />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 flex flex-col p-5 gap-3">
-                  <h3 className="text-[17px] leading-[1.15] font-black line-clamp-5" style={{ color: NEXO_DARK, letterSpacing: "-0.01em" }}>
+                  <h3 className="text-[16px] leading-[1.2] font-bold line-clamp-4" style={{ color: NEXO_DARK, letterSpacing: "-0.01em" }}>
                     {title}
                   </h3>
                   {isOpen && (
-                    <p className="text-[12px] leading-snug" style={{ color: NEXO_DARK, opacity: 0.85, maxHeight: 120, overflow: "auto" }}>
+                    <p className="text-[12px] leading-snug" style={{ color: "#475569", maxHeight: 120, overflow: "auto" }}>
                       {sanitizeTitle(n.summary || "") || "Sem resumo disponível para esta notícia."}
                     </p>
                   )}
                   <div className="mt-auto flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-semibold" style={{ color: NEXO_DARK, opacity: 0.75 }}>
+                    <span className="text-[11px] font-semibold" style={{ color: NEXO_MUTED }}>
                       {dateLabel || " "}
                     </span>
                     <div className="flex items-center gap-1.5">
                       {n.link && (
                         <a href={n.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                           className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition" title="Abrir no site"
-                          style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}55` }}>
+                          style={{ background: "#fff", color: NEXO_DARK, border: "1px solid #E2E8F0" }}>
                           <ExternalLink size={14} />
                         </a>
                       )}
                       <button type="button" onClick={() => toggleEye(i)}
                         className="w-9 h-9 rounded-full flex items-center justify-center transition hover:scale-110"
-                        style={{ background: isOpen ? NEXO_DARK : NEXO_CYAN, color: "#fff" }}
+                        style={{ background: isOpen ? NEXO_DARK : NEXO_BLUE, color: "#fff", boxShadow: "0 2px 8px rgba(38, 143, 250, 0.25)" }}
                         aria-label={isOpen ? "Fechar resumo" : "Abrir resumo"}
                         title={isOpen ? "Fechar resumo" : "Ver resumo"}>
                         <Eye size={16} />
@@ -677,9 +682,9 @@ function NewsHorizontalScroller({
 
       {/* Blocos - drop targets */}
       {blocosCount > 0 && (
-        <div className="shrink-0 px-4 pt-3 pb-4 border-t" style={{ borderColor: "rgba(10,37,64,0.08)", background: "#F5FAFC" }}>
+        <div className="shrink-0 px-4 pt-3 pb-4 border-t" style={{ borderColor: NEXO_BORDER, background: NEXO_BG_SUBTLE }}>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: NEXO_DARK, opacity: 0.6 }}>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: NEXO_MUTED }}>
               Arraste a notícia para o bloco
             </span>
           </div>
@@ -721,10 +726,10 @@ function NewsHorizontalScroller({
                   }}
                   className="flex-1 min-w-[180px] rounded-xl flex flex-col transition overflow-hidden"
                   style={{
-                    background: isHover ? NEXO_CYAN : "#fff",
+                    background: isHover ? NEXO_BLUE : "#fff",
                     color: isHover ? "#fff" : NEXO_DARK,
-                    border: `2px ${dragging || isHover ? "solid" : "dashed"} ${NEXO_CYAN}`,
-                    boxShadow: isHover ? "0 6px 18px rgba(0,191,240,0.35)" : "none",
+                    border: `2px ${dragging || isHover ? "solid" : "dashed"} ${isHover ? NEXO_BLUE : "color-mix(in srgb, #268ffa 40%, transparent)"}`,
+                    boxShadow: isHover ? "0 6px 20px rgba(38, 143, 250, 0.3)" : "none",
                     fontFamily: "'Montserrat', sans-serif",
                     minHeight: "48px",
                   }}
@@ -736,7 +741,7 @@ function NewsHorizontalScroller({
                     {added.length > 0 && (
                       <span
                         className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                        style={{ background: isHover ? "#fff" : NEXO_CYAN, color: isHover ? NEXO_CYAN : "#fff" }}
+                        style={{ background: isHover ? "#fff" : NEXO_BLUE, color: isHover ? NEXO_BLUE : "#fff" }}
                       >
                         {added.length}
                       </span>
@@ -781,8 +786,9 @@ function NewsHorizontalScroller({
                           }}
                           className="flex items-start gap-1 rounded-md px-2 py-1.5 text-[11px] leading-tight cursor-move"
                           style={{
-                            background: isHover ? "rgba(255,255,255,0.18)" : "rgba(0,191,240,0.08)",
+                            background: isHover ? "rgba(255,255,255,0.2)" : "color-mix(in srgb, #268ffa 8%, transparent)",
                             color: isHover ? "#fff" : NEXO_DARK,
+                            border: isHover ? "none" : "1px solid color-mix(in srgb, #268ffa 18%, transparent)",
                           }}
                         >
                           <GripVertical size={12} className="shrink-0 mt-0.5 opacity-50" />
@@ -1115,23 +1121,23 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between" style={{ background: NEXO_CARD_BG, borderBottom: `1px solid ${NEXO_CYAN}33` }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ background: "#FFFFFF", borderBottom: `1px solid ${NEXO_BORDER}` }}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: NEXO_CYAN, color: "#fff" }}>
-              <Newspaper size={18} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm" style={{ background: NEXO_BLUE, color: "#fff" }}>
+              <Newspaper size={20} />
             </div>
             <div>
-              <h3 className="text-base font-bold uppercase tracking-widest" style={{ color: NEXO_DARK }}>Notícias de Fontes</h3>
-              <p className="text-[11px]" style={{ color: "rgba(10,37,64,0.65)" }}>
+              <h3 className="text-base font-bold uppercase tracking-wider" style={{ color: NEXO_DARK }}>Notícias de Fontes</h3>
+              <p className="text-[11px]" style={{ color: NEXO_MUTED }}>
                 {sites.length} {sites.length === 1 ? "fonte" : "fontes"} · {totalNoticias} notícias carregadas
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setShowSettings(true)} className="p-1.5 rounded-lg hover:bg-white/60 transition" style={{ color: NEXO_DARK }} title="Configurar fontes" aria-label="Configurar fontes">
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setShowSettings(true)} className="p-2 rounded-xl hover:bg-slate-100 transition text-slate-500 hover:text-slate-900" title="Configurar fontes" aria-label="Configurar fontes">
               <Settings size={18} />
             </button>
-            <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-lg hover:bg-white/60 transition" style={{ color: NEXO_DARK }} aria-label="Fechar">
+            <button onClick={() => onOpenChange(false)} className="p-2 rounded-xl hover:bg-slate-100 transition text-slate-500 hover:text-slate-900" aria-label="Fechar">
               <XIcon size={18} />
             </button>
           </div>
@@ -1139,12 +1145,11 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
 
         {/* Tabs */}
         {sites.length > 0 && (
-          <div className="flex items-stretch border-b" style={{ borderColor: "rgba(10,37,64,0.08)", background: "#F5FAFC" }}>
+          <div className="flex items-stretch border-b" style={{ borderColor: NEXO_BORDER, background: NEXO_BG_SUBTLE }}>
             <button
               onClick={() => scrollTabs("left")}
               disabled={!canScrollLeft}
-              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-white/70"
-              style={{ color: NEXO_DARK }}
+              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-slate-200/60 text-slate-500 hover:text-slate-900"
               aria-label="Rolar abas para esquerda"
               title="Anterior"
             >
@@ -1153,7 +1158,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
             <div
               ref={tabsScrollRef}
               onScroll={updateScrollButtons}
-              className="flex-1 flex items-center gap-1 py-2 overflow-x-auto scroll-smooth"
+              className="flex-1 flex items-center gap-1.5 py-2 overflow-x-auto scroll-smooth px-1"
               style={{ scrollbarWidth: "none" }}
             >
               {(() => {
@@ -1184,11 +1189,12 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                             setOpenMenuFor(null);
                           }
                         }}
-                        className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
+                        className="shrink-0 h-8 px-3.5 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
                         style={{
-                          background: active ? NEXO_CYAN : "#fff",
+                          background: active ? NEXO_BLUE : "#fff",
                           color: active ? "#fff" : NEXO_DARK,
-                          border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
+                          border: `2px solid ${active ? NEXO_BLUE : "#E2E8F0"}`,
+                          boxShadow: active ? "0 2px 8px rgba(38, 143, 250, 0.25)" : "none",
                         }}
                         title={children.length ? "Ver subfontes" : displayLabel}
                       >
@@ -1197,7 +1203,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                         {loading ? (
                           <Loader2 size={10} className="animate-spin" />
                         ) : (
-                          <span className="text-[9px] opacity-80">{count}</span>
+                          <span className="text-[9px] opacity-80" style={{ background: active ? "rgba(255,255,255,0.25)" : "#f1f5f9", padding: "1px 6px", borderRadius: 999, color: active ? "#fff" : NEXO_MUTED }}>{count}</span>
                         )}
                         {children.length > 0 && (
                           <ChevronDown size={11} className={`transition ${isOpen ? "rotate-180" : ""}`} />
@@ -1206,19 +1212,19 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                       {children.length > 0 && isOpen && menuPos && createPortal(
                         <div
                           className="fixed z-[10002] min-w-[220px] rounded-xl overflow-hidden py-1"
-                          style={{ top: menuPos.top, left: menuPos.left, background: "#fff", boxShadow: "0 10px 30px rgba(10,37,64,0.18)", border: `1px solid ${NEXO_CYAN}33` }}
+                          style={{ top: menuPos.top, left: menuPos.left, background: "#fff", boxShadow: "0 10px 30px rgba(0,0,0,0.12)", border: "1px solid #E2E8F0" }}
                           onMouseLeave={() => setOpenMenuFor(null)}
                         >
                           <button
                             onClick={() => { setActiveTab(s.id); setOpenMenuFor(null); }}
-                            className="w-full text-left px-3 py-2 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-cyan-50 transition"
-                            style={{ color: isSelfActive ? NEXO_CYAN : NEXO_DARK, background: isSelfActive ? `${NEXO_CYAN}12` : "transparent" }}
+                            className="w-full text-left px-3 py-2 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-slate-50 transition"
+                            style={{ color: isSelfActive ? NEXO_BLUE : NEXO_DARK, background: isSelfActive ? "color-mix(in srgb, #268ffa 10%, transparent)" : "transparent" }}
                           >
                             <Globe size={11} />
                             <span className="flex-1 truncate">Todas · {s.name}</span>
                             <span className="text-[9px] opacity-70">{(newsBySite[s.id] || []).length}</span>
                           </button>
-                          <div className="h-px my-1" style={{ background: `${NEXO_CYAN}22` }} />
+                          <div className="h-px my-1" style={{ background: "#E2E8F0" }} />
                           {children.map((c) => {
                             const cActive = c.id === activeTab;
                             const cCount = (newsBySite[c.id] || []).length;
@@ -1227,8 +1233,8 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                               <button
                                 key={c.id}
                                 onClick={() => { setActiveTab(c.id); setOpenMenuFor(null); }}
-                                className="w-full text-left px-3 py-2 text-[11px] font-semibold flex items-center gap-2 hover:bg-cyan-50 transition"
-                                style={{ color: cActive ? NEXO_CYAN : NEXO_DARK, background: cActive ? `${NEXO_CYAN}12` : "transparent" }}
+                                className="w-full text-left px-3 py-2 text-[11px] font-semibold flex items-center gap-2 hover:bg-slate-50 transition"
+                                style={{ color: cActive ? NEXO_BLUE : NEXO_DARK, background: cActive ? "color-mix(in srgb, #268ffa 10%, transparent)" : "transparent" }}
                               >
                                 <span className="text-[10px] font-black opacity-60">↳</span>
                                 <span className="flex-1 truncate">{c.category || c.name}</span>
@@ -1247,8 +1253,8 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
             <button
               onClick={() => scrollTabs("right")}
               disabled={!canScrollRight}
-              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-white/70 border-l"
-              style={{ color: NEXO_DARK, borderColor: "rgba(10,37,64,0.06)" }}
+              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-slate-200/60 text-slate-500 hover:text-slate-900 border-l"
+              style={{ color: NEXO_DARK, borderColor: NEXO_BORDER }}
               aria-label="Rolar abas para direita"
               title="Próxima"
             >
@@ -1258,11 +1264,11 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               <button
                 onClick={() => loadSiteNews(activeSite)}
                 disabled={activeLoading}
-                className="shrink-0 h-8 my-2 mr-3 ml-2 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition hover:opacity-90 disabled:opacity-50 self-center"
-                style={{ background: "#fff", color: NEXO_DARK, border: `2px solid ${NEXO_CYAN}44` }}
+                className="shrink-0 h-8 my-2 mr-3 ml-2 px-3.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition hover:opacity-90 disabled:opacity-50 self-center"
+                style={{ background: "#fff", color: NEXO_DARK, border: "1px solid #E2E8F0" }}
                 title="Buscar notícias mais recentes"
               >
-                <RefreshCw size={11} className={activeLoading ? "animate-spin" : ""} />
+                <RefreshCw size={11} className={activeLoading ? "animate-spin" : ""} style={{ color: NEXO_BLUE }} />
                 Atualizar
               </button>
             )}
@@ -1272,23 +1278,23 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
         {/* Body */}
         <div className="flex-1 min-h-0 relative" style={{ background: "#FAFCFD" }}>
           {initialLoading && (
-            <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_DARK }}>
-              <Loader2 size={20} className="animate-spin" />
+            <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_BLUE }}>
+              <Loader2 size={24} className="animate-spin" />
             </div>
           )}
           {!initialLoading && sites.length === 0 && (
             <div className="text-center py-16">
-              <div className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-3" style={{ background: `${NEXO_CYAN}1A`, color: NEXO_CYAN }}>
-                <Newspaper size={26} />
+              <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-3.5" style={{ background: "color-mix(in srgb, #268ffa 12%, transparent)", color: NEXO_BLUE }}>
+                <Newspaper size={28} />
               </div>
               <p className="text-sm font-bold" style={{ color: NEXO_DARK }}>Nenhuma fonte cadastrada</p>
-              <p className="text-xs mt-1 mb-4" style={{ color: "rgba(10,37,64,0.55)" }}>Clique no ícone de configuração para adicionar sites.</p>
+              <p className="text-xs mt-1 mb-5" style={{ color: NEXO_MUTED }}>Clique no botão abaixo ou no ícone de configuração para adicionar sites.</p>
               <button
                 onClick={() => setShowSettings(true)}
-                className="h-9 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5"
-                style={{ background: NEXO_CYAN, color: "#fff" }}
+                className="h-10 px-6 rounded-full text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-2 hover:opacity-95 transition"
+                style={{ background: NEXO_BLUE, color: "#fff", boxShadow: "0 4px 14px rgba(38, 143, 250, 0.35)" }}
               >
-                <Settings size={13} /> Configurar Fontes
+                <Settings size={14} /> Configurar Fontes
               </button>
             </div>
           )}
@@ -1296,11 +1302,11 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
           {!initialLoading && activeSite && (
             <>
               {activeLoading && activeNews.length === 0 ? (
-                <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_DARK }}>
-                  <Loader2 size={20} className="animate-spin" />
+                <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_BLUE }}>
+                  <Loader2 size={24} className="animate-spin" />
                 </div>
               ) : activeNews.length === 0 ? (
-                <p className="text-xs text-center py-10" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhuma notícia encontrada nesta fonte.</p>
+                <p className="text-xs text-center py-10" style={{ color: NEXO_MUTED }}>Nenhuma notícia encontrada nesta fonte.</p>
               ) : (
                 <NewsHorizontalScroller items={activeNews} siteId={activeSite.id} blocosCount={blocosCount} onDropToBloco={(bi, item) => onAddNoticiaToBloco?.(bi, item)} initialBlocoItems={initialBlocoItems} onBlocoItemsChange={onBlocoItemsChange} />
               )}
@@ -1318,21 +1324,21 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
             style={{ background: "#fff", fontFamily: "'Montserrat', sans-serif", boxShadow: "0 24px 60px rgba(10,37,64,0.35)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-4 flex items-center justify-between" style={{ background: NEXO_CARD_BG, borderBottom: `1px solid ${NEXO_CYAN}33` }}>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: NEXO_CYAN, color: "#fff" }}>
-                  <Settings size={15} />
+            <div className="px-5 py-4 flex items-center justify-between" style={{ background: "#FFFFFF", borderBottom: `1px solid ${NEXO_BORDER}` }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" style={{ background: NEXO_BLUE, color: "#fff" }}>
+                  <Settings size={16} />
                 </div>
-                <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: NEXO_DARK }}>Configurar Fontes</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: NEXO_DARK }}>Configurar Fontes</h3>
               </div>
-              <button onClick={closeSettings} className="p-1.5 rounded-lg hover:bg-white/60 transition" style={{ color: NEXO_DARK }} aria-label="Fechar">
+              <button onClick={closeSettings} className="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-500 hover:text-slate-900" aria-label="Fechar">
                 <XIcon size={16} />
               </button>
             </div>
 
-            <div className="px-5 py-4 border-b space-y-2" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
+            <div className="px-5 py-4 border-b space-y-2.5" style={{ borderColor: NEXO_BORDER, background: "#FFFFFF" }}>
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${NEXO_CYAN}1A`, color: NEXO_CYAN }}>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "color-mix(in srgb, #268ffa 12%, transparent)", color: NEXO_BLUE }}>
                   <Globe size={16} />
                 </div>
                 <input
@@ -1341,14 +1347,14 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                   onChange={(e) => setNewUrl(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
                   placeholder="URL do feed RSS (ex.: https://g1.globo.com/rss/g1/)"
-                  className="flex-1 h-10 px-3 rounded-lg text-xs outline-none"
-                  style={{ background: "#F5FAFC", border: `2px solid ${NEXO_CYAN}33`, color: NEXO_DARK }}
+                  className="flex-1 h-10 px-3 rounded-lg text-xs outline-none focus:ring-1 focus:ring-[#268ffa]"
+                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: NEXO_DARK }}
                 />
                 <button
                   onClick={addSite}
                   disabled={adding || !newUrl.trim() || (!!newParentId && !newCategory.trim())}
-                  className="h-10 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-40 transition hover:opacity-90"
-                  style={{ background: NEXO_CYAN, color: "#fff" }}
+                  className="h-10 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-40 transition hover:opacity-90 shrink-0"
+                  style={{ background: NEXO_BLUE, color: "#fff", boxShadow: "0 2px 8px rgba(38, 143, 250, 0.3)" }}
                 >
                   {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Adicionar
                 </button>
@@ -1360,17 +1366,16 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
                   placeholder="Nome da fonte (opcional — ex.: G1, Metrópoles)"
-                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none"
-                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK }}
+                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none focus:ring-1 focus:ring-[#268ffa]"
+                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: NEXO_DARK }}
                 />
               </div>
               <div className="flex items-center gap-2 pl-11">
-
                 <select
                   value={newParentId}
                   onChange={(e) => setNewParentId(e.target.value)}
                   className="h-9 px-2 rounded-lg text-[11px] outline-none font-semibold"
-                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK, minWidth: 160 }}
+                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: NEXO_DARK, minWidth: 160 }}
                   title="Vincular como subfonte de uma fonte principal"
                 >
                   <option value="">— Fonte principal —</option>
@@ -1385,18 +1390,18 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                   onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
                   placeholder={newParentId ? "Nome da subcategoria (ex.: Política)" : "Categoria (opcional, só p/ subfontes)"}
                   disabled={!newParentId}
-                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none disabled:opacity-50"
-                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK }}
+                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none disabled:opacity-50 focus:ring-1 focus:ring-[#268ffa]"
+                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: NEXO_DARK }}
                 />
               </div>
-              <p className="text-[10px] pl-11" style={{ color: "rgba(10,37,64,0.55)" }}>
+              <p className="text-[10px] pl-11" style={{ color: NEXO_MUTED }}>
                 Dica: para adicionar só a editoria de Política do G1, escolha "Subfonte de: g1.globo.com" e nomeie a categoria "Política".
               </p>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2" style={{ background: "#FAFCFD" }}>
               {sites.length === 0 && (
-                <p className="text-xs text-center py-6" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhum site cadastrado ainda.</p>
+                <p className="text-xs text-center py-6" style={{ color: NEXO_MUTED }}>Nenhum site cadastrado ainda.</p>
               )}
               {(() => {
                 const parents = sites.filter((x) => !x.parent_id);
@@ -1410,9 +1415,9 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                 return ordered.map(({ site: s, depth }) => {
                   const isEditing = editingId === s.id;
                   return (
-                    <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#fff", border: `1px solid ${isEditing ? NEXO_CYAN : `${NEXO_CYAN}22`}`, marginLeft: depth * 20 }}>
-                      {depth > 0 && <span className="text-[10px] font-bold" style={{ color: NEXO_CYAN }}>↳</span>}
-                      <Globe size={14} style={{ color: NEXO_CYAN }} className="shrink-0" />
+                    <div key={s.id} className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition" style={{ background: "#fff", border: `1px solid ${isEditing ? NEXO_BLUE : "#E2E8F0"}`, marginLeft: depth * 20, boxShadow: "0 1px 4px rgba(0,0,0,0.03)" }}>
+                      {depth > 0 && <span className="text-[10px] font-bold" style={{ color: NEXO_BLUE }}>↳</span>}
+                      <Globe size={14} style={{ color: NEXO_BLUE }} className="shrink-0" />
                       {isEditing ? (
                         <div className="flex-1 min-w-0 flex flex-col gap-1">
                           <input
@@ -1420,8 +1425,8 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             placeholder={depth > 0 ? "Categoria (ex.: Política)" : "Nome"}
-                            className="w-full h-7 px-2 rounded text-xs font-bold outline-none"
-                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                            className="w-full h-7 px-2 rounded text-xs font-bold outline-none focus:ring-1 focus:ring-[#268ffa]"
+                            style={{ background: "#F8FAFC", border: `1px solid ${NEXO_BLUE}`, color: NEXO_DARK }}
                           />
                           <input
                             type="text"
@@ -1429,14 +1434,14 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                             onChange={(e) => setEditUrl(e.target.value)}
                             onKeyDown={(e) => { if (e.key === "Enter") saveEdit(s.id); if (e.key === "Escape") cancelEdit(); }}
                             placeholder="URL do feed RSS"
-                            className="w-full h-7 px-2 rounded text-[10px] outline-none"
-                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                            className="w-full h-7 px-2 rounded text-[10px] outline-none focus:ring-1 focus:ring-[#268ffa]"
+                            style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: NEXO_DARK }}
                           />
                           <select
                             value={editParentId}
                             onChange={(e) => setEditParentId(e.target.value)}
                             className="w-full h-7 px-2 rounded text-[10px] font-semibold outline-none"
-                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                            style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: NEXO_DARK }}
                             title="Hierarquia: fonte principal ou subfonte de outra"
                           >
                             <option value="">— Fonte principal —</option>
@@ -1448,24 +1453,23 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                       ) : (
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold truncate" style={{ color: NEXO_DARK }}>
-                            {depth > 0 && <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase mr-1.5" style={{ background: `${NEXO_CYAN}22`, color: NEXO_CYAN }}>SUB</span>}
+                            {depth > 0 && <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase mr-1.5" style={{ background: "color-mix(in srgb, #268ffa 12%, transparent)", color: NEXO_BLUE }}>SUB</span>}
                             {s.name}
                           </p>
-                          
                         </div>
                       )}
                       {isEditing ? (
                         <>
-                          <button onClick={() => saveEdit(s.id)} disabled={savingEdit} className="p-1.5 rounded-md hover:bg-cyan-50 transition disabled:opacity-50" style={{ color: NEXO_CYAN }} title="Salvar">
+                          <button onClick={() => saveEdit(s.id)} disabled={savingEdit} className="p-1.5 rounded-md hover:bg-blue-50 transition disabled:opacity-50" style={{ color: NEXO_BLUE }} title="Salvar">
                             {savingEdit ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                           </button>
-                          <button onClick={cancelEdit} className="p-1.5 rounded-md hover:bg-gray-100 transition" style={{ color: NEXO_DARK }} title="Cancelar">
+                          <button onClick={cancelEdit} className="p-1.5 rounded-md hover:bg-slate-100 transition" style={{ color: NEXO_DARK }} title="Cancelar">
                             <XIcon size={13} />
                           </button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-cyan-50 transition" style={{ color: NEXO_DARK }} title="Editar">
+                          <button onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-slate-100 transition text-slate-500 hover:text-slate-800" title="Editar">
                             <Pencil size={13} />
                           </button>
                           <button onClick={() => removeSite(s.id)} className="p-1.5 rounded-md hover:bg-red-50 transition" style={{ color: "#dc2626" }} title="Remover">
@@ -1479,7 +1483,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               })()}
             </div>
 
-            <div className="px-5 py-3 border-t flex justify-end" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
+            <div className="px-5 py-3 border-t flex justify-end" style={{ borderColor: NEXO_BORDER, background: "#FFFFFF" }}>
               <button
                 onClick={closeSettings}
                 className="h-9 px-5 rounded-full text-[11px] font-bold uppercase tracking-wider transition hover:opacity-90"

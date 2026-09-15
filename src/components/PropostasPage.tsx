@@ -1,13 +1,18 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { 
   FileText, Plus, Trash2, Send, Mail, Smartphone, Printer, 
   Search, Check, X, Building2, User, Phone, Calendar, 
   DollarSign, Clock, RefreshCw, Sparkles, Eye, Download,
-  Layers, CheckCircle2, ChevronRight, Copy, AlertCircle, Briefcase, MapPin
+  Layers, CheckCircle2, ChevronRight, Copy, AlertCircle, Briefcase, MapPin,
+  Pencil
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { scrollToForm } from "@/lib/utils";
+import { confirmDialog } from "@/lib/confirmDialog";
 import { getStoredProdutos, type Produto, type TipoMedida } from "./ProdutosPage";
 
 // Metadata storage key from ClientesPage
@@ -30,6 +35,7 @@ interface ClienteItem {
   nome_contato?: string;
   email_cobranca?: string;
   logo_url?: string | null;
+  ativo?: boolean;
 }
 
 export interface ItemOrcamento {
@@ -57,8 +63,13 @@ export interface Orcamento {
   created_at: string;
 }
 
-export default function PropostasPage() {
+export default function PropostasPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
+  const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id || null;
+  const storageKey = targetUserId ? `nexohub_orcamentos_salvos_${targetUserId}` : PROPOSTAS_STORAGE_KEY;
+
   const [activeTab, setActiveTab] = useState<"novo" | "historico">("novo");
+  const formRef = useRef<HTMLDivElement>(null);
   const [clientes, setClientes] = useState<ClienteItem[]>([]);
   const [produtosCatalogo, setProdutosCatalogo] = useState<Produto[]>([]);
   const [orcamentosSalvos, setOrcamentosSalvos] = useState<Orcamento[]>([]);
@@ -74,21 +85,15 @@ export default function PropostasPage() {
     "Orçamento válido por 15 dias. Pagamento via PIX ou boleto bancário. Produção e entrega iniciadas após aprovação formal."
   );
 
-  // Budget Items
-  const [itens, setItens] = useState<ItemOrcamento[]>([
-    {
-      id: "item-1",
-      codigo: "NXO-001",
-      nome: "Spot Comercial 30s",
-      descricao: "Produção de spot publicitário com locução profissional e trilha sincronizada.",
-      tipo_medida: "tempo",
-      tempo_duracao: "00:00:30",
-      quantidade: 1,
-      valor: 350.00,
-    }
-  ]);
+  // Budget Items - Começa com a lista vazia conforme solicitação
+  const [itens, setItens] = useState<ItemOrcamento[]>([]);
 
-  // Autocomplete state for product rows
+  // State for adding products from search bar
+  const [buscaProdutoInput, setBuscaProdutoInput] = useState("");
+  const [selectedCatalogoProd, setSelectedCatalogoProd] = useState<Produto | null>(null);
+  const [isBuscaProdDropdownOpen, setIsBuscaProdDropdownOpen] = useState(false);
+
+  // Autocomplete state for product rows in table
   const [activeProdRowId, setActiveProdRowId] = useState<string | null>(null);
 
   // Modal: Quick Client Registration (com CNPJ e CEP inteligentes)
@@ -109,6 +114,7 @@ export default function PropostasPage() {
     cliente_desde: new Date().toISOString().split("T")[0],
     nome_contato: "",
     email_cobranca: "",
+    ativo: true,
   });
 
   const formatCnpjQuick = (val: string) => {
@@ -205,7 +211,7 @@ export default function PropostasPage() {
     loadClientes();
     setProdutosCatalogo(getStoredProdutos());
     loadOrcamentosSalvos();
-  }, []);
+  }, [targetUserId]);
 
   const loadClientes = async () => {
     try {
@@ -216,9 +222,16 @@ export default function PropostasPage() {
       } catch { /* noop */ }
 
       // Fetch from Supabase logos_patrocinadores and empresa_config
+      let logosQuery = supabase.from("logos_patrocinadores").select("id, user_id, nome, logo_url, ativo, created_at").eq("excluido", false);
+      let empQuery = supabase.from("empresa_config").select("user_id, nome, logo, telefone_comercial, ativo").eq("ativo", true);
+      if (targetUserId) {
+        logosQuery = logosQuery.eq("user_id", targetUserId);
+        empQuery = empQuery.eq("user_id", targetUserId);
+      }
+
       const [logosRes, empRes] = await Promise.all([
-        supabase.from("logos_patrocinadores").select("id, user_id, nome, logo_url, ativo, created_at").eq("excluido", false),
-        supabase.from("empresa_config").select("user_id, nome, logo, telefone_comercial, ativo").eq("ativo", true),
+        logosQuery,
+        empQuery,
       ]);
 
       const list: ClienteItem[] = [];
@@ -297,15 +310,59 @@ export default function PropostasPage() {
 
   const loadOrcamentosSalvos = () => {
     try {
-      const raw = localStorage.getItem(PROPOSTAS_STORAGE_KEY);
-      if (raw) setOrcamentosSalvos(JSON.parse(raw));
+      const raw = localStorage.getItem(storageKey) || localStorage.getItem(PROPOSTAS_STORAGE_KEY);
+      if (raw) {
+        const parsed: Orcamento[] = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          // Apagar automaticamente orçamentos com mais de 90 dias
+          const now = Date.now();
+          const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+          const validOrcamentos = parsed.filter((orc: Orcamento) => {
+            const orcTime = new Date(orc.data || orc.created_at).getTime();
+            if (isNaN(orcTime)) return true;
+            return (now - orcTime) <= ninetyDaysMs;
+          });
+
+          if (validOrcamentos.length !== parsed.length) {
+            localStorage.setItem(storageKey, JSON.stringify(validOrcamentos));
+          }
+
+          setOrcamentosSalvos(validOrcamentos);
+          return;
+        }
+      }
+      setOrcamentosSalvos([]);
     } catch { /* noop */ }
   };
 
   const saveOrcamentoInStorage = (orc: Orcamento) => {
-    const next = [orc, ...orcamentosSalvos.filter(o => o.id !== orc.id)];
-    setOrcamentosSalvos(next);
-    localStorage.setItem(PROPOSTAS_STORAGE_KEY, JSON.stringify(next));
+    const now = Date.now();
+    const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+    const all = [orc, ...orcamentosSalvos.filter(o => o.id !== orc.id)];
+    const valid = all.filter((o: Orcamento) => {
+      const orcTime = new Date(o.data || o.created_at).getTime();
+      if (isNaN(orcTime)) return true;
+      return (now - orcTime) <= ninetyDaysMs;
+    });
+    setOrcamentosSalvos(valid);
+    localStorage.setItem(storageKey, JSON.stringify(valid));
+  };
+
+  const handleDeleteOrcamento = async (orc: Orcamento) => {
+    const confirmed = await confirmDialog({
+      title: "Apagar Orçamento",
+      message: `Deseja realmente apagar o orçamento ${orc.numero} (${orc.cliente.nome})?`,
+      destructive: true,
+      confirmLabel: "Apagar",
+      cancelLabel: "Cancelar"
+    });
+    if (!confirmed) return;
+    const updated = orcamentosSalvos.filter(o => o.id !== orc.id);
+    setOrcamentosSalvos(updated);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch { /* noop */ }
+    toast.success(`Orçamento ${orc.numero} apagado com sucesso!`);
   };
 
   // Filtered clients for autocomplete
@@ -342,6 +399,7 @@ export default function PropostasPage() {
       cliente_desde: novoClienteData.cliente_desde,
       nome_contato: novoClienteData.nome_contato.trim(),
       email_cobranca: novoClienteData.email_cobranca.trim(),
+      ativo: novoClienteData.ativo,
     };
 
     // Save to localStorage metadata (so ClientesPage reads it)
@@ -360,6 +418,7 @@ export default function PropostasPage() {
         cliente_desde: newClient.cliente_desde,
         nome_contato: newClient.nome_contato,
         email_cobranca: newClient.email_cobranca,
+        ativo: newClient.ativo,
       };
       all[newClient.nome] = all[newId];
       localStorage.setItem(CLIENTES_METADATA_KEY, JSON.stringify(all));
@@ -374,7 +433,7 @@ export default function PropostasPage() {
         await supabase.from("logos_patrocinadores").insert({
           user_id: authData.user.id,
           nome: newClient.nome,
-          ativo: true,
+          ativo: newClient.ativo,
           excluido: false,
         });
       }
@@ -389,9 +448,73 @@ export default function PropostasPage() {
     toast.success(`Cliente ${newClient.nome} cadastrado e vinculado ao orçamento!`);
   };
 
-  // Add Item Line
+  // Add Item Line (com suporte a produto selecionado ou digitado no campo de busca)
   const handleAddItem = () => {
     const nextNum = itens.length + 1;
+
+    if (selectedCatalogoProd) {
+      // Adiciona o produto que foi selecionado na busca
+      const newItem: ItemOrcamento = {
+        id: `item-${Date.now()}-${nextNum}`,
+        codigo: selectedCatalogoProd.codigo || `NXO-${String(nextNum).padStart(3, "0")}`,
+        nome: selectedCatalogoProd.nome,
+        descricao: selectedCatalogoProd.descricao || "",
+        tipo_medida: selectedCatalogoProd.tipo_medida || "unidade",
+        tempo_duracao: selectedCatalogoProd.tempo_duracao,
+        quantidade: 1,
+        valor: selectedCatalogoProd.valor || 0,
+      };
+      setItens(prev => [...prev, newItem]);
+      setBuscaProdutoInput("");
+      setSelectedCatalogoProd(null);
+      setIsBuscaProdDropdownOpen(false);
+      toast.success(`Produto "${newItem.nome}" adicionado ao orçamento!`);
+      return;
+    }
+
+    if (buscaProdutoInput.trim()) {
+      // Verifica se bate exatamente com algum produto do catálogo
+      const matched = produtosCatalogo.find(
+        p => p.nome.toLowerCase() === buscaProdutoInput.trim().toLowerCase() ||
+             p.codigo.toLowerCase() === buscaProdutoInput.trim().toLowerCase()
+      );
+
+      if (matched) {
+        const newItem: ItemOrcamento = {
+          id: `item-${Date.now()}-${nextNum}`,
+          codigo: matched.codigo || `NXO-${String(nextNum).padStart(3, "0")}`,
+          nome: matched.nome,
+          descricao: matched.descricao || "",
+          tipo_medida: matched.tipo_medida || "unidade",
+          tempo_duracao: matched.tempo_duracao,
+          quantidade: 1,
+          valor: matched.valor || 0,
+        };
+        setItens(prev => [...prev, newItem]);
+        setBuscaProdutoInput("");
+        setIsBuscaProdDropdownOpen(false);
+        toast.success(`Produto "${newItem.nome}" adicionado!`);
+        return;
+      }
+
+      // Adiciona como item personalizado com o nome digitado
+      const newItem: ItemOrcamento = {
+        id: `item-${Date.now()}-${nextNum}`,
+        codigo: `NXO-${String(nextNum).padStart(3, "0")}`,
+        nome: buscaProdutoInput.trim(),
+        descricao: "",
+        tipo_medida: "unidade",
+        quantidade: 1,
+        valor: 0,
+      };
+      setItens(prev => [...prev, newItem]);
+      setBuscaProdutoInput("");
+      setIsBuscaProdDropdownOpen(false);
+      toast.success(`Item "${newItem.nome}" adicionado! Preencha o valor.`);
+      return;
+    }
+
+    // Se clicou sem digitar nada, cria uma linha vazia para preenchimento
     const newItem: ItemOrcamento = {
       id: `item-${Date.now()}-${nextNum}`,
       codigo: `NXO-${String(nextNum).padStart(3, "0")}`,
@@ -404,13 +527,10 @@ export default function PropostasPage() {
     setItens(prev => [...prev, newItem]);
   };
 
-  // Remove Item Line
+  // Remove Item Line (permite remover qualquer item, sem restrição)
   const handleRemoveItem = (id: string) => {
-    if (itens.length <= 1) {
-      toast.info("O orçamento deve conter pelo menos 1 produto.");
-      return;
-    }
     setItens(prev => prev.filter(it => it.id !== id));
+    toast.info("Produto removido do orçamento.");
   };
 
   // Update Item field
@@ -419,6 +539,19 @@ export default function PropostasPage() {
       if (it.id !== id) return it;
       return { ...it, [field]: value };
     }));
+  };
+
+  // Carrega orçamento do histórico no formulário para edição com scroll automático
+  const handleEditarOrcamento = (orc: Orcamento) => {
+    setSelectedCliente(orc.cliente);
+    setItens(orc.itens || []);
+    setTipoRecorrencia(orc.tipo_recorrencia || "unico");
+    setValidadeDias(orc.validade_dias || 15);
+    setDesconto(orc.desconto || 0);
+    setObservacoes(orc.observacoes || "");
+    setActiveTab("novo");
+    scrollToForm(formRef.current);
+    toast.info(`Orçamento ${orc.numero} carregado para edição`);
   };
 
   // Auto-complete product selection
@@ -449,9 +582,13 @@ export default function PropostasPage() {
     return res > 0 ? res : 0;
   }, [subtotal, desconto]);
 
-  // Prepare Orcamento Object
+  // Prepare Orcamento Object com código único sequencial e seguro
   const buildOrcamentoObject = (): Orcamento => {
-    const num = `ORC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const ano = new Date().getFullYear();
+    const count = (orcamentosSalvos?.length || 0) + 1;
+    const sequencial = String(count).padStart(4, "0");
+    const num = `ORC-${ano}-${sequencial}`;
+
     return {
       id: `orc_${Date.now()}`,
       numero: num,
@@ -474,6 +611,10 @@ export default function PropostasPage() {
   const handleOpenEnviarModal = () => {
     if (!selectedCliente && !clienteBusca.trim()) {
       toast.error("Por favor, selecione ou informe o cliente do orçamento.");
+      return;
+    }
+    if (itens.length === 0) {
+      toast.error("Adicione pelo menos um produto ao orçamento antes de enviar.");
       return;
     }
     if (itens.some(it => !it.nome.trim() || it.valor <= 0)) {
@@ -545,13 +686,328 @@ export default function PropostasPage() {
     toast.success("Orçamento preparado no cliente de e-mail!");
   };
 
-  // Trigger Print / PDF
+  // Trigger Print / PDF - Gera documento limpo e formatado em janela própria, sem capturar o modal/popup
   const handlePrintPDF = () => {
-    window.print();
+    if (!orcamentoParaEnvio) return;
+
+    const orc = orcamentoParaEnvio;
+    const dataFormatada = new Date(orc.data).toLocaleDateString("pt-BR");
+    const recurrenceLabel = orc.tipo_recorrencia === "mensal" ? "Recorrente Mensal (Assinatura)" : "Pagamento Único / Avulso";
+    const subtotalOrc = orc.itens.reduce((acc, it) => acc + (Number(it.valor) || 0) * (Number(it.quantidade) || 1), 0);
+    const totalOrc = Math.max(0, subtotalOrc - (Number(orc.desconto) || 0));
+
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error("Por favor, permita popups no navegador para gerar o PDF.");
+      return;
+    }
+
+    const itemsHtml = orc.itens.map(it => `
+      <tr>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-weight: 700; color: #011c5b;">${it.codigo}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
+          <div style="font-weight: 700; color: #002132;">${it.nome}</div>
+          ${it.descricao ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px;">${it.descricao}</div>` : ""}
+        </td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; text-transform: capitalize; color: #475569;">${it.tipo_medida}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #002132;">${it.quantidade}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-family: monospace; color: #475569;">R$ ${Number(it.valor).toFixed(2)}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-family: monospace; font-weight: 700; color: #002132;">R$ ${(Number(it.valor) * Number(it.quantidade)).toFixed(2)}</td>
+      </tr>
+    `).join("");
+
+    win.document.write(`<!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="utf-8">
+      <title>Orçamento Comercial - ${orc.numero}</title>
+      <style>
+        @page {
+          size: A4;
+          margin: 15mm;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          color: #002132;
+          background: #ffffff;
+          padding: 24px;
+          font-size: 12px;
+          line-height: 1.4;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 2px solid #0055ff;
+          padding-bottom: 16px;
+          margin-bottom: 24px;
+        }
+        .logo-title {
+          font-size: 22px;
+          font-weight: 900;
+          color: #002132;
+          letter-spacing: -0.5px;
+          text-transform: uppercase;
+        }
+        .logo-sub {
+          font-size: 11px;
+          color: #64748b;
+          font-weight: 600;
+          margin-top: 2px;
+        }
+        .logo-contact {
+          font-size: 10px;
+          color: #94a3b8;
+          margin-top: 4px;
+        }
+        .doc-badge {
+          text-align: right;
+        }
+        .doc-number {
+          font-size: 18px;
+          font-weight: 900;
+          color: #0055ff;
+          letter-spacing: 0.5px;
+          font-family: monospace;
+        }
+        .doc-meta {
+          font-size: 11px;
+          color: #475569;
+          margin-top: 4px;
+        }
+        .client-card {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 24px;
+        }
+        .card-label {
+          font-size: 10px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          color: #0055ff;
+          margin-bottom: 8px;
+        }
+        .client-name {
+          font-size: 15px;
+          font-weight: 800;
+          color: #002132;
+        }
+        .client-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 6px 20px;
+          margin-top: 8px;
+          font-size: 11px;
+          color: #334155;
+        }
+        .table-wrap {
+          margin-bottom: 24px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          overflow: hidden;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 11px;
+          text-align: left;
+        }
+        thead tr {
+          background: #f1f5f9;
+          color: #475569;
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        th {
+          padding: 10px 12px;
+          border-bottom: 1px solid #cbd5e1;
+        }
+        .totals-section {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 24px;
+        }
+        .totals-box {
+          width: 320px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 16px;
+        }
+        .totals-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 4px 0;
+          font-size: 11px;
+          color: #475569;
+        }
+        .totals-row.discount {
+          color: #dc2626;
+        }
+        .totals-row.grand {
+          border-top: 2px solid #002132;
+          margin-top: 8px;
+          padding-top: 8px;
+          font-size: 14px;
+          font-weight: 900;
+          color: #002132;
+        }
+        .conditions-card {
+          border-top: 1px solid #e2e8f0;
+          padding-top: 16px;
+          margin-bottom: 36px;
+        }
+        .conditions-text {
+          font-size: 10.5px;
+          color: #475569;
+          line-height: 1.5;
+          margin-top: 4px;
+        }
+        .signatures {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
+          margin-top: 48px;
+          text-align: center;
+          page-break-inside: avoid;
+        }
+        .signature-line {
+          border-top: 1px solid #002132;
+          padding-top: 6px;
+          font-size: 11px;
+          font-weight: 700;
+          color: #002132;
+        }
+        @media print {
+          body { padding: 0; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <!-- CABEÇALHO DO ORÇAMENTO -->
+        <div class="header">
+          <div>
+            <div class="logo-title">NEXO AGÊNCIA</div>
+            <div class="logo-sub">Soluções em Radiodifusão, TV, IA & Mídia Digital</div>
+            <div class="logo-contact">contato@nexobrasil.net • nexobrasil.net</div>
+          </div>
+          <div class="doc-badge">
+            <div class="doc-number">${orc.numero}</div>
+            <div class="doc-meta"><strong>Emissão:</strong> ${dataFormatada}</div>
+            <div class="doc-meta"><strong>Validade:</strong> ${orc.validade_dias} dias</div>
+            <div class="doc-meta"><strong>Cobrança:</strong> ${recurrenceLabel}</div>
+          </div>
+        </div>
+
+        <!-- DADOS DO CLIENTE -->
+        <div class="client-card">
+          <div class="card-label">Dados do Cliente</div>
+          <div class="client-name">${orc.cliente.nome}</div>
+          <div class="client-grid">
+            ${orc.cliente.nome_empresarial ? `<div><strong>Razão / Fantasia:</strong> ${orc.cliente.nome_empresarial}</div>` : ""}
+            ${orc.cliente.cnpj ? `<div><strong>CNPJ:</strong> ${orc.cliente.cnpj}</div>` : ""}
+            ${orc.cliente.nome_contato ? `<div><strong>Contato:</strong> ${orc.cliente.nome_contato}</div>` : ""}
+            ${(orc.cliente.telefone || orc.cliente.whatsapp_responsavel) ? `<div><strong>Telefone / WhatsApp:</strong> ${orc.cliente.whatsapp_responsavel || orc.cliente.telefone}</div>` : ""}
+            ${orc.cliente.email_cobranca ? `<div><strong>E-mail:</strong> ${orc.cliente.email_cobranca}</div>` : ""}
+            ${orc.cliente.endereco ? `<div><strong>Endereço:</strong> ${orc.cliente.endereco}${orc.cliente.cidade ? ` - ${orc.cliente.cidade}/${orc.cliente.estado || ""}` : ""}</div>` : ""}
+          </div>
+        </div>
+
+        <!-- LISTA DOS ITENS DO ORÇAMENTO -->
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 90px;">Cód.</th>
+                <th>Produto / Serviço</th>
+                <th style="width: 100px; text-align: center;">Medida</th>
+                <th style="width: 60px; text-align: center;">Qtd</th>
+                <th style="width: 110px; text-align: right;">Unitário</th>
+                <th style="width: 120px; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- RESUMO DE VALORES DO ORÇAMENTO -->
+        <div class="totals-section">
+          <div class="totals-box">
+            <div class="card-label" style="margin-bottom: 6px;">Resumo Financeiro</div>
+            <div class="totals-row">
+              <span>Tipo de Cobrança:</span>
+              <strong style="color: #002132;">${orc.tipo_recorrencia === "mensal" ? "Recorrente Mensal" : "Pagamento Único"}</strong>
+            </div>
+            <div class="totals-row">
+              <span>Subtotal:</span>
+              <span style="font-family: monospace;">R$ ${subtotalOrc.toFixed(2)}</span>
+            </div>
+            ${orc.desconto > 0 ? `
+            <div class="totals-row discount">
+              <span>Desconto Aplicado:</span>
+              <span style="font-family: monospace;">- R$ ${Number(orc.desconto).toFixed(2)}</span>
+            </div>
+            ` : ""}
+            <div class="totals-row grand">
+              <span>VALOR TOTAL:</span>
+              <span style="font-family: monospace; color: #0055ff;">
+                R$ ${totalOrc.toFixed(2)}${orc.tipo_recorrencia === "mensal" ? " /mês" : ""}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONDIÇÕES GERAIS -->
+        ${orc.observacoes ? `
+        <div class="conditions-card">
+          <div class="card-label">Condições Gerais & Prazo de Entrega</div>
+          <div class="conditions-text">${orc.observacoes}</div>
+        </div>
+        ` : ""}
+
+        <!-- ASSINATURAS -->
+        <div class="signatures">
+          <div>
+            <div class="signature-line">NEXO AGÊNCIA</div>
+            <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Emissão Comercial</div>
+          </div>
+          <div>
+            <div class="signature-line">DE ACORDO: ${orc.cliente.nome.toUpperCase()}</div>
+            <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Assinatura do Cliente / Responsável</div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 400);
+        };
+      </script>
+    </body>
+    </html>`);
+
+    win.document.close();
+    toast.success("Documento pronto para impressão/salvar como PDF!");
   };
 
   return (
-    <div className="w-full space-y-6 pt-2 pb-16 font-sans animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-16 font-sans animate-fade-in">
       {/* Top Header Card */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -586,7 +1042,7 @@ export default function PropostasPage() {
       </section>
 
       {activeTab === "novo" ? (
-        <div className="bg-white rounded-3xl p-6 md:p-10 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-8">
+        <div ref={formRef} className="bg-white rounded-3xl p-6 md:p-10 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-8">
           {/* SEÇÃO 1: CLIENTE DO ORÇAMENTO */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -733,23 +1189,116 @@ export default function PropostasPage() {
 
           {/* SEÇÃO 2: TABELA DE PRODUTOS DO ORÇAMENTO */}
           <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <label className="text-xs font-black uppercase tracking-wider text-[#002132] flex items-center gap-2">
                   <Layers className="w-4 h-4 text-[#0055ff]" /> 2. Produtos & Serviços do Orçamento
                 </label>
                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                  Digite o nome do produto para autocompletar os dados com o catálogo oficial
+                  Busque o produto pelo nome ou código no catálogo ao lado e clique em Adicionar Produto
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleAddItem}
-                className="h-10 px-5 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-black stroke-[3]" /> Adicionar Produto
-              </button>
+              {/* Barra de busca de produto + Botão Adicionar Produto */}
+              <div className="flex items-center gap-2 relative">
+                <div className="relative w-72 sm:w-80">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={buscaProdutoInput}
+                    onChange={e => {
+                      setBuscaProdutoInput(e.target.value);
+                      setSelectedCatalogoProd(null);
+                      setIsBuscaProdDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsBuscaProdDropdownOpen(true)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddItem();
+                      }
+                    }}
+                    placeholder="Buscar produto por nome ou código..."
+                    className="w-full h-10 pl-9 pr-8 rounded-full bg-[#f8fafc] border border-slate-200 text-xs font-semibold text-[#002132] outline-none focus:border-[#0055ff] focus:bg-white transition-all shadow-inner"
+                  />
+                  {buscaProdutoInput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBuscaProdutoInput("");
+                        setSelectedCatalogoProd(null);
+                        setIsBuscaProdDropdownOpen(false);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  {/* Dropdown de sugestões do catálogo */}
+                  {isBuscaProdDropdownOpen && (
+                    <div className="absolute left-0 right-0 top-12 z-30 bg-white rounded-2xl shadow-xl border border-slate-200 max-h-60 overflow-y-auto divide-y divide-slate-100">
+                      {produtosCatalogo
+                        .filter(p => {
+                          if (!buscaProdutoInput.trim()) return true;
+                          const term = buscaProdutoInput.toLowerCase();
+                          return p.nome.toLowerCase().includes(term) || p.codigo.toLowerCase().includes(term) || (p.categoria && p.categoria.toLowerCase().includes(term));
+                        })
+                        .slice(0, 10)
+                        .map(prod => (
+                          <div
+                            key={prod.id}
+                            onClick={() => {
+                              setSelectedCatalogoProd(prod);
+                              setBuscaProdutoInput(`${prod.codigo} - ${prod.nome}`);
+                              setIsBuscaProdDropdownOpen(false);
+                            }}
+                            className="p-3 hover:bg-blue-50/70 cursor-pointer flex items-center justify-between transition-colors text-left"
+                          >
+                            <div>
+                              <div className="text-xs font-bold text-[#002132]">
+                                <span className="text-[#0055ff] font-mono mr-1.5 font-bold">{prod.codigo}</span>
+                                {prod.nome}
+                              </div>
+                              <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                                <span>{prod.categoria || "Geral"}</span>
+                                <span>•</span>
+                                <span className="capitalize">Medida: {prod.tipo_medida}</span>
+                              </div>
+                            </div>
+                            <div className="text-right pl-3">
+                              <div className="text-xs font-black text-[#0055ff] font-mono">
+                                R$ {Number(prod.valor).toFixed(2)}
+                              </div>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase">Selecionar</span>
+                            </div>
+                          </div>
+                        ))}
+
+                      {produtosCatalogo.filter(p => {
+                        if (!buscaProdutoInput.trim()) return true;
+                        const term = buscaProdutoInput.toLowerCase();
+                        return p.nome.toLowerCase().includes(term) || p.codigo.toLowerCase().includes(term);
+                      }).length === 0 && (
+                        <div className="p-4 text-center text-xs text-slate-400">
+                          Nenhum produto cadastrado com "{buscaProdutoInput}".
+                          <div className="text-[10px] text-slate-500 mt-1">
+                            Clique em "+ Adicionar Produto" para inserir como item avulso.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddItem}
+                  className="h-10 px-5 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 text-black stroke-[3]" /> Adicionar Produto
+                </button>
+              </div>
             </div>
 
             {/* TABELA DE PRODUTOS */}
@@ -768,121 +1317,135 @@ export default function PropostasPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
-                    {itens.map((item, index) => (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                        {/* Cód. Produto */}
-                        <td className="py-3 px-4">
-                          <input
-                            type="text"
-                            value={item.codigo}
-                            onChange={e => handleUpdateItem(item.id, "codigo", e.target.value)}
-                            className="w-full h-9 px-2.5 rounded-lg bg-[#f8fafc] border border-slate-200 text-xs font-mono font-bold text-slate-700 outline-none uppercase"
-                          />
-                        </td>
-
-                        {/* Nome do Produto com Autocomplete */}
-                        <td className="py-3 px-4 relative">
-                          <input
-                            type="text"
-                            value={item.nome}
-                            onChange={e => {
-                              handleUpdateItem(item.id, "nome", e.target.value);
-                              setActiveProdRowId(item.id);
-                            }}
-                            onFocus={() => setActiveProdRowId(item.id)}
-                            placeholder="Digite ou escolha produto..."
-                            className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs font-bold text-[#002132] outline-none focus:border-[#0055ff]"
-                          />
-
-                          {/* Sugestões do Catálogo */}
-                          {activeProdRowId === item.id && (
-                            <div className="absolute left-4 right-4 top-12 z-20 bg-white rounded-xl shadow-xl border border-slate-200 max-h-48 overflow-y-auto divide-y divide-slate-100">
-                              {produtosCatalogo
-                                .filter(p => !item.nome || p.nome.toLowerCase().includes(item.nome.toLowerCase()) || p.codigo.toLowerCase().includes(item.nome.toLowerCase()))
-                                .map(prod => (
-                                  <div
-                                    key={prod.id}
-                                    onClick={() => handleSelectProductForLine(item.id, prod)}
-                                    className="p-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
-                                  >
-                                    <div>
-                                      <div className="text-xs font-bold text-[#002132]">
-                                        <span className="text-[#0055ff] mr-1">{prod.codigo}</span> {prod.nome}
-                                      </div>
-                                      <div className="text-[10px] text-slate-400">
-                                        {prod.categoria} • Medida: {prod.tipo_medida}
-                                      </div>
-                                    </div>
-                                    <div className="text-xs font-extrabold text-[#002132] font-mono">
-                                      R$ {prod.valor.toFixed(2)}
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          )}
-                        </td>
-
-                        {/* Descrição */}
-                        <td className="py-3 px-4">
-                          <input
-                            type="text"
-                            value={item.descricao}
-                            onChange={e => handleUpdateItem(item.id, "descricao", e.target.value)}
-                            placeholder="Detalhes ou entregas inclusas..."
-                            className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 outline-none"
-                          />
-                        </td>
-
-                        {/* Medida */}
-                        <td className="py-3 px-4 text-center">
-                          <select
-                            value={item.tipo_medida}
-                            onChange={e => handleUpdateItem(item.id, "tipo_medida", e.target.value as any)}
-                            className="h-9 px-2.5 rounded-lg bg-[#f8fafc] border border-slate-200 text-xs font-semibold text-slate-700 outline-none capitalize cursor-pointer w-full"
-                          >
-                            <option value="unidade">Unidade</option>
-                            <option value="tempo">Tempo (hh:mm:ss)</option>
-                            <option value="mensal">Mensal</option>
-                            <option value="hora">Hora</option>
-                            <option value="projeto">Projeto</option>
-                          </select>
-                        </td>
-
-                        {/* Quantidade */}
-                        <td className="py-3 px-4 text-center">
-                          <input
-                            type="number"
-                            min={1}
-                            value={item.quantidade}
-                            onChange={e => handleUpdateItem(item.id, "quantidade", Number(e.target.value) || 1)}
-                            className="w-full h-9 px-2 text-center rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 outline-none"
-                          />
-                        </td>
-
-                        {/* Valor Unitário */}
-                        <td className="py-3 px-4 text-right">
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={item.valor}
-                            onChange={e => handleUpdateItem(item.id, "valor", Number(e.target.value))}
-                            className="w-full h-9 px-3 text-right rounded-lg bg-white border border-slate-200 text-xs font-bold font-mono text-[#002132] outline-none"
-                          />
-                        </td>
-
-                        {/* Excluir Linha */}
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                            title="Excluir produto do orçamento"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                    {itens.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-12 px-4 text-center text-slate-400">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Layers className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                            <div className="text-xs font-bold text-slate-600">Nenhum produto adicionado ao orçamento</div>
+                            <p className="text-[11px] text-slate-400 max-w-md">
+                              Digite o nome de um produto no campo de busca acima e clique em <strong>+ Adicionar Produto</strong> para incluí-lo nesta proposta.
+                            </p>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      itens.map((item, index) => (
+                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                          {/* Cód. Produto */}
+                          <td className="py-3 px-4">
+                            <input
+                              type="text"
+                              value={item.codigo}
+                              onChange={e => handleUpdateItem(item.id, "codigo", e.target.value)}
+                              className="w-full h-9 px-2.5 rounded-lg bg-[#f8fafc] border border-slate-200 text-xs font-mono font-bold text-slate-700 outline-none uppercase"
+                            />
+                          </td>
+
+                          {/* Nome do Produto com Autocomplete */}
+                          <td className="py-3 px-4 relative">
+                            <input
+                              type="text"
+                              value={item.nome}
+                              onChange={e => {
+                                handleUpdateItem(item.id, "nome", e.target.value);
+                                setActiveProdRowId(item.id);
+                              }}
+                              onFocus={() => setActiveProdRowId(item.id)}
+                              placeholder="Digite ou escolha produto..."
+                              className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs font-bold text-[#002132] outline-none focus:border-[#0055ff]"
+                            />
+
+                            {/* Sugestões do Catálogo */}
+                            {activeProdRowId === item.id && (
+                              <div className="absolute left-4 right-4 top-12 z-20 bg-white rounded-xl shadow-xl border border-slate-200 max-h-48 overflow-y-auto divide-y divide-slate-100">
+                                {produtosCatalogo
+                                  .filter(p => !item.nome || p.nome.toLowerCase().includes(item.nome.toLowerCase()) || p.codigo.toLowerCase().includes(item.nome.toLowerCase()))
+                                  .map(prod => (
+                                    <div
+                                      key={prod.id}
+                                      onClick={() => handleSelectProductForLine(item.id, prod)}
+                                      className="p-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between"
+                                    >
+                                      <div>
+                                        <div className="text-xs font-bold text-[#002132]">
+                                          <span className="text-[#0055ff] mr-1">{prod.codigo}</span> {prod.nome}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400">
+                                          {prod.categoria} • Medida: {prod.tipo_medida}
+                                        </div>
+                                      </div>
+                                      <div className="text-xs font-extrabold text-[#002132] font-mono">
+                                        R$ {prod.valor.toFixed(2)}
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Descrição */}
+                          <td className="py-3 px-4">
+                            <input
+                              type="text"
+                              value={item.descricao}
+                              onChange={e => handleUpdateItem(item.id, "descricao", e.target.value)}
+                              placeholder="Detalhes ou entregas inclusas..."
+                              className="w-full h-9 px-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 outline-none"
+                            />
+                          </td>
+
+                          {/* Medida */}
+                          <td className="py-3 px-4 text-center">
+                            <select
+                              value={item.tipo_medida}
+                              onChange={e => handleUpdateItem(item.id, "tipo_medida", e.target.value as any)}
+                              className="h-9 px-2.5 rounded-lg bg-[#f8fafc] border border-slate-200 text-xs font-semibold text-slate-700 outline-none capitalize cursor-pointer w-full"
+                            >
+                              <option value="unidade">Unidade</option>
+                              <option value="tempo">Tempo (hh:mm:ss)</option>
+                              <option value="mensal">Mensal</option>
+                              <option value="hora">Hora</option>
+                              <option value="projeto">Projeto</option>
+                            </select>
+                          </td>
+
+                          {/* Quantidade */}
+                          <td className="py-3 px-4 text-center">
+                            <input
+                              type="number"
+                              min={1}
+                              value={item.quantidade}
+                              onChange={e => handleUpdateItem(item.id, "quantidade", Number(e.target.value) || 1)}
+                              className="w-full h-9 px-2 text-center rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 outline-none"
+                            />
+                          </td>
+
+                          {/* Valor Unitário */}
+                          <td className="py-3 px-4 text-right">
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.valor}
+                              onChange={e => handleUpdateItem(item.id, "valor", Number(e.target.value))}
+                              className="w-full h-9 px-3 text-right rounded-lg bg-white border border-slate-200 text-xs font-bold font-mono text-[#002132] outline-none"
+                            />
+                          </td>
+
+                          {/* Excluir Linha */}
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(item.id)}
+                              className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                              title="Excluir produto do orçamento"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1021,10 +1584,19 @@ export default function PropostasPage() {
       ) : (
         /* HISTÓRICO DE ORÇAMENTOS */
         <div className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-[#002132] uppercase">
-              Orçamentos Emitidos Recentemente
-            </h3>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 className="text-sm font-black text-[#002132] uppercase">
+                Orçamentos Emitidos Recentemente
+              </h3>
+              <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                Histórico de propostas comerciais geradas no sistema
+              </p>
+            </div>
+            <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-1.5 border border-slate-200/60">
+              <Clock className="w-3.5 h-3.5 text-[#0055ff]" />
+              Limpeza automática após 90 dias
+            </span>
           </div>
 
           {orcamentosSalvos.length === 0 ? (
@@ -1052,13 +1624,22 @@ export default function PropostasPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="text-right">
                         <div className="text-sm font-black text-[#002132] font-mono">
                           R$ {totalOrc.toFixed(2)}
                         </div>
                         <div className="text-[10px] text-slate-400">Validade: {orc.validade_dias} dias</div>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleEditarOrcamento(orc)}
+                        className="px-3.5 py-2 rounded-full bg-[#f8fafc] hover:bg-[#0055ff] hover:text-white text-[#002132] text-xs font-bold transition-all border border-slate-200 cursor-pointer flex items-center gap-1.5"
+                        title={`Carregar orçamento ${orc.numero} para edição`}
+                      >
+                        <Pencil className="w-3 h-3 text-[#0055ff] group-hover:text-white" /> Editar
+                      </button>
 
                       <button
                         type="button"
@@ -1069,6 +1650,15 @@ export default function PropostasPage() {
                         className="px-4 py-2 rounded-full bg-[#f8fafc] hover:bg-[#0055ff] hover:text-white text-[#002132] text-xs font-bold transition-all border border-slate-200 cursor-pointer flex items-center gap-1.5"
                       >
                         <Send className="w-3 h-3" /> Reenviar / PDF
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteOrcamento(orc)}
+                        className="w-8 h-8 rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors flex items-center justify-center border border-slate-200 cursor-pointer shrink-0"
+                        title={`Apagar orçamento ${orc.numero}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1083,9 +1673,26 @@ export default function PropostasPage() {
       <Dialog open={isNovoClienteModalOpen} onOpenChange={setIsNovoClienteModalOpen}>
         <DialogContent className="bg-white rounded-3xl max-w-2xl p-6 md:p-8 border border-slate-200 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-[#0055ff]" /> Cadastro de Cliente
-            </DialogTitle>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <DialogTitle className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-[#0055ff]" /> Cadastro de Cliente
+              </DialogTitle>
+              <div className={`flex items-center gap-2.5 px-3 py-1 rounded-full border transition-all ${
+                novoClienteData.ativo 
+                  ? "bg-emerald-50/80 border-emerald-200 text-emerald-800" 
+                  : "bg-rose-50/80 border-rose-200 text-rose-800"
+              }`}>
+                <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${novoClienteData.ativo ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+                  {novoClienteData.ativo ? "Ativo" : "Inativo"}
+                </span>
+                <Switch
+                  checked={novoClienteData.ativo}
+                  onCheckedChange={(checked) => setNovoClienteData(n => ({ ...n, ativo: checked }))}
+                  className="data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-slate-300 scale-90"
+                />
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">

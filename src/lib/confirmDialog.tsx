@@ -1,10 +1,6 @@
 import { createRoot, type Root } from "react-dom/client";
 import { useEffect, useState } from "react";
-
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const DARK = "#0A2540";
-const BG = "#D6F4FB";
+import { AlertTriangle, Trash2, HelpCircle, X, CheckCircle2 } from "lucide-react";
 
 export interface ConfirmOptions {
   title?: string;
@@ -12,6 +8,7 @@ export interface ConfirmOptions {
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
+  icon?: "trash" | "alert" | "info" | "check";
 }
 
 function ConfirmModal({
@@ -43,7 +40,15 @@ function ConfirmModal({
     setTimeout(() => onResolve(v), 180);
   };
 
-  const confirmBg = options.destructive ? "#E11D48" : CYAN;
+  const isDestructive = options.destructive !== false && (
+    options.destructive === true ||
+    (options.title || "").toLowerCase().includes("apagar") ||
+    (options.title || "").toLowerCase().includes("excluir") ||
+    (options.title || "").toLowerCase().includes("remover") ||
+    (options.confirmLabel || "").toLowerCase().includes("apagar") ||
+    (options.confirmLabel || "").toLowerCase().includes("excluir") ||
+    (options.confirmLabel || "").toLowerCase().includes("remover")
+  );
 
   return (
     <div
@@ -52,15 +57,15 @@ function ConfirmModal({
         position: "fixed",
         inset: 0,
         zIndex: 2147483001,
-        background: "rgba(10, 37, 64, 0.55)",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
+        background: "rgba(0, 33, 50, 0.65)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
         opacity: open ? 1 : 0,
-        transition: "opacity 180ms ease",
+        transition: "opacity 180ms cubic-bezier(0.16, 1, 0.3, 1)",
         fontFamily: "Montserrat, sans-serif",
       }}
     >
@@ -69,84 +74,171 @@ function ConfirmModal({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff",
+          background: "#ffffff",
           borderRadius: 24,
           width: "100%",
-          maxWidth: 440,
+          maxWidth: 460,
           overflow: "hidden",
-          boxShadow: "0 24px 60px rgba(10,37,64,0.25)",
-          border: `1px solid ${CYAN}33`,
-          transform: open ? "scale(1) translateY(0)" : "scale(0.96) translateY(-8px)",
-          transition: "transform 180ms ease",
+          boxShadow: "0 24px 60px -12px rgba(0, 33, 50, 0.28)",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          transform: open ? "scale(1) translateY(0)" : "scale(0.95) translateY(-10px)",
+          transition: "transform 200ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
+        {/* Modal Header */}
         <div
           style={{
-            background: `linear-gradient(135deg, ${CYAN} 0%, #00A9D6 100%)`,
-            padding: "18px 22px",
-            color: "#fff",
+            padding: "20px 24px 16px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid #f1f5f9",
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.12em" }}>
-            {options.title || "Confirmação"}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 14,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: isDestructive ? "rgba(225, 29, 72, 0.10)" : "rgba(0, 85, 255, 0.10)",
+                color: isDestructive ? "#e11d48" : "#0055ff",
+                border: isDestructive ? "1px solid rgba(225, 29, 72, 0.20)" : "1px solid rgba(0, 85, 255, 0.20)",
+                flexShrink: 0,
+              }}
+            >
+              {isDestructive ? (
+                <Trash2 style={{ width: 20, height: 20, strokeWidth: 2.2 }} />
+              ) : options.icon === "check" ? (
+                <CheckCircle2 style={{ width: 20, height: 20, strokeWidth: 2.2 }} />
+              ) : (
+                <HelpCircle style={{ width: 20, height: 20, strokeWidth: 2.2 }} />
+              )}
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "#002132",
+                  lineHeight: 1.2,
+                }}
+              >
+                {options.title || (isDestructive ? "Confirmar Exclusão" : "Confirmação")}
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#64748b",
+                  fontWeight: 500,
+                  marginTop: 2,
+                }}
+              >
+                Esta ação requer a sua confirmação
+              </div>
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => close(false)}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 999,
+              background: "#f1f5f9",
+              border: "1px solid #e2e8f0",
+              color: "#64748b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 150ms ease",
+            }}
+            title="Fechar"
+          >
+            <X style={{ width: 15, height: 15, strokeWidth: 2.5 }} />
+          </button>
         </div>
-        <div style={{ padding: "22px", background: BG }}>
-          <p style={{ color: DARK, fontSize: 14, lineHeight: 1.5, margin: 0, fontWeight: 600 }}>
+
+        {/* Modal Body */}
+        <div style={{ padding: "20px 24px", background: "#ffffff" }}>
+          <p
+            style={{
+              color: "#334155",
+              fontSize: 13,
+              lineHeight: 1.6,
+              margin: 0,
+              fontWeight: 600,
+            }}
+          >
             {options.message}
           </p>
         </div>
+
+        {/* Modal Footer Actions */}
         <div
           style={{
             display: "flex",
-            gap: 8,
+            gap: 10,
             justifyContent: "flex-end",
-            padding: "14px 18px",
-            background: "#fff",
-            borderTop: `1px solid ${CYAN}22`,
+            alignItems: "center",
+            padding: "16px 24px",
+            background: "#f8fafc",
+            borderTop: "1px solid #f1f5f9",
           }}
         >
           <button
             type="button"
             onClick={() => close(false)}
             style={{
-              padding: "9px 18px",
+              height: 40,
+              padding: "0 20px",
               borderRadius: 999,
-              border: `2px solid ${CYAN}`,
-              background: "#fff",
-              color: DARK,
+              border: "1px solid #cbd5e1",
+              background: "#ffffff",
+              color: "#475569",
               fontSize: 11,
-              fontWeight: 900,
+              fontWeight: 800,
               textTransform: "uppercase",
-              letterSpacing: "0.08em",
+              letterSpacing: "0.06em",
               cursor: "pointer",
-              fontFamily: "Montserrat, sans-serif",
+              transition: "all 150ms ease",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
             }}
           >
             {options.cancelLabel || "Cancelar"}
           </button>
+
           <button
             type="button"
             autoFocus
             onClick={() => close(true)}
             style={{
-              padding: "9px 20px",
+              height: 40,
+              padding: "0 24px",
               borderRadius: 999,
               border: "none",
-              background: confirmBg,
-              color: options.destructive ? "#fff" : DARK,
+              background: isDestructive ? "#e11d48" : "#0055ff",
+              color: "#ffffff",
               fontSize: 11,
               fontWeight: 900,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               cursor: "pointer",
-              fontFamily: "Montserrat, sans-serif",
-              boxShadow: options.destructive
-                ? "0 4px 14px rgba(225,29,72,0.35)"
-                : `0 4px 14px ${CYAN}55`,
+              transition: "all 150ms ease",
+              boxShadow: isDestructive
+                ? "0 4px 16px rgba(225, 29, 72, 0.35)"
+                : "0 4px 16px rgba(0, 85, 255, 0.30)",
             }}
           >
-            {options.confirmLabel || "Confirmar"}
+            {options.confirmLabel || (isDestructive ? "Apagar" : "Confirmar")}
           </button>
         </div>
       </div>

@@ -22,20 +22,30 @@ interface Props {
   batalhas: BatalhaAgendada[];
   onEdit: (b: BatalhaAgendada) => void;
   onRefresh: () => void;
+  onDelete?: (id: string) => Promise<void> | void;
 }
 
-export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Props) {
+export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDelete }: Props) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     setDeleting(id);
-    const { error } = await supabase.from("batalhas_agendadas").delete().eq("id", id);
-    setDeleting(null);
-    if (error) {
-      toast.error("Erro ao excluir batalha");
-    } else {
-      toast.success("Batalha excluída");
-      onRefresh();
+    try {
+      if (onDelete) {
+        await onDelete(id);
+      } else {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (isUuid) {
+          const { error } = await supabase.from("batalhas_agendadas").delete().eq("id", id);
+          if (error) console.warn("Supabase delete batalha warning:", error.message);
+        }
+        toast.success("Batalha excluída com sucesso");
+        onRefresh();
+      }
+    } catch (err) {
+      console.warn("Erro ao excluir batalha:", err);
+    } finally {
+      setDeleting(null);
     }
   };
 

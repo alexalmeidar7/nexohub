@@ -9,6 +9,11 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { user, loading, role } = useAuth();
+  const isExplicitLogout = typeof window !== "undefined" && localStorage.getItem("nexohub_explicit_logout") === "true";
+
+  if (isExplicitLogout) {
+    return <Navigate to="/" replace />;
+  }
 
   if (loading) {
     return (

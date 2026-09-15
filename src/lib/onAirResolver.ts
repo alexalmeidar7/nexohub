@@ -94,7 +94,7 @@ export function resolveEffectiveOnAir<T extends ProgramLike>(
   programas: T[],
   now: Date = new Date(),
   timezone?: string | null,
-): { current: T | null; isPreloadingNext: boolean } {
+): { current: T | null; next: T | null; isPreloadingNext: boolean } {
   const { weekday, hour, minute, second } = getZonedParts(now, timezone);
   const dayFull = DIAS_MAP[weekday];
   const nowSec = hour * 3600 + minute * 60 + second;
@@ -106,22 +106,60 @@ export function resolveEffectiveOnAir<T extends ProgramLike>(
 
   const currentEntry = todays.find((e) => nowSec >= e.ini && nowSec < e.fim);
 
+  let current: T | null = null;
+  let next: T | null = null;
+  let isPreloadingNext = false;
+
   if (currentEntry) {
     const secToEnd = currentEntry.fim - nowSec;
     if (secToEnd <= PRELOAD_SECONDS) {
-      const next = todays.find(
+      const immediateNext = todays.find(
         (e) => e.ini >= currentEntry.fim && e.ini - currentEntry.fim <= NEXT_MAX_GAP_SECONDS,
       );
-      if (next) return { current: next.p, isPreloadingNext: true };
+      if (immediateNext) {
+        current = immediateNext.p;
+        isPreloadingNext = true;
+        const afterNext = todays.find((e) => e.ini >= immediateNext.fim);
+        next = afterNext?.p || null;
+      }
     }
-    return { current: currentEntry.p, isPreloadingNext: false };
+    if (!current) {
+      current = currentEntry.p;
+      const afterCurrent = todays.find((e) => e.ini >= currentEntry.fim);
+      next = afterCurrent?.p || null;
+    }
+  } else {
+    // Sem programa atual: se tem um começando em <= PRELOAD_SECONDS, adianta
+    const upcoming = todays.find((e) => e.ini > nowSec && e.ini - nowSec <= PRELOAD_SECONDS);
+    if (upcoming) {
+      current = upcoming.p;
+      isPreloadingNext = true;
+      const afterUpcoming = todays.find((e) => e.ini >= upcoming.fim);
+      next = afterUpcoming?.p || null;
+    } else {
+      const upcomingLater = todays.find((e) => e.ini > nowSec);
+      next = upcomingLater?.p || null;
+    }
   }
 
-  // Sem programa atual: se tem um começando em <= PRELOAD_SECONDS, adianta
-  const upcoming = todays.find((e) => e.ini > nowSec && e.ini - nowSec <= PRELOAD_SECONDS);
-  if (upcoming) return { current: upcoming.p, isPreloadingNext: true };
+  // Se não encontrou próximo hoje, busca no dia seguinte (ou nos próximos 7 dias)
+  if (!next && programas.length > 0) {
+    for (let offset = 1; offset <= 7; offset++) {
+      const nextDayWd = (weekday + offset) % 7;
+      const nextDayFull = DIAS_MAP[nextDayWd];
+      const nextDayProgs = programas
+        .filter((p) => matchesDay(p.dias_semana, nextDayFull))
+        .map((p) => ({ p, ini: toSec(p.horario_inicio), fim: toSec(p.horario_fim) }))
+        .sort((a, b) => a.ini - b.ini);
 
-  return { current: null, isPreloadingNext: false };
+      if (nextDayProgs.length > 0) {
+        next = nextDayProgs[0].p;
+        break;
+      }
+    }
+  }
+
+  return { current, next, isPreloadingNext };
 }
 
 /**

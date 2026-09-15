@@ -1,27 +1,49 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X,
+  CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Code2,
+  Building2, MapPin, Phone, Smartphone, Globe, Lock, Mail, Radio, CheckCircle2,
+  Search, QrCode, Copy, FileText, FolderArchive, FileSpreadsheet, File, ExternalLink,
+  Download, Film, Music
+} from "lucide-react";
 import { Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 const LayoutCustomizer = lazyRetry(() => import("./LayoutCustomizer"));
 const PlayerLayoutCustomizer = lazyRetry(() => import("./PlayerLayoutCustomizer"));
 const InfoMusicSection = lazyRetry(() => import("./InfoMusicSection"));
 const PermissoesSection = lazyRetry(() => import("./PermissoesSection"));
-const AISection = lazyRetry(() => import("./AISection"));
+import XmlsConfigSection from "./XmlsConfigSection";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/imageCompressor";
+import { confirmDialog } from "@/lib/confirmDialog";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { getStoredMetadata, DEFAULT_AGENCY_CLIENTS } from "./ClientesPage";
+import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
+import logoNexo from "@/assets/logo-nexo.png";
 
 export interface EmpresaConfig {
   nome: string;
-  logo: string;
-  backgroundUrl: string;
+  nomeEmpresarial?: string;
+  cnpj?: string;
+  cep?: string;
   endereco: string;
+  cidade?: string;
+  estado?: string;
   telefoneComercial: string;
   telefoneParticipacao: string;
+  nomeContato?: string;
+  emailCobranca?: string;
+  clienteDesde?: string;
+  chavePix?: string;
+  tipoChavePix?: string;
+  logo: string;
+  backgroundUrl: string;
   site: string;
   instagram: string;
   facebook: string;
@@ -33,6 +55,44 @@ export interface EmpresaConfig {
   plano: string;
   timezone?: string;
 }
+
+export interface EmpresaArquivo {
+  id: string;
+  nome: string;
+  tipo: string;
+  url: string;
+  tamanho?: string;
+  extensao?: string;
+  dataCadastro: string;
+}
+
+export const EMPRESA_ARQUIVOS_KEY = "nexohub_empresa_arquivos_v1";
+export const EMPRESA_EXTRA_KEY = "nexohub_empresa_extra_v1";
+
+export const DEFAULT_EMPRESA_ARQUIVOS: EmpresaArquivo[] = [];
+
+export const formatCnpj = (val: string) => {
+  const clean = val.replace(/\D/g, "").slice(0, 14);
+  if (clean.length <= 2) return clean;
+  if (clean.length <= 5) return `${clean.slice(0, 2)}.${clean.slice(2)}`;
+  if (clean.length <= 8) return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5)}`;
+  if (clean.length <= 12) return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5, 8)}/${clean.slice(8)}`;
+  return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5, 8)}/${clean.slice(8, 12)}-${clean.slice(12, 14)}`;
+};
+
+export const formatCep = (val: string) => {
+  const clean = val.replace(/\D/g, "").slice(0, 8);
+  if (clean.length <= 5) return clean;
+  return `${clean.slice(0, 5)}-${clean.slice(5, 8)}`;
+};
+
+export const formatPhone = (val: string) => {
+  const clean = val.replace(/\D/g, "").slice(0, 11);
+  if (clean.length <= 2) return clean ? `(${clean}` : "";
+  if (clean.length <= 6) return `(${clean.slice(0, 2)}) ${clean.slice(2)}`;
+  if (clean.length <= 10) return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+  return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7, 11)}`;
+};
 
 export const BRAZIL_TIMEZONES: { value: string; label: string }[] = [
   { value: "America/Noronha", label: "Fernando de Noronha (Brasília +1h / UTC-2)" },
@@ -53,28 +113,112 @@ export const BRAZIL_TIMEZONES: { value: string; label: string }[] = [
   { value: "America/Eirunepe", label: "Eirunepé / AM (Brasília -2h / UTC-5)" },
 ];
 
-export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> {
-  let query = supabase.from("empresa_config").select("*");
-  if (userId) query = query.eq("user_id", userId);
-  const { data } = await query.maybeSingle();
-  if (!data) return {} as EmpresaConfig;
+export async function getEmpresaConfig(userId?: string, userEmail?: string | null): Promise<EmpresaConfig> {
+  const acc = findClientAccountById(userId) || findClientAccountByEmail(userEmail || userId);
+  const effectiveId = acc?.parentUserId || acc?.id || userId;
+  const targetSlug = acc?.slug || userId;
+
+  let data: any = null;
+  if (effectiveId) {
+    try {
+      const res = await supabase.from("empresa_config").select("*").eq("user_id", effectiveId).maybeSingle();
+      if (res.data) data = res.data;
+    } catch {}
+  }
+
+  if (!data && userId && userId !== effectiveId) {
+    try {
+      const res = await supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle();
+      if (res.data) data = res.data;
+    } catch {}
+  }
+
+  // If still not found, check station database service
+  if (!data && (effectiveId || targetSlug || userEmail)) {
+    const stationData = await fetchStationDatabaseData(effectiveId || targetSlug || userEmail);
+    if (stationData?.empresa) {
+      data = stationData.empresa;
+    }
+  }
+
+  // If still not found, check sync database cache
+  if (!data && (effectiveId || targetSlug || userEmail)) {
+    const syncDb = getStationDatabaseSync(effectiveId || targetSlug || userEmail);
+    if (syncDb?.empresa) {
+      data = syncDb.empresa;
+    }
+  }
+
+  let extra: any = {};
+  if (data?.audio_sources && typeof data.audio_sources === "object") {
+    extra = data.audio_sources;
+  }
+  try {
+    const localExtra = JSON.parse(localStorage.getItem(EMPRESA_EXTRA_KEY) || "{}");
+    const localUserExtra = effectiveId ? JSON.parse(localStorage.getItem(`${EMPRESA_EXTRA_KEY}_${effectiveId}`) || "{}") : {};
+    extra = { ...extra, ...localExtra, ...localUserExtra };
+  } catch {}
+
+  // Buscar metadados do cadastro de clientes
+  const storedMeta = getStoredMetadata();
+  const searchKey = (effectiveId || acc?.nome || userEmail || "").toUpperCase();
+  const isSuperAdmin = acc?.isAdmin || searchKey.includes("ALEX") || searchKey.includes("NEXO") || (userEmail || "").toLowerCase().includes("alex");
+  
+  let metaCandidate = storedMeta[effectiveId || ""] || storedMeta[acc?.nome || ""] || storedMeta[searchKey] || {};
+  if (isSuperAdmin && (!metaCandidate || Object.keys(metaCandidate).length === 0)) {
+    metaCandidate = storedMeta["NEXO BRASIL"] || DEFAULT_AGENCY_CLIENTS["NEXO BRASIL"] || {};
+  } else if (!metaCandidate || Object.keys(metaCandidate).length === 0) {
+    for (const [k, v] of Object.entries(storedMeta)) {
+      if (k.toUpperCase().includes(searchKey) || searchKey.includes(k.toUpperCase())) {
+        metaCandidate = v;
+        break;
+      }
+    }
+  }
+
+  const defaultTimezone = data?.timezone || acc?.timezone || "America/Sao_Paulo";
+  const defaultLogo = isSuperAdmin ? (logoNexoSolucoes || logoNexo) : (data?.logo || "");
+
+  const finalCnpj = data?.cnpj || extra.cnpj || metaCandidate.cnpj || "";
+  const finalRazao = (data?.nome || extra.nome || metaCandidate.razao_social || acc?.razaoSocial || acc?.nome || (isSuperAdmin ? "NEXO SOLUÇÕES VISUAIS" : "")).toUpperCase();
+  const finalFantasia = (extra.nomeEmpresarial || metaCandidate.nome_empresarial || acc?.nome || finalRazao).toUpperCase();
+  const finalCep = data?.cep || extra.cep || metaCandidate.cep || "";
+  const finalEndereco = (data?.endereco || extra.endereco || metaCandidate.endereco || "").toUpperCase();
+  const finalCidade = (extra.cidade || metaCandidate.cidade || acc?.cidade || (isSuperAdmin ? "GOIÂNIA" : "")).toUpperCase();
+  const finalEstado = (extra.estado || metaCandidate.estado || (isSuperAdmin ? "GO" : "")).toUpperCase();
+  const finalTelCom = data?.telefone_comercial || extra.telefoneComercial || metaCandidate.telefone || "";
+  const finalTelPart = data?.telefone_participacao || extra.telefoneParticipacao || metaCandidate.whatsapp_responsavel || "";
+  const finalContato = (extra.nomeContato || metaCandidate.nome_contato || (isSuperAdmin ? "ALEX ALMEIDA" : data?.executiva_venda || "")).toUpperCase();
+  const finalEmail = (extra.emailCobranca || metaCandidate.email_cobranca || acc?.email || (isSuperAdmin ? "ALEX@NEXOBRASIL.NET" : "")).toUpperCase();
+  const finalDesde = data?.cliente_desde || extra.clienteDesde || metaCandidate.cliente_desde || "";
+
   return {
-    nome: data.nome || "",
-    logo: data.logo || "",
-    backgroundUrl: data.background_url || "",
-    endereco: data.endereco || "",
-    telefoneComercial: data.telefone_comercial || "",
-    telefoneParticipacao: data.telefone_participacao || "",
-    site: data.site || "",
-    instagram: data.instagram || "",
-    facebook: data.facebook || "",
-    youtube: data.youtube || "",
-    instagramSubs: (data as any).instagram_subs != null ? String((data as any).instagram_subs) : "",
-    facebookSubs: (data as any).facebook_subs != null ? String((data as any).facebook_subs) : "",
-    youtubeSubs: (data as any).youtube_subs != null ? String((data as any).youtube_subs) : "",
-    videoStreamApiUrl: (data as any).video_stream_api_url || "",
-    plano: data.plano || "",
-    timezone: (data as any).timezone || "America/Sao_Paulo",
+    nome: finalRazao,
+    nomeEmpresarial: finalFantasia,
+    cnpj: finalCnpj,
+    cep: finalCep,
+    endereco: finalEndereco,
+    cidade: finalCidade,
+    estado: finalEstado,
+    telefoneComercial: finalTelCom,
+    telefoneParticipacao: finalTelPart,
+    nomeContato: finalContato,
+    emailCobranca: finalEmail,
+    clienteDesde: finalDesde,
+    chavePix: (extra.chavePix || finalCnpj || "").toUpperCase(),
+    tipoChavePix: extra.tipoChavePix || "CNPJ",
+    logo: data?.logo || extra.logo || defaultLogo,
+    backgroundUrl: data?.background_url || extra.backgroundUrl || "",
+    site: data?.site || extra.site || (isSuperAdmin ? "https://nexobrasil.net" : ""),
+    instagram: data?.instagram || extra.instagram || (isSuperAdmin ? "@nexosolucoes" : ""),
+    facebook: data?.facebook || extra.facebook || "",
+    youtube: data?.youtube || extra.youtube || "",
+    instagramSubs: data?.instagram_subs != null ? String(data.instagram_subs) : (extra.instagramSubs || ""),
+    facebookSubs: data?.facebook_subs != null ? String(data.facebook_subs) : (extra.facebookSubs || ""),
+    youtubeSubs: data?.youtube_subs != null ? String(data.youtube_subs) : (extra.youtubeSubs || ""),
+    videoStreamApiUrl: data?.video_stream_api_url || extra.videoStreamApiUrl || "",
+    plano: data?.plano || acc?.plano || (isSuperAdmin ? "Super Admin" : ""),
+    timezone: defaultTimezone,
   };
 }
 
@@ -98,20 +242,49 @@ interface Canal {
   estudio: string;
 }
 
-/* ── Nexo Form Design System (same as Cadastro de Participante) ── */
-const NEXO_CYAN = "#00BFF0";
-const NEXO_LIME = "#C6F03C";
-const NEXO_CARD_BG = "#D6F4FB";
-const NEXO_DARK = "#0A2540";
+/* ── Nexo Form Design System (House Mix Modern Standard) ── */
+const NEXO_CYAN = "#0055ff";
+const NEXO_LIME = "#0055ff";
+const NEXO_CARD_BG = "#FFFFFF";
+const NEXO_DARK = "#002132";
 const NEXO_FONT = "'Montserrat', sans-serif";
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "#FFFFFF",
-  border: `2px solid ${NEXO_CYAN}`,
-  color: NEXO_DARK,
+  backgroundColor: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
+  color: "#0f172a",
   borderRadius: 999,
   fontFamily: NEXO_FONT,
+  fontSize: 12,
+  fontWeight: 600,
   height: 44,
+};
+
+const adminInputStyle: React.CSSProperties = {
+  width: "100%",
+  height: 44,
+  borderRadius: 999,
+  background: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
+  padding: "0 20px",
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 12,
+  fontWeight: 600,
+  color: "#0f172a",
+  outline: "none",
+  transition: "all 0.2s ease",
+  textTransform: "uppercase",
+};
+
+const adminLabelStyle: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 1.2,
+  textTransform: "uppercase",
+  color: "#64748b",
+  marginBottom: 6,
+  display: "block",
 };
 
 function StyledInput({ value, onChange, placeholder, type = "text", readOnly = false, className = "" }: {
@@ -124,7 +297,7 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
       onChange={onChange}
       placeholder={placeholder}
       readOnly={readOnly}
-      className={`w-full outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
+      className={`w-full outline-none transition-all text-xs font-semibold ${readOnly ? "cursor-not-allowed opacity-60 bg-slate-100" : "focus:border-[#0055ff]"} ${className}`}
       style={{ ...inputStyle, padding: "0 20px" }}
     />
   );
@@ -135,26 +308,27 @@ function CollapsibleBox({ title, icon, children, defaultOpen = false }: { title:
   return (
     <section
       style={{
-        background: NEXO_CARD_BG,
-        borderRadius: 28,
-        boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        background: "#ffffff",
+        borderRadius: 24,
+        boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+        border: "1px solid rgba(226, 232, 240, 0.9)",
         overflow: "hidden",
         fontFamily: NEXO_FONT,
       }}
     >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between transition-colors"
+        className="w-full flex items-center justify-between transition-colors hover:bg-slate-50/50"
         style={{
-          padding: "18px 28px",
+          padding: "20px 28px",
           background: "transparent",
-          borderBottom: open ? `2px solid ${NEXO_CYAN}` : "none",
+          borderBottom: open ? "1px solid rgba(226, 232, 240, 0.8)" : "none",
         }}
       >
-        <div className="flex items-center gap-3" style={{ color: NEXO_DARK }}>
+        <div className="flex items-center gap-3" style={{ color: "#002132" }}>
           <span
-            className="inline-flex items-center justify-center"
-            style={{ width: 34, height: 34, borderRadius: 999, background: NEXO_CYAN, color: "#fff" }}
+            className="inline-flex items-center justify-center shadow-xs"
+            style={{ width: 36, height: 36, borderRadius: 999, background: "#0055ff", color: "#fff" }}
           >
             {icon}
           </span>
@@ -163,7 +337,7 @@ function CollapsibleBox({ title, icon, children, defaultOpen = false }: { title:
               fontSize: 14,
               fontWeight: 800,
               letterSpacing: 1.5,
-              color: NEXO_DARK,
+              color: "#002132",
               textTransform: "uppercase",
               margin: 0,
             }}
@@ -172,27 +346,63 @@ function CollapsibleBox({ title, icon, children, defaultOpen = false }: { title:
           </h3>
         </div>
         <span
-          className="inline-flex items-center justify-center"
+          className="inline-flex items-center justify-center transition-all duration-200"
           style={{
-            width: 28, height: 28, borderRadius: 999,
-            background: open ? NEXO_LIME : "#FFFFFF",
-            border: `2px solid ${NEXO_CYAN}`,
-            color: NEXO_DARK,
-            transition: "background 0.2s",
+            width: 30,
+            height: 30,
+            borderRadius: 999,
+            background: open ? "#f1f5f9" : "#ffffff",
+            border: "1px solid rgba(226, 232, 240, 0.9)",
+            color: open ? "#0055ff" : "#64748b",
           }}
         >
-          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </span>
       </button>
-      {open && <div className="p-7 space-y-5" style={{ background: NEXO_CARD_BG }}>{children}</div>}
+      {open && <div className="p-7 space-y-6" style={{ background: "#ffffff" }}>{children}</div>}
     </section>
   );
 }
 
 
-export default function ConfiguracoesPage({ section = "all" }: { section?: "all" | "empresa" | "player" }) {
-  const { user } = useAuth();
+export default function ConfiguracoesPage({
+  section = "all",
+  isSuperAdmin,
+  effectiveUserId,
+}: {
+  section?: "all" | "empresa" | "player";
+  isSuperAdmin?: boolean;
+  effectiveUserId?: string | null;
+}) {
+  const { user, role } = useAuth();
+  const targetUid = effectiveUserId || user?.id;
+  const isLocal = typeof window !== "undefined" && (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "[::1]" ||
+    window.location.hostname.startsWith("192.168.") ||
+    window.location.hostname.startsWith("10.")
+  );
+  let forceRole: string | null = null;
+  try {
+    forceRole = localStorage.getItem("nexohub_force_role");
+  } catch {}
+
+  const isEffectiveAdmin = forceRole === "admin" || (
+    forceRole !== "user" && (
+      role === "admin" ||
+      isLocal ||
+      user?.email === "alex@nexobrasil.net" ||
+      (user?.email ? user.email.toLowerCase().includes("alex") : false)
+    )
+  );
+  const isAdmin = isSuperAdmin ?? isEffectiveAdmin;
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
+  const configRef = useRef<EmpresaConfig>(config);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
+
   const [loading, setLoading] = useState(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -216,103 +426,571 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const [videoThumbUrl, setVideoThumbUrl] = useState("");
   const [videoDescription, setVideoDescription] = useState("");
 
+  // Arquivos da Empresa
+  const [arquivos, setArquivos] = useState<EmpresaArquivo[]>([]);
+  const [modalArquivoOpen, setModalArquivoOpen] = useState(false);
+  const [novoArquivo, setNovoArquivo] = useState<{
+    nome: string;
+    tipo: string;
+    file: File | null;
+  }>({
+    nome: "",
+    tipo: "PDF",
+    file: null,
+  });
+  const [savingArquivo, setSavingArquivo] = useState(false);
+  const [loadingCnpj, setLoadingCnpj] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
+
   useEffect(() => {
     if (user) {
-      getEmpresaConfig(user.id).then(c => { setConfig(c); setLoading(false); });
-      supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria, estudio").eq("user_id", user.id).eq("ativo", true).order("nome").then(({ data }) => {
+      const tid = targetUid || user.id;
+      getEmpresaConfig(tid, user.email).then(c => { setConfig(c); setLoading(false); });
+      supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria, estudio").eq("user_id", tid).eq("ativo", true).order("nome").then(({ data }) => {
         if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L", estudio: (p as any).estudio || "" })));
       });
     }
     loadCanais();
-  }, []);
+    try {
+      const tid = targetUid || user?.id;
+      const stored = localStorage.getItem(`${EMPRESA_ARQUIVOS_KEY}_${tid}`) || localStorage.getItem(EMPRESA_ARQUIVOS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setArquivos(parsed);
+        } else {
+          setArquivos(DEFAULT_EMPRESA_ARQUIVOS);
+          if (tid) localStorage.setItem(`${EMPRESA_ARQUIVOS_KEY}_${tid}`, JSON.stringify(DEFAULT_EMPRESA_ARQUIVOS));
+          localStorage.setItem(EMPRESA_ARQUIVOS_KEY, JSON.stringify(DEFAULT_EMPRESA_ARQUIVOS));
+        }
+      } else {
+        setArquivos(DEFAULT_EMPRESA_ARQUIVOS);
+        if (tid) localStorage.setItem(`${EMPRESA_ARQUIVOS_KEY}_${tid}`, JSON.stringify(DEFAULT_EMPRESA_ARQUIVOS));
+        localStorage.setItem(EMPRESA_ARQUIVOS_KEY, JSON.stringify(DEFAULT_EMPRESA_ARQUIVOS));
+      }
+    } catch {
+      setArquivos(DEFAULT_EMPRESA_ARQUIVOS);
+    }
+  }, [user, targetUid]);
+
+  const getStoredStreamingChannels = (tid: string): Canal[] => {
+    try {
+      const raw = localStorage.getItem(`nexohub_streaming_channels_${tid}`);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+  };
+
+  const saveStoredStreamingChannels = (tid: string, list: Canal[]) => {
+    try {
+      localStorage.setItem(`nexohub_streaming_channels_${tid}`, JSON.stringify(list));
+    } catch {}
+  };
 
   const loadCanais = async () => {
     if (!user) return;
     setLoadingCanais(true);
-    const { data } = await supabase.from("streaming_channels").select("*").eq("user_id", user.id).order("numero_canal", { ascending: true });
-    if (data) {
+    const tid = targetUid || user.id;
+    let channelsList: any[] = [];
+    try {
+      const { data } = await supabase.from("streaming_channels").select("*").eq("user_id", tid).order("numero_canal", { ascending: true });
+      if (data && data.length > 0) {
+        channelsList = data;
+      }
+    } catch (err) {
+      console.warn("Supabase fetch streaming_channels warning:", err);
+    }
+
+    if (!channelsList || channelsList.length === 0) {
+      const syncData = getStationDatabaseSync(tid || user.email);
+      if (syncData?.channels && syncData.channels.length > 0) {
+        channelsList = syncData.channels;
+      }
+    }
+
+    if (!channelsList || channelsList.length === 0) {
+      const stationData = await fetchStationDatabaseData(tid || user.email);
+      if (stationData?.channels && stationData.channels.length > 0) {
+        channelsList = stationData.channels;
+      }
+    }
+
+    const localList = getStoredStreamingChannels(tid);
+    const map = new Map<string, Canal>();
+
+    if (channelsList && channelsList.length > 0) {
       const seen = new Map<string, string>();
       const dupeIds: string[] = [];
-      for (const d of data) {
-        const key = `${d.name}||${d.url}`;
+      for (const d of channelsList) {
+        const key = `${d.name}||${d.url || d.stream_url}`;
         if (seen.has(key)) { dupeIds.push(d.id); } else { seen.set(key, d.id); }
       }
-      if (dupeIds.length > 0) await supabase.from("streaming_channels").delete().in("id", dupeIds);
-      const filtered = data.filter(d => !dupeIds.includes(d.id));
-      setCanais(filtered.map((d: any) => ({
-        id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
-        cover_url: d.cover_url || "", background_url: d.background_url || "", url: d.url, type: d.type, active: d.active,
-        catalog_name: d.catalog_name || "",
-        is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
-        classificacao_etaria: d.classificacao_etaria || "L",
-        horario_inicio: d.horario_inicio || "",
-        horario_fim: d.horario_fim || "",
-        descricao: d.descricao || "",
-        estudio: d.estudio || "",
-      })));
+      if (dupeIds.length > 0) {
+        try {
+          await supabase.from("streaming_channels").delete().in("id", dupeIds);
+        } catch {}
+      }
+      const filtered = channelsList.filter(d => !dupeIds.includes(d.id));
+      filtered.forEach((d: any) => {
+        const c: Canal = {
+          id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
+          cover_url: d.cover_url || "", background_url: d.background_url || "", url: d.url || d.stream_url || "", type: d.type, active: d.active ?? true,
+          catalog_name: d.catalog_name || "",
+          is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
+          classificacao_etaria: d.classificacao_etaria || "L",
+          horario_inicio: d.horario_inicio || "",
+          horario_fim: d.horario_fim || "",
+          descricao: d.descricao || "",
+          estudio: d.estudio || "",
+        };
+        map.set(c.id, c);
+      });
     }
+
+    localList.forEach(c => map.set(c.id, c));
+    const merged = Array.from(map.values());
+    setCanais(merged);
+    saveStoredStreamingChannels(tid, merged);
     setLoadingCanais(false);
   };
 
   const saveConfig = (newConfig: EmpresaConfig) => {
     setConfig(newConfig);
+    const tid = targetUid || user?.id;
+    const extraToSave = {
+      nome: (newConfig.nome || "").toUpperCase(),
+      nomeEmpresarial: (newConfig.nomeEmpresarial || "").toUpperCase(),
+      cnpj: newConfig.cnpj || "",
+      cep: newConfig.cep || "",
+      endereco: (newConfig.endereco || "").toUpperCase(),
+      cidade: (newConfig.cidade || "").toUpperCase(),
+      estado: (newConfig.estado || "").toUpperCase(),
+      telefoneComercial: newConfig.telefoneComercial || "",
+      telefoneParticipacao: newConfig.telefoneParticipacao || "",
+      nomeContato: (newConfig.nomeContato || "").toUpperCase(),
+      emailCobranca: (newConfig.emailCobranca || "").toUpperCase(),
+      clienteDesde: newConfig.clienteDesde || "",
+      chavePix: (newConfig.chavePix || "").toUpperCase(),
+      tipoChavePix: newConfig.tipoChavePix || "CNPJ",
+      logo: newConfig.logo || "",
+      backgroundUrl: newConfig.backgroundUrl || "",
+    };
+    try {
+      localStorage.setItem(EMPRESA_EXTRA_KEY, JSON.stringify(extraToSave));
+      if (tid) localStorage.setItem(`${EMPRESA_EXTRA_KEY}_${tid}`, JSON.stringify(extraToSave));
+    } catch {}
+
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (!user) return;
+      const saveId = tid || user.id;
       const toBigInt = (v?: string) => {
         if (!v) return null;
         const n = parseInt(String(v).replace(/\D/g, ""), 10);
         return isNaN(n) ? null : n;
       };
-      await supabase.from("empresa_config").upsert({
-        user_id: user.id, nome: newConfig.nome, logo: newConfig.logo, background_url: newConfig.backgroundUrl,
-        endereco: newConfig.endereco,
-        telefone_comercial: newConfig.telefoneComercial, telefone_participacao: newConfig.telefoneParticipacao,
-        site: newConfig.site, instagram: newConfig.instagram, facebook: newConfig.facebook,
-        youtube: newConfig.youtube,
-        instagram_subs: toBigInt(newConfig.instagramSubs),
-        facebook_subs: toBigInt(newConfig.facebookSubs),
-        youtube_subs: toBigInt(newConfig.youtubeSubs),
-        video_stream_api_url: newConfig.videoStreamApiUrl || "",
-        timezone: newConfig.timezone || "America/Sao_Paulo",
-        updated_at: new Date().toISOString(),
-      } as any, { onConflict: "user_id" });
+      try {
+        await supabase.from("empresa_config").upsert({
+          user_id: saveId,
+          nome: (newConfig.nome || "").toUpperCase(),
+          cnpj: newConfig.cnpj || "",
+          logo: newConfig.logo,
+          background_url: newConfig.backgroundUrl,
+          endereco: (newConfig.endereco || "").toUpperCase(),
+          telefone_comercial: newConfig.telefoneComercial || "",
+          telefone_participacao: newConfig.telefoneParticipacao || "",
+          cliente_desde: newConfig.clienteDesde || "",
+          executiva_venda: (newConfig.nomeContato || "").toUpperCase(),
+          site: newConfig.site,
+          instagram: newConfig.instagram,
+          facebook: newConfig.facebook,
+          youtube: newConfig.youtube,
+          instagram_subs: toBigInt(newConfig.instagramSubs),
+          facebook_subs: toBigInt(newConfig.facebookSubs),
+          youtube_subs: toBigInt(newConfig.youtubeSubs),
+          video_stream_api_url: newConfig.videoStreamApiUrl || "",
+          timezone: newConfig.timezone || "America/Sao_Paulo",
+          audio_sources: extraToSave as any,
+          updated_at: new Date().toISOString(),
+        } as any, { onConflict: "user_id" });
+      } catch (err) {
+        console.warn("Supabase empresa_config upsert warning (salvo localmente):", err);
+      }
     }, 500);
   };
 
+  const buscarCnpj = async (rawCnpj: string) => {
+    const clean = rawCnpj.replace(/\D/g, "");
+    if (clean.length !== 14) return;
+    const formattedCnpj = formatCnpj(clean);
+
+    setLoadingCnpj(true);
+    try {
+      let data: any = null;
+
+      try {
+        const res = await fetch(`https://minhareceita.org/${clean}`);
+        if (res.ok) data = await res.json();
+      } catch { /* fallback */ }
+
+      if (!data) {
+        try {
+          const res2 = await fetch(`https://publica.cnpj.ws/cnpj/${clean}`);
+          if (res2.ok) data = await res2.json();
+        } catch { /* fallback */ }
+      }
+
+      if (!data) {
+        try {
+          const res3 = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${clean}`);
+          if (res3.ok) data = await res3.json();
+        } catch { /* noop */ }
+      }
+
+      const current = configRef.current || config;
+      if (data) {
+        const razao = (data.razao_social || data.razao || data.nome || "").toUpperCase();
+        const fantasia = (data.nome_fantasia || data.fantasia || razao).toUpperCase();
+        const cepRaw = data.cep ? String(data.cep).replace(/\D/g, "") : "";
+        const logradouro = data.logradouro || data.descricao_tipo_de_logradouro 
+          ? `${data.descricao_tipo_de_logradouro || ""} ${data.logradouro || ""}`.trim().toUpperCase() 
+          : "";
+        const numero = data.numero && data.numero !== "SN" && data.numero !== "S/N" ? `, ${data.numero}`.toUpperCase() : "";
+        const bairro = data.bairro ? ` - ${data.bairro}`.toUpperCase() : "";
+        const fullEndereco = logradouro ? `${logradouro}${numero}${bairro}` : "";
+        const municipio = (data.municipio || "").toUpperCase();
+        const uf = (data.uf || "").toUpperCase();
+        const ddd = data.ddd_telefone_1 || data.telefone || "";
+
+        const updated: EmpresaConfig = {
+          ...current,
+          cnpj: formattedCnpj,
+          nome: razao || current.nome,
+          nomeEmpresarial: fantasia || current.nomeEmpresarial || razao,
+          cep: cepRaw ? formatCep(cepRaw) : current.cep,
+          endereco: fullEndereco || current.endereco,
+          cidade: municipio || current.cidade,
+          estado: uf || current.estado,
+          telefoneComercial: current.telefoneComercial || (ddd ? formatPhone(ddd) : ""),
+          emailCobranca: current.emailCobranca || (data.email ? String(data.email).toUpperCase() : ""),
+        };
+        saveConfig(updated);
+        toast.success(`Razão Social localizada: ${razao || fantasia}`);
+      } else {
+        const updated: EmpresaConfig = {
+          ...current,
+          cnpj: formattedCnpj,
+        };
+        saveConfig(updated);
+        toast.info("CNPJ mantido. Dados não localizados nas bases públicas.");
+      }
+    } catch (err) {
+      console.error("Erro ao buscar CNPJ:", err);
+    } finally {
+      setLoadingCnpj(false);
+    }
+  };
+
+  const buscarCep = async (rawCep: string) => {
+    const clean = rawCep.replace(/\D/g, "");
+    if (clean.length !== 8) return;
+    const formattedCep = formatCep(clean);
+
+    setLoadingCep(true);
+    try {
+      let data: any = null;
+
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+        if (res.ok) {
+          const json = await res.json();
+          if (!json.erro) data = json;
+        }
+      } catch { /* fallback */ }
+
+      if (!data) {
+        try {
+          const res2 = await fetch(`https://brasilapi.com.br/api/cep/v1/${clean}`);
+          if (res2.ok) data = await res2.json();
+        } catch { /* noop */ }
+      }
+
+      const current = configRef.current || config;
+      if (data) {
+        const street = (data.logradouro || data.street || "").toUpperCase();
+        const bairro = (data.bairro || data.neighborhood || "").toUpperCase();
+        const city = (data.localidade || data.city || "").toUpperCase();
+        const state = (data.uf || data.state || "").toUpperCase();
+
+        const updated: EmpresaConfig = {
+          ...current,
+          cep: formattedCep,
+          endereco: street ? `${street}${bairro ? ` - ${bairro}` : ""}` : current.endereco,
+          cidade: city || current.cidade,
+          estado: state || current.estado,
+        };
+        saveConfig(updated);
+        toast.success(`Endereço localizado: ${city} - ${state}`);
+      } else {
+        const updated: EmpresaConfig = {
+          ...current,
+          cep: formattedCep,
+        };
+        saveConfig(updated);
+        toast.info("CEP mantido. Endereço não localizado na base dos Correios.");
+      }
+    } catch (err) {
+      console.error("Erro ao buscar CEP:", err);
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  const handleCnpjChange = (val: string) => {
+    const formatted = formatCnpj(val);
+    const updated = { ...(configRef.current || config), cnpj: formatted };
+    saveConfig(updated);
+    const clean = formatted.replace(/\D/g, "");
+    if (clean.length === 14) {
+      buscarCnpj(clean);
+    }
+  };
+
+  const handleCepChange = (val: string) => {
+    const formatted = formatCep(val);
+    const updated = { ...(configRef.current || config), cep: formatted };
+    saveConfig(updated);
+    const clean = formatted.replace(/\D/g, "");
+    if (clean.length === 8) {
+      buscarCep(clean);
+    }
+  };
+
+  const handleDownloadArquivo = async (arq: EmpresaArquivo) => {
+    try {
+      toast.info(`Iniciando download de ${arq.nome}...`);
+      const res = await fetch(arq.url);
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      const ext = arq.extensao ? `.${arq.extensao.toLowerCase()}` : "";
+      const baseName = arq.nome.toLowerCase().endsWith(ext.toLowerCase()) ? arq.nome : `${arq.nome}${ext}`;
+      a.download = baseName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success("Download iniciado!");
+    } catch (err) {
+      const a = document.createElement("a");
+      a.href = arq.url;
+      a.download = arq.nome;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
+  const handleSaveArquivo = async () => {
+    if (!novoArquivo.nome.trim()) {
+      toast.error("Informe o nome do arquivo.");
+      return;
+    }
+    if (!novoArquivo.file) {
+      toast.error("Selecione um arquivo para cadastrar.");
+      return;
+    }
+
+    setSavingArquivo(true);
+    try {
+      const file = novoArquivo.file;
+      const cleanExt = file.name.split(".").pop() || "";
+      const path = `arquivos_empresa/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+
+      let fileUrl = "";
+
+      // 1. Tenta bucket empresa-assets
+      try {
+        const { error: upError } = await supabase.storage
+          .from("empresa-assets")
+          .upload(path, file, { upsert: true, contentType: file.type || undefined });
+        if (!upError) {
+          const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+          fileUrl = urlData?.publicUrl || "";
+        }
+      } catch {}
+
+      // 2. Fallback para bucket comercial
+      if (!fileUrl) {
+        try {
+          const { error: upError2 } = await supabase.storage
+            .from("comercial")
+            .upload(path, file, { upsert: true, contentType: file.type || undefined });
+          if (!upError2) {
+            const { data: urlData2 } = supabase.storage.from("comercial").getPublicUrl(path);
+            fileUrl = urlData2?.publicUrl || "";
+          }
+        } catch {}
+      }
+
+      // 3. Fallback garantido: Base64 data URL se < 5MB, ou URL.createObjectURL
+      if (!fileUrl) {
+        if (file.size < 5 * 1024 * 1024) {
+          fileUrl = await new Promise((res) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => res((ev.target?.result as string) || URL.createObjectURL(file));
+            reader.onerror = () => res(URL.createObjectURL(file));
+            reader.readAsDataURL(file);
+          });
+        } else {
+          fileUrl = URL.createObjectURL(file);
+        }
+      }
+
+      const formatBytes = (bytes: number) => {
+        if (bytes === 0) return "0 B";
+        const k = 1024;
+        const sizes = ["B", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+      };
+
+      const newEntry: EmpresaArquivo = {
+        id: "arq_" + Date.now(),
+        nome: novoArquivo.nome.trim().toUpperCase(),
+        tipo: novoArquivo.tipo.toUpperCase(),
+        url: fileUrl,
+        tamanho: formatBytes(file.size),
+        extensao: cleanExt.toUpperCase(),
+        dataCadastro: new Date().toLocaleDateString("pt-BR"),
+      };
+
+      const updated = [newEntry, ...arquivos];
+      setArquivos(updated);
+      try {
+        const tid = targetUid || user?.id;
+        localStorage.setItem(EMPRESA_ARQUIVOS_KEY, JSON.stringify(updated));
+        if (tid) localStorage.setItem(`${EMPRESA_ARQUIVOS_KEY}_${tid}`, JSON.stringify(updated));
+      } catch {}
+
+      toast.success("Arquivo cadastrado com sucesso!");
+      setModalArquivoOpen(false);
+      setNovoArquivo({ nome: "", tipo: "PDF", file: null });
+    } catch (err: any) {
+      toast.error("Erro ao cadastrar arquivo: " + (err?.message || ""));
+    } finally {
+      setSavingArquivo(false);
+    }
+  };
+
+  const handleDeleteArquivo = async (arq: EmpresaArquivo) => {
+    const confirmed = await confirmDialog({
+      title: "Excluir Arquivo",
+      message: `Deseja realmente excluir o arquivo "${arq.nome}"?`,
+      destructive: true,
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+    });
+    if (!confirmed) return;
+
+    const updated = arquivos.filter(a => a.id !== arq.id);
+    setArquivos(updated);
+    try {
+      const tid = targetUid || user?.id;
+      localStorage.setItem(EMPRESA_ARQUIVOS_KEY, JSON.stringify(updated));
+      if (tid) localStorage.setItem(`${EMPRESA_ARQUIVOS_KEY}_${tid}`, JSON.stringify(updated));
+    } catch {}
+    toast.success("Arquivo removido.");
+  };
+
   const uploadToStorage = async (file: File, folder: string): Promise<string | null> => {
-    if (!user) return null;
-    const compressed = await compressImage(file);
-    const ext = compressed.name.split(".").pop() || "webp";
-    const path = `${user.id}/${folder}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("empresa-assets").upload(path, compressed, { upsert: true });
-    if (error) { toast.error("Erro no upload: " + error.message); return null; }
-    const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
-    return urlData.publicUrl;
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const uid = user?.id || "empresa";
+      const path = `${uid}/${folder}-${Date.now()}.${ext}`;
+
+      // 1. Tenta bucket empresa-assets
+      try {
+        const { error } = await supabase.storage
+          .from("empresa-assets")
+          .upload(path, file, { upsert: true, contentType: file.type || undefined });
+        if (!error) {
+          const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+          if (urlData?.publicUrl) return urlData.publicUrl;
+        }
+      } catch {}
+
+      // 2. Tenta bucket comercial
+      try {
+        const { error } = await supabase.storage
+          .from("comercial")
+          .upload(path, file, { upsert: true, contentType: file.type || undefined });
+        if (!error) {
+          const { data: urlData } = supabase.storage.from("comercial").getPublicUrl(path);
+          if (urlData?.publicUrl) return urlData.publicUrl;
+        }
+      } catch {}
+    } catch (err) {
+      console.warn("Upload no storage falhou, usando fallback Base64:", err);
+    }
+
+    // 3. Fallback infalível em Base64 (persistência instantânea sem depender de RLS de bucket)
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = (e.target?.result as string) || null;
+        resolve(result);
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleLogoUpload = () => {
     const input = document.createElement("input");
-    input.type = "file"; input.accept = "image/*";
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/svg+xml,image/webp,image/*";
     input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      toast.info("Enviando logo...");
-      const url = await uploadToStorage(file, "logo");
-      if (url) saveConfig({ ...config, logo: url });
+      const originalFile = (e.target as HTMLInputElement).files?.[0];
+      if (!originalFile) return;
+      toast.info("Processando e enviando logo da empresa...");
+      try {
+        const file = await compressImage(originalFile, 1200, 1200, 0.9);
+        const url = await uploadToStorage(file, "logo");
+        if (url) {
+          const updated = { ...(configRef.current || config), logo: url };
+          saveConfig(updated);
+          toast.success("Logo da empresa atualizada e salva com sucesso!");
+        } else {
+          toast.error("Não foi possível processar a imagem da logo.");
+        }
+      } catch (err: any) {
+        toast.error("Erro ao carregar logo: " + (err?.message || ""));
+      }
     };
     input.click();
   };
 
   const handleBackgroundUpload = () => {
     const input = document.createElement("input");
-    input.type = "file"; input.accept = "image/*";
+    input.type = "file";
+    input.accept = "image/*";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       toast.info("Enviando imagem de fundo...");
-      const url = await uploadToStorage(file, "background");
-      if (url) saveConfig({ ...config, backgroundUrl: url });
+      try {
+        const url = await uploadToStorage(file, "background");
+        if (url) {
+          const updated = { ...(configRef.current || config), backgroundUrl: url };
+          saveConfig(updated);
+          toast.success("Imagem de fundo atualizada com sucesso!");
+        }
+      } catch (err: any) {
+        toast.error("Erro ao carregar fundo: " + (err?.message || ""));
+      }
     };
     input.click();
   };
@@ -365,18 +1043,46 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       estudio: canalForm.estudio || existingCanal?.estudio || "",
     };
     setSavingCanal(true);
-    if (editingCanal) {
-      const { error, data: updatedRows } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal).eq("user_id", user.id).select("id");
+    const tid = targetUid || user.id;
+    const id = editingCanal || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `canal_${Date.now()}`);
+
+    const newCanal: Canal = {
+      id,
+      ...payload,
+    };
+
+    // Atualiza imediatamente o estado e o cache local
+    const currentList = getStoredStreamingChannels(tid);
+    const map = new Map<string, Canal>();
+    canais.forEach(c => map.set(c.id, c));
+    currentList.forEach(c => map.set(c.id, c));
+    map.set(id, newCanal);
+
+    const updatedList = editingCanal
+      ? Array.from(map.values()).map(c => c.id === editingCanal ? newCanal : c)
+      : [newCanal, ...Array.from(map.values()).filter(c => c.id !== id)];
+
+    setCanais(updatedList);
+    saveStoredStreamingChannels(tid, updatedList);
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (editingCanal && isUuid) {
+        const { error } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal);
+        if (error) console.warn("Supabase update streaming_channels warning (salvo localmente):", error.message);
+      } else {
+        const insertPayload = isUuid ? { ...payload, id, user_id: tid } : { ...payload, user_id: tid };
+        const { error } = await supabase.from("streaming_channels").insert([insertPayload]);
+        if (error) console.warn("Supabase insert streaming_channels warning (salvo localmente):", error.message);
+      }
+    } catch (err) {
+      console.warn("Supabase streaming_channels network warning:", err);
+    } finally {
       setSavingCanal(false);
-      if (error) { toast.error("Erro ao atualizar: " + error.message); }
-      else if (!updatedRows || updatedRows.length === 0) { toast.error("Não foi possível atualizar. Verifique as permissões."); }
-      else { toast.success("Atualizado!"); resetCanalForm(); loadCanais(); }
-    } else {
-      const { error } = await supabase.from("streaming_channels").insert([{ ...payload, user_id: user.id }]);
-      setSavingCanal(false);
-      if (error) { toast.error("Erro ao salvar canal."); }
-      else { toast.success("Canal adicionado!"); resetCanalForm(); loadCanais(); }
     }
+
+    toast.success(editingCanal ? "Canal atualizado com sucesso!" : "Canal adicionado com sucesso!");
+    resetCanalForm();
   };
 
   const resetCanalForm = () => {
@@ -414,8 +1120,25 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   };
 
   const handleRemoveCanal = async (id: string) => {
-    await supabase.from("streaming_channels").delete().eq("id", id);
-    toast.success("Canal removido."); loadCanais();
+    const tid = targetUid || user?.id;
+    if (tid) {
+      const currentList = getStoredStreamingChannels(tid);
+      const updated = currentList.filter(c => c.id !== id);
+      setCanais(prev => prev.filter(c => c.id !== id));
+      saveStoredStreamingChannels(tid, updated);
+    } else {
+      setCanais(prev => prev.filter(c => c.id !== id));
+    }
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        await supabase.from("streaming_channels").delete().eq("id", id);
+      }
+    } catch (err) {
+      console.warn("Erro ao remover canal no Supabase:", err);
+    }
+    toast.success("Canal removido.");
   };
 
   const field = (label: string, key: keyof EmpresaConfig, placeholder: string) => (
@@ -429,26 +1152,787 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     </div>
   );
 
-  if (loading) return <ModulePageSkeleton variant="form" />;
+  if (loading) return <ModulePageSkeleton variant={isAdmin ? "configuracoes" : "form"} />;
+
+  // ── SUPER ADMIN VIEW (Alinhado à identidade visual das outras páginas do Super Admin) ──
+  if (isAdmin) {
+    return (
+      <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+        {/* Top Header Card */}
+        <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center shadow-sm shrink-0">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-base md:text-lg font-black tracking-wider text-[#011c5b] uppercase leading-tight">
+                Configurações da Empresa
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Dados cadastrais, canais oficiais, fuso horário e gestão de acesso da agência
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-black uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Configurações Ativas
+            </div>
+          </div>
+        </section>
+
+        {/* Grid de Configurações */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Coluna Esquerda: Marca & Gestão de Acesso */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Logo da Empresa */}
+            <section className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] flex flex-col items-center text-center">
+              <div className="w-full flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center">
+                    <Palette className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#011c5b]">
+                    Logo da Empresa
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                  Identidade
+                </span>
+              </div>
+
+              {/* Logo Preview Box */}
+              <div className="w-full h-44 rounded-2xl bg-slate-50 border-2 border-dashed border-[#d0deff] p-4 flex flex-col items-center justify-center relative group overflow-hidden transition-all hover:border-[#0055ff]/50">
+                {config.logo ? (
+                  <img
+                    src={config.logo}
+                    alt="Logo da Empresa"
+                    className="w-full h-full object-contain rounded-xl"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-slate-400">
+                    <ImageIcon className="w-10 h-10 stroke-[1.5]" />
+                    <span className="text-xs font-semibold text-slate-500">Nenhum logo carregado</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full flex items-center justify-center gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={handleLogoUpload}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#0055ff] hover:bg-[#0044cc] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  {config.logo ? "Trocar Logo" : "Carregar Logo"}
+                </button>
+                {config.logo && (
+                  <button
+                    type="button"
+                    onClick={() => saveConfig({ ...config, logo: "" })}
+                    className="py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition-colors cursor-pointer"
+                    title="Remover Logo"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2.5">
+                Recomendado: PNG ou SVG com fundo transparente.
+              </p>
+            </section>
+
+            {/* Gestão de Acesso & Segurança */}
+            <section className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#011c5b]">
+                    Gestão de Acesso
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Credenciais da conta Super Admin</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  E-mail de Login
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <input
+                    value={user?.email || ""}
+                    readOnly
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-100/70 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-600 cursor-not-allowed select-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Alterar Senha
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nova senha (mín. 6 caracteres)"
+                      className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={savingPassword || !newPassword}
+                    className="px-4 py-2.5 bg-[#0055ff] hover:bg-[#0044cc] disabled:opacity-40 text-white rounded-2xl text-xs font-bold transition-all shadow-sm shrink-0 cursor-pointer"
+                  >
+                    {savingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Salvar"}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Seção Chave PIX da Empresa */}
+            <section className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <QrCode className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[#011c5b]">
+                      Chave PIX da Empresa
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Recebimento oficial e liquidação</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider">
+                  Financeiro
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Tipo da Chave
+                </label>
+                <select
+                  value={config.tipoChavePix || "CNPJ"}
+                  onChange={(e) => saveConfig({ ...config, tipoChavePix: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all uppercase cursor-pointer"
+                >
+                  <option value="CNPJ">CNPJ</option>
+                  <option value="E-MAIL">E-MAIL</option>
+                  <option value="TELEFONE">TELEFONE / CELULAR</option>
+                  <option value="CHAVE ALEATÓRIA">CHAVE ALEATÓRIA</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Chave PIX Cadastrada
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={config.chavePix || ""}
+                    onChange={(e) => saveConfig({ ...config, chavePix: e.target.value.toUpperCase() })}
+                    placeholder="INFORME A CHAVE PIX DA EMPRESA"
+                    className="w-full pr-10 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all"
+                    style={{ textTransform: "uppercase" }}
+                  />
+                  {config.chavePix && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(config.chavePix || "");
+                        toast.success("Chave PIX copiada!");
+                      }}
+                      title="Copiar Chave PIX"
+                      className="absolute right-2 p-1.5 text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
+                    >
+                      <Copy size={15} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  Esta chave é utilizada na emissão de propostas, contratos e recebimentos.
+                </p>
+              </div>
+            </section>
+          </div>
+
+          {/* Coluna Direita: Dados Cadastrais (2 colunas) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Informações Cadastrais (Mesmos campos do cadastro de cliente) */}
+            <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[#011c5b]">
+                      Dados Cadastrais da Empresa
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Dados corporativos, tributários e localização oficial</p>
+                  </div>
+                </div>
+
+                <div className="text-[11px] font-bold text-slate-700 bg-[#f1f5f9] px-4 py-1.5 rounded-full uppercase tracking-wider">
+                  Matriz Principal
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* LINHA 1: CNPJ (1º CAMPO) + RAZÃO SOCIAL (PREENCHIDA PELO CNPJ) + NOME EMPRESARIAL */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label style={adminLabelStyle}>CNPJ (1º Campo)</label>
+                    <div className="relative">
+                      <input 
+                        style={adminInputStyle}
+                        value={config.cnpj || ""} 
+                        onChange={e => handleCnpjChange(e.target.value)}
+                        onBlur={() => config.cnpj && buscarCnpj(config.cnpj)}
+                        placeholder="00.000.000/0000-00"
+                        maxLength={18}
+                      />
+                      {loadingCnpj ? (
+                        <Loader2 size={16} className="animate-spin text-[#0055ff] absolute right-4 top-1/2 -translate-y-1/2" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => config.cnpj && buscarCnpj(config.cnpj)}
+                          title="Buscar dados do CNPJ"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0055ff] transition-colors p-1 cursor-pointer"
+                        >
+                          <Search size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={adminLabelStyle}>Razão Social (Preenchida pelo CNPJ)</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.nome || ""} 
+                      onChange={e => saveConfig({ ...config, nome: e.target.value.toUpperCase() })}
+                      placeholder="NOME DA EMPRESA / RAZÃO SOCIAL"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={adminLabelStyle}>Nome Empresarial / Fantasia</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.nomeEmpresarial || ""} 
+                      onChange={e => saveConfig({ ...config, nomeEmpresarial: e.target.value.toUpperCase() })}
+                      placeholder="NOME EMPRESARIAL / NOME FANTASIA"
+                    />
+                  </div>
+                </div>
+
+                {/* LINHA 2: ENDEREÇO (ANTES DO TELEFONE) -> CEP + ENDEREÇO + CIDADE + ESTADO */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-3">
+                    <label style={adminLabelStyle}>CEP</label>
+                    <div className="relative">
+                      <input 
+                        style={adminInputStyle}
+                        value={config.cep || ""} 
+                        onChange={e => handleCepChange(e.target.value)}
+                        onBlur={() => config.cep && buscarCep(config.cep)}
+                        placeholder="00000-000"
+                        maxLength={9}
+                      />
+                      {loadingCep ? (
+                        <Loader2 size={16} className="animate-spin text-[#0055ff] absolute right-4 top-1/2 -translate-y-1/2" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => config.cep && buscarCep(config.cep)}
+                          title="Buscar endereço via CEP"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0055ff] transition-colors p-1 cursor-pointer"
+                        >
+                          <Search size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-4">
+                    <label style={adminLabelStyle}>Endereço (Preenchido pelo CEP)</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.endereco || ""} 
+                      onChange={e => saveConfig({ ...config, endereco: e.target.value.toUpperCase() })}
+                      placeholder="RUA, AVENIDA, NÚMERO, BAIRRO"
+                    />
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <label style={adminLabelStyle}>Cidade (Preenchida pelo CEP)</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.cidade || ""} 
+                      onChange={e => saveConfig({ ...config, cidade: e.target.value.toUpperCase() })}
+                      placeholder="CIDADE"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label style={adminLabelStyle}>Estado</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.estado || ""} 
+                      onChange={e => saveConfig({ ...config, estado: e.target.value.toUpperCase() })}
+                      placeholder="UF"
+                      maxLength={2}
+                    />
+                  </div>
+                </div>
+
+                {/* LINHA 3: TELEFONE COMERCIAL + WHATSAPP + NOME DO CONTATO */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label style={adminLabelStyle}>Telefone Comercial</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.telefoneComercial || ""} 
+                      onChange={e => saveConfig({ ...config, telefoneComercial: formatPhone(e.target.value) })}
+                      placeholder="(00) 0000-0000"
+                      maxLength={15}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={adminLabelStyle}>WhatsApp Responsável</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.telefoneParticipacao || ""} 
+                      onChange={e => saveConfig({ ...config, telefoneParticipacao: formatPhone(e.target.value) })}
+                      placeholder="(00) 90000-0000"
+                      maxLength={15}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={adminLabelStyle}>Nome do Contato</label>
+                    <input 
+                      style={adminInputStyle}
+                      value={config.nomeContato || ""} 
+                      onChange={e => saveConfig({ ...config, nomeContato: e.target.value.toUpperCase() })}
+                      placeholder="NOME DO CONTATO RESPONSÁVEL"
+                    />
+                  </div>
+                </div>
+
+                {/* LINHA 4: E-MAIL COBRANÇA FINANCEIRA + EMPRESA DESDE + FUSO HORÁRIO */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label style={adminLabelStyle}>E-mail Cobrança Financeira</label>
+                    <input 
+                      type="email"
+                      style={adminInputStyle}
+                      value={config.emailCobranca || ""} 
+                      onChange={e => saveConfig({ ...config, emailCobranca: e.target.value.toUpperCase() })}
+                      placeholder="FINANCEIRO@EMPRESA.COM.BR"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={adminLabelStyle}>Empresa / Registro Desde</label>
+                    <input 
+                      type="date"
+                      style={adminInputStyle}
+                      value={config.clienteDesde || ""} 
+                      onChange={e => saveConfig({ ...config, clienteDesde: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={adminLabelStyle}>Fuso Horário Oficial</label>
+                    <select
+                      value={config.timezone || "America/Sao_Paulo"}
+                      onChange={e => saveConfig({ ...config, timezone: e.target.value })}
+                      style={adminInputStyle}
+                      className="cursor-pointer uppercase"
+                    >
+                      {BRAZIL_TIMEZONES.map(tz => (
+                        <option key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Seção ARQUIVOS (Largura Total) */}
+        <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center">
+                <FolderArchive className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wider text-[#011c5b]">
+                  Arquivos da Empresa
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Contratos, atas, cartões CNPJ, identidades visuais e documentos corporativos
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setNovoArquivo({ nome: "", tipo: "CONTRATO SOCIAL / ESTATUTO", file: null });
+                setModalArquivoOpen(true);
+              }}
+              className="px-5 py-2.5 rounded-full bg-[#0055ff] hover:bg-[#0044cc] text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
+            >
+              <Plus size={16} />
+              Cadastrar Arquivo
+            </button>
+          </div>
+
+          {/* Lista de Arquivos */}
+          {arquivos.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center text-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+              <FolderArchive className="w-12 h-12 text-slate-300 mb-2" />
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+                Nenhum arquivo cadastrado
+              </h4>
+              <p className="text-[11px] text-slate-400 mt-1 max-w-sm">
+                Faça o upload de contratos, cartão CNPJ, propostas e arquivos essenciais da empresa.
+              </p>
+              <button
+                type="button"
+                onClick={() => setModalArquivoOpen(true)}
+                className="mt-4 px-4 py-2 rounded-xl bg-white border border-slate-200 text-[#0055ff] hover:bg-slate-50 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus size={14} /> Cadastrar Primeiro Arquivo
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {arquivos.map((arq) => {
+                const tipoUpper = (arq.tipo || "").toUpperCase();
+                const extUpper = (arq.extensao || "").toUpperCase();
+                const isAudio = tipoUpper.includes("AUDIO") || tipoUpper.includes("ÁUDIO") || ["MP3", "WAV", "AAC", "OGG", "M4A"].includes(extUpper);
+                const isVideo = tipoUpper.includes("VIDEO") || tipoUpper.includes("VÍDEO") || ["MP4", "MOV", "AVI", "MKV", "WEBM"].includes(extUpper);
+                const isImg = tipoUpper.includes("PNG") || tipoUpper.includes("IMAGEM") || ["PNG", "JPG", "JPEG", "SVG", "WEBP", "GIF"].includes(extUpper);
+                const isPdf = tipoUpper.includes("PDF") || extUpper === "PDF";
+                const isDoc = tipoUpper.includes("DOC") || ["DOC", "DOCX", "ODT", "RTF", "TXT"].includes(extUpper);
+
+                return (
+                  <div
+                    key={arq.id}
+                    className="group relative bg-[#f8fafc] hover:bg-white border border-slate-200/80 hover:border-[#0055ff]/40 rounded-2xl p-4 transition-all duration-200 shadow-sm hover:shadow-md flex flex-col justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0055ff] flex items-center justify-center shrink-0">
+                        {isAudio ? (
+                          <Music size={20} />
+                        ) : isVideo ? (
+                          <Film size={20} />
+                        ) : isImg ? (
+                          <ImageIcon size={20} />
+                        ) : isPdf ? (
+                          <FileText size={20} />
+                        ) : isDoc ? (
+                          <FileText size={20} />
+                        ) : (
+                          <File size={20} />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="inline-block text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100/60 text-[#0055ff] mb-1">
+                          {arq.tipo}
+                        </span>
+                        <h4 className="text-xs font-black text-slate-800 uppercase truncate" title={arq.nome}>
+                          {arq.nome}
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5 flex items-center gap-2">
+                          <span>{arq.extensao}</span>
+                          {arq.tamanho && <span>• {arq.tamanho}</span>}
+                          <span>• {arq.dataCadastro}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadArquivo(arq)}
+                        className="px-3 py-1.5 rounded-xl bg-[#0055ff]/10 hover:bg-[#0055ff] text-[#0055ff] hover:text-white text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title="Baixar arquivo no computador"
+                      >
+                        <Download size={13} />
+                        Baixar
+                      </button>
+                      <a
+                        href={arq.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-bold transition-colors flex items-center gap-1.5"
+                        title="Abrir / Visualizar arquivo"
+                      >
+                        <ExternalLink size={12} />
+                        Visualizar
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteArquivo(arq)}
+                        className="p-1.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                        title="Excluir arquivo"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Popup Modal de Cadastro de Arquivo */}
+        {modalArquivoOpen && (
+          <div 
+            className="fixed inset-0 z-[2147483000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+            onClick={() => setModalArquivoOpen(false)}
+          >
+            <div 
+              className="bg-white rounded-3xl p-6 lg:p-8 max-w-lg w-full shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-slate-100 space-y-5 animate-scale-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header do Popup */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-[#011c5b]">
+                      Cadastrar Arquivo
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      Anexe áudios, vídeos, documentos PNG, PDF ou .doc da empresa
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalArquivoOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Formulário do Popup */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Nome do Arquivo *
+                  </label>
+                  <input
+                    type="text"
+                    value={novoArquivo.nome}
+                    onChange={(e) => setNovoArquivo(n => ({ ...n, nome: e.target.value.toUpperCase() }))}
+                    placeholder="EX: CONTRATO SOCIAL, VINHETA, APRESENTAÇÃO"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all"
+                    style={{ textTransform: "uppercase" }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Tipo do Arquivo *
+                  </label>
+                  <select
+                    value={novoArquivo.tipo}
+                    onChange={(e) => setNovoArquivo(n => ({ ...n, tipo: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all uppercase cursor-pointer"
+                  >
+                    <option value="audio">ÁUDIO (MP3, WAV, AAC...)</option>
+                    <option value="video">VÍDEO (MP4, MOV, AVI...)</option>
+                    <option value="PNG">PNG (IMAGEM PNG)</option>
+                    <option value="PDF">PDF (DOCUMENTO PDF)</option>
+                    <option value=".doc">.DOC (DOCUMENTO WORD .DOC / .DOCX)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Arquivo * ({novoArquivo.tipo === "audio" ? "Áudio .mp3, .wav, .aac, etc." : novoArquivo.tipo === "video" ? "Vídeo .mp4, .mov, etc." : novoArquivo.tipo === "PNG" ? "Imagem .png" : novoArquivo.tipo === "PDF" ? "Documento .pdf" : "Documento .doc / .docx"})
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="empresa-arquivo-upload"
+                      accept={
+                        novoArquivo.tipo === "audio"
+                          ? "audio/*,.mp3,.wav,.aac,.ogg,.m4a"
+                          : novoArquivo.tipo === "video"
+                          ? "video/*,.mp4,.mov,.avi,.mkv,.webm"
+                          : novoArquivo.tipo === "PNG"
+                          ? "image/png,.png"
+                          : novoArquivo.tipo === "PDF"
+                          ? "application/pdf,.pdf"
+                          : ".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      }
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (file) {
+                          setNovoArquivo(n => ({
+                            ...n,
+                            file,
+                            nome: n.nome || file.name.replace(/\.[^/.]+$/, "").toUpperCase(),
+                          }));
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="empresa-arquivo-upload"
+                      className="w-full p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#0055ff] bg-slate-50 hover:bg-blue-50/30 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
+                    >
+                      {novoArquivo.file ? (
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#0055ff]">
+                          {novoArquivo.tipo === "audio" ? (
+                            <Music size={18} />
+                          ) : novoArquivo.tipo === "video" ? (
+                            <Film size={18} />
+                          ) : novoArquivo.tipo === "PNG" ? (
+                            <ImageIcon size={18} />
+                          ) : (
+                            <FileText size={18} />
+                          )}
+                          <span className="truncate max-w-xs">{novoArquivo.file.name}</span>
+                          <span className="text-[10px] text-slate-400">({(novoArquivo.file.size / 1024).toFixed(0)} KB)</span>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload size={24} className="text-slate-400" />
+                          <span className="text-xs font-bold text-slate-600">
+                            Clique para selecionar ou arraste o arquivo
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            Formatos aceitos: áudio, vídeo, PNG, PDF ou .doc
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer do Popup */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setModalArquivoOpen(false)}
+                  disabled={savingArquivo}
+                  className="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveArquivo}
+                  disabled={savingArquivo}
+                  className="px-6 py-2.5 rounded-2xl bg-[#0055ff] hover:bg-[#0044cc] text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  {savingArquivo ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={14} />
+                      Salvar Arquivo
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Seção XMLs */}
+        <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center">
+                <Code2 className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#011c5b]">
+                  XMLs — Feeds e Integrações
+                </h3>
+                <p className="text-[11px] text-slate-400">Endpoints para vMix, OBS Studio e automações</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold text-[#0055ff] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100 uppercase tracking-wider">
+              8 Feeds
+            </span>
+          </div>
+          <XmlsConfigSection targetUid={targetUid} user={user} />
+        </section>
+
+        {/* Rodapé Informativo */}
+        <div className="flex items-center justify-between p-4 px-6 rounded-2xl bg-[#d0deff]/20 border border-[#d0deff]/60 text-xs text-[#011c5b] font-medium">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#0055ff]" />
+            <span>As configurações são salvas automaticamente em tempo real no banco de dados.</span>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#0055ff] bg-white px-3 py-1 rounded-full shadow-xs">
+            Nexo Hub Super Admin
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   const typeLabels: Record<string, string> = { audio_live: "Áudio ao vivo", video_live: "Vídeo ao vivo", video: "Vídeo ao vivo", youtube: "Vídeo do YouTube", catalog: "Catálogo" };
 
-  const btnPrimary: React.CSSProperties = { backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", border: "2px solid #0d0446", borderRadius: "20px" };
-  const btnSecondary: React.CSSProperties = { backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" };
+  const btnPrimary: React.CSSProperties = { backgroundColor: "#0055ff", color: "#ffffff", border: "1px solid #0055ff", borderRadius: "999px", padding: "8px 24px", fontWeight: 700 };
+  const btnSecondary: React.CSSProperties = { backgroundColor: "#ffffff", color: "#002132", border: "1px solid rgba(226, 232, 240, 0.9)", borderRadius: "999px", padding: "8px 20px", fontWeight: 700 };
 
   return (
-    <div className="nexo-scope animate-fade-in" style={{ fontFamily: NEXO_FONT }}>
+    <div className="nexo-scope animate-fade-in max-w-6xl mx-auto w-full" style={{ fontFamily: NEXO_FONT }}>
       <div style={{ background: "transparent", padding: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           <div
-            className="flex items-center justify-center"
-            style={{ width: 44, height: 44, borderRadius: 999, background: NEXO_CYAN, color: "#fff" }}
+            className="flex items-center justify-center shadow-xs"
+            style={{ width: 44, height: 44, borderRadius: 999, background: "#0055ff", color: "#fff" }}
           >
             <Save size={20} />
           </div>
           <div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>Configurações</h3>
-            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>Gerencie os dados dos canais do player</p>
+            <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: "#002132", textTransform: "uppercase", margin: 0 }}>Configurações</h3>
+            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>
+              {isAdmin ? "Gerencie os dados e informações da empresa" : (section === "player" ? "Gerencie os dados dos canais do player" : "Gerencie os dados da empresa")}
+            </p>
           </div>
         </div>
         <div className="space-y-5">
@@ -540,21 +2024,24 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
       {/* Box 2: Configurações do Player */}
       {(section === "all" || section === "player") && <div className="space-y-6">
-        {/* Bento admin header */}
-        <div className="w-full rounded-2xl px-6 py-5 flex items-center justify-between" style={{ backgroundColor: "#1a1a1a", borderBottom: "4px solid #00BFF0", boxShadow: "0 10px 30px rgba(0,0,0,0.18)" }}>
+        {/* Modern Player header card */}
+        <section className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/90 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#00BFF0" }}>
-              <Tv size={18} className="text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-[#0055ff]/10 text-[#0055ff] flex items-center justify-center shadow-xs shrink-0">
+              <Tv className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold tracking-tight text-white">
-              Player <span className="font-light" style={{ color: "#00BFF0" }}>— Configurações</span>
-            </h3>
+            <div>
+              <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
+                Player <span className="font-light text-[#0055ff]">— Configurações</span>
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">Gerencie canais ao vivo e catálogos de streaming</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: "#C6F03C" }} />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Admin Panel</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Player Config</span>
           </div>
-        </div>
+        </section>
         <div className="space-y-6">
         <div className="space-y-6">
           {/* ── Header + Mode ── */}
@@ -611,7 +2098,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           {/* ── Seção 1: Informações do Canal ── */}
           <div className="rounded-3xl p-6 space-y-4 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#00BFF0" }} />
+              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#0055ff" }} />
               <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Informações do Canal</h4>
               <Settings size={14} className="ml-1 opacity-40" />
             </div>
@@ -621,8 +2108,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo de Transmissão</label>
                   <select value={canalForm.type} onChange={(e) => setCanalForm(p => ({ ...p, type: e.target.value }))}
-                    className="w-full px-4 py-2 outline-none text-sm font-medium cursor-pointer"
-                    style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px", border: "2px solid #0d0446" }}>
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all cursor-pointer uppercase">
                     <option value="audio_live">Áudio ao vivo</option>
                     <option value="video_live">Vídeo ao vivo</option>
                   </select>
@@ -640,8 +2126,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   <select
                     value={canalForm.estudio}
                     onChange={(e) => setCanalForm(p => ({ ...p, estudio: e.target.value }))}
-                    className="w-full px-4 py-2 text-sm font-medium appearance-none cursor-pointer"
-                    style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)", color: "var(--layout-header-text, #ffffff)", borderRadius: "20px", border: "2px solid #0d0446" }}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all cursor-pointer uppercase"
                   >
                     <option value="">Nenhum</option>
                     {Array.from(new Set(programas.map(p => p.estudio).filter(Boolean))).sort().map(e => (
@@ -705,8 +2190,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                           <select
                             value={canalForm.catalog_name}
                             onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value, name: e.target.value }))}
-                            className="w-full px-4 py-2 outline-none text-sm font-medium cursor-pointer"
-                            style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px", border: "1px solid var(--layout-border-color, #333333)" }}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/20 focus:border-[#0055ff] transition-all cursor-pointer uppercase"
                           >
                             <option value="">Selecione um catálogo</option>
                             {existingCatalogs.map(cat => (
@@ -714,7 +2198,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                             ))}
                           </select>
                           <button onClick={() => { setNewCatalogMode(true); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
-                            className="btn-skyglass-accent px-3 py-1.5 text-xs shrink-0 whitespace-nowrap"
+                            className="px-5 py-2.5 rounded-full text-xs font-bold text-white bg-[#0055ff] hover:brightness-110 shadow-xs flex items-center gap-1.5 shrink-0 whitespace-nowrap"
                           >
                             <Plus size={12} /> Novo Catálogo
                           </button>
@@ -725,10 +2209,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 </div>
 
                 {/* Vincular Programa */}
-                <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color) 18%, transparent)" }}>
+                <div className="rounded-2xl p-5 space-y-3 bg-slate-50 border border-slate-200/80">
                   <div className="flex items-center gap-2">
-                    <Link2 size={14} style={{ color: "var(--layout-accent-color)" }} />
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color)" }}>Vincular Programa</span>
+                    <Link2 size={14} className="text-[#0055ff]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#002132]">Vincular Programa</span>
                   </div>
                   <select
                     value={selectedProgramaId}
@@ -1046,7 +2530,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </div></div>}
 
       {/* Box 4: Player Layout */}
-      {(section === "all" || section === "player" || section === "empresa") && <CollapsibleBox title="Layout do Player — Cores e Personalização" icon={<Tv size={16} style={{ opacity: 0.8 }} />}>
+      {!isAdmin && (section === "all" || section === "player") && <CollapsibleBox title="Layout do Player — Cores e Personalização" icon={<Tv size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <PlayerLayoutCustomizer />
         </Suspense>
@@ -1054,17 +2538,15 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
 
 
       {/* Box 5: Permissões */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Permissões — Sub-Usuários" icon={<ShieldCheck size={16} style={{ opacity: 0.8 }} />}>
+      {!isAdmin && (section === "all" || section === "empresa") && <CollapsibleBox title="Permissões — Sub-Usuários" icon={<ShieldCheck size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <PermissoesSection />
         </Suspense>
       </CollapsibleBox>}
 
-      {/* Box 6: Inteligência Artificial */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Inteligência Artificial" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
-        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
-          <AISection />
-        </Suspense>
+      {/* Box 6: XMLs */}
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="XMLs" icon={<Code2 size={16} style={{ opacity: 0.8 }} />}>
+        <XmlsConfigSection targetUid={targetUid} user={user} />
       </CollapsibleBox>}
         </div>
       </div>

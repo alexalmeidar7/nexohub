@@ -5,28 +5,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot, Send, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { History, Trash2, Pencil, MessageSquare, FileText, X, Check, RefreshCw, Zap, Bot, Send, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const WhatsAppSendDialog = lazyRetry(() => import("./WhatsAppSendDialog"));
-const ProgramaExpressInline = lazyRetry(() => import("./ProgramaExpressInline"));
+import ProgramaExpressInline from "./ProgramaExpressInline";
 const AutomacaoProgramaSection = lazyRetry(() => import("./AutomacaoProgramaSection"));
 import HistoricoTable from "./HistoricoTable";
 import type { ExpressEditData } from "./ProgramaExpressInline";
+import { getProgramas } from "./ProgramaForm";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 
-// Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+// Palette (nexo-form-design-system) — alinhado ao Cadastro de Cliente
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#ffffff";
+const DARK = "#002132";
 const MONT: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
 
 // Formata timestamp UTC do banco no fuso local do usuário (respeita DST automaticamente).
-const LOCAL_TZ = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined;
+const LOCAL_TZ = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "America/Sao_Paulo";
 function formatLocal(iso: string | null | undefined, pattern: "full" | "short" = "full"): string {
   if (!iso) return "";
-  const d = new Date(iso);
+  let dateStr = String(iso).trim();
+  if (dateStr.includes(" ") && !dateStr.includes("T")) {
+    dateStr = dateStr.replace(" ", "T");
+  }
+  if (!/([+-]\d{2}(:?\d{2})?|Z)$/i.test(dateStr)) {
+    dateStr = `${dateStr}Z`;
+  }
+  const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "";
   const opts: Intl.DateTimeFormatOptions =
     pattern === "full"
@@ -47,12 +56,28 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[];
   apresentador_id: string | null;
+  apresentadores_ids?: string[] | null;
   capa: string | null;
   selo: string | null;
 }
 
-export default function RoteiroPrograma() {
+function findProgramaForRoteiro(r: any, progs: Programa[]): Programa | undefined {
+  if (!r || !Array.isArray(progs) || progs.length === 0) return undefined;
+  if (r.programa_id) {
+    const byId = progs.find(p => p.id === r.programa_id);
+    if (byId) return byId;
+  }
+  const rawName = (r.programa_nome || "").replace(/^PROGRAMA EXPRESS\s*[-—]\s*/i, "").trim();
+  const norm = (s: string) => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toUpperCase();
+  const target = norm(rawName);
+  if (!target) return undefined;
+  return progs.find(p => norm(p.nome) === target) ||
+         progs.find(p => norm(p.nome).includes(target) || target.includes(norm(p.nome)));
+}
+
+export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const [resolvedUserId, setResolvedUserId] = useState<string>("");
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [estudios, setEstudios] = useState<string[]>([]);
@@ -67,7 +92,6 @@ export default function RoteiroPrograma() {
   const [txtSaving, setTxtSaving] = useState(false);
   const [externalPasteText, setExternalPasteText] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"recentes" | "historico">("recentes");
-  const [historicoOpen, setHistoricoOpen] = useState(true);
   const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
   const [automacaoOpen, setAutomacaoOpen] = useState(false);
   const [agendados, setAgendados] = useState<any[]>([]);
@@ -369,50 +393,557 @@ export default function RoteiroPrograma() {
     fetchHistorico();
   };
 
-  useEffect(() => {
-    if (!user) return;
-    const load = async () => {
-      setLoading(true);
-      // Resolve effective user id: sub-users inherit parent's programs/schedule
+  const getLocalStorageKey = (uId: string) => `nexohub_roteiros_${uId}`;
+
+  const getStoredRoteiros = (uId: string): any[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  };
+
+  const saveStoredRoteiros = (uId: string, list: any[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+    } catch {}
+  };
+
+  const resolveEffectiveUserId = async (): Promise<string> => {
+    if (propEffectiveUserId) return propEffectiveUserId;
+    if (!user) return "";
+    try {
       const { data: sub } = await supabase
         .from("sub_users")
         .select("parent_user_id, ativo")
         .eq("auth_user_id", user.id)
         .maybeSingle();
-      const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
+      if (sub?.ativo && sub.parent_user_id) return sub.parent_user_id;
+    } catch {}
+    return user.id;
+  };
 
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const effectiveUserId = await resolveEffectiveUserId();
+    setResolvedUserId(effectiveUserId);
+
+    let programasList: Programa[] = [];
+    try {
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, capa, selo")
+        .select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, capa, selo")
         .eq("ativo", true)
         .eq("user_id", effectiveUserId);
-      const programasList = progs || [];
-      setProgramas(programasList);
-      const uniqueEstudios = [...new Set(programasList.map(p => p.estudio).filter(Boolean))] as string[];
-      setEstudios(uniqueEstudios);
-      setLoading(false);
-    };
+      if (progs && progs.length > 0) {
+        programasList = progs;
+      }
+    } catch {}
+
+    try {
+      const fallbackProgs = await getProgramas(effectiveUserId, user.email);
+      if (fallbackProgs && fallbackProgs.length > 0) {
+        const map = new Map<string, Programa>();
+        programasList.forEach(p => map.set(p.id, p));
+        fallbackProgs.forEach((p: any) => {
+          const formatted: Programa = {
+            id: p.id,
+            nome: p.nome,
+            estudio: p.estudio || "",
+            tipo_programa: p.tipo_programa || p.tipoPrograma || null,
+            horario_inicio: p.horario_inicio || p.horarioInicio || "",
+            horario_fim: p.horario_fim || p.horarioFim || "",
+            dias_semana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray(p.diasSemana) ? p.diasSemana : (p.dias_semana ? p.dias_semana.split(",") : [])),
+            apresentador_id: p.apresentador_id || p.apresentadorId || null,
+            apresentadores_ids: (p as any).apresentadores_ids || (p as any).apresentadoresIds || (p.apresentador_id ? [p.apresentador_id] : (p as any).apresentadorId ? [(p as any).apresentadorId] : null),
+            capa: p.capa || null,
+            selo: p.selo || null,
+          };
+          if (map.has(p.id)) {
+            const existing = map.get(p.id)!;
+            map.set(p.id, {
+              ...existing,
+              tipo_programa: formatted.tipo_programa || existing.tipo_programa,
+              apresentadores_ids: (formatted.apresentadores_ids && formatted.apresentadores_ids.length > 0) ? formatted.apresentadores_ids : existing.apresentadores_ids,
+              apresentador_id: formatted.apresentador_id || existing.apresentador_id,
+            });
+          } else {
+            map.set(p.id, formatted);
+          }
+        });
+        programasList = Array.from(map.values());
+      }
+    } catch {}
+
+    setProgramas(programasList);
+    const uniqueEstudios = [...new Set(programasList.map(p => p.estudio).filter(Boolean))] as string[];
+    setEstudios(uniqueEstudios);
+    setLoading(false);
+    await fetchHistorico(programasList);
+  }, [user, propEffectiveUserId]);
+
+  useEffect(() => {
     load();
-  }, [user]);
+  }, [load]);
 
-  const fetchHistorico = async () => {
+  useEffect(() => {
+    const handleProgramasUpdated = () => {
+      load();
+    };
+    const handleRoteirosUpdated = () => {
+      fetchHistorico();
+    };
+    window.addEventListener("nexohub:programas-updated", handleProgramasUpdated);
+    window.addEventListener("housemix:programas-updated", handleProgramasUpdated);
+    window.addEventListener("nexohub:roteiros-updated", handleRoteirosUpdated);
+    return () => {
+      window.removeEventListener("nexohub:programas-updated", handleProgramasUpdated);
+      window.removeEventListener("housemix:programas-updated", handleProgramasUpdated);
+      window.removeEventListener("nexohub:roteiros-updated", handleRoteirosUpdated);
+    };
+  }, [load]);
+
+  const parseXmlToRoteiro = (
+    xmlText: string,
+    xmlUrl: string,
+    fileId: string,
+    effectiveUserId: string,
+    fileCreatedAt?: string,
+    knownProgramas?: Programa[]
+  ) => {
+    const getTag = (xml: string, tag: string) => {
+      const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+      return m ? m[1].trim() : "";
+    };
+
+    const decodeXml = (s: string) => {
+      if (!s) return "";
+      return s
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&");
+    };
+
+    const cleanXmlVal = (s: string) => {
+      if (!s) return "";
+      return decodeXml(s)
+        .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1")
+        .replace(/<[^>]+>/g, "")
+        .trim();
+    };
+
+    const isItemsDados = xmlText.includes("<items>") && xmlText.includes("<dados>");
+
+    let rawProg = getTag(xmlText, "programa");
+    let rawTitulo = getTag(xmlText, "titulo");
+    let rawEstudio = getTag(xmlText, "estudio");
+
+    let programaNome = cleanXmlVal(rawProg);
+    if (!programaNome && rawTitulo) {
+      const cleanTit = cleanXmlVal(rawTitulo);
+      if (cleanTit.includes("—")) programaNome = cleanTit.split("—")[1].trim();
+      else if (cleanTit.includes("-")) programaNome = cleanTit.split("-")[1].trim();
+      else programaNome = cleanTit;
+    }
+    if (!programaNome) programaNome = "Programa";
+
+    // Limpa prefixos conhecidos caso tenham sido gravados
+    if (programaNome.toUpperCase().startsWith("PROGRAMA EXPRESS — ")) {
+      programaNome = programaNome.substring(19).trim();
+    } else if (programaNome.toUpperCase().startsWith("PROGRAMA EXPRESS - ")) {
+      programaNome = programaNome.substring(19).trim();
+    }
+
+    let rawEstudioClean = cleanXmlVal(rawEstudio);
+    let estudio = rawEstudioClean;
+
+    // Se o XML não tiver estúdio explícito, detecta pelo nome do programa
+    if (!estudio) {
+      const lowerProg = programaNome.toLowerCase();
+      if (
+        lowerProg.includes("bate papo") ||
+        lowerProg.includes("conversas") ||
+        lowerProg.includes("família") ||
+        lowerProg.includes("familia") ||
+        lowerProg.includes("política") ||
+        lowerProg.includes("politica") ||
+        lowerProg.includes("podcast") ||
+        lowerProg.includes("debate")
+      ) {
+        estudio = "PODCAST";
+      } else {
+        estudio = "ESTÚDIO FM";
+      }
+    }
+
+    // Tenta encontrar o estúdio correto na grade de programas cadastrados
+    let matchedProg: Programa | undefined;
+    if (knownProgramas && knownProgramas.length > 0) {
+      matchedProg = knownProgramas.find(
+        p => p.nome?.toLowerCase().trim() === programaNome.toLowerCase().trim()
+      ) || findProgramaForRoteiro({ programa_nome: programaNome }, knownProgramas);
+      if (matchedProg && matchedProg.estudio) {
+        estudio = matchedProg.estudio;
+      }
+    }
+
+    // Normalização dos estúdios padrão
+    const normEst = estudio.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+    if (normEst === "ESTUDIO FM" || normEst === "FM" || normEst === "ESTUDIO PRINCIPAL" || normEst === "PRINCIPAL") {
+      estudio = "ESTÚDIO FM";
+    } else if (normEst.includes("PODCAST")) {
+      estudio = "PODCAST";
+    }
+
+    const rawData = cleanXmlVal(getTag(xmlText, "data"));
+    let dataPrograma = rawData;
+    if (!dataPrograma && fileCreatedAt) {
+      try {
+        const d = new Date(fileCreatedAt);
+        dataPrograma = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      } catch {}
+    }
+    if (!dataPrograma) {
+      const now = new Date();
+      dataPrograma = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    }
+
+    const rawHorario = cleanXmlVal(getTag(xmlText, "horario") || getTag(xmlText, "hora") || getTag(xmlText, "hora_inicio"));
+    let finalHorario = rawHorario;
+    if (!finalHorario && matchedProg?.horario_inicio) {
+      finalHorario = matchedProg.horario_inicio.slice(0, 5);
+    }
+    if (!finalHorario && fileCreatedAt) {
+      try {
+        const d = new Date(fileCreatedAt);
+        finalHorario = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+      } catch {}
+    }
+    if (!finalHorario) finalHorario = "08:00";
+
+    const participantes: any[] = [];
+    const escaladaList: any[] = [];
+    const blocos: any[] = [];
+    let podcastData: any = null;
+
+    if (isItemsDados) {
+      const partNome = cleanXmlVal(getTag(xmlText, "participante_nome"));
+      const partCargo = cleanXmlVal(getTag(xmlText, "participante_cargo") || "Apresentador");
+      const insta = cleanXmlVal(getTag(xmlText, "rede_social_instagram_texto"));
+      if (partNome) {
+        participantes.push({ nome: partNome, cargo: partCargo, instagram: insta });
+      }
+    } else {
+      const participantesMatch = xmlText.match(/<participantes>([\s\S]*?)<\/participantes>/i);
+      if (participantesMatch) {
+        const partXml = participantesMatch[1];
+        const itemMatches = partXml.matchAll(/<(?:participante\d+|item)>([\s\S]*?)<\/(?:participante\d+|item)>/gi);
+        for (const match of itemMatches) {
+          const inner = match[1];
+          const nome = cleanXmlVal(getTag(inner, "nome"));
+          const cargo = cleanXmlVal(getTag(inner, "cargo"));
+          const instagram = cleanXmlVal(getTag(inner, "instagram"));
+          if (nome) participantes.push({ nome, cargo, instagram });
+        }
+      }
+
+      const escaladaMatch = xmlText.match(/<escalada>([\s\S]*?)<\/escalada>/i);
+      if (escaladaMatch) {
+        const escXml = escaladaMatch[1];
+        const itemMatches = escXml.matchAll(/<item[^>]*>([\s\S]*?)<\/item>/gi);
+        for (const match of itemMatches) {
+          const inner = match[1];
+          const titulo = cleanXmlVal(getTag(inner, "titulo"));
+          const imagem = cleanXmlVal(getTag(inner, "imagem"));
+          if (titulo) escaladaList.push({ titulo, imagemUrl: imagem });
+        }
+      }
+
+      const roteiroMatch = xmlText.match(/<roteiro>([\s\S]*?)<\/roteiro>/i);
+      if (roteiroMatch) {
+        const rXml = roteiroMatch[1];
+        const tituloTarja = cleanXmlVal(getTag(rXml, "tituloTarja") || getTag(rXml, "titulo"));
+        const introducao = cleanXmlVal(getTag(rXml, "introducao"));
+        const concluindo = cleanXmlVal(getTag(rXml, "concluindo"));
+        const perguntas: string[] = [];
+        const perMatches = rXml.matchAll(/<pergunta[^>]*>([\s\S]*?)<\/pergunta>/gi);
+        for (const pm of perMatches) {
+          const pText = cleanXmlVal(pm[1]);
+          if (pText) perguntas.push(pText);
+        }
+        podcastData = {
+          tituloTarja,
+          introducao,
+          perguntas,
+          concluindo,
+          apoioImagens: [],
+          apoioVideos: []
+        };
+        if (tituloTarja || perguntas.length > 0) {
+          blocos.push({
+            noticias: [{
+              titulo: tituloTarja || (perguntas[0] || "PAUTA PODCAST"),
+              resumo: introducao,
+              texto_materia: concluindo || perguntas.join("\n"),
+              escalada: false
+            }]
+          });
+        }
+      }
+
+      const blocoMatches = xmlText.matchAll(/<bloco[^>]*>([\s\S]*?)<\/bloco>/gi);
+      for (const bMatch of blocoMatches) {
+        const bXml = bMatch[1];
+        const noticias: any[] = [];
+        const notMatches = bXml.matchAll(/<noticia[^>]*>([\s\S]*?)<\/noticia>/gi);
+        for (const nMatch of notMatches) {
+          const nXml = nMatch[1];
+          const titulo = cleanXmlVal(getTag(nXml, "titulo"));
+          const imagem = cleanXmlVal(getTag(nXml, "imagem"));
+          const resumo = cleanXmlVal(getTag(nXml, "resumo"));
+          const texto = cleanXmlVal(getTag(nXml, "texto_materia") || getTag(nXml, "texto"));
+          const escalada = getTag(nXml, "escalada") === "true";
+          if (titulo || texto) {
+            noticias.push({
+              titulo,
+              imagemUrl: imagem,
+              resumo,
+              texto_materia: texto,
+              escalada
+            });
+          }
+        }
+        if (noticias.length > 0) blocos.push({ noticias });
+      }
+    }
+
+    const participantesData = {
+      participantes,
+      escaladaList,
+      blocos,
+      ...(podcastData ? { podcastData } : {})
+    };
+
+    let textoFormatado = `Estúdio: ${estudio}\nPrograma: ${programaNome}\n\n`;
+    if (participantes.length > 0) {
+      textoFormatado += `EQUIPE:\n`;
+      participantes.forEach(p => {
+        textoFormatado += `- ${p.nome}${p.cargo ? ` – ${p.cargo}` : ""}${p.instagram ? ` : ${p.instagram}` : ""}\n`;
+      });
+      textoFormatado += `\n`;
+    }
+    if (podcastData?.tituloTarja) {
+      textoFormatado += `PAUTA:\n- ${podcastData.tituloTarja}\n\n`;
+    }
+    if (escaladaList.length > 0) {
+      textoFormatado += `ESCALADA:\n`;
+      escaladaList.forEach((e, idx) => {
+        textoFormatado += `${idx + 1}. ${e.titulo}\n`;
+      });
+      textoFormatado += `\n`;
+    }
+    blocos.forEach((b, idx) => {
+      textoFormatado += `BLOCO ${idx + 1}:\n`;
+      b.noticias.forEach((n: any) => {
+        textoFormatado += `- ${n.titulo}\n`;
+      });
+      textoFormatado += `\n`;
+    });
+
+    const ticker = escaladaList.length > 0
+      ? escaladaList.map(e => e.titulo).join(" • ")
+      : blocos.flatMap(b => b.noticias.map((n: any) => n.titulo)).join(" • ");
+
+    return {
+      id: fileId,
+      user_id: effectiveUserId,
+      programa_nome: programaNome,
+      programa_id: matchedProg?.id || "",
+      estudio: estudio,
+      titulo: `PROGRAMA EXPRESS — ${programaNome}`,
+      subtitulo: `express_xml::${xmlUrl}`,
+      tipo_programa: matchedProg?.tipo_programa || "Jornalístico / Talk",
+      data_programa: dataPrograma,
+      horario: finalHorario,
+      conteudo_html: textoFormatado.trim(),
+      participantes: JSON.stringify(participantesData),
+      status: "feito",
+      tickertitulos: ticker,
+      created_at: fileCreatedAt || new Date().toISOString(),
+      updated_at: fileCreatedAt || new Date().toISOString(),
+      xml_pushed_at: fileCreatedAt || new Date().toISOString(),
+    };
+  };
+
+  const fetchHistorico = async (_currentProgramas?: Programa[]) => {
     if (!user) return;
+    const effectiveUserId = await resolveEffectiveUserId();
+    const progs = _currentProgramas || programas;
 
-    // Resolve effective user id: sub-users inherit parent's data
-    const { data: sub } = await supabase
-      .from("sub_users")
-      .select("parent_user_id, ativo")
-      .eq("auth_user_id", user.id)
-      .maybeSingle();
-    const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
+    const acc = findClientAccountById(effectiveUserId) || findClientAccountByEmail(user?.email);
+    const candidateUserIds = Array.from(
+      new Set(
+        [
+          effectiveUserId,
+          user.id,
+          propEffectiveUserId,
+          resolvedUserId,
+          acc?.id,
+          acc?.parentUserId,
+        ].filter(Boolean) as string[]
+      )
+    );
 
-    const { data } = await supabase
-      .from("roteiros")
-      .select("*")
-      .eq("user_id", effectiveUserId)
-      .order("created_at", { ascending: false });
+    let dbRoteiros: any[] = [];
+    try {
+      const res = await supabase
+        .from("roteiros")
+        .select("*")
+        .in("user_id", candidateUserIds)
+        .order("created_at", { ascending: false });
+      if (res.data && res.data.length > 0) {
+        dbRoteiros = res.data.filter((r: any) => !r.programa_nome?.includes("<"));
+      }
+    } catch {}
 
-    if (!data) {
+    // Collect all locally stored roteiros across all candidate user IDs
+    const localRoteiros: any[] = [];
+    candidateUserIds.forEach((uid) => {
+      const stored = getStoredRoteiros(uid);
+      if (Array.isArray(stored) && stored.length > 0) {
+        localRoteiros.push(...stored.filter((r: any) => !r.programa_nome?.includes("<")));
+      }
+    });
+
+    // Merge DB and local storage roteiros seamlessly
+    const combinedMap = new Map<string, any>();
+    localRoteiros.forEach((r) => {
+      if (r?.id) combinedMap.set(r.id, r);
+    });
+    dbRoteiros.forEach((r) => {
+      if (r?.id) combinedMap.set(r.id, r);
+    });
+
+    let data = Array.from(combinedMap.values());
+    data.sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
+
+    // Save all merged roteiros across all candidate user IDs
+    candidateUserIds.forEach((uid) => saveStoredRoteiros(uid, data));
+
+    // Se a tabela estiver vazia, busca os arquivos XML REAIS gravados no Storage (empresa-assets/express/{userId})
+    if (data.length === 0) {
+      try {
+        const { data: files } = await supabase.storage
+          .from("empresa-assets")
+          .list(`express/${effectiveUserId}`, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+
+        if (files && files.length > 0) {
+          const xmlFiles = files.filter(f => f.name.endsWith(".xml"));
+          const parsedRoteiros: any[] = [];
+
+          for (const file of xmlFiles) {
+            try {
+              const { data: pubUrl } = supabase.storage
+                .from("empresa-assets")
+                .getPublicUrl(`express/${effectiveUserId}/${file.name}`);
+              const fileUrl = pubUrl.publicUrl;
+              const res = await fetch(fileUrl);
+              if (res.ok) {
+                const xmlContent = await res.text();
+                const parsed = parseXmlToRoteiro(
+                  xmlContent,
+                  fileUrl,
+                  file.name.replace(".xml", ""),
+                  effectiveUserId,
+                  file.created_at || file.updated_at,
+                  progs
+                );
+                if (parsed) {
+                  parsedRoteiros.push(parsed);
+                }
+              }
+            } catch (err) {
+              console.warn("Erro ao processar XML de roteiro:", file.name, err);
+            }
+          }
+
+          if (parsedRoteiros.length > 0) {
+            // Deduplica mantendo a versão mais recente de cada programa
+            parsedRoteiros.sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
+            const progMap = new Map<string, any>();
+            for (const r of parsedRoteiros) {
+              const key = (r.programa_nome || "").toLowerCase().trim();
+              if (key && !progMap.has(key)) {
+                progMap.set(key, r);
+              }
+            }
+            data = Array.from(progMap.values());
+            data.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+            saveStoredRoteiros(effectiveUserId, data);
+          }
+        }
+      } catch (e) {
+        console.warn("Erro ao buscar XMLs do storage:", e);
+      }
+    }
+
+    // Se ainda vazio, consulta o endpoint oficial do servidor serve-xml-roteiro-estudio para os estúdios reais
+    if (data.length === 0) {
+      try {
+        const candidateEstudios = Array.from(new Set([
+          "Estudio FM",
+          "Podcast",
+          "ESTÚDIO FM",
+          "PODCAST",
+          ...progs.map(p => p.estudio).filter(Boolean)
+        ]));
+
+        const serverRoteiros: any[] = [];
+        for (const est of candidateEstudios) {
+          try {
+            const res = await fetch(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${effectiveUserId}&estudio=${encodeURIComponent(est)}`);
+            if (res.ok) {
+              const xmlText = await res.text();
+              if (xmlText.includes("<programaExpress>") && !xmlText.includes("<error>")) {
+                const parsed = parseXmlToRoteiro(
+                  xmlText,
+                  `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${effectiveUserId}&estudio=${encodeURIComponent(est)}`,
+                  `srv_${effectiveUserId}_${est.replace(/\s+/g, "_")}`,
+                  effectiveUserId,
+                  new Date().toISOString(),
+                  progs
+                );
+                if (parsed && (parsed.conteudo_html || parsed.participantes)) {
+                  serverRoteiros.push(parsed);
+                }
+              }
+            }
+          } catch {}
+        }
+
+        if (serverRoteiros.length > 0) {
+          const progMap = new Map<string, any>();
+          for (const r of serverRoteiros) {
+            const key = (r.programa_nome || r.estudio || "").toLowerCase().trim();
+            if (key && !progMap.has(key)) {
+              progMap.set(key, r);
+            }
+          }
+          data = Array.from(progMap.values());
+          saveStoredRoteiros(effectiveUserId, data);
+        }
+      } catch (e) {
+        console.warn("Erro ao buscar serve-xml-roteiro-estudio:", e);
+      }
+    }
+
+    if (!data || data.length === 0) {
       setHistorico([]);
       setAgendados([]);
       return;
@@ -427,14 +958,36 @@ export default function RoteiroPrograma() {
     );
     if (expiredAgendados.length > 0) {
       const expiredIds = expiredAgendados.map((r: any) => r.id);
-      await supabase.from("roteiros").update({ agendado_para_envio: null }).in("id", expiredIds);
+      try {
+        await supabase.from("roteiros").update({ agendado_para_envio: null }).in("id", expiredIds);
+      } catch {}
       for (const r of data) {
         if (expiredIds.includes(r.id)) r.agendado_para_envio = null;
       }
     }
 
-    setHistorico(data.filter((r: any) => !r.agendado_para_envio));
-    setAgendados(data.filter((r: any) => r.agendado_para_envio));
+    // 1. Roteiros agendados: todos com data de agendamento ativa
+    const activeAgendados = data.filter((r: any) => !!r.agendado_para_envio);
+    activeAgendados.sort((a: any, b: any) => new Date(a.agendado_para_envio).getTime() - new Date(b.agendado_para_envio).getTime());
+
+    // 2. Roteiros cadastrados (boxes principais por programa + estúdio)
+    // Permite que programas agendados também mantenham seu box em cadastrados
+    const baseItems = data.filter((r: any) => !r.agendado_para_envio);
+    const candidatesForBoxes = baseItems.length > 0 ? [...baseItems, ...data] : data;
+    const progMap = new Map<string, any>();
+    for (const r of candidatesForBoxes) {
+      const key = `${(r.programa_nome || "").toLowerCase().trim()}__${(r.estudio || "").toLowerCase().trim()}`;
+      if (key && !progMap.has(key)) {
+        progMap.set(key, r);
+      } else if (!key) {
+        progMap.set(r.id, r);
+      }
+    }
+    const finalHistorico = Array.from(progMap.values());
+    finalHistorico.sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
+
+    setHistorico(finalHistorico);
+    setAgendados(activeAgendados);
     const toMarkFeito: string[] = [];
     for (const r of data) {
       if (r.status === "feito" || r.status === "rascunho") continue;
@@ -445,38 +998,55 @@ export default function RoteiroPrograma() {
       if (now >= oneHourAfter) { toMarkFeito.push(r.id); r.status = "feito"; }
     }
     if (toMarkFeito.length > 0) {
-      await supabase.from("roteiros").update({ status: "feito" }).in("id", toMarkFeito);
+      try {
+        await supabase.from("roteiros").update({ status: "feito" }).in("id", toMarkFeito);
+      } catch {}
       for (const id of toMarkFeito) {
         const rot = data.find(r => r.id === id);
         if (!rot) continue;
-        const { data: eventos } = await supabase.from("agenda_eventos").select("id, descricao").eq("user_id", effectiveUserId).ilike("descricao", `%Roteiro: ${rot.programa_nome}%`).eq("data", rot.horario ? `${rot.data_programa}T${rot.horario}:00` : rot.data_programa);
-        if (eventos && eventos.length > 0) {
-          for (const ev of eventos) {
-            if (!ev.descricao?.includes("[VENCIDO]")) {
-              await supabase.from("agenda_eventos").update({ descricao: `[VENCIDO] ${ev.descricao}` }).eq("id", ev.id);
+        try {
+          const { data: eventos } = await supabase.from("agenda_eventos").select("id, descricao").eq("user_id", effectiveUserId).ilike("descricao", `%Roteiro: ${rot.programa_nome}%`).eq("data", rot.horario ? `${rot.data_programa}T${rot.horario}:00` : rot.data_programa);
+          if (eventos && eventos.length > 0) {
+            for (const ev of eventos) {
+              if (!ev.descricao?.includes("[VENCIDO]")) {
+                await supabase.from("agenda_eventos").update({ descricao: `[VENCIDO] ${ev.descricao}` }).eq("id", ev.id);
+              }
             }
           }
-        }
+        } catch {}
       }
     }
-    
   };
 
-  useEffect(() => { if (user) fetchHistorico(); }, [user]);
+  useEffect(() => {
+    if (user) fetchHistorico();
+    const handleUpdated = () => {
+      fetchHistorico();
+    };
+    window.addEventListener("nexohub:roteiros-updated", handleUpdated);
+    return () => window.removeEventListener("nexohub:roteiros-updated", handleUpdated);
+  }, [user, propEffectiveUserId]);
 
   const excluirRoteiro = async (id: string) => {
+    const effectiveUserId = await resolveEffectiveUserId();
     const roteiro = historico.find(r => r.id === id);
-    const { error } = await supabase.from("roteiros").delete().eq("id", id);
-    if (error) { toast.error("Erro ao excluir roteiro"); }
-    else {
+    try {
+      await supabase.from("roteiros").delete().eq("id", id);
       if (roteiro && user) {
-        const { data: sub } = await supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle();
-        const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
         await supabase.from("agenda_eventos").delete().eq("user_id", effectiveUserId).eq("data", roteiro.data_programa).like("descricao", `Roteiro: ${roteiro.programa_nome}%`);
       }
-      toast.success("Roteiro excluído");
-      fetchHistorico();
-    }
+    } catch {}
+
+    const acc = findClientAccountById(effectiveUserId) || findClientAccountByEmail(user?.email);
+    const candidateUserIds = Array.from(
+      new Set([effectiveUserId, user?.id, propEffectiveUserId, resolvedUserId, acc?.id, acc?.parentUserId].filter(Boolean) as string[])
+    );
+    candidateUserIds.forEach((uid) => {
+      const updated = getStoredRoteiros(uid).filter(r => r.id !== id);
+      saveStoredRoteiros(uid, updated);
+    });
+    toast.success("Roteiro excluído");
+    fetchHistorico();
   };
 
   const cancelAgendamento = async (id: string) => {
@@ -602,27 +1172,27 @@ export default function RoteiroPrograma() {
 
 
   const historicoSlot = useMemo(() => {
-    if (historico.length === 0 && agendados.length === 0) return null;
     return (
       <div className="px-6 pt-4 pb-2" style={MONT}>
         <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
           <div className="flex items-center gap-3 mb-3 flex-wrap">
-            <button
-              onClick={() => setHistoricoOpen(o => !o)}
-              className="flex items-center gap-2 hover:opacity-80 transition"
-              title={historicoOpen ? "Recolher" : "Expandir"}
-            >
+            <div className="flex items-center gap-2">
               <History size={14} style={{ color: CYAN }} />
               <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
                 Roteiros Cadastrados
               </span>
-              {historicoOpen
-                ? <ChevronUp size={14} style={{ color: CYAN }} />
-                : <ChevronDown size={14} style={{ color: "#94A3B8" }} />}
-            </button>
+              <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
+                {historico.length}
+              </span>
+            </div>
           </div>
-          {historicoOpen && (<>
-          {activeTab === "historico" ? (
+          {historico.length === 0 ? (
+            <div className="text-center py-8" style={{ background: "#FFFFFF", borderRadius: 16, border: `1px dashed ${CYAN}` }}>
+              <FileText size={28} className="mx-auto mb-2 opacity-40" style={{ color: DARK }} />
+              <p style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK, margin: "0 0 6px" }}>Nenhum roteiro cadastrado no momento</p>
+              <p style={{ ...MONT, fontSize: 11, color: "#64748B", margin: 0 }}>Clique em "+ Novo Roteiro" acima para criar um novo roteiro.</p>
+            </div>
+          ) : activeTab === "historico" ? (
 
             <HistoricoTable 
               historico={historico} 
@@ -641,7 +1211,7 @@ export default function RoteiroPrograma() {
                 } catch { 
                   blocos = []; 
                 }
-                const prog = programas.find(p => p.nome === r.programa_nome);
+                const prog = findProgramaForRoteiro(r, programas);
                 let existingXmlPath: string | undefined;
                 if (r.subtitulo?.startsWith("express_xml::")) {
                   try {
@@ -653,13 +1223,16 @@ export default function RoteiroPrograma() {
                 }
                 setExpressEditData({ 
                   roteiroId: r.id, 
-                  estudio: r.estudio || "", 
-                  programaId: prog?.id || "", 
+                  estudio: r.estudio || prog?.estudio || "", 
+                  programaId: prog?.id || r.programa_id || "", 
+                  programaNome: prog?.nome || r.programa_nome || "",
                   blocos, 
                   participantes: editParticipantes, 
                   escaladaList: editEscaladaList, 
                   existingXmlPath, 
-                  podcastData: editPodcastData 
+                  podcastData: editPodcastData,
+                  horario: r.horario || prog?.horario_inicio || "",
+                  dataPrograma: r.data_programa || "",
                 });
                 setNovoRoteiroOpen(true);
                 // Scroll to top to see the edit form
@@ -844,7 +1417,7 @@ export default function RoteiroPrograma() {
                               <button onClick={() => {
                                 let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
                                 try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
-                                const prog = programas.find(p => p.nome === r.programa_nome);
+                                const prog = findProgramaForRoteiro(r, programas);
                                 let existingXmlPath: string | undefined;
                                 if (r.subtitulo?.startsWith("express_xml::")) {
                                   try {
@@ -854,7 +1427,19 @@ export default function RoteiroPrograma() {
                                     if (pathMatch) existingXmlPath = pathMatch[1];
                                   } catch {}
                                 }
-                                setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
+                                setExpressEditData({
+                                  roteiroId: r.id,
+                                  estudio: r.estudio || prog?.estudio || "",
+                                  programaId: prog?.id || r.programa_id || "",
+                                  programaNome: prog?.nome || r.programa_nome || "",
+                                  blocos,
+                                  participantes: editParticipantes,
+                                  escaladaList: editEscaladaList,
+                                  existingXmlPath,
+                                  podcastData: editPodcastData,
+                                  horario: r.horario || prog?.horario_inicio || "",
+                                  dataPrograma: r.data_programa || "",
+                                });
                                 setNovoRoteiroOpen(true);
                               }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Editar">
                                 <Pencil size={13} style={{ color: DARK }} />
@@ -984,7 +1569,7 @@ export default function RoteiroPrograma() {
                       <button onClick={() => {
                         let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
                         try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
-                        const prog = programas.find(p => p.id === r.programa_id);
+                        const prog = findProgramaForRoteiro(r, programas);
                         let existingXmlPath: string | undefined;
                         if (r.subtitulo?.startsWith("express_xml::")) {
                           try {
@@ -994,7 +1579,20 @@ export default function RoteiroPrograma() {
                             if (pathMatch) existingXmlPath = pathMatch[1];
                           } catch {}
                         }
-                        setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
+                        setExpressEditData({
+                          roteiroId: r.id,
+                          estudio: r.estudio || prog?.estudio || "",
+                          programaId: prog?.id || r.programa_id || "",
+                          programaNome: prog?.nome || r.programa_nome || "",
+                          blocos,
+                          participantes: editParticipantes,
+                          escaladaList: editEscaladaList,
+                          existingXmlPath,
+                          podcastData: editPodcastData,
+                          agendaEventoId: r.id,
+                          horario: r.horario || prog?.horario_inicio || "",
+                          dataPrograma: r.data_programa || "",
+                        });
                         setNovoRoteiroOpen(true);
                       }} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors" title="Editar Agendamento">
                         <Pencil size={16} />
@@ -1013,11 +1611,10 @@ export default function RoteiroPrograma() {
               })}
             </div>
           )}
-        </>)}
       </div>
     </div>
   );
-}, [historico, agendados, programas, activeTab, regenerating, historicoOpen, cancelAgendamento]);
+}, [historico, agendados, programas, activeTab, regenerating, cancelAgendamento]);
 
 
 
@@ -1061,12 +1658,12 @@ export default function RoteiroPrograma() {
 
 
 
-  if (loading) return <ModulePageSkeleton />;
+  if (loading) return <ModulePageSkeleton variant="form" />;
 
   const ORANGE = "#fe8900";
 
   return (
-    <div className="animate-fade-in space-y-5" style={MONT}>
+    <div className="animate-fade-in space-y-5 max-w-6xl mx-auto w-full" style={MONT}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         vMix — Roteiro de Programa
@@ -1107,54 +1704,7 @@ export default function RoteiroPrograma() {
 
       
 
-      {estudios.length > 0 && (
-        <div className="px-6 pt-4 pb-2" style={MONT}>
-          <div style={{ background: CARD_BG, borderRadius: 24, padding: "18px 20px" }}>
-            <div className="flex items-center gap-3 mb-3">
-              <Code2 size={14} style={{ color: CYAN }} />
-              <p style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK, margin: 0 }}>
-                XML Roteiro por Estúdio
-              </p>
-              <span style={{ ...MONT, fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, color: CYAN }}>
-                {estudios.length}
-              </span>
-            </div>
-            
-            {/* scheduled roteiros list removed from here as it is now in the drawer */}
 
-
-            <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-              {estudios.map(est => {
-                const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
-                return (
-                  <div
-                    key={est}
-                    className="flex items-center gap-3 transition-all hover:-translate-y-0.5"
-                    style={{ ...MONT, padding: "10px 14px", borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}` }}
-                  >
-                    <span style={{ width: 34, height: 34, borderRadius: "50%", background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Code2 size={14} style={{ color: CYAN }} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p style={{ ...MONT, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#64748B", margin: 0 }}>XML Roteiro</p>
-                      <p style={{ ...MONT, fontSize: 13, fontWeight: 800, color: DARK, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{est}</p>
-                    </div>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(xmlUrl).then(() => toast.success(`URL do XML de ${est} copiada!`)).catch(() => toast.error("Erro ao copiar"))}
-                      style={{ width: 34, height: 34, borderRadius: "50%", background: LIME, color: DARK, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(198, 240, 60, 0.4)" }}
-                      title={`Copiar URL: ${xmlUrl}`}
-                    >
-                      <Copy size={13} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-
-          </div>
-        </div>
-      )}
 
       {!novoRoteiroOpen && historicoSlot}
 
@@ -1171,6 +1721,7 @@ export default function RoteiroPrograma() {
           renderAsModal
           externalPasteText={externalPasteText}
           onExternalPasteConsumed={() => setExternalPasteText(null)}
+          effectiveUserId={resolvedUserId || propEffectiveUserId || user?.id}
         />
       </Suspense>
 

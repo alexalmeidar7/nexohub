@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles, MapPin, Wind } from "lucide-react";
-import XmlLinkRow from "./XmlLinkRow";
-import XmlSection from "./XmlSection";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles, MapPin, Wind, Loader2, Plus, X } from "lucide-react";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSlug } from "@/hooks/useUserSlug";
+import { confirmDialog } from "@/lib/confirmDialog";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { toast } from "sonner";
 
 interface WeatherData {
   city: string;
@@ -75,17 +77,13 @@ function formatDay(dateStr: string) {
   return date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
 }
 
-// Per-user storage keys — never mix data between users on the same device.
-const lastCityKey = (uid: string) => `masterview_last_city_${uid}`;
-const favoritesKey = (uid: string) => `masterview_favorite_cities_${uid}`;
-const primaryCityKey = (uid: string) => `masterview_primary_city_${uid}`;
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
-// Palette (nexo-form-design-system)
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+// Palette (nexo-form-design-system - ClientesPage style)
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#ffffff";
+const DARK = "#002132";
 
 const pillInput: React.CSSProperties = {
   width: "100%",
@@ -117,24 +115,146 @@ interface PrimaryCity {
   lon: number;
 }
 
-function getFavorites(uid: string): FavoriteCity[] {
-  try { return JSON.parse(localStorage.getItem(favoritesKey(uid)) || "[]"); } catch { return []; }
-}
-function saveFavorites(uid: string, list: FavoriteCity[]) {
-  localStorage.setItem(favoritesKey(uid), JSON.stringify(list));
-}
-function getPrimaryCity(uid: string): PrimaryCity | null {
-  try { return JSON.parse(localStorage.getItem(primaryCityKey(uid)) || "null"); } catch { return null; }
-}
-function savePrimaryCity(uid: string, city: PrimaryCity | null) {
-  if (city) localStorage.setItem(primaryCityKey(uid), JSON.stringify(city));
-  else localStorage.removeItem(primaryCityKey(uid));
+export interface PrevisaoTempoProps {
+  effectiveUserId?: string | null;
 }
 
-export default function PrevisaoTempo() {
+function getLookupKeys(ownerId: string | null, altUid: string | null, slug: string | null, email: string | null): string[] {
+  return Array.from(new Set([ownerId, altUid, slug, email].filter(Boolean) as string[]));
+}
+
+function getFavoritesFromStorage(keys: string[]): FavoriteCity[] {
+  for (const k of keys) {
+    try {
+      const raw = localStorage.getItem(`nexohub_cidade_tempo_favorites_${k}`) || localStorage.getItem(`masterview_favorite_cities_${k}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+  }
+  try {
+    const raw = localStorage.getItem("masterview_favorite_cities");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+function saveFavoritesToStorage(keys: string[], list: FavoriteCity[], ownerId: string | null) {
+  const json = JSON.stringify(list);
+  for (const k of keys) {
+    try {
+      localStorage.setItem(`nexohub_cidade_tempo_favorites_${k}`, json);
+      localStorage.setItem(`masterview_favorite_cities_${k}`, json);
+    } catch {}
+  }
+  try {
+    localStorage.setItem("masterview_favorite_cities", json);
+  } catch {}
+
+  // Sync asynchronously to database dashboard_items
+  if (ownerId) {
+    mergeUserDashboardItems(ownerId, { cidade_tempo_favorites: list }).catch(() => {});
+  }
+}
+
+function getPrimaryCityFromStorage(keys: string[]): PrimaryCity | null {
+  for (const k of keys) {
+    try {
+      const raw = localStorage.getItem(`nexohub_cidade_tempo_primary_${k}`) || localStorage.getItem(`masterview_primary_city_${k}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.name === "string" && parsed.lat != null && parsed.lon != null) {
+          return parsed;
+        }
+      }
+    } catch {}
+  }
+  try {
+    const raw = localStorage.getItem("masterview_primary_city");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.name === "string" && parsed.lat != null && parsed.lon != null) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+function savePrimaryCityToStorage(keys: string[], city: PrimaryCity | null, ownerId: string | null) {
+  const json = city ? JSON.stringify(city) : null;
+  for (const k of keys) {
+    try {
+      if (city && json) {
+        localStorage.setItem(`nexohub_cidade_tempo_primary_${k}`, json);
+        localStorage.setItem(`masterview_primary_city_${k}`, json);
+        localStorage.setItem(`masterview_last_city_${k}`, city.name);
+      } else {
+        localStorage.removeItem(`nexohub_cidade_tempo_primary_${k}`);
+        localStorage.removeItem(`masterview_primary_city_${k}`);
+      }
+    } catch {}
+  }
+  try {
+    if (city && json) {
+      localStorage.setItem("masterview_primary_city", json);
+      localStorage.setItem("masterview_last_city", city.name);
+    } else {
+      localStorage.removeItem("masterview_primary_city");
+    }
+  } catch {}
+
+  // Notify widgets and dashboard in realtime
+  try {
+    window.dispatchEvent(new CustomEvent("weather:primary-city-changed", { detail: city }));
+  } catch {}
+
+  // Sync to database
+  if (ownerId) {
+    const nowIso = new Date().toISOString();
+    supabase
+      .from("user_settings")
+      .update({
+        weather_city: city?.name || null,
+        weather_lat: city?.lat ?? null,
+        weather_lon: city?.lon ?? null,
+        updated_at: nowIso,
+      })
+      .eq("user_id", ownerId)
+      .then(() => {})
+      .catch(() => {});
+
+    mergeUserDashboardItems(ownerId, {
+      cidade_tempo_primary: city,
+      weather_city: city?.name || null,
+      weather_lat: city?.lat ?? null,
+      weather_lon: city?.lon ?? null,
+    }).catch(() => {});
+  }
+}
+
+export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = {}) {
   const { user } = useAuth();
-  const uid = user?.id ?? null;
-  const userSlug = useUserSlug(uid || undefined);
+  const rawUid = effectiveUserId || user?.id || null;
+  const clientAcc = findClientAccountById(rawUid) || findClientAccountByEmail(user?.email || rawUid);
+  const ownerId = clientAcc?.parentUserId || clientAcc?.id || rawUid;
+  const stationSlug = clientAcc?.slug || null;
+  const stationEmail = clientAcc?.email || user?.email || null;
+  const stationDefaultCity = clientAcc?.cidade || null;
+  const lookupKeys = useMemo(
+    () => getLookupKeys(ownerId, user?.id || null, stationSlug, stationEmail),
+    [ownerId, user?.id, stationSlug, stationEmail]
+  );
+  const lookupKeysRef = useRef(lookupKeys);
+  lookupKeysRef.current = lookupKeys;
+
+  const hookSlug = useUserSlug(ownerId || undefined);
+  const resolvedSlug = stationSlug || hookSlug || "p";
+
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -207,12 +327,15 @@ export default function PrevisaoTempo() {
         weatherCode: wxData.daily.weather_code[i + 1],
       }));
       const isNight = wxData.current?.is_day === 0;
-      if (uid) localStorage.setItem(lastCityKey(uid), name);
+      lookupKeysRef.current.forEach(k => {
+        try { localStorage.setItem(`masterview_last_city_${k}`, name); } catch {}
+      });
+      try { localStorage.setItem("masterview_last_city", name); } catch {}
       setWeather({ city: name, lat, lon, current, forecast, isNight });
       // AI disabled – skip weather description
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
     finally { setLoading(false); }
-  }, [uid]);
+  }, []);
 
   const fetchWeather = useCallback(async (searchCity: string, silent = false) => {
     if (!searchCity.trim()) return;
@@ -231,8 +354,7 @@ export default function PrevisaoTempo() {
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
 
   useEffect(() => {
-    if (!uid) {
-      // Reset all UI state when logged out or switching users, so we never mix data.
+    if (!ownerId) {
       setCity("");
       setWeather(null);
       setFavorites([]);
@@ -240,116 +362,196 @@ export default function PrevisaoTempo() {
       return;
     }
 
-    // Hydrate per-user state from user-scoped localStorage first.
-    setFavorites(getFavorites(uid));
-    const scopedPrimary = getPrimaryCity(uid);
+    // Hydrate per-user state from storage first
+    setFavorites(getFavoritesFromStorage(lookupKeys));
+    const scopedPrimary = getPrimaryCityFromStorage(lookupKeys);
     setPrimaryCity(scopedPrimary);
 
+    let isMounted = true;
+
     const loadCity = async () => {
+      // 1) If already cached locally in storage
       if (scopedPrimary) {
-        setCity(scopedPrimary.name);
+        if (isMounted) setCity(scopedPrimary.name);
         fetchWeatherByCoords(scopedPrimary.lat, scopedPrimary.lon, scopedPrimary.name);
         return;
       }
 
-      // 2) Fallback: check database for saved city (scoped to this user)
+      // 2) Check database for saved city (user_settings / dashboard_items)
       try {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("weather_city, weather_lat, weather_lon")
-          .eq("user_id", uid)
+          .select("weather_city, weather_lat, weather_lon, dashboard_items")
+          .eq("user_id", ownerId)
           .maybeSingle();
-        if (settings?.weather_city && settings?.weather_lat != null && settings?.weather_lon != null) {
-          const pc = { name: settings.weather_city, lat: settings.weather_lat, lon: settings.weather_lon };
-          savePrimaryCity(uid, pc);
-          setPrimaryCity(pc);
-          setCity(pc.name);
-          localStorage.setItem(lastCityKey(uid), pc.name);
-          fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
+
+        if (settings && isMounted) {
+          const items = (settings.dashboard_items || {}) as Record<string, any>;
+          if (Array.isArray(items.cidade_tempo_favorites) && items.cidade_tempo_favorites.length > 0) {
+            setFavorites(items.cidade_tempo_favorites);
+            saveFavoritesToStorage(lookupKeys, items.cidade_tempo_favorites, ownerId);
+          }
+          if (items.cidade_tempo_primary?.name && items.cidade_tempo_primary?.lat != null) {
+            const pc: PrimaryCity = items.cidade_tempo_primary;
+            setPrimaryCity(pc);
+            setCity(pc.name);
+            savePrimaryCityToStorage(lookupKeys, pc, ownerId);
+            fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
+            return;
+          }
+          if (settings.weather_city && settings.weather_lat != null && settings.weather_lon != null) {
+            const pc: PrimaryCity = {
+              name: settings.weather_city,
+              lat: settings.weather_lat,
+              lon: settings.weather_lon,
+            };
+            setPrimaryCity(pc);
+            setCity(pc.name);
+            savePrimaryCityToStorage(lookupKeys, pc, ownerId);
+            fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("[PrevisaoTempo] Erro ao ler user_settings:", err);
+      }
+
+      // 3) Check public weather XML for this station
+      try {
+        const xmlRes = await fetch(`https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-${ownerId}.xml`);
+        if (xmlRes.ok) {
+          const xmlText = await xmlRes.text();
+          const match = xmlText.match(/<cidade>(.*?)<\/cidade>/);
+          if (match?.[1] && isMounted) {
+            const cityName = match[1].trim();
+            setCity(cityName);
+            await fetchWeather(cityName);
+            return;
+          }
+        }
+      } catch {}
+
+      // 4) Station default city fallback (e.g. "Goiânia" for Interativa FM / Positiva FM)
+      const stationCity = (stationDefaultCity || "Goiânia").split("-")[0].trim();
+      if (stationCity && isMounted) {
+        setCity(stationCity);
+        await fetchWeather(stationCity);
+        return;
+      }
+
+      // 5) Last search fallback across lookup keys
+      for (const k of lookupKeys) {
+        const saved = localStorage.getItem(`masterview_last_city_${k}`);
+        if (saved && isMounted) {
+          setCity(saved);
+          await fetchWeather(saved);
           return;
         }
-      } catch { /* ignore */ }
-
-      // 3) Last fallback: per-user last city name
-      const saved = localStorage.getItem(lastCityKey(uid));
-      if (saved) {
-        setCity(saved);
-        fetchWeather(saved);
+      }
+      const globalSaved = localStorage.getItem("masterview_last_city");
+      if (globalSaved && isMounted) {
+        setCity(globalSaved);
+        await fetchWeather(globalSaved);
       }
     };
 
     loadCity();
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [uid, fetchWeather, fetchWeatherByCoords]);
+    return () => {
+      isMounted = false;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [ownerId, stationDefaultCity, fetchWeather, fetchWeatherByCoords]);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (weather && uid) {
+    if (weather && ownerId) {
       intervalRef.current = setInterval(() => {
-        const saved = localStorage.getItem(lastCityKey(uid));
-        if (saved) fetchWeather(saved, true);
+        let savedCity: string | null = null;
+        for (const k of lookupKeysRef.current) {
+          const s = localStorage.getItem(`masterview_last_city_${k}`);
+          if (s) { savedCity = s; break; }
+        }
+        if (!savedCity) savedCity = localStorage.getItem("masterview_last_city");
+        if (savedCity) fetchWeather(savedCity, true);
       }, REFRESH_INTERVAL);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [weather, fetchWeather, uid]);
+  }, [weather?.city, ownerId, fetchWeather]);
 
   const addFavorite = () => {
-    if (!weather || !uid) return;
+    if (!weather || !ownerId) return;
     if (favorites.some(f => f.name === weather.city)) return;
     const updated = [...favorites, { name: weather.city, lat: weather.lat, lon: weather.lon, inXml: false }];
-    saveFavorites(uid, updated);
+    saveFavoritesToStorage(lookupKeys, updated, ownerId);
     setFavorites(updated);
+    toast.success(`Cidade "${weather.city}" salva como secundária com sucesso!`);
   };
 
   const toggleFavoriteXml = (name: string) => {
-    if (!uid) return;
+    if (!ownerId) return;
     const updated = favorites.map(f => f.name === name ? { ...f, inXml: !f.inXml } : f);
-    saveFavorites(uid, updated);
+    saveFavoritesToStorage(lookupKeys, updated, ownerId);
     setFavorites(updated);
+    const item = updated.find(f => f.name === name);
+    if (item?.inXml) {
+      toast.info(`Cidade "${name}" incluída no XML da emissora.`);
+    } else {
+      toast.info(`Cidade "${name}" removida do XML.`);
+    }
   };
 
   const removeFavorite = (name: string) => {
-    if (!uid) return;
+    if (!ownerId) return;
     const updated = favorites.filter(f => f.name !== name);
-    saveFavorites(uid, updated);
+    saveFavoritesToStorage(lookupKeys, updated, ownerId);
     setFavorites(updated);
+    toast.success(`Cidade "${name}" removida dos favoritos.`);
   };
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
   const isPrimary = weather ? primaryCity?.name === weather.city : false;
 
   const setAsPrimaryCity = async () => {
-    if (!weather || !uid) return;
-    const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
-    savePrimaryCity(uid, pc);
+    if (!weather || !ownerId) return;
+    const pc: PrimaryCity = { name: weather.city, lat: weather.lat, lon: weather.lon };
+    savePrimaryCityToStorage(lookupKeys, pc, ownerId);
     setPrimaryCity(pc);
+
     // Remove from favorites if it was there — a city is either primary or secondary.
     if (favorites.some(f => f.name === pc.name)) {
       const updated = favorites.filter(f => f.name !== pc.name);
-      saveFavorites(uid, updated);
+      saveFavoritesToStorage(lookupKeys, updated, ownerId);
       setFavorites(updated);
     }
-    const row = { user_id: uid, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
-    const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", uid).maybeSingle();
-    if (existing) {
-      await supabase.from("user_settings").update(row).eq("user_id", uid);
-    } else {
-      await supabase.from("user_settings").insert(row);
-    }
+
+    toast.success(`Cidade "${pc.name}" definida como principal e salva com sucesso!`);
   };
 
   const clearPrimaryCity = async () => {
-    if (!uid) return;
-    savePrimaryCity(uid, null);
+    if (!ownerId) return;
+    savePrimaryCityToStorage(lookupKeys, null, ownerId);
     setPrimaryCity(null);
-    await supabase.from("user_settings").update({
-      weather_city: null, weather_lat: null, weather_lon: null,
-    }).eq("user_id", uid);
+    toast.info("Cidade principal removida.");
   };
 
   const togglePrimaryCity = async () => {
     if (isPrimary) await clearPrimaryCity();
     else await setAsPrimaryCity();
+  };
+
+  const setFavoriteAsPrimary = async (f: FavoriteCity) => {
+    if (!ownerId) return;
+    const pc: PrimaryCity = { name: f.name, lat: f.lat, lon: f.lon };
+    savePrimaryCityToStorage(lookupKeys, pc, ownerId);
+    setPrimaryCity(pc);
+    const updated = favorites.filter(fav => fav.name !== f.name);
+    if (primaryCity && primaryCity.name !== f.name) {
+      updated.unshift({ name: primaryCity.name, lat: primaryCity.lat, lon: primaryCity.lon, inXml: true });
+    }
+    saveFavoritesToStorage(lookupKeys, updated, ownerId);
+    setFavorites(updated);
+    fetchWeatherByCoords(f.lat, f.lon, f.name);
+    toast.success(`"${f.name}" agora é a Cidade Principal!`);
   };
 
   const fetchForecastDescription = async () => {
@@ -360,7 +562,7 @@ export default function PrevisaoTempo() {
   const today = new Date().toLocaleDateString("pt-BR");
 
   return (
-    <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="animate-fade-in space-y-8 max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cidade / Tempo
@@ -388,20 +590,9 @@ export default function PrevisaoTempo() {
           >
             Cadastro de Cidade / Tempo
           </h3>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: DARK,
-              background: "#FFFFFF",
-              padding: "6px 16px",
-              borderRadius: 999,
-              border: `2px solid ${CYAN}`,
-              letterSpacing: 1,
-              textTransform: "uppercase",
-            }}
-          >
-            Data: <span style={{ color: CYAN }}>{today}</span>
+          <div className="text-[11px] font-bold text-slate-600 bg-slate-100/90 px-4 py-2 rounded-full uppercase tracking-wider border border-slate-200/80 shadow-xs flex items-center gap-1.5">
+            <span className="text-slate-400 font-semibold">Data:</span>
+            <span className="text-[#0055ff] font-black">{today}</span>
           </div>
         </div>
 
@@ -409,40 +600,25 @@ export default function PrevisaoTempo() {
         <div className="relative" ref={suggestionsRef}>
           <label style={labelStyle}>Buscar cidade</label>
           <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <MapPin size={16} style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", color: CYAN }} />
+            <div className="relative flex-1">
+              <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0055ff] pointer-events-none z-10" />
               <input
                 value={city}
                 onChange={(e) => handleCityChange(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && searchWeather()}
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder="Digite o nome da cidade..."
-                style={{ ...pillInput, paddingLeft: 42 }}
+                className="w-full h-11 rounded-full bg-[#f8fafc] border border-slate-200/90 pl-11 pr-5 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0055ff] focus:ring-1 focus:ring-[#0055ff] transition-all shadow-xs"
+                style={{ fontFamily: "'Montserrat', sans-serif" }}
               />
             </div>
             <button
+              type="button"
               onClick={searchWeather}
               disabled={loading}
-              style={{
-                height: 44,
-                padding: "0 26px",
-                borderRadius: 999,
-                background: LIME,
-                border: "none",
-                color: DARK,
-                fontWeight: 800,
-                fontSize: 12,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: loading ? "wait" : "pointer",
-                opacity: loading ? 0.7 : 1,
-                boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
-              }}
+              className="h-11 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all shadow-md shadow-blue-500/20 active:scale-95 disabled:opacity-60 cursor-pointer shrink-0"
             >
-              <Search size={16} /> Buscar
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />} Buscar
             </button>
           </div>
           {showSuggestions && suggestions.length > 0 && (
@@ -457,8 +633,8 @@ export default function PrevisaoTempo() {
                 background: "#FFFFFF",
                 borderRadius: 20,
                 overflow: "hidden",
-                border: `2px solid ${CYAN}`,
-                boxShadow: "0 10px 30px rgba(10,37,64,0.15)",
+                border: "1px solid rgba(226, 232, 240, 0.9)",
+                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
               }}
             >
               {suggestions.map((s, i) => (
@@ -496,67 +672,89 @@ export default function PrevisaoTempo() {
         {(primaryCity || favorites.length > 0) && (
           <div style={{ marginTop: 20 }}>
             <label style={labelStyle}>Cidades cadastradas</label>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2.5 flex-wrap items-center">
               {primaryCity && (
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "8px 8px 8px 16px",
-                    borderRadius: 999,
-                    background: DARK,
-                    color: "#FFFFFF",
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
+                <div className="inline-flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full bg-amber-50/90 border border-amber-300/80 text-amber-950 shadow-xs transition-all select-none">
                   <button
+                    type="button"
                     onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "#FFFFFF", cursor: "pointer", fontWeight: 700 }}
+                    className="inline-flex items-center gap-2 bg-transparent border-none cursor-pointer text-left group"
+                    title="Clique para ver a previsão desta cidade"
                   >
-                    <Star size={12} style={{ color: LIME }} fill={LIME} />
-                    {primaryCity.name}
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white px-2 py-0.5 rounded-full shadow-xs">
+                      <Star size={10} className="fill-white" /> Principal
+                    </span>
+                    <span className="font-black text-xs text-slate-800 group-hover:text-[#0055ff] transition-colors uppercase tracking-wide">
+                      {primaryCity.name}
+                    </span>
                   </button>
                   <button
-                    onClick={() => { if (confirm(`Remover "${primaryCity.name}" como cidade principal?`)) clearPrimaryCity(); }}
-                    style={{ width: 22, height: 22, borderRadius: 999, background: "rgba(255,255,255,0.15)", border: "none", color: "#FFFFFF", cursor: "pointer", fontSize: 12 }}
+                    type="button"
+                    onClick={async () => {
+                      const confirmed = await confirmDialog({
+                        title: "Remover Cidade Principal",
+                        message: `Remover "${primaryCity.name}" como cidade principal?`,
+                        confirmLabel: "Remover",
+                        destructive: true,
+                      });
+                      if (confirmed) clearPrimaryCity();
+                    }}
+                    className="w-5 h-5 rounded-full bg-amber-200/60 hover:bg-rose-100 hover:text-rose-600 text-amber-800 flex items-center justify-center transition-colors cursor-pointer text-xs"
                     title="Remover cidade principal"
-                  >✕</button>
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               )}
               {favorites.map(f => (
                 <div
                   key={f.name}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "8px 12px",
-                    borderRadius: 999,
-                    background: "#FFFFFF",
-                    border: `2px solid ${CYAN}`,
-                    color: DARK,
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
+                  className="inline-flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 shadow-xs transition-all"
                 >
-                  <input
-                    type="checkbox"
-                    checked={f.inXml}
-                    onChange={() => toggleFavoriteXml(f.name)}
-                    style={{ width: 12, height: 12, accentColor: CYAN }}
-                    title="Incluir no XML"
-                  />
                   <button
+                    type="button"
+                    onClick={() => setFavoriteAsPrimary(f)}
+                    className="text-slate-300 hover:text-amber-500 transition-colors p-1 cursor-pointer rounded-full hover:bg-amber-50"
+                    title="Tornar esta cidade a Principal"
+                  >
+                    <Star size={13} />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                    style={{ background: "transparent", border: "none", color: DARK, cursor: "pointer", fontWeight: 700, fontSize: 12 }}
-                  >{f.name}</button>
+                    className="bg-transparent border-none cursor-pointer font-bold text-xs text-slate-700 hover:text-[#0055ff] transition-colors uppercase tracking-wide text-left"
+                    title="Clique para ver a previsão"
+                  >
+                    {f.name}
+                  </button>
+                  <label
+                    className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[10px] font-bold text-slate-500 bg-slate-100 hover:bg-blue-50 hover:text-[#0055ff] px-2 py-0.5 rounded-full transition-colors"
+                    title="Incluir no XML da rádio"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={f.inXml}
+                      onChange={() => toggleFavoriteXml(f.name)}
+                      className="rounded text-[#0055ff] focus:ring-0 w-3 h-3 cursor-pointer"
+                    />
+                    <span>XML</span>
+                  </label>
                   <button
-                    onClick={() => { if (confirm(`Remover "${f.name}" dos favoritos?`)) removeFavorite(f.name); }}
-                    style={{ background: "transparent", border: "none", color: "#94A3B8", cursor: "pointer", fontSize: 12 }}
+                    type="button"
+                    onClick={async () => {
+                      const confirmed = await confirmDialog({
+                        title: "Remover Favorito",
+                        message: `Remover "${f.name}" dos favoritos?`,
+                        confirmLabel: "Remover",
+                        destructive: true,
+                      });
+                      if (confirmed) removeFavorite(f.name);
+                    }}
+                    className="w-5 h-5 rounded-full hover:bg-rose-50 hover:text-rose-600 text-slate-400 flex items-center justify-center transition-colors cursor-pointer text-xs"
                     title="Remover"
-                  >✕</button>
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -588,45 +786,26 @@ export default function PrevisaoTempo() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <h3 style={{ fontSize: 22, fontWeight: 800, color: DARK, margin: 0 }}>{weather.city}</h3>
                   {isPrimary ? (
-                    <span
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 6,
-                        padding: "6px 14px", borderRadius: 999,
-                        background: DARK, color: "#FFFFFF",
-                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
-                      }}
-                    >
-                      <Star size={11} fill={LIME} style={{ color: LIME }} /> Cidade Principal
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-300/80 text-amber-900 text-[11px] font-black uppercase tracking-wider shadow-xs">
+                      <Star size={12} className="fill-amber-500 text-amber-500" /> Cidade Principal
                     </span>
                   ) : (
                     <button
+                      type="button"
                       onClick={setAsPrimaryCity}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 6,
-                        padding: "6px 14px", borderRadius: 999,
-                        background: "#FFFFFF", color: DARK,
-                        border: `2px solid ${CYAN}`,
-                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
-                        cursor: "pointer",
-                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-amber-50/80 border border-slate-200/90 hover:border-amber-300 text-slate-700 hover:text-amber-800 text-[11px] font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer active:scale-95"
                     >
-                      <Star size={11} style={{ color: CYAN }} />
+                      <Star size={12} className="text-amber-500" />
                       {primaryCity ? "Tornar Principal" : "Definir como Principal"}
                     </button>
                   )}
                   {!isFavorited && !isPrimary && (
                     <button
+                      type="button"
                       onClick={addFavorite}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 6,
-                        padding: "6px 14px", borderRadius: 999,
-                        background: CARD_BG, color: DARK,
-                        border: "none",
-                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
-                        cursor: "pointer",
-                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-blue-50 border border-slate-200/60 hover:border-[#0055ff]/30 text-slate-700 hover:text-[#0055ff] text-[11px] font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer active:scale-95"
                     >
-                      <Star size={11} /> Adicionar Secundária
+                      <Plus size={12} /> Salvar como Secundária
                     </button>
                   )}
                 </div>
@@ -698,23 +877,6 @@ export default function PrevisaoTempo() {
               ))}
             </div>
           </section>
-
-          <XmlSection title="XML Tempo">
-            <XmlLinkRow
-              label="XML TEMPO"
-              permanentUrl={`http://housemix.nexobrasil.net/xml/${userSlug || "p"}/tempo.xml`}
-              xmlContent={(() => {
-              if (!weather) return "";
-              const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
-              const dayToXml = (d: DayWeather, tag: string, night = false) =>
-                `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode, night)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
-              const tomorrow = weather.forecast[0];
-              const amanhaXml = tomorrow
-                ? `  <amanha date="${tomorrow.date}">\n    <temperatura_minima>${tomorrow.tempMin}Cº</temperatura_minima>\n    <temperatura_maxima>${tomorrow.tempMax}Cº</temperatura_maxima>\n    <url_imagem_icone>${iconUrl(tomorrow.weatherCode)}</url_imagem_icone>\n    <descricao_tempo>${getWeatherLabel(tomorrow.weatherCode)}</descricao_tempo>\n  </amanha>`
-                : "";
-              return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual", !!weather.isNight)}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
-            })()} />
-          </XmlSection>
         </>
       )}
     </div>

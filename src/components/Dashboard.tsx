@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense, startTransition } from "react";
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
@@ -24,6 +24,10 @@ import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { AnimatedFlyout } from "@/components/AnimatedFlyout";
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
+import { fetchStationDatabaseData, preloadAllStationsDatabase, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { getApresentadores } from "./ApresentadorForm";
 
 
 // Lazy-load all tab pages for faster initial render
@@ -39,7 +43,7 @@ const OnAirWidget = lazyRetry(() => import("./OnAirWidget"));
 const UpcomingEventsWidget = lazyRetry(() => import("./UpcomingEventsWidget"));
 
 const MusicaNoAr = lazyRetry(() => import("./MusicaNoAr"));
-const AgendaPage = lazyRetry(() => import("./AgendaPage"));
+import AgendaPage from "./AgendaPage";
 const MusicWidget = lazyRetry(() => import("./MusicWidget"));
 const XmlLinkRow = lazyRetry(() => import("./XmlLinkRow"));
 const ConfiguracoesPage = lazyRetry(() => import("./ConfiguracoesPage"));
@@ -78,16 +82,21 @@ const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
 const HouseMixPage = lazyRetry(() => import("./HouseMixPage"));
 const ProdutosPage = lazyRetry(() => import("./ProdutosPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
+const FloatingMiniPlayer = lazyRetry(() => import("./FloatingMiniPlayer"));
+const HomeGradientBackground = lazyRetry(() => import("./HomeGradientBackground"));
+const FloatingOnAirPresenter = lazyRetry(() => import("./FloatingOnAirPresenter"));
+
 
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import AgendaPageSkeleton from "./skeletons/AgendaPageSkeleton";
-import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 import logoNxo from "@/assets/logo-nxo.png";
 import SuperAdminHeader from "./SuperAdminHeader";
+import HouseMixHeader from "./HouseMixHeader";
+import ServerClock from "./ServerClock";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos";
 
@@ -99,6 +108,7 @@ interface MenuChild {
   separator?: boolean;
   permKey?: string;
   children?: MenuChild[];
+  disabled?: boolean;
 }
 interface MenuItem {
   icon: React.ComponentType<{ size?: string | number; className?: string; style?: React.CSSProperties }>;
@@ -146,7 +156,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: ExternalLink, label: "módulo locutor", page: undefined as unknown as Page, permKey: "telapromo", children: [
         { icon: Settings, label: "config módulo locutor", page: "configtelapromo" },
       ] },
-      { icon: ShoppingCart, label: "shopping", page: "shopping" },
+      { icon: ShoppingCart, label: "shopping", page: "shopping", disabled: true },
     ]
   },
   {
@@ -165,9 +175,6 @@ const sidebarMenu: MenuItem[] = [
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
-  { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
-  { icon: Smartphone, label: "app", page: "dashboard", pillMode: "TV App" },
-  { icon: Palette, label: "social design", page: "dashboard", pillMode: "Social Design" },
 ];
 
 
@@ -229,7 +236,7 @@ export const adminModulosGroups: MenuItem[] = [
   {
     icon: Mic2, label: "locutor", children: [
       { icon: Settings, label: "config módulo locutor", page: "configtelapromo" },
-      { icon: ShoppingCart, label: "shopping", page: "shopping" },
+      { icon: ShoppingCart, label: "shopping", page: "shopping", disabled: true },
     ]
   },
   {
@@ -319,7 +326,7 @@ const pageTitle: Record<Page, string> = {
   configuracoes: "Configurações",
   testemunhais: "Comercial — Citações",
   promocoes: "Comercial — Promoções",
-  logos: "Comercial — Logos Patrocinadores",
+  logos: "Comercial — Logos",
   shopping: "Comercial — Shopping",
   preroll: "ADS",
   propostas: "Comercial — Propostas Comerciais",
@@ -353,8 +360,32 @@ interface DashboardProps {
 
 export default function Dashboard({ onLogout }: DashboardProps) {
   const { user, role } = useAuth();
-  const isAdmin = role === "admin";
+  const isLocal = typeof window !== "undefined" && (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "[::1]" ||
+    window.location.hostname.startsWith("192.168.") ||
+    window.location.hostname.startsWith("10.")
+  );
+  let forceRole: string | null = null;
+  try {
+    forceRole = localStorage.getItem("nexohub_force_role");
+  } catch {}
+
+  const isAlexAdmin = user?.email === "alex@nexobrasil.net" || (user?.email ? user.email.toLowerCase().includes("alex") : false);
+  const isClientUser = !!user?.email && !isAlexAdmin;
+  const isAdmin = forceRole === "admin" || (
+    forceRole !== "user" && !isClientUser && (
+      role === "admin" ||
+      isAlexAdmin ||
+      (isLocal && !user)
+    )
+  );
   const layoutColors = useLayoutColors();
+  
+  useEffect(() => {
+    preloadAllStationsDatabase();
+  }, []);
   
   // Lista de páginas que suportam minimização (Expandida para quase todos os módulos)
   const MINIMIZABLE_PAGES: Page[] = [
@@ -405,11 +436,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       
-      // Removed automatic minimization logic when navigating AWAY.
-      // Pages only stay minimized if explicitly added to minimizedModules via the minimize button.
-      
       if (resolved !== prev) {
-        try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+        try { window.dispatchEvent(new CustomEvent("app:page-change", { detail: { page: resolved } })); } catch { /* noop */ }
       }
       return resolved;
     });
@@ -428,15 +456,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   useEffect(() => {
     try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
   }, [selectedHeaderPill]);
-  // Super admin abre por padrão o painel Business
+  // Super admin abre por padrão o painel Business e define o título da página
   useEffect(() => {
     if (!isAdmin) return;
+    document.title = "Nexo Brasil - Soluções Visuais";
     try {
       if (localStorage.getItem("nexohub_admin_pill_init") === "1") return;
       localStorage.setItem("nexohub_admin_pill_init", "1");
     } catch { /* noop */ }
     setSelectedHeaderPill("Business");
-  }, [isAdmin]);
+  }, [isAdmin, currentPage]);
   // Animação de entrada/saída ao trocar de modo (nexohub <-> Chatbot ...)
   const [displayedPill, setDisplayedPill] = useState<string>(selectedHeaderPill);
   const [pillPhase, setPillPhase] = useState<"in" | "out">("in");
@@ -520,7 +549,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [nextProgram, setNextProgram] = useState<{ foto: string | null; apresentador: string; programa: string; inicio: string; fim: string } | null>(null);
   const [showNext, setShowNext] = useState(false);
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
-  const [nowTick, setNowTick] = useState(() => Date.now());
   // Global player state (mirrored from CustomizableDashboard via window events)
   const [playerState, setPlayerState] = useState<{ isPlaying: boolean; isLoading: boolean; hasChannel: boolean; channelName: string }>({ isPlaying: false, isLoading: false, hasChannel: false, channelName: "" });
   useEffect(() => {
@@ -531,14 +559,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     window.addEventListener("player:state", onState);
     return () => window.removeEventListener("player:state", onState);
   }, []);
-  useEffect(() => {
-    const iv = setInterval(() => setNowTick(Date.now()), 1000);
-    return () => clearInterval(iv);
-  }, []);
   const prevThumbRef = useRef<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const [contentScrollProgress, setContentScrollProgress] = useState(0);
   const [showContentScrollIndicator, setShowContentScrollIndicator] = useState(false);
+  const [isScrollDragging, setIsScrollDragging] = useState(false);
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
   
@@ -568,8 +593,42 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           .ilike("estudio", "%fm%"),
         supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
       ]);
-      const data = progRes.data;
-      const tz: string | null = (empRes.data as any)?.timezone || null;
+      let data = progRes.data;
+      let tz: string | null = (empRes.data as any)?.timezone || null;
+
+      // Se não houver programas cadastrados no Supabase direto, busca na base de dados da emissora
+      if (!data || data.length === 0) {
+        const stationDb = await fetchStationDatabaseData(uid || user?.email);
+        if (stationDb?.programas && stationDb.programas.length > 0) {
+          data = stationDb.programas.map((p) => ({
+            id: p.id,
+            nome: p.nome,
+            apresentador_id: p.apresentador_id || null,
+            dias_semana: Array.isArray(p.dias_semana) ? p.dias_semana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',') : []),
+            horario_inicio: p.horario_inicio,
+            horario_fim: p.horario_fim,
+          })) as any;
+        } else {
+          const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(uid);
+          const stationName = clientAcc?.nome || "POSITIVA FM";
+          const fallbackProgsResult = getClientHouseMixProgramsSync(stationName);
+          const fallbackProgs: any[] = Array.isArray(fallbackProgsResult)
+            ? fallbackProgsResult
+            : (fallbackProgsResult?.programas || []);
+          data = fallbackProgs.map((p) => ({
+            id: p.id,
+            nome: p.nome,
+            apresentador_id: p.apresentador_id || null,
+            dias_semana: p.dias_semana || [],
+            horario_inicio: p.horario_inicio,
+            horario_fim: p.horario_fim,
+          })) as any;
+          if (!tz && clientAcc?.timezone) {
+            tz = clientAcc.timezone;
+          }
+        }
+      }
+
       if (cancelled || !data) return;
       const now = new Date();
 
@@ -597,10 +656,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); }
       else {
         setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
+        let foto: string | null = null;
         if (current.apresentador_id) {
           const { data: ap } = await supabase.from("apresentadores").select("foto").eq("id", current.apresentador_id).maybeSingle();
-          if (!cancelled) setOnAirLocutorFoto((ap as any)?.foto || null);
-        } else setOnAirLocutorFoto(null);
+          foto = (ap as any)?.foto || null;
+        }
+        if (!foto) {
+          const aps = await getApresentadores(uid, user?.email);
+          const found = current.apresentador_id ? aps.find(a => a.id === current.apresentador_id) : null;
+          if (found?.foto) {
+            foto = found.foto;
+          } else if (aps.length > 0 && aps[0].foto) {
+            foto = aps[0].foto;
+          } else {
+            const syncDb = getStationDatabaseSync(uid || user?.email);
+            if (syncDb?.currentPresenter?.foto) {
+              foto = syncDb.currentPresenter.foto;
+            }
+          }
+        }
+        if (!cancelled) setOnAirLocutorFoto(foto);
       }
 
       if (next) {
@@ -610,6 +685,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           const { data: ap } = await supabase.from("apresentadores").select("nome, foto").eq("id", next.apresentador_id).maybeSingle();
           apNome = (ap as any)?.nome || "";
           apFoto = (ap as any)?.foto || null;
+        }
+        if (!apFoto || !apNome) {
+          const aps = await getApresentadores(uid, user?.email);
+          const found = next.apresentador_id ? aps.find(a => a.id === next.apresentador_id) : null;
+          if (found) {
+            if (!apNome) apNome = found.nome;
+            if (!apFoto) apFoto = found.foto;
+          }
         }
         if (!cancelled) setNextProgram({ foto: apFoto, apresentador: apNome, programa: next.nome, inicio: next.horario_inicio, fim: next.horario_fim });
       } else if (!cancelled) setNextProgram(null);
@@ -627,18 +710,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const [{ data }, { data: emp }] = await Promise.all([
       supabase
         .from("programas")
-        .select("id, dias_semana, horario_inicio, horario_fim")
+        .select("id, dias_semana, horario_inicio, horario_fim, selo")
         .eq("user_id", uid)
         .eq("ativo", true)
         .ilike("estudio", "%fm%"),
       supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
     ]);
-    if (!data) return null;
+    let progList = data;
+    if (!progList || progList.length === 0) {
+      const stationDb = await fetchStationDatabaseData(uid || user?.email);
+      if (stationDb?.programas && stationDb.programas.length > 0) {
+        progList = stationDb.programas as any;
+      }
+    }
+    if (!progList || progList.length === 0) return null;
 
     // Usa o mesmo resolver com pré-carga do próximo na última minutagem, no fuso da emissora
-    const { current } = resolveEffectiveOnAir(data as any[], new Date(), (emp as any)?.timezone || null);
+    const { current } = resolveEffectiveOnAir(progList as any[], new Date(), (emp as any)?.timezone || null);
     if (!current) return null;
 
+    if ((current as any)?.selo) return (current as any).selo;
     const { data: thumbData } = await supabase
       .from("programas")
       .select("selo")
@@ -716,6 +807,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       if (cancelled) return;
 
+      // Check if this user is a client account or sub-user
+      const clientAcc = findClientAccountByEmail(user.email) || findClientAccountById(user.id);
+
       // Check if this user is a sub-user
       if (subUserRes.data && subUserRes.data.ativo) {
         const parentId = subUserRes.data.parent_user_id;
@@ -733,32 +827,62 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           setEnabledModules(new Set(parentModulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
         }
         const pd = parentEmpresaRes.data;
-        if (pd) {
-          const parentCfg = {
-            nome: pd.nome || "", logo: pd.logo || "", backgroundUrl: pd.background_url || "",
-            endereco: pd.endereco || "", telefoneComercial: pd.telefone_comercial || "",
-            telefoneParticipacao: pd.telefone_participacao || "", site: pd.site || "",
-            instagram: pd.instagram || "", facebook: pd.facebook || "", youtube: pd.youtube || "",
-            plano: pd.plano || "",
-          };
-          setEmpresa(parentCfg);
-          setEmpresaTimezone((pd as any).timezone || null);
-          if (parentCfg.plano) {
-            supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
-              if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
-            });
-          }
-          setInitialLoading(false);
-
-          // Fetch thumb for sub-user using parent's data
-          const thumb = await findCurrentOnAirThumb(parentId);
-          if (!cancelled) {
-            const finalThumb = thumb || parentCfg.backgroundUrl || null;
-            prevThumbRef.current = finalThumb;
-            setOnAirThumb(finalThumb);
-          }
-          return;
+        const parentCfg = {
+          nome: pd?.nome || clientAcc?.nome || "",
+          logo: pd?.logo || "",
+          backgroundUrl: pd?.background_url || "",
+          endereco: pd?.endereco || clientAcc?.cidade || "",
+          telefoneComercial: pd?.telefone_comercial || "",
+          telefoneParticipacao: pd?.telefone_participacao || "",
+          site: pd?.site || "",
+          instagram: pd?.instagram || "",
+          facebook: pd?.facebook || "",
+          youtube: pd?.youtube || "",
+          plano: pd?.plano || clientAcc?.plano || "",
+        };
+        setEmpresa(parentCfg);
+        setEmpresaTimezone((pd as any)?.timezone || clientAcc?.timezone || null);
+        if (parentCfg.plano) {
+          supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
+            if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
+          });
         }
+        setInitialLoading(false);
+
+        // Fetch thumb for sub-user using parent's data
+        const thumb = await findCurrentOnAirThumb(parentId);
+        if (!cancelled) {
+          const finalThumb = thumb || parentCfg.backgroundUrl || null;
+          prevThumbRef.current = finalThumb;
+          setOnAirThumb(finalThumb);
+        }
+        return;
+      } else if (clientAcc?.isSubUser) {
+        setSubUserModules(new Set(clientAcc.allowedModules || []));
+        setEffectiveUserId(clientAcc.parentUserId || null);
+        setParentEmail(clientAcc.parentEmail || null);
+        const parentCfg = {
+          nome: clientAcc.nome,
+          logo: "",
+          backgroundUrl: "",
+          endereco: clientAcc.cidade,
+          telefoneComercial: "",
+          telefoneParticipacao: "",
+          site: "",
+          instagram: "",
+          facebook: "",
+          youtube: "",
+          plano: clientAcc.plano,
+        };
+        setEmpresa(parentCfg);
+        setEmpresaTimezone(clientAcc.timezone);
+        setInitialLoading(false);
+        const thumb = await findCurrentOnAirThumb(clientAcc.parentUserId || undefined);
+        if (!cancelled) {
+          prevThumbRef.current = thumb;
+          setOnAirThumb(thumb);
+        }
+        return;
       }
 
       // Modules
@@ -768,15 +892,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       // Empresa config
       const d = empresaRes.data;
-      const cfg = d ? {
-        nome: d.nome || "", logo: d.logo || "", backgroundUrl: d.background_url || "",
-        endereco: d.endereco || "", telefoneComercial: d.telefone_comercial || "",
-        telefoneParticipacao: d.telefone_participacao || "", site: d.site || "",
-        instagram: d.instagram || "", facebook: d.facebook || "", youtube: d.youtube || "",
-        plano: d.plano || "",
-      } : ({} as any);
+      const cfg = {
+        nome: d?.nome || clientAcc?.nome || "",
+        logo: d?.logo || "",
+        backgroundUrl: d?.background_url || "",
+        endereco: d?.endereco || clientAcc?.cidade || "",
+        telefoneComercial: d?.telefone_comercial || "",
+        telefoneParticipacao: d?.telefone_participacao || "",
+        site: d?.site || "",
+        instagram: d?.instagram || "",
+        facebook: d?.facebook || "",
+        youtube: d?.youtube || "",
+        plano: d?.plano || clientAcc?.plano || "",
+      };
       setEmpresa(cfg);
-      setEmpresaTimezone((d as any)?.timezone || null);
+      setEmpresaTimezone((d as any)?.timezone || clientAcc?.timezone || null);
 
       // Plan modules — fire and forget
       if (cfg.plano) {
@@ -822,6 +952,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     // Sub-users: only allow modules explicitly assigned + always-accessible pages
     if (subUserModules !== null) {
       if (page === "configuracoes") return false;
+      if (
+        page === "programas" ||
+        page === "apresentadores" ||
+        page === "ouvintes" ||
+        page === "clientes" ||
+        page === "previsao"
+      ) {
+        return (
+          subUserModules.has(page) ||
+          subUserModules.has(`c:cadastros:${page}`) ||
+          subUserModules.has("g:cadastros") ||
+          subUserModules.has("cadastros")
+        );
+      }
       // Granular check: the page key itself is stored in allowed_modules
       return subUserModules.has(page);
     }
@@ -839,7 +983,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "previsao" ||
       page === "site" ||
       page === "sorteios" ||
-      page === "clientes"
+      page === "clientes" ||
+      page === "logos" ||
+      page === "roteiros" ||
+      page === "agenda"
     ) {
       return true;
     }
@@ -848,11 +995,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     if (!modulesSource) return true;
 
     if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
-      return modulesSource.has("comercial");
+      return modulesSource.has("comercial") || modulesSource.has(page) || modulesSource.has("logos");
     }
 
     if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete" || page === "quiz") {
-      return modulesSource.has("vmix");
+      return modulesSource.has("vmix") || modulesSource.has(page);
     }
 
     return modulesSource.has(page);
@@ -917,6 +1064,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       currentPage !== "clientes" &&
       currentPage !== "subusuarios" &&
       currentPage !== "pacotes" &&
+      currentPage !== "logos" &&
+      currentPage !== "roteiros" &&
+      currentPage !== "agenda" &&
+      currentPage !== "programas" &&
+      currentPage !== "apresentadores" &&
+      currentPage !== "ouvintes" &&
       !isAdmin &&
       !isModuleEnabled(currentPage)
     ) {
@@ -954,7 +1107,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
 
-  const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
+  const handleChildClick = (child: { label: string; page?: Page; disabled?: boolean }, parentLabel: string) => {
+    if (child.disabled) return;
     {
       const pillByLabel: Record<string, string> = {
         "housemix": "nexohub",
@@ -999,8 +1153,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setHoveredMenu(null);
       return;
     }
-    if (child.page) {
-      setCurrentPage(child.page);
+    const targetPage = child.page || ((child as any).label?.toLowerCase() === "programas" ? "programas" : (child as any).label?.toLowerCase() === "apresentadores" ? "apresentadores" : (child as any).label?.toLowerCase() === "ouvintes" ? "ouvintes" : undefined);
+    if (targetPage) {
+      setCurrentPage(targetPage as Page);
       setMobileMenuOpen(false);
       setHoveredMenu(null);
     }
@@ -1044,264 +1199,84 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isDashboard = currentPage === "dashboard";
  
   return (
-    <div data-app-shell className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "#e4fcff" }}>
+    <div data-app-shell className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "transparent" }}>
       <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} />
 
-      {/* Background layers (full page, behind sidebar) */}
-      {isDashboard && (
-        <div className="absolute inset-0 z-0" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "#e4fcff" }} />
-      )}
-
-
-      {/* ===== LEFT SIDEBAR (desktop) ===== */}
+      {/* Dynamic ambient gradient background reacting to the playing album art (persists across all pages behind header) */}
       {!isAdmin && (
-      <div className="hidden lg:flex flex-shrink-0 z-[60] flex-col items-center py-3 pl-3 gap-2 overflow-visible">
-        <img
-          src={isAdmin ? logoNxo : nexoCantoLogo}
-          alt={isAdmin ? "NX." : "Nexo"}
-          style={{ width: isAdmin ? 42 : 40, height: "auto", display: "block", marginBottom: 4 }}
-        />
-        <aside
-          className="flex flex-col items-center py-4 gap-2 rounded-full relative overflow-visible"
-          style={{
-            width: "58px",
-            backgroundColor: `color-mix(in srgb, ${layoutColors.navBg} 95%, transparent)`,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
-          }}
-        >
-
-        {(() => {
-          const isChatbotMode = displayedPill === "Chatbot";
-          const chatbotAllowedTop = new Set(["home", "cadastros", "atendimento", "sorteio"]);
-          const chatbotCadastroChildren = new Set(["ouvintes"]);
-          const effectiveMenu: MenuItem[] = isAdmin
-            ? adminSidebarMenu
-            : isChatbotMode
-            ? sidebarMenu
-                .filter(i => chatbotAllowedTop.has(i.label))
-                .map(i => i.label === "cadastros" && i.children
-                  ? { ...i, children: i.children.filter(c => chatbotCadastroChildren.has(c.label)) }
-                  : i)
-            : sidebarMenu;
-          return (
-        <div key={isChatbotMode ? "sb-chat" : "sb-nexo"} className="flex flex-col items-center gap-1 px-1 overflow-visible animate-fade-in">
-          {effectiveMenu.filter(isMenuItemVisible).map((item, itemIdx, arr) => {
-            const active = isItemActive(item);
-            const Icon = item.icon;
-            const isOpen = hoveredMenu === item.label;
-
-            return (
-              <div
-                key={item.label}
-                data-menu-item-root
-                className="relative"
-
-                onMouseEnter={() => {
-                   clearMenuLeaveTimer();
-                   if (item.children) {
-                     setHoveredMenu(item.label);
-                   } else {
-                     // Fecha imediatamente qualquer submenu aberto de outro ícone
-                     // para não prejudicar a visibilidade do tooltip deste item.
-                     setHoveredMenu(null);
-                   }
-                 }}
-                 onMouseLeave={scheduleCloseMenu}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        if (item.children) {
-                          setHoveredMenu(prev => prev === item.label ? null : item.label);
-                        } else if (item.label === "home") {
-                          setSelectedHeaderPill("nexohub");
-                          setCurrentPage("dashboard");
-                          setHoveredMenu(null);
-                        } else if (item.pillMode) {
-                          setSelectedHeaderPill(item.pillMode);
-                          setCurrentPage("dashboard");
-                        } else if (item.page) {
-                          setCurrentPage(item.page);
-                        }
-                      }}
-
-                      onFocus={() => { if (item.children) { clearMenuLeaveTimer(); setHoveredMenu(item.label); } }}
-                      onKeyDown={(e) => {
-                        if (!item.children) return;
-                        if (e.key === "ArrowRight" || (e.key === "ArrowDown" && isOpen)) {
-                          e.preventDefault();
-                          clearMenuLeaveTimer();
-                          setHoveredMenu(item.label);
-                          requestAnimationFrame(() => {
-                            const first = document.querySelector<HTMLButtonElement>(`[data-submenu="${item.label}"] [data-submenu-item]`);
-                            first?.focus();
-                          });
-                        } else if (e.key === "Escape" && isOpen) {
-                          setHoveredMenu(null);
-                        }
-                      }}
-                      aria-haspopup={item.children ? "menu" : undefined}
-                      aria-expanded={item.children ? isOpen : undefined}
-                      aria-label={item.label === "home" ? "Home nexohub" : item.label}
-                      className="nexo-focus w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
-                      style={{
-                        backgroundColor: active && item.label !== "home" ? layoutColors.accentColor : "transparent",
-                        ["--nexo-accent" as any]: layoutColors.accentColor,
-                      }}
-                      onMouseEnter={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
-                      onMouseLeave={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = "transparent"; }}
-                    >
-                      {item.label === "home" ? (
-                        <HouseMixIcon size={28} />
-                      ) : (
-                        <Icon size={22} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
-                      )}
-
-                    </button>
-
-                  </TooltipTrigger>
-                  {!item.children && (
-                    <TooltipContent side="right">
-                      <p className="text-xs capitalize">
-                        {item.label === "home" ? "Home nexohub" : item.label}
-                      </p>
-                    </TooltipContent>
-                  )}
-
-                </Tooltip>
-
-                {/* Sidebar flyout submenu — destacado da barra com gap, blur e sombra suave */}
-                {item.children && (() => {
-                  const flipUp = itemIdx >= Math.ceil(arr.length / 2);
-                  return (
-                  <AnimatedFlyout
-                    open={isOpen}
-                    className="absolute left-full z-[70]"
-                    style={{ ...(flipUp ? { bottom: 0 } : { top: 0 }), marginLeft: 18, paddingLeft: 4 }}
-                    onMouseEnter={clearMenuLeaveTimer}
-                    onMouseLeave={scheduleCloseMenu}
-                  >
-
-                    {/* ponte invisível para não perder hover no gap */}
-                    <div style={{ position: "absolute", left: -18, top: 0, width: 22, height: "100%" }} />
-                    <div
-                      data-submenu={item.label}
-                      role="menu"
-                      aria-label={`Submenu ${item.label}`}
-                      onKeyDown={(e) => {
-                        const items = Array.from(
-                          (e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("[data-submenu-item]")
-                        ).filter(el => !el.hasAttribute("disabled"));
-                        const currentIndex = items.findIndex(el => el === document.activeElement);
-                        if (e.key === "ArrowDown") {
-                          e.preventDefault();
-                          const next = items[(currentIndex + 1 + items.length) % items.length];
-                          next?.focus();
-                        } else if (e.key === "ArrowUp") {
-                          e.preventDefault();
-                          const prev = items[(currentIndex - 1 + items.length) % items.length];
-                          prev?.focus();
-                        } else if (e.key === "Home") {
-                          e.preventDefault();
-                          items[0]?.focus();
-                        } else if (e.key === "End") {
-                          e.preventDefault();
-                          items[items.length - 1]?.focus();
-                        } else if (e.key === "Escape" || e.key === "ArrowLeft") {
-                          e.preventDefault();
-                          setHoveredMenu(null);
-                          // devolve o foco ao botão-pai
-                          const parentBtn = (e.currentTarget.closest("[data-menu-item-root]") as HTMLElement | null)?.querySelector<HTMLButtonElement>("button");
-                          parentBtn?.focus();
-                        }
-                      }}
-                      className="rounded-2xl py-3 min-w-[210px] overflow-y-auto backdrop-blur-xl"
-                      style={{
-                        background: `linear-gradient(180deg, ${layoutColors.navBg}f2 0%, ${layoutColors.navBg}e6 100%)`,
-                        border: `1px solid ${layoutColors.navText}1f`,
-                        boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px ${layoutColors.accentColor}14, inset 0 1px 0 ${layoutColors.navText}0f`,
-                        maxHeight: "calc(100vh - 24px)",
-                        ["--nexo-accent" as any]: layoutColors.accentColor,
-                      }}
-                    >
-                      <div className="flex items-center gap-2 px-4 pb-2">
-                        <span className="inline-block rounded-full" style={{ width: 4, height: 12, background: layoutColors.accentColor }} />
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: `${layoutColors.navText}80` }}>{item.label}</p>
-                      </div>
-                      <div className="px-2">
-                        {filterMenuChildren(item.children).map((child, ci) => {
-                          const ChildIcon = child.icon;
-                          const childActive = currentPage === child.page;
-                          return (
-                            <div key={child.label} className="animate-in fade-in slide-in-from-left-1" style={{ animationDelay: `${ci * 25}ms`, animationFillMode: "both" }}>
-                              {child.separator && ci > 0 && (
-                                <div className="mx-2 my-1.5" style={{ borderTop: `1px solid ${layoutColors.navText}12` }} />
-                              )}
-                              <button
-                                data-submenu-item
-                                role="menuitem"
-                                onClick={() => handleChildClick(child, item.label)}
-                                className="nexo-focus w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
-                                style={{
-                                  color: childActive ? layoutColors.accentColor : `${layoutColors.navText}d9`,
-                                  backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
-                                }}
-                                onMouseEnter={e => { if (!childActive) { e.currentTarget.style.backgroundColor = `${layoutColors.navText}10`; e.currentTarget.style.color = layoutColors.navText; } }}
-                                onMouseLeave={e => { if (!childActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = `${layoutColors.navText}d9`; } }}
-                              >
-                                {childActive && (
-                                  <span className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full" style={{ width: 3, height: 14, background: layoutColors.accentColor }} />
-                                )}
-                                <ChildIcon size={14} />
-                                <span className="font-medium">{child.label}</span>
-                              </button>
-                              {child.children && child.children.map(grand => {
-                                const GrandIcon = grand.icon;
-                                const grandActive = currentPage === grand.page;
-                                return (
-                                  <button
-                                    key={grand.label}
-                                    data-submenu-item
-                                    role="menuitem"
-                                    onClick={() => handleChildClick(grand, child.label)}
-                                    className="nexo-focus w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
-                                    style={{
-                                      color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}a6`,
-                                      backgroundColor: grandActive ? `${layoutColors.accentColor}10` : "transparent",
-                                    }}
-                                    onMouseEnter={e => { if (!grandActive) { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.navText; } }}
-                                    onMouseLeave={e => { if (!grandActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = `${layoutColors.navText}a6`; } }}
-                                  >
-                                    <GrandIcon size={12} />
-                                    <span>{grand.label}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                  </AnimatedFlyout>
-
-                  );
-                })()}
-              </div>
-            );
-          })}
-        </div>
-          );
-        })()}
-
-        
-
-        </aside>
-      </div>
+        <Suspense fallback={null}>
+          <HomeGradientBackground />
+        </Suspense>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0 relative z-[1]">
+      {/* Floating player dock: sits at root level; when currentPage !== 'dashboard', sits behind pages (z-[2]); on dashboard sits at z-30 */}
+      {!isAdmin && (
+        <Suspense fallback={null}>
+          <FloatingMiniPlayer
+            isBehindPages={currentPage !== "dashboard"}
+            effectiveUserId={effectiveUserId}
+          />
+        </Suspense>
+      )}
+
+      {/* Floating on-air presenter dock: sits at bottom right of Home; when currentPage !== 'dashboard', sits behind pages (z-[2]); on dashboard sits at z-30 */}
+      {!isAdmin && (
+        <Suspense fallback={null}>
+          <FloatingOnAirPresenter
+            isBehindPages={currentPage !== "dashboard"}
+            effectiveUserId={effectiveUserId}
+          />
+        </Suspense>
+      )}
+
+      {/* Background layers */}
+      {isDashboard && isAdmin && (
+        <div className="absolute inset-0 z-0" style={{ backgroundColor: "#f4f6fa" }} />
+      )}
+
+
+      {/* ===== TOP HEADER BAR (desktop) ===== */}
+      {isAdmin ? (
+        <div className="relative z-50">
+          <SuperAdminHeader
+            currentPage={currentPage}
+            onNavigate={setCurrentPage}
+            onLogout={onLogout}
+            userEmail={user?.email || "alex@nexobrasil.net"}
+          />
+        </div>
+      ) : (
+        <div className="relative z-50">
+          <HouseMixHeader
+            currentPage={currentPage}
+            onNavigate={setCurrentPage}
+            onLogout={onLogout}
+            userEmail={user?.email || ""}
+            empresaNome={empresa.nome}
+            empresaLogo={empresa.logo}
+            empresaTimezone={empresaTimezone}
+            playerState={playerState}
+            allowedPages={subUserModules !== null ? subUserModules : (planModules ?? enabledModules)}
+            showBots={subUserModules === null}
+            pageTitle={currentPage !== "dashboard" ? pageTitle[currentPage] : undefined}
+            onGoBack={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== currentPage));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes(currentPage)) return prev;
+                return [...prev, currentPage];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+            canMinimize={MINIMIZABLE_PAGES.includes(currentPage)}
+          />
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative z-20">
 
         {/* Mobile top bar */}
         <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-2 relative z-[1]">
@@ -1411,11 +1386,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               const childActive = currentPage === child.page;
                               return (
                                 <div key={child.label}>
-                                  <button onClick={() => handleChildClick(child, item.label)}
-                                    className="w-full flex items-center gap-2 px-3 rounded-lg text-xs transition-all active:scale-[0.98]"
+                                  <button onClick={() => !child.disabled && handleChildClick(child, item.label)}
+                                    disabled={child.disabled}
+                                    className={`w-full flex items-center gap-2 px-3 rounded-lg text-xs transition-all active:scale-[0.98] ${
+                                      child.disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""
+                                    }`}
                                     style={{
                                       minHeight: 40,
-                                      color: childActive ? layoutColors.accentColor : `${layoutColors.navText}b3`,
+                                      color: child.disabled ? `${layoutColors.navText}66` : childActive ? layoutColors.accentColor : `${layoutColors.navText}b3`,
                                       backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
                                     }}
                                   >
@@ -1426,11 +1404,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                     const GrandIcon = grand.icon;
                                     const grandActive = currentPage === grand.page;
                                     return (
-                                      <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
-                                        className="w-full flex items-center gap-2 pl-8 pr-3 rounded-lg text-[11px] transition-all active:scale-[0.98]"
+                                      <button key={grand.label} onClick={() => !grand.disabled && handleChildClick(grand, child.label)}
+                                        disabled={grand.disabled}
+                                        className={`w-full flex items-center gap-2 pl-8 pr-3 rounded-lg text-[11px] transition-all active:scale-[0.98] ${
+                                          grand.disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""
+                                        }`}
                                         style={{
                                           minHeight: 36,
-                                          color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80`,
+                                          color: grand.disabled ? `${layoutColors.navText}44` : grandActive ? layoutColors.accentColor : `${layoutColors.navText}80`,
                                         }}
                                       >
                                         <GrandIcon size={12} />
@@ -1464,311 +1445,38 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         )}
 
-        {/* ===== TOP HEADER BAR (desktop) ===== */}
-        {isAdmin ? (
-          <div className="relative z-50">
-            <SuperAdminHeader
-              currentPage={currentPage}
-              onNavigate={setCurrentPage}
-              onLogout={onLogout}
-              userEmail={user?.email || "alex@nexobrasil.net"}
-            />
-          </div>
-        ) : (
-          <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
-                  {empresa.nome || "NexoHUB"}
-                </h1>
-
-                {/* Notificações agora são centralizadas no topo via App.tsx */}
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="flex items-center gap-1 rounded-full pl-2 pr-3 py-1"
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid rgba(0,191,240,0.22)",
-              boxShadow: "0 6px 18px rgba(0,33,50,0.06)",
-            }}
-          >
-            {playerState.hasChannel && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
-                    className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                    style={{ color: "#002132" }}
-                    aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
-                  >
-                    {playerState.isLoading ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : playerState.isPlaying ? (
-                      <Pause size={18} />
-                    ) : (
-                      <Play size={18} />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p className="text-xs">{playerState.isPlaying ? `Pausar${playerState.channelName ? ` – ${playerState.channelName}` : ""}` : "Reproduzir player"}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="relative" id="intercom-toolbar-marker" data-intercom-anchor>
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
-                    className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                    style={{ color: "#002132" }}
-                  >
-                    <Radio size={18} />
-                  </button>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom"><p className="text-xs">Intercomunicador</p></TooltipContent>
-            </Tooltip>
-            <Suspense fallback={<div className="w-9 h-9" />}>
-              <MessageNotification />
-            </Suspense>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setCurrentPage("configuracoes")}
-                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                  style={{ color: "#002132" }}
-                >
-                  <Settings size={18} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onLogout}
-                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                  style={{ color: "#002132" }}
-                >
-                  <LogOut size={18} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom"><p className="text-xs">Sair</p></TooltipContent>
-            </Tooltip>
-            <div className="w-px h-7 mx-2" style={{ backgroundColor: "rgba(0,33,50,0.10)" }} />
-            <ServerClock timezone={empresaTimezone} />
-            <style>{`
-              .nexo-toolbar-btn:hover { background-color: rgba(0,191,240,0.14); color: #0087aa; }
-              .nexo-toolbar-btn:active { transform: scale(0.94); }
-            `}</style>
-          </div>
-        </div>
-        )}
-
-        {isDashboard && !isAdmin && displayedPill !== "Chatbot" && (
-          <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
-
-            <div className="flex flex-row gap-4 items-stretch">
-            <style>{`
-              .nexo-onair-card {
-                width: 778px;
-                flex-basis: 778px;
-                min-width: 520px;
-                height: 461px;
-                background: linear-gradient(135deg, var(--onair-primary) 0%, var(--onair-secondary) 100%);
-                transition: --onair-primary 900ms ease, --onair-secondary 900ms ease, background 900ms ease;
-              }
-
-              @media (max-width: 1024px) {
-                .nexo-onair-card { min-width: 0; width: 100%; flex-basis: 100%; height: 380px; }
-                .nexo-onair-locutor { width: 46% !important; }
-                .nexo-onair-thumb { height: 150px !important; }
-              }
-              @media (max-width: 640px) {
-                .nexo-onair-card { height: 300px; border-radius: 20px; }
-                .nexo-onair-locutor { width: 52% !important; top: 12px !important; right: 8px !important; }
-                .nexo-onair-thumb { height: 104px !important; top: 52px !important; left: 4px !important; }
-                .nexo-onair-pill { top: 12px !important; left: 12px !important; padding: 4px 12px !important; font-size: 11px !important; }
-                .nexo-onair-info { bottom: 12px !important; left: 12px !important; right: 12px !important; }
-              }
-            `}</style>
-            <div
-              className="nexo-onair-card rounded-3xl relative shrink min-w-0 overflow-hidden"
-              style={{
-                flexShrink: 1,
-                maxWidth: "100%",
-                ["--onair-primary" as any]: onAirPair?.primary || "#00d6f9",
-                ["--onair-secondary" as any]: onAirPair?.secondary || "#00d6f9",
-              }}
-            >
-
-              <div
-                className="nexo-onair-pill absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
-                style={{
-                  top: "20px",
-                  left: "18px",
-                  backgroundColor: onAirText === "#ffffff" ? "rgba(255,255,255,0.16)" : "#c3f628",
-                  color: onAirText === "#ffffff" ? "#ffffff" : "#002132",
-                }}
-              >
-                no ar
-              </div>
-              {onAirThumb && (
-                <img
-                  src={onAirThumb}
-                  alt="Programa no ar"
-                  className="nexo-onair-thumb absolute object-contain"
-                  style={{ top: "60px", left: "8px", height: "208px", width: "auto", maxWidth: "45%" }}
-                />
-              )}
-              <div
-                id="on-air-info-slot"
-                className="nexo-onair-info"
-                style={{
-                  position: "absolute",
-                  bottom: "20px",
-                  left: "18px",
-                  right: "18px",
-                  zIndex: 15,
-                  ["--layout-nav-text" as any]: onAirText,
-                  ["--layout-icon-color" as any]: onAirText,
-                  ["--layout-accent-color" as any]: onAirText,
-                }}
-              >
-                <Suspense fallback={null}>
-                  <OnAirWidget compact nextProgram={nextProgram} />
-                </Suspense>
-              </div>
-              {/* LOCUTOR — foto sem box, encostada no bottom */}
-              <div
-                className="nexo-onair-locutor absolute group"
-                style={{
-                  top: "20px",
-                  right: "20px",
-                  bottom: "0px",
-                  width: "320px",
-                  maxWidth: "52%",
-                }}
-              >
 
 
-                {onAirLocutorFoto && (
-                  <>
-                    <style>{`
-                      @keyframes locutorEntrada {
-                        0%   { opacity: 0; transform: scale(1.5) translateY(24px); filter: blur(6px); }
-                        60%  { opacity: 1; filter: blur(0); }
-                        100% { opacity: 1; transform: scale(1.3) translateY(0); filter: blur(0); }
-                      }
-                      @keyframes locutorGlow {
-                        0%   { box-shadow: inset 0 0 0 0 rgba(195,246,40,0); }
-                        50%  { box-shadow: inset 0 0 60px 10px rgba(195,246,40,0.35); }
-                        100% { box-shadow: inset 0 0 0 0 rgba(195,246,40,0); }
-                      }
-                    `}</style>
-                    <img
-                      src={onAirFotoSrc!}
-                      alt="Locutor no ar"
-                      className="w-full h-full object-contain object-bottom"
-                      style={{
-                        animation: "locutorEntrada 0.95s cubic-bezier(0.22,1,0.36,1) both",
-                        transformOrigin: "center 100%",
-                        willChange: "transform, opacity, filter",
-                      }}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Calendário Próximos Eventos — ao lado do "No Ar" */}
-            <div
-              className="rounded-3xl relative overflow-hidden flex-1 min-w-0"
-              style={{
-                minWidth: "260px",
-                height: "461px",
-                backgroundColor: "#00d6f9",
-                padding: "20px",
-                ["--layout-widget-text" as any]: "#002132",
-                ["--layout-accent-color" as any]: "#002132",
-                ["--layout-header-text" as any]: "#c3f628",
-                ["--layout-widget-bg" as any]: "#002132",
-                ["--layout-border-color" as any]: "#002132",
-              }}
-            >
-              <Suspense fallback={<div className="w-full h-full" />}>
-                <UpcomingEventsWidget onNavigate={setCurrentPage as any} />
-              </Suspense>
-            </div>
-            </div>
-
-          </div>
-        )}
 
 
 
         {/* ===== MAIN CONTENT AREA ===== */}
-        <div className={`flex-1 min-h-0 pb-4 relative z-[1] ${isAdmin ? "w-full px-4 lg:px-8 flex flex-col" : "px-3 lg:px-6"}`}>
-          {currentPage !== "dashboard" && !isAdmin && (
-            <div className="flex items-center justify-between mb-6 ml-1">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <BackButton onClick={() => {
-                    setMinimizedModules(prev => prev.filter(p => p !== currentPage));
-                    setCurrentPage("dashboard");
-                  }} />
-                  {MINIMIZABLE_PAGES.includes(currentPage) && (
-                    <button
-                      onClick={() => {
-                        setMinimizedModules(prev => {
-                          if (prev.includes(currentPage)) return prev;
-                          return [...prev, currentPage];
-                        });
-                        setCurrentPageState("dashboard");
-                        try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
-                      }}
-                      className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-[#00BFF0] text-white shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)] transition-all duration-300 hover:brightness-110 active:scale-95"
-                      title="Minimizar"
-                    >
-                      <ChevronDown size={20} className="text-white transition-opacity" />
-                    </button>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
-                  {minimizedModules.includes(currentPage) && (
-                    <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#002132]/10">
-                      {currentPage === "sorteios" ? <Gift size={14} className="text-[#00BFF0]" /> : 
-                       currentPage === "previsao" ? <CloudRain size={14} className="text-[#00BFF0]" /> :
-                       currentPage === "agenda" ? <CalendarDays size={14} className="text-[#00BFF0]" /> :
-                       currentPage === "musica" ? <Music size={14} className="text-[#00BFF0]" /> :
-                       currentPage === "blitz" ? <Siren size={14} className="text-[#00BFF0]" /> :
-                       currentPage === "noticias" ? <FileText size={14} className="text-[#00BFF0]" /> :
-                       currentPage === "broadcast" ? <Radio size={14} className="text-[#00BFF0]" /> :
-                       currentPage === "site" ? <Globe size={14} className="text-[#00BFF0]" /> :
-                       <Users size={14} className="text-[#00BFF0]" />}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-black select-none">
-                    <span className="opacity-40" style={{ color: layoutColors.pageText }}>Home</span>
-                    <ChevronRight size={10} className="opacity-20" />
-                    <span style={{ color: layoutColors.accentColor }}>{pageTitle[currentPage]}</span>
-                  </div>
-                </div>
-              </div>
+        <div className={`flex-1 min-h-0 ${currentPage === "cortevideo" ? "pb-0 px-2 lg:px-4" : "pb-4 px-4 lg:px-8"} relative z-10 flex flex-col`}>
+          <div className={`${!isAdmin ? (currentPage === "cortevideo" ? "w-full flex flex-col flex-1 min-h-0" : "max-w-[1600px] mx-auto w-full flex flex-col flex-1 min-h-0") : "w-full flex flex-col flex-1"}`}>
 
-              {/* Espaço reservado para ações globais do módulo, se necessário */}
-              <div id="module-actions-portal" className="flex items-center gap-2" />
-            </div>
+          {/* Module actions portal (used by pages for global action buttons) */}
+          {currentPage !== "dashboard" && !isAdmin && (
+            <div id="module-actions-portal" className="flex items-center gap-2 justify-end" />
           )}
+
           <div className={`relative flex-1 h-full ${isAdmin ? "max-w-[1600px] mx-auto w-full flex flex-col" : ""}`}>
-            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden ${isAdmin ? "rounded-3xl" : "rounded-2xl"} ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: isAdmin ? "1.5rem" : "1.25rem" }}>
-            <Suspense fallback={<ModulePageSkeleton />}>
+            <div ref={contentScrollRef} className={`flex-1 h-full ${currentPage === "cortevideo" ? "overflow-hidden !p-0" : "overflow-y-auto overflow-x-hidden"} ${isAdmin ? "rounded-3xl" : "rounded-2xl"} ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : (currentPage === "cortevideo" ? { padding: 0 } : { padding: isAdmin ? "1.5rem" : "0.5rem" })}>
+            <Suspense fallback={
+              <ModulePageSkeleton
+                variant={
+                  currentPage === "musica" ? "musica" :
+                  currentPage === "financeiro" ? "financeiro" :
+                  currentPage === "clientes" ? "clientes" :
+                  currentPage === "configuracoes" ? (isAdmin ? "configuracoes" : "form") :
+                  (currentPage === "produtos" || currentPage === "housemix") ? "produtos" :
+                  currentPage === "agenda" ? "agenda" :
+                  (currentPage === "dashboard" && isAdmin) ? "dashboard" :
+                  (currentPage === "curtidas" || currentPage === "fans") ? "table" :
+                  ["apresentadores", "programas", "ouvintes", "noticias", "sorteios", "promocoes", "testemunhais", "shopping", "preroll", "cortevideo", "enquete", "quiz", "tp", "configtelapromo", "site"].includes(currentPage) ? "form" :
+                  "list"
+                }
+              />
+            }>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
               <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
                 {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
@@ -1776,9 +1484,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  {isAdmin ? <AdminClientsDashboard onNavigate={setCurrentPage} /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
+                  {isAdmin ? <AdminClientsDashboard onNavigate={setCurrentPage} /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} isActive={currentPage === "dashboard"} />}
                 </div>
               </div>
+
 
 
               {!isAdmin && currentPage === "admininfomusic" && <AdminInfoMusicPage />}
@@ -1786,37 +1495,37 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "chatbot" && <ChatbotHome />}
               {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
-                  <ApresentadorForm />
+                  <ApresentadorForm effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "previsao" || (minimizedModules.includes("previsao") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
-                  <PrevisaoTempo />
+                  <PrevisaoTempo effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "clientes" || (minimizedModules.includes("clientes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
-                  <ClientesPage />
+                  <ClientesPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "ouvintes" || (minimizedModules.includes("ouvintes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "ouvintes" ? "block" : "none" }}>
-                  <OuvintesPage />
+                  <OuvintesPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "sorteios" || (minimizedModules.includes("sorteios") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "sorteios" ? "block" : "none" }}>
-                  <SorteiosPage />
+                  <SorteiosPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "blitz" || (minimizedModules.includes("blitz") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "blitz" ? "block" : "none" }}>
-                  <BlitzPage />
+                  <BlitzPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "noticias" || (minimizedModules.includes("noticias") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "noticias" ? "block" : "none" }}>
-                  <RoteiroPrograma />
+                  <RoteiroPrograma effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "programas" || (minimizedModules.includes("programas") && currentPage === "dashboard")) && (
@@ -1824,22 +1533,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ProgramaForm effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
-              <div style={{ display: currentPage === "musica" || (minimizedModules.includes("musica") && currentPage === "dashboard") ? "block" : "none" }}>
-                <MusicaNoAr effectiveUserId={effectiveUserId} />
-              </div>
+              {/* MusicaNoAr mounted only when active or minimized on dashboard */}
+              {(currentPage === "musica" || (minimizedModules.includes("musica") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
+                  <MusicaNoAr effectiveUserId={effectiveUserId} />
+                </div>
+              )}
               {(currentPage === "agenda" || (minimizedModules.includes("agenda") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "agenda" ? "block" : "none" }}>
-                  <Suspense fallback={<AgendaPageSkeleton />}>
-                    <AgendaPage effectiveUserId={effectiveUserId} />
-                  </Suspense>
+                  <AgendaPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
-              {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
+              {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" isSuperAdmin={isAdmin} effectiveUserId={effectiveUserId} />}
               {(currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && currentPage === "dashboard")) && (
-                <div style={{ display: currentPage === "playerconfig" ? "block" : "none" }}>
-                  <ConfiguracoesPage section="player" />
+                <div className="keep-dark-layout" style={{ display: currentPage === "playerconfig" ? "block" : "none" }}>
+                  <ConfiguracoesPage section="player" effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "testemunhais" || (minimizedModules.includes("testemunhais") && currentPage === "dashboard")) && (
@@ -1852,49 +1561,49 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <PromocoesPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
+              {currentPage === "configtelapromo" && <ConfigTelaPromoPage effectiveUserId={effectiveUserId} />}
               {(currentPage === "logos" || (minimizedModules.includes("logos") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "logos" ? "block" : "none" }}>
                   <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {currentPage === "shopping" && <ShoppingPage />}
+              {currentPage === "shopping" && <ShoppingPage effectiveUserId={effectiveUserId} />}
               {(currentPage === "preroll" || (minimizedModules.includes("preroll") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "preroll" ? "block" : "none" }}>
-                  <PreRollPage />
+                  <PreRollPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "cortevideo" || (minimizedModules.includes("cortevideo") && currentPage === "dashboard")) && (
-                <div style={{ display: currentPage === "cortevideo" ? "block" : "none" }}>
+                <div className={currentPage === "cortevideo" ? "h-full w-full flex flex-col flex-1 min-h-0" : ""} style={{ display: currentPage === "cortevideo" ? "flex" : "none", height: currentPage === "cortevideo" ? "100%" : undefined }}>
                   <CortesVideoPage />
                 </div>
               )}
               {currentPage === "vmix" && <VmixPage />}
-              {currentPage === "propostas" && <PropostasPage />}
+              {currentPage === "propostas" && <PropostasPage effectiveUserId={effectiveUserId} />}
               {currentPage === "tp" && <TeleprompterPage />}
               {(currentPage === "cenario" || (minimizedModules.includes("cenario") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "cenario" ? "block" : "none" }}>
-                  <CenariosPage />
+                  <CenariosPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "broadcast" || (minimizedModules.includes("broadcast") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "broadcast" ? "block" : "none" }}>
-                  <BroadcastPage />
+                  <BroadcastPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "batalha" || (minimizedModules.includes("batalha") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "batalha" ? "block" : "none" }}>
-                  <BatalhaMusicalPage />
+                  <BatalhaMusicalPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "enquete" || (minimizedModules.includes("enquete") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "enquete" ? "block" : "none" }}>
-                  <EnquetePage />
+                  <EnquetePage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "quiz" || (minimizedModules.includes("quiz") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "quiz" ? "block" : "none" }}>
-                  <QuizPage />
+                  <QuizPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {(currentPage === "site" || (minimizedModules.includes("site") && currentPage === "dashboard")) && (
@@ -1902,12 +1611,30 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <SitePage effectiveUserId={effectiveUserId || user?.id || null} />
                 </div>
               )}
-              {/* Produtos (Página de Gestão de Produtos com House Mix integrado) */}
-              {(currentPage === "produtos" || currentPage === "housemix" || (isAdmin && ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage))) && (
+              {/* Produtos (Página de Cadastro e Catálogo de Produtos) */}
+              {currentPage === "produtos" && (
                 <ProdutosPage
+                  accentColor={layoutColors.accentColor}
+                  onNavigate={setCurrentPage}
+                />
+              )}
+
+              {/* House Mix (Página Exclusiva do Produto House Mix) */}
+              {(currentPage === "housemix" || (isAdmin && ["modulos", "subusuarios", "pacotes", "admininfomusic"].includes(currentPage))) && (
+                <HouseMixPage
+                  initialTab={
+                    currentPage === "subusuarios"
+                      ? "subusuarios"
+                      : currentPage === "pacotes"
+                      ? "pacotes"
+                      : currentPage === "admininfomusic"
+                      ? "infomusic"
+                      : "modulos"
+                  }
                   accentColor={layoutColors.accentColor}
                   adminModulosGroups={adminModulosGroups as never}
                   subUsuarioModulosGroups={subUsuarioModulosGroups as never}
+                  effectiveUserId={effectiveUserId}
                   onSelectGroup={(g) => {
                     const item = adminModulosGroups.find(i => i.label === g.label);
                     if (item?.page) { setCurrentPage(item.page); return; }
@@ -1930,8 +1657,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     };
                     const group = adminModulosGroups.find(i => i.label === parent)
                       ?? adminModulosGroups.find(i => (i.children ?? []).some(ch => ch.label === parent));
-                    const child = findChild(group?.children) ?? { label: c.label };
-                    handleChildClick(child, parent);
+                    const child = ((c as any)?.page ? c : findChild(group?.children)) ?? {
+                      label: c.label,
+                      page: (c as any)?.page || (c.label?.toLowerCase() === "programas" ? "programas" : undefined),
+                    };
+                    handleChildClick(child as any, parent);
                   }}
                   onNavigate={setCurrentPage}
                 />
@@ -1966,8 +1696,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     };
                     const group = adminModulosGroups.find(i => i.label === parent)
                       ?? adminModulosGroups.find(i => (i.children ?? []).some(ch => ch.label === parent));
-                    const child = findChild(group?.children) ?? { label: c.label };
-                    handleChildClick(child, parent);
+                    const child = ((c as any)?.page ? c : findChild(group?.children)) ?? {
+                      label: c.label,
+                      page: (c as any)?.page || (c.label?.toLowerCase() === "programas" ? "programas" : undefined),
+                    };
+                    handleChildClick(child as any, parent);
                   }}
                 />
               )}
@@ -1977,47 +1710,65 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
             {currentPage !== "dashboard" && showContentScrollIndicator && (
               <div
-                className="absolute inset-y-4 right-1 z-20 flex items-stretch"
-                style={{ width: "14px", cursor: "pointer", pointerEvents: "auto" }}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  const track = e.currentTarget;
-                  const rect = track.getBoundingClientRect();
-                  const scrollEl = contentScrollRef.current;
-                  if (!scrollEl) return;
-                  const setScrollFromY = (clientY: number) => {
-                    const ratio = Math.min(Math.max((clientY - rect.top) / rect.height, 0), 1);
-                    scrollEl.scrollTop = ratio * (scrollEl.scrollHeight - scrollEl.clientHeight);
-                  };
-                  setScrollFromY(e.clientY);
-                  const onMove = (ev: MouseEvent) => { ev.preventDefault(); setScrollFromY(ev.clientY); };
-                  const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-                  window.addEventListener("mousemove", onMove);
-                  window.addEventListener("mouseup", onUp);
-                }}
+                className="absolute inset-y-4 right-2 z-30 flex items-stretch justify-center pointer-events-auto select-none group/scroll"
+                style={{ width: "32px" }}
               >
-                <div className="relative h-full w-full flex items-stretch justify-center">
+                {/* Trilho Interativo com Drag Suave e Tons de Azul */}
+                <div
+                  className="relative flex-1 h-full flex items-stretch justify-center cursor-pointer"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setIsScrollDragging(true);
+                    const track = e.currentTarget;
+                    const rect = track.getBoundingClientRect();
+                    const scrollEl = contentScrollRef.current;
+                    if (!scrollEl) return;
+                    const thumbHeight = 48;
+                    const availableHeight = Math.max(rect.height - thumbHeight, 1);
+                    const setScrollFromY = (clientY: number) => {
+                      const offsetY = clientY - rect.top - (thumbHeight / 2);
+                      const ratio = Math.min(Math.max(offsetY / availableHeight, 0), 1);
+                      scrollEl.scrollTop = ratio * (scrollEl.scrollHeight - scrollEl.clientHeight);
+                    };
+                    setScrollFromY(e.clientY);
+                    const onMove = (ev: MouseEvent) => { ev.preventDefault(); setScrollFromY(ev.clientY); };
+                    const onUp = () => {
+                      setIsScrollDragging(false);
+                      window.removeEventListener("mousemove", onMove);
+                      window.removeEventListener("mouseup", onUp);
+                    };
+                    window.addEventListener("mousemove", onMove);
+                    window.addEventListener("mouseup", onUp);
+                  }}
+                >
+                  {/* Linha do Trilho em Azul Suave (#d0deff) que expande no hover */}
                   <div
-                    className="absolute top-0 bottom-0 w-[2px]"
-                    style={{ background: "color-mix(in srgb, var(--layout-page-text, hsl(var(--background))) 25%, transparent)", borderRadius: "1px" }}
+                    className={`absolute top-0 bottom-0 rounded-full transition-all duration-200 ease-out ${
+                      isScrollDragging
+                        ? "w-[10px] bg-[#d0deff]/80"
+                        : "w-[4px] group-hover/scroll:w-[10px] bg-[#d0deff]/40 group-hover/scroll:bg-[#d0deff]/80"
+                    }`}
                   />
+
+                  {/* Cursor de Rolagem em Azul Sólido (#0055ff) sem gradiente, expande no hover */}
                   <div
-                    className="absolute transition-[top] duration-100 hover:scale-110"
+                    className={`absolute rounded-full bg-[#0055ff] transition-all duration-200 ease-out ${
+                      isScrollDragging
+                        ? "w-[16px] bg-[#0042cc] shadow-[0_0_14px_rgba(0,85,255,0.5)] ring-2 ring-[#d0deff] cursor-grabbing"
+                        : "w-[6px] group-hover/scroll:w-[14px] hover:bg-[#0042cc] group-hover/scroll:shadow-[0_2px_10px_rgba(0,85,255,0.35)] cursor-grab"
+                    }`}
                     style={{
-                      width: "8px",
-                      height: "28px",
-                      borderRadius: "4px",
-                      top: `clamp(0px, calc(${contentScrollProgress * 100}% - 14px), calc(100% - 28px))`,
+                      height: "48px",
+                      top: `calc(${contentScrollProgress} * (100% - 48px))`,
                       left: "50%",
                       transform: "translateX(-50%)",
-                      background: "var(--layout-accent-color, hsl(var(--destructive)))",
-                      boxShadow: "0 1px 6px rgba(0,0,0,0.3)",
-                      cursor: "grab",
                     }}
                   />
                 </div>
               </div>
             )}
+          </div>
+          {/* end max-w wrapper */}
           </div>
         </div>
 
@@ -2123,12 +1874,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       <Suspense fallback={null}>
         <IntercomWidget />
       </Suspense>
-
-      {subUserModules === null && (
-        <>
-          {isDashboard && <BotsStatusBox />}
-        </>
-      )}
     </div>
   );
 }
@@ -2426,11 +2171,11 @@ const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayE
 );
 
 /* ========== SERVER CLOCK ========== */
-function ProgramProgressBar({ inicio, fim, nowTick }: { inicio: string; fim: string; nowTick: number }) {
+function ProgramProgressBar({ inicio, fim }: { inicio: string; fim: string }) {
   const fillRef = useRef<HTMLDivElement>(null);
   const [sh, sm] = inicio.split(":").map(Number);
   const [eh, em] = fim.split(":").map(Number);
-  const now = new Date(nowTick);
+  const now = new Date();
   const startDate = new Date(now); startDate.setHours(sh, sm, 0, 0);
   const endDate = new Date(now); endDate.setHours(eh, em, 0, 0);
   if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
@@ -2483,43 +2228,6 @@ function ProgramProgressBar({ inicio, fim, nowTick }: { inicio: string; fim: str
   );
 }
 
-function ServerClock({ timezone }: { timezone?: string | null }) {
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const tz = timezone && timezone.length > 0 ? timezone : undefined;
-  let hours: string;
-  let seconds: string;
-  try {
-    hours = new Intl.DateTimeFormat("pt-BR", {
-      timeZone: tz,
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(now);
-    seconds = new Intl.DateTimeFormat("pt-BR", {
-      timeZone: tz,
-      second: "2-digit",
-      hour12: false,
-    }).format(now).padStart(2, "0");
-  } catch {
-    hours = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-    seconds = String(now.getSeconds()).padStart(2, "0");
-  }
-
-  return (
-    <div className="text-right" title={tz ? `Fuso: ${tz}` : undefined}>
-      <span className="font-light tracking-wider inline-flex items-start" style={{ fontFamily: "Poppins, sans-serif", fontSize: "26px", lineHeight: 1.1, color: "#002132" }}>
-        {hours}
-        <span className="font-light inline-block" style={{ fontSize: "12px", width: "18px", textAlign: "left", marginTop: "2px", color: "#002132", opacity: 0.7 }}>{seconds}</span>
-      </span>
-    </div>
-  );
-}
 
 /* ========== UNIFIED XML FIELD ========== */
 const WEATHER_KEY = "masterview_last_city";
@@ -2758,14 +2466,43 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
     return new Date(d.getFullYear(), f.mes - 1, f.dia);
   });
 
+  const DIAS_INDEX_MAP: Record<number, string[]> = {
+    0: ["domingo", "dom"],
+    1: ["segunda", "seg", "segunda-feira"],
+    2: ["terca", "terça", "ter", "terca-feira", "terça-feira"],
+    3: ["quarta", "qua", "quarta-feira"],
+    4: ["quinta", "qui", "quinta-feira"],
+    5: ["sexta", "sex", "sexta-feira"],
+    6: ["sabado", "sábado", "sab", "sábado"],
+  };
+
   const eventMatchesDate = (evt: any, dateStr: string) => {
-    if (evt.data === dateStr) return true;
-    const evtDate = new Date(evt.data + "T12:00:00");
+    if (evt.data === dateStr && evt.recorrencia === "unico") return true;
     const checkDate = new Date(dateStr + "T12:00:00");
-    if (checkDate < evtDate) return false;
-    if (evt.recorrencia === "semanal") return evtDate.getDay() === checkDate.getDay();
+    const evtDate = new Date((evt.data || dateStr) + "T12:00:00");
+    if (checkDate < evtDate && evt.recorrencia === "unico") return false;
+
+    const dow = checkDate.getDay();
+    const dowNames = DIAS_INDEX_MAP[dow] || [];
+    const progDays = evt.programa?.dias_semana || evt.programa?.diasSemana;
+    if (progDays && Array.isArray(progDays) && progDays.length > 0) {
+      const normalizedDays = progDays.map((d: any) => String(d).trim().toLowerCase());
+      return normalizedDays.some((d: any) => dowNames.some(dn => d.includes(dn)));
+    }
+    if (evt.recorrencia === "programa_semanal" || evt.recorrencia?.startsWith("programa_semanal:") || evt.recorrencia?.startsWith("dias:")) {
+      let activeDays: number[] = [1, 2, 3, 4, 5];
+      if (evt.dias_semana && Array.isArray(evt.dias_semana) && evt.dias_semana.length > 0) {
+        activeDays = evt.dias_semana;
+      } else if (evt.recorrencia.startsWith("programa_semanal:")) {
+        activeDays = evt.recorrencia.slice(17).split(",").map(Number).filter((n: any) => !isNaN(n));
+      } else if (evt.recorrencia.startsWith("dias:")) {
+        activeDays = evt.recorrencia.slice(5).split(",").map(Number).filter((n: any) => !isNaN(n));
+      }
+      return activeDays.includes(dow);
+    }
+    if (evt.recorrencia === "semanal") return evtDate.getDay() === dow;
     if (evt.recorrencia === "mensal") return evtDate.getDate() === checkDate.getDate();
-    return false;
+    return evt.data === dateStr;
   };
 
   const getCalendarDates = () => {
@@ -2811,19 +2548,33 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
         .select("*")
         .eq("user_id", user.id)
         .order("data");
-      if (!evts) { setEventos([]); setLoading(false); return; }
-      const programaIds = evts.map((e: any) => e.programa_id).filter(Boolean);
-      const { data: progs } = programaIds.length
-        ? await supabase.from("programas").select("*").in("id", programaIds)
-        : { data: [] };
-      setEventos(evts.map((e: any) => ({
+      
+      let progs: any[] = [];
+      try {
+        const { data: pData } = await supabase.from("programas").select("*").eq("user_id", user.id);
+        if (pData && pData.length > 0) progs = pData;
+      } catch {}
+
+      if (progs.length === 0) {
+        try {
+          const fallbackData = await fetchStationDatabaseData(effectiveUserId || user.id || user.email);
+          if (fallbackData?.programas && fallbackData.programas.length > 0) {
+            progs = fallbackData.programas;
+          }
+        } catch {}
+      }
+
+      const evtsList = evts || [];
+      const progMap = new Map(progs.map((p: any) => [p.id, p]));
+
+      setEventos(evtsList.map((e: any) => ({
         ...e,
-        programa: (progs || []).find((p: any) => p.id === e.programa_id),
+        programa: progMap.get(e.programa_id) || e.programa,
       })));
       setLoading(false);
     };
     fetchData();
-  }, [user]);
+  }, [user, effectiveUserId]);
 
   if (loading) return (
     <div className="animate-pulse h-full">

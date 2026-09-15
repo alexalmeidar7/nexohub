@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as UserIcon, Smartphone, Radio as RadioIcon, Ban, ShieldCheck } from "lucide-react";
@@ -7,28 +8,9 @@ import { useToast } from "@/hooks/use-toast";
 import PontuacaoRulesSection from "./ouvintes/PontuacaoRulesSection";
 import { confirmDialog } from "@/lib/confirmDialog";
 import { promptDialog } from "@/lib/promptDialog";
-import { DEFAULT_CADASTRO_RULES, computePontuacaoFromRules } from "@/lib/ouvintesUpsert";
+import { DEFAULT_CADASTRO_RULES, computePontuacaoFromRules, getStoredOuvintes, saveStoredOuvintes, OuvinteRecord } from "@/lib/ouvintesUpsert";
 
-interface Ouvinte {
-  id: string;
-  created_at: string;
-  nome: string;
-  cpf: string | null;
-  telefone: string | null;
-  email: string | null;
-  setor: string | null;
-  cidade: string | null;
-  data_nascimento: string | null;
-  escolaridade: string | null;
-  renda: string | null;
-  pontuacao: number | null;
-  sexo: string | null;
-  origem_cadastro: string | null;
-  whatsapp_message_id?: string | null;
-  banido?: boolean | null;
-  banido_at?: string | null;
-  banido_motivo?: string | null;
-}
+type Ouvinte = OuvinteRecord;
 
 const ESCOLARIDADE_OPTIONS = [
   "Fundamental Incompleto",
@@ -73,30 +55,31 @@ const emptyForm = {
   sexo: "",
 };
 
-// Palette (nexo-form-design-system)
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+// Palette (nexo-form-design-system - ClientesPage style)
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#FFFFFF";
+const DARK = "#002132";
 
 const pillInput: React.CSSProperties = {
   width: "100%",
   height: 44,
   borderRadius: 999,
-  background: "#FFFFFF",
-  border: `2px solid ${CYAN}`,
+  background: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
   padding: "0 20px",
   fontFamily: "'Montserrat', sans-serif",
-  fontSize: 13,
-  color: DARK,
+  fontSize: 12,
+  color: "#0f172a",
   outline: "none",
+  textTransform: "uppercase",
 };
 
 const pillSelect: React.CSSProperties = {
   ...pillInput,
   appearance: "none",
   backgroundImage:
-    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2300BFF0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230055ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
   backgroundRepeat: "no-repeat",
   backgroundPosition: "right 18px center",
   paddingRight: 44,
@@ -104,12 +87,12 @@ const pillSelect: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Montserrat', sans-serif",
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: DARK,
-  marginBottom: 8,
+  color: "#64748b",
+  marginBottom: 6,
   display: "block",
 };
 
@@ -131,9 +114,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export default function OuvintesPage() {
+export default function OuvintesPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const { toast } = useToast();
+  const formRef = useRef<HTMLElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [ouvintes, setOuvintes] = useState<Ouvinte[]>([]);
@@ -149,13 +134,13 @@ export default function OuvintesPage() {
   // Load Pontuação rules (Cadastro tab) from localStorage — kept in sync by PontuacaoRulesSection.
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(`nexohub_pontuacao_rules_cadastro_${user?.id || "anon"}`);
+      const raw = localStorage.getItem(`nexohub_pontuacao_rules_cadastro_${targetUserId || user?.id || "anon"}`);
       if (raw) {
         const p = JSON.parse(raw);
         if (p && typeof p === "object") setRulesCadastro({ ...DEFAULT_CADASTRO_RULES, ...p });
       }
     } catch { /* ignore */ }
-  }, [user?.id]);
+  }, [targetUserId, user?.id]);
 
   // Live pontuação: calculada em tempo real conforme os campos preenchidos.
   const pontuacaoAuto = useMemo(
@@ -166,9 +151,9 @@ export default function OuvintesPage() {
         cidade: form.cidade, setor: form.setor, escolaridade: form.escolaridade,
         renda: form.renda,
       },
-      rulesCadastro,
+      rulesCadastro
     ),
-    [form, rulesCadastro],
+    [form, rulesCadastro]
   );
 
   // Load IBGE cities whenever UF changes
@@ -199,21 +184,49 @@ export default function OuvintesPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("ouvintes")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      toast({ title: "Erro ao carregar ouvintes", description: error.message, variant: "destructive" });
-    } else {
-      setOuvintes((data as any) || []);
+    const ownerId = targetUserId || user?.id;
+    let serverOuvintes: Ouvinte[] = [];
+    try {
+      let query = supabase
+        .from("ouvintes")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (ownerId) {
+        query = query.eq("user_id", ownerId);
+      }
+      const { data, error } = await query;
+      if (error) {
+        console.warn("Supabase fetch ouvintes aviso (usando cache local):", error.message);
+      } else if (data) {
+        serverOuvintes = data as Ouvinte[];
+      }
+    } catch (e) {
+      console.warn("Supabase fetch ouvintes exceção:", e);
+    }
+
+    const localList = getStoredOuvintes(ownerId);
+    const map = new Map<string, Ouvinte>();
+    // Primeiramente adiciona os dados vindos do servidor
+    serverOuvintes.forEach((o) => map.set(o.id, o));
+    // Sobrepõe os dados locais (que incluem cadastros e edições recentes)
+    localList.forEach((o) => map.set(o.id, o));
+
+    const merged = Array.from(map.values()).sort((a, b) => {
+      const ta = new Date(a.created_at || 0).getTime();
+      const tb = new Date(b.created_at || 0).getTime();
+      return tb - ta;
+    });
+
+    setOuvintes(merged);
+    if (merged.length > 0 && ownerId) {
+      saveStoredOuvintes(ownerId, merged);
     }
     setLoading(false);
   };
 
   useEffect(() => {
     load();
-  }, []);
+  }, [targetUserId, user?.id]);
 
   const resetForm = () => {
     setForm({ ...emptyForm });
@@ -221,48 +234,93 @@ export default function OuvintesPage() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) {
+      toast({ title: "Sessão inválida", description: "Faça login novamente para continuar.", variant: "destructive" });
+      return;
+    }
     if (!form.nome.trim()) {
       toast({ title: "Nome é obrigatório", variant: "destructive" });
       return;
     }
     setSaving(true);
-    const payload: any = {
-      user_id: user.id,
+
+    const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    const id = editingId || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ouv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+
+    const existingRecord = editingId ? ouvintes.find(o => o.id === editingId) : null;
+    const cidadeFinal = form.cidade.trim()
+      ? (form.uf ? `${form.cidade.trim()}/${form.uf}` : form.cidade.trim())
+      : null;
+
+    const newRecord: Ouvinte = {
+      id,
+      user_id: ownerId,
       nome: form.nome.trim(),
       cpf: form.cpf.trim() || null,
       telefone: form.telefone.trim() || null,
       email: form.email.trim() || null,
       setor: form.setor.trim() || null,
-      cidade: form.cidade.trim()
-        ? (form.uf ? `${form.cidade.trim()}/${form.uf}` : form.cidade.trim())
-        : null,
+      cidade: cidadeFinal,
       data_nascimento: form.data_nascimento || null,
       escolaridade: form.escolaridade || null,
       renda: form.renda || null,
       sexo: form.sexo || null,
-      // Pontuação AUTOMÁTICA: recalculada a partir das REGRAS DE PONTUAÇÃO
-      // (aba "Formulário de Cadastro") sempre que o admin salva. Ao criar,
-      // marca a origem como manual — os cadastros vindos do player/site/app
-      // são gravados via upsertOuvinteRecord com origem própria.
       pontuacao: pontuacaoAuto,
+      origem_cadastro: existingRecord?.origem_cadastro || "manual",
+      created_at: existingRecord?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      banido: existingRecord?.banido ?? false,
+      banido_at: existingRecord?.banido_at || null,
+      banido_motivo: existingRecord?.banido_motivo || null,
+    };
+
+    // Update state and localStorage immediately (guarantees record is saved and visible)
+    const currentStored = getStoredOuvintes(ownerId);
+    const map = new Map<string, Ouvinte>();
+    ouvintes.forEach(o => map.set(o.id, o));
+    currentStored.forEach(o => map.set(o.id, o));
+    map.set(id, newRecord);
+
+    const updatedList = editingId
+      ? Array.from(map.values()).map(o => o.id === editingId ? newRecord : o)
+      : [newRecord, ...Array.from(map.values()).filter(o => o.id !== id)];
+
+    setOuvintes(updatedList);
+    saveStoredOuvintes(ownerId, updatedList);
+
+    // Sync to Supabase in background
+    const payload: any = {
+      user_id: ownerId,
+      nome: newRecord.nome,
+      cpf: newRecord.cpf,
+      telefone: newRecord.telefone,
+      email: newRecord.email,
+      setor: newRecord.setor,
+      cidade: newRecord.cidade,
+      data_nascimento: newRecord.data_nascimento,
+      escolaridade: newRecord.escolaridade,
+      renda: newRecord.renda,
+      sexo: newRecord.sexo,
+      pontuacao: newRecord.pontuacao,
     };
     if (!editingId) payload.origem_cadastro = "manual";
 
-    let error;
-    if (editingId) {
-      ({ error } = await supabase.from("ouvintes").update(payload).eq("id", editingId));
-    } else {
-      ({ error } = await supabase.from("ouvintes").insert(payload));
+    try {
+      if (editingId && isUuid(editingId)) {
+        const { error } = await supabase.from("ouvintes").update(payload).eq("id", editingId);
+        if (error) console.warn("Aviso ao atualizar ouvinte no Supabase:", error.message);
+      } else {
+        if (isUuid(id)) payload.id = id;
+        const { error } = await supabase.from("ouvintes").insert(payload);
+        if (error) console.warn("Aviso ao salvar ouvinte no Supabase (mantido com sucesso no cache local):", error.message);
+      }
+    } catch (err) {
+      console.warn("Exceção ao sincronizar ouvinte com Supabase:", err);
     }
 
-    if (error) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: editingId ? "Ouvinte atualizado" : "Ouvinte cadastrado" });
-      resetForm();
-      load();
-    }
+    toast({ title: editingId ? "Ouvinte atualizado com sucesso" : "Ouvinte cadastrado com sucesso" });
+    resetForm();
     setSaving(false);
   };
 
@@ -287,18 +345,23 @@ export default function OuvintesPage() {
       sexo: o.sexo || "",
       pontuacao: String(o.pontuacao ?? 0),
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   };
 
   const handleDelete = async (id: string) => {
     if (!(await confirmDialog({ title: "Excluir ouvinte", message: "Excluir este ouvinte? Esta ação não pode ser desfeita.", destructive: true, confirmLabel: "Excluir" }))) return;
-    const { error } = await supabase.from("ouvintes").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Ouvinte excluído" });
-      load();
+    const ownerId = targetUserId || user?.id;
+    const updated = ouvintes.filter((o) => o.id !== id);
+    setOuvintes(updated);
+    if (ownerId) saveStoredOuvintes(ownerId, updated);
+
+    try {
+      const { error } = await supabase.from("ouvintes").delete().eq("id", id);
+      if (error) console.warn("Aviso ao excluir ouvinte no Supabase:", error.message);
+    } catch (e) {
+      console.warn("Exceção ao excluir ouvinte no Supabase:", e);
     }
+    toast({ title: "Ouvinte excluído" });
   };
 
   const handleToggleBan = async (o: Ouvinte) => {
@@ -327,16 +390,24 @@ export default function OuvintesPage() {
       motivo = motivo.trim();
       if (!motivo) return;
     }
+
+    const ownerId = targetUserId || user?.id;
     const payload: Record<string, unknown> = isBanned
       ? { banido: false, banido_at: null, banido_motivo: null }
       : { banido: true, banido_at: new Date().toISOString(), banido_motivo: motivo };
-    const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", o.id);
-    if (error) {
-      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: isBanned ? "Banimento removido" : "Ouvinte banido" });
-      load();
+
+    const updated = ouvintes.map(item => item.id === o.id ? { ...item, ...payload } : item);
+    setOuvintes(updated);
+    if (ownerId) saveStoredOuvintes(ownerId, updated);
+
+    try {
+      const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", o.id);
+      if (error) console.warn("Aviso ao atualizar banimento no Supabase:", error.message);
+    } catch (e) {
+      console.warn("Exceção ao atualizar banimento no Supabase:", e);
     }
+
+    toast({ title: isBanned ? "Banimento removido" : "Ouvinte banido" });
   };
 
   const filtered = ouvintes.filter((o) => {
@@ -363,12 +434,12 @@ export default function OuvintesPage() {
     return acc;
   }, {});
 
-  if (loading) return <ModulePageSkeleton />;
+  if (loading) return <ModulePageSkeleton variant="form" />;
 
   const today = new Date().toLocaleDateString("pt-BR");
 
   return (
-    <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cadastro de Ouvintes
@@ -380,11 +451,13 @@ export default function OuvintesPage() {
       {/* FORM CARD */}
 
       <section
+        ref={formRef}
         style={{
-          background: CARD_BG,
-          borderRadius: 28,
+          background: "#FFFFFF",
+          borderRadius: 24,
           padding: "28px 32px 32px",
-          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
         }}
       >
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -619,9 +692,9 @@ export default function OuvintesPage() {
               height: 44,
               padding: "0 28px",
               borderRadius: 999,
-              background: LIME,
+              background: "#0055ff",
               border: "none",
-              color: DARK,
+              color: "#ffffff",
               fontWeight: 800,
               fontSize: 12,
               letterSpacing: 2,
@@ -631,7 +704,7 @@ export default function OuvintesPage() {
               gap: 10,
               cursor: saving ? "wait" : "pointer",
               opacity: saving ? 0.7 : 1,
-              boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+              boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
             }}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}

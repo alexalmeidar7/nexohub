@@ -83,9 +83,12 @@ serve(async (req) => {
       const podcastData = parts.podcastData;
       const isPodcast = !!podcastData;
 
+      const finalHora = r.horario || progMap.get(r.programa_nome) || "00:00";
       xml += `  <programa>${esc(r.programa_nome || "")}</programa>\n`;
       xml += `  <estudio>${esc(r.estudio || "")}</estudio>\n`;
       xml += `  <data>${r.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
+      xml += `  <horario>${esc(finalHora)}</horario>\n`;
+      xml += `  <hora>${esc(finalHora)}</hora>\n`;
 
       if (pList.length > 0) {
         xml += `  <participantes>\n`;

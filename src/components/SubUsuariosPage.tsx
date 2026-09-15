@@ -1,15 +1,58 @@
 import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Check, GripVertical, RotateCcw, Save, Trash2, Users } from "lucide-react";
+import { 
+  Check, GripVertical, RotateCcw, Save, Trash2, Users,
+  ShieldCheck, Headphones, Mic, Clapperboard, Briefcase, Plus, Sparkles
+} from "lucide-react";
 import { toast } from "sonner";
 import type { ModuloGroup } from "./ModulosPage";
 
 const PERFIS = [
-  { key: "full", label: "FULL", desc: "Acesso total" },
-  { key: "recepcao", label: "RECEPÇÃO", desc: "Atendimento e cadastros" },
-  { key: "locutor", label: "LOCUTOR", desc: "Estúdio e no ar" },
-  { key: "producao", label: "PRODUÇÃO", desc: "Conteúdo e pauta" },
-  { key: "comercial", label: "COMERCIAL", desc: "Vendas e patrocínios" },
+  { 
+    key: "full", 
+    label: "FULL", 
+    desc: "Acesso total", 
+    icon: ShieldCheck, 
+    color: "#0055ff", 
+    bgBadge: "bg-[#d0deff]/40",
+    textColor: "text-[#0055ff]",
+  },
+  { 
+    key: "recepcao", 
+    label: "RECEPÇÃO", 
+    desc: "Atendimento e cadastros", 
+    icon: Headphones, 
+    color: "#0284c7", 
+    bgBadge: "bg-sky-50",
+    textColor: "text-sky-600",
+  },
+  { 
+    key: "locutor", 
+    label: "LOCUTOR", 
+    desc: "Estúdio e no ar", 
+    icon: Mic, 
+    color: "#7c3aed", 
+    bgBadge: "bg-purple-50",
+    textColor: "text-purple-600",
+  },
+  { 
+    key: "producao", 
+    label: "PRODUÇÃO", 
+    desc: "Conteúdo e pauta", 
+    icon: Clapperboard, 
+    color: "#d97706", 
+    bgBadge: "bg-amber-50",
+    textColor: "text-amber-600",
+  },
+  { 
+    key: "comercial", 
+    label: "COMERCIAL", 
+    desc: "Vendas e patrocínios", 
+    icon: Briefcase, 
+    color: "#059669", 
+    bgBadge: "bg-emerald-50",
+    textColor: "text-emerald-600",
+  },
 ] as const;
 
 type PerfilKey = (typeof PERFIS)[number]["key"];
@@ -170,7 +213,7 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
             disabled={!dirty}
             className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-40"
           >
-            <Save size={16} className="text-black" /> Salvar Perfis
+            <Save size={16} className="text-white" /> Salvar Perfis
           </button>
         </div>
       </section>
@@ -183,93 +226,137 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
           boxShadow: "0 12px 16px -12px rgba(15,23,42,0.18)",
         }}
       >
-      <div className="grid gap-4 grid-cols-5">
+        <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {PERFIS.map((p) => {
+            const items = perms[p.key];
+            const isHover = hover === p.key;
+            const PIcon = p.icon;
+            return (
+              <div
+                key={p.key}
+                onDragOver={(e) => { e.preventDefault(); setHover(p.key); }}
+                onDragLeave={() => setHover((h) => (h === p.key ? null : h))}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setHover(null);
+                  const id = e.dataTransfer.getData("text/plain") || dragging?.id;
+                  if (id) addTo(p.key, id);
+                }}
+                className={`rounded-3xl border transition-all duration-200 flex flex-col min-h-[220px] max-h-[46vh] overflow-hidden bg-white shadow-[0_4px_24px_rgba(1,28,91,0.05)] hover:shadow-[0_12px_32px_rgba(1,28,91,0.10)] hover:-translate-y-0.5 ${
+                  isHover 
+                    ? "border-[#0055ff] ring-4 ring-[#0055ff]/15 bg-blue-50/20 scale-[1.01]" 
+                    : "border-[#d0deff]/80 hover:border-[#0055ff]/40"
+                }`}
+              >
+                {/* Linha de Destaque Superior Colorida */}
+                <div 
+                  className="h-1.5 w-full shrink-0" 
+                  style={{ background: `linear-gradient(90deg, ${p.color}, #0055ff)` }} 
+                />
 
-        {PERFIS.map((p) => {
-          const items = perms[p.key];
-          const isHover = hover === p.key;
-          return (
-            <div
-              key={p.key}
-              onDragOver={(e) => { e.preventDefault(); setHover(p.key); }}
-              onDragLeave={() => setHover((h) => (h === p.key ? null : h))}
-              onDrop={(e) => {
-                e.preventDefault();
-                setHover(null);
-                const id = e.dataTransfer.getData("text/plain") || dragging?.id;
-                if (id) addTo(p.key, id);
-              }}
-              className="rounded-2xl border-2 shadow-sm flex flex-col min-h-[150px] max-h-[42vh] overflow-y-auto transition-all"
-              style={{
-                backgroundColor: accentColor,
-                borderColor: isHover ? "#ffffff" : accentColor,
-                boxShadow: isHover ? `0 0 0 4px ${accentColor}44` : undefined,
-              }}
-            >
-              <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: "rgba(255,255,255,0.25)" }}>
-                <span
-                  className="flex items-center justify-center rounded-lg shrink-0"
-                  style={{ width: 32, height: 32, backgroundColor: "rgba(255,255,255,0.2)", color: "#fff" }}
-                >
-                  <Users size={16} />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold tracking-wide text-white">{p.label}</div>
-                  <div className="text-[11px] text-white/70 truncate">{p.desc}</div>
-                </div>
-                <span className="text-[11px] font-semibold text-white/70">{items.length}</span>
-              </div>
-
-              <div className="flex-1 p-2.5 flex flex-wrap gap-1.5 content-start">
-                {items.length === 0 && (
-                  <div className="w-full h-full min-h-[120px] flex items-center justify-center text-center text-[11px] text-white/70 border-2 border-dashed rounded-xl px-3" style={{ borderColor: "rgba(255,255,255,0.35)" }}>
-                    Solte aqui os módulos deste perfil
-                  </div>
-                )}
-                {items.map((id) => {
-                  const it = flat[id];
-                  if (!it) return null;
-                  const IIcon = it.icon;
-                  const isGroup = id.startsWith("g:");
-                  return (
-                    <span
-                      key={id}
-                      className="group inline-flex items-center gap-1.5 rounded-full pl-2 pr-1.5 py-1 text-[11px] border"
-                      style={{
-                        backgroundColor: isGroup ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.18)",
-                        borderColor: "rgba(255,255,255,0.5)",
-                        color: isGroup ? "#0f172a" : "#ffffff",
+                {/* Cabeçalho do Card */}
+                <div className="px-4 py-3.5 border-b border-[#d0deff]/60 flex items-center justify-between gap-2 bg-gradient-to-b from-slate-50/70 to-white shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div 
+                      className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-xs border"
+                      style={{ 
+                        backgroundColor: `${p.color}14`, 
+                        borderColor: `${p.color}35`,
+                        color: p.color 
                       }}
                     >
-                      <IIcon size={12} style={{ color: isGroup ? accentColor : "#ffffff" }} />
-                      <span className="capitalize max-w-[130px] truncate">{it.label}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFrom(p.key, id)}
-                        className="opacity-60 hover:opacity-100 transition-opacity"
-                        aria-label="Remover"
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
+                      <PIcon size={18} strokeWidth={2.2} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[12px] font-black tracking-wider text-[#011c5b] uppercase leading-tight truncate">
+                        {p.label}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                        {p.desc}
+                      </div>
+                    </div>
+                  </div>
 
-              {items.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => clear(p.key)}
-                  className="text-[11px] text-white/70 hover:text-white px-4 py-2 border-t inline-flex items-center gap-1.5 justify-center transition-colors"
-                  style={{ borderColor: "rgba(255,255,255,0.25)" }}
-                >
-                  <RotateCcw size={11} /> Limpar
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                  <span 
+                    className={`text-[10px] font-black tracking-wider px-2 py-0.5 rounded-full shrink-0 border ${
+                      items.length > 0 
+                        ? "bg-[#d0deff]/40 text-[#011c5b] border-[#d0deff]" 
+                        : "bg-slate-100 text-slate-400 border-slate-200"
+                    }`}
+                  >
+                    {items.length}
+                  </span>
+                </div>
+
+                {/* Área de Itens / Dropzone */}
+                <div className="flex-1 p-3 flex flex-wrap gap-1.5 content-start overflow-y-auto bg-slate-50/35">
+                  {items.length === 0 ? (
+                    <div className="w-full h-full min-h-[140px] flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-[#d0deff]/80 rounded-2xl bg-white/80 gap-1.5 transition-colors">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center mb-0.5"
+                        style={{ backgroundColor: `${p.color}15`, color: p.color }}
+                      >
+                        <Plus size={16} />
+                      </div>
+                      <span className="text-[11px] font-bold text-[#011c5b]">Solte módulos aqui</span>
+                      <span className="text-[10px] text-slate-400">para liberar o acesso</span>
+                    </div>
+                  ) : (
+                    items.map((id) => {
+                      const it = flat[id];
+                      if (!it) return null;
+                      const IIcon = it.icon;
+                      const isGroup = id.startsWith("g:");
+                      return (
+                        <span
+                          key={id}
+                          className={`inline-flex items-center gap-1.5 rounded-full pl-2.5 pr-1.5 py-1 text-[11px] transition-all shadow-xs ${
+                            isGroup 
+                              ? "bg-white border border-[#d0deff] text-[#011c5b] font-bold hover:border-[#0055ff] hover:shadow-sm" 
+                              : "bg-[#d0deff]/25 border border-[#d0deff]/70 text-[#011c5b] font-medium hover:bg-[#d0deff]/40"
+                          }`}
+                        >
+                          <IIcon 
+                            size={12} 
+                            className="shrink-0" 
+                            style={{ color: isGroup ? "#0055ff" : p.color }} 
+                          />
+                          <span className="capitalize max-w-[125px] truncate">{it.label}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeFrom(p.key, id)}
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer ml-0.5"
+                            aria-label="Remover"
+                            title="Remover módulo"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Rodapé do Card */}
+                {items.length > 0 && (
+                  <div className="px-3.5 py-2 border-t border-[#d0deff]/50 bg-white flex items-center justify-between shrink-0">
+                    <span className="text-[10px] text-slate-400 font-medium pl-0.5">
+                      {items.length} {items.length === 1 ? "item" : "itens"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => clear(p.key)}
+                      className="text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-rose-600 hover:bg-rose-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 transition-all cursor-pointer"
+                      title="Limpar todos os módulos deste perfil"
+                    >
+                      <RotateCcw size={10} /> Limpar
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
 

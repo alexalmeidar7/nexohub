@@ -22,25 +22,28 @@ export default function XmlSection({ title, count, children }: XmlSectionProps) 
       className="nexo-scope w-full"
       style={{
         marginTop: 24,
-        borderRadius: 20,
-        background: "#D6F4FB",
-        border: "1.5px solid #00BFF0",
-        padding: "18px 20px",
+        borderRadius: 24,
+        background: "#ffffff",
+        border: "1px solid rgba(226, 232, 240, 0.9)",
+        boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+        padding: "20px 24px",
         fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif",
       }}
     >
       <header
-        className="flex items-center gap-2"
-        style={{ marginBottom: 12 }}
+        className="flex items-center gap-2.5"
+        style={{ marginBottom: 14 }}
       >
-        <Code2 size={16} style={{ color: "#00BFF0" }} strokeWidth={2.5} />
+        <div className="w-8 h-8 rounded-full bg-[#0055ff]/10 flex items-center justify-center">
+          <Code2 size={16} className="text-[#0055ff]" strokeWidth={2.5} />
+        </div>
         <h3
           style={{
             fontSize: 13,
             fontWeight: 800,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: "#00BFF0",
+            color: "#002132",
             margin: 0,
           }}
         >
@@ -50,18 +53,16 @@ export default function XmlSection({ title, count, children }: XmlSectionProps) 
           <span
             aria-label={`${resolvedCount} XML disponíveis`}
             style={{
-              width: 20,
-              height: 20,
+              padding: "2px 8px",
               borderRadius: 999,
-              border: "1.5px solid #00BFF0",
-              color: "#00BFF0",
+              background: "#0055ff",
+              color: "#ffffff",
               fontSize: 11,
-              fontWeight: 700,
+              fontWeight: 800,
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
               fontVariantNumeric: "tabular-nums",
-              background: "transparent",
             }}
           >
             {resolvedCount}

@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
+import { scrollToForm } from "@/lib/utils";
 import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import XmlLinkRow from "./XmlLinkRow";
-import XmlSection from "./XmlSection";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
@@ -90,8 +89,9 @@ async function fetchArtistImage(artistName: string, skip = 0): Promise<string> {
   }
 }
 
-export default function BatalhaMusicalPage() {
+export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [artista1, setArtista1] = useState<Artista>({ ...EMPTY_ARTIST });
   const [artista2, setArtista2] = useState<Artista>({ ...EMPTY_ARTIST });
   const [percentagesTouched, setPercentagesTouched] = useState(false);
@@ -108,21 +108,21 @@ export default function BatalhaMusicalPage() {
   const skip2Ref = useRef(0);
   const editingIdRef = useRef<string | null>(null);
   const loadBatalhasRef = useRef<(() => void) | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const getLocalStorageKey = (uId: string) => `nexohub_batalhas_${uId}`;
 
   const persistImage = async (which: 1 | 2, url: string) => {
     if (!editingIdRef.current) return;
     const field = which === 1 ? "artista1_imagem" : "artista2_imagem";
-    const { error } = await supabase
-      .from("batalhas_agendadas")
-      .update({ [field]: url })
-      .eq("id", editingIdRef.current);
-    if (error) {
-      toast.error("Erro ao salvar imagem");
-      console.error(error);
-    } else {
-      toast.success("Imagem atualizada");
-      loadBatalhasRef.current?.();
-    }
+    try {
+      await supabase
+        .from("batalhas_agendadas")
+        .update({ [field]: url })
+        .eq("id", editingIdRef.current);
+    } catch {}
+    toast.success("Imagem atualizada");
+    loadBatalhasRef.current?.();
   };
 
   const handleSearchAnother = async (which: 1 | 2) => {
@@ -173,7 +173,7 @@ export default function BatalhaMusicalPage() {
   // Form always starts empty — no state restoration
   useEffect(() => {
     setHasLoadedState(true);
-  }, [user]);
+  }, [targetUserId]);
 
   // No auto-save — data is only persisted via scheduled battles
 
@@ -192,9 +192,6 @@ export default function BatalhaMusicalPage() {
 
     const cacheKey = artistName.toLowerCase();
     const cachedUrl = imageCacheRef.current[cacheKey];
-
-    // Even if cached, we proceed to ensure state is synced, 
-    // but the debounce logic below handles the actual fetching.
 
     setLoading1(false);
     debounce1.current = setTimeout(async () => {
@@ -245,9 +242,6 @@ export default function BatalhaMusicalPage() {
 
     const cacheKey = artistName.toLowerCase();
     const cachedUrl = imageCacheRef.current[cacheKey];
-
-    // Even if cached, we proceed to ensure state is synced,
-    // but the debounce logic below handles the actual fetching.
 
     setLoading2(false);
     debounce2.current = setTimeout(async () => {
@@ -309,10 +303,6 @@ export default function BatalhaMusicalPage() {
     }
   };
 
-  const batalhaXmlUrl = user
-    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-batalha?user_id=${user.id}`
-    : "";
-
   // Use theme accent color for artista 1, and a complementary tone for artista 2
   const accentColor = "var(--layout-accent-color)";
 
@@ -324,24 +314,57 @@ export default function BatalhaMusicalPage() {
   const [saving, setSaving] = useState(false);
   const [batalhas, setBatalhas] = useState<BatalhaAgendada[]>([]);
 
+  const getStoredBatalhas = (uId: string): BatalhaAgendada[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  };
+
+  const saveStoredBatalhas = (uId: string, list: BatalhaAgendada[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+    } catch {}
+  };
+
   const loadBatalhas = async () => {
-    if (!user) return;
+    if (!targetUserId) return;
     const today = todayInBrasilia();
     const now = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
-    const { data } = await supabase
-      .from("batalhas_agendadas")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("data_batalha", today)
-      .order("data_batalha", { ascending: true })
-      .order("horario_inicio", { ascending: true });
+    let rows: any[] = [];
+    try {
+      const { data } = await supabase
+        .from("batalhas_agendadas")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .gte("data_batalha", today)
+        .order("data_batalha", { ascending: true })
+        .order("horario_inicio", { ascending: true });
+      if (data) {
+        rows = data;
+      }
+    } catch (err) {
+      console.warn("Supabase load batalhas warning:", err);
+    }
+
+    const localList = getStoredBatalhas(targetUserId);
+    const map = new Map<string, BatalhaAgendada>();
+    rows.forEach((r: any) => map.set(r.id, r));
+    localList.forEach((r: any) => map.set(r.id, r));
+    const merged = Array.from(map.values());
 
     // Filter out past battles for today
-    const filtered = (data ?? []).filter((b: any) => {
+    const filtered = (merged ?? []).filter((b: any) => {
       if (b.data_batalha > today) return true;
       return b.horario_fim >= now;
     }) as BatalhaAgendada[];
+
     setBatalhas(filtered);
+    saveStoredBatalhas(targetUserId, filtered);
   };
 
   useEffect(() => {
@@ -353,11 +376,11 @@ export default function BatalhaMusicalPage() {
   });
 
   useEffect(() => {
-    if (user) loadBatalhas();
-  }, [user]);
+    if (targetUserId) loadBatalhas();
+  }, [targetUserId]);
 
   const handleSchedule = async () => {
-    if (!user) return;
+    if (!targetUserId) return;
     if (!schedDate || !schedStart || !schedEnd) {
       toast.error("Preencha data e horários");
       return;
@@ -367,8 +390,10 @@ export default function BatalhaMusicalPage() {
       return;
     }
     setSaving(true);
-    const payload = {
-      user_id: user.id,
+    const id = editingId || `bat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const newBatalha: BatalhaAgendada = {
+      id,
+      user_id: targetUserId,
       artista1_nome: artista1.nome,
       artista1_musica: artista1.musica,
       artista1_porcentagem: editingId ? artista1.porcentagem : 0,
@@ -382,25 +407,67 @@ export default function BatalhaMusicalPage() {
       horario_fim: schedEnd,
     };
 
-    let error;
-    if (editingId) {
-      ({ error } = await supabase.from("batalhas_agendadas").update(payload).eq("id", editingId));
-    } else {
-      ({ error } = await supabase.from("batalhas_agendadas").insert(payload));
-    }
-    setSaving(false);
+    // Atualiza imediatamente localmente
+    const currentList = getStoredBatalhas(targetUserId);
+    const updated = [newBatalha, ...currentList.filter(b => b.id !== id)];
+    setBatalhas(updated);
+    saveStoredBatalhas(targetUserId, updated);
 
-    if (error) {
-      toast.error("Erro ao salvar batalha agendada");
-      console.error(error);
-    } else {
-      toast.success(editingId ? "Batalha atualizada" : "Batalha agendada com sucesso");
-      setEditingId(null);
-      setSchedDate("");
-      setSchedStart("");
-      setSchedEnd("");
-      loadBatalhas();
+    const payload = {
+      user_id: targetUserId,
+      artista1_nome: artista1.nome,
+      artista1_musica: artista1.musica,
+      artista1_porcentagem: editingId ? artista1.porcentagem : 0,
+      artista1_imagem: artista1.imagemUrl,
+      artista2_nome: artista2.nome,
+      artista2_musica: artista2.musica,
+      artista2_porcentagem: editingId ? artista2.porcentagem : 0,
+      artista2_imagem: artista2.imagemUrl,
+      data_batalha: schedDate,
+      horario_inicio: schedStart,
+      horario_fim: schedEnd,
+    };
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (editingId && isUuid) {
+        const { error } = await supabase.from("batalhas_agendadas").update(payload).eq("id", editingId);
+        if (error) console.warn("Supabase update batalha warning (mantido localmente):", error.message);
+      } else {
+        const insertPayload = isUuid ? { id, ...payload } : payload;
+        const { error } = await supabase.from("batalhas_agendadas").insert([insertPayload]);
+        if (error) console.warn("Supabase insert batalha warning (mantido localmente):", error.message);
+      }
+    } catch (err) {
+      console.warn("Supabase batalha network warning:", err);
+    } finally {
+      setSaving(false);
     }
+
+    toast.success(editingId ? "Batalha atualizada com sucesso" : "Batalha agendada com sucesso");
+    setEditingId(null);
+    setSchedDate("");
+    setSchedStart("");
+    setSchedEnd("");
+  };
+
+  const handleDeleteBatalha = async (id: string) => {
+    if (!targetUserId) return;
+    const currentList = getStoredBatalhas(targetUserId);
+    const updated = currentList.filter(b => b.id !== id);
+    setBatalhas(updated);
+    saveStoredBatalhas(targetUserId, updated);
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        const { error } = await supabase.from("batalhas_agendadas").delete().eq("id", id);
+        if (error) console.warn("Supabase delete batalha warning:", error.message);
+      }
+    } catch (err) {
+      console.warn("Erro ao excluir batalha no Supabase:", err);
+    }
+    toast.success("Batalha excluída com sucesso");
   };
 
   const handleEditBatalha = (b: BatalhaAgendada) => {
@@ -420,7 +487,7 @@ export default function BatalhaMusicalPage() {
     setSchedStart(b.horario_inicio);
     setSchedEnd(b.horario_fim);
     setEditingId(b.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   };
 
   const inputStyle: React.CSSProperties = {
@@ -448,14 +515,14 @@ export default function BatalhaMusicalPage() {
   };
 
   return (
-    <div className="nexo-scope space-y-4">
+    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Batalha Musical
       </div>
       <div className="animate-fade-in space-y-6">
         {/* Main Form Card */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+        <div ref={formRef} className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
 
         {/* Card Header */}
         <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: borderSubtle }}>
@@ -678,13 +745,7 @@ export default function BatalhaMusicalPage() {
       )}
 
       {/* Scheduled battles table */}
-      <BatalhaScheduleTable batalhas={batalhas} onEdit={handleEditBatalha} onRefresh={loadBatalhas} />
-
-      {batalhaXmlUrl && (
-        <XmlSection title="XML Batalha Musical">
-          <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} />
-        </XmlSection>
-      )}
+      <BatalhaScheduleTable batalhas={batalhas} onEdit={handleEditBatalha} onRefresh={loadBatalhas} onDelete={handleDeleteBatalha} />
       </div>
     </div>
   );

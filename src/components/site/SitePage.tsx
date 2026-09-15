@@ -34,12 +34,12 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
     <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-full transition"
       style={{
         background: "#ffffff",
-        border: `2px solid ${checked ? "#00BFF0" : "rgba(10,37,64,0.12)"}`,
+        border: `2px solid ${checked ? "#0055ff" : "rgba(226, 232, 240, 0.9)"}`,
       }} data-nexo-skip>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          {checked ? <Eye size={13} style={{ color: "#00BFF0" }} /> : <EyeOff size={13} style={{ color: "#64748B" }} />}
-          <span className="text-[12px] font-extrabold uppercase tracking-wider" style={{ color: "#0A2540" }}>{label}</span>
+          {checked ? <Eye size={13} style={{ color: "#0055ff" }} /> : <EyeOff size={13} style={{ color: "#64748B" }} />}
+          <span className="text-[12px] font-extrabold uppercase tracking-wider" style={{ color: "#002132" }}>{label}</span>
         </div>
         {description && <p className="text-[11px] mt-0.5 pl-5" style={{ color: "#64748B" }}>{description}</p>}
       </div>
@@ -49,22 +49,22 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="text-[11px] font-extrabold uppercase tracking-wider block mb-1.5" style={{ color: "#0A2540", letterSpacing: "1px" }}>{children}</label>;
+  return <label className="text-[10px] font-extrabold uppercase tracking-wider block mb-1.5" style={{ color: "#64748b", letterSpacing: "1.2px" }}>{children}</label>;
 }
 
 function StatCard({ icon: Icon, label, value, hint, accent }: { icon: any; label: string; value: string | number; hint?: string; accent?: boolean }) {
   return (
     <div className="rounded-2xl p-4 flex flex-col gap-1 transition hover:-translate-y-0.5"
       style={{
-        background: accent ? "#C6F03C" : "#ffffff",
-        border: `2px solid ${accent ? "#C6F03C" : "#00BFF0"}`,
-        boxShadow: accent ? "0 4px 14px rgba(198,240,60,0.35)" : "0 2px 8px rgba(10,37,64,0.05)",
+        background: accent ? "#0055ff" : "#f8fafc",
+        border: `1px solid ${accent ? "#0055ff" : "rgba(226, 232, 240, 0.9)"}`,
+        boxShadow: accent ? "0 4px 14px rgba(0,85,255,0.25)" : "0 2px 8px rgba(0,0,0,0.03)",
       }} data-nexo-skip>
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-extrabold" style={{ color: "#0A2540", letterSpacing: "1px" }}>
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-extrabold" style={{ color: accent ? "#ffffff" : "#64748b", letterSpacing: "1px" }}>
         <Icon size={11} /> {label}
       </div>
-      <div className="text-2xl font-black leading-none" style={{ color: "#0A2540" }}>{value}</div>
-      {hint && <div className="text-[10px] font-semibold" style={{ color: "#64748B" }}>{hint}</div>}
+      <div className="text-2xl font-black leading-none" style={{ color: accent ? "#ffffff" : "#002132" }}>{value}</div>
+      {hint && <div className="text-[10px] font-semibold" style={{ color: accent ? "rgba(255,255,255,0.8)" : "#64748B" }}>{hint}</div>}
     </div>
   );
 }
@@ -126,23 +126,23 @@ export default function SitePage({ effectiveUserId }: Props) {
   const subtleBorder = "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
 
   return (
-    <div className="nexo-scope space-y-4">
+    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Site — Admin
       </div>
       <div className="nexo-scope animate-fade-in flex flex-col gap-4 h-full min-h-0" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 rounded-2xl" style={{ background: "#ffffff", border: "2px solid #00BFF0" }} data-nexo-skip>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5 rounded-3xl" style={{ background: "#ffffff", border: "1px solid rgba(226, 232, 240, 0.9)", boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)" }} data-nexo-skip>
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: "#00BFF0", color: "#fff" }}>
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "#0055ff", color: "#fff" }}>
             <Globe size={20} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-sm font-extrabold uppercase tracking-wider truncate" style={{ color: "#0A2540" }}>
+            <h1 className="text-sm font-extrabold uppercase tracking-wider truncate" style={{ color: "#002132" }}>
               {config.site_nome || "Meu Site"}
             </h1>
-            <p className="text-[11px] font-semibold truncate" style={{ color: "#64748B" }}>
+            <p className="text-[11px] font-semibold truncate" style={{ color: "#64748b" }}>
               Painel administrativo · {visibleCount} seções ativas
               {config.site_dominio ? ` · ${config.site_dominio}` : ""}
             </p>
@@ -151,8 +151,8 @@ export default function SitePage({ effectiveUserId }: Props) {
         <div className="flex items-center gap-2">
           <button onClick={() => setModule("servidor")}
             data-nexo="primary"
-            className="inline-flex items-center gap-1.5 h-10 px-5 rounded-full text-xs font-extrabold uppercase tracking-wider transition"
-            style={{ background: "#C6F03C", color: "#0A2540", boxShadow: "0 4px 14px rgba(198,240,60,0.35)" }}>
+            className="inline-flex items-center gap-1.5 h-10 px-5 rounded-full text-xs font-extrabold uppercase tracking-wider transition hover:scale-105"
+            style={{ background: "#0055ff", color: "#ffffff", boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)" }}>
             <UploadIcon size={13} /> Publicar
           </button>
         </div>
@@ -161,23 +161,23 @@ export default function SitePage({ effectiveUserId }: Props) {
       {/* Layout: sidebar modules + content */}
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 flex-1 min-h-0">
         {/* Sidebar */}
-        <nav className="rounded-2xl p-2 flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible"
-          style={{ background: "#ffffff", border: "2px solid #00BFF0" }} data-nexo-skip>
+        <nav className="rounded-3xl p-3 flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible"
+          style={{ background: "#ffffff", border: "1px solid rgba(226, 232, 240, 0.9)", boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)" }} data-nexo-skip>
           {MODULES.map((m) => {
             const active = module === m.id;
             const Icon = m.icon;
             return (
               <button key={m.id} onClick={() => setModule(m.id)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-full text-left transition shrink-0 lg:w-full"
+                className="flex items-center gap-2.5 px-4 py-2.5 rounded-full text-left transition shrink-0 lg:w-full"
                 style={{
-                  background: active ? "#00BFF0" : "transparent",
-                  color: active ? "#ffffff" : "#0A2540",
+                  background: active ? "#0055ff" : "transparent",
+                  color: active ? "#ffffff" : "#002132",
                   fontFamily: "Montserrat, system-ui, sans-serif",
                 }}>
                 <Icon size={15} className="shrink-0" />
                 <div className="min-w-0">
                   <div className="text-[11px] font-extrabold uppercase tracking-wider truncate">{m.label}</div>
-                  <div className="text-[10px] font-medium opacity-80 truncate hidden lg:block" style={{ color: active ? "#F1FAFD" : "#64748B" }}>{m.desc}</div>
+                  <div className="text-[10px] font-medium opacity-80 truncate hidden lg:block" style={{ color: active ? "rgba(255,255,255,0.85)" : "#64748b" }}>{m.desc}</div>
                 </div>
               </button>
             );
@@ -185,8 +185,8 @@ export default function SitePage({ effectiveUserId }: Props) {
         </nav>
 
         {/* Content */}
-        <div className="rounded-2xl overflow-hidden flex flex-col min-h-0"
-          style={{ background: "#D6F4FB", border: "2px solid #00BFF0" }} data-nexo-skip>
+        <div className="rounded-3xl overflow-hidden flex flex-col min-h-0"
+          style={{ background: "#ffffff", border: "1px solid rgba(226, 232, 240, 0.9)", boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)" }} data-nexo-skip>
           <div className="flex-1 overflow-y-auto p-5">
 
             {module === "overview" && (

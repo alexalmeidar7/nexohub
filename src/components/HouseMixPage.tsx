@@ -1,27 +1,31 @@
 import { useState, useEffect } from "react";
-import { Radio, Users, Package, Music, Layers, ShieldCheck, Sparkles, ChevronRight } from "lucide-react";
+import { Radio, Users, Package, Music, KeyRound, ChevronRight, PlaySquare } from "lucide-react";
 import ModulosPage, { type ModuloGroup, type ModuloChild } from "./ModulosPage";
 import SubUsuariosPage from "./SubUsuariosPage";
 import PacotesPage from "./PacotesPage";
 import AdminInfoMusicPage from "./AdminInfoMusicPage";
+import HouseMixAcessoUsuario from "./HouseMixAcessoUsuario";
+import ProgramaForm from "./ProgramaForm";
 
-export type HouseMixTab = "modulos" | "subusuarios" | "pacotes" | "infomusic";
+export type HouseMixTab = "acesso" | "modulos" | "programas" | "subusuarios" | "pacotes" | "infomusic";
 
 interface HouseMixPageProps {
   initialTab?: HouseMixTab;
   accentColor?: string;
   adminModulosGroups: ModuloGroup[];
   subUsuarioModulosGroups: ModuloGroup[];
+  effectiveUserId?: string | null;
   onSelectGroup?: (group: ModuloGroup) => void;
   onSelectChild?: (child: ModuloChild, parentLabel: string) => void;
   onNavigate?: (page: string) => void;
 }
 
 export default function HouseMixPage({
-  initialTab = "modulos",
+  initialTab = "acesso",
   accentColor = "#0055ff",
   adminModulosGroups,
   subUsuarioModulosGroups,
+  effectiveUserId,
   onSelectGroup,
   onSelectChild,
   onNavigate,
@@ -36,14 +40,16 @@ export default function HouseMixPage({
   }, [initialTab]);
 
   const tabs: { id: HouseMixTab; label: string; icon: typeof Radio; badge?: string }[] = [
+    { id: "acesso", label: "Acesso Usuário", icon: KeyRound },
     { id: "modulos", label: "Módulos Rádio", icon: Radio },
+    { id: "programas", label: "Programas & Grade", icon: PlaySquare },
     { id: "subusuarios", label: "Subusuários & Perfis", icon: Users },
     { id: "pacotes", label: "Pacotes & Planos", icon: Package },
     { id: "infomusic", label: "Info Music", icon: Music },
   ];
 
   return (
-    <div className="w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* Top Banner: Gestão do Produto House Mix */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-200/80 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -56,12 +62,9 @@ export default function HouseMixPage({
                 <h1 className="text-xl lg:text-2xl font-black tracking-tight text-[#002132]">
                   House Mix
                 </h1>
-                <span className="px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#0055ff]/10 text-[#0055ff] border border-[#0055ff]/20">
-                  Produto Principal da Agência
-                </span>
               </div>
               <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
-                Central unificada de gestão da plataforma House Mix: configure módulos de rádio, permissões de subusuários, pacotes contratáveis e acervo Info Music.
+                Central unificada de gestão da plataforma House Mix: vincule emissoras, configure credenciais de acesso usuário, módulos de rádio, permissões de subusuários, pacotes e acervo Info Music.
               </p>
             </div>
           </div>
@@ -88,7 +91,6 @@ export default function HouseMixPage({
                 type="button"
                 onClick={() => {
                   setActiveTab(tab.id);
-                  // Notifica navegação se aplicável
                   if (tab.id === "modulos") onNavigate?.("housemix");
                 }}
                 className={`group flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold tracking-tight whitespace-nowrap transition-all duration-200 select-none active:scale-[0.98] ${
@@ -107,6 +109,10 @@ export default function HouseMixPage({
 
       {/* Content Area da Aba Selecionada */}
       <div className="animate-in fade-in duration-200">
+        {activeTab === "acesso" && (
+          <HouseMixAcessoUsuario />
+        )}
+
         {activeTab === "modulos" && (
           <ModulosPage
             groups={adminModulosGroups as never}
@@ -114,6 +120,12 @@ export default function HouseMixPage({
             onSelectGroup={onSelectGroup || (() => {})}
             onSelectChild={onSelectChild || (() => {})}
           />
+        )}
+
+        {activeTab === "programas" && (
+          <div className="pt-2">
+            <ProgramaForm effectiveUserId={effectiveUserId} />
+          </div>
         )}
 
         {activeTab === "subusuarios" && (

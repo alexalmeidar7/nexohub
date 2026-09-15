@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import logoNexo from "@/assets/logo-nexo-azul.png";
-import { HouseMixIcon } from "@/components/ProductIcons";
-
+import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
+import { verifyClientCredentials } from "@/lib/clientAuthAccounts";
 
 const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
@@ -58,30 +57,76 @@ const isConnectionLikeError = (value: unknown) => {
 
 const getFriendlyAuthMessage = (message: string) => {
   const normalized = message.toLowerCase();
-  if (normalized.includes("invalid login credentials")) {
-    return "E-mail ou senha inválidos.";
+  if (isCredentialError(normalized)) {
+    return "E-mail ou senha incorretos.";
   }
   if (normalized.includes("email not confirmed")) {
-    return "Seu e-mail ainda não foi confirmado.";
+    return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
   }
-  return message;
+  if (normalized.includes("rate limit") || normalized.includes("too many requests")) {
+    return "Muitas tentativas em pouco tempo. Aguarde alguns instantes.";
+  }
+  if (isConnectionLikeError(normalized)) {
+    return "Não foi possível conectar ao servidor. Tente novamente em alguns segundos.";
+  }
+  return "Não foi possível autenticar. Verifique seus dados e tente novamente.";
+};
+
+const FONT_FAMILY = "'Montserrat', sans-serif";
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: FONT_FAMILY,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 1.2,
+  textTransform: "uppercase",
+  color: "#64748b",
+  marginBottom: 6,
+  display: "block",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  height: 46,
+  borderRadius: 999,
+  background: "#ededed",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
+  padding: "0 20px",
+  fontFamily: FONT_FAMILY,
+  fontSize: 13,
+  color: "#0f172a",
+  outline: "none",
+  transition: "all 0.2s ease",
 };
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState(() => localStorage.getItem(REMEMBERED_USER_KEY) || "");
+  const [email, setEmail] = useState(() => {
+    try {
+      return localStorage.getItem(REMEMBERED_USER_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
   const [pass, setPass] = useState("");
-  const [keepConnected, setKeepConnected] = useState(() => localStorage.getItem(KEEP_CONNECTED_KEY) !== "false");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [keepConnected, setKeepConnected] = useState(() => {
+    try {
+      return localStorage.getItem(KEEP_CONNECTED_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  });
+
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [error, setError] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotError, setForgotError] = useState("");
 
-  const handleForgot = async () => {
+  const handleForgotSubmit = async () => {
     if (!forgotEmail.trim()) {
-      setForgotError("Preencha o email.");
+      setForgotError("Informe seu email.");
       return;
     }
     setForgotLoading(true);
@@ -120,6 +165,8 @@ export default function LoginScreen() {
     setForgotLoading(false);
   };
 
+  const handleForgot = handleForgotSubmit;
+
   const handleSubmit = async () => {
     if (!email.trim() || !pass.trim()) {
       setError("Preencha email e senha.");
@@ -128,6 +175,11 @@ export default function LoginScreen() {
     if (loading) return;
     setLoading(true);
     setError("");
+
+    try {
+      localStorage.removeItem("nexohub_explicit_logout");
+    } catch {}
+
     localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
     if (keepConnected) {
       localStorage.setItem(REMEMBERED_USER_KEY, email.trim());
@@ -135,11 +187,43 @@ export default function LoginScreen() {
       localStorage.removeItem(REMEMBERED_USER_KEY);
     }
 
+    const clientAccount = verifyClientCredentials(email.trim(), pass);
+    if (clientAccount) {
+      const targetRole = (clientAccount.isAdmin || clientAccount.email.toLowerCase() === "alex@nexobrasil.net") ? "admin" : "user";
+      const clientSession = {
+        access_token: (targetRole === "admin" ? "admin-token-" : "client-token-") + clientAccount.id,
+        refresh_token: (targetRole === "admin" ? "admin-refresh-" : "client-refresh-") + clientAccount.id,
+        expires_in: 3600 * 24 * 30,
+        expires_at: Math.floor(Date.now() / 1000) + 3600 * 24 * 30,
+        token_type: "bearer",
+        user: {
+          id: clientAccount.id,
+          app_metadata: { provider: "email", providers: ["email"] },
+          user_metadata: {
+            nome: clientAccount.nome,
+            razao_social: clientAccount.razaoSocial,
+            slug: clientAccount.slug,
+            cidade: clientAccount.cidade,
+            role: targetRole,
+          },
+          aud: "authenticated",
+          created_at: new Date().toISOString(),
+          email: clientAccount.email,
+        }
+      };
+      localStorage.setItem("nexohub_backup_session", JSON.stringify(clientSession));
+      localStorage.setItem(KEEP_CONNECTED_KEY, "true");
+      localStorage.setItem("nexohub_force_role", targetRole);
+      localStorage.removeItem("nexohub_explicit_logout");
+      window.location.replace("/home");
+      return;
+    }
+
     const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
+        const { data, error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
         if (error) {
           if (isCredentialError(error.message)) {
             setError(getFriendlyAuthMessage(error.message));
@@ -151,6 +235,13 @@ export default function LoginScreen() {
             await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
             continue;
           }
+        }
+        if (data?.session) {
+          localStorage.setItem("nexohub_backup_session", JSON.stringify(data.session));
+          localStorage.setItem(KEEP_CONNECTED_KEY, "true");
+          localStorage.removeItem("nexohub_explicit_logout");
+          window.location.replace("/home");
+          return;
         }
         break;
       } catch (err) {
@@ -178,98 +269,124 @@ export default function LoginScreen() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
-      style={{ background: "#00dbff" }}
+      className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden"
+      style={{ background: "#000000" }}
     >
-      <div className="relative w-full max-w-md z-10">
-        {/* Main Login Box */}
+      <div className="relative w-full max-w-[440px] z-10">
+        {/* Main Login Card - Super Admin / Cadastro de Cliente Visual Style */}
         <div
-          className="relative z-10 w-full p-10 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.25),0_0_0_1px_rgba(255,255,255,0.08)] animate-fade-in backdrop-blur-xl"
-          style={{ fontSize: "12px", borderRadius: "1.5rem", background: "rgba(255,255,255,0.97)" }}
+          className="relative z-10 w-full bg-white rounded-3xl p-8 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-slate-100/90 animate-fade-in"
+          style={{ fontFamily: FONT_FAMILY }}
         >
+          {/* Logo on top of form */}
           <div className="flex items-center justify-center mb-8">
-            <HouseMixIcon size={56} />
+            <img
+              src={logoNexoSolucoes}
+              alt="Nexo Soluções Visuais"
+              className="h-16 sm:h-20 w-auto object-contain"
+            />
           </div>
 
           <div className="space-y-4">
-            <input
-              type="email"
-              placeholder="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              className="login-input w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #00dbff", backgroundColor: "#ffffff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#00dbff")}
-              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#00dbff"; }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,219,255,0.25)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "none"; }}
-            />
-            <input
-              type="password"
-              placeholder="senha"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !loading) handleSubmit(); }}
-              disabled={loading}
-              className="login-input w-full rounded-xl px-5 py-3 outline-none transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #00dbff", backgroundColor: "#ffffff" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#00dbff")}
-              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = "#00dbff"; }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,219,255,0.25)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "#00dbff"; e.currentTarget.style.boxShadow = "none"; }}
-            />
+            <div>
+              <label style={labelStyle}>E-mail de Acesso</label>
+              <input
+                type="email"
+                placeholder="seu.email@empresa.com.br"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !loading) handleSubmit(); }}
+                disabled={loading}
+                style={inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#0055ff";
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,85,255,0.15)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(226, 232, 240, 0.9)";
+                  e.currentTarget.style.backgroundColor = "#ededed";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+            </div>
 
-            {error && <p className="text-center font-medium" style={{ fontSize: "12px", color: "#dc2626" }}>{error}</p>}
+            <div>
+              <label style={labelStyle}>Senha</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !loading) handleSubmit(); }}
+                disabled={loading}
+                style={inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#0055ff";
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,85,255,0.15)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(226, 232, 240, 0.9)";
+                  e.currentTarget.style.backgroundColor = "#ededed";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+            </div>
 
+            {error && (
+              <p
+                className="text-center font-bold text-xs py-1 px-3 rounded-full bg-rose-50 border border-rose-200 text-rose-600"
+                style={{ fontFamily: FONT_FAMILY }}
+              >
+                {error}
+              </p>
+            )}
+
+            {/* Mantenha-me conectado */}
             <label
               htmlFor="keep-connected"
-              className="flex items-center gap-3 cursor-pointer select-none px-3 py-2.5 min-h-11 rounded-xl group focus-within:outline-none transition-colors touch-manipulation"
-              style={{ border: "2px solid #00dbff", backgroundColor: "#ffffff" }}
+              className="flex items-center gap-3 cursor-pointer select-none px-4 py-2.5 rounded-full bg-[#f8fafc] border border-slate-200/80 hover:bg-slate-100/80 transition-colors"
             >
-              <div className="relative flex items-center justify-center">
-                <input
-                  id="keep-connected"
-                  name="keep-connected"
-                  type="checkbox"
-                  checked={keepConnected}
-                  onChange={(e) => {
-                    setKeepConnected(e.target.checked);
-                    localStorage.setItem(KEEP_CONNECTED_KEY, e.target.checked ? "true" : "false");
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const next = !keepConnected;
-                      setKeepConnected(next);
-                      localStorage.setItem(KEEP_CONNECTED_KEY, next ? "true" : "false");
-                    }
-                  }}
-                  aria-checked={keepConnected}
-                  aria-label="Mantenha-me conectado"
-                  className="peer h-[20px] w-[20px] shrink-0 rounded-[4px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00dbff] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-200 cursor-pointer"
-                  style={{
-                    accentColor: "#d9ff65",
-                    border: "2px solid #0f1058",
-                    backgroundColor: keepConnected ? "#d9ff65" : "#ffffff",
-                  }}
-                />
-                <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f1058" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-              </div>
-              <span className="transition-colors duration-200" style={{ fontSize: "12px", color: "#0f1058" }}>mantenha-me conectado</span>
+              <input
+                id="keep-connected"
+                name="keep-connected"
+                type="checkbox"
+                checked={keepConnected}
+                onChange={(e) => {
+                  setKeepConnected(e.target.checked);
+                  localStorage.setItem(KEEP_CONNECTED_KEY, e.target.checked ? "true" : "false");
+                }}
+                className="w-4 h-4 rounded text-[#0055ff] focus:ring-[#0055ff] accent-[#0055ff] cursor-pointer"
+              />
+              <span
+                style={{
+                  fontFamily: FONT_FAMILY,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: 0.8,
+                  textTransform: "uppercase",
+                  color: "#475569",
+                }}
+              >
+                Mantenha-me conectado
+              </span>
             </label>
 
-
-
-            <div className="flex justify-between items-center pt-2">
+            {/* Bottom Actions */}
+            <div className="flex justify-between items-center pt-3">
               <button
+                type="button"
                 onClick={() => { setShowForgot(!showForgot); setError(""); }}
-                className="transition-colors duration-200"
-                style={{ fontSize: "12px", color: "#0f1058" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#268ffa")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#0f1058")}
+                style={{
+                  fontFamily: FONT_FAMILY,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: 0.8,
+                  textTransform: "uppercase",
+                  color: "#64748b",
+                }}
+                className="hover:text-[#0055ff] transition-colors cursor-pointer"
               >
                 Esqueci a senha
               </button>
@@ -280,116 +397,139 @@ export default function LoginScreen() {
                 disabled={loading}
                 aria-busy={loading}
                 aria-live="polite"
-                className="group relative flex items-center justify-center gap-3 px-7 py-2.5 min-w-[130px] rounded-full font-semibold disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden"
-                style={{ fontSize: "12px", background: "#00dbff", color: "#0f1058", boxShadow: "0 4px 16px -2px rgba(0,219,255,0.5)" }}
-                onMouseEnter={(e) => {
-                  if (loading) return;
-                  e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(0,219,255,0.7)";
-                  e.currentTarget.style.transform = "translateY(-1px)";
+                style={{
+                  height: 44,
+                  borderRadius: 999,
+                  background: "#0055ff",
+                  color: "#ffffff",
+                  fontFamily: FONT_FAMILY,
+                  fontWeight: 800,
+                  fontSize: 12,
+                  letterSpacing: 1.2,
+                  textTransform: "uppercase",
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(0,219,255,0.5)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
+                className="px-7 inline-flex items-center justify-center gap-2 hover:bg-[#0047d4] active:scale-95 transition-all shadow-md hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="icon icon-xs animate-spin" style={{ color: "#0f1058" }} aria-hidden="true" />
-                    <span>entrando...</span>
-                    <span className="sr-only">Autenticando, aguarde</span>
+                    <Loader2 className="animate-spin text-white" size={15} />
+                    <span>Entrando...</span>
                   </>
                 ) : (
                   <>
-                    entrar
-                    <ArrowRight className="icon icon-sm transition-transform duration-300 group-hover:translate-x-1.5" />
+                    <span>Entrar</span>
+                    <ArrowRight size={15} />
                   </>
                 )}
-
               </button>
             </div>
           </div>
-
         </div>
 
-        <div className="mt-6 flex justify-center">
-          <img src={logoNexo} alt="Nexo Soluções Visuais" className="h-10 opacity-90 animate-fade-in" />
-        </div>
-
-        {/* Forgot Password Box */}
+        {/* Forgot Password Sub-Card */}
         <div
-          className="absolute left-0 right-0 z-0 overflow-hidden transition-all duration-500 ease-in-out"
+          className="overflow-hidden transition-all duration-300 ease-in-out mt-3"
           style={{
-            top: showForgot ? "calc(100% - 80px)" : "50%",
+            maxHeight: showForgot ? "300px" : "0",
             opacity: showForgot ? 1 : 0,
             pointerEvents: showForgot ? "auto" : "none",
           }}
         >
           <div
-            className="px-10 pt-10 pb-8 shadow-[0_16px_50px_-10px_rgba(0,0,0,0.15)]"
-            style={{ background: "#d9ff65", fontSize: "12px", borderRadius: "0 0 1.5rem 1.5rem", border: "1px solid rgba(0,219,255,0.25)", borderTop: "none" }}
+            className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100/90"
+            style={{ fontFamily: FONT_FAMILY }}
           >
             {forgotSent ? (
-              <div className="flex flex-col items-center gap-3">
-                <CheckCircle className="icon icon-xl" style={{ color: "#00dbff" }} />
-                <p className="text-center" style={{ fontSize: "12px", color: "#0f1058" }}>
+              <div className="flex flex-col items-center gap-3 py-2 text-center">
+                <CheckCircle className="text-emerald-500" size={32} />
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                   Link enviado para <strong>{forgotEmail}</strong>
                 </p>
                 <button
+                  type="button"
                   onClick={closeForgot}
-                  className="mt-2 font-medium transition-colors duration-200"
-                  style={{ fontSize: "12px", color: "#0f1058" }}
+                  style={{
+                    height: 38,
+                    borderRadius: 999,
+                    background: "#0055ff",
+                    color: "#ffffff",
+                    fontFamily: FONT_FAMILY,
+                    fontWeight: 800,
+                    fontSize: 11,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                  className="px-6 mt-2 hover:bg-[#0047d4] active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
                   Fechar
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                <p className="text-center" style={{ fontSize: "12px", color: "#0f1058" }}>
-                  Informe seu email para redefinir a senha
-                </p>
+              <div className="space-y-3">
+                <label style={labelStyle}>Redefinição de Senha</label>
                 <input
                   type="email"
-                  placeholder="seu email"
+                  placeholder="seu.email@empresa.com.br"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleForgot()}
-                  className="login-input w-full rounded-xl px-5 py-3 outline-none transition-all duration-200"
-                  style={{ fontSize: "12px", color: "#0f1058", border: "2px solid #00dbff", backgroundColor: "#ffffff" }}
-                  onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,219,255,0.25)"; }}
-                  onBlur={(e) => { e.currentTarget.style.boxShadow = "none"; }}
+                  style={inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#0055ff";
+                    e.currentTarget.style.backgroundColor = "#ffffff";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,85,255,0.15)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(226, 232, 240, 0.9)";
+                    e.currentTarget.style.backgroundColor = "#ededed";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
                 />
-                {forgotError && <p className="text-center" style={{ fontSize: "12px", color: "#dc2626" }}>{forgotError}</p>}
-                <div className="flex justify-between items-center">
+                {forgotError && (
+                  <p className="text-center font-bold text-xs py-1 px-3 rounded-full bg-rose-50 border border-rose-200 text-rose-600">
+                    {forgotError}
+                  </p>
+                )}
+                <div className="flex justify-between items-center pt-2">
                   <button
+                    type="button"
                     onClick={closeForgot}
-                    className="flex items-center gap-1 transition-colors duration-200"
-                    style={{ fontSize: "12px", color: "#0f1058" }}
+                    style={{
+                      fontFamily: FONT_FAMILY,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: 0.8,
+                      textTransform: "uppercase",
+                      color: "#64748b",
+                    }}
+                    className="inline-flex items-center gap-1 hover:text-slate-900 transition-colors cursor-pointer"
                   >
-                    <X className="icon icon-xs" /> Fechar
+                    <X size={14} /> Fechar
                   </button>
                   <button
+                    type="button"
                     onClick={handleForgot}
                     disabled={forgotLoading}
-                    className="group flex items-center gap-3 px-7 py-2.5 rounded-full font-semibold disabled:opacity-70 transition-all duration-300"
-                    style={{ fontSize: "12px", background: "#00dbff", color: "#0f1058", boxShadow: "0 4px 16px -2px rgba(0,219,255,0.5)" }}
-                    onMouseEnter={(e) => {
-                      if (forgotLoading) return;
-                      e.currentTarget.style.boxShadow = "0 6px 24px -2px rgba(0,219,255,0.7)";
-                      e.currentTarget.style.transform = "translateY(-1px)";
+                    style={{
+                      height: 38,
+                      borderRadius: 999,
+                      background: "#0055ff",
+                      color: "#ffffff",
+                      fontFamily: FONT_FAMILY,
+                      fontWeight: 800,
+                      fontSize: 11,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
                     }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = "0 4px 16px -2px rgba(0,219,255,0.5)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
+                    className="px-6 inline-flex items-center gap-2 hover:bg-[#0047d4] active:scale-95 transition-all shadow-sm hover:shadow-md hover:shadow-blue-500/25 disabled:opacity-50 cursor-pointer"
                   >
                     {forgotLoading ? (
-                      <Loader2 className="icon icon-sm animate-spin" style={{ color: "#0f1058" }} />
+                      <Loader2 className="animate-spin text-white" size={14} />
                     ) : (
                       <>
-                        enviar
-                        <ArrowRight className="icon icon-sm transition-transform duration-300 group-hover:translate-x-1.5" />
+                        <span>Enviar</span>
+                        <ArrowRight size={14} />
                       </>
-
                     )}
                   </button>
                 </div>
@@ -399,7 +539,17 @@ export default function LoginScreen() {
         </div>
       </div>
 
-      <p className="text-center mt-8 text-white/40 z-10" style={{ fontSize: "11px" }}>
+      <p
+        className="text-center mt-8 z-10"
+        style={{
+          fontFamily: FONT_FAMILY,
+          fontSize: "11px",
+          color: "rgba(255, 255, 255, 0.35)",
+          letterSpacing: 1.2,
+          textTransform: "uppercase",
+          fontWeight: 600,
+        }}
+      >
         © {new Date().getFullYear()} Nexo Soluções Visuais
       </p>
     </div>

@@ -136,12 +136,12 @@ export default function FansPage({ radioName }: FansPageProps) {
     label: fanLabel(s),
   }));
 
-  if (loading) return <ModulePageSkeleton />;
+  if (loading) return <ModulePageSkeleton variant="table" />;
 
   const title = radioName ? `Fãs ${radioName}` : "Fãs";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto w-full">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Star size={24} style={{ color: "var(--layout-accent-color, #e2b714)" }} fill="currentColor" />

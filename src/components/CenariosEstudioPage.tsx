@@ -13,6 +13,8 @@ import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { compressImage } from "@/lib/imageCompressor";
 import { toast } from "sonner";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { scrollToForm } from "@/lib/utils";
+import { getProgramas } from "./ProgramaForm";
 
 interface Programa {
   id: string;
@@ -69,8 +71,9 @@ const layoutAccentSoft: React.CSSProperties = {
 };
 const layoutAccent: React.CSSProperties = { color: "var(--layout-accent-color, #2563eb)" };
 
-export default function CenariosEstudioPage() {
+export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,25 +81,27 @@ export default function CenariosEstudioPage() {
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
 
   const xmlUrl = useMemo(() => {
-    if (!user?.id) return "";
+    const uid = targetUserId || user?.id;
+    if (!uid) return "";
     const base = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-    return `${base}/functions/v1/serve-xml-cenarios-estudio?uid=${user.id}`;
-  }, [user?.id]);
+    return `${base}/functions/v1/serve-xml-cenarios-estudio?uid=${uid}`;
+  }, [targetUserId, user?.id]);
 
   const loadAll = useCallback(async () => {
-    if (!user?.id) return;
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) return;
     setLoading(true);
     const [gruposRes, tvsRes, progsRes] = await Promise.all([
-      supabase.from("cenario_estudio_grupos" as any).select("*").eq("user_id", user.id).order("created_at"),
-      supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", user.id).order("posicao"),
-      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio").eq("user_id", user.id).eq("ativo", true).order("horario_inicio"),
+      supabase.from("cenario_estudio_grupos" as any).select("*").eq("user_id", ownerId).order("created_at"),
+      supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", ownerId).order("posicao"),
+      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
     ]);
     const tvsByGrupo: Record<string, TV[]> = {};
     ((tvsRes.data as any[]) || []).forEach((t) => {
       tvsByGrupo[t.grupo_id] = tvsByGrupo[t.grupo_id] || [];
       tvsByGrupo[t.grupo_id].push({ id: t.id, posicao: t.posicao, imagem_url: t.imagem_url || "" });
     });
-    const gs: Grupo[] = ((gruposRes.data as any[]) || []).map((g) => ({
+    let gs: Grupo[] = ((gruposRes.data as any[]) || []).map((g) => ({
       id: g.id,
       user_id: g.user_id,
       nome: g.nome,
@@ -105,10 +110,53 @@ export default function CenariosEstudioPage() {
       programa_ids: g.programa_ids || [],
       tvs: tvsByGrupo[g.id] || [],
     }));
+
+    if (gs.length > 0) {
+      try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(gs)); } catch {}
+    } else {
+      try {
+        const raw = localStorage.getItem(`nexohub_cenarios_grupos_${ownerId}`);
+        if (raw) gs = JSON.parse(raw);
+      } catch {}
+    }
+
+    let progs = (progsRes.data as Programa[]) || [];
+    if (!progs.length) {
+      const fallbackProgs = await getProgramas(ownerId, user?.email);
+      progs = fallbackProgs.map(p => ({
+        id: p.id,
+        nome: p.nome,
+        ativo: p.ativo,
+        dias_semana: p.dias_semana,
+        horario_inicio: p.horario_inicio,
+        horario_fim: p.horario_fim,
+        estudio: p.estudio,
+      }));
+    }
+
+    if (gs.length === 0) {
+      gs = [
+        {
+          id: `grupo_estudio_${ownerId}_1`,
+          user_id: ownerId,
+          nome: "Estúdio Principal (Vídeo Wall)",
+          rows: 1,
+          cols: 3,
+          programa_ids: progs.length > 0 ? [progs[0].id] : [],
+          tvs: [
+            { posicao: 1, imagem_url: "" },
+            { posicao: 2, imagem_url: "" },
+            { posicao: 3, imagem_url: "" },
+          ],
+        }
+      ];
+      try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(gs)); } catch {}
+    }
+
     setGrupos(gs);
-    setProgramas((progsRes.data as Programa[]) || []);
+    setProgramas(progs);
     setLoading(false);
-  }, [user?.id]);
+  }, [targetUserId, user?.id, user?.email]);
 
   const onAirProgramId = useMemo(() => {
     if (!programas.length) return null;
@@ -535,7 +583,7 @@ export default function CenariosEstudioPage() {
                     className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
                     onClick={() => {
                       setEditingIds((prev) => new Set(prev).add(t.id));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      scrollToForm();
                     }}
                   >
                     <Pencil className="h-4 w-4" />

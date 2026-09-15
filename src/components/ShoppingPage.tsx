@@ -7,6 +7,8 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/components/ui/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 
+import { getProgramas } from "./ProgramaForm";
+
 interface ShoppingProduct {
   id: string;
   name: string;
@@ -25,8 +27,9 @@ interface Programa {
   nome: string;
 }
 
-export default function ShoppingPage() {
+export default function ShoppingPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const ownerId = effectiveUserId || user?.id;
   const [products, setProducts] = useState<ShoppingProduct[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,32 +47,59 @@ export default function ShoppingPage() {
   const [imagePreview, setImagePreview] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
 
+  const getLocalStorageKey = (uId: string) => `nexohub_shopping_${uId}`;
+
   useEffect(() => {
-    if (!user) return;
+    if (!ownerId) return;
     loadData();
     // Load shopping_active setting
-    supabase.from("user_settings").select("shopping_active").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+    supabase.from("user_settings").select("shopping_active").eq("user_id", ownerId).maybeSingle().then(({ data }) => {
       if (data && typeof (data as any).shopping_active === "boolean") setShopActive((data as any).shopping_active);
     });
-  }, [user]);
+  }, [ownerId]);
 
   const toggleShopActive = async () => {
-    if (!user) return;
+    if (!ownerId) return;
     const newVal = !shopActive;
     setShopActive(newVal);
-    await supabase.from("user_settings").upsert({ user_id: user.id, shopping_active: newVal } as any, { onConflict: "user_id" });
+    await supabase.from("user_settings").upsert({ user_id: ownerId, shopping_active: newVal } as any, { onConflict: "user_id" });
     toast({ title: newVal ? "Vitrine ativada no Player" : "Vitrine desativada no Player" });
   };
 
   const loadData = async () => {
-    if (!user) return;
+    if (!ownerId) return;
     setLoading(true);
-    const [prodRes, progRes] = await Promise.all([
-      supabase.from("shopping_products").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome").eq("user_id", user.id).eq("ativo", true).order("nome"),
-    ]);
-    if (prodRes.data) setProducts(prodRes.data as ShoppingProduct[]);
-    if (progRes.data) setProgramas(progRes.data as Programa[]);
+    let prodList: ShoppingProduct[] = [];
+    let progList: Programa[] = [];
+    try {
+      const [prodRes, progRes] = await Promise.all([
+        supabase.from("shopping_products").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
+        supabase.from("programas").select("id, nome").eq("user_id", ownerId).eq("ativo", true).order("nome"),
+      ]);
+      if (prodRes.data && prodRes.data.length > 0) {
+        prodList = prodRes.data as ShoppingProduct[];
+        try { localStorage.setItem(getLocalStorageKey(ownerId), JSON.stringify(prodList)); } catch {}
+      }
+      if (progRes.data) progList = progRes.data as Programa[];
+    } catch {}
+
+    if (prodList.length === 0) {
+      try {
+        const raw = localStorage.getItem(getLocalStorageKey(ownerId));
+        if (raw) prodList = JSON.parse(raw);
+      } catch {}
+    }
+    setProducts(prodList);
+
+    if (progList.length === 0) {
+      try {
+        const fallbackProgs = await getProgramas(ownerId, user?.email);
+        if (fallbackProgs && fallbackProgs.length > 0) {
+          progList = fallbackProgs.map((p: any) => ({ id: p.id, nome: p.nome }));
+        }
+      } catch {}
+    }
+    setProgramas(progList);
     setLoading(false);
   };
 
@@ -151,7 +181,7 @@ export default function ShoppingPage() {
   };
 
   return (
-    <div className="nexo-scope animate-fade-in">
+    <div className="nexo-scope animate-fade-in max-w-6xl mx-auto w-full">
       <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">

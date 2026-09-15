@@ -3,12 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { musicDataKey, musicStartKey, botXmlLastRunKey, writeMusicData } from "@/lib/musicStorageKeys";
+import {
+  musicDataKey,
+  musicStartKey,
+  botXmlLastRunKey,
+  writeMusicData,
+  readMusicData,
+  writeMusicStart,
+  writeBotXmlLastRun,
+  parseHorarioToTimestamp,
+} from "@/lib/musicStorageKeys";
 import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 import { isJornalFmTxtPayload, jornalFmTxtToPseudoXml } from "@/lib/jornalFmTxt";
 import { isCulturaFmXmlPayload, culturaFmXmlToPseudoXml } from "@/lib/culturaFmXml";
 import { fetchArtistImageCached } from "@/lib/artistImageCache";
 import { matchesMusicException } from "@/lib/musicExceptions";
+import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
 
 
 
@@ -36,7 +46,7 @@ function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   return (titulo === "" || titulo === "sem título" || titulo === "sem titulo") && (artista === "" || artista === "desconhecido");
 }
 
-function parseXml(xmlStr: string): { titulo: string; artista: string; duracao: number; capa: string } | "stopped" | null {
+function parseXml(xmlStr: string): { titulo: string; artista: string; duracao: number; capa: string; horario?: string; fileModifiedAt?: number } | "stopped" | null {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlStr, "application/xml");
@@ -58,11 +68,23 @@ function parseXml(xmlStr: string): { titulo: string; artista: string; duracao: n
       duracao = parseFloat(duracaoStr) || 0;
       if (duracao > 600) duracao = duracao / 1000;
     }
+    const rawHorario = (
+      doc.querySelector("horario")?.textContent ||
+      doc.querySelector("hora")?.textContent ||
+      doc.querySelector("hora_inicio")?.textContent ||
+      doc.querySelector("horainicio")?.textContent ||
+      doc.querySelector("time")?.textContent ||
+      doc.querySelector("start_time")?.textContent ||
+      doc.querySelector("data_hora")?.textContent ||
+      ""
+    ).trim();
+
     return {
       titulo: titulo || "Sem título",
       artista: artista || "Desconhecido",
       duracao,
       capa,
+      horario: rawHorario || undefined,
     };
   } catch { return null; }
 }
@@ -173,7 +195,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         };
 
         writeMusicData(user.id, masked);
-        localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+        writeMusicStart(user.id, Date.now());
         if (user?.id) {
           void mergeUserDashboardItems(user.id, {
             music_current_title: "",
@@ -201,6 +223,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           }).catch(() => {});
         }
         return;
+      }
+      if (!data.capa) {
+        const syncCover = getTrackCoverSync(data.titulo, data.artista);
+        if (syncCover) data.capa = syncCover;
       }
       fetchCoverAndArtistImg(data);
       applyMusicData(data);
@@ -240,7 +266,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       }
     };
 
-    const applyMusicData = (data: { titulo: string; artista: string; duracao: number; capa: string }) => {
+    const applyMusicData = (data: { titulo: string; artista: string; duracao: number; capa: string; horario?: string; fileModifiedAt?: number }) => {
       const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
       const prev = prevRaw ? JSON.parse(prevRaw) : null;
       const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
@@ -267,9 +293,19 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         // recordToHistory below so musicas_tocadas gets the new track.
         const skipWrite = !prevIsBreak && !!existingStartStr && !!prev && prevAgeMs < 5000;
         if (!skipWrite) {
-          const now = Date.now();
+          let songStartTime = parseHorarioToTimestamp(data.horario);
+          if (!songStartTime || Math.abs(Date.now() - songStartTime) > 12 * 3600 * 1000) {
+            songStartTime = null;
+          }
+          if (!songStartTime && typeof data.fileModifiedAt === "number" && data.fileModifiedAt > 0) {
+            const age = Date.now() - data.fileModifiedAt;
+            if (age >= 0 && age < Math.max(600_000, (data.duracao || 180) * 1000)) {
+              songStartTime = data.fileModifiedAt;
+            }
+          }
+          const now = songStartTime || Date.now();
           writeMusicData(user.id, data);
-          localStorage.setItem(MUSIC_START_KEY, now.toString());
+          writeMusicStart(user.id, now);
 
           (async () => {
             await applyTrackChangeWithCuriosityGuard({
@@ -320,19 +356,9 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const fetchAll = async () => {
         try {
           if (!data.capa) {
-            if (coverCacheRef.current[cacheKey]) {
-              data.capa = coverCacheRef.current[cacheKey];
-            } else {
-              const query = encodeURIComponent(`${data.artista} ${data.titulo}`);
-              const itunesRes = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`, { signal: AbortSignal.timeout(3000) });
-              const itunesData = await itunesRes.json();
-              if (itunesData.results?.length > 0) {
-                const cover = itunesData.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
-                if (cover) {
-                  data.capa = cover;
-                  coverCacheRef.current[cacheKey] = cover;
-                }
-              }
+            const cover = await fetchTrackCover(data.titulo, data.artista);
+            if (cover) {
+              data.capa = cover;
             }
           }
 
@@ -460,6 +486,8 @@ export function useGlobalMusicSync(enabled: boolean = true) {
               cache: "no-store",
             });
             if (!res.ok) continue;
+            const lastModHeader = res.headers.get("last-modified");
+            const fileModifiedAt = lastModHeader ? new Date(lastModHeader).getTime() : undefined;
             const rawText = await res.text();
             if (!rawText) continue;
             // Jornal FM: se o arquivo local é TXT ("ARTISTA - MUSICA"),
@@ -478,10 +506,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             }
             if (!data) continue;
             if (isPlaceholderTrack(data)) return "stopped";
+            if (fileModifiedAt && !data.fileModifiedAt) {
+              data.fileModifiedAt = fileModifiedAt;
+            }
             lastLocalSyncAtRef.current = Date.now();
             void processTrackData(data);
-
-            localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+            writeBotXmlLastRun(user.id, Date.now());
             return true;
           } catch {
             // try next candidate
@@ -514,8 +544,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
         onlineStoppedRef.current = false;
         void processTrackData(data);
-
-        localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+        writeBotXmlLastRun(user.id, Date.now());
         return "ok";
       };
 
@@ -523,6 +552,78 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const localResult = await syncLocalFromStorage();
       const localSynced = localResult === true;
       const localStopped = localResult === "stopped";
+
+      // 3. Fallback do banco de dados (se o cliente da rádio estiver salvando pelo navegador local direto em musicas_tocadas)
+      if (!localSynced && onlineResult !== "ok") {
+        try {
+          const targetUids = [
+            user.id,
+            "d17e65af-e407-466f-9b60-b55c43399513", // Positiva FM 99.1
+          ];
+
+          let foundTrack: { titulo: string; artista: string; created_at?: string } | null = null;
+
+          for (const targetUid of targetUids) {
+            const { data: lastPlayed } = await supabase
+              .from("musicas_tocadas")
+              .select("musica, artista, horario, dia, created_at")
+              .eq("user_id", targetUid)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            let dbMusica = (lastPlayed?.musica || "").trim();
+            let dbArtista = (lastPlayed?.artista || "").trim();
+
+            if (!dbMusica) {
+              try {
+                const edgeResp = await fetch(
+                  `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/public-music-history?user_id=${encodeURIComponent(targetUid)}&limit=1`,
+                  {
+                    headers: {
+                      apikey: (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                    },
+                  }
+                );
+                const edgeJson = await edgeResp.json();
+                if (edgeJson?.ok && Array.isArray(edgeJson.items) && edgeJson.items.length > 0) {
+                  dbMusica = (edgeJson.items[0].musica || "").trim();
+                  dbArtista = (edgeJson.items[0].artista || "").trim();
+                }
+              } catch {}
+            }
+
+            if (dbMusica && dbMusica.toUpperCase().startsWith("!SB - ")) {
+              dbMusica = dbMusica.replace(/^!SB\s*-\s*/i, "").trim();
+            }
+            if ((dbArtista.toUpperCase().includes("STANDBY") || !dbArtista) && dbMusica.includes(" - ")) {
+              const parts = dbMusica.split(" - ");
+              dbArtista = parts[0].trim();
+              dbMusica = parts.slice(1).join(" - ").trim();
+            }
+
+            if (dbMusica && dbMusica.toLowerCase() !== "sem título" && dbMusica.toLowerCase() !== "sem titulo" && dbMusica.toLowerCase() !== "aguardando leitura...") {
+              foundTrack = { titulo: dbMusica, artista: dbArtista || "Desconhecido", created_at: lastPlayed?.created_at };
+              break;
+            }
+          }
+
+          if (foundTrack) {
+            const cur = readMusicData(user.id);
+            const isSameTrack = cur && cur.titulo === foundTrack.titulo && cur.artista === foundTrack.artista;
+            if (!isSameTrack) {
+              const initialCover = getTrackCoverSync(foundTrack.titulo, foundTrack.artista) || "";
+              void processTrackData({
+                titulo: foundTrack.titulo,
+                artista: foundTrack.artista,
+                duracao: 180,
+                capa: initialCover,
+              });
+            }
+            return;
+          }
+        } catch {}
+      }
 
       // When both sources agree there's no song playing (or the only active
       // source reports stopped), clear the on-air track and the mirrored DB

@@ -22,6 +22,7 @@ import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { playerSignOut } from "@/lib/playerSignOut";
+import { fetchStationDatabaseData } from "@/lib/stationDatabaseService";
 const MiniPlayerWidget = lazyRetry(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazyRetry(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazyRetry(() => import("@/components/player/CatalogDetailInline"));
@@ -1771,15 +1772,20 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       let channelsData = (chRes.data ?? []) as any[];
       let channelError = chRes.error;
 
-      // Fallback: if user has no channels at all, or no live channels, merge global active channels
+      // Fallback: if user has no channels at all, or no live channels, fetch station data or merge global active channels
       const hasLiveChannels = channelsData.some((ch: any) => ch.type === "video_live" || ch.type === "audio_live");
       if (!channelError && (channelsData.length === 0 || !hasLiveChannels)) {
-        const fallbackChRes = await supabase.from("streaming_channels").select("*").eq("active", true).order("numero_canal");
-        if (!fallbackChRes.error && fallbackChRes.data) {
-          const existingIds = new Set(channelsData.map((ch: any) => ch.id));
-          const merged = [...channelsData, ...fallbackChRes.data.filter((ch: any) => !existingIds.has(ch.id))];
-          channelsData = merged as any[];
-        } else if (fallbackChRes.error) channelError = fallbackChRes.error;
+        const stationData = await fetchStationDatabaseData(userId);
+        if (stationData?.channels && stationData.channels.length > 0) {
+          channelsData = stationData.channels;
+        } else {
+          const fallbackChRes = await supabase.from("streaming_channels").select("*").eq("active", true).order("numero_canal");
+          if (!fallbackChRes.error && fallbackChRes.data) {
+            const existingIds = new Set(channelsData.map((ch: any) => ch.id));
+            const merged = [...channelsData, ...fallbackChRes.data.filter((ch: any) => !existingIds.has(ch.id))];
+            channelsData = merged as any[];
+          } else if (fallbackChRes.error) channelError = fallbackChRes.error;
+        }
       }
 
       const programasData = (progRes.data ?? []) as any[];

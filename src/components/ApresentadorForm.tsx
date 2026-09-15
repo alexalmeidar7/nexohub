@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet, Search, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet, Search, Save, Upload } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,11 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export interface Apresentador {
   id: string;
   nome: string;
   cargo: string;
+  categoria?: string;
   instagram: string;
   whatsapp: string;
   foto: string;
@@ -25,7 +28,55 @@ export interface Apresentador {
   ativo: boolean;
 }
 
-const CATEGORIA_OPTIONS = ["Apresentador", "Jornalista", "Convidado"];
+export const CATEGORIA_OPTIONS = ["Apresentador", "Jornalista", "Convidado"];
+
+export function resolveParticipanteCategoria(a: { nome?: string; cargo?: string; categoria?: string; foto?: string }): { categoria: "Apresentador" | "Jornalista" | "Convidado"; cargo: string } {
+  const explicitCat = (a.categoria || "").trim();
+  const explicitCargo = (a.cargo || "").trim();
+
+  // If already explicit in standard categories
+  if (CATEGORIA_OPTIONS.includes(explicitCat)) {
+    return {
+      categoria: explicitCat as any,
+      cargo: explicitCargo && explicitCargo !== explicitCat ? explicitCargo : (explicitCat === "Convidado" ? "" : explicitCat)
+    };
+  }
+  if (CATEGORIA_OPTIONS.includes(explicitCargo)) {
+    return {
+      categoria: explicitCargo as any,
+      cargo: explicitCargo === "Convidado" ? "" : explicitCargo
+    };
+  }
+
+  const nameUpper = (a.nome || "").trim().toUpperCase();
+
+  // Known Journalists
+  const knownJornalistas = [
+    "HENRIQUE MORGANTINI", "MARCOS MARINHO", "RICARDO MARQUES",
+    "LUIZ GAMA", "DOMINGOS KETELBEY", "FABIO CAMARGO", "FÁBIO CAMARGO", "JORNALISTA"
+  ];
+  if (knownJornalistas.some(j => nameUpper.includes(j))) {
+    return { categoria: "Jornalista", cargo: explicitCargo || "Jornalista" };
+  }
+
+  // Known Apresentadores / Locutores / DJs (or anyone with an official photo in station storage)
+  const knownApresentadores = [
+    "GABS", "ANDRE RODRIGUES", "ANDRÉ RODRIGUES", "ANI CRISTINE", "DJ HENRIQUE AMARAL",
+    "PABLO KOSSA", "JOSÉ LUIZ", "JOSE LUIZ", "THIAGO SANTHÊ", "THIAGO SANTHE",
+    "HENRIQUE AUGUSTO", "JOHNNY BOTELHO", "ÉVERSON CÂNDIDO", "EVERSON CANDIDO",
+    "DJ KOJAK", "TEO", "LEO MARTINE", "LÉO MARTINE", "REGYS RODRIGUES",
+    "ERIKA NAVES", "ÉRIKA NAVES", "FELLIPE ROCHA", "JHONATHA", "TONINHO",
+    "LOCUTOR", "APRESENTADOR", "DJ "
+  ];
+  const hasOfficialPhoto = Boolean(a.foto && (a.foto.includes("empresa-assets/apresentadores") || a.foto.includes("supabase.co")));
+
+  if (hasOfficialPhoto || knownApresentadores.some(ap => nameUpper.includes(ap))) {
+    return { categoria: "Apresentador", cargo: explicitCargo || (nameUpper.includes("DJ") ? "DJ / Apresentador" : "Locutor / Apresentador") };
+  }
+
+  // Default for other participants
+  return { categoria: "Convidado", cargo: explicitCargo || "" };
+}
 
 // IMPORTANT: keep Field defined OUTSIDE the component. Declaring components
 // inside another component recreates them on every render, which unmounts
@@ -48,23 +99,116 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
   </div>
 );
 
-export async function getApresentadores(): Promise<Apresentador[]> {
-  const { data } = await supabase.from("apresentadores").select("*");
-  if (!data) return [];
-  return data.map(a => ({
-    id: a.id,
-    nome: a.nome,
-    cargo: a.cargo || "",
-    instagram: a.instagram || "",
-    whatsapp: (a as any).whatsapp || "",
-    foto: a.foto || "",
-    background_url: (a as any).background_url || "",
-    ativo: a.ativo ?? true,
-  }));
+import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+
+export async function getApresentadores(userId?: string, userEmail?: string | null): Promise<Apresentador[]> {
+  const acc = findClientAccountById(userId) || findClientAccountByEmail(userEmail || userId);
+  const effectiveId = acc?.parentUserId || acc?.id || userId;
+  const targetSlug = acc?.slug || userId;
+
+  // 1. Fetch from Supabase
+  let supabaseAps: Apresentador[] = [];
+  try {
+    let query = supabase.from("apresentadores").select("*");
+    if (effectiveId) query = query.eq("user_id", effectiveId);
+    const { data } = await query;
+    if (data && data.length > 0) {
+      supabaseAps = data.map(a => {
+        const resolved = resolveParticipanteCategoria(a);
+        return {
+          id: a.id,
+          nome: a.nome,
+          categoria: (a as any).categoria || resolved.categoria,
+          cargo: a.cargo || (a as any).categoria || resolved.cargo,
+          instagram: a.instagram || "",
+          whatsapp: (a as any).whatsapp || "",
+          foto: a.foto || "",
+          background_url: (a as any).background_url || "",
+          ativo: a.ativo ?? true,
+        };
+      });
+    }
+  } catch {}
+
+  // 2. Check isolated localStorage for custom saved participantes / updated cargos
+  let localList: Apresentador[] = [];
+  try {
+    if (effectiveId) {
+      const raw = localStorage.getItem(`nexohub_participantes_${effectiveId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localList = parsed.map(a => {
+            const resolved = resolveParticipanteCategoria(a);
+            return {
+              ...a,
+              categoria: a.categoria || resolved.categoria,
+              cargo: a.cargo || resolved.cargo,
+            };
+          });
+        }
+      }
+    }
+  } catch {}
+
+  if (supabaseAps.length > 0 || localList.length > 0) {
+    const mergedMap = new Map<string, Apresentador>();
+    supabaseAps.forEach(a => {
+      mergedMap.set(a.id, a);
+      if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), a);
+    });
+    localList.forEach(a => {
+      const existing = mergedMap.get(a.id) || (a.nome ? mergedMap.get(a.nome.trim().toLowerCase()) : undefined);
+      const merged = { ...(existing || {}), ...a };
+      mergedMap.set(a.id, merged);
+      if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), merged);
+    });
+    return Array.from(new Set(Array.from(mergedMap.values())));
+  }
+
+  const stationData = await fetchStationDatabaseData(effectiveId || targetSlug || userEmail);
+  if (stationData?.apresentadores && stationData.apresentadores.length > 0) {
+    return stationData.apresentadores.map(a => {
+      const resolved = resolveParticipanteCategoria(a);
+      return {
+        id: a.id,
+        nome: a.nome,
+        categoria: (a as any).categoria || resolved.categoria,
+        cargo: a.cargo || (a as any).categoria || resolved.cargo,
+        instagram: a.instagram || "",
+        whatsapp: (a as any).whatsapp || "",
+        foto: a.foto || "",
+        background_url: (a as any).background_url || "",
+        ativo: a.ativo ?? true,
+      };
+    });
+  }
+
+  const syncData = getStationDatabaseSync(effectiveId || targetSlug || userEmail);
+  if (syncData?.apresentadores && syncData.apresentadores.length > 0) {
+    return syncData.apresentadores.map(a => {
+      const resolved = resolveParticipanteCategoria(a);
+      return {
+        id: a.id,
+        nome: a.nome,
+        categoria: (a as any).categoria || resolved.categoria,
+        cargo: a.cargo || (a as any).categoria || resolved.cargo,
+        instagram: a.instagram || "",
+        whatsapp: (a as any).whatsapp || "",
+        foto: a.foto || "",
+        background_url: (a as any).background_url || "",
+        ativo: a.ativo ?? true,
+      };
+    });
+  }
+
+  return [];
 }
 
-export default function ApresentadorForm() {
+export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [showSuccess, setShowSuccess] = useState(false);
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -87,23 +231,27 @@ export default function ApresentadorForm() {
   const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
 
   const updateField = async (id: string, field: string, value: any) => {
-    const { error } = await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
-    if (error) {
-      console.error(`Erro ao atualizar campo ${field}:`, error);
-      alert("Erro ao salvar: " + error.message);
-    } else {
-      setApresentadores(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
-      // Dispara atualização imediata dos XMLs
+    const ownerId = targetUserId || user?.id;
+    try {
+      await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
+    } catch {}
+    const updated = apresentadores.map(a => a.id === id ? { ...a, [field]: value } : a);
+    setApresentadores(updated);
+    if (ownerId) {
       try {
-        window.dispatchEvent(new CustomEvent("apresentadores-updated"));
+        localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
       } catch {}
     }
+    // Dispara atualização imediata dos XMLs
+    try {
+      window.dispatchEvent(new CustomEvent("apresentadores-updated"));
+    } catch {}
   };
 
   const load = async () => {
     setLoadingList(true);
     try {
-      const list = await getApresentadores();
+      const list = await getApresentadores(targetUserId || user?.id, user?.email);
       list.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
       setApresentadores(list);
     } finally {
@@ -111,7 +259,7 @@ export default function ApresentadorForm() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [targetUserId, user?.email]);
 
   const showFoto = categoria === "Apresentador" || categoria === "Jornalista";
 
@@ -128,33 +276,35 @@ export default function ApresentadorForm() {
   };
 
   const handleSave = async () => {
-    if (!nome.trim() || !user || !categoria) return;
+    const ownerId = targetUserId || user?.id;
+    if (!nome.trim() || !ownerId || !categoria) return;
     setSaving(true);
 
     // Para "Convidado" com cargo livre (Médico, Advogado...), grava o cargo digitado.
     // Caso contrário, grava a própria categoria (Apresentador/Jornalista/Convidado).
     const cargoValue = categoria === "Convidado" && cargoConvidado.trim()
       ? cargoConvidado.trim()
-      : categoria;
+      : (cargoConvidado.trim() || categoria);
 
     // Upload photo to storage if it's base64
     let fotoUrl = showFoto ? foto : "";
     if (fotoUrl && fotoUrl.startsWith("data:")) {
       const targetId = editingId || crypto.randomUUID();
-      const path = `apresentadores/${user.id}/${targetId}.webp`;
+      const path = `apresentadores/${ownerId}/${targetId}.webp`;
       fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", path);
     }
 
     let finalBackgroundUrl = backgroundUrl;
     if (finalBackgroundUrl && finalBackgroundUrl.startsWith("data:")) {
       const targetId = editingId || crypto.randomUUID();
-      const path = `apresentadores/${user.id}/${targetId}-bg.webp`;
+      const path = `apresentadores/${ownerId}/${targetId}-bg.webp`;
       finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", path);
     }
 
     const payload = {
       nome: nome.trim(),
       cargo: cargoValue,
+      categoria: categoria,
       instagram: instagram.trim(),
       whatsapp: whatsapp.replace(/\D/g, "").length >= 10 ? whatsapp.trim() : "",
       foto: fotoUrl,
@@ -163,19 +313,39 @@ export default function ApresentadorForm() {
     };
 
     let error: any = null;
+    let savedId = editingId;
     if (editingId) {
       const res = await supabase.from("apresentadores").update(payload as any).eq("id", editingId);
       error = res.error;
     } else {
-      const res = await supabase.from("apresentadores").insert({ user_id: user.id, ...payload } as any);
+      const res = await supabase.from("apresentadores").insert({ user_id: ownerId, ...payload } as any).select();
       error = res.error;
+      if (res.data?.[0]?.id) savedId = res.data[0].id;
     }
 
+    // Sync to isolated localStorage
+    try {
+      const currentList = [...apresentadores];
+      const newEntry: Apresentador = {
+        id: savedId || `part_${Date.now()}`,
+        nome: payload.nome,
+        categoria: payload.categoria,
+        cargo: payload.cargo,
+        instagram: payload.instagram,
+        whatsapp: payload.whatsapp,
+        foto: payload.foto,
+        background_url: payload.background_url,
+        ativo: payload.ativo,
+      };
+      const updated = editingId
+        ? currentList.map(a => a.id === editingId ? newEntry : a)
+        : [newEntry, ...currentList.filter(a => a.id !== newEntry.id)];
+      setApresentadores(updated);
+      localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
+    } catch {}
+
     if (error) {
-      console.error("Erro ao salvar apresentador:", error);
-      alert("Erro ao salvar: " + error.message);
-      setSaving(false);
-      return;
+      console.warn("Aviso ao salvar apresentador no Supabase:", error);
     }
 
     // Dispara atualização imediata dos XMLs que dependem de apresentadores
@@ -193,14 +363,13 @@ export default function ApresentadorForm() {
   const startEdit = (a: Apresentador) => {
     setEditingId(a.id);
     setNome(a.nome);
-    // Se o cargo gravado é uma das categorias padrão, é a categoria.
-    // Caso contrário, trata-se de um Convidado com cargo livre.
-    if (CATEGORIA_OPTIONS.includes(a.cargo)) {
-      setCategoria(a.cargo);
-      setCargoConvidado("");
+    const resolved = resolveParticipanteCategoria(a);
+    const effectiveCat = a.categoria || resolved.categoria;
+    setCategoria(effectiveCat);
+    if (effectiveCat === "Convidado") {
+      setCargoConvidado(a.cargo && a.cargo !== "Convidado" ? a.cargo : "");
     } else {
-      setCategoria("Convidado");
-      setCargoConvidado(a.cargo || "");
+      setCargoConvidado(a.cargo && a.cargo !== effectiveCat ? a.cargo : "");
     }
     setInstagram(a.instagram);
     setWhatsapp(a.whatsapp || "+55");
@@ -263,13 +432,31 @@ export default function ApresentadorForm() {
   };
 
   const toggleAtivo = async (id: string, current: boolean) => {
-    await supabase.from("apresentadores").update({ ativo: !current }).eq("id", id);
-    await load();
+    const ownerId = targetUserId || user?.id;
+    try {
+      await supabase.from("apresentadores").update({ ativo: !current }).eq("id", id);
+    } catch {}
+    const updated = apresentadores.map(a => a.id === id ? { ...a, ativo: !current } : a);
+    setApresentadores(updated);
+    if (ownerId) {
+      try {
+        localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
+      } catch {}
+    }
   };
 
   const removeApresentador = async (id: string) => {
-    await supabase.from("apresentadores").delete().eq("id", id);
-    await load();
+    const ownerId = targetUserId || user?.id;
+    try {
+      await supabase.from("apresentadores").delete().eq("id", id);
+    } catch {}
+    const updated = apresentadores.filter(a => a.id !== id);
+    setApresentadores(updated);
+    if (ownerId) {
+      try {
+        localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
+      } catch {}
+    }
   };
 
   const handleExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,27 +489,47 @@ export default function ApresentadorForm() {
   };
 
   const confirmImport = async () => {
-    if (!importRows || !user) return;
+    const ownerId = targetUserId || user?.id;
+    if (!importRows || !ownerId) return;
     setImporting(true);
     const inserts = importRows.map(r => ({
-      user_id: user.id,
+      user_id: ownerId,
       nome: r.nome,
-      cargo: CATEGORIA_OPTIONS.includes(r.categoria) ? r.categoria : r.cargo || "Convidado",
+      cargo: CATEGORIA_OPTIONS.includes(r.categoria) ? r.categoria : (r.cargo || "Convidado"),
       instagram: r.instagram,
       whatsapp: r.whatsapp,
       foto: "",
       ativo: r.ativo,
     }));
-    await supabase.from("apresentadores").insert(inserts as any);
+    try {
+      await supabase.from("apresentadores").insert(inserts as any);
+    } catch {}
+    const newItems: Apresentador[] = inserts.map((ins, i) => ({
+      id: `imp_${Date.now()}_${i}`,
+      nome: ins.nome,
+      cargo: ins.cargo,
+      instagram: ins.instagram,
+      whatsapp: ins.whatsapp,
+      foto: ins.foto,
+      background_url: "",
+      ativo: ins.ativo,
+    }));
+    const updated = [...newItems, ...apresentadores];
+    setApresentadores(updated);
+    try {
+      localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
+    } catch {}
     setImportRows(null);
     setImporting(false);
-    await load();
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const filtered = apresentadores
-    .filter(a => filterCategoria === "todos" || a.cargo === filterCategoria)
+    .filter(a => {
+      const cat = a.categoria || resolveParticipanteCategoria(a).categoria;
+      return filterCategoria === "todos" || cat === filterCategoria;
+    })
     .filter(a => !searchNome || a.nome.toLowerCase().includes(searchNome.toLowerCase()));
 
   const stats = {
@@ -331,30 +538,31 @@ export default function ApresentadorForm() {
     inativos: apresentadores.filter(a => !a.ativo).length,
   };
 
-  // === Nexo Form Design System (mesmo do Cadastro de Ouvinte) ===
-  const CYAN = "#00BFF0";
-  const LIME = "#C6F03C";
-  const CARD_BG = "#D6F4FB";
-  const DARK = "#0A2540";
+  // === Nexo Form Design System (mesmo padrão Blitz / ClientesPage) ===
+  const CYAN = "#0055ff";
+  const LIME = "#0055ff";
+  const CARD_BG = "#ffffff";
+  const DARK = "#002132";
 
   const pillInput: React.CSSProperties = {
     width: "100%",
     height: 44,
     borderRadius: 999,
-    background: "#FFFFFF",
-    border: `2px solid ${CYAN}`,
+    background: "#f8fafc",
+    border: "1px solid rgba(226, 232, 240, 0.9)",
     padding: "0 20px",
     fontFamily: "'Montserrat', sans-serif",
-    fontSize: 13,
-    color: DARK,
+    fontSize: 12,
+    color: "#0f172a",
     outline: "none",
+    textTransform: "uppercase",
   };
 
   const pillSelect: React.CSSProperties = {
     ...pillInput,
     appearance: "none",
     backgroundImage:
-      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2300BFF0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230055ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "right 18px center",
     paddingRight: 44,
@@ -362,12 +570,12 @@ export default function ApresentadorForm() {
 
   const labelStyle: React.CSSProperties = {
     fontFamily: "'Montserrat', sans-serif",
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: 800,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: DARK,
-    marginBottom: 8,
+    color: "#64748b",
+    marginBottom: 6,
     display: "block",
   };
 
@@ -375,11 +583,11 @@ export default function ApresentadorForm() {
   // remontagem a cada render, o que fazia o foco sair dos inputs/combos.
 
   if (loadingList && apresentadores.length === 0) {
-    return <ModulePageSkeleton />;
+    return <ModulePageSkeleton variant="form" />;
   }
 
   return (
-    <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="animate-fade-in space-y-8 max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cadastro de Participantes
@@ -388,10 +596,11 @@ export default function ApresentadorForm() {
       {/* FORM CARD */}
       <section
         style={{
-          background: CARD_BG,
-          borderRadius: 28,
+          background: "#ffffff",
+          borderRadius: 24,
           padding: "28px 32px 32px",
-          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
         }}
       >
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -407,69 +616,33 @@ export default function ApresentadorForm() {
           >
             {editingId ? "Editar Participante" : "Cadastro de Participante"}
           </h3>
-          <div className="flex items-center gap-4">
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: DARK,
-                background: "#FFFFFF",
-                padding: "6px 16px",
-                borderRadius: 999,
-                border: `2px solid ${CYAN}`,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-              }}
-            >
-              ID: <span style={{ color: CYAN }}>{editingId ? editingId.slice(0, 8) : "—"}</span>
+          <div className="flex items-center gap-3">
+            {/* ID Badge */}
+            <div className="text-[11px] font-bold text-slate-600 bg-slate-100/90 px-4 py-2 rounded-full uppercase tracking-wider border border-slate-200/80 shadow-xs flex items-center gap-1.5">
+              <span className="text-slate-400 font-semibold">ID:</span>
+              <span className="text-[#0055ff] font-black">{editingId ? editingId.slice(0, 8) : "—"}</span>
             </div>
-            <label
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                cursor: "pointer",
-                userSelect: "none",
-                background: "#FFFFFF",
-                border: `2px solid ${CYAN}`,
-                borderRadius: 999,
-                padding: "6px 14px",
-              }}
+
+            {/* Ativo Toggle */}
+            <div
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-full border transition-all duration-200 cursor-pointer select-none shadow-xs ${
+                ativo 
+                  ? "bg-emerald-50/90 border-emerald-200/90 text-emerald-800" 
+                  : "bg-slate-50 border-slate-200 text-slate-600"
+              }`}
+              onClick={() => setAtivo(!ativo)}
             >
-              <div style={{ position: "relative", width: 34, height: 18 }}>
-                <input
-                  type="checkbox"
-                  checked={ativo}
-                  onChange={(e) => setAtivo(e.target.checked)}
-                  style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: 999,
-                    background: ativo ? LIME : "#E2E8F0",
-                    transition: "background 0.2s",
-                  }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 2,
-                    left: ativo ? 18 : 2,
-                    width: 14,
-                    height: 14,
-                    borderRadius: "50%",
-                    background: "#FFFFFF",
-                    transition: "left 0.2s",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                  }}
-                />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>
+              <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${ativo ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse" : "bg-slate-400"}`} />
                 {ativo ? "Ativo" : "Inativo"}
               </span>
-            </label>
+              <Switch
+                checked={ativo}
+                onCheckedChange={setAtivo}
+                className="data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-slate-300 scale-90"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
           </div>
         </div>
 
@@ -512,47 +685,34 @@ export default function ApresentadorForm() {
               <label style={labelStyle}>Foto (1080 × 1080 px — PNG com fundo transparente)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <label
-                  style={{
-                    width: 88,
-                    height: 88,
-                    borderRadius: 20,
-                    background: "#FFFFFF",
-                    border: `2px dashed ${CYAN}`,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    overflow: "hidden",
-                  }}
+                  className="group relative flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/20 bg-slate-50/80 shadow-xs"
+                  style={{ width: 88, height: 88 }}
                 >
                   {foto ? (
-                    <img src={foto} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div className="relative w-full h-full group">
+                      <img src={foto} alt="Preview" className="w-full h-full object-cover rounded-2xl" />
+                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-2xl">
+                        <Upload size={14} />
+                        <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5">Trocar</span>
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <Camera size={22} style={{ color: CYAN }} />
-                      <span style={{ fontSize: 9, color: DARK, marginTop: 4, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>Upload</span>
-                    </>
+                    <div className="flex flex-col items-center justify-center gap-1 p-1 text-slate-400 group-hover:text-[#0055ff] transition-colors">
+                      <Camera size={20} className="text-slate-400 group-hover:text-[#0055ff] transition-colors" />
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500 group-hover:text-[#0055ff] transition-colors">
+                        Upload
+                      </span>
+                    </div>
                   )}
                   <input type="file" accept="image/*" onChange={handleFoto} style={{ display: "none" }} />
                 </label>
                 {foto && (
                   <button
+                    type="button"
                     onClick={() => setFoto("")}
-                    style={{
-                      background: "#FEE2E2",
-                      color: "#DC2626",
-                      border: "none",
-                      borderRadius: 999,
-                      padding: "8px 16px",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      letterSpacing: 1,
-                      textTransform: "uppercase",
-                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs cursor-pointer"
                   >
-                    Remover foto
+                    <Trash2 size={12} /> Remover foto
                   </button>
                 )}
               </div>
@@ -632,9 +792,9 @@ export default function ApresentadorForm() {
                 height: 44,
                 padding: "0 22px",
                 borderRadius: 999,
-                background: "#FFFFFF",
-                border: `2px solid ${CYAN}`,
-                color: DARK,
+                background: "#f8fafc",
+                border: "1px solid #cbd5e1",
+                color: "#334155",
                 fontWeight: 700,
                 fontSize: 12,
                 letterSpacing: 1.5,
@@ -649,24 +809,9 @@ export default function ApresentadorForm() {
             </button>
           )}
           <label
-            style={{
-              height: 44,
-              padding: "0 22px",
-              borderRadius: 999,
-              background: "#FFFFFF",
-              border: `2px solid ${CYAN}`,
-              color: DARK,
-              fontWeight: 700,
-              fontSize: 12,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              cursor: "pointer",
-            }}
+            className="h-11 px-5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-700 hover:text-slate-900 font-bold text-xs tracking-wider uppercase inline-flex items-center gap-2 cursor-pointer shadow-xs hover:shadow transition-all"
           >
-            <FileSpreadsheet size={14} /> Importar Excel
+            <FileSpreadsheet size={15} className="text-[#0055ff]" /> Importar Excel
             <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelFile} style={{ display: "none" }} />
           </label>
           <button
@@ -676,9 +821,9 @@ export default function ApresentadorForm() {
               height: 44,
               padding: "0 28px",
               borderRadius: 999,
-              background: LIME,
+              background: "#0055ff",
               border: "none",
-              color: DARK,
+              color: "#ffffff",
               fontWeight: 800,
               fontSize: 12,
               letterSpacing: 2,
@@ -687,11 +832,11 @@ export default function ApresentadorForm() {
               alignItems: "center",
               gap: 10,
               cursor: saving ? "wait" : "pointer",
-              boxShadow: `0 8px 14px ${LIME}25`
+              boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
             }}
             className="hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {saving ? <Loader2 size={16} className="animate-spin text-white" /> : <Save size={16} className="text-white" />}
             {editingId ? "Atualizar Dados" : "Salvar Participante"}
           </button>
         </div>
@@ -701,10 +846,10 @@ export default function ApresentadorForm() {
       <section
         style={{
           background: "#FFFFFF",
-          borderRadius: 28,
-          padding: "20px 24px 28px",
-          border: "1px solid #E5F5FB",
-          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+          borderRadius: 24,
+          padding: "24px 28px 28px",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
         }}
       >
         <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
@@ -754,9 +899,19 @@ export default function ApresentadorForm() {
             Nenhum participante cadastrado.
           </p>
         ) : (
-          <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
+          <div
+            className="nexo-table-scroll relative"
+            style={{
+              overflowX: "auto",
+              overflowY: "auto",
+              maxHeight: 565,
+              borderRadius: 16,
+              border: "1px solid rgba(226, 232, 240, 0.9)",
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+            }}
+          >
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
-              <thead>
+              <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                 <tr style={{ background: CYAN, color: "#FFFFFF" }}>
                   {["Categoria", "Nome", "Cargo", "Instagram", "WhatsApp", "Foto", "Status", "Ações"].map((h) => (
                     <th
@@ -769,6 +924,10 @@ export default function ApresentadorForm() {
                         textTransform: "uppercase",
                         fontSize: 10,
                         whiteSpace: "nowrap",
+                        background: CYAN,
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 10,
                       }}
                     >
                       {h}
@@ -778,9 +937,11 @@ export default function ApresentadorForm() {
               </thead>
               <tbody>
                 {filtered.map((a, idx) => {
-                  const cat = CATEGORIA_OPTIONS.includes(a.cargo) ? a.cargo : "Convidado";
+                  const resolved = resolveParticipanteCategoria(a);
+                  const cat = a.categoria || resolved.categoria;
+                  const displayCargo = a.cargo && a.cargo !== cat ? a.cargo : (cat === "Convidado" ? "—" : a.cargo || "—");
                   return (
-                    <tr key={a.id} style={{ background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
+                    <tr key={a.id} style={{ background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK, height: 52 }}>
                       <td style={{ padding: "10px 14px" }}>
                         <span
                           style={{
@@ -800,7 +961,7 @@ export default function ApresentadorForm() {
                         </span>
                       </td>
                       <td style={{ padding: "10px 14px", fontWeight: 700 }}>{a.nome}</td>
-                      <td style={{ padding: "10px 14px" }}>{a.cargo || "—"}</td>
+                      <td style={{ padding: "10px 14px" }}>{displayCargo}</td>
                       <td style={{ padding: "10px 14px" }}>
                         {a.instagram ? (
                           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -887,32 +1048,24 @@ export default function ApresentadorForm() {
               boxShadow: "0 20px 60px rgba(10, 37, 64, 0.35)",
             }}
           >
-            <FileSpreadsheet size={40} style={{ color: CYAN, margin: "0 auto 12px" }} />
-            <p style={{ fontSize: 14, fontWeight: 700, color: DARK, margin: "0 0 20px" }}>
-              Deseja importar <span style={{ color: CYAN, fontWeight: 800 }}>{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""}?
+            <FileSpreadsheet size={44} className="text-[#0055ff] mx-auto mb-3" />
+            <p style={{ fontSize: 14, fontWeight: 700, color: DARK, margin: "0 0 24px" }}>
+              Deseja importar <span className="text-[#0055ff] font-extrabold">{importRows.length}</span> participante{importRows.length > 1 ? "s" : ""}?
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <button
+                type="button"
                 onClick={() => setImportRows(null)}
                 disabled={importing}
-                style={{
-                  height: 42, padding: "0 22px", borderRadius: 999,
-                  background: "#FFFFFF", border: `2px solid ${CYAN}`, color: DARK,
-                  fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer",
-                }}
+                className="h-11 px-6 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={confirmImport}
                 disabled={importing}
-                style={{
-                  height: 42, padding: "0 28px", borderRadius: 999,
-                  background: LIME, border: "none", color: DARK,
-                  fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase",
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                  cursor: importing ? "wait" : "pointer",
-                }}
+                className="h-11 px-7 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50"
               >
                 {importing && <Loader2 size={14} className="animate-spin" />}
                 {importing ? "Importando..." : "Confirmar"}

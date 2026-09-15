@@ -372,12 +372,15 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
 
   useEffect(() => {
     if (music?.titulo || music?.artista) {
-      setNowPlaying((prev) => ({
-        musica: music.titulo || prev?.musica || "Sem título",
-        artista: music.artista || prev?.artista || "Desconhecido",
-        capa: music.capa || prev?.capa || "",
-        curiosity: curiosidade || prev?.curiosity || "",
-      }));
+      setNowPlaying((prev) => {
+        const isSameTrack = prev?.musica === (music.titulo || "Sem título") && prev?.artista === (music.artista || "Desconhecido");
+        return {
+          musica: music.titulo || prev?.musica || "Sem título",
+          artista: music.artista || prev?.artista || "Desconhecido",
+          capa: music.capa || (isSameTrack ? (prev?.capa || "") : ""),
+          curiosity: curiosidade || (isSameTrack ? (prev?.curiosity || "") : ""),
+        };
+      });
       load();
     }
   }, [music?.titulo, music?.artista, music?.capa, curiosidade]);
@@ -585,18 +588,25 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   };
 
   return (
-    <div className="relative space-y-5 rounded-2xl p-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
+    <div
+      className="relative space-y-5 rounded-3xl p-6 transition-all"
+      style={{
+        backgroundColor: "#ffffff",
+        border: "1px solid rgba(226, 232, 240, 0.9)",
+        boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+      }}
+    >
       <div 
         className="flex items-center justify-between mb-2 cursor-pointer group" 
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
+          <div className="w-1.5 h-6 bg-[#0055ff] rounded-full" />
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
-                <Music size={18} style={{ color: "#00BFF0" }} />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-50">
+                <Music size={18} style={{ color: "#0055ff" }} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "#00BFF0" }}>
+              <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "#002132" }}>
                 INFO MUSIC
               </h3>
             </div>
@@ -625,7 +635,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
 
       {/* No Ar Agora em destaque no topo */}
       {nowPlaying && (
-        <div className="p-4 rounded-xl bg-[#00BFF0]/10 border border-[#00BFF0]/20 flex items-center justify-between gap-4">
+        <div className="p-4 rounded-2xl bg-[#0055ff]/5 border border-[#0055ff]/20 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <div className="relative group">
               {nowPlaying.capa ? (
@@ -638,7 +648,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">NO AR</div>
             </div>
             <div className="min-w-0">
-              <h4 className="text-[10px] font-bold uppercase text-[#00BFF0] tracking-widest mb-1">Tocando Agora</h4>
+              <h4 className="text-[10px] font-bold uppercase text-[#0055ff] tracking-widest mb-1">Tocando Agora</h4>
               <div className="font-black text-lg truncate leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{nowPlaying.musica}</div>
               <div className="text-sm opacity-70 truncate font-medium">{nowPlaying.artista}</div>
             </div>
@@ -648,13 +658,13 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="hidden md:block flex-1 max-w-xl bg-white/40 p-3 rounded-lg border border-white/60 italic text-xs leading-relaxed opacity-90 shadow-sm line-clamp-2 cursor-pointer">
-                    <Sparkles size={14} className="text-[#00BFF0] mb-1 inline mr-2" />
+                    <Sparkles size={14} className="text-[#0055ff] mb-1 inline mr-2" />
                     "{nowPlaying.curiosity}"
                   </div>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-md p-3 text-xs leading-relaxed bg-[#0A2540] text-white border-none shadow-xl z-50">
                   <div className="flex items-start gap-2">
-                    <Sparkles size={14} className="text-[#00BFF0] mt-0.5 shrink-0" />
+                    <Sparkles size={14} className="text-[#0055ff] mt-0.5 shrink-0" />
                     <span>{nowPlaying.curiosity}</span>
                   </div>
                 </TooltipContent>
@@ -708,14 +718,14 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         <div className="space-y-3 flex flex-col h-[500px]">
           <div className="flex items-center justify-between flex-shrink-0 h-10">
             <div className="flex items-center gap-2">
-              <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
+              <div className="w-1 h-4 bg-[#0055ff] rounded-full" />
               <h4 className="text-xs font-black uppercase tracking-wider">Últimas Tocadas ({filteredHistoryRows.length})</h4>
             </div>
           </div>
-          <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
+          <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid rgba(226, 232, 240, 0.9)", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.5)" }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
-                <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
+                <tr style={{ background: "#0055ff", color: "#FFFFFF" }}>
                   <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Data / Hora</th>
                   <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Música / Artista</th>
                 </tr>
@@ -1130,10 +1140,10 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           </div>
           {loadingAllCuriosities && <Loader2 size={14} className="animate-spin text-emerald-500" />}
         </div>
-        <div style={{ maxHeight: "400px", overflowY: "auto", borderRadius: 16, border: "1px solid #E5F5FB" }}>
+        <div style={{ maxHeight: "400px", overflowY: "auto", borderRadius: 16, border: "1px solid rgba(226, 232, 240, 0.9)" }}>
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
             <thead className="sticky top-0 z-10">
-              <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
+              <tr style={{ background: "#0055ff", color: "#FFFFFF" }}>
                 {["Data", "Hora", "Música / Artista", "Curiosidade", "Ação"].map((h) => (
                   <th
                     key={h}
@@ -1157,8 +1167,8 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                 <tr 
                   key={r.id} 
                   style={{ 
-                    background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
-                    color: "#0A2540"
+                    background: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC",
+                    color: "#002132"
                   }}
                 >
                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap", opacity: 0.7, fontWeight: 500 }}>
@@ -1172,7 +1182,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                     <div style={{ opacity: 0.6, fontSize: 11 }}>{r.artista}</div>
                   </td>
                   <td style={{ padding: "12px 14px" }}>
-                    <div className="line-clamp-2 italic" style={{ color: "#00BFF0", fontSize: 11 }}>
+                    <div className="line-clamp-2 italic" style={{ color: "#0055ff", fontSize: 11 }}>
                       {r.curiosidade}
                     </div>
                   </td>
@@ -1181,7 +1191,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                       <Button 
                         size="sm" 
                         variant="ghost" 
-                        className="h-7 px-2 text-[10px] font-bold text-[#00BFF0] hover:bg-cyan-50 border border-[#00BFF0]/20"
+                        className="h-7 px-2 text-[10px] font-bold text-[#0055ff] hover:bg-blue-50 border border-[#0055ff]/20"
                         onClick={async () => {
                           if (!user) return;
                           try {

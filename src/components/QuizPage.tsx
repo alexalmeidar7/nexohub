@@ -4,9 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import XmlLinkRow from "./XmlLinkRow";
-import XmlSection from "./XmlSection";
 import { toast } from "sonner";
+import { confirmDialog } from "@/lib/confirmDialog";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
@@ -24,8 +23,9 @@ interface QuizAgendado {
   explicacao: string;
 }
 
-export default function QuizPage() {
+export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [quizzes, setQuizzes] = useState<QuizAgendado[]>([]);
@@ -44,176 +44,214 @@ export default function QuizPage() {
     explicacao: ""
   });
 
-  const xmlUrl = user ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-quiz?user_id=${user.id}` : "";
+  const getLocalStorageKey = (uId: string) => `nexohub_quizzes_${uId}`;
+
+  const getStoredQuizzes = (uId: string): QuizAgendado[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  };
+
+  const saveStoredQuizzes = (uId: string, list: QuizAgendado[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+    } catch {}
+  };
 
   const fetchQuizzes = async () => {
-    if (!user) return;
+    if (!targetUserId) return;
     
     const now = new Date();
     const today = todayInBrasilia();
     const currentTime = now.toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-    const { data, error } = await supabase
-      .from("quiz_agendados")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("data_quiz", { ascending: false });
+    let rows: any[] = [];
+    try {
+      const { data } = await supabase
+        .from("quiz_agendados")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .order("data_quiz", { ascending: false });
 
-    if (error) {
-      toast.error("Erro ao carregar quizzes");
-    } else if (data) {
-      // Filter valid quizzes (not finished)
-      const validQuizzes = data.filter(q => {
-        if (q.data_quiz > today) return true;
-        if (q.data_quiz === today && q.horario_fim >= currentTime) return true;
-        return false;
-      });
-
-      // Remove expired from DB
-      const expiredIds = data
-        .filter(q => !validQuizzes.find(v => v.id === q.id))
-        .map(q => q.id);
-
-      if (expiredIds.length > 0) {
-        await supabase
-          .from("quiz_agendados")
-          .delete()
-          .in("id", expiredIds);
+      if (data) {
+        rows = data;
       }
-
-      setQuizzes(validQuizzes as QuizAgendado[]);
+    } catch (err) {
+      console.warn("Supabase fetch quizzes warning:", err);
     }
+
+    const localList = getStoredQuizzes(targetUserId);
+    const map = new Map<string, QuizAgendado>();
+    rows.forEach(q => map.set(q.id, q));
+    localList.forEach(q => map.set(q.id, q));
+    const merged = Array.from(map.values());
+
+    // Filter valid quizzes (not finished)
+    const validQuizzes = merged.filter(q => {
+      if (q.data_quiz > today) return true;
+      if (q.data_quiz === today && q.horario_fim >= currentTime) return true;
+      return false;
+    });
+
+    setQuizzes(validQuizzes as QuizAgendado[]);
+    saveStoredQuizzes(targetUserId, validQuizzes as QuizAgendado[]);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchQuizzes();
-  }, [user]);
+  }, [targetUserId]);
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!targetUserId) return;
     if (!formData.pergunta || !formData.resposta1 || !formData.resposta2) {
       toast.error("Preencha a pergunta e pelo menos as duas primeiras respostas.");
       return;
     }
 
     setSaving(true);
+    const id = `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const newQuiz: QuizAgendado = {
+      id,
+      ...formData,
+    };
+
+    // Atualiza imediatamente localmente
+    const currentList = getStoredQuizzes(targetUserId);
+    const updated = [newQuiz, ...currentList.filter(q => q.id !== id)];
+    setQuizzes(updated);
+    saveStoredQuizzes(targetUserId, updated);
+
     try {
       const { error } = await supabase
         .from("quiz_agendados")
         .insert([{
           ...formData,
-          user_id: user.id
+          user_id: targetUserId,
         }]);
 
-      if (error) throw error;
-      
-      // Cleanup: Keep only last 20
-      const { data: latestQuizzes } = await supabase
-        .from("quiz_agendados")
-        .select("id")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      
-      if (latestQuizzes && latestQuizzes.length > 20) {
-        const idsToDelete = latestQuizzes.slice(20).map(q => q.id);
-        await supabase
-          .from("quiz_agendados")
-          .delete()
-          .in("id", idsToDelete);
+      if (error) {
+        console.warn("Supabase quiz insert warning (mantido localmente):", error.message);
       }
-
-      toast.success("Quiz agendado com sucesso!");
-      setFormData({
-        pergunta: "",
-        resposta1: "",
-        resposta2: "",
-        resposta3: "",
-        resposta4: "",
-        resposta_correta: 1,
-        data_quiz: todayInBrasilia(),
-        horario_inicio: "00:00",
-        horario_fim: "23:59",
-        explicacao: ""
-      });
-      fetchQuizzes();
-    } catch (err: any) {
-      toast.error("Erro ao salvar: " + err.message);
+    } catch (err) {
+      console.warn("Supabase quiz save network error:", err);
     } finally {
       setSaving(false);
     }
+
+    toast.success("Quiz agendado com sucesso!");
+    setFormData({
+      pergunta: "",
+      resposta1: "",
+      resposta2: "",
+      resposta3: "",
+      resposta4: "",
+      resposta_correta: 1,
+      data_quiz: todayInBrasilia(),
+      horario_inicio: "00:00",
+      horario_fim: "23:59",
+      explicacao: ""
+    });
+    setShowForm(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este quiz?")) return;
+    const confirmed = await confirmDialog({
+      title: "Excluir Quiz",
+      message: "Tem certeza que deseja excluir este quiz?",
+      confirmLabel: "Excluir",
+      destructive: true
+    });
+    if (!confirmed || !targetUserId) return;
     
+    // Atualiza localmente imediatamente
+    const currentList = getStoredQuizzes(targetUserId);
+    const updated = currentList.filter(q => q.id !== id);
+    setQuizzes(updated);
+    saveStoredQuizzes(targetUserId, updated);
+
     try {
-      const { error } = await supabase
-        .from("quiz_agendados")
-        .delete()
-        .eq("id", id);
-      
-      if (error) throw error;
-      toast.success("Quiz excluído.");
-      fetchQuizzes();
-    } catch (err: any) {
-      toast.error("Erro ao excluir: " + err.message);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        await supabase
+          .from("quiz_agendados")
+          .delete()
+          .eq("id", id);
+      }
+    } catch (err) {
+      console.warn("Erro ao excluir quiz no Supabase:", err);
     }
+    toast.success("Quiz excluído com sucesso.");
   };
 
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
-    <div className="nexo-scope space-y-4">
+    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
       <div id="module-header-title" style={{ display: "none" }}>
         vMix — Quiz
       </div>
 
-      <div className="flex justify-between items-center bg-white/50 backdrop-blur-md p-4 rounded-3xl border border-white/20">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <Sparkles className="text-[#C6F03C]" /> Gerenciamento de Quizzes
-        </h2>
-        <Button 
+      <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+        <div className="flex items-center gap-3">
+          <div style={{ width: 44, height: 44, borderRadius: 16, background: "#0055ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Sparkles size={20} color="#fff" />
+          </div>
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wider text-[#002132]">
+              Gerenciamento de Quizzes
+            </h2>
+            <p className="text-xs text-slate-400 font-medium">Agendamento e controle de quizzes</p>
+          </div>
+        </div>
+        <button 
           onClick={() => setShowForm(!showForm)}
-          className="bg-[#C6F03C] hover:bg-[#C6F03C]/90 text-black rounded-full px-6"
+          className={`h-11 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer ${
+            showForm ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-[#0055ff] hover:bg-[#0047d4] text-white shadow-md hover:shadow-blue-500/20"
+          }`}
         >
-          {showForm ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+          {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? "Cancelar" : "Novo Quiz"}
-        </Button>
+        </button>
       </div>
 
       {showForm && (
-        <div className="animate-in fade-in slide-in-from-top-4 duration-300 p-6 bg-white rounded-3xl border border-[#C6F03C]/20 shadow-xl space-y-6">
+        <div className="animate-in fade-in slide-in-from-top-4 duration-300 p-6 bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase opacity-60 block mb-1">Pergunta</label>
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Pergunta</label>
                 <Input 
                   value={formData.pergunta}
                   onChange={e => setFormData(prev => ({ ...prev, pergunta: e.target.value }))}
                   placeholder="Qual o nome do primeiro álbum dos Beatles?"
-                  className="rounded-xl border-[#C6F03C]/20"
+                  className="rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff]"
                 />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map(idx => (
                   <div key={idx}>
-                    <label className="text-xs font-bold uppercase opacity-60 block mb-1">
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">
                       Resposta {idx} {idx > 2 && "(Opcional)"}
                     </label>
                     <div className="flex gap-2">
                       <Input 
                         value={(formData as any)[`resposta${idx}`]}
                         onChange={e => setFormData(prev => ({ ...prev, [`resposta${idx}`]: e.target.value }))}
-                        className={`rounded-xl border-[#C6F03C]/20 ${formData.resposta_correta === idx ? 'ring-2 ring-[#C6F03C]' : ''}`}
+                        className={`rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff] ${formData.resposta_correta === idx ? 'ring-2 ring-[#0055ff]' : ''}`}
                       />
                       <button 
                         onClick={() => setFormData(prev => ({ ...prev, resposta_correta: idx }))}
-                        className={`px-3 rounded-xl border text-[10px] font-bold transition-all ${
+                        className={`px-4 rounded-full border text-[10px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
                           formData.resposta_correta === idx 
-                          ? 'bg-[#C6F03C] border-[#C6F03C] text-black' 
-                          : 'border-gray-200 text-gray-400 hover:border-[#C6F03C]/50'
+                          ? 'bg-[#0055ff] border-[#0055ff] text-white shadow-sm' 
+                          : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-[#0055ff]/50'
                         }`}
                       >
                         CORRETA
@@ -224,48 +262,48 @@ export default function QuizPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold uppercase opacity-60 block mb-1">Explicação / Curiosidade (Opcional)</label>
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Explicação / Curiosidade (Opcional)</label>
                 <Input 
                   value={formData.explicacao}
                   onChange={e => setFormData(prev => ({ ...prev, explicacao: e.target.value }))}
                   placeholder="O álbum Please Please Me foi gravado em apenas um dia..."
-                  className="rounded-xl border-[#C6F03C]/20"
+                  className="rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff]"
                 />
               </div>
             </div>
 
-            <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-              <h3 className="text-sm font-bold flex items-center gap-2 mb-2">
-                <CalendarPlus size={16} className="text-[#C6F03C]" /> Agendamento
+            <div className="space-y-4 p-5 bg-[#f8fafc] rounded-2xl border border-slate-200/80">
+              <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 mb-2 text-[#002132]">
+                <CalendarPlus size={16} className="text-[#0055ff]" /> Agendamento
               </h3>
               
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="text-xs font-bold uppercase opacity-60 block mb-1">Data do Quiz</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Data do Quiz</label>
                   <Input 
                     type="date"
                     value={formData.data_quiz}
                     onChange={e => setFormData(prev => ({ ...prev, data_quiz: e.target.value }))}
-                    className="rounded-xl border-[#C6F03C]/20"
+                    className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold uppercase opacity-60 block mb-1">Início</label>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Início</label>
                     <Input 
                       type="time"
                       value={formData.horario_inicio}
                       onChange={e => setFormData(prev => ({ ...prev, horario_inicio: e.target.value }))}
-                      className="rounded-xl border-[#C6F03C]/20"
+                      className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold uppercase opacity-60 block mb-1">Fim</label>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Fim</label>
                     <Input 
                       type="time"
                       value={formData.horario_fim}
                       onChange={e => setFormData(prev => ({ ...prev, horario_fim: e.target.value }))}
-                      className="rounded-xl border-[#C6F03C]/20"
+                      className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                     />
                   </div>
                 </div>
@@ -273,15 +311,15 @@ export default function QuizPage() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4 border-t">
-            <Button 
+          <div className="flex justify-end pt-4 border-t border-slate-100">
+            <button 
               disabled={saving}
               onClick={handleSave}
-              className="bg-[#C6F03C] hover:bg-[#C6F03C]/90 text-black rounded-full px-8 py-6 text-lg font-bold shadow-lg"
+              className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 shadow-md hover:shadow-lg hover:shadow-blue-500/20 cursor-pointer disabled:opacity-50"
             >
-              {saving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Save className="h-4 w-4 text-white" />}
               Salvar e Agendar Quiz
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -410,12 +448,6 @@ export default function QuizPage() {
           </table>
         </div>
       </section>
-
-      {user && xmlUrl && (
-        <XmlSection title="Integração vMix">
-          <XmlLinkRow label="XML QUIZ" permanentUrl={xmlUrl} />
-        </XmlSection>
-      )}
     </div>
   );
 }

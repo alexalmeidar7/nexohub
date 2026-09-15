@@ -5,6 +5,10 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getZonedNow } from "@/lib/onAirResolver";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
+import { fetchStationDatabaseData } from "@/lib/stationDatabaseService";
+import { getStoredAgendaEvents } from "@/components/AgendaPage";
 
 type Page = string;
 
@@ -48,14 +52,27 @@ function matches(evt: Evt & { periodo_inicio?: string | null; periodo_fim?: stri
   const check = new Date(format(date, "yyyy-MM-dd") + "T12:00:00");
   const checkStr = format(date, "yyyy-MM-dd");
   let ok = false;
-  if (evt.recorrencia === "unico" || !evt.recorrencia) {
+  const dow = check.getDay();
+  const dowNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+  const progDays = (evt.programa as any)?.dias_semana || (evt.programa as any)?.diasSemana;
+
+  if (progDays && Array.isArray(progDays) && progDays.length > 0) {
+    const norm = progDays.map((d: any) => String(d).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+    ok = norm.some((d: any) => d.includes(dowNames[dow]));
+  } else if (evt.recorrencia === "unico" || !evt.recorrencia) {
     ok = isSameDay(evtDate, check);
   } else if (check < evtDate) {
     ok = false;
-  } else if (evt.recorrencia === "programa_semanal") {
-    // Segunda a sexta
-    const dow = check.getDay();
-    ok = dow >= 1 && dow <= 5;
+  } else if (evt.recorrencia === "programa_semanal" || evt.recorrencia?.startsWith("programa_semanal:") || evt.recorrencia?.startsWith("dias:")) {
+    let activeDays: number[] = [1, 2, 3, 4, 5];
+    if (evt.dias_semana && Array.isArray(evt.dias_semana) && evt.dias_semana.length > 0) {
+      activeDays = evt.dias_semana;
+    } else if (evt.recorrencia.startsWith("programa_semanal:")) {
+      activeDays = evt.recorrencia.slice(17).split(",").map(Number).filter((n: any) => !isNaN(n));
+    } else if (evt.recorrencia.startsWith("dias:")) {
+      activeDays = evt.recorrencia.slice(5).split(",").map(Number).filter((n: any) => !isNaN(n));
+    }
+    ok = activeDays.includes(dow);
   } else if (evt.recorrencia === "semanal") {
     ok = evtDate.getDay() === check.getDay();
   } else if (evt.recorrencia === "mensal") {
@@ -86,7 +103,7 @@ const typeColors: Record<string, { bg: string; text: string; label: string }> = 
 // Background color used by the Audience widget — reused for weekly-recurring event cards.
 const WEEKLY_BG = "#d9ff65";
 
-export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: Page) => void }) {
+export default function UpcomingEventsWidget({ onNavigate, effectiveUserId }: { onNavigate?: (p: Page) => void; effectiveUserId?: string | null }) {
   const { user } = useAuth();
   const [eventos, setEventos] = useState<Evt[]>([]);
   const [programasAll, setProgramasAll] = useState<Programa[]>([]);
@@ -98,22 +115,20 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     if (!user) return;
     let cancelled = false;
     const load = async () => {
-      // For sub-users, we load events from the master user (parent_user_id)
-      let targetUserId = user.id;
-      const { data: subUser } = await supabase
-        .from("sub_users")
-        .select("parent_user_id, ativo")
-        .eq("auth_user_id", user.id)
-        .maybeSingle();
-      
-      if (subUser?.ativo && subUser.parent_user_id) {
-        targetUserId = subUser.parent_user_id;
+      let targetUserId = effectiveUserId || user.id;
+      if (!effectiveUserId) {
+        const { data: subUser } = await supabase
+          .from("sub_users")
+          .select("parent_user_id, ativo")
+          .eq("auth_user_id", user.id)
+          .maybeSingle();
+        
+        if (subUser?.ativo && subUser.parent_user_id) {
+          targetUserId = subUser.parent_user_id;
+        }
       }
 
-      // Performance: janela curta de datas (timeline de 14 dias) em vez de todo o histórico.
-      // Eventos RECORRENTES (lives semanais, etc.) podem ter a data-base antiga; por isso
-      // buscamos separadamente os eventos únicos dentro da janela e as recorrências cujo
-      // período ainda cubra a janela atual.
+      // Timeline de eventos cadastrados na agenda
       const winStart = format(addDays(new Date(), -7), "yyyy-MM-dd");
       const winEnd = format(addDays(new Date(), 45), "yyyy-MM-dd");
       const [uniqueRes, recurringRes, progsRes] = await Promise.all([
@@ -139,12 +154,36 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       ]);
       if (cancelled) return;
       const evtsMap = new Map<string, any>();
+      // Preload locally stored events for instant display & offline resilience
+      try {
+        const localEvts = getStoredAgendaEvents(targetUserId);
+        localEvts.forEach((e: any) => {
+          if (e && e.id) evtsMap.set(e.id, e);
+        });
+      } catch {}
       (uniqueRes.data || []).forEach((e: any) => evtsMap.set(e.id, e));
       (recurringRes.data || []).forEach((e: any) => { if (!evtsMap.has(e.id)) evtsMap.set(e.id, e); });
-      const evts = Array.from(evtsMap.values()).sort((a: any, b: any) => a.data.localeCompare(b.data));
-      const progs = (progsRes.data || []) as Programa[];
+      let progs = (progsRes.data || []) as Programa[];
+      if (progs.length === 0) {
+        try {
+          const fallbackData = await fetchStationDatabaseData(targetUserId || user.email);
+          if (fallbackData?.programas && fallbackData.programas.length > 0) {
+            progs = fallbackData.programas.map((p: any) => ({
+              id: p.id,
+              nome: p.nome,
+              horario_inicio: (p.horario_inicio || p.horarioInicio || "").slice(0, 5),
+              horario_fim: (p.horario_fim || p.horarioFim || "").slice(0, 5),
+              dias_semana: p.dias_semana || p.diasSemana || [],
+              ativo: p.ativo ?? true,
+            }));
+          }
+        } catch {}
+      }
       setProgramasAll(progs);
       const progMap = new Map(progs.map(p => [p.id, p]));
+
+      const evts = Array.from(evtsMap.values()).sort((a: any, b: any) => (a.data || "").localeCompare(b.data || ""));
+
       setEventos(
         evts.map((e: any) => ({
           ...e,
@@ -153,61 +192,48 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             nome: progMap.get(e.programa_id)!.nome,
             horario_inicio: progMap.get(e.programa_id)!.horario_inicio || undefined,
             horario_fim: progMap.get(e.programa_id)!.horario_fim || undefined,
-          } : null,
+            dias_semana: progMap.get(e.programa_id)!.dias_semana || undefined,
+          } : e.programa || null,
         })) as Evt[]
       );
       setLoading(false);
     };
     load();
-    // Use targetUserId for realtime subscription as well
-    const getTargetId = async () => {
-      const { data } = await supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle();
-      return (data?.ativo && data.parent_user_id) ? data.parent_user_id : user.id;
+    
+    const tid = effectiveUserId || user.id;
+    const ch = supabase
+      .channel(`upcoming-events-${tid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${tid}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${tid}` }, load)
+      .subscribe();
+
+    const handleLocalAgendaUpdate = () => {
+      load();
     };
+    window.addEventListener("nexohub:agenda-updated", handleLocalAgendaUpdate);
     
-    let ch: any;
-    getTargetId().then(tid => {
-      if (cancelled) return;
-      ch = supabase
-        .channel(`upcoming-events-${tid}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${tid}` }, load)
-        .on("postgres_changes", { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${tid}` }, load)
-        .subscribe();
-    });
-    
-    return () => { cancelled = true; if (ch) supabase.removeChannel(ch); };
-  }, [user]);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("nexohub:agenda-updated", handleLocalAgendaUpdate);
+      if (ch) supabase.removeChannel(ch);
+    };
+  }, [user, effectiveUserId]);
 
 
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i)), [weekAnchor]);
 
   const dayHasEvents = (d: Date) => {
     const nowD = new Date();
-    // Use user-configured timezone if available for time comparisons
     const tz = (user as any)?.timezone;
     const { hhmm: nowHM } = getZonedNow(tz, nowD);
 
     if (d < nowD && !isSameDay(d, nowD)) return false;
     
-    const hasExplicit = eventos.some(e => {
+    return eventos.some(e => {
       if (!matches(e, d)) return false;
       if (e.status === "cancelado" || e.status === "concluido") return false;
       if (isSameDay(d, nowD)) {
         const refT = e.horario_gravacao_fim || e.programa?.horario_fim || e.horario_gravacao || e.programa?.horario_inicio;
-        if (refT && refT.slice(0, 5) < nowHM) return false;
-      }
-      return true;
-    });
-    if (hasExplicit) return true;
-    const DAY_INDEX_TO_NAME = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const dayNameNorm = norm(DAY_INDEX_TO_NAME[d.getDay()]);
-    return programasAll.some((p) => {
-      if (p.ativo === false || !p.horario_inicio) return false;
-      const dias = (p.dias_semana || []).map((x) => norm(x || ""));
-      if (!dias.includes(dayNameNorm)) return false;
-      if (isSameDay(d, nowD)) {
-        const refT = p.horario_fim || p.horario_inicio;
         if (refT && refT.slice(0, 5) < nowHM) return false;
       }
       return true;

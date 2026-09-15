@@ -81,6 +81,60 @@ export default function ChatbotHome() {
 }
 
 /* ------------------------- INBOX ------------------------- */
+const DEMO_CONTACTS_STORAGE_KEY = "nexohub_chatbot_contacts_v1";
+
+const DEFAULT_DEMO_CONTACTS: Contact[] = [
+  {
+    id: "demo-contact-1",
+    phone: "5567999887766",
+    name: "Cultura FM (Emissora)",
+    profile_name: "Cultura FM",
+    ouvinte_id: null,
+    unread_count: 1,
+    last_message_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    human_takeover: true,
+    flow_state: {},
+  },
+  {
+    id: "demo-contact-2",
+    phone: "5562988776655",
+    name: "Interativa FM",
+    profile_name: "Interativa FM",
+    ouvinte_id: null,
+    unread_count: 1,
+    last_message_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    human_takeover: false,
+    flow_state: {},
+  },
+];
+
+export const DEMO_MESSAGES_STORAGE_KEY = "nexohub_chatbot_messages_v1";
+
+const DEMO_MESSAGES: Record<string, Message[]> = {
+  "demo-contact-1": [
+    {
+      id: "demo-m1",
+      contact_id: "demo-contact-1",
+      direction: "in",
+      body: "Olá equipe Nexo! Estamos com uma dúvida sobre a transmissão de vídeo da rádio. #suporte",
+      status: "delivered",
+      created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+      type: "text",
+    },
+  ],
+  "demo-contact-2": [
+    {
+      id: "demo-m2",
+      contact_id: "demo-contact-2",
+      direction: "in",
+      body: "Boa tarde! Gostaríamos de solicitar suporte para atualização da grade da próxima semana. #suporte",
+      status: "delivered",
+      created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+      type: "text",
+    },
+  ],
+};
+
 function InboxTab({ userId }: { userId: string }) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [active, setActive] = useState<Contact | null>(null);
@@ -94,9 +148,32 @@ function InboxTab({ userId }: { userId: string }) {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data } = await supabase.from("wa_contacts").select("*")
-        .eq("user_id", userId).order("last_message_at", { ascending: false, nullsFirst: false }).limit(200);
-      if (mounted) setContacts((data || []) as Contact[]);
+      try {
+        const { data } = await supabase.from("wa_contacts").select("*")
+          .eq("user_id", userId).order("last_message_at", { ascending: false, nullsFirst: false }).limit(200);
+        if (mounted) {
+          if (data && data.length > 0) {
+            setContacts(data as Contact[]);
+          } else {
+            const local = localStorage.getItem(DEMO_CONTACTS_STORAGE_KEY);
+            if (local) {
+              try {
+                setContacts(JSON.parse(local));
+              } catch {
+                setContacts(DEFAULT_DEMO_CONTACTS);
+                localStorage.setItem(DEMO_CONTACTS_STORAGE_KEY, JSON.stringify(DEFAULT_DEMO_CONTACTS));
+              }
+            } else {
+              setContacts(DEFAULT_DEMO_CONTACTS);
+              localStorage.setItem(DEMO_CONTACTS_STORAGE_KEY, JSON.stringify(DEFAULT_DEMO_CONTACTS));
+            }
+          }
+        }
+      } catch {
+        if (mounted) {
+          setContacts(DEFAULT_DEMO_CONTACTS);
+        }
+      }
     })();
     const ch = supabase.channel(`wa-contacts-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "wa_contacts", filter: `user_id=eq.${userId}` },
@@ -112,11 +189,30 @@ function InboxTab({ userId }: { userId: string }) {
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [userId]);
 
+  // Sync unread messages with header
+  useEffect(() => {
+    const unread = contacts.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    localStorage.setItem("nexohub_chatbot_unread_count", String(unread));
+    localStorage.setItem(DEMO_CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+    window.dispatchEvent(new CustomEvent("chatbot:unread_updated", { detail: { unreadCount: unread } }));
+  }, [contacts]);
+
+  const handleSelectContact = (c: Contact) => {
+    setActive(c);
+    if (c.unread_count > 0) {
+      setContacts(prev => prev.map(item => item.id === c.id ? { ...item, unread_count: 0 } : item));
+    }
+  };
+
   // Load messages for active contact + realtime
   useEffect(() => {
     if (!active) return;
     let mounted = true;
     (async () => {
+      if (active.id.startsWith("demo-")) {
+        setMessages(DEMO_MESSAGES[active.id] || []);
+        return;
+      }
       const { data } = await supabase.from("wa_messages").select("*")
         .eq("contact_id", active.id).order("created_at").limit(300);
       if (mounted) setMessages((data || []) as Message[]);
@@ -139,6 +235,22 @@ function InboxTab({ userId }: { userId: string }) {
     setSending(true);
     const text = msgText.trim();
     setMsgText("");
+
+    if (active.id.startsWith("demo-")) {
+      const newMsg: Message = {
+        id: `demo-${Date.now()}`,
+        contact_id: active.id,
+        direction: "out",
+        body: text,
+        status: "read",
+        created_at: new Date().toISOString(),
+        type: "text",
+      };
+      setMessages(prev => [...prev, newMsg]);
+      setSending(false);
+      return;
+    }
+
     const { error } = await supabase.functions.invoke("whatsapp-send", {
       body: { contact_id: active.id, text, take_over: true },
     });
@@ -176,7 +288,7 @@ function InboxTab({ userId }: { userId: string }) {
             </div>
           )}
           {filtered.map(c => (
-            <button key={c.id} onClick={() => setActive(c)}
+            <button key={c.id} onClick={() => handleSelectContact(c)}
               className="w-full text-left px-4 py-3 border-b transition-colors"
               style={{
                 borderColor: "rgba(0,191,240,0.12)",

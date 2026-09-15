@@ -49,19 +49,40 @@ const defaults = (userId: string): SiteConfig => ({
 });
 
 
+const getStoredSiteConfig = (uid: string): SiteConfig | null => {
+  try {
+    const raw = localStorage.getItem(`nexohub_site_config_${uid}`);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+};
+
+const saveStoredSiteConfig = (uid: string, cfg: SiteConfig) => {
+  try {
+    localStorage.setItem(`nexohub_site_config_${uid}`, JSON.stringify(cfg));
+  } catch {}
+};
+
 export function useSiteConfig(userId: string | null | undefined) {
-  const [config, setConfig] = useState<SiteConfig | null>(null);
+  const [config, setConfig] = useState<SiteConfig | null>(() => userId ? getStoredSiteConfig(userId) : null);
   const [loading, setLoading] = useState(true);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localPatchRef = useRef(0); // counts pending local edits to ignore self-echo
 
   const fetchConfig = useCallback(async (uid: string) => {
-    const { data } = await supabase
-      .from("site_config")
-      .select("*")
-      .eq("user_id", uid)
-      .maybeSingle();
-    if (data) setConfig(data as SiteConfig);
+    try {
+      const { data } = await supabase
+        .from("site_config")
+        .select("*")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if (data) {
+        setConfig(data as SiteConfig);
+        saveStoredSiteConfig(uid, data as SiteConfig);
+      }
+    } catch (err) {
+      console.warn("Supabase fetch site_config warning:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -74,20 +95,34 @@ export function useSiteConfig(userId: string | null | undefined) {
     (async () => {
       setLoading(true);
       try {
+        const localCfg = getStoredSiteConfig(userId);
+        if (localCfg && !cancelled) {
+          setConfig(localCfg);
+        }
+
         const { data } = await supabase
           .from("site_config")
           .select("*")
           .eq("user_id", userId)
           .maybeSingle();
+
         if (cancelled) return;
         if (data) {
           setConfig(data as SiteConfig);
-        } else {
+          saveStoredSiteConfig(userId, data as SiteConfig);
+        } else if (!localCfg) {
           const seed = defaults(userId);
-          const { error } = await supabase.from("site_config").insert(seed);
-          if (cancelled) return;
-          if (!error) setConfig(seed);
-          else setConfig(seed);
+          setConfig(seed);
+          saveStoredSiteConfig(userId, seed);
+          try {
+            await supabase.from("site_config").insert(seed);
+          } catch {}
+        }
+      } catch (err) {
+        console.warn("useSiteConfig load warning (usando cache local):", err);
+        if (!cancelled && !config) {
+          const fallback = getStoredSiteConfig(userId) || defaults(userId);
+          setConfig(fallback);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -114,11 +149,17 @@ export function useSiteConfig(userId: string | null | undefined) {
       if (!config || !userId) return;
       const next = { ...config, ...patch };
       setConfig(next);
+      saveStoredSiteConfig(userId, next);
+
       if (saveTimer.current) clearTimeout(saveTimer.current);
       localPatchRef.current += 1;
       saveTimer.current = setTimeout(async () => {
-        const { user_id, ...rest } = next;
-        await supabase.from("site_config").update(rest).eq("user_id", userId);
+        try {
+          const { user_id, ...rest } = next;
+          await supabase.from("site_config").update(rest).eq("user_id", userId);
+        } catch (err) {
+          console.warn("Supabase site_config update warning (mantido localmente):", err);
+        }
         postSiteSync({ type: "config" });
         // release echo guard after a tick so the broadcast we just posted is ignored
         setTimeout(() => {

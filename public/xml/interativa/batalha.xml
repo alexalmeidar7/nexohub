@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <batalha>
+    <artista1_nome></artista1_nome>
+    <artista1_musica></artista1_musica>
+    <artista1_porcentagem>0%</artista1_porcentagem>
+    <artista1_imagem></artista1_imagem>
+    <artista2_nome></artista2_nome>
+    <artista2_musica></artista2_musica>
+    <artista2_porcentagem>0%</artista2_porcentagem>
+    <artista2_imagem></artista2_imagem>
+  </batalha>
+</items>

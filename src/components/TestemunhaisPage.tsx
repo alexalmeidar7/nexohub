@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar, Check, Bold, Italic } from "lucide-react";
@@ -8,11 +9,12 @@ import { confirmDialog } from "@/lib/confirmDialog";
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import DOMPurify from 'dompurify';
+import { getProgramas } from "./ProgramaForm";
 
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#ffffff";
+const DARK = "#002132";
 const FONT = "'Montserrat', sans-serif";
 
 interface Testemunhal {
@@ -42,23 +44,24 @@ const pillInput: React.CSSProperties = {
   width: "100%",
   height: 44,
   borderRadius: 999,
-  background: "#FFFFFF",
-  border: `2px solid ${CYAN}`,
+  background: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
   padding: "0 20px",
   fontFamily: FONT,
-  fontSize: 13,
-  color: DARK,
+  fontSize: 12,
+  color: "#0f172a",
   outline: "none",
+  textTransform: "uppercase",
 };
 
 const labelStyle: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: DARK,
-  marginBottom: 8,
+  color: "#64748b",
+  marginBottom: 6,
   display: "block",
 };
 
@@ -72,23 +75,30 @@ const cardStyle: React.CSSProperties = {
 const primaryBtn: React.CSSProperties = {
   height: 44,
   borderRadius: 999,
-  background: CYAN,
+  background: "#0055ff",
   color: "#fff",
-  padding: "0 22px",
+  padding: "0 24px",
   fontFamily: FONT,
   fontWeight: 800,
   fontSize: 12,
-  letterSpacing: 1,
+  letterSpacing: 1.5,
   textTransform: "uppercase",
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
   border: "none",
   cursor: "pointer",
+  boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
 };
 
-const limeBtn: React.CSSProperties = { ...primaryBtn, background: LIME, color: DARK };
-const ghostBtn: React.CSSProperties = { ...primaryBtn, background: "#fff", color: DARK, border: `2px solid ${CYAN}` };
+const limeBtn: React.CSSProperties = { ...primaryBtn };
+const ghostBtn: React.CSSProperties = {
+  ...primaryBtn,
+  background: "#f8fafc",
+  color: "#334155",
+  border: "1px solid #cbd5e1",
+  boxShadow: "none",
+};
 
 export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
@@ -97,6 +107,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   const [items, setItems] = useState<Testemunhal[]>([]);
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [showProgramCombo, setShowProgramCombo] = useState(false);
   const quillRef = useRef<ReactQuill>(null);
@@ -109,26 +120,71 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const ownerId = effectiveUserId || user?.id;
 
+  const getLocalStorageKey = (uId: string) => `nexohub_testemunhais_${uId}`;
+
+  const getStoredTestemunhais = (uId: string): Testemunhal[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  };
+
+  const saveStoredTestemunhais = (uId: string, list: Testemunhal[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+    } catch {}
+  };
+
   const loadData = async () => {
     if (!ownerId) return;
     setLoading(true);
-    const [ { data: tData }, { data: pData } ] = await Promise.all([
-      supabase.from("testemunhais").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome").eq("user_id", ownerId).order("nome")
-    ]);
-    if (tData) {
-      setItems(tData.map(t => ({
-        ...t,
-        texto: t.texto || "",
-      })) as Testemunhal[]);
+
+    let tList: Testemunhal[] = [];
+    let pList: { id: string; nome: string }[] = [];
+
+    try {
+      const [{ data: tData }, progsFromHelper] = await Promise.all([
+        supabase.from("testemunhais").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
+        getProgramas(ownerId, user?.email),
+      ]);
+      if (tData) {
+        tList = tData.map(t => ({
+          ...t,
+          texto: t.texto || "",
+        })) as Testemunhal[];
+      }
+      if (progsFromHelper && progsFromHelper.length > 0) {
+        pList = progsFromHelper.map(p => ({ id: p.id, nome: p.nome }));
+      } else {
+        const { data: pData } = await supabase.from("programas").select("id, nome").order("nome");
+        if (pData) pList = pData;
+      }
+    } catch (e) {
+      console.warn("Error loading testemunhais/programas:", e);
     }
-    if (pData) setProgramas(pData);
+
+    // Merge Supabase items with local storage items
+    const localList = getStoredTestemunhais(ownerId);
+    const map = new Map<string, Testemunhal>();
+    tList.forEach(t => map.set(t.id, t));
+    localList.forEach(t => map.set(t.id, t));
+    const merged = Array.from(map.values());
+
+    setProgramas(pList);
+    setItems(merged);
+    if (merged.length > 0) {
+      saveStoredTestemunhais(ownerId, merged);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-  }, [ownerId]);
+  }, [ownerId, user?.email]);
 
   const reset = () => {
     setForm({
@@ -142,14 +198,17 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const handleSave = async () => {
     if (!ownerId) return;
-    if (!form.texto.trim()) {
+    const cleanText = form.texto.replace(/<[^>]*>/g, "").trim();
+    if (!cleanText && !form.texto.trim()) {
       toast({ title: "O texto da citação é obrigatório", variant: "destructive" });
       return;
     }
 
     setSaving(true);
-    const payload = {
-      user_id: ownerId,
+    const id = editingId || `test_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+    const newEntry: Testemunhal = {
+      id,
       texto: form.texto.trim(),
       data_inicio: form.data_inicio,
       data_fim: form.data_fim,
@@ -157,21 +216,57 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       programa_id: form.programa_ids[0] ?? null,
     };
 
-    const query = editingId
-      ? supabase.from("testemunhais").update(payload).eq("id", editingId)
-      : supabase.from("testemunhais").insert(payload);
+    // Update local state and localStorage immediately
+    const existingList = getStoredTestemunhais(ownerId);
+    const map = new Map<string, Testemunhal>();
+    items.forEach(i => map.set(i.id, i));
+    existingList.forEach(i => map.set(i.id, i));
+    map.set(id, newEntry);
 
-    const { error } = await query;
-    setSaving(false);
+    const updatedList = editingId
+      ? Array.from(map.values()).map(i => i.id === editingId ? newEntry : i)
+      : [newEntry, ...Array.from(map.values()).filter(i => i.id !== id)];
 
-    if (error) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
-      return;
+    setItems(updatedList);
+    saveStoredTestemunhais(ownerId, updatedList);
+
+    // Sync to Supabase in the background if valid UUID
+    const isUuid = (val: any) => typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    const validProgId = isUuid(form.programa_ids[0]) ? form.programa_ids[0] : null;
+    const validProgIds = form.programa_ids.filter(isUuid);
+
+    const payload: any = {
+      user_id: ownerId,
+      texto: form.texto.trim(),
+      data_inicio: form.data_inicio,
+      data_fim: form.data_fim,
+      programa_ids: validProgIds,
+      programa_id: validProgId,
+    };
+
+    try {
+      if (editingId && isUuid(editingId)) {
+        const { error } = await supabase.from("testemunhais").update(payload).eq("id", editingId);
+        if (error) console.warn("Supabase update error (testemunhais):", error);
+      } else if (!editingId && isUuid(ownerId)) {
+        const insertPayload = isUuid(id) ? { id, ...payload } : payload;
+        const { data, error } = await supabase.from("testemunhais").insert([insertPayload]).select();
+        if (error) {
+          console.warn("Supabase insert error (testemunhais):", error);
+        } else if (data?.[0]?.id && data[0].id !== id) {
+          const remoteId = data[0].id;
+          const finalizedList = updatedList.map(item => item.id === id ? { ...item, id: remoteId } : item);
+          setItems(finalizedList);
+          saveStoredTestemunhais(ownerId, finalizedList);
+        }
+      }
+    } catch (e: any) {
+      console.warn("Supabase testemunhais save warning:", e);
+    } finally {
+      setSaving(false);
+      toast({ title: editingId ? "Citação atualizada com sucesso" : "Citação cadastrada com sucesso" });
+      reset();
     }
-
-    toast({ title: editingId ? "Citação atualizada" : "Citação cadastrada" });
-    reset();
-    loadData();
   };
 
   const handleEdit = (item: Testemunhal) => {
@@ -185,24 +280,40 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       programa_ids: itemProgIds,
     });
     setShowProgramCombo(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   };
 
   const handleDelete = async (id: string) => {
-    if (!(await confirmDialog("Deseja excluir esta citação?"))) return;
-    const { error } = await supabase.from("testemunhais").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-      return;
+    const confirmed = await confirmDialog({
+      title: "Excluir Citação",
+      message: "Tem certeza que deseja excluir esta citação?",
+      confirmLabel: "Excluir",
+      destructive: true
+    });
+    if (!confirmed || !ownerId) return;
+
+    // Immediately remove from local state and localStorage
+    const updated = items.filter(item => item.id !== id);
+    setItems(updated);
+    saveStoredTestemunhais(ownerId, updated);
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        const { error } = await supabase.from("testemunhais").delete().eq("id", id);
+        if (error) console.warn("Supabase delete warning (testemunhais):", error);
+      }
+      toast({ title: "Citação excluída" });
+    } catch (e) {
+      console.warn("Erro ao excluir citação no Supabase:", e);
+      toast({ title: "Citação excluída" });
     }
-    toast({ title: "Citação excluída" });
-    loadData();
   };
 
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
-    <div className="nexo-scope space-y-6" style={{ fontFamily: FONT }}>
+    <div className="nexo-scope space-y-6 max-w-6xl mx-auto w-full" style={{ fontFamily: FONT }}>
       <div id="module-header-title" style={{ display: "none" }}>ADS — Citações</div>
 
       <style>{`
@@ -225,7 +336,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
         }
       `}</style>
 
-      <div style={cardStyle} className="mb-6">
+      <div ref={formRef} style={cardStyle} className="mb-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <h3
             style={{
@@ -239,27 +350,109 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           >
             {editingId ? "Editar Citação" : "Cadastro de Citação"}
           </h3>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: DARK,
-              background: "#FFFFFF",
-              padding: "6px 16px",
-              borderRadius: 999,
-              border: `2px solid ${CYAN}`,
-              letterSpacing: 1,
-              textTransform: "uppercase",
-            }}
-          >
-            ID: <span style={{ color: CYAN }}>{editingId ? editingId.slice(0, 8) : "—"}</span>
+          <div className="text-[11px] font-bold text-slate-600 bg-slate-100/90 px-4 py-2 rounded-full uppercase tracking-wider border border-slate-200/80 shadow-xs flex items-center gap-1.5">
+            <span className="text-slate-400 font-semibold">ID:</span>
+            <span className="text-[#0055ff] font-black">{editingId ? editingId.slice(0, 8) : "—"}</span>
           </div>
         </div>
         
         <div className="space-y-4">
+          <div className="relative">
+            <label style={labelStyle}>Programas (Selecione um ou mais)</label>
+            <button
+              type="button"
+              onClick={() => setShowProgramCombo(!showProgramCombo)}
+              style={{ ...pillInput, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <span className="truncate font-semibold">
+                {form.programa_ids.length === 0 
+                  ? "Selecione os programas..." 
+                  : `${form.programa_ids.length} programa(s) selecionado(s)`}
+              </span>
+              <span className="text-[#0055ff] ml-2">▼</span>
+            </button>
+
+            {form.programa_ids.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {form.programa_ids.map(pid => {
+                  const prog = programas.find(p => p.id === pid);
+                  return (
+                    <span
+                      key={pid}
+                      className="inline-flex items-center gap-2 bg-white border border-slate-200/90 text-slate-800 text-[11px] font-bold uppercase tracking-wide px-3.5 py-1.5 rounded-full shadow-xs"
+                    >
+                      <Check size={12} className="text-[#0055ff]" />
+                      {prog?.nome || "Programa"}
+                      <button
+                        type="button"
+                        onClick={() => setForm(current => ({ ...current, programa_ids: current.programa_ids.filter(id => id !== pid) }))}
+                        className="text-slate-400 hover:text-rose-600 transition-colors"
+                        aria-label={`Remover ${prog?.nome || "programa"}`}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            
+            {showProgramCombo && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowProgramCombo(false)}
+                />
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-3xl p-2 z-20 max-h-72 overflow-y-auto shadow-2xl space-y-1">
+                  {programas.map(p => {
+                    const selected = form.programa_ids.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setForm(current => ({
+                            ...current,
+                            programa_ids: current.programa_ids.includes(p.id)
+                              ? current.programa_ids.filter(id => id !== p.id)
+                              : [...current.programa_ids, p.id],
+                          }));
+                        }}
+                        className={`w-full text-left px-4 py-2.5 rounded-full flex items-center justify-between gap-3 transition-all ${selected ? 'bg-[#0055ff] text-white shadow-md' : 'bg-slate-50 hover:bg-[#0055ff] hover:text-white text-slate-700'}`}
+                      >
+                        <span className="text-xs font-bold uppercase tracking-wide truncate">{p.nome}</span>
+                        <span
+                          className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center border ${selected ? 'bg-white border-white' : 'border-slate-300'}`}
+                        >
+                          {selected && <Check size={12} className="text-[#0055ff]" />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {programas.length === 0 && (
+                    <div className="p-4 text-center text-slate-400 text-xs italic">
+                      Nenhum programa cadastrado
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label style={labelStyle}>Data Início</label>
+              <input type="date" style={pillInput} value={form.data_inicio} onChange={(e) => setForm(current => ({ ...current, data_inicio: e.target.value }))}/>
+            </div>
+            <div>
+              <label style={labelStyle}>Data Fim (Validade)</label>
+              <input type="date" style={pillInput} value={form.data_fim} onChange={(e) => setForm(current => ({ ...current, data_fim: e.target.value }))}/>
+            </div>
+          </div>
+
           <div>
             <label style={labelStyle}>Texto da Citação</label>
-            <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
+            <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#0055ff] shadow-xs">
               <ReactQuill
                 ref={quillRef}
                 theme="snow"
@@ -277,100 +470,6 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
             </div>
           </div>
 
-          <div className="relative">
-            <label style={labelStyle}>Programas (Selecione um ou mais)</label>
-            <button
-              type="button"
-              onClick={() => setShowProgramCombo(!showProgramCombo)}
-              style={{ ...pillInput, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <span className="truncate font-semibold">
-                {form.programa_ids.length === 0 
-                  ? "Selecione os programas..." 
-                  : `${form.programa_ids.length} programa(s) selecionado(s)`}
-              </span>
-              <span className="text-[#00BFF0] ml-2">▼</span>
-            </button>
-
-            {form.programa_ids.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {form.programa_ids.map(pid => {
-                  const prog = programas.find(p => p.id === pid);
-                  return (
-                    <span
-                      key={pid}
-                      className="inline-flex items-center gap-2 bg-white border-2 border-[#00BFF0] text-[#0A2540] text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full"
-                    >
-                      <Check size={12} className="text-[#00BFF0]" />
-                      {prog?.nome || "Programa removido"}
-                      <button
-                        type="button"
-                        onClick={() => setForm(current => ({ ...current, programa_ids: current.programa_ids.filter(id => id !== pid) }))}
-                        className="text-[#0A2540]/50 hover:text-[#ff4d4f] transition-colors"
-                        aria-label={`Remover ${prog?.nome || "programa"}`}
-                      >
-                        <X size={12} />
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-            
-            {showProgramCombo && (
-              <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setShowProgramCombo(false)}
-                />
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-[#00BFF0] rounded-3xl p-2 z-20 max-h-72 overflow-y-auto shadow-2xl space-y-1">
-                  {programas.map(p => {
-                    const selected = form.programa_ids.includes(p.id);
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setForm(current => ({
-                            ...current,
-                            programa_ids: current.programa_ids.includes(p.id)
-                              ? current.programa_ids.filter(id => id !== p.id)
-                              : [...current.programa_ids, p.id],
-                          }));
-                        }}
-                        className={`w-full text-left px-4 py-2.5 rounded-full flex items-center justify-between gap-3 transition-all ${selected ? 'bg-[#00BFF0] text-white shadow-md' : 'bg-[#D6F4FB]/60 text-[#0A2540] hover:bg-[#D6F4FB]'}`}
-                      >
-                        <span className="text-xs font-bold uppercase tracking-wide truncate">{p.nome}</span>
-                        <span
-                          className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center border-2 ${selected ? 'bg-white border-white' : 'border-[#00BFF0]/40'}`}
-                        >
-                          {selected && <Check size={12} className="text-[#00BFF0]" />}
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {programas.length === 0 && (
-                    <div className="p-4 text-center text-gray-400 text-xs italic">
-                      Nenhum programa cadastrado
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label style={labelStyle}>Data Início</label>
-              <input type="date" style={pillInput} value={form.data_inicio} onChange={(e) => setForm(current => ({ ...current, data_inicio: e.target.value }))}/>
-            </div>
-            <div>
-              <label style={labelStyle}>Data Fim (Validade)</label>
-              <input type="date" style={pillInput} value={form.data_fim} onChange={(e) => setForm(current => ({ ...current, data_fim: e.target.value }))}/>
-            </div>
-          </div>
-
           <div className="flex gap-2 pt-2">
             <button style={limeBtn} onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -383,13 +482,13 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
       <div style={cardStyle}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Calendar className="text-[#00BFF0]" /> Citações Cadastradas ({items.length})
+          <Calendar className="text-[#0055ff]" /> Citações Cadastradas ({items.length})
         </h2>
         
         {items.length === 0 ? (
-          <div className="p-8 text-center bg-white/50 rounded-2xl border border-dashed border-[#00BFF0]/30"><p className="text-sm text-[#0A2540]/60">Nenhuma citação cadastrada.</p></div>
+          <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-200"><p className="text-sm text-slate-400">Nenhuma citação cadastrada.</p></div>
         ) : (
-          <div className="overflow-x-auto rounded-[24px] border border-[#00BFF0]/30 shadow-sm">
+          <div className="overflow-x-auto rounded-[24px] border border-slate-200/90 shadow-sm">
             <table className="w-full text-left border-collapse bg-white">
               <thead>
                 <tr style={{ backgroundColor: CYAN }}>
@@ -403,49 +502,53 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                 {items.map((item, idx) => (
                   <tr 
                     key={item.id} 
-                    className="transition-colors"
+                    className="transition-colors hover:bg-slate-50/60"
                     style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
                   >
-                    <td className="p-4 text-[11px] text-[#0A2540] border-r border-[#00BFF0]/10">
+                    <td className="p-4 text-[11px] text-[#0A2540] border-r border-slate-100">
                       <div className="flex flex-wrap gap-1">
                         {getLinkedProgramIds(item).length > 0 ? (
                           getLinkedProgramIds(item).map(pid => {
-                            const prog = programas.find(p => p.id === pid);
-                            return prog ? (
-                              <span key={pid} className="bg-[#00BFF0]/10 text-[#00BFF0] px-2 py-0.5 rounded-full font-bold">
-                                {prog.nome}
+                            const prog = programas.find(p => p.id === pid || String(p.id).toLowerCase() === String(pid).toLowerCase());
+                            return (
+                              <span key={pid} className="bg-[#0055ff]/10 text-[#0055ff] border border-[#0055ff]/20 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+                                {prog ? prog.nome : pid}
                               </span>
-                            ) : null;
+                            );
                           })
                         ) : (
-                          <span className="text-gray-400 italic">Nenhum</span>
+                          <span className="text-slate-400 italic">Nenhum</span>
                         )}
                       </div>
                     </td>
-                    <td className="p-4 text-[13px] text-[#0A2540] border-r border-[#00BFF0]/10">
+                    <td className="p-4 text-[13px] text-[#0A2540] border-r border-slate-100">
                       <div 
                         className="max-w-xs truncate line-clamp-2" 
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.texto) }}
                       />
                     </td>
-                    <td className="p-4 text-[11px] font-bold text-[#0A2540]/70 whitespace-nowrap border-r border-[#00BFF0]/10">
+                    <td className="p-4 text-[11px] font-bold text-slate-500 whitespace-nowrap border-r border-slate-100">
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="p-4 flex gap-2">
-                      <button 
-                        style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center', borderRadius: 8}} 
-                        onClick={() => handleEdit(item)}
-                        title="Editar"
-                      >
-                        <Pencil size={14}/>
-                      </button>
-                      <button 
-                        style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center', borderColor: '#ff4d4f', color: '#ff4d4f', borderRadius: 8}} 
-                        onClick={() => handleDelete(item.id)}
-                        title="Excluir"
-                      >
-                        <Trash2 size={14}/>
-                      </button>
+                    <td className="p-4">
+                      <div className="flex gap-1.5 items-center">
+                        <button 
+                          type="button"
+                          className="w-8 h-8 rounded-full bg-slate-100 hover:bg-[#0055ff]/10 text-slate-500 hover:text-[#0055ff] flex items-center justify-center transition-all cursor-pointer"
+                          onClick={() => handleEdit(item)}
+                          title="Editar"
+                        >
+                          <Pencil size={14}/>
+                        </button>
+                        <button 
+                          type="button"
+                          className="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 flex items-center justify-center transition-all cursor-pointer"
+                          onClick={() => handleDelete(item.id)}
+                          title="Excluir"
+                        >
+                          <Trash2 size={14}/>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

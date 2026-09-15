@@ -17,28 +17,28 @@ const PALETTE: Record<
   { bg: string; fg: string; shadow: string; Icon: typeof Bell }
 > = {
   info: {
-    bg: "#00BFF0",
-    fg: "#001420",
-    shadow: "0 10px 30px rgba(0,191,240,0.35)",
+    bg: "#0055ff",
+    fg: "#ffffff",
+    shadow: "0 8px 24px rgba(0,85,255,0.40)",
     Icon: Bell,
   },
   success: {
-    bg: "#C6F03C",
-    fg: "#0c1400",
-    shadow: "0 10px 30px rgba(198,240,60,0.4)",
-    Icon: CheckCircle2,
+    bg: "#0055ff",
+    fg: "#ffffff",
+    shadow: "0 8px 24px rgba(0,85,255,0.40)",
+    Icon: Bell,
   },
   warning: {
-    bg: "#FFB020",
-    fg: "#1a0e00",
-    shadow: "0 10px 30px rgba(255,176,32,0.38)",
-    Icon: AlertTriangle,
+    bg: "#0055ff",
+    fg: "#ffffff",
+    shadow: "0 8px 24px rgba(0,85,255,0.40)",
+    Icon: Bell,
   },
   error: {
-    bg: "#FF4D6D",
-    fg: "#1a0006",
-    shadow: "0 10px 30px rgba(255,77,109,0.4)",
-    Icon: XCircle,
+    bg: "#0055ff",
+    fg: "#ffffff",
+    shadow: "0 8px 24px rgba(0,85,255,0.40)",
+    Icon: Bell,
   },
 };
 
@@ -66,11 +66,11 @@ export default function InlineNotification(_props: Props) {
   if (!msg || typeof document === "undefined") return null;
 
   const variant = msg.variant || "info";
-  const { bg, fg, shadow, Icon } = PALETTE[variant];
+  const { bg, fg, shadow, Icon } = PALETTE[variant] || PALETTE.info;
 
   const container: React.CSSProperties = {
     position: "fixed",
-    top: 18,
+    top: 89,
     left: "50%",
     transform: `translateX(-50%) translateY(${visible ? "0" : "-10px"}) scale(${visible ? 1 : 0.96})`,
     // Acima de qualquer popup (Radix Dialog usa 50, Sonner ~9999). Usamos o teto de 32-bit int.
@@ -89,15 +89,16 @@ export default function InlineNotification(_props: Props) {
     background: bg,
     color: fg,
     borderRadius: 9999,
-    padding: "10px 18px",
+    padding: "8px 20px",
     display: "inline-flex",
     alignItems: "center",
-    gap: 10,
+    gap: 9,
     fontFamily: "'Montserrat', system-ui, sans-serif",
     fontSize: 13,
     fontWeight: 700,
     letterSpacing: 0.2,
     boxShadow: shadow,
+    border: "1px solid rgba(255, 255, 255, 0.2)",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -112,12 +113,13 @@ export default function InlineNotification(_props: Props) {
         style={pill}
         title={msg.text}
       >
-        <Icon size={15} strokeWidth={2.4} />
+        <Icon size={15} strokeWidth={2.4} color="#ffffff" className="shrink-0 text-white" />
         <span
           style={{
             overflow: "hidden",
             textOverflow: "ellipsis",
             maxWidth: 480,
+            color: "#ffffff",
           }}
         >
           {msg.text}

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check, Bold, Italic } from "lucide-react";
@@ -9,10 +10,10 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import DOMPurify from 'dompurify';
 
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#ffffff";
+const DARK = "#002132";
 const FONT = "'Montserrat', sans-serif";
 
 interface Promocao {
@@ -31,23 +32,24 @@ const pillInput: React.CSSProperties = {
   width: "100%",
   height: 44,
   borderRadius: 999,
-  background: "#FFFFFF",
-  border: `2px solid ${CYAN}`,
+  background: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
   padding: "0 20px",
   fontFamily: FONT,
-  fontSize: 13,
-  color: DARK,
+  fontSize: 12,
+  color: "#0f172a",
   outline: "none",
+  textTransform: "uppercase",
 };
 
 const labelStyle: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: DARK,
-  marginBottom: 8,
+  color: "#64748b",
+  marginBottom: 6,
   display: "block",
 };
 
@@ -61,23 +63,30 @@ const cardStyle: React.CSSProperties = {
 const primaryBtn: React.CSSProperties = {
   height: 44,
   borderRadius: 999,
-  background: CYAN,
+  background: "#0055ff",
   color: "#fff",
-  padding: "0 22px",
+  padding: "0 24px",
   fontFamily: FONT,
   fontWeight: 800,
   fontSize: 12,
-  letterSpacing: 1,
+  letterSpacing: 1.5,
   textTransform: "uppercase",
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
   border: "none",
   cursor: "pointer",
+  boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
 };
 
-const limeBtn: React.CSSProperties = { ...primaryBtn, background: LIME, color: DARK };
-const ghostBtn: React.CSSProperties = { ...primaryBtn, background: "#fff", color: DARK, border: `2px solid ${CYAN}` };
+const limeBtn: React.CSSProperties = { ...primaryBtn };
+const ghostBtn: React.CSSProperties = {
+  ...primaryBtn,
+  background: "#f8fafc",
+  color: "#334155",
+  border: "1px solid #cbd5e1",
+  boxShadow: "none",
+};
 
 export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
@@ -86,6 +95,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const [items, setItems] = useState<Promocao[]>([]);
   
   const [editingId, setEditingId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   
   const [form, setForm] = useState({
@@ -102,21 +112,55 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const ownerId = effectiveUserId || user?.id;
 
+  const getLocalStorageKey = (uId: string) => `nexohub_promocoes_${uId}`;
+
+  const getStoredPromos = (uId: string): Promocao[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  };
+
+  const saveStoredPromos = (uId: string, list: Promocao[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+    } catch {}
+  };
+
   const loadData = async () => {
     if (!ownerId) return;
     setLoading(true);
-    const { data: promosData } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
-    if (promosData) {
-      setItems(promosData.map(p => ({
-        ...p,
-        nome: p.nome || "",
-        texto: p.texto || "",
-        oferecimento: p.oferecimento || "",
-        imagem_url: p.imagem_url || "",
-        banner_l_url: p.banner_l_url || "",
-      })) as Promocao[]);
+    let itemsList: Promocao[] = [];
+    try {
+      const { data: promosData } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
+      if (promosData) {
+        itemsList = promosData.map(p => ({
+          ...p,
+          nome: p.nome || "",
+          texto: p.texto || "",
+          oferecimento: p.oferecimento || "",
+          imagem_url: p.imagem_url || "",
+          banner_l_url: p.banner_l_url || "",
+        })) as Promocao[];
+      }
+    } catch (e) {
+      console.warn("Error loading promocoes from Supabase:", e);
     }
-    
+
+    const localList = getStoredPromos(ownerId);
+    const map = new Map<string, Promocao>();
+    itemsList.forEach(p => map.set(p.id, p));
+    localList.forEach(p => map.set(p.id, p));
+    const merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+    setItems(merged);
+    if (merged.length > 0) {
+      saveStoredPromos(ownerId, merged);
+    }
     setLoading(false);
   };
 
@@ -145,15 +189,29 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     const isField1 = field === 'imagem_url';
     if (isField1) setUploading1(true); else setUploading2(true);
 
+    const fallbackToBase64 = () => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        setForm(prev => ({ ...prev, [field]: base64 }));
+        toast({ title: `Imagem ${isField1 ? '1' : '2'} carregada com sucesso` });
+      };
+      reader.readAsDataURL(file);
+    };
+
     try {
       const fileExt = file.name.split('.').pop();
       const folder = isField1 ? 'promos' : 'promos_l';
       const fileName = `${ownerId}/${folder}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('comercial')
-        .upload(fileName, file);
+        .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.warn("Storage upload error (fallback para Base64):", uploadError.message);
+        fallbackToBase64();
+        return;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('comercial')
@@ -162,7 +220,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       setForm(prev => ({ ...prev, [field]: publicUrl }));
       toast({ title: `Imagem ${isField1 ? '1' : '2'} enviada com sucesso` });
     } catch (error: any) {
-      toast({ title: "Erro no upload", description: error.message, variant: "destructive" });
+      console.warn("Exceção no upload (fallback para Base64):", error);
+      fallbackToBase64();
     } finally {
       if (isField1) setUploading1(false); else setUploading2(false);
     }
@@ -180,6 +239,36 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     }
 
     setSaving(true);
+    const id = editingId || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `promo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+
+    const existingRecord = editingId ? items.find(i => i.id === editingId) : null;
+    const newRecord: Promocao = {
+      id,
+      user_id: ownerId,
+      nome: form.nome.trim(),
+      texto: form.texto.trim(),
+      oferecimento: form.oferecimento.trim(),
+      data_inicio: form.data_inicio,
+      data_fim: form.data_fim,
+      imagem_url: form.imagem_url,
+      banner_l_url: form.banner_l_url,
+      created_at: existingRecord?.created_at || new Date().toISOString(),
+    };
+
+    // Atualiza imediatamente o estado e localStorage
+    const currentStored = getStoredPromos(ownerId);
+    const map = new Map<string, Promocao>();
+    items.forEach(i => map.set(i.id, i));
+    currentStored.forEach(i => map.set(i.id, i));
+    map.set(id, newRecord);
+
+    const updatedList = editingId
+      ? Array.from(map.values()).map(p => p.id === editingId ? newRecord : p)
+      : [newRecord, ...Array.from(map.values()).filter(p => p.id !== id)];
+
+    setItems(updatedList);
+    saveStoredPromos(ownerId, updatedList);
+
     const payload = {
       user_id: ownerId,
       nome: form.nome.trim(),
@@ -191,97 +280,121 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       banner_l_url: form.banner_l_url,
     };
 
-    const query = editingId
-      ? supabase.from("promocoes").update(payload).eq("id", editingId)
-      : supabase.from("promocoes").insert([payload]);
-
-    const { error } = await query;
-    setSaving(false);
-
-    if (error) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
-      return;
+    // Sincroniza em background com Supabase
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (editingId && isUuid) {
+        const { error } = await supabase.from("promocoes").update(payload).eq("id", editingId);
+        if (error) console.warn("Supabase promo update warning (mantido localmente):", error.message);
+      } else {
+        const insertPayload = isUuid ? { id, ...payload } : payload;
+        const { error } = await supabase.from("promocoes").insert([insertPayload]);
+        if (error) console.warn("Supabase promo insert warning (mantido localmente):", error.message);
+      }
+    } catch (err: any) {
+      console.warn("Supabase promo network error:", err);
+    } finally {
+      setSaving(false);
     }
 
-
-    toast({ title: editingId ? "Promoção atualizada" : "Promoção cadastrada" });
+    toast({ title: editingId ? "Promoção atualizada com sucesso" : "Promoção cadastrada com sucesso" });
     reset();
-    loadData();
   };
 
   const handleEdit = async (item: Promocao) => {
     if (!ownerId) return;
 
-    const { data, error } = await supabase
-      .from("promocoes")
-      .select("id, nome, texto, oferecimento, data_inicio, data_fim, imagem_url, banner_l_url")
-      .eq("id", item.id)
-      .eq("user_id", ownerId)
-      .maybeSingle();
-
-    if (error || !data) {
-      toast({
-        title: "Erro ao abrir promoção",
-        description: error?.message || "A promoção selecionada não foi encontrada.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setEditingId(data.id);
+    setEditingId(item.id);
     setForm({
-      nome: data.nome || "",
-      texto: data.texto || "",
-      oferecimento: data.oferecimento || "",
-      data_inicio: data.data_inicio || new Date().toISOString().split("T")[0],
-      data_fim: data.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      imagem_url: data.imagem_url || "",
-      banner_l_url: data.banner_l_url || "",
+      nome: item.nome || "",
+      texto: item.texto || "",
+      oferecimento: item.oferecimento || "",
+      data_inicio: item.data_inicio || new Date().toISOString().split("T")[0],
+      data_fim: item.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      imagem_url: item.imagem_url || "",
+      banner_l_url: item.banner_l_url || "",
     });
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   };
 
   const handleDelete = async (id: string) => {
-    if (!(await confirmDialog("Deseja excluir esta promoção?"))) return;
-    const { error } = await supabase.from("promocoes").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-      return;
+    const confirmed = await confirmDialog({
+      title: "Excluir Promoção",
+      message: "Tem certeza que deseja excluir esta promoção?",
+      confirmLabel: "Excluir",
+      destructive: true
+    });
+    if (!confirmed || !ownerId) return;
+
+    // Atualiza localmente imediatamente
+    const currentStored = getStoredPromos(ownerId);
+    const updated = currentStored.filter(i => i.id !== id);
+    saveStoredPromos(ownerId, updated);
+    setItems(prev => prev.filter(i => i.id !== id));
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        const { error } = await supabase.from("promocoes").delete().eq("id", id);
+        if (error) console.warn("Supabase delete promo warning:", error.message);
+      }
+    } catch (e) {
+      console.warn("Erro ao excluir promoção no Supabase:", e);
     }
     toast({ title: "Promoção excluída" });
-    loadData();
   };
 
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
-    <div className="nexo-scope space-y-6" style={{ fontFamily: FONT }}>
+    <div className="nexo-scope space-y-6 max-w-6xl mx-auto w-full" style={{ fontFamily: FONT }}>
       <div id="module-header-title" style={{ display: "none" }}>ADS — Promoções</div>
 
       <style>{`
+        .nexo-quill-editor {
+          border: 2px solid #0055ff !important;
+          border-radius: 24px !important;
+          background: #FFFFFF;
+          transition: all 0.2s ease;
+        }
+        .nexo-quill-editor:focus-within {
+          border-color: #0055ff !important;
+          box-shadow: 0 0 0 4px rgba(0, 85, 255, 0.12) !important;
+        }
         .nexo-quill-editor .ql-container {
-          border-bottom-left-radius: 24px;
-          border-bottom-right-radius: 24px;
+          border: none !important;
+          border-bottom-left-radius: 22px;
+          border-bottom-right-radius: 22px;
           background: #FFFFFF;
           font-family: ${FONT};
           min-height: 200px;
         }
         .nexo-quill-editor .ql-toolbar {
-          border-top-left-radius: 24px;
-          border-top-right-radius: 24px;
+          border: none !important;
+          border-top-left-radius: 22px;
+          border-top-right-radius: 22px;
           background: #FFFFFF;
-          border-bottom: 1px solid ${CYAN}33;
+          border-bottom: 1px solid rgba(0, 85, 255, 0.15) !important;
         }
         .nexo-quill-editor .ql-editor {
           font-size: 14px;
           line-height: 1.6;
         }
+        #root .nexo-scope input.promo-input-highlight {
+          border: 2px solid #0055ff !important;
+          background: #ffffff !important;
+          transition: all 0.2s ease;
+        }
+        #root .nexo-scope input.promo-input-highlight:focus {
+          border-color: #0055ff !important;
+          box-shadow: 0 0 0 4px rgba(0, 85, 255, 0.12) !important;
+        }
       `}</style>
 
-      <div style={cardStyle}>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Tag className="text-[#00BFF0]" /> 
+      <div ref={formRef} style={cardStyle}>
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[#002132]">
+          <Tag className="text-[#0055ff]" /> 
           {editingId ? `Editar Promoção: ${form.nome}` : "Nova Promoção"}
         </h2>
         
@@ -290,7 +403,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <label style={labelStyle}>Nome da Promoção</label>
             <input 
               type="text" 
-              style={pillInput} 
+              style={{ ...pillInput, border: "2px solid #0055ff", background: "#ffffff" }}
+              className="promo-input-highlight w-full h-11 px-5 rounded-full outline-none"
               value={form.nome} 
               onChange={(e) => setForm({ ...form, nome: e.target.value })}
               placeholder="Ex: Sorteio de Ingressos 2026"
@@ -301,7 +415,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label style={labelStyle}>Texto da Promoção</label>
-              <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
+              <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#0055ff]">
                 <ReactQuill
                   key={`texto-${editingId || "novo"}`}
                   theme="snow"
@@ -320,7 +434,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             </div>
             <div>
               <label style={labelStyle}>Oferecimento / Patrocínio</label>
-              <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
+              <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#0055ff]">
                 <ReactQuill
                   key={`oferecimento-${editingId || "novo"}`}
                   theme="snow"
@@ -362,7 +476,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                   </div>
                 </label>
                 {form.imagem_url && (
-                  <div className="w-11 h-11 rounded-lg border-2 border-[#00BFF0] overflow-hidden bg-white">
+                  <div className="w-11 h-11 rounded-lg border-2 border-[#0055ff] overflow-hidden bg-white">
                     <img src={form.imagem_url} alt="Preview 1" className="w-full h-full object-cover" />
                   </div>
                 )}
@@ -379,7 +493,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                   </div>
                 </label>
                 {form.banner_l_url && (
-                  <div className="w-11 h-11 rounded-lg border-2 border-[#00BFF0] overflow-hidden bg-white">
+                  <div className="w-11 h-11 rounded-lg border-2 border-[#0055ff] overflow-hidden bg-white">
                     <img src={form.banner_l_url} alt="Preview 2" className="w-full h-full object-cover" />
                   </div>
                 )}

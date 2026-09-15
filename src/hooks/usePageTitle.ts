@@ -49,9 +49,35 @@ export function usePageTitle(pageName: string) {
 
   useEffect(() => {
     if (isPublic) return;
-    const prefix = empresaNome || "NexoHub";
-    document.title = `${prefix} - ${pageName}`;
-  }, [empresaNome, pageName, isPublic]);
+
+    let forceRole: string | null = null;
+    try {
+      forceRole = localStorage.getItem("nexohub_force_role");
+    } catch {}
+
+    const isLocal = typeof window !== "undefined" && (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("192.168.") ||
+      window.location.hostname.startsWith("10.")
+    );
+
+    const isAdmin = forceRole === "admin" || (
+      forceRole !== "user" && (
+        isLocal ||
+        user?.email === "alex@nexobrasil.net" ||
+        (user?.email ? user.email.toLowerCase().includes("alex") : false)
+      )
+    );
+
+    if (isAdmin) {
+      document.title = "Nexo Brasil - Soluções Visuais";
+      return;
+    }
+
+    document.title = "NXO - House Mix";
+    setFavicon(DEFAULT_FAVICON);
+  }, [empresaNome, pageName, isPublic, user]);
 }
 
 export function setFavicon(url: string) {

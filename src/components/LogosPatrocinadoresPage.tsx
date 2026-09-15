@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import XmlLinkRow from "./XmlLinkRow";
-import XmlSection from "./XmlSection";
+import { getProgramas } from "./ProgramaForm";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 
 interface Logo {
   id: string;
@@ -32,8 +33,29 @@ interface Programa {
 }
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
+  backgroundColor: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
+  color: "#002132",
+  borderRadius: 999,
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 12,
+  fontWeight: 600,
+  outline: "none",
+  transition: "all 0.2s ease",
 };
+
+export function isExcludedStudio(raw?: string | null): boolean {
+  if (!raw) return false;
+  const s = raw
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+  if (s.includes("CRISTAL")) return true;
+  if (s.includes("PRINCIPAL")) return true;
+  if (s.includes("TRANSMISSAO WEB") || s.includes("TRANSMISSAO AO VIVO") || s.includes("ESTUDIO WEB")) return true;
+  return false;
+}
 
 interface LogosPatrocinadoresPageProps {
   effectiveUserId?: string | null;
@@ -47,7 +69,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dataUserId, setDataUserId] = useState<string | null>(effectiveUserId ?? null);
+  const [dataUserId, setDataUserId] = useState<string | null>(effectiveUserId ?? user?.id ?? null);
 
   const [programaId, setProgramaId] = useState("");
   const [programaIds, setProgramaIds] = useState<string[]>([]);
@@ -88,6 +110,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     }
 
     if (!user) return;
+    setDataUserId(user.id);
     let cancelled = false;
 
     supabase
@@ -97,7 +120,9 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
-        setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
+        if (data?.ativo && data.parent_user_id) {
+          setDataUserId(data.parent_user_id);
+        }
       });
 
     return () => {
@@ -105,15 +130,166 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     };
   }, [user, effectiveUserId]);
 
-  const loadData = async (targetUserId = dataUserId) => {
-    if (!targetUserId) return;
+  const getLocalStorageKey = (uId: string) => `nexohub_logos_${uId}`;
+
+  const loadData = async (targetUserId = dataUserId || effectiveUserId || user?.id) => {
     setLoading(true);
     try {
-      const [, { data: lData }, { data: pData }] = await Promise.all([
-        supabase.rpc("cleanup_comercial"),
-        supabase.from("logos_patrocinadores").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
-        supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", targetUserId).eq("ativo", true),
-      ]);
+      let lData: any[] = [];
+      let pData: any[] = [];
+
+      // Non-blocking cleanup
+      try {
+        await (supabase.rpc("cleanup_comercial") as any);
+      } catch {}
+
+      // 1. Check database table first
+      if (targetUserId) {
+        try {
+          const [resL, resP] = await Promise.all([
+            supabase.from("logos_patrocinadores").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
+            supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", targetUserId).eq("ativo", true),
+          ]);
+          if (resL.data && resL.data.length > 0) lData = resL.data;
+          if (resP.data && resP.data.length > 0) {
+            pData = resP.data.map((p: any) => ({
+              id: p.id,
+              nome: p.nome,
+              estudio: p.estudio || "ESTÚDIO FM",
+              horario_inicio: p.horario_inicio || "08:00:00",
+            }));
+          }
+        } catch (err) {
+          console.warn("Erro ao buscar logos do supabase:", err);
+        }
+      }
+
+      const acc = (targetUserId && findClientAccountById(targetUserId)) || 
+                  (targetUserId && findClientAccountByEmail(targetUserId)) || 
+                  (effectiveUserId && findClientAccountById(effectiveUserId)) ||
+                  (effectiveUserId && findClientAccountByEmail(effectiveUserId)) ||
+                  (user?.id && findClientAccountById(user.id)) || 
+                  (user?.email && findClientAccountByEmail(user.email));
+
+      const stationUid = acc?.id || acc?.parentUserId || targetUserId || effectiveUserId || user?.id;
+
+      // 1.1 Fetch real database logos from serve-xml-logos Edge Function for the active station
+      const uidsToQuery = Array.from(
+        new Set(
+          [
+            stationUid,
+            targetUserId,
+            effectiveUserId,
+            user?.id,
+            "d17e65af-e407-466f-9b60-b55c43399513", // Positiva FM 99.1
+          ].filter(Boolean) as string[]
+        )
+      );
+
+      for (const uid of uidsToQuery) {
+        if (lData.length === 0) {
+          try {
+            const resXml = await fetch(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-logos?user_id=${uid}`, {
+              signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined,
+            });
+            if (resXml.ok) {
+              const xmlText = await resXml.text();
+              const progMatches = [...xmlText.matchAll(/<programa id="([^"]+)">([\s\S]*?)<\/programa>/g)];
+              for (const m of progMatches) {
+                const content = m[2];
+                const nomeMatch = content.match(/<nome>([\s\S]*?)<\/nome>/);
+                const progNome = (nomeMatch ? nomeMatch[1] : "").trim();
+                let matchedProg = pData.find(
+                  (p) => p.nome.trim().toLowerCase() === progNome.toLowerCase() || p.id === m[1]
+                );
+                if (!matchedProg && progNome) {
+                  matchedProg = {
+                    id: m[1] || progNome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+                    nome: progNome,
+                    estudio: "ESTÚDIO FM",
+                    horario_inicio: "08:00:00",
+                  };
+                  pData.push(matchedProg);
+                }
+                const progId = matchedProg?.id || progNome;
+
+                const logoMatches = [...content.matchAll(/<logo>([\s\S]*?)<\/logo>/g)];
+                for (const lm of logoMatches) {
+                  const lName = (lm[1].match(/<nome>([\s\S]*?)<\/nome>/)?.[1] || "").trim();
+                  const lUrl = (lm[1].match(/<url>([\s\S]*?)<\/url>/)?.[1] || "").trim();
+                  if (lUrl && !lUrl.includes("default-sponsor-logo.png")) {
+                    lData.push({
+                      id: `db_xml_${uid}_${progId}_${lName.replace(/\s+/g, "_")}`,
+                      user_id: uid,
+                      programa_id: progId,
+                      programa_nome: progNome,
+                      logo_url: lUrl,
+                      data_final: `${new Date().getFullYear() + 2}-12-31`,
+                      ativo: true,
+                      created_at: new Date().toISOString(),
+                      nome: lName.toUpperCase(),
+                      excluido: false,
+                      excluido_at: null,
+                    });
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.warn("Erro ao buscar serve-xml-logos:", err);
+          }
+        }
+      }
+
+      // Fetch programs fallback
+      try {
+        const fallbackProgs = await getProgramas(targetUserId || undefined, user?.email);
+        if (fallbackProgs && fallbackProgs.length > 0) {
+          fallbackProgs.forEach((fp: any) => {
+            if (!pData.some((p) => (p.id && p.id === fp.id) || p.nome.trim().toLowerCase() === fp.nome.trim().toLowerCase())) {
+              pData.push({
+                id: fp.id || fp.nome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+                nome: fp.nome,
+                estudio: fp.estudio || (fp as any).estudio || "ESTÚDIO FM",
+                horario_inicio: fp.horario_inicio || (fp as any).horarioInicio || "08:00:00",
+              });
+            }
+          });
+        }
+      } catch {}
+
+      // Always merge official programming grid / House Mix programs for this station
+      try {
+        const hmProgs = getClientHouseMixProgramsSync(acc || stationUid || targetUserId || effectiveUserId || user?.id || user?.email, pData);
+        if (Array.isArray(hmProgs) && hmProgs.length > 0) {
+          hmProgs.forEach((hp: any) => {
+            if (isExcludedStudio(hp.estudio)) return;
+            if (!pData.some((p) => (p.id && p.id === hp.id) || p.nome.trim().toLowerCase() === hp.nome.trim().toLowerCase())) {
+              pData.push({
+                id: hp.id || hp.nome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+                nome: hp.nome,
+                estudio: hp.estudio || "ESTÚDIO FM",
+                horario_inicio: hp.horario_inicio || "08:00:00",
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("Erro ao mesclar programas da grade House Mix:", err);
+      }
+
+      // Ensure all logos have their associated program represented in pData
+      lData.forEach((l: any) => {
+        const pIdentifier = l.programa_nome || l.programa_id;
+        if (pIdentifier && !pData.some((p) => p.id === l.programa_id || p.nome.toLowerCase() === String(pIdentifier).toLowerCase())) {
+          pData.push({
+            id: l.programa_id || pIdentifier,
+            nome: pIdentifier,
+            estudio: "ESTÚDIO FM",
+            horario_inicio: "08:00:00",
+          });
+        }
+      });
 
       const all = (lData || []) as Logo[];
       const cutoff = new Date();
@@ -134,15 +310,19 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           return false;
         })
       );
-      setProgramas(pData || []);
+      // Exclui estúdios (ESTÚDIO CRISTAL, ESTÚDIO PRINCIPAL, ESTÚDIO TRANSMISSÃO WEB) e seus programas
+      const cleanProgramas = (pData || []).filter((p) => !isExcludedStudio(p.estudio));
+      setProgramas(cleanProgramas);
+    } catch (e) {
+      console.error("Erro geral no loadData de logos:", e);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (dataUserId) loadData(dataUserId);
-  }, [dataUserId]);
+    loadData(dataUserId || effectiveUserId || user?.id);
+  }, [dataUserId, effectiveUserId, user]);
 
   useEffect(() => {
     if (!programaPickerOpen) return;
@@ -455,7 +635,11 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     setCopyPrompt(null);
   };
 
-  const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
+  const sortedProgramas = useMemo(() => {
+    return [...programas]
+      .filter((p) => !isExcludedStudio(p.estudio))
+      .sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
+  }, [programas]);
 
   // Normaliza o rótulo do estúdio para exibição/agrupamento (traz TODOS os estúdios)
   const normalizeEstudio = (raw?: string | null) => {
@@ -475,58 +659,74 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   };
   const estudioColor = (label: string) => {
     if (/podcast/i.test(label)) return "#8B5CF6";
-    if (/fm/i.test(label)) return "#00BFF0";
+    if (/fm/i.test(label)) return "#0055ff";
     if (/news|redação|redacao/i.test(label)) return "#F59E0B";
     return "#64748B";
   };
 
-  // Agrupa dinamicamente por estúdio (qualquer estúdio existente)
+  // Agrupa dinamicamente por estúdio (qualquer estúdio existente, ocultando programas/seções com 0 logos)
   const groupedByStudio = useMemo(() => {
     const map = new Map<string, { programa: Programa; logos: Logo[] }[]>();
     sortedProgramas.forEach((p) => {
+      if (isExcludedStudio(p.estudio)) return;
       const key = normalizeEstudio(p.estudio);
-      const gLogos = logos.filter((l) => l.programa_id === p.id && l.ativo);
-      if (!gLogos.length) return;
+      if (isExcludedStudio(key)) return;
+      const gLogos = logos.filter(
+        (l) =>
+          (l.programa_id === p.id ||
+            l.programa_id === p.nome ||
+            l.programa_id?.toLowerCase() === p.nome.toLowerCase() ||
+            (l as any).programa_nome?.toLowerCase() === p.nome.toLowerCase()) &&
+          l.ativo
+      );
+      // Exclui seções onde o número de logos cadastradas for = 0
+      if (gLogos.length === 0) return;
+
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push({ programa: p, logos: gLogos });
     });
-    // Grupo especial: logos sem programa vinculado
-    const semProgLogos = logos.filter((l) => !l.programa_id && l.ativo);
-    if (semProgLogos.length) {
-      const placeholder = { id: "__none__", nome: "SEM PROGRAMA", estudio: "Geral", horario_inicio: "" } as unknown as Programa;
-      map.set("Geral", [{ programa: placeholder, logos: semProgLogos }]);
+    // Grupo especial: logos sem programa vinculado ou com programa não encontrado
+    const semProgLogos = logos.filter(
+      (l) =>
+        (!l.programa_id ||
+          l.programa_id === "__none__" ||
+          !programas.some(
+            (p) =>
+              p.id === l.programa_id ||
+              p.nome.toLowerCase() === l.programa_id?.toLowerCase() ||
+              p.nome.toLowerCase() === (l as any).programa_nome?.toLowerCase()
+          )) &&
+        l.ativo
+    );
+    if (semProgLogos.length > 0) {
+      const placeholder = { id: "__none__", nome: "TODOS OS PROGRAMAS / GERAL", estudio: "Estúdio Geral", horario_inicio: "" } as unknown as Programa;
+      map.set("Estúdio Geral", [{ programa: placeholder, logos: semProgLogos }]);
     }
     // Ordem preferida: FM primeiro, depois Podcast, depois demais alfabético
     const order = (label: string) =>
       /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : /geral/i.test(label) ? 9 : 3;
     return Array.from(map.entries())
+      .filter(([label, items]) => !isExcludedStudio(label) && items.length > 0)
       .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
-      .map(([label, items]) => ({ label, items }));
-  }, [sortedProgramas, logos]);
+      .map(([label, items]) => ({
+        label,
+        items: items.filter((item) => !isExcludedStudio(item.programa.estudio) && item.logos.length > 0),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [sortedProgramas, logos, programas]);
 
   const groupedExcluded = programas
     .map((p) => ({
       programa: p,
-      logos: excludedLogos.filter((l) => l.programa_id === p.id),
+      logos: excludedLogos.filter(
+        (l) =>
+          l.programa_id === p.id ||
+          l.programa_id === p.nome ||
+          l.programa_id?.toLowerCase() === p.nome.toLowerCase() ||
+          (l as any).programa_nome?.toLowerCase() === p.nome.toLowerCase()
+      ),
     }))
     .filter((g) => g.logos.length > 0);
-
-
-  const logosXmlUrl = useMemo(() => {
-    if (!dataUserId) return "";
-    const base = import.meta.env.VITE_SUPABASE_URL || "";
-    return `${base}/functions/v1/serve-xml-logos?user_id=${dataUserId}`;
-  }, [dataUserId]);
-
-  // LOGOS ALL: flat list of all active logos (no program grouping)
-  const logosAllXmlContent = useMemo(() => {
-    if (!logos.length) return "";
-    const entries = logos.filter(l => l.ativo).map(l => {
-      const progName = programas.find(p => p.id === l.programa_id)?.nome || "Sem programa";
-      return `  <logo>\n    <cliente>${(l.nome || "").replace(/&/g, "&amp;").replace(/</g, "&lt;")}</cliente>\n    <url>${l.logo_url}</url>\n  </logo>`;
-    });
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<logos_all>\n${entries.join("\n")}\n</logos_all>`;
-  }, [logos, programas]);
 
   if (loading || !dataUserId) {
     return (
@@ -541,59 +741,92 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   }
 
   return (
-    <div className="nexo-scope space-y-4 animate-fade-in">
+    <div className="nexo-scope space-y-4 animate-fade-in max-w-6xl mx-auto w-full">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         ADS — Logos Patrocinadores
       </div>
-      <div className="rounded-2xl" style={{ background: "#D6F4FB", boxShadow: "0 8px 32px rgba(0,191,240,0.15)", padding: "20px", border: "1.5px solid #00BFF0" }}>
-
+      <div
+        className="rounded-3xl p-6 lg:p-8"
+        style={{
+          background: "#ffffff",
+          borderRadius: 24,
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <Upload size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+        <div className="flex items-center gap-3.5 mb-6">
+          <div
+            className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
+            style={{ backgroundColor: "#0055ff", color: "#ffffff" }}
+          >
+            <Upload size={20} />
           </div>
-          <div className="shrink-0">
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Logos de Patrocinadores</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie as logos vinculadas aos programas</p>
+          <div>
+            <h3 className="text-lg font-black uppercase tracking-wider" style={{ color: "#002132", margin: 0 }}>
+              Logos de Patrocinadores
+            </h3>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">
+              Gerencie as marcas e logos vinculadas aos programas da emissora
+            </p>
           </div>
         </div>
 
-
         {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-              {editingFullId ? "✏️ Editar Logo de Patrocinador" : "➕ Nova Logo de Patrocinador"}
-            </h3>
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="rounded-2xl overflow-hidden mb-6 bg-white"
+          style={{
+            border: "1px solid rgba(226, 232, 240, 0.9)",
+            boxShadow: "0 2px 16px rgba(0, 0, 0, 0.02)",
+          }}
+        >
+          <div
+            className="px-6 py-4 flex items-center justify-between border-b border-slate-100"
+            style={{ backgroundColor: "#f8fafc" }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#0055ff]" />
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#002132]">
+                {editingFullId ? "Editar Logo de Patrocinador" : "Nova Logo de Patrocinador"}
+              </h4>
+            </div>
             {editingFullId && (
-              <button type="button" onClick={resetForm} className="text-[10px] transition-colors" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.7 }}>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors"
+              >
                 Cancelar edição
               </button>
             )}
           </div>
-          <div className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 {editingFullId && (
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Nome *</label>
-                    <input type="text" value={nomeLogo} onChange={(e) => setNomeLogo(e.target.value)} placeholder="Ex: Patrocinador X"
-                      className="w-full px-4 py-1.5 text-sm outline-none uppercase font-bold"
-                      style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Nome *</label>
+                    <input
+                      type="text"
+                      value={nomeLogo}
+                      onChange={(e) => setNomeLogo(e.target.value)}
+                      placeholder="Ex: Patrocinador X"
+                      className="w-full px-5 py-2.5 text-xs font-bold uppercase outline-none rounded-full bg-[#f8fafc] border border-slate-200/90 text-[#002132] focus:border-[#0055ff] focus:ring-2 focus:ring-[#0055ff]/15 transition-all"
                     />
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                     Programa(s) * {!editingFullId && programaIds.length > 0 && <span className="font-normal opacity-60">({programaIds.length} selecionado{programaIds.length > 1 ? "s" : ""})</span>}
                   </label>
                   {editingFullId ? (
-                    <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
-                      className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
-                      style={inputStyle}
+                    <select
+                      value={programaId}
+                      onChange={(e) => setProgramaId(e.target.value)}
+                      className="w-full px-5 py-2.5 text-xs font-bold outline-none rounded-full bg-[#f8fafc] border border-slate-200/90 text-[#002132] focus:border-[#0055ff] focus:ring-2 focus:ring-[#0055ff]/15 cursor-pointer uppercase transition-all"
                     >
                       <option value="">Selecione um programa</option>
                       <option value="__none__">— SEM PROGRAMA —</option>
@@ -607,8 +840,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                         ref={programaTriggerRef}
                         type="button"
                         onClick={() => setProgramaPickerOpen((v) => !v)}
-                        className="w-full px-4 py-1.5 text-sm outline-none text-left flex items-center justify-between"
-                        style={inputStyle}
+                        className="w-full px-5 py-2.5 text-xs font-bold outline-none text-left flex items-center justify-between rounded-full bg-[#f8fafc] border border-slate-200/90 text-[#002132] hover:border-[#0055ff] focus:border-[#0055ff] focus:ring-2 focus:ring-[#0055ff]/15 transition-all"
                       >
                         <span className="truncate">
                           {programaIds.length === 0
@@ -623,55 +855,53 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       {programaPickerOpen && programaPickerPos && createPortal(
                         <div
                           ref={programaPortalRef}
-                          className="fixed rounded-xl shadow-2xl"
+                          className="fixed rounded-2xl shadow-2xl overflow-hidden bg-white border border-slate-200"
                           style={{
                             top: programaPickerPos.top,
                             left: programaPickerPos.left,
                             width: programaPickerPos.width,
                             zIndex: 9999,
-                            backgroundColor: "var(--layout-page-bg, #ffffff)",
-                            border: "1px solid var(--layout-border-color, #333333)",
                           }}
                         >
-                          <div className="p-2 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                          <div className="p-3 border-b border-slate-100 bg-slate-50/50">
                             <div className="relative">
-                              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+                              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                               <input
                                 type="text"
                                 autoFocus
                                 value={programaSearch}
                                 onChange={(e) => setProgramaSearch(e.target.value)}
                                 placeholder="Buscar programa..."
-                                className="w-full pl-7 pr-2 py-1.5 text-xs outline-none rounded-md"
-                                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+                                className="w-full pl-9 pr-3 py-2 text-xs font-bold outline-none rounded-full bg-white border border-slate-200 text-[#002132] focus:border-[#0055ff]"
                               />
                             </div>
                           </div>
-                          <div className="flex items-center justify-between px-3 py-1.5 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                          <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 bg-slate-50/30">
                             <div className="flex gap-3">
-                              <button type="button" onClick={() => setProgramaIds(programas.map((p) => p.id))} className="text-[11px] font-semibold opacity-70 hover:opacity-100" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              <button type="button" onClick={() => setProgramaIds(programas.map((p) => p.id))} className="text-[11px] font-bold text-[#0055ff] hover:underline">
                                 Todos
                               </button>
-                              <button type="button" onClick={() => setProgramaIds([])} className="text-[11px] font-semibold opacity-70 hover:opacity-100" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              <button type="button" onClick={() => setProgramaIds([])} className="text-[11px] font-bold text-slate-500 hover:text-slate-800">
                                 Limpar
                               </button>
                             </div>
-                            <span className="text-[10px] opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                            <span className="text-[10px] font-semibold text-slate-400">
                               {programaIds.length} selecionado{programaIds.length !== 1 ? "s" : ""}
                             </span>
                           </div>
-                          <div className="max-h-72 overflow-auto">
+                          <div className="max-h-72 overflow-auto p-1.5">
                             {"sem programa".includes(programaSearch.toLowerCase()) && (
-                              <label className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-black/5 border-b" style={{ color: "var(--layout-page-text, #1a1a1a)", borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+                              <label className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-xl transition-colors border-b border-slate-100">
                                 <input
                                   type="checkbox"
                                   checked={programaIds.includes("__none__")}
                                   onChange={(e) =>
                                     setProgramaIds((prev) => (e.target.checked ? [...prev, "__none__"] : prev.filter((x) => x !== "__none__")))
                                   }
+                                  className="accent-[#0055ff] w-4 h-4 rounded"
                                 />
-                                <span className="text-sm flex-1 truncate font-bold uppercase" style={{ opacity: 0.85 }}>— Sem Programa —</span>
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ background: "#64748B22", color: "#64748B" }}>Geral</span>
+                                <span className="text-xs font-black uppercase text-[#002132] flex-1 truncate">— Sem Programa —</span>
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap bg-slate-100 text-slate-600">Geral</span>
                               </label>
                             )}
                             {programas
@@ -679,38 +909,38 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                               .map((p) => {
                                 const checked = programaIds.includes(p.id);
                                 return (
-                                  <label key={p.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-black/5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                                  <label key={p.id} className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50 rounded-xl transition-colors">
                                     <input
                                       type="checkbox"
                                       checked={checked}
                                       onChange={(e) =>
                                         setProgramaIds((prev) => (e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)))
                                       }
+                                      className="accent-[#0055ff] w-4 h-4 rounded"
                                     />
-                                    <span className="text-sm flex-1 truncate">{p.nome}</span>
+                                    <span className="text-xs font-bold text-[#002132] flex-1 truncate">{p.nome}</span>
                                     <span
-                                      className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                                      className="text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
                                       style={{
-                                        background: `${estudioColor(normalizeEstudio(p.estudio))}22`,
+                                        background: `${estudioColor(normalizeEstudio(p.estudio))}15`,
                                         color: estudioColor(normalizeEstudio(p.estudio)),
                                       }}
                                     >
                                       {estudioIcon(normalizeEstudio(p.estudio))} {normalizeEstudio(p.estudio)}
                                     </span>
                                   </label>
-
                                 );
                               })}
                             {programas.filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase())).length === 0 && (
-                              <div className="px-3 py-3 text-xs opacity-60 text-center" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nenhum programa encontrado</div>
+                              <div className="px-3 py-6 text-xs text-slate-400 text-center font-medium">Nenhum programa encontrado</div>
                             )}
                           </div>
-                          <div className="p-2 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
+                          <div className="p-3 border-t border-slate-100 bg-slate-50/50">
                             <button
                               type="button"
                               onClick={() => { setProgramaPickerOpen(false); setProgramaSearch(""); }}
-                              className="w-full py-1.5 text-xs font-semibold rounded-md"
-                              style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
+                              className="w-full py-2 text-xs font-black uppercase tracking-wider rounded-full text-white transition-all hover:brightness-110 shadow-xs"
+                              style={{ backgroundColor: "#0055ff" }}
                             >
                               Concluir
                             </button>
@@ -723,61 +953,70 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Data de Expiração *</label>
-                  <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} required
-                    className="w-full px-4 py-1.5 text-sm outline-none"
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Data de Expiração *</label>
+                  <input
+                    type="date"
+                    value={dataFinal}
+                    onChange={(e) => setDataFinal(e.target.value)}
+                    required
+                    className="w-full px-5 py-2.5 text-xs font-bold outline-none rounded-full bg-[#f8fafc] border border-slate-200/90 text-[#002132] focus:border-[#0055ff] focus:ring-2 focus:ring-[#0055ff]/15 transition-all"
                   />
                 </div>
 
-                <Button variant="save" type="submit" disabled={saving}
-                >
-                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingFullId ? "Atualizar Logo" : `Salvar ${pendingFiles.length} logo(s)`}
-                </Button>
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="h-11 px-8 rounded-full font-black text-xs uppercase tracking-widest text-white transition-all duration-200 hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(0,85,255,0.28)]"
+                    style={{ backgroundColor: "#0055ff" }}
+                  >
+                    {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingFullId ? "Atualizar Logo" : `Salvar ${pendingFiles.length} logo(s)`}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-3">
-                <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
-                  Logo {editingFullId ? "" : "*"} <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(1080×1080, fundo transparente)</span>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Logo {editingFullId ? "" : "*"} <span className="font-normal text-slate-400">(1080×1080, fundo transparente)</span>
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {existingLogoUrl && pendingFiles.length === 0 && (
                     <div className="relative group">
-                      <img src={existingLogoUrl} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "var(--layout-header-bg, #1a1a1a)" }} />
-                      <span className="text-[8px] text-center block mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Atual</span>
+                      <img src={existingLogoUrl} alt="" className="w-20 h-20 rounded-2xl object-contain p-2 bg-black border border-slate-800" />
+                      <span className="text-[9px] font-bold text-slate-400 text-center block mt-1 uppercase">Atual</span>
                     </div>
                   )}
                   {pendingFiles.map((pf, idx) => (
                     <div key={idx} className="relative group flex flex-col items-center w-24">
-                      <img src={pf.preview} alt="" className="w-20 h-20 rounded-lg object-contain" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)", backgroundColor: "repeating-conic-gradient(#ddd 0% 25%,transparent 0% 50%) 0 0/20px 20px" }} />
-                      <button type="button" onClick={() => removePendingFile(idx)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                      <img src={pf.preview} alt="" className="w-20 h-20 rounded-2xl object-contain p-2 border border-slate-800 bg-black" />
+                      <button
+                        type="button"
+                        onClick={() => removePendingFile(idx)}
+                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm hover:scale-110 transition-transform"
+                      >
+                        ×
+                      </button>
                       {!editingFullId && (
                         <input
                           type="text"
                           value={pf.nome}
                           onChange={(e) => updatePendingName(idx, e.target.value)}
                           placeholder="Nome"
-                          className="w-full mt-1 px-1.5 py-0.5 text-[10px] uppercase font-bold rounded outline-none text-center"
-                          style={{ ...inputStyle, borderRadius: "6px" }}
+                          className="w-full mt-1.5 px-2 py-1 text-[10px] uppercase font-bold rounded-lg outline-none text-center bg-[#f8fafc] border border-slate-200 text-[#002132] focus:border-[#0055ff]"
                         />
                       )}
                     </div>
                   ))}
-                  <label className="w-20 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
-                    style={{ border: "2px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)"; }}
+                  <label
+                    className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all bg-[#f8fafc] border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/40 group"
                   >
-                    <Plus size={18} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
-                    <span className="text-[10px] mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Adicionar</span>
+                    <Plus size={18} className="text-slate-400 group-hover:text-[#0055ff] transition-colors" />
+                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-[#0055ff] mt-1 transition-colors">Adicionar</span>
                     <input type="file" accept="image/png" multiple={!editingFullId} className="hidden" onChange={handleAddFile} />
                   </label>
                 </div>
                 {!editingFullId && pendingFiles.length > 0 && (
-                  <p className="text-[10px] mt-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                  <p className="text-[11px] font-medium text-slate-400 mt-2">
                     O nome de cada logo foi extraído do arquivo. Você pode editar individualmente acima.
                   </p>
                 )}
@@ -788,34 +1027,32 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
         {/* Excluded Logos - right after form */}
         <Collapsible open={excluidasOpen} onOpenChange={setExcluidasOpen}>
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div className="rounded-2xl overflow-hidden mb-6 border border-slate-200/80 bg-white shadow-sm">
             <CollapsibleTrigger asChild>
-              <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, #6b7280, #4b5563)" }}>
-                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-                  🗑️ Logos Excluídas
+              <button className="w-full px-5 py-3.5 flex items-center justify-between cursor-pointer bg-slate-50 hover:bg-slate-100/80 transition-colors">
+                <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-slate-700">
+                  <Trash2 size={15} className="text-slate-500" />
+                  Logos Excluídas
                   {excludedLogos.length > 0 && (
-                    <span className="text-[10px] font-normal bg-white/20 px-2 py-0.5 rounded-full">{excludedLogos.length}</span>
+                    <span className="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">{excludedLogos.length}</span>
                   )}
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {excluidasOpen && (
                     <div onClick={(e) => e.stopPropagation()}>
                       <div className="relative">
-                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.5 }} />
+                        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                           type="text"
                           value={excluidasSearch}
                           onChange={(e) => setExcluidasSearch(e.target.value)}
                           placeholder="Buscar logo..."
-                          className="pl-7 pr-3 py-1 text-[11px] rounded-full outline-none w-40"
-                          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)", border: "1px solid rgba(255,255,255,0.25)" }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; }}
+                          className="pl-8 pr-3 py-1.5 text-[11px] rounded-full outline-none w-44 bg-white border border-slate-200 text-[#002132] focus:border-[#0055ff] transition-all shadow-sm"
                         />
                       </div>
                     </div>
                   )}
-                  <ChevronDown size={16} className={`transition-transform duration-200 ${excluidasOpen ? "rotate-180" : ""}`} style={{ color: "var(--layout-header-text, #ffffff)" }} />
+                  <ChevronDown size={18} className={`transition-transform duration-200 text-slate-500 ${excluidasOpen ? "rotate-180" : ""}`} />
                 </div>
               </button>
             </CollapsibleTrigger>
@@ -827,40 +1064,40 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   return (l.nome || "").toLowerCase().includes(q);
                 });
                 return filtered.length === 0 ? (
-                  <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                  <p className="text-xs font-medium py-8 text-center text-slate-400">
                     {excludedLogos.length === 0 ? "Nenhuma logo excluída." : "Nenhuma logo encontrada."}
                   </p>
                 ) : (
-                <div className="p-4">
-                  <p className="text-[10px] mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                <div className="p-5">
+                  <p className="text-[11px] font-medium text-slate-500 mb-4">
                     Arraste uma logo para um programa para restaurá-la, ou clique no botão de restaurar.
-                    <br />Logos excluídas são mantidas por até 180 dias.
+                    <br /><span className="text-slate-400 text-[10px]">Logos excluídas são mantidas por até 180 dias.</span>
                   </p>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-4">
                     {filtered.map((logo) => {
                       const refDate = logo.excluido_at ? new Date(logo.excluido_at) : (logo.data_final ? new Date(logo.data_final + "T23:59:59") : null);
                       const diasRestantes = refDate ? Math.max(0, 180 - Math.ceil((Date.now() - refDate.getTime()) / 86400000)) : 0;
                       const isExpiredOnly = !logo.excluido;
                       return (
-                        <div key={logo.id} className="w-24 space-y-1 text-center opacity-70 hover:opacity-100 transition-opacity cursor-grab"
+                        <div key={logo.id} className="w-24 space-y-1.5 text-center opacity-85 hover:opacity-100 transition-all cursor-grab"
                           draggable
                           onDragStart={() => handleDragStart(logo)}
                         >
                           <div className="relative group">
-                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "linear-gradient(135deg,#07111F 0%,#111827 55%,#020617 100%)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05), 0 4px 12px rgba(10,37,64,0.18)" }} />
-                            <div className="absolute inset-0 rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
-                              <button onClick={() => handleRestore(logo)} className="bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Restaurar">
+                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-2xl object-contain p-2.5 bg-black border border-slate-800 shadow-sm" />
+                            <div className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 backdrop-blur-[2px]">
+                              <button onClick={() => handleRestore(logo)} className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-transform hover:scale-110" title="Restaurar">
                                 <RotateCcw size={13} />
                               </button>
-                              <button onClick={() => handlePermanentDelete(logo.id)} className="bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Excluir permanentemente">
+                              <button onClick={() => handlePermanentDelete(logo.id)} className="bg-rose-500 hover:bg-rose-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-transform hover:scale-110" title="Excluir permanentemente">
                                 <Trash2 size={13} />
                               </button>
                             </div>
                           </div>
                           {logo.nome && (
-                            <p className="text-[10px] font-semibold truncate" style={{ color: "#6b7280" }}>{logo.nome}</p>
+                            <p className="text-[11px] font-bold text-slate-700 truncate">{logo.nome}</p>
                           )}
-                          <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{isExpiredOnly ? "vencida • " : ""}{diasRestantes}d para expirar</span>
+                          <span className="text-[9px] font-medium text-slate-400 block">{isExpiredOnly ? "vencida • " : ""}{diasRestantes}d para expirar</span>
                         </div>
                       );
                     })}
@@ -878,183 +1115,207 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           const icon = estudioIcon(section.label);
           const totalLogos = section.items.reduce((sum, g) => sum + g.logos.length, 0);
           return (
-          <div key={section.label} className="mb-6">
+          <div key={section.label} className="mb-8">
             <div
-              className="flex items-center gap-3 mb-3 px-3 py-2 rounded-xl"
+              className="flex items-center gap-3 mb-3 px-4 py-2.5 rounded-2xl border"
               style={{
-                background: `linear-gradient(90deg, ${color}18, transparent)`,
-                borderLeft: `3px solid ${color}`,
+                backgroundColor: "#ffffff",
+                borderColor: "rgba(226, 232, 240, 0.9)",
+                borderLeft: `4px solid ${color}`,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
               }}
             >
               <span
-                className="flex items-center justify-center rounded-lg text-sm"
-                style={{ width: 30, height: 30, background: `${color}22`, color }}
+                className="flex items-center justify-center rounded-xl text-sm"
+                style={{ width: 32, height: 32, background: `${color}15`, color }}
               >
                 {icon}
               </span>
               <h2
-                className="text-[13px] font-extrabold uppercase tracking-wider"
-                style={{ color: "var(--layout-page-text, #1a1a1a)", letterSpacing: 1.5 }}
+                className="text-xs font-black uppercase tracking-wider text-[#002132]"
               >
                 {section.label}
               </h2>
               <span
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
                 style={{ background: color, color: "#fff" }}
               >
                 {section.items.length} {section.items.length === 1 ? "programa" : "programas"}
               </span>
               <span
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: `${color}22`, color }}
+                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                style={{ background: `${color}15`, color }}
               >
                 {totalLogos} {totalLogos === 1 ? "logo" : "logos"}
               </span>
             </div>
-            {section.items.map(({ programa, logos: gLogos }) => (
-              <Collapsible key={programa.id} defaultOpen={false}>
-                <div className="rounded-xl overflow-hidden mb-3 transition-all hover:shadow-lg" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: `1px solid ${color}20` }}
-                  onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, programa.id)}
-                  onContextMenu={(e) => handleProgramaContextMenu(e, programa)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, black 30%))` }}>
-                      <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "#ffffff" }}>
-                        {programa.horario_inicio && (
-                          <span className="text-[10px] font-mono opacity-80 px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.2)" }}>{programa.horario_inicio.slice(0,5)}</span>
-                        )}
-                        {programa.nome}
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.25)" }}>{gLogos.length}</span>
-                      </h3>
-                      <ChevronDown size={16} className="transition-transform duration-200 ui-open:rotate-180" style={{ color: "#ffffff" }} />
-                    </button>
-                  </CollapsibleTrigger>
+            <div className="space-y-3">
+              {section.items.map(({ programa, logos: gLogos }) => (
+                <Collapsible key={programa.id} defaultOpen={false}>
+                  <div className="rounded-2xl overflow-hidden border border-slate-200/80 bg-white shadow-sm transition-all"
+                    onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, programa.id)}
+                    onContextMenu={(e) => handleProgramaContextMenu(e, programa)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        className="w-full px-5 py-3.5 flex items-center justify-between cursor-pointer text-white transition-all hover:brightness-105 active:scale-[0.99] [&[data-state=open]>svg]:rotate-180"
+                        style={{
+                          background: `linear-gradient(90deg, ${color} 0%, color-mix(in srgb, ${color} 80%, #000) 100%)`,
+                        }}
+                      >
+                        <h3 className="text-xs font-black uppercase flex items-center gap-2.5 tracking-wide text-white">
+                          {programa.horario_inicio && (
+                            <span className="text-[10px] font-mono font-bold bg-black/25 backdrop-blur-sm px-2.5 py-0.5 rounded-full">
+                              {programa.horario_inicio.slice(0,5)}
+                            </span>
+                          )}
+                          {programa.nome}
+                          <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm">
+                            {gLogos.length}
+                          </span>
+                        </h3>
+                        <ChevronDown size={18} className="transition-transform duration-200 text-white" />
+                      </button>
+                    </CollapsibleTrigger>
 
-                  {copyPrompt && copyPrompt.programa.id === programa.id && (
-                    <div className="px-4 py-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff))", borderTop: "1px solid var(--layout-border-color, #333333)", borderBottom: "1px solid var(--layout-border-color, #333333)" }}>
-                      <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          Deseja copiar a logo <strong>"{copyPrompt.logo.nome}"</strong> para este programa?
+                    {copyPrompt && copyPrompt.programa.id === programa.id && (
+                      <div className="px-5 py-3 bg-blue-50/70 border-b border-blue-100 flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-xs font-medium text-[#002132]">
+                          Deseja copiar a logo <strong className="font-bold">"{copyPrompt.logo.nome}"</strong> para este programa?
                         </p>
                         <div className="flex gap-2">
                           <button onClick={() => setCopyPrompt(null)}
-                            className="px-4 py-1.5 text-xs font-semibold rounded-full"
-                            style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                            className="px-4 py-1.5 text-xs font-bold rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">
                             Cancelar
                           </button>
                           <button onClick={confirmCopyPrompt}
-                            className="px-4 py-1.5 text-xs font-semibold rounded-full text-white"
-                            style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}>
+                            className="px-4 py-1.5 text-xs font-bold rounded-full text-white bg-[#0055ff] hover:bg-blue-600 transition-colors shadow-sm cursor-pointer">
                             Copiar
                           </button>
                         </div>
                       </div>
-                    </div>
-                  )}
-                  <CollapsibleContent>
-                    <div className="p-3 sm:p-4 px-4 sm:px-10">
-                      <Carousel opts={{ align: "start" }} className="w-full">
-                        <CarouselContent>
-                          {gLogos.map((logo) => {
-                            const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
-                            return (
-                              <CarouselItem key={logo.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                                <div className="space-y-2 text-center cursor-grab active:cursor-grabbing"
+                    )}
+                    <CollapsibleContent>
+                      <div className="p-4 sm:p-5">
+                        {gLogos.length === 0 ? (
+                          <div className="py-6 px-4 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                            <p className="text-xs font-bold text-slate-600">Nenhuma logo vinculada a este programa.</p>
+                            <p className="text-[11px] font-medium text-slate-400 mt-1">Arraste uma logo de outro programa ou adicione acima para vincular.</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-4 items-start">
+                            {gLogos.map((logo) => {
+                              const diasRestantes = Math.ceil((new Date(logo.data_final + "T23:59:59").getTime() - Date.now()) / 86400000);
+                              return (
+                                <div
+                                  key={logo.id}
+                                  className="w-28 space-y-2 text-center cursor-grab active:cursor-grabbing shrink-0"
                                   draggable
                                   onDragStart={() => handleDragStart(logo)}
                                   onMouseDown={() => { dragItem.current = logo; }}
                                   title="Arraste para outro programa para copiar (ou clique e use o botão direito no programa de destino)"
                                 >
-                                  <div className="relative group">
-                                    <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2 transition-all group-hover:ring-2" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", backgroundColor: "#2d2d2d", ['--tw-ring-color' as any]: "var(--layout-accent-color, #2563eb)" }} />
-                                    <button onClick={(e) => { e.stopPropagation(); dragItem.current = logo; toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." }); }}
-                                      className="absolute top-1 left-1 bg-blue-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                      title="Copiar para outro programa">
-                                      <Copy size={12} />
+                                  <div className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-black hover:border-[#0055ff]/50 transition-all shadow-sm">
+                                    <img
+                                      src={logo.logo_url}
+                                      alt={logo.nome}
+                                      className="w-full aspect-square object-contain p-2.5 bg-black transition-transform group-hover:scale-105"
+                                    />
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        dragItem.current = logo;
+                                        toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." });
+                                      }}
+                                      className="absolute top-1.5 left-1.5 bg-[#0055ff] hover:bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:scale-110"
+                                      title="Copiar para outro programa"
+                                    >
+                                      <Copy size={11} />
                                     </button>
-                                    <button onClick={() => handleSoftDelete(logo.id)}
-                                      className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Trash2 size={12} />
+                                    <button
+                                      onClick={() => handleSoftDelete(logo.id)}
+                                      className="absolute top-1.5 right-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:scale-110"
+                                      title="Excluir"
+                                    >
+                                      <Trash2 size={11} />
                                     </button>
                                   </div>
                                   {logo.nome && (
-                                    <p className="text-[11px] font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{logo.nome}</p>
+                                    <p className="text-[11px] font-bold text-[#002132] truncate">
+                                      {logo.nome}
+                                    </p>
                                   )}
-                                  <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${diasRestantes <= 7 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                                  <span
+                                    className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                                      diasRestantes <= 7 ? "bg-rose-50 text-rose-600 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    }`}
+                                  >
                                     {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
                                   </span>
-                                  <button onClick={() => startFullEdit(logo)} className="text-[10px] flex items-center gap-1 mx-auto transition-colors"
-                                    style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}
-                                    onMouseEnter={e => { e.currentTarget.style.color = "var(--layout-accent-color, #2563eb)"; }}
-                                    onMouseLeave={e => { e.currentTarget.style.color = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)"; }}
-                                  >
-                                    <Pencil size={10} /> Editar
-                                  </button>
+                                  <div>
+                                    <button
+                                      onClick={() => startFullEdit(logo)}
+                                      className="text-[10px] font-semibold text-slate-400 hover:text-[#0055ff] inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                    >
+                                      <Pencil size={10} /> Editar
+                                    </button>
+                                  </div>
                                 </div>
-                              </CarouselItem>
-                            );
-                          })}
-                        </CarouselContent>
-                        <CarouselPrevious className="hidden sm:flex" />
-                        <CarouselNext className="hidden sm:flex" />
-                      </Carousel>
-                    </div>
-                  </CollapsibleContent>
-                </div>
-              </Collapsible>
-            ))}
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
+              ))}
+            </div>
           </div>
           );
         })}
       </div>
 
-      {(logosXmlUrl || logosAllXmlContent) && (
-        <XmlSection title="XML Logos">
-          {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} />}
-          {logosAllXmlContent && <XmlLinkRow label="Logos ALL" xmlContent={logosAllXmlContent} />}
-        </XmlSection>
-      )}
-
       {restoreLogo && createPortal(
         <div
           onClick={() => { if (!restoring) setRestoreLogo(null); }}
-          style={{ position: "fixed", inset: 0, zIndex: 2147483001, background: "rgba(10,37,64,0.55)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "Montserrat, sans-serif" }}
+          style={{ position: "fixed", inset: 0, zIndex: 2147483001, background: "rgba(0, 33, 50, 0.45)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "Montserrat, sans-serif" }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 24, width: "100%", maxWidth: 460, overflow: "hidden", boxShadow: "0 24px 60px rgba(10,37,64,0.25)", border: "1px solid #00BFF033" }}
+            style={{ background: "#fff", borderRadius: 24, width: "100%", maxWidth: 460, overflow: "hidden", boxShadow: "0 24px 60px rgba(0, 33, 50, 0.2)", border: "1px solid rgba(226, 232, 240, 0.9)" }}
           >
-            <div style={{ background: "linear-gradient(135deg,#00BFF0 0%,#00A9D6 100%)", padding: "18px 22px", color: "#fff", fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.12em" }}>
+            <div style={{ background: "linear-gradient(135deg, #0055ff 0%, #0044cc 100%)", padding: "18px 24px", color: "#fff", fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.12em" }}>
               Restaurar Logo
             </div>
-            <div style={{ padding: 22, background: "#D6F4FB" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-                <div style={{ width: 92, height: 92, borderRadius: 18, background: "linear-gradient(135deg,#07111F 0%,#111827 55%,#020617 100%)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06), 0 12px 26px rgba(10,37,64,0.20)", padding: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ padding: 24, background: "#f8fafc" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                <div style={{ width: 84, height: 84, borderRadius: 18, background: "#0f172a", border: "1px solid #1e293b", boxShadow: "0 8px 20px rgba(0, 0, 0, 0.12)", padding: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <img src={restoreLogo.logo_url} alt={restoreLogo.nome || "Logo"} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ color: "#0A2540", fontSize: 11, fontWeight: 900, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Logo selecionada</p>
-                  <p style={{ color: "#0A2540", fontSize: 16, fontWeight: 900, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restoreLogo.nome || "Sem nome"}</p>
-                  <p style={{ color: "rgba(10,37,64,0.62)", fontSize: 11, fontWeight: 700, margin: "5px 0 0" }}>Fundo escuro para conferir transparência e contraste.</p>
+                  <p style={{ color: "#64748b", fontSize: 10, fontWeight: 900, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Logo selecionada</p>
+                  <p style={{ color: "#002132", fontSize: 16, fontWeight: 900, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restoreLogo.nome || "Sem nome"}</p>
+                  <p style={{ color: "#94a3b8", fontSize: 11, fontWeight: 600, margin: "4px 0 0" }}>Fundo escuro para conferir contraste e transparência.</p>
                 </div>
               </div>
-              <p style={{ color: "#0A2540", fontSize: 13, fontWeight: 600, margin: "0 0 12px" }}>
+              <p style={{ color: "#002132", fontSize: 12, fontWeight: 700, margin: "0 0 10px" }}>
                 Escolha um ou mais programas para restaurar a logo{restoreLogo.nome ? ` "${restoreLogo.nome}"` : ""}:
               </p>
-              <div style={{ maxHeight: 260, overflowY: "auto", background: "#fff", border: "2px solid #00BFF0", borderRadius: 16, padding: 8 }}>
+              <div style={{ maxHeight: 240, overflowY: "auto", background: "#fff", border: "1px solid rgba(226, 232, 240, 0.9)", borderRadius: 16, padding: 8, boxShadow: "inset 0 1px 3px rgba(0,0,0,0.02)" }}>
                 {(() => {
                   const opts = [{ id: "", nome: "— SEM PROGRAMA —" }, ...[...programas].sort((a, b) => a.nome.localeCompare(b.nome))];
                   return opts.map((p) => {
                     const checked = restoreProgramaIds.includes(p.id);
                     return (
-                      <label key={p.id || "none"} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, cursor: "pointer", background: checked ? "#00BFF022" : "transparent", color: "#0A2540", fontSize: 13, fontWeight: 600, fontFamily: "Montserrat, sans-serif" }}>
+                      <label key={p.id || "none"} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 10, cursor: "pointer", background: checked ? "#eff6ff" : "transparent", color: checked ? "#0055ff" : "#002132", fontSize: 12, fontWeight: checked ? 700 : 600, fontFamily: "Montserrat, sans-serif", transition: "all 0.15s ease" }}>
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={(e) => {
                             setRestoreProgramaIds((prev) => e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id));
                           }}
-                          style={{ accentColor: "#00BFF0", width: 16, height: 16 }}
+                          style={{ accentColor: "#0055ff", width: 16, height: 16, cursor: "pointer" }}
                         />
                         {p.nome}
                       </label>
@@ -1063,12 +1324,12 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                 })()}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", padding: "14px 18px", background: "#fff", borderTop: "1px solid #00BFF022" }}>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", padding: "16px 24px", background: "#fff", borderTop: "1px solid rgba(226, 232, 240, 0.8)" }}>
               <button
                 type="button"
                 onClick={() => setRestoreLogo(null)}
                 disabled={restoring}
-                style={{ padding: "9px 18px", borderRadius: 999, border: "2px solid #00BFF0", background: "#fff", color: "#0A2540", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer", fontFamily: "Montserrat, sans-serif" }}
+                style={{ padding: "8px 20px", borderRadius: 999, border: "1px solid #cbd5e1", background: "#fff", color: "#475569", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer", fontFamily: "Montserrat, sans-serif", transition: "all 0.15s ease" }}
               >
                 Cancelar
               </button>
@@ -1076,9 +1337,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                 type="button"
                 onClick={confirmRestore}
                 disabled={restoring}
-                style={{ padding: "9px 20px", borderRadius: 999, border: "none", background: restoring ? "#A7E9F7" : "#00BFF0", color: "#0A2540", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: restoring ? "wait" : "pointer", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px #00BFF055" }}
+                style={{ padding: "8px 22px", borderRadius: 999, border: "none", background: restoring ? "#93c5fd" : "#0055ff", color: "#ffffff", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: restoring ? "wait" : "pointer", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)", display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                {restoring ? "Restaurando..." : "OK"}
+                {restoring && <Loader2 className="animate-spin" size={14} />}
+                {restoring ? "Restaurando..." : "Confirmar"}
               </button>
             </div>
           </div>

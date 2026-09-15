@@ -17,14 +17,14 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "nx-select-trigger flex h-11 w-full items-center justify-between rounded-full border border-[#0A0A0A]/10 bg-white px-5 py-2 font-sans text-sm font-medium text-[#0A0A0A] shadow-[inset_0_1px_2px_rgba(10,10,10,0.06)] ring-offset-background placeholder:text-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#00BFF0]/60 focus:border-[#00BFF0] disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 [&>span]:text-inherit transition-all duration-200",
+      "nx-select-trigger flex h-11 w-full items-center justify-between rounded-full border border-[#0055ff] bg-white px-5 py-2 font-sans text-sm font-medium text-[#0A0A0A] shadow-[inset_0_1px_2px_rgba(0,85,255,0.06)] ring-offset-background placeholder:text-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#0055ff]/40 focus:border-[#0055ff] disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 [&>span]:text-inherit transition-all duration-200",
       className,
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 text-[#00BFF0]" strokeWidth={2.5} />
+      <ChevronDown className="h-4 w-4 text-[#0055ff]" strokeWidth={2.5} />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -105,8 +105,8 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-full py-2 pl-8 pr-3 text-sm font-medium leading-snug outline-none transition-colors duration-150 data-[disabled]:pointer-events-none data-[disabled]:opacity-40",
-      "text-[#0A0A0A] data-[highlighted]:bg-[#D6F4FB] data-[highlighted]:text-[#0A0A0A] data-[state=checked]:bg-[#00BFF0] data-[state=checked]:text-white focus:bg-[#D6F4FB] focus:text-[#0A0A0A]",
+      "relative flex w-full cursor-pointer select-none items-center rounded-xl py-2 pl-8 pr-3 text-sm font-medium leading-snug outline-none transition-colors duration-150 data-[disabled]:pointer-events-none data-[disabled]:opacity-40",
+      "text-[#0A0A0A] data-[highlighted]:bg-[#0055ff] data-[highlighted]:text-white data-[state=checked]:bg-[#0055ff] data-[state=checked]:text-white focus:bg-[#0055ff] focus:text-white",
       className,
     )}
     {...props}

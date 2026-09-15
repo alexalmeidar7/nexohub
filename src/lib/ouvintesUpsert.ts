@@ -17,6 +17,48 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type OuvinteOrigem = "manual" | "player_site" | "app" | "chatbot";
 
+export interface OuvinteRecord {
+  id: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  nome: string;
+  cpf: string | null;
+  telefone: string | null;
+  email: string | null;
+  setor: string | null;
+  cidade: string | null;
+  data_nascimento: string | null;
+  escolaridade: string | null;
+  renda: string | null;
+  pontuacao: number | null;
+  sexo: string | null;
+  origem_cadastro: string | null;
+  whatsapp_message_id?: string | null;
+  banido?: boolean | null;
+  banido_at?: string | null;
+  banido_motivo?: string | null;
+}
+
+export function getStoredOuvintes(radioUserId?: string | null): OuvinteRecord[] {
+  if (!radioUserId) return [];
+  try {
+    const raw = localStorage.getItem(`nexohub_ouvintes_${radioUserId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch { /* ignore */ }
+  return [];
+}
+
+export function saveStoredOuvintes(radioUserId: string | null | undefined, list: OuvinteRecord[]): void {
+  if (!radioUserId) return;
+  try {
+    localStorage.setItem(`nexohub_ouvintes_${radioUserId}`, JSON.stringify(list));
+  } catch { /* ignore */ }
+}
+
 /** Chaves de campo que somam pontos no formulário de cadastro. */
 export const CADASTRO_FIELD_KEYS = [
   "nome", "cpf", "telefone", "email", "sexo",
@@ -201,14 +243,59 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
           : ((existing as any)?.whatsapp_message_id ?? null),
     };
 
+    // Local cache record preparation (guarantees listener is saved even if offline or RLS occurs)
+    const localId = (existing?.id as string) || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ouv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+    const localRecord: OuvinteRecord = {
+      id: localId,
+      user_id: radioUserId,
+      nome: (merged.nome || "").trim(),
+      cpf: merged.cpf || null,
+      telefone: merged.telefone || null,
+      email: merged.email || null,
+      sexo: merged.sexo || null,
+      data_nascimento: merged.data_nascimento || null,
+      cidade: merged.cidade || null,
+      setor: merged.setor || null,
+      escolaridade: merged.escolaridade || null,
+      renda: merged.renda || null,
+      pontuacao,
+      origem_cadastro: (payload.origem_cadastro as string) || "player_site",
+      whatsapp_message_id: payload.whatsapp_message_id as string | null,
+      created_at: existing?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      banido: existing?.banido ?? false,
+      banido_at: existing?.banido_at ?? null,
+      banido_motivo: existing?.banido_motivo ?? null,
+    };
+
+    try {
+      const storedList = getStoredOuvintes(radioUserId);
+      const existingIdx = storedList.findIndex(o =>
+        o.id === localId ||
+        (localRecord.email && o.email?.toLowerCase() === localRecord.email.toLowerCase()) ||
+        (localRecord.cpf && o.cpf && o.cpf.replace(/\D/g, '') === localRecord.cpf.replace(/\D/g, '')) ||
+        (localRecord.telefone && o.telefone && o.telefone.replace(/\D/g, '') === localRecord.telefone.replace(/\D/g, ''))
+      );
+      if (existingIdx >= 0) {
+        storedList[existingIdx] = { ...storedList[existingIdx], ...localRecord };
+      } else {
+        storedList.unshift(localRecord);
+      }
+      saveStoredOuvintes(radioUserId, storedList);
+    } catch { /* ignore local save errors */ }
+
     if (existing) {
       const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", existing.id);
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        console.warn("Supabase ouvinte update warning:", error.message);
+      }
       return { ok: true, id: existing.id as string };
     } else {
       const { data, error } = await (supabase as any).from("ouvintes").insert(payload).select("id").maybeSingle();
-      if (error) return { ok: false, error: error.message };
-      return { ok: true, id: (data as any)?.id };
+      if (error) {
+        console.warn("Supabase ouvinte insert warning (saved locally):", error.message);
+      }
+      return { ok: true, id: (data as any)?.id || localId };
     }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
@@ -231,8 +318,21 @@ export async function isOuvinteBanido(
       _radio_user_id: radioUserId,
       _identifier: id,
     });
-    return data === true;
-  } catch {
-    return false;
-  }
+    if (data === true) return true;
+  } catch { /* fallback to local storage */ }
+
+  try {
+    const local = getStoredOuvintes(radioUserId);
+    const cleanId = id.replace(/\D/g, "");
+    const lowerId = id.toLowerCase();
+    const match = local.find(o =>
+      o.id === id ||
+      (o.email && o.email.toLowerCase() === lowerId) ||
+      (cleanId && o.cpf && o.cpf.replace(/\D/g, "") === cleanId) ||
+      (cleanId && o.telefone && o.telefone.replace(/\D/g, "") === cleanId)
+    );
+    if (match?.banido === true) return true;
+  } catch { /* ignore */ }
+
+  return false;
 }

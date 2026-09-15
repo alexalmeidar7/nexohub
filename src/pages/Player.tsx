@@ -3,6 +3,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import { toast } from "sonner";
 import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchStationDatabaseData } from "@/lib/stationDatabaseService";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
@@ -489,7 +490,7 @@ export default function PlayerPage() {
   });
   const handleSpectrumStyleChange = useCallback((s: import("@/components/AudioSpectrum").SpectrumStyle) => {
     setSpectrumStyle(s);
-    localStorage.setItem("nexo_spectrum_style", s);
+    try { localStorage.setItem("nexo_spectrum_style", s); } catch {}
     // Persist to user_settings if logged in
     if (user) {
       void mergeUserDashboardItems(user.id, { spectrum_style: s }).catch(() => {});
@@ -525,7 +526,7 @@ export default function PlayerPage() {
       const items = (data?.dashboard_items as any) || {};
       if (items.spectrum_style) {
         setSpectrumStyle(items.spectrum_style);
-        localStorage.setItem("nexo_spectrum_style", items.spectrum_style);
+        try { localStorage.setItem("nexo_spectrum_style", items.spectrum_style); } catch {}
       }
       if (data && typeof (data as any).shopping_active === "boolean") {
         setShopActive((data as any).shopping_active);
@@ -1009,7 +1010,7 @@ export default function PlayerPage() {
               horario: data.musicData.horario || "",
             });
             if (data.musicStartTime) {
-              localStorage.setItem(MUSIC_START_KEY, String(data.musicStartTime));
+              try { localStorage.setItem(MUSIC_START_KEY, String(data.musicStartTime)); } catch {}
             }
           }
 
@@ -1082,6 +1083,12 @@ export default function PlayerPage() {
 
         // Hydrate all critical states at once
         let canaisData = channelsRes.data as Canal[] | null;
+        if (!canaisData || canaisData.length === 0) {
+          const stationData = await fetchStationDatabaseData(userId);
+          if (stationData?.channels && stationData.channels.length > 0) {
+            canaisData = stationData.channels as Canal[];
+          }
+        }
         if (canaisData) {
           setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
         }
@@ -1335,7 +1342,7 @@ export default function PlayerPage() {
         };
 
         if (typeof musicStartTime === "number" && musicStartTime > 0) {
-          localStorage.setItem(MUSIC_START_KEY, String(musicStartTime));
+          try { localStorage.setItem(MUSIC_START_KEY, String(musicStartTime)); } catch {}
         }
 
         setMusicData((prev) => {
@@ -1346,7 +1353,7 @@ export default function PlayerPage() {
           const songChanged = !prev || prev.titulo !== normalized.titulo || prev.artista !== normalized.artista;
           if (songChanged) {
             if (!(typeof musicStartTime === "number" && musicStartTime > 0)) {
-              localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+              try { localStorage.setItem(MUSIC_START_KEY, Date.now().toString()); } catch {}
             }
             return normalized;
           }
@@ -1585,8 +1592,10 @@ export default function PlayerPage() {
 
           if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
             const next = { ...data };
-            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
-            localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+            try {
+              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
+              localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+            } catch {}
             broadcastMusicSync(next);
             return next;
           }
@@ -1597,7 +1606,7 @@ export default function PlayerPage() {
 
           if (hasMetaDiff) {
             const next = { ...prev, ...data, capa: data.capa || prev.capa };
-            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
+            try { localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next)); } catch {}
             broadcastMusicSync(next);
             return next;
           }
@@ -1612,7 +1621,7 @@ export default function PlayerPage() {
             setMusicData(prev => {
               if (prev && prev.titulo === data.titulo && prev.artista === data.artista && !prev.capa) {
                 const next = { ...prev, capa: cover };
-                localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
+                try { localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next)); } catch {}
                 broadcastMusicSync(next);
                 return next;
               }
@@ -1631,7 +1640,7 @@ export default function PlayerPage() {
                     setMusicData(prev => {
                       if (prev && prev.titulo === data.titulo && prev.artista === data.artista && !prev.capa) {
                         const next = { ...prev, capa: cover };
-                        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next));
+                        try { localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(next)); } catch {}
                         broadcastMusicSync(next);
                         return next;
                       }

@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import TrafficMap from "@/components/TrafficMap";
 import SatelliteMap from "@/components/SatelliteMap";
 import CenarioQuotesPanel from "@/components/cenario/CenarioQuotesPanel";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 
 /* ─── types ─── */
 interface WeatherConfig {
@@ -350,8 +352,9 @@ function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: str
 
 /* ─── COMPONENT ─── */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-export default function CenarioInterativoPage() {
+export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
   const [activeTab, setActiveTab] = useState("home");
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>([]);
@@ -1097,7 +1100,8 @@ export default function CenarioInterativoPage() {
 
   /* ─── Fetch current program + sponsor logos ─── */
   useEffect(() => {
-    if (!user?.id) {
+    const ownerId = targetUserId;
+    if (!ownerId) {
       setCurrentProgram(null);
       setSponsorLogos([]);
       setNextProgram(null);
@@ -1105,21 +1109,119 @@ export default function CenarioInterativoPage() {
     }
     const load = async () => {
       const now = new Date();
-      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-      const today = dayNames[now.getDay()];
-      const nowTime = now.toTimeString().slice(0, 5);
+      // Timezone São Paulo
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      }).formatToParts(now);
+      const h = Number(parts.find(p => p.type === "hour")?.value || 0);
+      const m = Number(parts.find(p => p.type === "minute")?.value || 0);
+      const s = Number(parts.find(p => p.type === "second")?.value || 0);
+      const nowSeconds = h * 3600 + m * 60 + s;
+
+      const dayNameMap: Record<string, string> = {
+        domingo: "Domingo",
+        "segunda-feira": "Segunda",
+        "terça-feira": "Terça",
+        "quarta-feira": "Quarta",
+        "quinta-feira": "Quinta",
+        "sexta-feira": "Sexta",
+        sábado: "Sábado",
+      };
+      const dayRaw = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long" }).format(now).toLowerCase();
+      const today = dayNameMap[dayRaw] || "Segunda";
+      const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+
+      const parseTimeToSec = (t: string | null | undefined): number => {
+        if (!t) return -1;
+        const [hh = "0", mm = "0"] = String(t).split(":");
+        return Number(hh) * 3600 + Number(mm) * 60;
+      };
+
+      const acc = findClientAccountById(ownerId) || 
+                  findClientAccountByEmail(ownerId) || 
+                  findClientAccountByEmail(user?.email);
+      const stationUid = acc?.id || acc?.parentUserId || ownerId;
 
       const { data: progs } = await supabase
         .from("programas")
-        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, thumb, capa, apresentador_id, apresentadores_ids, tipo_programa")
-        .eq("user_id", user.id)
-        .eq("ativo", true)
-        .ilike("estudio", "%fm%");
+        .select("id, nome, horario_inicio, horario_fim, dias_semana, selo, thumb, capa, apresentador_id, apresentadores_ids, tipo_programa, estudio, variavel, data_variavel")
+        .in("user_id", Array.from(new Set([ownerId, stationUid].filter(Boolean))))
+        .eq("ativo", true);
 
-      const onAir = progs?.find(p => {
-        const dias = p.dias_semana || [];
-        return dias.includes(today) && p.horario_inicio <= nowTime && p.horario_fim > nowTime;
+      let allProgs: any[] = (progs || []).map((p: any) => ({
+        id: p.id,
+        nome: p.nome,
+        horario_inicio: p.horario_inicio,
+        horario_fim: p.horario_fim,
+        dias_semana: p.dias_semana || [],
+        selo: p.selo,
+        thumb: p.thumb,
+        capa: p.capa,
+        apresentador_id: p.apresentador_id,
+        apresentadores_ids: p.apresentadores_ids || [],
+        tipo_programa: p.tipo_programa,
+        estudio: p.estudio || "ESTÚDIO PRINCIPAL (AO VIVO)",
+        variavel: p.variavel,
+        data_variavel: p.data_variavel,
+      }));
+
+      // Enrich with House Mix / station schedule programs
+      try {
+        const hmProgs = getClientHouseMixProgramsSync(acc || stationUid || ownerId, user?.email);
+        if (Array.isArray(hmProgs) && hmProgs.length > 0) {
+          hmProgs.forEach((hp: any) => {
+            if (!allProgs.some((p: any) => p.nome?.trim().toLowerCase() === hp.nome?.trim().toLowerCase())) {
+              allProgs.push({
+                id: hp.id,
+                nome: hp.nome,
+                horario_inicio: hp.horario_inicio,
+                horario_fim: hp.horario_fim,
+                dias_semana: hp.dias_semana || ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"],
+                selo: hp.selo || null,
+                thumb: hp.thumb || null,
+                capa: hp.capa || null,
+                apresentador_id: hp.apresentador_id || null,
+                apresentadores_ids: hp.apresentadores_ids || [],
+                tipo_programa: hp.tipo_programa || null,
+                estudio: hp.estudio || "ESTÚDIO PRINCIPAL (AO VIVO)",
+                variavel: false,
+                data_variavel: null,
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("Erro ao buscar programas House Mix no CenarioInterativoPage:", err);
+      }
+
+      const candidates = allProgs.filter(p => {
+        if (p.variavel && p.data_variavel !== dateStr) return false;
+        if (!p.variavel) {
+          const dias = (p.dias_semana || []).map((d: string) => String(d).toLowerCase());
+          const todayLower = today.toLowerCase();
+          const isAllDays = dias.length === 0 || dias.some((d: string) => d.includes("todos") || d.includes("diário") || d.includes("diario"));
+          const hasDay = isAllDays || dias.some((d: string) => d.includes(todayLower) || todayLower.includes(d));
+          if (!hasDay) return false;
+        }
+        const start = parseTimeToSec(p.horario_inicio);
+        const end = parseTimeToSec(p.horario_fim);
+        if (start < 0 || end < 0) return false;
+        if (end <= start) {
+          return nowSeconds >= start || nowSeconds < end;
+        }
+        return nowSeconds >= start && nowSeconds < end;
       });
+
+      // Prioritize primary / live on-air studio (Estúdio FM, Estúdio Principal, Ao Vivo) or fallback to any candidate
+      const mainStudioMatch = candidates.find(p => {
+        const est = (p.estudio || "").toLowerCase();
+        return est.includes("fm") || est.includes("principal") || est.includes("ao vivo");
+      });
+      const onAir = mainStudioMatch || (candidates.length > 0 ? candidates[0] : null);
 
       if (onAir) {
         let apresentadorNome = "";
@@ -1150,28 +1252,46 @@ export default function CenarioInterativoPage() {
         });
         const { data: logos } = await supabase
           .from("logos_patrocinadores")
-          .select("id, nome, logo_url")
-          .eq("programa_id", onAir.id)
-          .eq("user_id", user.id)
+          .select("id, nome, logo_url, programa_id")
+          .in("user_id", Array.from(new Set([ownerId, stationUid].filter(Boolean))))
           .eq("ativo", true)
           .eq("excluido", false);
-        setSponsorLogos(logos || []);
+        const filteredLogos = (logos || []).filter(l => 
+          l.programa_id === onAir.id || 
+          l.programa_id === onAir.nome ||
+          (l as any).programa_nome === onAir.nome
+        );
+        setSponsorLogos(filteredLogos);
+
         // Find next program
-        const upcoming = progs?.filter(p => (p.dias_semana || []).includes(today) && p.horario_inicio > nowTime).sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
-        if (upcoming?.length) {
+        const upcoming = allProgs
+          .filter(p => {
+            if (p.id === onAir.id || p.nome === onAir.nome) return false;
+            if (p.variavel && p.data_variavel !== dateStr) return false;
+            if (!p.variavel) {
+              const dias = (p.dias_semana || []).map((d: string) => String(d).toLowerCase());
+              const todayLower = today.toLowerCase();
+              const isAllDays = dias.length === 0 || dias.some((d: string) => d.includes("todos") || d.includes("diário") || d.includes("diario"));
+              const hasDay = isAllDays || dias.some((d: string) => d.includes(todayLower) || todayLower.includes(d));
+              if (!hasDay) return false;
+            }
+            const sSec = parseTimeToSec(p.horario_inicio);
+            return sSec > nowSeconds;
+          })
+          .sort((a, b) => (parseTimeToSec(a.horario_inicio) - parseTimeToSec(b.horario_inicio)));
+
+        if (upcoming.length > 0) {
           const np = upcoming[0];
           setNextProgram({ nome: np.nome, selo: np.selo, horario_inicio: np.horario_inicio, horario_fim: np.horario_fim });
         } else {
           setNextProgram(null);
         }
+
         // Fetch chat data if enabled
         if (config.chat?.enabled && config.chat?.youtubeVideoUrl) {
           try {
-            const now = new Date();
-            const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            const day = dayNames[now.getDay()];
-            const time = now.toTimeString().slice(0, 5);
-            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${user.id}&day=${encodeURIComponent(day)}&time=${time}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl)}&_t=${Date.now()}`;
+            const timeStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${ownerId}&day=${encodeURIComponent(today)}&time=${timeStr}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl)}&_t=${Date.now()}`;
             const resp = await fetch(baseUrl, {
               headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
             });
@@ -1196,7 +1316,7 @@ export default function CenarioInterativoPage() {
     load();
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [targetUserId, config.chat?.enabled, config.chat?.youtubeVideoUrl]);
 
   /* Rotate presenter photo every 10s when program has multiple presenters */
   useEffect(() => {
@@ -1766,23 +1886,7 @@ export default function CenarioInterativoPage() {
     <div className="animate-fade-in space-y-5">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
-        vMix — CENÁRIO 1 E 2
-      </div>
-      {/* Header — Condensed broadcast dashboard */}
-      <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#00BFF0] flex items-center justify-center text-white">
-            <MonitorPlay className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-[#0A2540] text-sm font-bold uppercase tracking-widest leading-none">CENÁRIO 1 E 2</h1>
-            <p className="text-[11px] text-[#64748B] mt-1">Configure os elementos do cenário para suas transmissões</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {saving && <span className="text-[10px] text-[#64748B] animate-pulse uppercase tracking-wider font-bold">Salvando…</span>}
-          {!saving && savedFlash && <span className="text-[10px] text-[#0A2540] uppercase tracking-wider font-bold">✓ Salvo</span>}
-        </div>
+        vMix — CENÁRIO INTERATIVO
       </div>
 
       <div className="rounded-2xl overflow-hidden bg-[#D6F4FB] border border-[#00BFF0]/30">
@@ -1818,97 +1922,6 @@ export default function CenarioInterativoPage() {
               {/* ═══ Home ═══ */}
               <TabsContent value="home" className="space-y-5 animate-in fade-in-50 duration-500">
                 <div className="flex flex-col gap-5">
-                  {/* Status do Programa no Ar */}
-                  <div className="relative overflow-hidden rounded-xl border p-4 transition-all" 
-                       style={{ 
-                         background: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 3%, var(--layout-page-bg, #ffffff))",
-                         borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)"
-                       }}>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                          <Clock size={16} />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold leading-none">Programa no ar</h4>
-                          <p className="text-[10px] opacity-60 mt-1 uppercase tracking-wider font-semibold">Monitoramento em tempo real</p>
-                        </div>
-                      </div>
-                      {currentProgram && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold border border-green-500/20">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                          </span>
-                          AO VIVO
-                        </div>
-                      )}
-                    </div>
-
-                    {currentProgram ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-12 w-12 rounded-lg overflow-hidden border border-white/10 shrink-0 flex items-center justify-center" style={{ background: "#0d0446" }}>
-                            {currentProgram.selo || currentProgram.capa || currentProgram.thumb ? (
-                              <img 
-                                src={currentProgram.selo || currentProgram.capa || currentProgram.thumb || ""} 
-                                className="h-full w-full object-contain p-1"
-                                alt={currentProgram.nome}
-                              />
-                            ) : (
-                              <MonitorPlay size={20} className="text-white/60" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-sm font-extrabold line-clamp-1">{currentProgram.nome}</div>
-                            <div className="text-xs opacity-70 flex items-center gap-1 mt-0.5">
-                              <CalendarDays size={10} />
-                              {currentProgram.horario_inicio} às {currentProgram.horario_fim}
-                            </div>
-                          </div>
-                        </div>
-
-                        {sponsorLogos.length > 0 && (
-                          <div className="pt-3 border-t border-dashed border-black/5 dark:border-white/5">
-                            <p className="text-[10px] font-bold opacity-50 mb-2 uppercase tracking-tighter">Patrocinadores vinculados</p>
-                            <div className="relative inline-block group">
-                              <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs border cursor-help transition-all hover:bg-white/70"
-                                   style={{ background: "white", borderColor: "rgba(0,0,0,0.08)" }}>
-                                <div className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-extrabold text-white" style={{ background: "var(--layout-accent-color, #00BFF0)" }}>
-                                  {sponsorLogos.length}
-                                </div>
-                                <span className="font-bold text-[11px] uppercase tracking-wider">
-                                  {sponsorLogos.length === 1 ? "Patrocinador" : "Patrocinadores"}
-                                </span>
-                              </div>
-                              <div className="pointer-events-none absolute left-0 top-full mt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 min-w-[220px] max-w-[320px] rounded-lg shadow-lg border p-3"
-                                   style={{ background: "white", borderColor: "rgba(0,0,0,0.08)" }}>
-                                <p className="text-[9px] font-bold opacity-50 mb-2 uppercase tracking-wider">Vinculados</p>
-                                <div className="flex flex-col gap-1.5 max-h-[240px] overflow-auto">
-                                  {sponsorLogos.map(l => (
-                                    <div key={l.id} className="flex items-center gap-2">
-                                      {l.logo_url ? (
-                                        <img src={l.logo_url} alt={l.nome} className="w-5 h-5 object-contain rounded bg-white shrink-0" />
-                                      ) : (
-                                        <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[8px] font-bold shrink-0">L</div>
-                                      )}
-                                      <span className="text-[11px] font-semibold truncate">{l.nome}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="py-4 flex flex-col items-center justify-center text-center rounded-lg border-2 border-dashed border-black/5 bg-black/5">
-                        <MonitorPlay size={24} className="opacity-20 mb-2" />
-                        <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Cores dos Elementos do Preview */}
                   {(() => {
                     const colorFields: { key: keyof HomeConfig; label: string; def: string }[] = [

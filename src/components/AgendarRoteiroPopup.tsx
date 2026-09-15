@@ -70,7 +70,7 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
         <DialogHeader>
           <DialogTitle className="text-lg font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: "#0A2540" }}>
             <Calendar className="w-5 h-5 text-[#00BFF0]" />
-            Agendar Roteiro
+            Agendar
           </DialogTitle>
         </DialogHeader>
         
@@ -121,7 +121,7 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
             className="flex-1 rounded-xl font-bold uppercase text-[11px] tracking-wider shadow-lg transition-transform hover:scale-105"
             style={{ backgroundColor: "#00BFF0", color: "#FFFFFF" }}
           >
-            {loading ? "Salvando..." : <><Check className="w-4 h-4 mr-2" /> {onSaveAndSchedule ? "Salvar e Agendar" : "Agendar"}</>}
+            {loading ? "Salvando..." : <><Check className="w-4 h-4 mr-2" /> Agendar</>}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,104 +1,101 @@
-/**
- * Skeleton loading padrão dos módulos internos (admin).
- * Usa o shimmer cyan Nexo definido em `src/index.css`
- * (.nexo-skel-bar / .nexo-skel-pill / .nexo-skel-tile).
- */
-const NEXO_CYAN = "#00BFF0";
-const NEXO_CYAN_DARK = "#0AA9D8";
+import FinanceiroPageSkeleton from "./FinanceiroPageSkeleton";
+import ClientesPageSkeleton from "./ClientesPageSkeleton";
+import ConfiguracoesPageSkeleton from "./ConfiguracoesPageSkeleton";
+import ProdutosPageSkeleton from "./ProdutosPageSkeleton";
+import AdminDashboardSkeleton from "./AdminDashboardSkeleton";
+import AgendaPageSkeleton from "./AgendaPageSkeleton";
+import DashboardSkeleton from "./DashboardSkeleton";
+import MusicaNoArSkeleton from "./MusicaNoArSkeleton";
+
+export type SkeletonVariant =
+  | "financeiro"
+  | "clientes"
+  | "configuracoes"
+  | "empresa"
+  | "produtos"
+  | "agenda"
+  | "dashboard"
+  | "musica"
+  | "form"
+  | "list"
+  | "table";
 
 interface Props {
-  /** "list" = cards list (default), "form" = form + tabela, "table" = só tabela */
-  variant?: "list" | "form" | "table";
+  variant?: SkeletonVariant;
 }
 
-function HeaderBlock() {
+/** Header Block no padrão da Agenda/House Mix */
+function ModernHeaderBlock() {
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: `linear-gradient(135deg, ${NEXO_CYAN} 0%, ${NEXO_CYAN_DARK} 100%)`,
-        padding: 18,
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-xl"
-          style={{ background: "rgba(255,255,255,0.25)" }}
-        />
-        <div className="flex-1 space-y-2">
-          <div className="h-3.5 w-48 rounded" style={{ background: "rgba(255,255,255,0.35)" }} />
-          <div className="h-2.5 w-72 rounded" style={{ background: "rgba(255,255,255,0.22)" }} />
+    <section className="bg-white rounded-3xl p-6 lg:p-7 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex items-center justify-between gap-4 flex-wrap animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="w-11 h-11 rounded-2xl bg-[#0055ff]/10 shrink-0" />
+        <div className="space-y-2">
+          <div className="h-4.5 w-48 bg-slate-200 rounded-md" />
+          <div className="h-3 w-72 max-w-full bg-slate-100 rounded-md" />
         </div>
-        <div className="h-8 w-28 rounded-full" style={{ background: "rgba(255,255,255,0.28)" }} />
       </div>
+
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-28 rounded-full bg-slate-100" />
+        <div className="h-9 w-36 rounded-full bg-[#0055ff]/25" />
+      </div>
+    </section>
+  );
+}
+
+/** Action Bar com botões pílula */
+function ModernActionBar() {
+  return (
+    <div className="flex flex-wrap gap-2.5 animate-pulse">
+      <div className="h-9 w-36 rounded-full bg-[#0055ff]/25" />
+      <div className="h-9 w-28 rounded-full bg-slate-100" />
+      <div className="h-9 w-28 rounded-full bg-slate-100" />
     </div>
   );
 }
 
-function ActionBar() {
+/** Lista de cards com rounded-3xl */
+function ModernCardsList() {
   return (
-    <div className="flex flex-wrap gap-2">
-      <div className="h-9 w-32 nexo-skel-pill" />
-      <div className="h-9 w-28 nexo-skel-pill" style={{ opacity: 0.7 }} />
-      <div className="h-9 w-24 nexo-skel-pill" style={{ opacity: 0.5 }} />
-    </div>
-  );
-}
-
-function CardsList() {
-  return (
-    <div className="space-y-3">
+    <div className="space-y-3.5 animate-pulse">
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-2xl p-4 flex items-center gap-4"
-          style={{
-            background: "#F1F9FC",
-            border: `1px solid color-mix(in srgb, ${NEXO_CYAN} 18%, transparent)`,
-          }}
+          className="rounded-3xl p-5 bg-white border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex items-center gap-4"
         >
-          <div className="w-12 h-12 rounded-xl nexo-skel-tile shrink-0" />
+          <div className="w-11 h-11 rounded-2xl bg-slate-100 shrink-0" />
           <div className="flex-1 space-y-2 min-w-0">
-            <div className="h-3.5 w-2/5 nexo-skel-bar" />
-            <div className="h-2.5 w-3/5 nexo-skel-bar" style={{ opacity: 0.65 }} />
+            <div className="h-3.5 w-2/5 bg-slate-200 rounded" />
+            <div className="h-2.5 w-3/5 bg-slate-100 rounded" />
           </div>
-          <div className="h-6 w-16 nexo-skel-pill" style={{ opacity: 0.7 }} />
-          <div className="w-8 h-8 rounded-full nexo-skel-tile" />
+          <div className="h-6 w-20 rounded-full bg-[#0055ff]/10" />
+          <div className="w-8 h-8 rounded-full bg-slate-100" />
         </div>
       ))}
     </div>
   );
 }
 
-function TableRowsSkeleton() {
+/** Tabela com linhas rounded-3xl */
+function ModernTableRows() {
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: "#F1F9FC",
-        border: `1px solid color-mix(in srgb, ${NEXO_CYAN} 18%, transparent)`,
-      }}
-    >
-      {/* Header */}
-      <div
-        className="flex gap-4 px-4 py-3"
-        style={{ background: `color-mix(in srgb, ${NEXO_CYAN} 12%, transparent)` }}
-      >
-        {[90, 160, 110, 70, 50].map((w, i) => (
-          <div key={i} className="h-2.5 nexo-skel-bar" style={{ width: w, opacity: 0.9 }} />
+    <div className="bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] overflow-hidden animate-pulse">
+      <div className="flex gap-4 px-6 py-4 border-b border-slate-100 bg-[#f8fafc]/80 text-[10px]">
+        {[100, 180, 120, 80, 60].map((w, i) => (
+          <div key={i} className="h-3 bg-slate-200 rounded" style={{ width: w }} />
         ))}
       </div>
-      {/* Rows */}
-      <div className="divide-y" style={{ borderColor: "rgba(0,191,240,0.12)" }}>
+      <div className="divide-y divide-slate-100">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-3">
-            <div className="w-8 h-8 rounded-lg nexo-skel-tile shrink-0" />
-            <div className="h-3 flex-1 max-w-[220px] nexo-skel-bar" />
-            <div className="h-3 w-24 nexo-skel-bar" style={{ opacity: 0.7 }} />
-            <div className="h-3 w-16 nexo-skel-bar" style={{ opacity: 0.55 }} />
+          <div key={i} className="flex items-center gap-4 px-6 py-4">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 shrink-0" />
+            <div className="h-3.5 flex-1 max-w-[220px] bg-slate-200 rounded" />
+            <div className="h-3 w-28 bg-slate-100 rounded" />
+            <div className="h-3 w-20 bg-slate-100 rounded" />
             <div className="flex gap-2 ml-auto">
-              <div className="w-7 h-7 rounded-full nexo-skel-tile" />
-              <div className="w-7 h-7 rounded-full nexo-skel-tile" style={{ opacity: 0.7 }} />
+              <div className="w-7 h-7 rounded-full bg-slate-100" />
+              <div className="w-7 h-7 rounded-full bg-slate-100" />
             </div>
           </div>
         ))}
@@ -107,60 +104,84 @@ function TableRowsSkeleton() {
   );
 }
 
-function FormBlock() {
+/** Bloco de formulário com estética da Agenda */
+function ModernFormBlock() {
   return (
-    <div
-      className="rounded-2xl p-5 space-y-4"
-      style={{
-        background: "#F1F9FC",
-        border: `1px solid color-mix(in srgb, ${NEXO_CYAN} 18%, transparent)`,
-      }}
-    >
+    <div className="bg-white rounded-3xl p-6 lg:p-7 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 space-y-5 animate-pulse">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="space-y-1.5">
-            <div className="h-2.5 w-24 nexo-skel-bar" style={{ opacity: 0.7 }} />
-            <div className="h-10 w-full nexo-skel-tile" />
+            <div className="h-2.5 w-24 bg-slate-200 rounded" />
+            <div className="h-10 w-full rounded-xl bg-slate-50 border border-slate-200" />
           </div>
         ))}
       </div>
       <div className="space-y-1.5">
-        <div className="h-2.5 w-20 nexo-skel-bar" style={{ opacity: 0.7 }} />
-        <div className="h-24 w-full nexo-skel-tile" />
+        <div className="h-2.5 w-20 bg-slate-200 rounded" />
+        <div className="h-20 w-full rounded-2xl bg-slate-50 border border-slate-200" />
       </div>
-      <div className="flex gap-3 pt-1">
-        <div className="h-9 w-28 nexo-skel-pill" />
-        <div className="h-9 w-24 nexo-skel-pill" style={{ opacity: 0.6 }} />
+      <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="h-9 w-28 rounded-full bg-slate-100" />
+        <div className="h-9 w-36 rounded-full bg-[#0055ff]/30" />
       </div>
     </div>
   );
 }
 
 export default function ModulePageSkeleton({ variant = "list" }: Props) {
-  if (variant === "form") {
-    return (
-      <div className="space-y-5">
-        <HeaderBlock />
-        <FormBlock />
-        <TableRowsSkeleton />
-      </div>
-    );
+  switch (variant) {
+    case "financeiro":
+      return <FinanceiroPageSkeleton />;
+    case "clientes":
+      return <ClientesPageSkeleton />;
+    case "configuracoes":
+    case "empresa":
+      return <ConfiguracoesPageSkeleton />;
+    case "produtos":
+    case "housemix":
+      return <ProdutosPageSkeleton />;
+    case "agenda":
+      return <AgendaPageSkeleton />;
+    case "dashboard":
+      return <DashboardSkeleton />;
+    case "musica":
+      return <MusicaNoArSkeleton />;
+    case "form":
+      return (
+        <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+          <ModernHeaderBlock />
+          <ModernFormBlock />
+          <ModernTableRows />
+        </div>
+      );
+    case "table":
+      return (
+        <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+          <ModernHeaderBlock />
+          <ModernTableRows />
+        </div>
+      );
+    case "list":
+    default:
+      return (
+        <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+          <ModernHeaderBlock />
+          <ModernActionBar />
+          <ModernCardsList />
+        </div>
+      );
   }
-  if (variant === "table") {
-    return (
-      <div className="space-y-5">
-        <HeaderBlock />
-        <TableRowsSkeleton />
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-5">
-      <HeaderBlock />
-      <ActionBar />
-      <CardsList />
-    </div>
-  );
 }
 
-export { FormBlock as FormSkeleton, TableRowsSkeleton };
+export {
+  ModernFormBlock as FormSkeleton,
+  ModernTableRows as TableRowsSkeleton,
+  FinanceiroPageSkeleton,
+  ClientesPageSkeleton,
+  ConfiguracoesPageSkeleton,
+  ProdutosPageSkeleton,
+  AdminDashboardSkeleton,
+  AgendaPageSkeleton,
+  DashboardSkeleton,
+  MusicaNoArSkeleton,
+};

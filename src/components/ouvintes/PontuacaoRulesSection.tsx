@@ -4,10 +4,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Save, Award, FileText, RotateCcw, ChevronDown, Radio } from "lucide-react";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#ffffff";
+const DARK = "#002132";
 
 type TabKey = "cadastro" | "player";
 

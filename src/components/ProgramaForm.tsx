@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle, ChevronsUpDown, Check, PlaySquare, Download, ChevronDown, Plus } from "lucide-react";
+import { AlertCircle, Trash2, Clock, Calendar, Building2, Pencil, X, Power, Loader2, Info, CalendarDays, CheckCircle, ChevronsUpDown, Check, PlaySquare, Download, ChevronDown, Plus, Upload, Image as ImageIcon, Minus } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
@@ -11,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { uploadProgramImage } from "@/lib/uploadProgramImage";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import {
   Select,
   SelectContent,
@@ -40,6 +44,34 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
+import { getStoredMetadata } from "./ClientesPage";
+import {
+  saveCustomProgram,
+  removeCustomProgram,
+  saveCustomStudio,
+  removeCustomStudio,
+  getStoredCustomPrograms,
+  getStoredCustomEstudios,
+  normalizeClientKey,
+  DEFAULT_STATION_DATA,
+  type HouseMixProgram
+} from "@/lib/houseMixProgramasService";
+
+const DEFAULT_ESTUDIOS = ["ESTÚDIO FM", "PODCAST"];
+const ESTUDIOS_STORAGE_KEY = "nexohub_estudios_cadastrados";
+
+const getStoredEstudios = (): string[] => {
+  try {
+    const raw = localStorage.getItem(ESTUDIOS_STORAGE_KEY);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(e => (typeof e === "string" ? e.toUpperCase().trim() : "")).filter(Boolean);
+      }
+    }
+  } catch {}
+  return DEFAULT_ESTUDIOS;
+};
 
 const CLASSIFICACOES_ETARIAS = [
   { value: "AL", label: "AL — Livre para todos os públicos", color: "#14A44D", textColor: "#fff" },
@@ -93,7 +125,7 @@ function Field({ label, children, span = "" }: { label: React.ReactNode; childre
 }
 
 
-interface Programa {
+export interface Programa {
   id: string;
   nome: string;
   apresentadorId: string;
@@ -111,35 +143,96 @@ interface Programa {
   dataVariavel: string | null;
   classificacaoEtaria: string;
   tipoPrograma: string;
+  cliente?: string;
 }
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
-async function getProgramas(targetUserId?: string | null): Promise<Programa[]> {
-  let query = supabase.from("programas").select("*");
-  if (targetUserId) {
-    query = query.eq("user_id", targetUserId);
+import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+
+export async function getProgramas(targetUserId?: string | null, userEmail?: string | null): Promise<Programa[]> {
+  const acc = findClientAccountById(targetUserId) || findClientAccountByEmail(userEmail || targetUserId);
+  const effectiveId = acc?.parentUserId || acc?.id || targetUserId;
+  const targetSlug = acc?.slug || targetUserId;
+
+  try {
+    let query = supabase.from("programas").select("*");
+    if (effectiveId) {
+      query = query.eq("user_id", effectiveId);
+    }
+    const { data } = await query;
+    if (data && data.length > 0) {
+      return data.map(p => ({
+        id: p.id || `prog_${Math.random()}`,
+        nome: p.nome || "Programa Sem Nome",
+        apresentadorId: p.apresentador_id || "",
+        apresentadoresIds: (p as any).apresentadores_ids || (p.apresentador_id ? [p.apresentador_id] : []),
+        selo: p.selo || (p as any).thumb || (p as any).capa || "",
+        capa: (p as any).capa || "",
+        thumb: (p as any).thumb || "",
+        diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map(s => s.trim()).filter(Boolean) : []),
+        horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
+        horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
+        estudio: p.estudio || "Estúdio FM",
+        ativo: (p as any).ativo ?? true,
+        variavel: (p as any).variavel ?? false,
+        descricao: (p as any).descricao || "",
+        dataVariavel: (p as any).data_variavel || null,
+        classificacaoEtaria: (p as any).classificacao_etaria || "",
+        tipoPrograma: (p as any).tipo_programa || "Musical",
+      }));
+    }
+  } catch (err) {
+    console.warn("getProgramas from supabase warning:", err);
   }
-  const { data } = await query;
-  if (!data) return [];
-  return data.map(p => ({
-    id: p.id,
-    nome: p.nome,
-    apresentadorId: p.apresentador_id || "",
-    apresentadoresIds: (p as any).apresentadores_ids || [],
-    selo: p.selo || "",
-    capa: (p as any).capa || "",
-    thumb: (p as any).thumb || "",
-    diasSemana: p.dias_semana || [],
-    horarioInicio: p.horario_inicio,
-    horarioFim: p.horario_fim,
-    estudio: p.estudio || "",
-    ativo: (p as any).ativo ?? true,
-    variavel: (p as any).variavel ?? false,
-    descricao: (p as any).descricao || "",
-    dataVariavel: (p as any).data_variavel || null,
-    classificacaoEtaria: (p as any).classificacao_etaria || "",
-    tipoPrograma: (p as any).tipo_programa || "",
+
+  try {
+    const stationData = await fetchStationDatabaseData(effectiveId || targetSlug || userEmail);
+    if (stationData?.programas && stationData.programas.length > 0) {
+      return stationData.programas.map(p => ({
+        id: p.id || `prog_${Math.random()}`,
+        nome: p.nome || "Programa Sem Nome",
+        apresentadorId: p.apresentador_id || p.apresentadorId || "",
+        apresentadoresIds: (p as any).apresentadores_ids || (p as any).apresentadoresIds || (p.apresentador_id ? [p.apresentador_id] : []),
+        selo: p.selo || (p as any).thumb || (p as any).capa || "",
+        capa: (p as any).capa || "",
+        thumb: (p as any).thumb || "",
+        diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray(p.diasSemana) ? p.diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map(s => s.trim()).filter(Boolean) : [])),
+        horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
+        horarioFim: p.horario_fim || p.horarioFim || "00:00:00",
+        estudio: p.estudio || "Estúdio FM",
+        ativo: (p as any).ativo ?? true,
+        variavel: (p as any).variavel ?? false,
+        descricao: (p as any).descricao || "",
+        dataVariavel: (p as any).data_variavel || (p as any).dataVariavel || null,
+        classificacaoEtaria: (p as any).classificacao_etaria || (p as any).classificacaoEtaria || "",
+        tipoPrograma: (p as any).tipo_programa || (p as any).tipoPrograma || "Musical",
+      }));
+    }
+  } catch (err) {
+    console.warn("getProgramas from stationData warning:", err);
+  }
+
+  const fallback = getClientHouseMixProgramsSync(acc?.id || targetUserId, acc?.email || userEmail);
+  const fallbackList: any[] = Array.isArray(fallback) ? fallback : (fallback?.programas || []);
+  return fallbackList.map(p => ({
+    id: p.id || `prog_${Math.random()}`,
+    nome: p.nome || "Programa Sem Nome",
+    apresentadorId: p.apresentador_id || p.apresentadorId || "",
+    apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || [],
+    selo: p.selo || p.thumb || p.capa || "",
+    capa: p.capa || "",
+    thumb: p.thumb || "",
+    diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray(p.diasSemana) ? p.diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map(s => s.trim()).filter(Boolean) : [])),
+    horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
+    horarioFim: p.horario_fim || p.horarioFim || "00:00:00",
+    estudio: p.estudio || "Estúdio FM",
+    ativo: p.ativo ?? true,
+    variavel: false,
+    descricao: p.descricao || "",
+    dataVariavel: null,
+    classificacaoEtaria: p.classificacao_etaria || p.classificacaoEtaria || "Livre",
+    tipoPrograma: p.tipo_programa || p.tipoPrograma || "Musical",
   }));
 }
 
@@ -211,10 +304,10 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
     return apresentadores.find(a => a.id === apresentadorId) || null;
   };
 
-  const CYAN = "#00BFF0";
-  const LIME = "#C6F03C";
-  const DARK = "#0A2540";
-  const CARD_BG = "#D6F4FB";
+  const CYAN = "#0055ff";
+  const LIME = "#0055ff";
+  const DARK = "#002132";
+  const CARD_BG = "#ffffff";
 
   return (
     <>
@@ -256,7 +349,9 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                 const cellData = spanMap[key];
                 if (!cellData) return <td key={dia} className="grade-empty-cell" style={{ padding: 0, height: 34 }} />;
                 const { prog, rowSpan } = cellData;
-                const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
+                const progInicio = prog?.horarioInicio || "00:00:00";
+                const progFim = prog?.horarioFim || "23:59:59";
+                const isOnAir = prog && dia === diaAtual && currentTimeStr >= progInicio && currentTimeStr < progFim;
                 const presenter = getPresenter(prog.apresentadorId);
                 return (
                   <td key={dia} rowSpan={rowSpan}
@@ -299,14 +394,14 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
                       color: isOnAir ? "#FFFFFF" : DARK,
                       paddingRight: isOnAir ? 60 : 0,
-                    }}>{prog.nome}</div>
+                    }}>{prog.nome || "Sem Nome"}</div>
                     <div style={{
                       fontSize: 10, marginTop: 4, fontWeight: 700,
                       fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                       color: isOnAir ? CYAN : "rgba(10,37,64,0.55)",
                       letterSpacing: 0.3,
                     }}>
-                      {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
+                      {(prog.horarioInicio || "").slice(0, 5)} — {(prog.horarioFim || "").slice(0, 5)}
                     </div>
                     {(() => {
                       const names = getPresenterNames(prog);
@@ -359,10 +454,10 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
               <div className="space-y-2 flex-1 min-w-0">
                 <h2 className="text-xl font-extrabold pr-6" style={{ color: DARK }}>{detailProg.nome}</h2>
                 <p className="text-xs flex items-center gap-1.5 font-semibold" style={{ color: "rgba(10,37,64,0.6)" }}>
-                  <Clock size={12} style={{ color: CYAN }} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
+                  <Clock size={12} style={{ color: CYAN }} /> {(detailProg.horarioInicio || "").slice(0, 5)} — {(detailProg.horarioFim || "").slice(0, 5)}
                 </p>
                 <p className="text-xs flex items-center gap-1.5 font-semibold" style={{ color: "rgba(10,37,64,0.6)" }}>
-                  <Calendar size={12} style={{ color: CYAN }} /> {detailProg.diasSemana.join(", ")}
+                  <Calendar size={12} style={{ color: CYAN }} /> {Array.isArray(detailProg.diasSemana) ? detailProg.diasSemana.join(", ") : (detailProg.diasSemana || "")}
                 </p>
                 {getPresenterName(detailProg.apresentadorId) && (
                   <p className="text-xs font-bold" style={{ color: DARK }}>
@@ -383,6 +478,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
 
 export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const targetUserId = effectiveUserId || user?.id;
   const [nome, setNome] = useState("");
   const nomeInputRef = useRef<HTMLInputElement>(null);
@@ -421,9 +517,10 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
   }, [editingId]);
 
   // Estúdio management
-  const [estudios, setEstudios] = useState<string[]>([]);
+  const [estudios, setEstudios] = useState<string[]>(() => getStoredEstudios());
   const [newEstudio, setNewEstudio] = useState("");
   const [estudioDialogOpen, setEstudioDialogOpen] = useState(false);
+  const [estudioDropdownOpen, setEstudioDropdownOpen] = useState(false);
 
   // Tipo do programa management
   const DEFAULT_TIPOS = ["Musical", "Jornalístico", "Entrevista", "Show", "Evento"];
@@ -458,6 +555,11 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     setApresentadoresIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  // Cliente / Emissora selection & filter
+  const [clientesList, setClientesList] = useState<string[]>([]);
+  const [selectedCliente, setSelectedCliente] = useState<string>("INTERATIVA FM");
+  const [filterCliente, setFilterCliente] = useState<string>("todos");
+
   // Grade filter
   const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
   const gradeRef = useRef<HTMLDivElement>(null);
@@ -490,21 +592,111 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
   const load = async () => {
     setLoadingData(true);
     try {
-      const [ap, pg] = await Promise.all([getApresentadores(), getProgramas(targetUserId)]);
-      setApresentadores(ap);
-      pg.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio));
-      setProgramas(pg);
-      const allEstudios = Array.from(new Set(pg.map(p => p.estudio).filter(Boolean)));
-      setEstudios(prev => {
-        const merged = Array.from(new Set([...prev, ...allEstudios]));
-        return merged.sort();
-      });
+      const [ap, pg] = await Promise.all([
+        getApresentadores(targetUserId, user?.email).catch(e => {
+          console.warn("Error getting apresentadores:", e);
+          return [];
+        }),
+        getProgramas(targetUserId, user?.email).catch(e => {
+          console.warn("Error getting programas:", e);
+          return [];
+        })
+      ]);
+      setApresentadores(Array.isArray(ap) ? ap : []);
+
+      // Carrega clientes conhecidos
+      let metaNames: string[] = [];
+      try {
+        const meta = getStoredMetadata() || {};
+        metaNames = Object.keys(meta).map(k => {
+          const item = meta[k];
+          return (item?.nome_empresarial || item?.razao_social || k || "").trim().toUpperCase();
+        }).filter(Boolean);
+      } catch (err) {
+        console.warn("Error getting stored metadata:", err);
+      }
+      const defaultStations = DEFAULT_STATION_DATA ? Object.keys(DEFAULT_STATION_DATA) : [];
+      const allStations = Array.from(new Set([...metaNames, ...defaultStations])).filter(Boolean).sort();
+      setClientesList(allStations.length > 0 ? allStations : ["INTERATIVA FM"]);
+
+      // Carrega programas customizados salvos
+      const allCustomProgs: Programa[] = [];
+      try {
+        const customProgsObj = getStoredCustomPrograms() || {};
+        Object.entries(customProgsObj).forEach(([cliKey, progs]) => {
+          (progs || []).forEach(p => {
+            allCustomProgs.push({
+              id: p.id || `custom_${Date.now()}_${Math.random()}`,
+              nome: p.nome || "Programa Sem Nome",
+              apresentadorId: p.apresentador_id || (p as any).apresentadorId || "",
+              apresentadoresIds: p.apresentadores_ids || (p as any).apresentadoresIds || [],
+              selo: p.selo || "",
+              capa: p.capa || "",
+              thumb: p.thumb || "",
+              diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+              horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
+              horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
+              estudio: p.estudio || "Estúdio FM",
+              ativo: p.ativo ?? true,
+              variavel: false,
+              descricao: p.descricao || "",
+              dataVariavel: null,
+              classificacaoEtaria: "",
+              tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
+              cliente: cliKey,
+            });
+          });
+        });
+      } catch (err) {
+        console.warn("Error reading custom progs:", err);
+      }
+
+      let combinedProgs = Array.isArray(pg) ? [...pg] : [];
+      if (combinedProgs.length === 0 && allCustomProgs.length === 0 && DEFAULT_STATION_DATA) {
+        Object.entries(DEFAULT_STATION_DATA).forEach(([stationName, def]) => {
+          (def.programas || []).forEach((p, idx) => {
+            combinedProgs.push({
+              id: `def_${stationName.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
+              nome: p.nome || "Programa",
+              apresentadorId: "",
+              apresentadoresIds: [],
+              selo: "",
+              capa: "",
+              thumb: "",
+              diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+              horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
+              horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
+              estudio: p.estudio || "Estúdio FM",
+              ativo: true,
+              variavel: false,
+              descricao: p.descricao || "",
+              dataVariavel: null,
+              classificacaoEtaria: "",
+              tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
+              cliente: stationName,
+            });
+          });
+        });
+      } else {
+        const existingIds = new Set(combinedProgs.map(p => p.id));
+        allCustomProgs.forEach(p => {
+          if (!existingIds.has(p.id)) combinedProgs.push(p);
+        });
+      }
+
+      combinedProgs.sort((a, b) => (a.horarioInicio || "").localeCompare(b.horarioInicio || ""));
+      setProgramas(combinedProgs);
+
+      // Mantém a lista configurada de estúdios cadastrados (default: ESTÚDIO FM e PODCAST)
+      setEstudios(getStoredEstudios());
+    } catch (err) {
+      console.error("Erro fatal ao carregar ProgramaForm:", err);
     } finally {
       setLoadingData(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [targetUserId, user?.email]);
 
   useEffect(() => {
     nomeDraftRef.current = nome;
@@ -685,6 +877,8 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     if (horarioInicio >= horarioFim) { setConflictMsg("O horário de início deve ser antes do fim."); return; }
     if (!estudio.trim()) { setConflictMsg("Informe o estúdio."); return; }
 
+    const effectiveOwnerId = targetUserId || user.id;
+
     if (variavel) {
       if (agendamentoVariavel === "data" && !dataVariavel) { setConflictMsg("Selecione a data para o programa variável."); return; }
       if (agendamentoVariavel === "dias" && diasSemana.length === 0) { setConflictMsg("Selecione ao menos um dia da semana."); return; }
@@ -697,23 +891,54 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
       setSaving(true);
       let targetId = editingId;
-      if (editingId) {
-        await supabase.from("programas").update({
-          nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
-          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-          variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-          apresentadores_ids: apresentadoresIds,
-        } as any).eq("id", editingId);
-      } else {
-        const { data: inserted } = await supabase.from("programas").insert({
-          user_id: user.id, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
-          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-          variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-          apresentadores_ids: apresentadoresIds,
-        } as any).select("id").single();
-        targetId = inserted?.id || null;
+      try {
+        if (editingId) {
+          await supabase.from("programas").update({
+            nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
+            horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+            variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+            apresentadores_ids: apresentadoresIds,
+          } as any).eq("id", editingId);
+        } else {
+          const { data: inserted, error: insertErr } = await supabase.from("programas").insert({
+            user_id: effectiveOwnerId, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
+            horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+            variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+            apresentadores_ids: apresentadoresIds,
+          } as any).select("id").single();
+          if (insertErr) console.warn("Supabase insert programa (variavel) notice:", insertErr);
+          targetId = inserted?.id || null;
+        }
+      } catch (err) {
+        console.warn("Supabase insert/update programa (variavel) error:", err);
       }
-      if (targetId) await uploadImages(targetId);
+      if (targetId) {
+        try { await uploadImages(targetId); } catch {}
+      }
+
+      // Salva vinculação com o cliente selecionado
+      const normCli = normalizeClientKey(selectedCliente) || selectedCliente;
+      saveCustomProgram({
+        id: targetId || `prog_${Date.now()}`,
+        nome: nomeAtual,
+        estudio: estudio.trim().toUpperCase(),
+        horario_inicio: horarioInicio,
+        horario_fim: horarioFim,
+        dias_semana: diasVariavel,
+        ativo,
+        tipo_programa: tipoPrograma || null,
+        apresentador_id: apresentadoresIds[0] || apresentadorId || null,
+        apresentadores_ids: apresentadoresIds,
+        descricao: descricao.trim() || null,
+        cliente_nome: selectedCliente,
+      }, normCli);
+      saveCustomStudio(estudio.trim().toUpperCase(), normCli);
+
+      try {
+        window.dispatchEvent(new CustomEvent("nexohub:programas-updated", { detail: { programId: targetId } }));
+        window.dispatchEvent(new CustomEvent("housemix:programas-updated", { detail: { clientKey: normCli, programId: targetId } }));
+      } catch {}
+
       await load();
       resetForm();
       setSaving(false);
@@ -731,23 +956,54 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     setSaving(true);
     let targetId = editingId;
 
-    if (editingId) {
-      await supabase.from("programas").update({
-        nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
-        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-        apresentadores_ids: apresentadoresIds,
-      } as any).eq("id", editingId);
-    } else {
-      const { data: inserted } = await supabase.from("programas").insert({
-        user_id: user.id, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
-        horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-        variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-        apresentadores_ids: apresentadoresIds,
-      } as any).select("id").single();
-      targetId = inserted?.id || null;
+    try {
+      if (editingId) {
+        await supabase.from("programas").update({
+          nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
+          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+          variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+          apresentadores_ids: apresentadoresIds,
+        } as any).eq("id", editingId);
+      } else {
+        const { data: inserted, error: insertErr } = await supabase.from("programas").insert({
+          user_id: effectiveOwnerId, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
+          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
+          variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
+          apresentadores_ids: apresentadoresIds,
+        } as any).select("id").single();
+        if (insertErr) console.warn("Supabase insert programa notice:", insertErr);
+        targetId = inserted?.id || null;
+      }
+    } catch (err) {
+      console.warn("Supabase insert/update programa error:", err);
     }
-    if (targetId) await uploadImages(targetId);
+    if (targetId) {
+      try { await uploadImages(targetId); } catch {}
+    }
+
+    // Salva vinculação com o cliente selecionado
+    const normCli = normalizeClientKey(selectedCliente) || selectedCliente;
+    saveCustomProgram({
+      id: targetId || `prog_${Date.now()}`,
+      nome: nomeAtual,
+      estudio: estudio.trim().toUpperCase(),
+      horario_inicio: horarioInicio,
+      horario_fim: horarioFim,
+      dias_semana: diasSemana,
+      ativo,
+      tipo_programa: tipoPrograma || null,
+      apresentador_id: apresentadoresIds[0] || apresentadorId || null,
+      apresentadores_ids: apresentadoresIds,
+      descricao: descricao.trim() || null,
+      cliente_nome: selectedCliente,
+    }, normCli);
+    saveCustomStudio(estudio.trim().toUpperCase(), normCli);
+
+    try {
+      window.dispatchEvent(new CustomEvent("nexohub:programas-updated", { detail: { programId: targetId } }));
+      window.dispatchEvent(new CustomEvent("housemix:programas-updated", { detail: { clientKey: normCli, programId: targetId } }));
+    } catch {}
+
     await load();
     resetForm();
     setSaving(false);
@@ -766,27 +1022,75 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
     setClassificacaoEtaria(p.classificacaoEtaria || "");
     setTipoPrograma(p.tipoPrograma || "");
+    if (p.cliente) {
+      setSelectedCliente(p.cliente);
+    }
     setConflictMsg("");
     // Scroll to form
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
   const removePrograma = async (id: string) => {
-    await supabase.from("programas").delete().eq("id", id);
+    try {
+      await supabase.from("programas").delete().eq("id", id);
+    } catch (e) {
+      console.warn("Error deleting program from supabase:", e);
+    }
+    removeCustomProgram(id, selectedCliente);
     await load();
   };
 
   const toggleAtivo = async (id: string, current: boolean) => {
-    await supabase.from("programas").update({ ativo: !current } as any).eq("id", id);
+    try {
+      await supabase.from("programas").update({ ativo: !current } as any).eq("id", id);
+    } catch (e) {
+      console.warn("Error updating program ativo in supabase:", e);
+    }
+    try {
+      const all = getStoredCustomPrograms();
+      let updatedAny = false;
+      Object.keys(all).forEach(k => {
+        all[k] = (all[k] || []).map(p => {
+          if (p.id === id) {
+            updatedAny = true;
+            return { ...p, ativo: !current };
+          }
+          return p;
+        });
+      });
+      if (updatedAny) {
+        localStorage.setItem("nexohub_housemix_programs_v2", JSON.stringify(all));
+      }
+    } catch {}
     await load();
   };
 
   const addEstudio = () => {
     if (!newEstudio.trim()) return;
-    setEstudios(prev => Array.from(new Set([...prev, newEstudio.trim()])).sort());
-    setEstudio(newEstudio.trim());
+    const est = newEstudio.trim().toUpperCase();
+    const current = getStoredEstudios();
+    if (!current.includes(est)) {
+      const updated = [...current, est];
+      setEstudios(updated);
+      localStorage.setItem(ESTUDIOS_STORAGE_KEY, JSON.stringify(updated));
+      saveCustomStudio(est, selectedCliente || "INTERATIVA FM");
+    }
+    setEstudio(est);
     setNewEstudio("");
     setEstudioDialogOpen(false);
+    toast({ title: `Estúdio "${est}" cadastrado com sucesso` });
+  };
+
+  const removeEstudio = (estudioToRemove: string) => {
+    const current = getStoredEstudios();
+    const updated = current.filter(e => e.toUpperCase() !== estudioToRemove.toUpperCase());
+    setEstudios(updated);
+    localStorage.setItem(ESTUDIOS_STORAGE_KEY, JSON.stringify(updated));
+    removeCustomStudio(estudioToRemove, selectedCliente);
+    if (estudio.toUpperCase() === estudioToRemove.toUpperCase()) {
+      setEstudio("");
+    }
+    toast({ title: `Estúdio "${estudioToRemove}" excluído` });
   };
 
   const getApresentadorNome = (id: string) => apresentadores.find(a => a.id === id)?.nome || "—";
@@ -814,24 +1118,41 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
   const weekDates = useMemo(() => {
     const dates: Record<string, string> = {};
     DIAS_SEMANA.forEach((dia, i) => {
-      const date = addDays(weekStart, i);
-      dates[dia] = format(date, "dd/MM");
+      try {
+        const date = addDays(weekStart, i);
+        dates[dia] = format(date, "dd/MM");
+      } catch {
+        dates[dia] = "";
+      }
     });
     return dates;
   }, [weekStart.toDateString()]);
 
-  // Filter: variable programs only show on their specific day
+  // Filter: variable programs only show on their specific day, and filtered by client/estudio
   const gradeProgramas = useMemo(() => {
     let filtered = gradeEstudioFilter === "todos" ? programas : programas.filter(p => p.estudio === gradeEstudioFilter);
-    // Variable programs only show on their registered days (treated as specific date programs)
+    if (filterCliente !== "todos") {
+      const normF = normalizeClientKey(filterCliente);
+      filtered = filtered.filter(p => {
+        const pCli = normalizeClientKey(p.cliente || "");
+        const matchName = (p.nome || "").toUpperCase().includes(normF);
+        const matchDesc = (p.descricao || "").toUpperCase().includes(normF);
+        const matchEst = (p.estudio || "").toUpperCase().includes(normF);
+        return pCli === normF || matchName || matchDesc || matchEst;
+      });
+    }
     return filtered;
-  }, [programas, gradeEstudioFilter]);
+  }, [programas, gradeEstudioFilter, filterCliente]);
 
   // Get the full date string for a given day of the week in current week
   const getDateForDay = (dia: string): string => {
-    const idx = DIAS_SEMANA.indexOf(dia);
-    const date = addDays(weekStart, idx);
-    return format(date, "yyyy-MM-dd");
+    try {
+      const idx = DIAS_SEMANA.indexOf(dia);
+      const date = addDays(weekStart, idx);
+      return format(date, "yyyy-MM-dd");
+    } catch {
+      return "";
+    }
   };
 
   const getProgramaForSlot = (dia: string, slotTime: string) => {
@@ -850,8 +1171,11 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     const matching = gradeProgramas.filter(p => {
       if (!p.ativo) return false;
       // Overlap logic: program starts before slot ends AND program ends after slot starts
-      const overlaps = p.horarioInicio < nextSlotTime && p.horarioFim > slotTime;
-      return p.diasSemana.includes(dia) && overlaps;
+      const pInicio = p.horarioInicio || "00:00:00";
+      const pFim = p.horarioFim || "00:00:00";
+      const overlaps = pInicio < nextSlotTime && pFim > slotTime;
+      const days = Array.isArray(p.diasSemana) ? p.diasSemana : [];
+      return days.includes(dia) && overlaps;
     });
 
     if (matching.length === 0) return undefined;
@@ -860,8 +1184,8 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     const variable = matching.find(p => p.variavel && (!p.dataVariavel || p.dataVariavel === dateForDay));
     if (variable) return variable;
 
-    // Priority: show program that starts in this slot if any
-    const startsInSlot = matching.find(p => p.horarioInicio >= slotTime && p.horarioInicio < nextSlotTime);
+    // Prioritize program whose start time matches this slot
+    const startsInSlot = matching.find(p => (p.horarioInicio || "").startsWith(slotTime.slice(0, 5)));
     if (startsInSlot) return startsInSlot;
 
     // Otherwise show fixed (non-variable) program
@@ -873,42 +1197,53 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     const WD = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
     const WE = ["Sábado", "Domingo"];
     let sorted = [...programas];
+    if (filterCliente !== "todos") {
+      const normF = normalizeClientKey(filterCliente);
+      sorted = sorted.filter(p => {
+        const pCli = normalizeClientKey(p.cliente || "");
+        const matchName = (p.nome || "").toUpperCase().includes(normF);
+        const matchDesc = (p.descricao || "").toUpperCase().includes(normF);
+        const matchEst = (p.estudio || "").toUpperCase().includes(normF);
+        return pCli === normF || matchName || matchDesc || matchEst;
+      });
+    }
     if (periodoFilter !== "todos") {
       sorted = sorted.filter(p => {
-        const days = p.diasSemana || [];
+        const days = Array.isArray(p.diasSemana) ? p.diasSemana : [];
         if (periodoFilter === "semana") return days.some(d => WD.includes(d));
         return days.some(d => WE.includes(d));
       });
     }
     switch (sortBy) {
-      case "nome": sorted.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")); break;
-      case "estudio": sorted.sort((a, b) => a.estudio.localeCompare(b.estudio, "pt-BR")); break;
+      case "nome": sorted.sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")); break;
+      case "estudio": sorted.sort((a, b) => (a.estudio || "").localeCompare(b.estudio || "", "pt-BR")); break;
       case "status": sorted.sort((a, b) => (a.ativo === b.ativo ? 0 : a.ativo ? -1 : 1)); break;
-      default: sorted.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio)); break;
+      default: sorted.sort((a, b) => (a.horarioInicio || "").localeCompare(b.horarioInicio || "")); break;
     }
     return sorted;
-  }, [programas, sortBy, periodoFilter]);
+  }, [programas, filterCliente, sortBy, periodoFilter]);
 
 
   if (loadingData) return <ModulePageSkeleton variant="form" />;
 
-  // === Nexo Form Design System (mesmo do Cadastro de Ouvinte) ===
-  const CYAN = "#00BFF0";
-  const LIME = "#C6F03C";
-  const CARD_BG = "#D6F4FB";
-  const DARK = "#0A2540";
+  // === Nexo Form Design System (mesmo padrão Blitz / ClientesPage) ===
+  const CYAN = "#0055ff";
+  const LIME = "#0055ff";
+  const CARD_BG = "#ffffff";
+  const DARK = "#002132";
 
   const pillInput: React.CSSProperties = {
     width: "100%",
     height: 44,
     borderRadius: 999,
-    background: "#FFFFFF",
-    border: `2px solid ${CYAN}`,
+    background: "#f8fafc",
+    border: "1px solid rgba(226, 232, 240, 0.9)",
     padding: "0 20px",
     fontFamily: "'Montserrat', sans-serif",
-    fontSize: 13,
-    color: DARK,
+    fontSize: 12,
+    color: "#0f172a",
     outline: "none",
+    textTransform: "uppercase",
   };
 
   const pillSelectTrigger: React.CSSProperties = {
@@ -922,12 +1257,12 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
   const labelStyle: React.CSSProperties = {
     fontFamily: "'Montserrat', sans-serif",
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: 800,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: DARK,
-    marginBottom: 8,
+    color: "#64748b",
+    marginBottom: 6,
     display: "block",
   };
 
@@ -935,9 +1270,9 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     height: 44,
     padding: "0 28px",
     borderRadius: 999,
-    background: LIME,
+    background: "#0055ff",
     border: "none",
-    color: DARK,
+    color: "#ffffff",
     fontWeight: 800,
     fontSize: 12,
     letterSpacing: 2,
@@ -946,16 +1281,16 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     alignItems: "center",
     gap: 10,
     cursor: "pointer",
-    boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+    boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
   };
 
   const secondaryBtn: React.CSSProperties = {
     height: 44,
     padding: "0 22px",
     borderRadius: 999,
-    background: "#FFFFFF",
-    border: `2px solid ${CYAN}`,
-    color: DARK,
+    background: "#f8fafc",
+    border: "1px solid #cbd5e1",
+    color: "#334155",
     fontWeight: 700,
     fontSize: 12,
     letterSpacing: 1.5,
@@ -967,54 +1302,54 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
   };
 
   const smallCyanBtn: React.CSSProperties = {
-    height: 36,
-    padding: "0 14px",
+    height: 44,
+    padding: "0 16px",
     borderRadius: 999,
-    background: CYAN,
+    background: "#0055ff",
     border: "none",
-    color: "#FFFFFF",
+    color: "#ffffff",
     fontWeight: 700,
     fontSize: 11,
     letterSpacing: 1,
     textTransform: "uppercase",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
     cursor: "pointer",
     whiteSpace: "nowrap",
+    boxShadow: "0 2px 8px rgba(0, 85, 255, 0.25)",
   };
 
-
-
-
-
-
-  const uploadBox = (img: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, w: number, h: number) => (
+  const uploadBox = (img: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, w: number, h: number, labelName = "Upload") => (
     <label
+      className="group relative flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/20 bg-slate-50/80 shadow-xs"
       style={{
         width: w,
         height: h,
-        borderRadius: 18,
-        background: "#FFFFFF",
-        border: `2px dashed ${CYAN}`,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        overflow: "hidden",
       }}
     >
       {img ? (
-        <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div className="relative w-full h-full group">
+          <img src={img} alt="" className="w-full h-full object-cover rounded-2xl" />
+          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-2xl">
+            <Upload size={14} />
+            <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5">Trocar</span>
+          </div>
+        </div>
       ) : (
-        <span style={{ fontSize: 9, fontWeight: 700, color: DARK, letterSpacing: 0.5, textTransform: "uppercase" }}>
-          Upload
-        </span>
+        <div className="flex flex-col items-center justify-center gap-1 p-1 text-slate-400 group-hover:text-[#0055ff] transition-colors">
+          <Upload size={15} className="text-slate-400 group-hover:text-[#0055ff] transition-colors" />
+          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500 group-hover:text-[#0055ff] transition-colors">
+            {labelName}
+          </span>
+        </div>
       )}
       <input type="file" accept="image/*" onChange={onChange} style={{ display: "none" }} />
     </label>
   );
 
   return (
-    <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="animate-fade-in space-y-8 max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cadastro de Programas
@@ -1024,10 +1359,11 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       <section
         ref={formRef}
         style={{
-          background: CARD_BG,
-          borderRadius: 28,
+          background: "#ffffff",
+          borderRadius: 24,
           padding: "28px 32px 32px",
-          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
         }}
         className="mb-8"
       >
@@ -1045,42 +1381,67 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             {editingId ? "Editar Programa" : "Cadastro de Programa"}
           </h3>
           
-          <div className="flex items-center gap-4 flex-wrap">
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: DARK,
-                background: "#FFFFFF",
-                padding: "6px 16px",
-                borderRadius: 999,
-                border: `2px solid ${CYAN}`,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-              }}
-            >
-              ID: <span style={{ color: CYAN }}>{editingId ? editingId.slice(0, 8) : "—"}</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* ID Badge */}
+            <div className="text-[11px] font-bold text-slate-600 bg-slate-100/90 px-4 py-2 rounded-full uppercase tracking-wider border border-slate-200/80 shadow-xs flex items-center gap-1.5">
+              <span className="text-slate-400 font-semibold">ID:</span>
+              <span className="text-[#0055ff] font-black">{editingId ? editingId.slice(0, 8) : "—"}</span>
             </div>
             
             {/* Ativo Toggle */}
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
-              <div style={{ position: "relative", width: 34, height: 18 }}>
-                <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
-                <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: ativo ? LIME : "#E2E8F0", transition: "background 0.2s" }} />
-                <span style={{ position: "absolute", top: 2, left: ativo ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>{ativo ? "Ativo" : "Inativo"}</span>
-            </label>
+            <div
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-full border transition-all duration-200 cursor-pointer select-none shadow-xs ${
+                ativo 
+                  ? "bg-emerald-50/90 border-emerald-200/90 text-emerald-800" 
+                  : "bg-slate-50 border-slate-200 text-slate-600"
+              }`}
+              onClick={() => setAtivo(!ativo)}
+            >
+              <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${ativo ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse" : "bg-slate-400"}`} />
+                {ativo ? "Ativo" : "Inativo"}
+              </span>
+              <Switch
+                checked={ativo}
+                onCheckedChange={setAtivo}
+                className="data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-slate-300 scale-90"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
             
             {/* Variável Toggle */}
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${variavel ? "#F59E0B" : CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
-              <div style={{ position: "relative", width: 34, height: 18 }}>
-                <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) { setDataVariavel(undefined); setAgendamentoVariavel("data"); } }} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
-                <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: variavel ? "#F59E0B" : "#E2E8F0", transition: "background 0.2s" }} />
-                <span style={{ position: "absolute", top: 2, left: variavel ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>Variável</span>
-            </label>
+            <div
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-full border transition-all duration-200 cursor-pointer select-none shadow-xs ${
+                variavel 
+                  ? "bg-amber-50/90 border-amber-300/90 text-amber-900" 
+                  : "bg-slate-50 border-slate-200 text-slate-600"
+              }`}
+              onClick={() => {
+                const next = !variavel;
+                setVariavel(next);
+                if (!next) {
+                  setDataVariavel(undefined);
+                  setAgendamentoVariavel("data");
+                }
+              }}
+            >
+              <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${variavel ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)] animate-pulse" : "bg-slate-400"}`} />
+                {variavel ? "Variável" : "Fixo"}
+              </span>
+              <Switch
+                checked={variavel}
+                onCheckedChange={(checked) => {
+                  setVariavel(checked);
+                  if (!checked) {
+                    setDataVariavel(undefined);
+                    setAgendamentoVariavel("data");
+                  }
+                }}
+                className="data-[state=checked]:bg-amber-500 data-[state=unchecked]:bg-slate-300 scale-90"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
           </div>
         </div>
 
@@ -1088,6 +1449,21 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Building2 size={12} /> Cliente / Emissora</span>}>
+            <Select value={selectedCliente || undefined} onValueChange={setSelectedCliente}>
+              <SelectTrigger style={pillSelectTrigger}>
+                <SelectValue placeholder="Selecione o Cliente" />
+              </SelectTrigger>
+              <SelectContent className="max-h-56">
+                {clientesList.filter(cli => typeof cli === "string" && cli.trim() !== "").map(cli => (
+                  <SelectItem key={cli} value={cli}>
+                    {cli}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
           <Field label="Nome do Programa" span="lg:col-span-2">
             <input
               ref={nomeInputRef}
@@ -1110,12 +1486,12 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
           <Field label="Tipo do Programa">
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
-                <Select value={tipoPrograma} onValueChange={setTipoPrograma}>
+                <Select value={tipoPrograma || undefined} onValueChange={setTipoPrograma}>
                   <SelectTrigger style={pillSelectTrigger}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tiposPrograma.map(t => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
+                    {tiposPrograma.filter(t => typeof t === "string" && t.trim() !== "").map(t => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1135,12 +1511,12 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
           </Field>
 
           <Field label="Classificação Etária">
-            <Select value={classificacaoEtaria} onValueChange={setClassificacaoEtaria}>
+            <Select value={classificacaoEtaria || undefined} onValueChange={setClassificacaoEtaria}>
               <SelectTrigger style={pillSelectTrigger}>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {CLASSIFICACOES_ETARIAS.map(c => (
+                {CLASSIFICACOES_ETARIAS.filter(c => typeof c.value === "string" && c.value.trim() !== "").map(c => (
                   <SelectItem key={c.value} value={c.value}>
                     <span className="flex items-center gap-2">
                       <ClassificacaoBadge value={c.value} size={18} />
@@ -1206,14 +1582,70 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
           <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Building2 size={12} /> Estúdio</span>}>
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
-                <Select value={estudio} onValueChange={setEstudio}>
-                  <SelectTrigger style={pillSelectTrigger}>
-                    <SelectValue placeholder="Selecione o estúdio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {estudios.map(e => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <Popover open={estudioDropdownOpen} onOpenChange={setEstudioDropdownOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      style={pillSelectTrigger}
+                      onClick={() => setEstudioDropdownOpen(prev => !prev)}
+                      className="w-full text-left"
+                    >
+                      <span style={{ color: estudio ? DARK : "#94A3B8", fontWeight: estudio ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {estudio || "Selecione o estúdio"}
+                      </span>
+                      <ChevronDown size={14} className={cn("text-[#0055ff] transition-transform duration-200 shrink-0 ml-2", estudioDropdownOpen && "rotate-180")} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] min-w-[220px] p-2 rounded-2xl bg-white border border-slate-200 shadow-2xl z-[100] max-h-64 overflow-y-auto space-y-1 animate-in fade-in zoom-in-95 duration-100"
+                    align="start"
+                  >
+                    {estudios.filter(e => typeof e === "string" && e.trim() !== "").map(e => {
+                      const isSelected = estudio?.toUpperCase() === e.toUpperCase();
+                      return (
+                        <div
+                          key={e}
+                          onClick={() => {
+                            setEstudio(e);
+                            setEstudioDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "group flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-150 text-xs font-bold uppercase tracking-wide",
+                            isSelected
+                              ? "bg-[#0055ff] text-white shadow-sm"
+                              : "text-slate-700 hover:bg-[#0055ff] hover:text-white"
+                          )}
+                        >
+                          <span className="truncate pr-2">{e}</span>
+                          <button
+                            type="button"
+                            onClick={(ev) => {
+                              ev.preventDefault();
+                              ev.stopPropagation();
+                              removeEstudio(e);
+                            }}
+                            title={`Excluir ${e}`}
+                            aria-label={`Excluir estúdio ${e}`}
+                            className={cn(
+                              "w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all border",
+                              isSelected
+                                ? "border-white/40 text-white hover:bg-rose-500 hover:border-rose-500"
+                                : "border-slate-300 text-slate-400 group-hover:border-white/40 group-hover:text-white hover:!bg-rose-500 hover:!text-white hover:!border-rose-500"
+                            )}
+                          >
+                            <Minus size={11} strokeWidth={3} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                    {estudios.length === 0 && (
+                      <div className="py-5 text-center text-xs text-slate-400 font-medium">
+                        Nenhum estúdio cadastrado.<br />
+                        Clique em <span className="text-[#0055ff] font-bold">+ NOVO</span> para adicionar.
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
               <Dialog open={estudioDialogOpen} onOpenChange={setEstudioDialogOpen}>
                 <DialogTrigger asChild>
@@ -1222,7 +1654,13 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                 <DialogContent style={{ background: CARD_BG, borderRadius: 24, border: "none" }}>
                   <DialogHeader><DialogTitle style={{ color: DARK, fontFamily: "'Montserrat', sans-serif", fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", fontSize: 14 }}>Cadastrar Estúdio</DialogTitle></DialogHeader>
                   <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
-                    <input style={pillInput} value={newEstudio} onChange={(e) => setNewEstudio(e.target.value)} placeholder="Nome do estúdio" />
+                    <input
+                      style={pillInput}
+                      value={newEstudio}
+                      onChange={(e) => setNewEstudio(e.target.value)}
+                      placeholder="Nome do estúdio"
+                      onKeyDown={(e) => { if (e.key === "Enter") addEstudio(); }}
+                    />
                     <button onClick={addEstudio} style={{ ...primaryBtn, width: "100%", justifyContent: "center" }}>Adicionar</button>
                   </div>
                 </DialogContent>
@@ -1323,14 +1761,22 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
           <Field label="Selo (1080×1080 PNG alpha)">
             <div className="flex items-center gap-3">
-              {uploadBox(selo, handleSelo, 72, 72)}
+              {uploadBox(selo, handleSelo, 74, 74, "Selo")}
               {selo && (
-                <div className="flex flex-col gap-1">
-                  <button onClick={() => setSelo("")} style={{ background: "transparent", border: "none", color: "#DC2626", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    <Trash2 size={11} className="inline mr-1" /> Remover
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(selo, `selo_${nome || "programa"}.png`)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
+                  >
+                    <Download size={11} /> Baixar
                   </button>
-                  <button onClick={() => handleDownload(selo, `selo_${nome || "programa"}.png`)} style={{ background: "transparent", border: "none", color: CYAN, fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    <Download size={11} className="inline mr-1" /> Baixar
+                  <button
+                    type="button"
+                    onClick={() => setSelo("")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
+                  >
+                    <Trash2 size={11} /> Remover
                   </button>
                 </div>
               )}
@@ -1338,14 +1784,22 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
           </Field>
           <Field label="Capa (226×302 PNG alpha)">
             <div className="flex items-center gap-3">
-              {uploadBox(capa, handleCapa, 60, 82)}
+              {uploadBox(capa, handleCapa, 64, 86, "Capa")}
               {capa && (
-                <div className="flex flex-col gap-1">
-                  <button onClick={() => setCapa("")} style={{ background: "transparent", border: "none", color: "#DC2626", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    <Trash2 size={11} className="inline mr-1" /> Remover
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(capa, `capa_${nome || "programa"}.png`)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
+                  >
+                    <Download size={11} /> Baixar
                   </button>
-                  <button onClick={() => handleDownload(capa, `capa_${nome || "programa"}.png`)} style={{ background: "transparent", border: "none", color: CYAN, fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    <Download size={11} className="inline mr-1" /> Baixar
+                  <button
+                    type="button"
+                    onClick={() => setCapa("")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
+                  >
+                    <Trash2 size={11} /> Remover
                   </button>
                 </div>
               )}
@@ -1353,14 +1807,22 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
           </Field>
           <Field label="Thumb (1920×1080 PNG)">
             <div className="flex items-center gap-3">
-              {uploadBox(thumb, handleThumb, 108, 60)}
+              {uploadBox(thumb, handleThumb, 110, 62, "Thumb")}
               {thumb && (
-                <div className="flex flex-col gap-1">
-                  <button onClick={() => setThumb("")} style={{ background: "transparent", border: "none", color: "#DC2626", fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    <Trash2 size={11} className="inline mr-1" /> Remover
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(thumb, `thumb_${nome || "programa"}.png`)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
+                  >
+                    <Download size={11} /> Baixar
                   </button>
-                  <button onClick={() => handleDownload(thumb, `thumb_${nome || "programa"}.png`)} style={{ background: "transparent", border: "none", color: CYAN, fontSize: 10, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    <Download size={11} className="inline mr-1" /> Baixar
+                  <button
+                    type="button"
+                    onClick={() => setThumb("")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
+                  >
+                    <Trash2 size={11} /> Remover
                   </button>
                 </div>
               )}
@@ -1438,6 +1900,22 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
               </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <div style={{ minWidth: 180 }}>
+                <Select value={filterCliente || "todos"} onValueChange={setFilterCliente}>
+                  <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                    <SelectValue placeholder="Filtrar por Cliente" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    <SelectItem value="todos">Todos os Clientes</SelectItem>
+                    {clientesList.filter(cli => typeof cli === "string" && cli.trim() !== "").map(cli => (
+                      <SelectItem key={cli} value={cli}>
+                        {cli}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div style={{ display: "inline-flex", gap: 4, background: CARD_BG, borderRadius: 999, padding: 4 }}>
                 {([
                   { v: "todos", label: "Todos" },
@@ -1459,7 +1937,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                 ))}
               </div>
               <div style={{ minWidth: 180 }}>
-                <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <Select value={sortBy || "horario"} onValueChange={(v: any) => setSortBy(v)}>
                   <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
                     <SelectValue placeholder="Ordenar" />
                   </SelectTrigger>
@@ -1493,9 +1971,14 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                       <div className="flex items-center gap-2">
                         {p.capa && <img src={p.capa} alt="" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover", border: `1px solid ${CARD_BG}` }} />}
                         <div>
-                          <div className="flex items-center gap-1.5">
-                            {p.nome}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{p.nome}</span>
                             {p.variavel && <span style={{ fontSize: 9, padding: "1px 8px", borderRadius: 999, fontWeight: 800, background: "#FEF3C7", color: "#92400E", letterSpacing: 0.5 }}>VAR</span>}
+                            {p.cliente && (
+                              <span style={{ fontSize: 9, padding: "1px 7px", borderRadius: 999, fontWeight: 800, background: "#E0F2FE", color: "#0369A1", letterSpacing: 0.4 }}>
+                                {p.cliente}
+                              </span>
+                            )}
                           </div>
                           {p.classificacaoEtaria && <div style={{ marginTop: 3 }}><ClassificacaoBadge value={p.classificacaoEtaria} size={13} /></div>}
                         </div>
@@ -1503,7 +1986,14 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                     </td>
                     <td style={{ padding: "10px 14px", fontSize: 11 }}>
                       {p.variavel && p.dataVariavel
-                        ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
+                        ? (() => {
+                            try {
+                              const d = new Date(p.dataVariavel + "T12:00:00");
+                              return isNaN(d.getTime()) ? p.dataVariavel : format(d, "dd/MM/yyyy (EEEE)", { locale: ptBR });
+                            } catch {
+                              return p.dataVariavel || "";
+                            }
+                          })()
                         : (
                           <div className="flex flex-wrap gap-1">
                             {(() => {
@@ -1525,7 +2015,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                     <td style={{ padding: "10px 14px", whiteSpace: "nowrap" }}>
                       <span className="inline-flex items-center gap-1.5" style={{ fontWeight: 600 }}>
                         <Clock size={11} style={{ color: CYAN }} />
-                        {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                        {(p.horarioInicio || "00:00").slice(0, 5)} — {(p.horarioFim || "00:00").slice(0, 5)}
                       </span>
                     </td>
                     <td style={{ padding: "10px 14px" }}>{getApresentadoresNomes(p)}</td>
@@ -1576,13 +2066,13 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
               </h3>
             </div>
             <div style={{ minWidth: 200 }}>
-              <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
+              <Select value={gradeEstudioFilter || "todos"} onValueChange={setGradeEstudioFilter}>
                 <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
                   <SelectValue placeholder="Filtrar por estúdio" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos os estúdios</SelectItem>
-                  {estudios.map(e => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
+                  {estudios.filter(e => typeof e === "string" && e.trim() !== "").map(e => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -1639,7 +2129,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             }}>
               <div style={{ position: "absolute", left: -4, top: -4, width: 10, height: 10, borderRadius: "50%", background: "#DC2626", boxShadow: "0 0 6px rgba(220,38,38,0.5)" }} />
               <div style={{ position: "absolute", left: 12, top: -9, fontSize: 9, fontWeight: 700, color: "#FFFFFF", background: "#DC2626", padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
-                {currentTimeStr.slice(0, 5)}
+                {(currentTimeStr || "00:00").slice(0, 5)}
               </div>
             </div>
           </div>

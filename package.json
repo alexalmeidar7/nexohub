@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "npx tsx scripts/generate-sitemap.ts",
+    "predev": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/generate-user-xmls.ts",
     "dev": "vite",
-    "build": "vite build",
+    "prebuild": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/generate-user-xmls.ts",
+    "build": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/generate-user-xmls.ts && vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",

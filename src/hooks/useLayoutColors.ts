@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 
 /** Convert hex color to HSL string "H S% L%" for CSS custom properties */
 function hexToHsl(hex: string, lightnessOffset = 0): string | null {
@@ -124,11 +125,12 @@ export function useLayoutColors() {
   }, [user]);
 
   const fetchColors = useCallback(() => {
-    if (!effectiveUserId) return;
+    if (!effectiveUserId && !user) return;
+    const targetId = effectiveUserId || user?.id;
     supabase
       .from("user_settings")
       .select("dashboard_items")
-      .eq("user_id", effectiveUserId)
+      .eq("user_id", targetId)
       .maybeSingle()
       .then(({ data }) => {
         if (
@@ -141,9 +143,24 @@ export function useLayoutColors() {
             ...(data.dashboard_items as any).layout_colors,
           };
           setColors(loaded);
+          return;
+        }
+
+        const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(targetId);
+        if (clientAcc?.layoutColors) {
+          setColors({
+            ...defaultLayoutColors,
+            pageBg: clientAcc.layoutColors.homeBgColor || defaultLayoutColors.pageBg,
+            homeBgColor: clientAcc.layoutColors.homeBgColor || defaultLayoutColors.homeBgColor,
+            widgetBg: clientAcc.layoutColors.cardBgColor || defaultLayoutColors.widgetBg,
+            widgetText: clientAcc.layoutColors.cardTextColor || defaultLayoutColors.widgetText,
+            accentColor: clientAcc.layoutColors.accentColor || defaultLayoutColors.accentColor,
+            buttonBg: clientAcc.layoutColors.accentColor || defaultLayoutColors.buttonBg,
+            buttonText: "#002132",
+          });
         }
       });
-  }, [effectiveUserId]);
+  }, [effectiveUserId, user]);
 
   useEffect(() => {
     fetchColors();

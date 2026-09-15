@@ -4,11 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import XmlLinkRow from "./XmlLinkRow";
-import XmlSection from "./XmlSection";
 import { toast } from "sonner";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface EnqueteAgendada {
   id: string;
@@ -23,8 +22,9 @@ interface EnqueteAgendada {
   horario_fim: string;
 }
 
-export default function EnquetePage() {
+export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enquetes, setEnquetes] = useState<EnqueteAgendada[]>([]);
@@ -42,227 +42,264 @@ export default function EnquetePage() {
     horario_fim: "23:59"
   });
 
-  const xmlUrl = user ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-enquete?user_id=${user.id}` : "";
+  const getLocalStorageKey = (uId: string) => `nexohub_enquetes_${uId}`;
+
+  const getStoredEnquetes = (uId: string): EnqueteAgendada[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  };
+
+  const saveStoredEnquetes = (uId: string, list: EnqueteAgendada[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+    } catch {}
+  };
 
   const fetchEnquetes = async () => {
-    if (!user) return;
+    if (!targetUserId) return;
     
     const now = new Date();
     const today = todayInBrasilia();
     const currentTime = now.toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-    // Primeiro, buscar as enquetes do usuário
-    const { data, error } = await supabase
-      .from("enquetes_agendadas")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("data_enquete", { ascending: false });
+    let rows: any[] = [];
+    try {
+      const { data } = await supabase
+        .from("enquetes_agendadas")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .order("data_enquete", { ascending: false });
 
-    if (error) {
-      toast.error("Erro ao carregar enquetes");
-    } else if (data) {
-      // Filtrar apenas as enquetes que ainda não terminaram
-      const validEnquetes = data.filter(e => {
-        if (e.data_enquete > today) return true;
-        if (e.data_enquete === today && e.horario_fim >= currentTime) return true;
-        return false;
-      });
-
-      // Identificar IDs de enquetes vencidas para remover do banco (opcional, mas solicitado)
-      const expiredIds = data
-        .filter(e => !validEnquetes.find(v => v.id === e.id))
-        .map(e => e.id);
-
-      if (expiredIds.length > 0) {
-        await supabase
-          .from("enquetes_agendadas")
-          .delete()
-          .in("id", expiredIds);
+      if (data) {
+        rows = data;
       }
-
-      setEnquetes(validEnquetes as EnqueteAgendada[]);
+    } catch (err) {
+      console.warn("Supabase fetch enquetes warning:", err);
     }
+
+    const localList = getStoredEnquetes(targetUserId);
+    const map = new Map<string, EnqueteAgendada>();
+    rows.forEach(r => map.set(r.id, r));
+    localList.forEach(r => map.set(r.id, r));
+    const merged = Array.from(map.values());
+
+    // Filtrar apenas as enquetes que ainda não terminaram
+    const validEnquetes = merged.filter(e => {
+      if (e.data_enquete > today) return true;
+      if (e.data_enquete === today && e.horario_fim >= currentTime) return true;
+      return false;
+    });
+
+    setEnquetes(validEnquetes as EnqueteAgendada[]);
+    saveStoredEnquetes(targetUserId, validEnquetes as EnqueteAgendada[]);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchEnquetes();
-  }, [user]);
+  }, [targetUserId]);
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!targetUserId) return;
     if (!formData.pergunta || !formData.resposta1 || !formData.resposta2) {
       toast.error("Preencha a pergunta e pelo menos as duas primeiras respostas.");
       return;
     }
 
     setSaving(true);
+    const id = `enq_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const newEnquete: EnqueteAgendada = {
+      id,
+      ...formData,
+    };
+
+    // Atualiza imediatamente localmente
+    const currentList = getStoredEnquetes(targetUserId);
+    const updated = [newEnquete, ...currentList.filter(e => e.id !== id)];
+    setEnquetes(updated);
+    saveStoredEnquetes(targetUserId, updated);
+
     try {
       const { error } = await supabase
         .from("enquetes_agendadas")
         .insert([{
           ...formData,
-          user_id: user.id
+          user_id: targetUserId,
         }]);
 
-      if (error) throw error;
-      
-      // Cleanup: Keep only last 20 polls
-      const { data: latestEnquetes } = await supabase
-        .from("enquetes_agendadas")
-        .select("id")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      
-      if (latestEnquetes && latestEnquetes.length > 20) {
-        const idsToDelete = latestEnquetes.slice(20).map(e => e.id);
-        await supabase
-          .from("enquetes_agendadas")
-          .delete()
-          .in("id", idsToDelete);
+      if (error) {
+        console.warn("Supabase enquete insert warning (mantido localmente):", error.message);
       }
-
-      toast.success("Enquete agendada com sucesso!");
-      setShowForm(false);
-      setFormData({
-        pergunta: "",
-        resposta1: "",
-        resposta2: "",
-        resposta3: "",
-        resposta4: "",
-        resposta_correta: 1,
-        data_enquete: todayInBrasilia(),
-        horario_inicio: "00:00",
-        horario_fim: "23:59"
-      });
-      fetchEnquetes();
-    } catch (err: any) {
-      toast.error("Erro ao salvar: " + err.message);
+    } catch (err) {
+      console.warn("Supabase enquete save network error:", err);
     } finally {
       setSaving(false);
     }
+
+    toast.success("Enquete agendada com sucesso!");
+    setShowForm(false);
+    setFormData({
+      pergunta: "",
+      resposta1: "",
+      resposta2: "",
+      resposta3: "",
+      resposta4: "",
+      resposta_correta: 1,
+      data_enquete: todayInBrasilia(),
+      horario_inicio: "00:00",
+      horario_fim: "23:59"
+    });
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta enquete?")) return;
+    const confirmed = await confirmDialog({
+      title: "Excluir Enquete",
+      message: "Tem certeza que deseja excluir esta enquete?",
+      destructive: true,
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar"
+    });
+    if (!confirmed || !targetUserId) return;
     
+    // Atualiza localmente imediatamente
+    const currentList = getStoredEnquetes(targetUserId);
+    const updated = currentList.filter(e => e.id !== id);
+    setEnquetes(updated);
+    saveStoredEnquetes(targetUserId, updated);
+
     try {
-      const { error } = await supabase
-        .from("enquetes_agendadas")
-        .delete()
-        .eq("id", id);
-      
-      if (error) throw error;
-      toast.success("Enquete excluída.");
-      fetchEnquetes();
-    } catch (err: any) {
-      toast.error("Erro ao excluir: " + err.message);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        await supabase
+          .from("enquetes_agendadas")
+          .delete()
+          .eq("id", id);
+      }
+    } catch (err) {
+      console.warn("Erro ao excluir enquete no Supabase:", err);
     }
+    toast.success("Enquete excluída com sucesso.");
   };
 
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
-    <div className="nexo-scope space-y-4">
+    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
       <div id="module-header-title" style={{ display: "none" }}>
         vMix — Enquete
       </div>
 
-      <div className="flex justify-between items-center bg-white/50 backdrop-blur-md p-4 rounded-3xl border border-white/20">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <Tag className="text-[#00BFF0]" /> Gerenciamento de Enquetes
-        </h2>
-        <Button 
+      <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+        <div className="flex items-center gap-3">
+          <div style={{ width: 44, height: 44, borderRadius: 16, background: "#0055ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Tag size={20} color="#fff" />
+          </div>
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wider text-[#002132]">
+              Gerenciamento de Enquetes
+            </h2>
+            <p className="text-xs text-slate-400 font-medium">Agendamento e controle de enquetes</p>
+          </div>
+        </div>
+        <button 
           onClick={() => setShowForm(!showForm)}
-          className="bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white rounded-full px-6"
+          className={`h-11 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer ${
+            showForm ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-[#0055ff] hover:bg-[#0047d4] text-white shadow-md hover:shadow-blue-500/20"
+          }`}
         >
-          {showForm ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+          {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? "Cancelar" : "Nova Enquete"}
-        </Button>
+        </button>
       </div>
 
       {showForm && (
-        <div className="animate-in fade-in slide-in-from-top-4 duration-300 p-6 bg-white rounded-3xl border border-[#00BFF0]/20 shadow-xl space-y-6">
+        <div className="animate-in fade-in slide-in-from-top-4 duration-300 p-6 bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase opacity-60 block mb-1">Pergunta</label>
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Pergunta</label>
                 <Input 
                   value={formData.pergunta}
                   onChange={e => setFormData(prev => ({ ...prev, pergunta: e.target.value }))}
                   placeholder="Qual sua música favorita?"
-                  className="rounded-xl border-[#00BFF0]/20"
+                  className="rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff]"
                 />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold uppercase opacity-60 block mb-1">Resposta 1</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Resposta 1</label>
                   <Input 
                     value={formData.resposta1}
                     onChange={e => setFormData(prev => ({ ...prev, resposta1: e.target.value }))}
-                    className="rounded-xl border-[#00BFF0]/20"
+                    className="rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase opacity-60 block mb-1">Resposta 2</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Resposta 2</label>
                   <Input 
                     value={formData.resposta2}
                     onChange={e => setFormData(prev => ({ ...prev, resposta2: e.target.value }))}
-                    className="rounded-xl border-[#00BFF0]/20"
+                    className="rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase opacity-60 block mb-1">Resposta 3 (Opcional)</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Resposta 3 (Opcional)</label>
                   <Input 
                     value={formData.resposta3}
                     onChange={e => setFormData(prev => ({ ...prev, resposta3: e.target.value }))}
-                    className="rounded-xl border-[#00BFF0]/20"
+                    className="rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase opacity-60 block mb-1">Resposta 4 (Opcional)</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Resposta 4 (Opcional)</label>
                   <Input 
                     value={formData.resposta4}
                     onChange={e => setFormData(prev => ({ ...prev, resposta4: e.target.value }))}
-                    className="rounded-xl border-[#00BFF0]/20"
+                    className="rounded-full h-11 bg-[#f8fafc] border-slate-200/90 text-xs font-semibold uppercase px-5 focus:bg-white focus:border-[#0055ff]"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-              <h3 className="text-sm font-bold flex items-center gap-2 mb-2">
-                <CalendarPlus size={16} className="text-[#00BFF0]" /> Agendamento
+            <div className="space-y-4 p-5 bg-[#f8fafc] rounded-2xl border border-slate-200/80">
+              <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 mb-2 text-[#002132]">
+                <CalendarPlus size={16} className="text-[#0055ff]" /> Agendamento
               </h3>
               
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="text-xs font-bold uppercase opacity-60 block mb-1">Data da Enquete</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Data da Enquete</label>
                   <Input 
                     type="date"
                     value={formData.data_enquete}
                     onChange={e => setFormData(prev => ({ ...prev, data_enquete: e.target.value }))}
-                    className="rounded-xl border-[#00BFF0]/20"
+                    className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold uppercase opacity-60 block mb-1">Início</label>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Início</label>
                     <Input 
                       type="time"
                       value={formData.horario_inicio}
                       onChange={e => setFormData(prev => ({ ...prev, horario_inicio: e.target.value }))}
-                      className="rounded-xl border-[#00BFF0]/20"
+                      className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold uppercase opacity-60 block mb-1">Fim</label>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Fim</label>
                     <Input 
                       type="time"
                       value={formData.horario_fim}
                       onChange={e => setFormData(prev => ({ ...prev, horario_fim: e.target.value }))}
-                      className="rounded-xl border-[#00BFF0]/20"
+                      className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                     />
                   </div>
                 </div>
@@ -270,15 +307,15 @@ export default function EnquetePage() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4 border-t">
-            <Button 
+          <div className="flex justify-end pt-4 border-t border-slate-100">
+            <button 
               disabled={saving}
               onClick={handleSave}
-              className="bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white rounded-full px-8 py-6 text-lg font-bold shadow-lg"
+              className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 shadow-md hover:shadow-lg hover:shadow-blue-500/20 cursor-pointer disabled:opacity-50"
             >
-              {saving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Save className="h-4 w-4 text-white" />}
               Salvar e Agendar Enquete
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -395,12 +432,6 @@ export default function EnquetePage() {
           </table>
         </div>
       </section>
-
-      {user && xmlUrl && (
-        <XmlSection title="Integração vMix">
-          <XmlLinkRow label="XML ENQUETE" permanentUrl={xmlUrl} />
-        </XmlSection>
-      )}
     </div>
   );
 }

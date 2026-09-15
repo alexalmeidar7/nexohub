@@ -77,11 +77,17 @@ export function brokeredPreviewStorage() {
       return localStorage.getItem(key);
     },
     setItem: (key: string, value: string) => {
-      localStorage.setItem(key, value);
+      try {
+        localStorage.setItem(key, value);
+      } catch (err) {
+        console.warn('Failed to save to localStorage:', err);
+      }
       return request('lovable-preview-auth:set', key, value).then(() => undefined);
     },
     removeItem: (key: string) => {
-      localStorage.removeItem(key);
+      try {
+        localStorage.removeItem(key);
+      } catch {}
       return request('lovable-preview-auth:remove', key).then(() => undefined);
     },
   };

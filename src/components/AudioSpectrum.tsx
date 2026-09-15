@@ -236,7 +236,15 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
       peaksRef.current = new Array(bufferLength).fill(0);
     }
 
+    let isRunning = true;
+
     const draw = () => {
+      if (!isRunning) return;
+      if (audioElement.paused || audioElement.ended) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
       rafRef.current = requestAnimationFrame(draw);
       const w = canvas.width;
       const h = canvas.height;
@@ -267,8 +275,34 @@ export default function AudioSpectrum({ audioElement, barColor, style = "bars", 
       }
     };
 
-    draw();
-    return () => cancelAnimationFrame(rafRef.current);
+    const onPlay = () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    const onPause = () => {
+      cancelAnimationFrame(rafRef.current);
+      if (canvasRef.current) {
+        const c = canvasRef.current.getContext("2d");
+        if (c) c.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    };
+
+    audioElement.addEventListener("play", onPlay);
+    audioElement.addEventListener("pause", onPause);
+    audioElement.addEventListener("ended", onPause);
+
+    if (!audioElement.paused) {
+      rafRef.current = requestAnimationFrame(draw);
+    }
+
+    return () => {
+      isRunning = false;
+      cancelAnimationFrame(rafRef.current);
+      audioElement.removeEventListener("play", onPlay);
+      audioElement.removeEventListener("pause", onPause);
+      audioElement.removeEventListener("ended", onPause);
+    };
   }, [audioElement, barColor, style]);
 
   useEffect(() => {

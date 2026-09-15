@@ -9,14 +9,14 @@ interface LoadingSpinnerProps {
   background?: string;
 }
 
-export const LOADING_ACCENT = "#d9ff65";
+export const LOADING_ACCENT = "#ffffff";
 
 const LoadingSpinner = forwardRef<HTMLDivElement, LoadingSpinnerProps>(function LoadingSpinner({
-  size = 32,
+  size = 44,
   fullscreen = false,
   className = "",
-  color = LOADING_ACCENT,
-  background = "#131519",
+  color = "#ffffff",
+  background = "#000000",
 }, ref) {
   if (fullscreen) {
     return (

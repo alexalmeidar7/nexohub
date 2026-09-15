@@ -2,8 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Building2, Users, Radio, MonitorPlay, Layers, Search, Sparkles,
-  Plus, Music, ChevronRight, ExternalLink
+  Plus, Music, ChevronRight, ExternalLink, Eye, EyeOff
 } from "lucide-react";
+import { getStoredMetadata } from "./ClientesPage";
+import { fetchFinanceiroMRR } from "@/lib/financeiroService";
+import { CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
+import AdminDashboardSkeleton from "./skeletons/AdminDashboardSkeleton";
+import AgoraNasRadiosWidget from "./AgoraNasRadiosWidget";
+import { getInfoMusicRealCounts } from "./AdminInfoMusicPage";
 
 interface Empresa {
   user_id: string;
@@ -68,12 +74,13 @@ function MoneyStackIcon() {
 // Icon for Info Music (Note + Equalizer lines) from reference
 function MusicEqualizerIcon() {
   return (
-    <svg width="34" height="34" viewBox="0 0 36 36" fill="none" stroke="#000000" strokeWidth="2.4" strokeLinecap="round">
-      <path d="M6 10h12" />
-      <path d="M6 16h12" />
-      <path d="M6 22h8" />
-      <path d="M22 6v18a4 4 0 1 1-4-4h4" />
-      <circle cx="18" cy="24" r="3.5" fill="#000000" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+      <path d="M9 18V5l12-2v13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="6" cy="18" r="3" fill="currentColor"/>
+      <circle cx="18" cy="16" r="3" fill="currentColor"/>
+      {/* Equalizer lines next to note */}
+      <line x1="2" y1="7" x2="2" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="5" y1="9" x2="5" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -82,18 +89,59 @@ interface AdminClientsDashboardProps {
   onNavigate?: (page: any) => void;
 }
 
+async function fetchSuporteMessagesCount(): Promise<number> {
+  try {
+    // 1. Consulta mensagens no Supabase com hashtag #suporte
+    const { data: msgs, error } = await supabase
+      .from("wa_messages")
+      .select("id, body")
+      .ilike("body", "%#suporte%");
+
+    if (!error && msgs) {
+      return msgs.length;
+    }
+  } catch (err) {
+    console.error("Erro ao buscar mensagens #suporte do Supabase:", err);
+  }
+
+  // 2. Consulta mensagens locais/demo do chatbot
+  try {
+    const rawDemo = localStorage.getItem("nexohub_chatbot_messages_v1");
+    if (rawDemo) {
+      const parsed = JSON.parse(rawDemo);
+      let count = 0;
+      if (Array.isArray(parsed)) {
+        count = parsed.filter((m: any) => (m.body || "").toLowerCase().includes("#suporte")).length;
+      } else if (typeof parsed === "object") {
+        Object.values(parsed).forEach((list: any) => {
+          if (Array.isArray(list)) {
+            count += list.filter((m: any) => (m.body || "").toLowerCase().includes("#suporte")).length;
+          }
+        });
+      }
+      return count;
+    }
+  } catch {}
+
+  // 3. Se não houver mensagens com #suporte, retorna 0
+  return 0;
+}
+
 export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
   const [busca, setBusca] = useState("");
-  const [totalInfoMusic, setTotalInfoMusic] = useState<number>(7203);
-  const [pendentesInfoMusic, setPendentesInfoMusic] = useState<number>(196);
-  const [mrrFee, setMrrFee] = useState<number>(14000);
+  const [totalInfoMusic, setTotalInfoMusic] = useState<number>(0);
+  const [pendentesInfoMusic, setPendentesInfoMusic] = useState<number>(0);
+  const [mrrFee, setMrrFee] = useState<number>(0);
+  const [clientesAtivosCount, setClientesAtivosCount] = useState<number>(0);
+  const [suporteAbertoCount, setSuporteAbertoCount] = useState<number>(0);
+  const [showFeeValor, setShowFeeValor] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const [empRes, profRes, subRes, cmRes, chanRes, infoRes] = await Promise.all([
+        const [empRes, profRes, subRes, cmRes, chanRes, logosRes] = await Promise.all([
           supabase.from("empresa_config")
             .select("user_id, nome, logo, plano, ativo, instagram_subs, youtube_subs, facebook_subs")
             .eq("ativo", true)
@@ -102,12 +150,105 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
           supabase.from("sub_users").select("parent_user_id, ativo"),
           supabase.from("client_modules").select("user_id, enabled"),
           supabase.from("streaming_channels").select("id, user_id, name, type, active"),
-          supabase.from("infomusic").select("id", { count: "exact", head: true }),
+          supabase.from("logos_patrocinadores")
+            .select("id, user_id, nome, logo_url, ativo, created_at")
+            .eq("excluido", false)
+            .order("nome"),
         ]);
 
-        if (infoRes.count && infoRes.count > 0) {
-          setTotalInfoMusic(infoRes.count);
+        // Carrega contagem real de Info Music diretamente da mesma base do House Mix > Info Music
+        try {
+          const infoStats = await getInfoMusicRealCounts();
+          setTotalInfoMusic(infoStats.totalCadastradas);
+          setPendentesInfoMusic(infoStats.pendentes);
+        } catch (err) {
+          console.warn("Erro ao carregar contagens de Info Music:", err);
         }
+
+        // CARREGAR CLIENTES CADASTRADOS (Espelhando a mesma lógica de ClientesPage)
+        const storedMeta = getStoredMetadata();
+        const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test((val || "").trim());
+        const seenNames = new Set<string>();
+        const seenCnpjs = new Set<string>();
+        let activeClientsFromCadastro = 0;
+
+        // 1. Clientes de logos_patrocinadores
+        (logosRes.data || []).forEach((item: any) => {
+          let name = (item.nome || "").trim();
+          if (!name) return;
+
+          if (isUuid(name)) {
+            const metaCandidate = storedMeta[name] || storedMeta[item.id] || {};
+            if (metaCandidate.razao_social || metaCandidate.nome_empresarial) {
+              name = (metaCandidate.razao_social || metaCandidate.nome_empresarial)!.trim();
+            } else {
+              return;
+            }
+          }
+
+          const upperName = name.toUpperCase();
+          const meta = storedMeta[item.id] || storedMeta[name] || storedMeta[upperName] || {};
+          const cleanCnpj = (meta.cnpj || "").replace(/\D/g, "");
+
+          if (seenNames.has(upperName) || (cleanCnpj && seenCnpjs.has(cleanCnpj))) {
+            return;
+          }
+
+          seenNames.add(upperName);
+          if (cleanCnpj) seenCnpjs.add(cleanCnpj);
+
+          const isAtivo = typeof meta.ativo === "boolean" ? meta.ativo : (item.ativo !== false);
+          if (isAtivo) {
+            activeClientsFromCadastro++;
+          }
+        });
+
+        // 2. Clientes de empresa_config
+        (empRes.data || []).forEach((emp: any) => {
+          const name = (emp.nome || "").trim();
+          if (!name || isUuid(name)) return;
+
+          const upperName = name.toUpperCase();
+          const meta = storedMeta[emp.user_id] || storedMeta[name] || storedMeta[upperName] || {};
+          const cleanCnpj = (meta.cnpj || "").replace(/\D/g, "");
+
+          if (seenNames.has(upperName) || (cleanCnpj && seenCnpjs.has(cleanCnpj))) {
+            return;
+          }
+
+          seenNames.add(upperName);
+          if (cleanCnpj) seenCnpjs.add(cleanCnpj);
+
+          const isAtivo = typeof meta.ativo === "boolean" ? meta.ativo : (emp.ativo !== false);
+          if (isAtivo) {
+            activeClientsFromCadastro++;
+          }
+        });
+
+        // 3. Clientes em storedMeta (incluindo clientes da agência)
+        Object.keys(storedMeta).forEach(key => {
+          if (isUuid(key)) return;
+
+          const meta = storedMeta[key];
+          const candidateName = (meta.razao_social || meta.nome_empresarial || (key.startsWith("local_") ? "" : key) || "").trim();
+          if (!candidateName || isUuid(candidateName)) return;
+
+          const upper = candidateName.toUpperCase();
+          const cleanCnpj = (meta.cnpj || "").replace(/\D/g, "");
+
+          if (seenNames.has(upper) || (cleanCnpj && seenCnpjs.has(cleanCnpj))) {
+            return;
+          }
+
+          seenNames.add(upper);
+          if (cleanCnpj) seenCnpjs.add(cleanCnpj);
+
+          if (meta.ativo !== false) {
+            activeClientsFromCadastro++;
+          }
+        });
+
+        setClientesAtivosCount(activeClientsFromCadastro);
 
         const empresas = (empRes.data as Empresa[]) || [];
         const emails = new Map<string, string>();
@@ -135,7 +276,9 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
         } catch { /* noop */ }
 
         let sumMrr = 0;
+        const seenUserIds = new Set<string>();
         const rows: ClienteRow[] = empresas.map(e => {
+          seenUserIds.add(e.user_id);
           const meus = canais.filter(c => c.user_id === e.user_id && c.active);
           const override = localOverrides[e.user_id] || {};
           const defaultProducts = ["house_mix"];
@@ -158,37 +301,147 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
           };
         });
 
+        // Garantir que todas as emissoras do CLIENT_ACCOUNTS estejam listadas
+        CLIENT_ACCOUNTS.forEach(acc => {
+          if (acc.isAdmin || acc.isSubUser) return;
+          if (seenUserIds.has(acc.id) || rows.some(r => r.nome.toUpperCase().includes(acc.nome.toUpperCase()) || acc.nome.toUpperCase().includes(r.nome.toUpperCase()))) {
+            return;
+          }
+          seenUserIds.add(acc.id);
+          const meus = canais.filter(c => c.user_id === acc.id && c.active);
+          const override = localOverrides[acc.id] || localOverrides[acc.nome] || {};
+          const isBasic = (acc.plano || "").toLowerCase().includes("basic") || acc.nome.toUpperCase().includes("NEXO BRASIL");
+          const defaultProducts = isBasic ? ["house_mix"] : ["house_mix", "chatbot"];
+
+          const clientPrice = override.valorMensal !== undefined ? override.valorMensal : (isBasic ? 590 : 890);
+          sumMrr += clientPrice;
+
+          rows.push({
+            user_id: acc.id,
+            nome: acc.nome,
+            logo: null,
+            plano: override.plano || acc.plano || "House Mix Nexo Max",
+            subUsers: subCount.get(acc.id) || 1,
+            modules: modCount.get(acc.id) || 12,
+            canaisVideo: meus.filter(c => isVideo(c.type)).length || 1,
+            canaisAudio: meus.filter(c => isAudio(c.type)).length || 1,
+            social: (acc.audience?.redes) || (acc.audience?.instagram) || 100000,
+            produtos: override.produtos || defaultProducts,
+          });
+        });
+
         setClientes(rows);
-        if (sumMrr > 0) {
-          setMrrFee(sumMrr);
+
+        // Obtém a contagem de mensagens de suporte aberto no chatbot
+        try {
+          const count = await fetchSuporteMessagesCount();
+          setSuporteAbertoCount(count);
+        } catch (err) {
+          console.error("Erro ao obter contagem de suporte:", err);
+        }
+
+        // Obtém a receita mensal sincronizada exatamente com a página Financeiro
+        try {
+          const financeiroMrr = await fetchFinanceiroMRR();
+          setMrrFee(financeiroMrr);
+        } catch (err) {
+          console.error("Erro ao obter MRR da página Financeiro:", err);
+          if (sumMrr > 0) {
+            setMrrFee(sumMrr);
+          }
         }
       } finally {
         setLoading(false);
       }
     })();
+
+    // Ouvinte em tempo real para sincronização quando a página Financeiro for atualizada
+    const handleFinanceiroUpdate = async () => {
+      try {
+        const financeiroMrr = await fetchFinanceiroMRR();
+        setMrrFee(financeiroMrr);
+      } catch (err) {
+        console.error("Erro ao sincronizar MRR financeiro:", err);
+      }
+    };
+
+    // Ouvinte em tempo real para sincronização de mensagens de suporte (#suporte)
+    const handleSuporteUpdate = async () => {
+      try {
+        const count = await fetchSuporteMessagesCount();
+        setSuporteAbertoCount(count);
+      } catch (err) {
+        console.error("Erro ao sincronizar contagem de suporte:", err);
+      }
+    };
+
+    // Canal Realtime para mensagens do chatbot
+    const chSuporte = supabase
+      .channel("dashboard-chatbot-suporte-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wa_messages" },
+        () => handleSuporteUpdate()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wa_contacts" },
+        () => handleSuporteUpdate()
+      )
+      .subscribe();
+
+    window.addEventListener("nexo_financeiro_updated", handleFinanceiroUpdate);
+    window.addEventListener("chatbot:unread_updated", handleSuporteUpdate);
+    window.addEventListener("chatbot:suporte_updated", handleSuporteUpdate);
+    window.addEventListener("storage", handleFinanceiroUpdate);
+    window.addEventListener("storage", handleSuporteUpdate);
+
+    return () => {
+      supabase.removeChannel(chSuporte);
+      window.removeEventListener("nexo_financeiro_updated", handleFinanceiroUpdate);
+      window.removeEventListener("chatbot:unread_updated", handleSuporteUpdate);
+      window.removeEventListener("chatbot:suporte_updated", handleSuporteUpdate);
+      window.removeEventListener("storage", handleFinanceiroUpdate);
+      window.removeEventListener("storage", handleSuporteUpdate);
+    };
   }, []);
+
+  if (loading) {
+    return <AdminDashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto animate-fade-in font-sans pb-12">
-      {/* 1. RESUMO GERAL BANNER (Animated Bottom Blue Light Glow) */}
-      <div className="relative rounded-3xl p-6 lg:p-8 bg-[#090b10] text-white shadow-xl overflow-hidden border border-white/10">
-        {/* Animated Ambient Light Coming from the Bottom */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* Subtle vertical vignette ensuring dominant black at the top and sides */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#090b10] via-[#090b10]/90 to-transparent z-[1]" />
+      {/* 1. RESUMO GERAL BANNER (Living Aurora Ambient Lights) */}
+      <div className="relative rounded-3xl p-6 lg:p-8 bg-[#080a11] text-white shadow-2xl overflow-hidden border border-white/[0.12]">
+        {/* Animated Ambient Lights System */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+          {/* Subtle top and side vignette to guarantee contrast on title and text */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#080a11] via-[#080a11]/75 to-transparent z-[2]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#080a11]/80 via-transparent to-[#080a11]/80 z-[2]" />
 
-          {/* Primary rising blue beam from the bottom center */}
+          {/* Light 1: Primary Swelling Blue Core (breathing & pulsing stronger periodically) */}
           <div 
-            className="superadmin-ambient-glow absolute -bottom-32 left-1/2 w-[140%] h-64 rounded-[100%] bg-gradient-to-t from-[#0055ff] via-[#0038b8]/60 to-transparent blur-3xl pointer-events-none"
+            className="superadmin-light-core absolute -bottom-32 left-1/2 -translate-x-1/2 w-[120%] h-64 rounded-[100%] bg-gradient-to-t from-[#0055ff] via-[#003db8]/70 to-transparent pointer-events-none"
           />
 
-          {/* Secondary drifting soft blue aura from the bottom right */}
+          {/* Light 2: Radiant Cyan Wave (gives that crisp luminous glow) */}
           <div 
-            className="superadmin-ambient-drift absolute -bottom-24 right-1/4 w-[90%] h-48 rounded-full bg-gradient-to-t from-[#0066ff]/50 via-[#0044cc]/30 to-transparent blur-2xl pointer-events-none"
+            className="superadmin-light-cyan absolute -bottom-24 left-1/4 w-[85%] h-52 rounded-[100%] bg-gradient-to-t from-[#00d2ff]/65 via-[#0055ff]/45 to-transparent pointer-events-none"
           />
 
-          {/* Subtle bottom edge line highlight */}
-          <div className="absolute bottom-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#0055ff]/80 to-transparent z-[2]" />
+          {/* Light 3: Drifting Indigo/Violet Depth Orb (drifts across bottom) */}
+          <div 
+            className="superadmin-light-drift absolute -bottom-28 right-12 w-[75%] h-56 rounded-full bg-gradient-to-t from-[#4f46e5]/55 via-[#2563eb]/35 to-transparent pointer-events-none"
+          />
+
+          {/* Light 4: Left Title Backlight Accent (subtle aura behind "resumo geral") */}
+          <div 
+            className="superadmin-light-accent absolute -bottom-16 -left-12 w-80 h-44 rounded-full bg-gradient-to-tr from-[#0055ff]/45 via-[#00d2ff]/25 to-transparent pointer-events-none"
+          />
+
+          {/* Glowing bottom line with animated light shimmer */}
+          <div className="superadmin-light-border absolute bottom-0 inset-x-0 h-[2px] z-[3]" />
         </div>
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -210,17 +463,49 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
                 <div>
                   <div className="text-xs font-bold leading-tight">resumo</div>
                   <div className="text-xs font-bold leading-tight">financeiro</div>
-                  <div className="text-xs font-semibold text-[#0055ff] mt-0.5">fee mensal</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs font-semibold text-[#0055ff]">fee mensal</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowFeeValor(prev => !prev)}
+                      className="text-white/40 hover:text-white transition-colors cursor-pointer p-0.5"
+                      title={showFeeValor ? "Ocultar valor" : "Mostrar valor"}
+                    >
+                      {showFeeValor ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
                 <MoneyStackIcon />
               </div>
 
               <div>
-                <div className="text-2xl font-extrabold tracking-tight">
-                  R$ {mrrFee.toLocaleString("pt-BR")}<sup className="text-xs font-bold">,00</sup>
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-thin tracking-tight select-none">
+                    {showFeeValor ? (
+                      (() => {
+                        const formatted = mrrFee.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        const [inteiro, centavos] = formatted.split(",");
+                        return (
+                          <>
+                            R$ {inteiro}<sup className="text-xs font-thin">,{centavos}</sup>
+                          </>
+                        );
+                      })()
+                    ) : (
+                      <span className="tracking-wider text-xl text-white/70 font-thin">R$ ******</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowFeeValor(prev => !prev)}
+                    className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title={showFeeValor ? "Ocultar valor" : "Mostrar valor"}
+                  >
+                    {showFeeValor ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 <div className="text-[10px] text-white/50 mt-1 flex items-center justify-between">
-                  <span>clientes ativos: {clientes.length || 14}</span>
+                  <span>clientes ativos: {clientesAtivosCount}</span>
                 </div>
               </div>
 
@@ -242,15 +527,15 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
               </div>
 
               <div>
-                <div className="text-3xl font-extrabold tracking-tight text-white">
-                  02
+                <div className="text-3xl font-extrabold tracking-tight text-white font-mono">
+                  {String(suporteAbertoCount).padStart(2, "0")}
                 </div>
               </div>
 
               {/* Blue plus button */}
               <button
                 onClick={() => onNavigate?.("chatbot")}
-                className="absolute bottom-3 right-3 w-5 h-5 rounded-full bg-[#0055ff] text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sm"
+                className="absolute bottom-3 right-3 w-5 h-5 rounded-full bg-[#0055ff] text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer"
                 title="Abrir Chatbot & Atendimento"
               >
                 <Plus className="w-3 h-3" />
@@ -269,9 +554,9 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
         </div>
       </div>
 
-      {/* 2. LOWER SECTION: INFO MUSIC CARD (Matches media_1788614596625.png) */}
-      <div className="flex items-start">
-        {/* Card Info Music (Exact match with reference) */}
+      {/* 2. LOWER SECTION: INFO MUSIC CARD + AGORA NAS RÁDIOS BOX */}
+      <div className="flex items-start gap-5 flex-wrap lg:flex-nowrap w-full">
+        {/* Card Info Music */}
         <div className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/80 flex flex-col justify-between w-full sm:w-[320px] shrink-0 h-[280px]">
           <div>
             <div className="flex items-start justify-between">
@@ -295,12 +580,15 @@ export default function AdminClientsDashboard({ onNavigate }: AdminClientsDashbo
           <div>
             <button
               onClick={() => onNavigate?.("admininfomusic")}
-              className="px-4 py-1.5 rounded-full bg-[#0047e1] text-white text-xs font-bold hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5"
+              className="px-4 py-1.5 rounded-full bg-[#0047e1] text-white text-xs font-bold hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               infos pendentes: {pendentesInfoMusic}
             </button>
           </div>
         </div>
+
+        {/* Card Agora nas Rádios (Box preto dinâmico com rotação a cada 5 segundos) */}
+        <AgoraNasRadiosWidget />
       </div>
     </div>
   );

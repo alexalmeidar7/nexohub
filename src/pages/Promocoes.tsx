@@ -363,7 +363,22 @@ export default function PromocoesKiosk() {
 
       const allPromos = promoData || [];
       setPromocoes(allPromos);
-      const activeTestemunhais = testData || [];
+      let activeTestemunhais = testData || [];
+      try {
+        const localUid = authData?.user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("nexohub_backup_session") || "{}")?.user?.id : null);
+        if (localUid) {
+          const rawLocal = localStorage.getItem(`nexohub_testemunhais_${localUid}`);
+          if (rawLocal) {
+            const parsed = JSON.parse(rawLocal);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const map = new Map<string, any>();
+              activeTestemunhais.forEach((t: any) => map.set(t.id, t));
+              parsed.forEach((t: any) => map.set(t.id, t));
+              activeTestemunhais = Array.from(map.values());
+            }
+          }
+        }
+      } catch {}
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")

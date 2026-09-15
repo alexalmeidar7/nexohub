@@ -8,12 +8,25 @@ interface Props {
   onEdit?: (roteiro: any) => void;
 }
 
+function formatDateSafe(dStr?: string): string {
+  if (!dStr) return "—";
+  const parts = dStr.split("-").map(Number);
+  if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+    return format(new Date(parts[0], parts[1] - 1, parts[2]), "dd/MM/yyyy");
+  }
+  try { return format(new Date(dStr), "dd/MM/yyyy"); } catch { return dStr; }
+}
+
 export default function HistoricoTable({ historico, onEdit }: Props) {
   const rows = useMemo(() => {
     const cutoff = subDays(new Date(), 30);
     return historico
       .filter(r => {
-        try { return isAfter(new Date(r.data_programa), cutoff); } catch { return false; }
+        try {
+          const parts = (r.data_programa || "").split("-").map(Number);
+          const d = parts.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date(r.data_programa);
+          return isAfter(d, cutoff);
+        } catch { return false; }
       })
       .sort((a, b) => {
         const da = new Date(`${a.data_programa}T${a.horario || "00:00"}`).getTime();
@@ -82,7 +95,7 @@ export default function HistoricoTable({ historico, onEdit }: Props) {
             const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
             return (
               <tr key={r.id} style={{ backgroundColor: isAuto ? "color-mix(in srgb, #8b5cf6 6%, transparent)" : undefined }}>
-                <td style={cellStyle}>{format(new Date(r.data_programa), "dd/MM/yyyy")}</td>
+                <td style={cellStyle}>{formatDateSafe(r.data_programa)}</td>
                 <td style={cellStyle}>{r.horario || "—"}</td>
                 <td style={{ ...cellStyle, fontWeight: 600 }}>
                   {r.programa_nome || "—"}

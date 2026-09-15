@@ -70,15 +70,15 @@ const PRESETS: { name: string; config: Partial<TelaPromoConfig> }[] = [
   { name: "⬛ Escuro Minimalista", config: { bg_type: "cor", bg_color: "#0a0a0a", btn_color_a: "#262626", btn_color_b: "#404040", btn_text_color: "#ffffff", card_border_color: "#525252", header_text_color: "#e5e5e5", card_style: "sharp" } },
 ];
 
-const inputStyle = { backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.18)" };
+const inputStyle = { backgroundColor: "#f8fafc", color: "#0f172a", borderColor: "rgba(226, 232, 240, 0.9)", border: "1px solid rgba(226, 232, 240, 0.9)", borderRadius: 999 };
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div className="space-y-1">
-      <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>{label}</Label>
+      <Label className="text-[10px] font-extrabold uppercase tracking-wider block mb-1" style={{ color: "#64748b", letterSpacing: "1.2px" }}>{label}</Label>
       <div className="flex items-center gap-2">
-        <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-7 h-7 rounded-md border-0 cursor-pointer shrink-0" style={{ background: "transparent" }} />
-        <Input value={value} onChange={e => onChange(e.target.value)} style={inputStyle} className="h-8 text-xs font-mono" />
+        <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-8 h-8 rounded-full border-0 cursor-pointer shrink-0" style={{ background: "transparent" }} />
+        <Input value={value} onChange={e => onChange(e.target.value)} style={inputStyle} className="h-10 text-xs font-mono uppercase px-4" />
       </div>
     </div>
   );
@@ -86,10 +86,12 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
 
 function SectionCard({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl p-4 space-y-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+    <div className="rounded-3xl p-6 space-y-4" style={{ background: "#ffffff", border: "1px solid rgba(226, 232, 240, 0.9)", boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)" }}>
       <div className="flex items-center gap-2">
-        <Icon size={14} style={{ color: "var(--layout-accent-color, hsl(var(--primary)))" }} />
-        <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, hsl(var(--primary)))" }}>{title}</h3>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(0, 85, 255, 0.1)", color: "#0055ff" }}>
+          <Icon size={14} />
+        </div>
+        <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: "#002132" }}>{title}</h3>
       </div>
       {children}
     </div>
@@ -102,6 +104,7 @@ interface Props {
 
 export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -110,43 +113,67 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const [uploadError, setUploadError] = useState<string>("");
   const [previewDark, setPreviewDark] = useState(true);
 
+  const getLocalStorageKey = (uId: string) => `nexohub_telapromo_${uId}`;
+
   useEffect(() => {
-    if (!user) return;
+    if (!targetUserId) return;
     (async () => {
-      const { data } = await supabase
-        .from("user_settings")
-        .select("cenario_config")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (data?.cenario_config) {
-        const raw = data.cenario_config as any;
-        if (raw.tela_promo_bg) {
-          setConfig({ ...defaultTelaPromoConfig, ...raw.tela_promo_bg });
+      let cfg: any = null;
+      try {
+        const { data } = await supabase
+          .from("user_settings")
+          .select("cenario_config")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+        if (data?.cenario_config) {
+          const raw = data.cenario_config as any;
+          if (raw.tela_promo_bg) {
+            cfg = raw.tela_promo_bg;
+          }
         }
+      } catch {}
+
+      if (!cfg) {
+        try {
+          const stored = localStorage.getItem(getLocalStorageKey(targetUserId));
+          if (stored) cfg = JSON.parse(stored);
+        } catch {}
+      }
+
+      if (cfg) {
+        setConfig({ ...defaultTelaPromoConfig, ...cfg });
       }
     })();
-  }, [user]);
+  }, [targetUserId]);
 
   async function handleSave() {
-    if (!user) return;
+    if (!targetUserId) return;
     setSaving(true);
     try {
-      const { data: existing } = await supabase
-        .from("user_settings")
-        .select("cenario_config")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      try {
+        const { data: existing } = await supabase
+          .from("user_settings")
+          .select("cenario_config")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
 
-      const prev = (existing?.cenario_config as any) || {};
-      const merged = { ...prev, tela_promo_bg: config };
+        const prev = (existing?.cenario_config as any) || {};
+        const updated = { ...prev, tela_promo_bg: config };
 
-      await supabase
-        .from("user_settings")
-        .upsert({ user_id: user.id, cenario_config: merged as any }, { onConflict: "user_id" });
+        await supabase
+          .from("user_settings")
+          .upsert({ user_id: targetUserId, cenario_config: updated as any });
+      } catch (err) {
+        console.warn("Supabase telapromo config save warning:", err);
+      }
 
-      toast.success("Configurações salvas!");
+      try {
+        localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(config));
+      } catch {}
+
+      toast.success("Configuração da Tela de Promoção salva!");
     } catch {
-      toast.error("Erro ao salvar");
+      toast.error("Erro ao salvar configuração.");
     } finally {
       setSaving(false);
     }
@@ -208,24 +235,31 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const cardRadius = config.card_style === "sharp" ? "4px" : config.card_style === "pill" ? "50px" : "16px";
 
   return (
-    <div className="nexo-scope flex flex-col gap-4">
+    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div style={{ width: 48, height: 48, borderRadius: 16, background: "#0055ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Palette size={24} color="#fff" />
+        </div>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#002132", letterSpacing: -0.5 }}>Configuração da Tela de Promoção</h1>
+          <p style={{ fontSize: 12, color: "#64748B" }}>Personalize as cores, fundos e botões da tela do módulo locutor</p>
+        </div>
+      </div>
+
       {/* Action buttons */}
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-        <Button variant="save"
+        <button
           onClick={handleSave}
           disabled={saving}
+          className="h-11 px-8 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 shadow-md hover:shadow-lg hover:shadow-blue-500/20 cursor-pointer disabled:opacity-50"
         >
           <Save size={15} />
           {saving ? "Salvando..." : "Salvar configurações"}
-        </Button>
+        </button>
 
         <button
-          className="min-h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110 px-6"
-          style={{
-            background: "rgba(255,255,255,0.06)",
-            color: "var(--foreground)",
-            border: "1px solid rgba(255,255,255,0.1)",
-          }}
+          className="h-11 px-6 rounded-full bg-[#ffffff] border-2 border-[#0055ff] text-[#002132] hover:bg-[#0055ff]/10 font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer transition-all"
           onClick={() => {
             const targetId = effectiveUserId || user?.id;
             window.open(`/user/${targetId}/nexohub/locutor`, "_blank");
@@ -246,8 +280,8 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
                 <button
                   key={preset.name}
                   onClick={() => setConfig(c => ({ ...c, ...preset.config }))}
-                  className="text-left px-3 py-2 rounded-lg text-xs font-medium transition-all hover:scale-[1.02] hover:brightness-125"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--layout-text)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  className="text-left px-4 py-2.5 rounded-full text-xs font-bold transition-all hover:border-[#0055ff] hover:shadow-sm"
+                  style={{ background: "#f8fafc", color: "#002132", border: "1px solid rgba(226, 232, 240, 0.9)" }}
                 >
                   {preset.name}
                 </button>

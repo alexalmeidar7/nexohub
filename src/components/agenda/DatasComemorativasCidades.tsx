@@ -1,14 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import { Star, Settings, MapPin } from "lucide-react";
-import { format } from "date-fns";
+import { CalendarDays, MapPin, ChevronDown, Check } from "lucide-react";
+import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DATAS_COMEMORATIVAS } from "@/data/datasComemorativas";
 import { ANIVERSARIOS_CIDADES, UF_LIST } from "@/data/aniversariosCidades";
 
-const NEXO_LIME = "#C6F03C";
-const NEXO_CYAN = "#00BFF0";
-const NEXO_DARK = "#0A2540";
 const LS_UF_KEY = "nexo:agenda:uf-cidades";
 
 type Item = {
@@ -72,141 +69,149 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
   }, [uf, feriados]);
 
   const ufNome = UF_LIST.find((u) => u.sigla === uf)?.nome || uf;
+  const today = new Date();
 
   return (
-    <div
-      className="overflow-hidden bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] font-sans"
-    >
-      <div
-        className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white"
-      >
+    <div className="overflow-hidden bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] font-sans">
+      <div className="flex items-center justify-between gap-2 pl-6 pr-12 py-4 border-b border-slate-100 bg-white">
         <div className="flex items-center gap-2 min-w-0">
-          <Star size={13} className="text-[#0055ff] fill-[#0055ff]" />
-          <span className="truncate text-xs font-black uppercase tracking-wider text-[#002132]">Datas Comemorativas</span>
-          <Popover open={ufOpen} onOpenChange={setUfOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                title={`Estado para aniversário de cidades: ${ufNome}`}
-                className="ml-1 inline-flex items-center justify-center transition-transform hover:rotate-45 w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
-              >
-                <Settings size={11} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              className="w-64 p-0 border border-slate-100 rounded-2xl shadow-xl bg-white overflow-hidden"
-            >
-              <div
-                className="px-4 py-2.5 bg-[#002132] text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-2"
-              >
-                <MapPin size={11} className="text-[#00BFF0]" />
-                Estado das cidades
-              </div>
-              <div className="p-2 max-h-72 overflow-y-auto">
-                {UF_LIST.map((u) => {
-                  const active = u.sigla === uf;
-                  const disponivel = !!ANIVERSARIOS_CIDADES[u.sigla]?.length;
-                  return (
-                    <button
-                      key={u.sigla}
-                      type="button"
-                      onClick={() => {
-                        setUf(u.sigla);
-                        setUfOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg transition-colors ${
-                        active ? "bg-blue-50 text-[#0055ff] font-bold" : "hover:bg-slate-50 text-slate-700"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center ${
-                            active ? "bg-[#0055ff] text-white" : "bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          {u.sigla}
-                        </span>
-                        <span className="text-xs">{u.nome}</span>
-                      </span>
-                      {!disponivel && (
-                        <span className="text-[9px] text-slate-400 italic">vazio</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
+          <CalendarDays size={16} className="text-[#0055ff]" />
+          <span className="truncate text-sm font-black uppercase tracking-wider text-[#002132]">
+            Datas Comemorativas
+          </span>
         </div>
-        <span
-          className="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 uppercase"
-        >
-          {uf}
-        </span>
+
+        <Popover open={ufOpen} onOpenChange={setUfOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              title={`Filtrar aniversários de cidades por estado (atual: ${ufNome})`}
+              className="h-7 px-2.5 text-[10px] bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-full font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <MapPin size={11} className="text-[#0055ff]" />
+              <span className="font-bold">{uf}</span>
+              <ChevronDown size={10} className="text-slate-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-64 p-0 border border-slate-100 rounded-2xl shadow-xl bg-white overflow-hidden z-50"
+          >
+            <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#002132]">
+                <MapPin size={12} className="text-[#0055ff]" />
+                <span>Estado das Cidades</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">Selecione</span>
+            </div>
+            <div className="p-1.5 max-h-64 overflow-y-auto space-y-0.5">
+              {UF_LIST.map((u) => {
+                const active = u.sigla === uf;
+                const disponivel = !!ANIVERSARIOS_CIDADES[u.sigla]?.length;
+                return (
+                  <button
+                    key={u.sigla}
+                    type="button"
+                    onClick={() => {
+                      setUf(u.sigla);
+                      setUfOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-left transition-colors text-xs ${
+                      active
+                        ? "bg-blue-50 text-[#0055ff] font-bold"
+                        : "hover:bg-slate-50 text-slate-700 font-medium"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md min-w-[26px] text-center ${
+                          active
+                            ? "bg-[#0055ff] text-white"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {u.sigla}
+                      </span>
+                      <span className="truncate">{u.nome}</span>
+                    </div>
+                    {active ? (
+                      <Check size={12} className="text-[#0055ff] shrink-0" />
+                    ) : !disponivel ? (
+                      <span className="text-[9px] text-slate-300 italic shrink-0">sem dados</span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
-      <div className="p-3 space-y-1.5 max-h-[320px] overflow-y-auto scrollbar-hide">
-        {items.length === 0 && (
-          <p className="text-center text-[11px] py-6" style={{ color: "#64748B" }}>
-            Nenhuma data cadastrada.
+      <div className="p-4 space-y-2 max-h-[440px] overflow-y-auto">
+        {items.length === 0 ? (
+          <p className="text-xs py-6 text-center text-slate-400">
+            Nenhuma data comemorativa cadastrada.
           </p>
-        )}
-        {items.map((item, idx) => {
-          const isCidade = item.categoria === "cidade";
-          const isFeriado = item.categoria === "feriado";
-          const RED = "#EF4444";
-          const accent = isFeriado ? RED : isCidade ? NEXO_CYAN : NEXO_LIME;
-          const accentText = isFeriado || isCidade ? "#FFFFFF" : NEXO_DARK;
-          const bg = isFeriado
-            ? `color-mix(in srgb, ${RED} 6%, #FFFFFF)`
-            : isCidade
-              ? `color-mix(in srgb, ${NEXO_CYAN} 5%, #FFFFFF)`
-              : `color-mix(in srgb, ${NEXO_LIME} 12%, #FFFFFF)`;
-          const border = isFeriado ? `${RED}40` : isCidade ? `${NEXO_CYAN}30` : `${NEXO_LIME}55`;
-          const tagColor = isFeriado ? RED : isCidade ? NEXO_CYAN : "#7A8B18";
-          const weekday = format(item.date, "EEEE", { locale: ptBR }).split("-")[0];
-          return (
-            <div
-              key={idx}
-              className="p-2 rounded-xl flex items-center gap-3 group transition-colors"
-              style={{ backgroundColor: bg, border: `1px solid ${border}` }}
-            >
+        ) : (
+          items.map((item, idx) => {
+            const isCidade = item.categoria === "cidade";
+            const isFeriado = item.categoria === "feriado";
+            const isItemToday = isSameDay(item.date, today);
+            const weekday = format(item.date, "EEEE", { locale: ptBR }).split("-")[0];
+
+            return (
               <div
-                className="w-10 h-10 rounded-md flex flex-col items-center justify-center shrink-0"
-                style={{ backgroundColor: accent, color: accentText }}
+                key={idx}
+                className="rounded-full px-4 py-2.5 flex items-center gap-3 transition-all duration-200 bg-white hover:bg-slate-50/90 border border-slate-100 hover:border-[#0055ff]/40 hover:shadow-md hover:-translate-y-0.5 group cursor-pointer"
               >
-                <span className="text-[11px] font-black leading-none">{format(item.date, "dd")}</span>
-                <span className="text-[7px] font-bold uppercase tracking-tighter opacity-90">
-                  {format(item.date, "MMM", { locale: ptBR }).replace(".", "")}
-                </span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p
-                  className="text-[11px] font-bold truncate leading-tight"
-                  style={{ color: NEXO_DARK }}
-                  title={item.nome}
+                {/* Badge de Data com círculo e borda na cor #0055ff */}
+                <div
+                  className={`w-10 h-10 rounded-full flex flex-col items-center justify-center shrink-0 border transition-all duration-200 group-hover:scale-105 ${
+                    isFeriado
+                      ? "bg-rose-50/80 border-rose-200 text-rose-600 group-hover:border-rose-400"
+                      : "bg-[#0055ff]/5 border-[#0055ff]/30 text-[#0055ff] group-hover:border-[#0055ff]"
+                  }`}
                 >
-                  {item.nome}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span
-                    className="text-[9px] font-semibold uppercase tracking-wider opacity-80"
-                    style={{ color: tagColor }}
-                  >
-                    {isCidade ? `Cidade · ${item.tag}` : item.tag}
-                  </span>
-                  <span
-                    className="text-[9px] font-medium capitalize"
-                    style={{ color: "rgba(10, 37, 64, 0.55)" }}
-                  >
-                    · {weekday}
+                  <span className="text-[12px] font-black leading-none">{format(item.date, "dd")}</span>
+                  <span className="text-[8px] font-bold uppercase tracking-wider opacity-80 mt-0.5">
+                    {format(item.date, "MMM", { locale: ptBR }).replace(".", "")}
                   </span>
                 </div>
+
+                {/* Conteúdo textual */}
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="text-xs font-bold truncate text-[#0055ff] group-hover:text-[#0047e1] transition-colors"
+                    title={item.nome}
+                  >
+                    {item.nome}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span
+                      className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full ${
+                        isFeriado
+                          ? "bg-rose-100/70 text-rose-700"
+                          : "bg-[#0055ff]/10 text-[#0055ff]"
+                      }`}
+                    >
+                      {isCidade ? `CIDADE · ${item.tag}` : item.tag.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-slate-400 capitalize font-medium">
+                      {weekday}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Selo se for Hoje */}
+                {isItemToday && (
+                  <span className="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 shrink-0">
+                    HOJE
+                  </span>
+                )}
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );

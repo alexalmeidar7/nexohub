@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-const NEXO_CYAN = "#00BFF0";
-const NEXO_LIME = "#C6F03C";
+const NEXO_CYAN = "#0055ff";
+const NEXO_LIME = "#0055ff";
 
 type Row = {
   id: string;
@@ -265,28 +265,35 @@ export default function TranscricaoStreamingPanel({ effectiveUserId }: { effecti
 
   return (
     <section className="mt-6">
-      <div className="rounded-2xl p-5 space-y-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
+      <div
+        className="rounded-3xl p-6 space-y-5 transition-all"
+        style={{
+          backgroundColor: "#ffffff",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+        }}
+      >
         {/* Header */}
         <div
           className="flex items-center justify-between mb-2 cursor-pointer group"
           onClick={() => setOpen((v) => !v)}
         >
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: NEXO_CYAN }} />
+            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#0055ff" }} />
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
-                <Radio size={18} style={{ color: NEXO_CYAN }} />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-50">
+                <Radio size={18} style={{ color: "#0055ff" }} />
               </div>
               <div>
-                <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: NEXO_CYAN }}>
+                <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: "#002132" }}>
                   MONITOR DE TRANSCRIÇÃO DO STREAMING
                 </h3>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1 }}>
                   Transcreve o canal de áudio e atualiza o texto em tempo real
                 </span>
               </div>
             </div>
-            <div className="ml-2 transition-transform duration-200" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", color: "#0A2540" }}>
+            <div className="ml-2 transition-transform duration-200" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", color: "#002132" }}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

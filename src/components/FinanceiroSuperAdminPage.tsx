@@ -5,10 +5,15 @@ import {
   DollarSign, Send, CheckCircle2, AlertCircle, Clock, Plus, Trash2,
   Edit2, Smartphone, Mail, Sparkles, Filter, Search, Layers,
   ChevronRight, ArrowUpRight, Zap, ShieldCheck, RefreshCw, Eye, Calendar,
-  User, FileText, Check, X
+  User, FileText, Check, X, Loader2, Download
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { confirmDialog } from "@/lib/confirmDialog";
 import { getStoredProdutos, type Produto } from "./ProdutosPage";
+import { getStoredMetadata, CLIENTES_METADATA_KEY } from "./ClientesPage";
+import { cn } from "@/lib/utils";
+import FinanceiroPageSkeleton from "./skeletons/FinanceiroPageSkeleton";
+import { generateAndDownloadBoletoPdf, sendBoletoByEmailBackend } from "@/lib/boletoPdfService";
 
 // Available Agency Predefined Products
 export const AGENCY_PRODUCTS = [
@@ -17,23 +22,20 @@ export const AGENCY_PRODUCTS = [
   { id: "tv_app", name: "TV App", tag: "Aplicativo Smart TV", color: "#A855F7" },
   { id: "business", name: "Nexo Business", tag: "Gestão & Comercial", color: "#3B82F6" },
   { id: "social_design", name: "Social Design", tag: "Mídias & Artes", color: "#EC4899" },
+  { id: "agencia_full", name: "Gestão Agência", tag: "Marketing & Publicidade", color: "#0055ff" },
 ];
 
-export interface ClientSubscription {
-  user_id: string;
-  nome: string;
-  logo: string | null;
-  email?: string;
-  telefone?: string;
-  plano: string;
-  produtos: string[];
-  valorMensal: number;
-  diaVencimento: number;
-  status: "em_dia" | "pendente" | "atrasado";
-  ultimaCobranca?: string;
-  tipoCobranca?: "mensal" | "avulsa";
-  dataVencimentoAvulsa?: string;
-}
+import {
+  type ClientSubscription,
+  loadFinanceiroClients,
+  calculateFinanceiroMRR,
+  dispatchFinanceiroUpdate,
+  STORAGE_SUBS_KEY,
+  STORAGE_PACKS_KEY,
+  STORAGE_CONFIG_KEY,
+} from "@/lib/financeiroService";
+
+export type { ClientSubscription };
 
 export interface ServicePack {
   id: string;
@@ -98,9 +100,6 @@ const DEFAULT_PACKS: ServicePack[] = [
   },
 ];
 
-const STORAGE_PACKS_KEY = "nexo_superadmin_packs";
-const STORAGE_SUBS_KEY = "nexo_superadmin_client_subs";
-const STORAGE_CONFIG_KEY = "nexo_superadmin_finance_config";
 
 export default function FinanceiroSuperAdminPage() {
   const [activeTab, setActiveTab] = useState<"cobrancas" | "packs" | "config">("cobrancas");
@@ -109,6 +108,10 @@ export default function FinanceiroSuperAdminPage() {
   const [packs, setPacks] = useState<ServicePack[]>([]);
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<string>("todos");
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [sendingEmailClient, setSendingEmailClient] = useState<ClientSubscription | null>(null);
+  const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
 
   // Dynamic Registered Products from ProdutosPage
   const [storedProdutos, setStoredProdutos] = useState<Produto[]>([]);
@@ -129,6 +132,58 @@ export default function FinanceiroSuperAdminPage() {
   // Client Subscription Edit Modal
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientSubscription | null>(null);
+  const [editValorMoeda, setEditValorMoeda] = useState("");
+
+  const handleOpenEditClient = (client: ClientSubscription) => {
+    setSelectedClient({
+      ...client,
+      produtos: [...(client.produtos || [])],
+    });
+    setEditValorMoeda(
+      Number(client.valorMensal || 0).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
+    setIsClientModalOpen(true);
+  };
+
+  const handleValorMoedaChange = (inputVal: string) => {
+    const cleanDigits = inputVal.replace(/\D/g, "");
+    if (!cleanDigits) {
+      setEditValorMoeda("0,00");
+      setSelectedClient(prev => (prev ? { ...prev, valorMensal: 0 } : null));
+      return;
+    }
+
+    const num = parseInt(cleanDigits, 10) / 100;
+    const formatted = num.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    setEditValorMoeda(formatted);
+    setSelectedClient(prev => (prev ? { ...prev, valorMensal: num } : null));
+  };
+
+  const handleValorMoedaPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasteData = e.clipboardData.getData("text").trim();
+    if (!pasteData) return;
+    e.preventDefault();
+    let num = 0;
+    if (pasteData.includes(",") || pasteData.includes(".")) {
+      const normalized = pasteData.replace(/\./g, "").replace(",", ".");
+      num = parseFloat(normalized) || 0;
+    } else {
+      num = parseFloat(pasteData) || 0;
+    }
+    const formatted = num.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    setEditValorMoeda(formatted);
+    setSelectedClient(prev => (prev ? { ...prev, valorMensal: num } : null));
+  };
 
   // Nova Cobrança Modal (Avulsa ou Mensal)
   const [isNovaCobrancaOpen, setIsNovaCobrancaOpen] = useState(false);
@@ -160,8 +215,10 @@ export default function FinanceiroSuperAdminPage() {
   const [autoBillingConfig, setAutoBillingConfig] = useState({
     autoDispatchEnabled: true,
     daysBeforeDue: 3,
-    pixKey: "financeiro@nexobrasil.net",
-    bankInfo: "Banco Inter - Chave PIX: financeiro@nexobrasil.net - Nexo Agência",
+    pixKey: "13.130.809/0001-80",
+    bankInfo: "Chave PIX: 13.130.809/0001-80 - Nexo Soluções Visuais",
+    senderEmail: "alex@nexobrasil.net",
+    resendApiKey: "re_SVZ23gud_6ywq9ABMgkEUVmP6u1CGECEF",
     customMessage: "Olá {cliente}! Sua fatura Nexo no valor de R$ {valor} vence em {vencimento}. Chave PIX: {pix}. Qualquer dúvida estamos à disposição!",
   });
 
@@ -196,109 +253,8 @@ export default function FinanceiroSuperAdminPage() {
           } catch { /* use defaults */ }
         }
 
-        // Fetch real clients from Supabase
-        const [empRes, profRes, logosRes] = await Promise.all([
-          supabase.from("empresa_config")
-            .select("user_id, nome, logo, plano, telefone_comercial, telefone_participacao, ativo")
-            .eq("ativo", true)
-            .order("nome"),
-          supabase.from("profiles").select("user_id, email"),
-          supabase.from("logos_patrocinadores").select("id, nome, logo_url").eq("excluido", false)
-        ]);
-
-        const emails = new Map<string, string>();
-        (profRes.data || []).forEach((p: any) => emails.set(p.user_id, p.email || ""));
-
-        const savedSubs = localStorage.getItem(STORAGE_SUBS_KEY);
-        let localOverrides: Record<string, Partial<ClientSubscription>> = {};
-        if (savedSubs) {
-          try {
-            localOverrides = JSON.parse(savedSubs);
-          } catch { /* noop */ }
-        }
-
-        const empresas = empRes.data || [];
-        const seenNames = new Set<string>();
-
-        const mappedClients: ClientSubscription[] = empresas.map(emp => {
-          const override = localOverrides[emp.user_id] || {};
-          const planName = emp.plano || "House Mix";
-          
-          let defaultPrice = 590;
-          let defaultProducts = ["house_mix"];
-          if (planName.toLowerCase().includes("max")) {
-            defaultPrice = 890;
-            defaultProducts = ["house_mix", "chatbot"];
-          } else if (planName.toLowerCase().includes("omni")) {
-            defaultPrice = 1450;
-            defaultProducts = ["house_mix", "chatbot", "tv_app", "business"];
-          }
-
-          const clientName = emp.nome || emails.get(emp.user_id) || "Cliente Sem Nome";
-          seenNames.add(clientName.toUpperCase());
-
-          return {
-            user_id: emp.user_id,
-            nome: clientName,
-            logo: emp.logo,
-            email: emails.get(emp.user_id) || "",
-            telefone: emp.telefone_comercial || emp.telefone_participacao || "",
-            plano: override.plano || emp.plano || "Nexo Max",
-            produtos: override.produtos || defaultProducts,
-            valorMensal: override.valorMensal !== undefined ? override.valorMensal : defaultPrice,
-            diaVencimento: override.diaVencimento || 10,
-            status: override.status || "em_dia",
-            ultimaCobranca: override.ultimaCobranca || undefined,
-            tipoCobranca: override.tipoCobranca || "mensal",
-            dataVencimentoAvulsa: override.dataVencimentoAvulsa || undefined,
-          };
-        });
-
-        // Also add logos_patrocinadores that might not have empresa_config
-        (logosRes.data || []).forEach((lg: any) => {
-          if (lg.nome && !seenNames.has(lg.nome.toUpperCase())) {
-            seenNames.add(lg.nome.toUpperCase());
-            const override = localOverrides[lg.id] || {};
-            mappedClients.push({
-              user_id: lg.id,
-              nome: lg.nome,
-              logo: lg.logo_url || null,
-              email: "",
-              telefone: "",
-              plano: override.plano || "Spot Comercial / Avulso",
-              produtos: override.produtos || ["prod-1"],
-              valorMensal: override.valorMensal !== undefined ? override.valorMensal : 350,
-              diaVencimento: override.diaVencimento || 15,
-              status: override.status || "em_dia",
-              ultimaCobranca: override.ultimaCobranca || undefined,
-              tipoCobranca: override.tipoCobranca || "avulsa",
-              dataVencimentoAvulsa: override.dataVencimentoAvulsa || undefined,
-            });
-          }
-        });
-
-        // Include any custom overrides that are independent
-        Object.keys(localOverrides).forEach(k => {
-          if (k.startsWith("custom_") && !mappedClients.some(c => c.user_id === k)) {
-            const ov = localOverrides[k] as any;
-            mappedClients.push({
-              user_id: k,
-              nome: ov.nome || "Cliente Avulso",
-              logo: null,
-              email: ov.email || "",
-              telefone: ov.telefone || "",
-              plano: ov.plano || "Serviço Avulso",
-              produtos: ov.produtos || [],
-              valorMensal: ov.valorMensal || 0,
-              diaVencimento: ov.diaVencimento || 10,
-              status: ov.status || "em_dia",
-              ultimaCobranca: ov.ultimaCobranca || undefined,
-              tipoCobranca: ov.tipoCobranca || "avulsa",
-              dataVencimentoAvulsa: ov.dataVencimentoAvulsa || undefined,
-            });
-          }
-        });
-
+        // Fetch real clients using centralized financeiroService
+        const mappedClients = await loadFinanceiroClients();
         setClients(mappedClients);
       } catch (err) {
         console.error("Erro ao carregar dados financeiros:", err);
@@ -328,6 +284,7 @@ export default function FinanceiroSuperAdminPage() {
       };
     });
     localStorage.setItem(STORAGE_SUBS_KEY, JSON.stringify(overrides));
+    dispatchFinanceiroUpdate();
   };
 
   // Save packs changes
@@ -343,17 +300,26 @@ export default function FinanceiroSuperAdminPage() {
     toast.success("Configurações de cobrança salvas com sucesso!");
   };
 
+  // Direct PDF Download Handler
+  const handleDownloadDirect = async (client: ClientSubscription) => {
+    setDownloadingPdfId(client.user_id);
+    const toastId = toast.loading(`Gerando Boleto PDF de ${client.nome_empresarial || client.nome}...`);
+    try {
+      await generateAndDownloadBoletoPdf(client, autoBillingConfig);
+      toast.success(`Boleto PDF de ${client.nome_empresarial || client.nome} baixado com sucesso!`, { id: toastId });
+    } catch (err: any) {
+      console.error("Erro ao baixar boleto PDF:", err);
+      toast.error(`Erro ao gerar boleto: ${err?.message || "Tente novamente."}`, { id: toastId });
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  };
+
   // Dispatch single client billing
-  const handleDispatchSingle = (client: ClientSubscription, channel: "whatsapp" | "email") => {
+  const handleDispatchSingle = async (client: ClientSubscription, channel: "whatsapp" | "email") => {
     const formattedDate = client.tipoCobranca === "avulsa" && client.dataVencimentoAvulsa
       ? new Date(client.dataVencimentoAvulsa).toLocaleDateString("pt-BR")
-      : `${client.diaVencimento}/${new Date().toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" })}`;
-
-    const msg = autoBillingConfig.customMessage
-      .replace("{cliente}", client.nome)
-      .replace("{valor}", client.valorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
-      .replace("{vencimento}", formattedDate)
-      .replace("{pix}", autoBillingConfig.pixKey);
+      : `${String(client.diaVencimento || 10).padStart(2, "0")}/${new Date().toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" })}`;
 
     if (channel === "whatsapp") {
       let rawPhone = (client.telefone || "").replace(/\D/g, "");
@@ -362,25 +328,70 @@ export default function FinanceiroSuperAdminPage() {
         return;
       }
       if (rawPhone.length <= 11) rawPhone = `55${rawPhone}`;
-      const url = `https://wa.me/${rawPhone}?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank");
 
-      // update last billing timestamp
-      const updated = clients.map(c => c.user_id === client.user_id ? { ...c, ultimaCobranca: new Date().toISOString() } : c);
-      saveClientSubs(updated);
-      toast.success(`Disparo para ${client.nome} enviado via WhatsApp!`);
+      setGeneratingPdfId(client.user_id);
+      const toastId = toast.loading(`Gerando cobrança e Boleto PDF para ${client.nome}...`);
+
+      try {
+        const { pixPayload } = await generateAndDownloadBoletoPdf(client, autoBillingConfig);
+        
+        const valorFormatado = (client.valorMensal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+        const nomeCliente = (client.nome_empresarial || client.nome || "Cliente").toUpperCase();
+        const chavePix = autoBillingConfig.pixKey || "13.130.809/0001-80";
+
+        // Message matching Image 1
+        const msg = `Olá *${nomeCliente}*!\n\nSua fatura Nexo Soluções Visuais no valor de\n*R$ ${valorFormatado}* vence em *${formattedDate}*.\n\n*Dados para Pagamento:*\n· Chave PIX: *${chavePix}*\n· Valor: *R$ ${valorFormatado}*\n· Vencimento: *${formattedDate}*\n\n*PIX Copia e Cola:*\n${pixPayload}\n\nSegue boleto na próxima mensagem. 🤓\nQualquer dúvida, nossa equipe está à disposição!`;
+
+        // Try copying banner image to clipboard for easy Ctrl+V in WhatsApp
+        try {
+          const imgRes = await fetch("/images/nx-financeiro-banner.jpg");
+          const imgBlob = await imgRes.blob();
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([
+              new ClipboardItem({ [imgBlob.type]: imgBlob })
+            ]);
+          }
+        } catch {
+          /* ignore clipboard error */
+        }
+
+        const url = `https://wa.me/${rawPhone}?text=${encodeURIComponent(msg)}`;
+        window.open(url, "_blank");
+
+        // update last billing timestamp
+        const updated = clients.map(c => c.user_id === client.user_id ? { ...c, ultimaCobranca: new Date().toISOString() } : c);
+        saveClientSubs(updated);
+
+        toast.success(`Imagem e texto copiados! No WhatsApp, basta colar (Ctrl+V) a imagem da fatura.`, { id: toastId });
+      } catch (err: any) {
+        console.error("Erro ao gerar boleto para WhatsApp:", err);
+        toast.error(`Erro ao gerar boleto: ${err?.message || "Tente novamente."}`, { id: toastId });
+      } finally {
+        setGeneratingPdfId(null);
+      }
     } else {
       if (!client.email) {
         toast.error(`Cliente ${client.nome} não possui e-mail cadastrado.`);
         return;
       }
-      const subject = `Fatura Nexo Agência - Vencimento ${formattedDate}`;
-      const mailUrl = `mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
-      window.open(mailUrl, "_blank");
 
-      const updated = clients.map(c => c.user_id === client.user_id ? { ...c, ultimaCobranca: new Date().toISOString() } : c);
-      saveClientSubs(updated);
-      toast.success(`E-mail de cobrança para ${client.nome} preparado!`);
+      setSendingEmailId(client.user_id);
+      setSendingEmailClient(client);
+
+      try {
+        const result = await sendBoletoByEmailBackend(client, autoBillingConfig);
+        
+        const updated = clients.map(c => c.user_id === client.user_id ? { ...c, ultimaCobranca: new Date().toISOString() } : c);
+        saveClientSubs(updated);
+
+        toast.success(result.message || `Fatura enviada com sucesso para ${client.email}!`);
+      } catch (err: any) {
+        console.error("Erro ao enviar boleto via e-mail:", err);
+        toast.error(`Falha no envio do boleto: ${err?.message || "Tente novamente."}`);
+      } finally {
+        setSendingEmailId(null);
+        setSendingEmailClient(null);
+      }
     }
   };
 
@@ -399,10 +410,46 @@ export default function FinanceiroSuperAdminPage() {
     toast.success(`Disparo efetuado com sucesso para ${count} clientes!`);
   };
 
+  // Helper to remove 'Cliente Agência' and leave only pack / service name
+  const cleanPlanoName = (plano?: string) => {
+    return (plano || "")
+      .replace(/^cliente\s*ag[êe]ncia\s*[-–—:]*\s*/i, "")
+      .trim() || (plano || "");
+  };
+
+  // Helper to compute scheduled dispatch date taking daysBeforeDue and diaVencimento into account
+  const getScheduledDispatchDate = (client: ClientSubscription, daysBefore: number) => {
+    const now = new Date();
+    let dueDate: Date;
+
+    if (client.tipoCobranca === "avulsa" && client.dataVencimentoAvulsa) {
+      const parts = client.dataVencimentoAvulsa.split("-").map(Number);
+      dueDate = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1, 12, 0, 0);
+    } else {
+      const dueDay = Number(client.diaVencimento) || 10;
+      dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay, 12, 0, 0);
+      if (now.getTime() > dueDate.getTime() && client.status !== "atrasado") {
+        dueDate = new Date(now.getFullYear(), now.getMonth() + 1, dueDay, 12, 0, 0);
+      }
+    }
+
+    const dispatchDate = new Date(dueDate.getTime() - (daysBefore || 0) * 24 * 60 * 60 * 1000);
+    const day = String(dispatchDate.getDate()).padStart(2, "0");
+    const month = String(dispatchDate.getMonth() + 1).padStart(2, "0");
+    const year = dispatchDate.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // Filter clients
   const filteredClients = useMemo(() => {
     return clients.filter(c => {
-      const matchBusca = !busca || c.nome.toLowerCase().includes(busca.toLowerCase()) || c.plano.toLowerCase().includes(busca.toLowerCase());
+      const q = busca.toLowerCase();
+      const matchBusca = !busca || 
+        c.nome.toLowerCase().includes(q) || 
+        (c.razao_social && c.razao_social.toLowerCase().includes(q)) ||
+        (c.nome_empresarial && c.nome_empresarial.toLowerCase().includes(q)) ||
+        (c.cnpj && c.cnpj.includes(busca)) ||
+        c.plano.toLowerCase().includes(q);
       const matchStatus = statusFiltro === "todos" || c.status === statusFiltro;
       return matchBusca && matchStatus;
     });
@@ -410,7 +457,7 @@ export default function FinanceiroSuperAdminPage() {
 
   // Financial KPIs
   const kpis = useMemo(() => {
-    const mrr = clients.filter(c => c.tipoCobranca !== "avulsa").reduce((acc, c) => acc + (c.valorMensal || 0), 0);
+    const mrr = calculateFinanceiroMRR(clients);
     const emDia = clients.filter(c => c.status === "em_dia").length;
     const pendentes = clients.filter(c => c.status === "pendente").length;
     const atrasados = clients.filter(c => c.status === "atrasado").length;
@@ -480,8 +527,12 @@ export default function FinanceiroSuperAdminPage() {
     setIsNovaCobrancaOpen(false);
   };
 
+  if (loading) {
+    return <FinanceiroPageSkeleton />;
+  }
+
   return (
-    <div className="w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* Top Header Section (Card Branco com Variações de Azul) */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(1,28,91,0.04)] border border-[#d0deff] flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -494,7 +545,30 @@ export default function FinanceiroSuperAdminPage() {
         </div>
 
         {/* Top Actions & Tabs */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-3">
+          <button
+            onClick={() => {
+              const firstClient = clients[0];
+              const prods = getStoredProdutos();
+              setNovaCobrancaData({
+                tipo: "mensal",
+                clienteId: firstClient?.user_id || "",
+                clienteNome: firstClient?.nome || "",
+                produtoId: prods[0]?.id || "prod-3",
+                produtoNome: prods[0]?.nome || "Plataforma House Mix Streaming",
+                valor: prods[0]?.valor || 590,
+                diaVencimento: 10,
+                dataVencimento: new Date().toISOString().split("T")[0],
+                status: "em_dia",
+                obs: "",
+              });
+              setIsNovaCobrancaOpen(true);
+            }}
+            className="h-9 px-5 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-[0_4px_12px_rgba(0,85,255,0.25)] hover:shadow-[0_6px_18px_rgba(0,85,255,0.35)] active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 text-white stroke-[3]" /> Cadastrar Cobrança
+          </button>
+
           <div className="flex items-center p-1.5 rounded-full bg-[#d0deff]/20 border border-[#d0deff]/60">
             <button
               onClick={() => setActiveTab("cobrancas")}
@@ -523,41 +597,6 @@ export default function FinanceiroSuperAdminPage() {
           </div>
         </div>
       </section>
-
-      {/* BOTÃO CADASTRAR COBRANÇA - DIRETAMENTE ACIMA DO BOX RECEITA MENSAL */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-1">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-black tracking-wider text-[#011c5b] uppercase">
-            Fluxo & Painel Financeiro
-          </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-[#d0deff]/30 text-[10px] font-extrabold text-[#011c5b] uppercase tracking-wider border border-[#d0deff]">
-            Nexo Live
-          </span>
-        </div>
-
-        <button
-          onClick={() => {
-            const firstClient = clients[0];
-            const prods = getStoredProdutos();
-            setNovaCobrancaData({
-              tipo: "mensal",
-              clienteId: firstClient?.user_id || "",
-              clienteNome: firstClient?.nome || "",
-              produtoId: prods[0]?.id || "prod-3",
-              produtoNome: prods[0]?.nome || "Plataforma House Mix Streaming",
-              valor: prods[0]?.valor || 590,
-              diaVencimento: 10,
-              dataVencimento: new Date().toISOString().split("T")[0],
-              status: "em_dia",
-              obs: "",
-            });
-            setIsNovaCobrancaOpen(true);
-          }}
-          className="h-11 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047d4] text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:shadow-[0_6px_20px_rgba(0,85,255,0.35)] active:scale-95 cursor-pointer"
-        >
-          <Plus className="w-4 h-4 text-white stroke-[3]" /> Cadastrar Cobrança
-        </button>
-      </div>
 
       {/* Top Summary KPI Cards (Design Elegante com Tons de Azul #011c5b e #d0deff) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -675,7 +714,7 @@ export default function FinanceiroSuperAdminPage() {
                   <tr className="border-b border-[#d0deff]/70 text-[11px] font-black uppercase tracking-wider text-[#011c5b]/80 bg-slate-50/80 rounded-2xl">
                     <th className="py-4 px-4 rounded-l-2xl">Nome do Cliente</th>
                     <th className="py-4 px-4">Serviço Assinado</th>
-                    <th className="py-4 px-4 text-center">Status da Assinatura</th>
+                    <th className="py-4 px-4 text-center">Status de Pagamento</th>
                     <th className="py-4 px-4 text-center">Status do Envio</th>
                     <th className="py-4 px-4 text-right">Valor da Cobrança</th>
                     <th className="py-4 px-4 text-center rounded-r-2xl">Ações</th>
@@ -690,67 +729,68 @@ export default function FinanceiroSuperAdminPage() {
                     </tr>
                   ) : (
                     filteredClients.map(client => {
-                      const isEmDia = client.status === "em_dia";
-                      const isPendente = client.status === "pendente";
-
-                      const statusBadge = isEmDia ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-black uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Em Dia
-                        </span>
-                      ) : isPendente ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 text-[10px] font-black uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> A Vencer
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 text-[10px] font-black uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Atrasado
-                        </span>
-                      );
+                      const isAtrasado = client.status === "atrasado";
+                      const scheduledDate = getScheduledDispatchDate(client, autoBillingConfig.daysBeforeDue);
 
                       const dispatchStatus = client.ultimaCobranca ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#0055ff] border border-blue-200/70 text-[10px] font-bold">
+                        <div 
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#0055ff] border border-blue-200/70 text-[10px] font-bold"
+                          title={`Disparado em ${new Date(client.ultimaCobranca).toLocaleDateString("pt-BR")}`}
+                        >
                           <CheckCircle2 className="w-3 h-3 text-[#0055ff]" />
                           <span>Disparado ({new Date(client.ultimaCobranca).toLocaleDateString("pt-BR")})</span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200/70 text-[10px] font-medium">
-                          <Clock className="w-3 h-3 text-slate-400" />
-                          <span>Aguardando Envio</span>
+                        <div 
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-200/80 text-[10px] font-bold shadow-xs"
+                          title={`Disparo programado ${autoBillingConfig.daysBeforeDue} dias antes do vencimento`}
+                        >
+                          <Clock className="w-3 h-3 text-[#0055ff]" />
+                          <span>Programado: {scheduledDate}</span>
                         </div>
                       );
 
+                      const nomeEmpresarial = client.nome_empresarial || client.nome;
+                      const razaoSocial = client.razao_social || client.nome;
+
                       return (
                         <tr key={client.user_id} className="hover:bg-[#d0deff]/15 transition-colors group">
-                          {/* Coluna 1: Nome do Cliente */}
+                          {/* Coluna 1: Nome do Cliente (Nome Empresarial no título e Razão Social + CNPJ no subtítulo) */}
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
                               {client.logo ? (
                                 <img
                                   src={client.logo}
-                                  alt={client.nome}
+                                  alt={nomeEmpresarial}
                                   className="w-10 h-10 rounded-2xl object-contain bg-slate-50 p-1 shrink-0 border border-slate-200/80 shadow-xs"
                                 />
                               ) : (
                                 <div className="w-10 h-10 rounded-2xl bg-[#d0deff]/40 border border-[#d0deff] flex items-center justify-center font-black text-xs text-[#011c5b] shrink-0">
-                                  {client.nome.charAt(0).toUpperCase()}
+                                  {nomeEmpresarial.charAt(0).toUpperCase()}
                                 </div>
                               )}
                               <div>
                                 <div className="font-black text-[#011c5b] group-hover:text-[#0055ff] transition-colors text-sm">
-                                  {client.nome}
+                                  {nomeEmpresarial}
                                 </div>
-                                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                                  {client.telefone || client.email || "Sem contato cadastrado"}
+                                <div className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-slate-600">{razaoSocial}</span>
+                                  {client.cnpj && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <span className="font-mono text-slate-400">CNPJ: {client.cnpj}</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
                           </td>
 
-                          {/* Coluna 2: Serviço Assinado */}
+                          {/* Coluna 2: Serviço Assinado (Nome do Pacote sem 'Cliente Agência' + Serviço) */}
                           <td className="py-4 px-4">
                             <div className="space-y-1">
                               <div className="font-bold text-[#011c5b] text-xs flex items-center gap-2">
-                                <span>{client.plano}</span>
+                                <span>{cleanPlanoName(client.plano)}</span>
                                 {client.tipoCobranca === "avulsa" && (
                                   <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                                     Avulso
@@ -777,15 +817,24 @@ export default function FinanceiroSuperAdminPage() {
                             </div>
                           </td>
 
-                          {/* Coluna 3: Status da Assinatura */}
+                          {/* Coluna 3: Status de Pagamento (Apenas ícone verde quando em dia, ícone vermelho quando em atraso) */}
                           <td className="py-4 px-4 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                              {statusBadge}
-                              <span className="text-[11px] text-slate-400 font-medium">
-                                {client.tipoCobranca === "avulsa" && client.dataVencimentoAvulsa
-                                  ? `Vence em ${new Date(client.dataVencimentoAvulsa).toLocaleDateString("pt-BR")}`
-                                  : `Vence todo dia ${client.diaVencimento}`}
-                              </span>
+                            <div className="flex items-center justify-center">
+                              {isAtrasado ? (
+                                <div 
+                                  className="w-7 h-7 rounded-full bg-rose-50 border border-rose-200/80 flex items-center justify-center shadow-xs" 
+                                  title={`Em atraso (Vencimento dia ${client.diaVencimento})`}
+                                >
+                                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]" />
+                                </div>
+                              ) : (
+                                <div 
+                                  className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-200/80 flex items-center justify-center shadow-xs" 
+                                  title={`Em dia (Vencimento dia ${client.diaVencimento})`}
+                                >
+                                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
+                                </div>
+                              )}
                             </div>
                           </td>
 
@@ -809,23 +858,42 @@ export default function FinanceiroSuperAdminPage() {
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 onClick={() => handleDispatchSingle(client, "whatsapp")}
-                                className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 border border-emerald-200/80 transition-all cursor-pointer shadow-xs"
-                                title="Disparar via WhatsApp"
+                                disabled={generatingPdfId === client.user_id}
+                                className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600 border border-emerald-200/80 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                                title="Gerar Boleto PDF & Disparar via WhatsApp"
                               >
-                                <Smartphone className="w-3.5 h-3.5" />
+                                {generatingPdfId === client.user_id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Smartphone className="w-3.5 h-3.5" />
+                                )}
                               </button>
                               <button
                                 onClick={() => handleDispatchSingle(client, "email")}
-                                className="p-2.5 rounded-xl bg-blue-50 hover:bg-[#0055ff] hover:text-white text-[#0055ff] border border-[#d0deff] transition-all cursor-pointer shadow-xs"
-                                title="Disparar via E-mail"
+                                disabled={sendingEmailId === client.user_id}
+                                className="p-2.5 rounded-xl bg-blue-50 hover:bg-[#0055ff] hover:text-white text-[#0055ff] border border-[#d0deff] transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                                title="Enviar Boleto por E-mail (Backend)"
                               >
-                                <Mail className="w-3.5 h-3.5" />
+                                {sendingEmailId === client.user_id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Mail className="w-3.5 h-3.5" />
+                                )}
                               </button>
                               <button
-                                onClick={() => {
-                                  setSelectedClient(client);
-                                  setIsClientModalOpen(true);
-                                }}
+                                onClick={() => handleDownloadDirect(client)}
+                                disabled={downloadingPdfId === client.user_id}
+                                className="p-2.5 rounded-xl bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-600 border border-purple-200/80 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                                title="Fazer Download do Boleto PDF"
+                              >
+                                {downloadingPdfId === client.user_id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Download className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleOpenEditClient(client)}
                                 className="p-2.5 rounded-xl bg-slate-100 hover:bg-[#011c5b] hover:text-white text-[#011c5b] border border-slate-200/80 transition-all cursor-pointer shadow-xs"
                                 title="Editar Valores & Detalhes"
                               >
@@ -877,39 +945,58 @@ export default function FinanceiroSuperAdminPage() {
             </button>
           </div>
 
-          {/* Packs Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {/* Packs Grid com design moderno e elegante em tons de azul */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {packs.map(pack => (
               <div
                 key={pack.id}
-                className="rounded-2xl bg-[#14161a] p-5 text-white flex flex-col justify-between space-y-4 relative overflow-hidden border border-white/5"
+                className="rounded-3xl bg-white p-6 md:p-7 flex flex-col justify-between space-y-5 relative overflow-hidden border border-[#d0deff] shadow-[0_4px_24px_rgba(1,28,91,0.04)] hover:shadow-[0_8px_32px_rgba(0,85,255,0.12)] hover:border-[#0055ff]/50 transition-all duration-300 group"
               >
+                {/* Top highlight bar */}
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#0055ff] via-[#d0deff] to-[#011c5b]" />
+
                 {pack.destaque && (
-                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[#00BFF0] text-black text-[9px] font-bold uppercase tracking-wider">
+                  <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-[#0055ff] text-white text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
                     Destaque
                   </div>
                 )}
 
                 <div>
-                  <h3 className="text-base font-bold text-white">{pack.nome}</h3>
-                  <p className="text-xs text-white/60 mt-1 leading-relaxed">{pack.descricao}</p>
+                  <div className="pr-16">
+                    <h3 className="text-lg font-black text-[#011c5b] tracking-tight group-hover:text-[#0055ff] transition-colors">
+                      {pack.nome}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed font-medium">
+                      {pack.descricao}
+                    </p>
+                  </div>
 
-                  {/* Price */}
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-2xl font-extrabold text-[#00BFF0]">
-                      R$ {pack.precoMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </span>
-                    <span className="text-xs text-white/40">/mês</span>
+                  {/* Preço e Desconto */}
+                  <div className="mt-5 p-4 rounded-2xl bg-[#d0deff]/20 border border-[#d0deff]/60 flex items-baseline justify-between gap-2">
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#011c5b]/70">Valor Mensal</div>
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className="text-2xl font-black text-[#011c5b] font-mono tracking-tight">
+                          R$ {pack.precoMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </span>
+                        <span className="text-xs text-slate-500 font-semibold">/mês</span>
+                      </div>
+                    </div>
+
                     {pack.descontoAnual > 0 && (
-                      <span className="text-[10px] text-emerald-400 font-semibold ml-auto">
-                        {pack.descontoAnual}% off no anual
-                      </span>
+                      <div className="text-right">
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider border border-emerald-200 shadow-xs">
+                          {pack.descontoAnual}% off anual
+                        </span>
+                      </div>
                     )}
                   </div>
 
-                  {/* Products Included */}
-                  <div className="mt-4 pt-3 border-t border-white/5">
-                    <div className="text-[10px] text-white/40 uppercase font-semibold tracking-wider mb-2">
+                  {/* Produtos Incluídos */}
+                  <div className="mt-5 pt-4 border-t border-[#d0deff]/60">
+                    <div className="text-[10px] text-[#011c5b] uppercase font-black tracking-wider mb-2.5 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-[#0055ff]" />
                       Produtos Incluídos
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -917,13 +1004,12 @@ export default function FinanceiroSuperAdminPage() {
                         const std = AGENCY_PRODUCTS.find(p => p.id === prodId);
                         const custom = storedProdutos.find(p => p.id === prodId || p.codigo === prodId);
                         const name = std?.name || custom?.nome || prodId;
-                        const color = std?.color || "#00BFF0";
                         return (
                           <span
                             key={prodId}
-                            className="px-2 py-0.5 rounded-md bg-white/10 text-white text-[10px] font-medium flex items-center gap-1 border border-white/5"
+                            className="px-3 py-1 rounded-full bg-[#f8fafc] text-[#011c5b] text-[11px] font-bold flex items-center gap-1.5 border border-[#d0deff] hover:bg-[#d0deff]/30 transition-colors shadow-xs"
                           >
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                            <span className="w-2 h-2 rounded-full bg-[#0055ff]" />
                             {name}
                           </span>
                         );
@@ -931,14 +1017,14 @@ export default function FinanceiroSuperAdminPage() {
                     </div>
                   </div>
 
-                  {/* Features List */}
-                  <div className="mt-4 pt-3 border-t border-white/5 space-y-1.5">
-                    <div className="text-[10px] text-white/40 uppercase font-semibold tracking-wider mb-1">
+                  {/* Recursos & Entregas */}
+                  <div className="mt-5 pt-4 border-t border-[#d0deff]/60 space-y-2">
+                    <div className="text-[10px] text-[#011c5b] uppercase font-black tracking-wider mb-2">
                       Recursos & Entregas
                     </div>
                     {pack.recursos.map((rec, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-white/70">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#00BFF0] shrink-0" />
+                      <div key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium">
+                        <CheckCircle2 className="w-4 h-4 text-[#0055ff] shrink-0 mt-0.5" />
                         <span>{rec}</span>
                       </div>
                     ))}
@@ -946,35 +1032,43 @@ export default function FinanceiroSuperAdminPage() {
                 </div>
 
                 {/* Card Actions */}
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                <div className="pt-4 border-t border-[#d0deff]/60 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${pack.ativo ? "bg-emerald-400" : "bg-white/30"}`} />
-                    <span className="text-[11px] text-white/60">{pack.ativo ? "Pack Ativo" : "Inativo"}</span>
+                    <span className={`w-2.5 h-2.5 rounded-full ${pack.ativo ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
+                    <span className={`text-xs font-black uppercase tracking-wider ${pack.ativo ? "text-emerald-700" : "text-slate-400"}`}>
+                      {pack.ativo ? "Pack Ativo" : "Inativo"}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => {
                         setEditingPack(pack);
                         setPackFormData({ ...pack });
                         setIsPackModalOpen(true);
                       }}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all cursor-pointer"
+                      className="p-2 rounded-xl bg-[#d0deff]/30 hover:bg-[#0055ff] text-[#011c5b] hover:text-white transition-all cursor-pointer shadow-xs"
                       title="Editar Pack"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm(`Excluir o pack "${pack.nome}"?`)) {
+                      onClick={async () => {
+                        const confirmed = await confirmDialog({
+                          title: "Excluir Pack",
+                          message: `Deseja realmente excluir o pack "${pack.nome}"?`,
+                          destructive: true,
+                          confirmLabel: "Excluir"
+                        });
+                        if (confirmed) {
                           savePacks(packs.filter(p => p.id !== pack.id));
                           toast.success("Pack excluído!");
                         }
                       }}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-all cursor-pointer"
+                      className="p-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-all cursor-pointer"
                       title="Excluir Pack"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -1031,6 +1125,34 @@ export default function FinanceiroSuperAdminPage() {
                 onChange={e => setAutoBillingConfig({ ...autoBillingConfig, pixKey: e.target.value })}
                 className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all"
               />
+            </div>
+
+            <div>
+              <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1.5">E-mail Remetente de Cobrança</label>
+              <input
+                type="email"
+                value={autoBillingConfig.senderEmail || "alex@nexobrasil.net"}
+                onChange={e => setAutoBillingConfig({ ...autoBillingConfig, senderEmail: e.target.value })}
+                placeholder="alex@nexobrasil.net"
+                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider">Chave de API Resend (Envio de E-mail)</label>
+                <span className="text-[10px] text-slate-400 font-semibold">re_...</span>
+              </div>
+              <input
+                type="password"
+                value={autoBillingConfig.resendApiKey || ""}
+                onChange={e => setAutoBillingConfig({ ...autoBillingConfig, resendApiKey: e.target.value })}
+                placeholder="re_123456789... (Opcional se já configurado no Supabase)"
+                className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-mono outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all"
+              />
+              <div className="text-[10px] text-slate-400 font-medium mt-1">
+                Utilizada pelo backend para enviar os e-mails com o boleto PDF anexado diretamente para a caixa de entrada do cliente.
+              </div>
             </div>
 
             <div>
@@ -1405,7 +1527,7 @@ export default function FinanceiroSuperAdminPage() {
 
       {/* MODAL: Editar Assinatura do Cliente */}
       <Dialog open={isClientModalOpen} onOpenChange={setIsClientModalOpen}>
-        <DialogContent className="bg-white text-slate-800 border border-[#d0deff] rounded-3xl max-w-md p-6 shadow-2xl">
+        <DialogContent className="bg-white text-slate-800 border border-[#d0deff] rounded-3xl max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-[#011c5b] text-base font-black uppercase tracking-wider">
               Editar Assinatura: {selectedClient?.nome}
@@ -1414,30 +1536,236 @@ export default function FinanceiroSuperAdminPage() {
 
           {selectedClient && (
             <div className="space-y-4 pt-2">
+              {/* Seleção Rápida de Pacote / Produto */}
               <div>
-                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Valor Mensal da Assinatura (R$)</label>
-                <input
-                  type="number"
-                  value={selectedClient.valorMensal}
-                  onChange={e => setSelectedClient({ ...selectedClient, valorMensal: Number(e.target.value) })}
-                  className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-black font-mono outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
-                />
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">
+                  Trocar / Aplicar Pacote ou Produto
+                </label>
+                <select
+                  value=""
+                  onChange={e => {
+                    const selId = e.target.value;
+                    if (!selId) return;
+
+                    // 1. Pack
+                    const foundPack = packs.find(p => p.id === selId);
+                    if (foundPack) {
+                      setSelectedClient({
+                        ...selectedClient,
+                        plano: foundPack.nome,
+                        produtos: [...foundPack.produtos],
+                        valorMensal: foundPack.precoMensal,
+                      });
+                      setEditValorMoeda(
+                        foundPack.precoMensal.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      );
+                      toast.info(`Pacote "${foundPack.nome}" aplicado!`);
+                      return;
+                    }
+
+                    // 2. Produto Cadastrado no Catálogo
+                    const foundProd = storedProdutos.find(p => p.id === selId);
+                    if (foundProd) {
+                      setSelectedClient({
+                        ...selectedClient,
+                        plano: foundProd.nome,
+                        produtos: [foundProd.id],
+                        valorMensal: foundProd.valor,
+                      });
+                      setEditValorMoeda(
+                        foundProd.valor.toLocaleString("pt-BR", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      );
+                      toast.info(`Produto "${foundProd.nome}" selecionado!`);
+                      return;
+                    }
+
+                    // 3. Módulo Base da Agência
+                    const foundAgency = AGENCY_PRODUCTS.find(p => p.id === selId);
+                    if (foundAgency) {
+                      const cur = selectedClient.produtos || [];
+                      const next = cur.includes(foundAgency.id) ? cur : [...cur, foundAgency.id];
+                      setSelectedClient({
+                        ...selectedClient,
+                        plano: foundAgency.name,
+                        produtos: next,
+                      });
+                      toast.info(`Serviço "${foundAgency.name}" selecionado!`);
+                      return;
+                    }
+                  }}
+                  className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white cursor-pointer"
+                >
+                  <option value="">-- Selecionar Pacote ou Serviço Cadastrado --</option>
+                  <optgroup label="Pacotes Prontos (Packs)">
+                    {packs.map(p => (
+                      <option key={p.id} value={p.id}>
+                        📦 {p.nome} (R$ {p.precoMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Produtos do Catálogo da Agência">
+                    {storedProdutos.map(prod => (
+                      <option key={prod.id} value={prod.id}>
+                        🏷️ {prod.codigo} - {prod.nome} (R$ {prod.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Serviços / Módulos Base">
+                    {AGENCY_PRODUCTS.map(prod => (
+                      <option key={prod.id} value={prod.id}>
+                        ⚡ {prod.name} ({prod.tag})
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
               </div>
 
+              {/* Nome do Plano / Serviço Assinado */}
               <div>
-                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Dia do Vencimento Mensal</label>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">
+                  Nome do Plano / Serviço Assinado
+                </label>
                 <input
-                  type="number"
-                  min={1}
-                  max={31}
-                  value={selectedClient.diaVencimento}
-                  onChange={e => setSelectedClient({ ...selectedClient, diaVencimento: Number(e.target.value) })}
+                  type="text"
+                  value={selectedClient.plano || ""}
+                  onChange={e => setSelectedClient({ ...selectedClient, plano: e.target.value })}
+                  placeholder="Ex: Pack House Mix Total, Spot Comercial..."
                   className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                 />
               </div>
 
+              {/* Produtos / Módulos Inclusos na Assinatura */}
               <div>
-                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">Status de Pagamento</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider">
+                    Produtos e Módulos Ativos ({selectedClient.produtos?.length || 0})
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">Clique para marcar/desmarcar</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 rounded-2xl bg-slate-50/80 border border-slate-200/70">
+                  {/* Serviços Base */}
+                  {AGENCY_PRODUCTS.map(prod => {
+                    const active = (selectedClient.produtos || []).includes(prod.id);
+                    return (
+                      <button
+                        key={prod.id}
+                        type="button"
+                        onClick={() => {
+                          const cur = selectedClient.produtos || [];
+                          const next = active ? cur.filter(p => p !== prod.id) : [...cur, prod.id];
+                          setSelectedClient({ ...selectedClient, produtos: next });
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border",
+                          active
+                            ? "bg-[#0055ff] text-white border-[#0055ff] shadow-sm font-black"
+                            : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                        )}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: active ? "#ffffff" : prod.color }}
+                        />
+                        <span>{prod.name}</span>
+                        {active && <Check size={12} className="stroke-[3]" />}
+                      </button>
+                    );
+                  })}
+
+                  {/* Produtos do Catálogo */}
+                  {storedProdutos.map(prod => {
+                    const active = (selectedClient.produtos || []).includes(prod.id);
+                    return (
+                      <button
+                        key={prod.id}
+                        type="button"
+                        onClick={() => {
+                          const cur = selectedClient.produtos || [];
+                          const next = active ? cur.filter(p => p !== prod.id) : [...cur, prod.id];
+                          setSelectedClient({ ...selectedClient, produtos: next });
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border",
+                          active
+                            ? "bg-[#011c5b] text-white border-[#011c5b] shadow-sm font-black"
+                            : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                        )}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: active ? "#ffffff" : "#9FCA1D" }}
+                        />
+                        <span>{prod.nome}</span>
+                        {active && <Check size={12} className="stroke-[3]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Valor com Máscara de Moeda (R$) */}
+              <div>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">
+                  Valor Mensal da Assinatura (R$)
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-4 text-xs font-black text-[#011c5b] opacity-60 select-none">
+                    R$
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editValorMoeda}
+                    onChange={e => handleValorMoedaChange(e.target.value)}
+                    onPaste={handleValorMoedaPaste}
+                    placeholder="0,00"
+                    className="w-full h-11 pl-11 pr-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-black font-mono outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white transition-all shadow-inner"
+                  />
+                </div>
+              </div>
+
+              {/* Tipo de Cobrança & Dia do Vencimento */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">
+                    Tipo de Cobrança
+                  </label>
+                  <select
+                    value={selectedClient.tipoCobranca || "mensal"}
+                    onChange={e => setSelectedClient({ ...selectedClient, tipoCobranca: e.target.value as any })}
+                    className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white cursor-pointer"
+                  >
+                    <option value="mensal">Mensalidade</option>
+                    <option value="avulsa">Avulsa (Única)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">
+                    Dia do Vencimento
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={selectedClient.diaVencimento}
+                    onChange={e => setSelectedClient({ ...selectedClient, diaVencimento: Number(e.target.value) })}
+                    className="w-full h-11 px-4 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Status de Pagamento */}
+              <div>
+                <label className="text-xs text-[#011c5b] font-black uppercase tracking-wider block mb-1">
+                  Status de Pagamento
+                </label>
                 <select
                   value={selectedClient.status}
                   onChange={e => setSelectedClient({ ...selectedClient, status: e.target.value as any })}
@@ -1474,6 +1802,38 @@ export default function FinanceiroSuperAdminPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Overlay de Envio de Boleto por E-mail (Centralizado na tela no estilo visual da página) */}
+      {sendingEmailClient && (
+        <div className="fixed inset-0 z-[9999] bg-[#011c5b]/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-[0_20px_60px_rgba(1,28,91,0.35)] border border-[#d0deff] text-center space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#0055ff] to-[#011c5b] text-white flex items-center justify-center mx-auto shadow-lg shadow-[#0055ff]/30 relative">
+              <Mail className="w-8 h-8 text-white animate-bounce" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white animate-ping" />
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-black text-[#011c5b] uppercase tracking-wider">
+                Enviando Boleto...
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Disparando fatura com QR Code PIX para o e-mail:
+              </p>
+              <p className="text-xs font-bold text-[#0055ff] bg-blue-50 py-1.5 px-3 rounded-full mt-2 font-mono break-all inline-block border border-[#d0deff]">
+                {sendingEmailClient.email}
+              </p>
+            </div>
+
+            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-200">
+              <div className="h-full bg-gradient-to-r from-[#0055ff] via-[#00BFF0] to-[#011c5b] rounded-full animate-pulse w-full" />
+            </div>
+
+            <div className="text-[11px] text-slate-500 font-medium bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80">
+              Assunto: <strong className="text-slate-800">Fatura de cobrança - Nexo Soluções Visuais</strong>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

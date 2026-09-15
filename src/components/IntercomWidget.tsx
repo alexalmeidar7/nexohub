@@ -46,10 +46,24 @@ export default function IntercomWidget() {
     const openHandler = () => {
       setAnchorRect(readIntercomAnchorRect());
       setOpen(true);
-      // Removed setMinimized(false) to maintain state if it was already minimized while navigating
+    };
+    const setRoleHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setAnchorRect(readIntercomAnchorRect());
+      if (detail?.role) {
+        setRole(detail.role);
+        setOpen(true);
+        setMinimized(false);
+      } else {
+        setOpen(true);
+      }
     };
     window.addEventListener("intercom:open", openHandler);
-    return () => window.removeEventListener("intercom:open", openHandler);
+    window.addEventListener("intercom:set-role", setRoleHandler as EventListener);
+    return () => {
+      window.removeEventListener("intercom:open", openHandler);
+      window.removeEventListener("intercom:set-role", setRoleHandler as EventListener);
+    };
   }, []);
 
   const [role, setRole] = useState<Role>("none");
@@ -105,6 +119,14 @@ export default function IntercomWidget() {
 
   useEffect(() => { hotkeyRef.current = hotkey; }, [hotkey]);
   useEffect(() => { talkingRef.current = talking; }, [talking]);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("intercom:state-change", {
+        detail: { role, talking, receiving, open },
+      })
+    );
+  }, [role, talking, receiving, open]);
 
   const attachRemoteStreamToAudio = useCallback((stream?: MediaStream | null) => {
     const el = audioRef.current;

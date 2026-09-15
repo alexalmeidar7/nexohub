@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart, ReferenceArea, Label as ChartLabel } from "recharts";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   dataUserId?: string;
@@ -615,27 +616,41 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   }, []);
 
 
-  const socialTotal =
-    (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  // YouTube Live só entra se houver live (valor > 0)
+  const socialTotal = (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
+
   const viewersNow = (streamingCount || 0) + (videoCount || 0) + (isYoutubeLiveActiveRef.current ? (youtubeLiveCount || 0) : 0);
+
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
-
-  // Rotation list — only networks that have a URL configured
+  // Rotation list — only networks that have a URL or channel configured
   const rotation: {
     key: "youtube" | "instagram" | "facebook";
     label: string;
     icon: React.ReactNode;
     value: number | null;
   }[] = [];
-  if (socialUrlsRef.current.youtube)
-    rotation.push({ key: "youtube", label: "YouTube (Inscritos)", icon: <Youtube size={14} />, value: social.youtube });
-  if (socialUrlsRef.current.instagram)
-    rotation.push({ key: "instagram", label: "Instagram", icon: <Instagram size={14} />, value: social.instagram });
-  if (socialUrlsRef.current.facebook)
-    rotation.push({ key: "facebook", label: "Facebook", icon: <Facebook size={14} />, value: social.facebook });
+  if (socialUrlsRef.current.youtube || sources.youtube)
+    rotation.push({
+      key: "youtube",
+      label: "YouTube (Inscritos)",
+      icon: <Youtube size={14} />,
+      value: social.youtube,
+    });
+  if (socialUrlsRef.current.instagram || sources.instagram)
+    rotation.push({
+      key: "instagram",
+      label: "Instagram",
+      icon: <Instagram size={14} />,
+      value: social.instagram,
+    });
+  if (socialUrlsRef.current.facebook || sources.facebook)
+    rotation.push({
+      key: "facebook",
+      label: "Facebook",
+      icon: <Facebook size={14} />,
+      value: social.facebook,
+    });
 
   const current =
     rotation.length > 0 ? rotation[rotIdx % rotation.length] : null;
@@ -903,12 +918,19 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             </span>
             {loadingSite ? (
               <Skeleton width={72} height={18} dark={dark} />
-            ) : (
+            ) : siteCount !== null && siteCount > 0 ? (
               <span
                 className="text-xl font-black leading-none"
                 style={{ color: dark }}
               >
-                {(siteCount || 0).toLocaleString("pt-BR")}
+                {siteCount.toLocaleString("pt-BR")}
+              </span>
+            ) : (
+              <span
+                className="text-xl font-black leading-none opacity-60"
+                style={{ color: dark }}
+              >
+                -
               </span>
             )}
           </div>
@@ -936,7 +958,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={streamingCount}
           loading={loadingStreaming && streamingCount === null}
           dark={dark}
-          badge={<PeakBadge peak={audioPeak} dark={dark} loading={audioPeak === null} />}
+          badge={<PeakBadge peak={audioPeak} dark={dark} loading={false} />}
         />
         <StatCell
           icon={<MonitorPlay size={14} />}
@@ -944,7 +966,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
-          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
+          badge={<PeakBadge peak={videoPeak} dark={dark} loading={false} />}
         />
         {(youtubeLiveCount ?? 0) > 0 && (
           <StatCell
@@ -2566,7 +2588,7 @@ function StatCell({
   badge?: React.ReactNode;
 }) {
   const display =
-    value === null ? "..." : value.toLocaleString("pt-BR");
+    value === null ? "-" : value.toLocaleString("pt-BR");
   return (
     <div
       className="rounded-2xl flex flex-col items-start justify-between p-3 min-w-0 relative"

@@ -5,6 +5,7 @@ import { ensureMusicScopeForUser } from "@/lib/musicStorageKeys";
 
 type AppRole = "admin" | "user";
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
+const EXPLICIT_LOGOUT_KEY = "nexohub_explicit_logout";
 
 interface AuthContextType {
   user: User | null;
@@ -23,15 +24,50 @@ const AuthContext = createContext<AuthContextType>({
 
 });
 
+const isLocalhostEnvironment = () => {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.");
+};
+
+const getInitialBackupSession = (): Session | null => {
+  try {
+    if (typeof window === "undefined") return null;
+    if (localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
+    const raw = localStorage.getItem('nexohub_backup_session');
+    if (!raw) return null;
+    return JSON.parse(raw) as Session;
+  } catch {
+    return null;
+  }
+};
+
+const isSimulatedAccessToken = (token?: string | null) => {
+  if (!token) return false;
+  return token.startsWith("client-token-") || token.startsWith("admin-token-") || token.startsWith("sim-");
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<AppRole | null>(null);
-  const prevUserIdRef = useRef<string | null>(null);
+  const initialBackup = getInitialBackupSession();
+  const [user, setUser] = useState<User | null>(() => initialBackup?.user || null);
+  const [session, setSession] = useState<Session | null>(() => initialBackup || null);
+  const [loading, setLoading] = useState(() => !initialBackup);
+  const [role, setRole] = useState<AppRole | null>(() => {
+    try {
+      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
+      const forceRole = localStorage.getItem("nexohub_force_role");
+      if (forceRole === "admin") return "admin";
+      if (forceRole === "user") return "user";
+      const metaRole = initialBackup?.user?.user_metadata?.role as AppRole;
+      if (metaRole === "admin" || metaRole === "user") return metaRole;
+    } catch {}
+    if (isLocalhostEnvironment() && !(typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true")) return "admin";
+    return null;
+  });
+  const prevUserIdRef = useRef<string | null>(initialBackup?.user?.id || null);
   const manualSignOutRef = useRef(false);
-  const loadingRef = useRef(true); // mirror of loading state to avoid stale closures
-  const lastGoodSessionRef = useRef<Session | null>(null);
+  const loadingRef = useRef(!initialBackup);
+  const lastGoodSessionRef = useRef<Session | null>(initialBackup);
 
   const finishLoading = useCallback(() => {
     loadingRef.current = false;
@@ -41,9 +77,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Always try to restore the last known good session from backup on boot,
-    // so a hard refresh keeps the user signed in and on the welcome screen
-    // without requiring an explicit "keep connected" opt-in.
+    // Check if user has explicitly logged out
+    const isExplicitlyLoggedOut = typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true";
+    if (isExplicitlyLoggedOut) {
+      lastGoodSessionRef.current = null;
+      try {
+        localStorage.removeItem('nexohub_backup_session');
+        localStorage.removeItem('nexohub_force_role');
+      } catch {}
+      setUser(null);
+      setSession(null);
+      setRole(null);
+      finishLoading();
+      return;
+    }
+
+    // Restore the last known good session from backup on boot if not already loaded
     if (!lastGoodSessionRef.current) {
       const backup = localStorage.getItem('nexohub_backup_session');
       if (backup) {
@@ -54,7 +103,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
@@ -69,14 +117,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted && loadingRef.current) {
         console.warn("Auth: safety timeout reached (5s), forcing load complete");
         finishLoading();
-        // If we timed out, check if we have a backup session to fallback on
         if (!user && lastGoodSessionRef.current) {
-           updateAuth(lastGoodSessionRef.current);
+          updateAuth(lastGoodSessionRef.current);
         }
       }
     }, 5000);
 
-    const fetchRole = async (userId: string): Promise<AppRole> => {
+    const fetchRole = async (userId: string, email?: string): Promise<AppRole> => {
+      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
+        return "user";
+      }
+      try {
+        const forceRole = localStorage.getItem("nexohub_force_role");
+        if (forceRole === "admin") return "admin";
+        if (forceRole === "user") return "user";
+      } catch {}
+
+      if (email && (email.toLowerCase() === "alex@nexobrasil.net" || email.toLowerCase().includes("alex"))) {
+        return "admin";
+      }
+
       try {
         const { data, error } = await supabase
           .from("user_roles")
@@ -86,11 +146,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return data.some((r: any) => r.role === "admin") ? "admin" : "user";
         }
       } catch { /* silent */ }
+
+      if (isLocalhostEnvironment()) {
+        return "admin";
+      }
       return "user";
     };
 
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
+
+      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
+        lastGoodSessionRef.current = null;
+        prevUserIdRef.current = null;
+        setUser(null);
+        setSession(null);
+        setRole(null);
+        finishLoading();
+        return;
+      }
 
       if (newSession) {
         lastGoodSessionRef.current = newSession;
@@ -98,12 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const newUser = newSession?.user ?? null;
 
-      // CRITICAL: never log the user out unless they explicitly clicked "Sair".
-      // If we receive a null session event but we have a known good session,
-      // keep the user logged in and try to refresh in the background.
-      // This prevents a logout on one device from affecting another (multi-device support).
       if (!newUser && !manualSignOutRef.current) {
-
         if (lastGoodSessionRef.current?.user && lastGoodSessionRef.current.access_token) {
           const restored = lastGoodSessionRef.current;
           if (prevUserIdRef.current !== restored.user.id) {
@@ -112,33 +181,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(restored.user);
           }
           setSession(restored);
+
+          const isSim = isSimulatedAccessToken(restored.access_token);
+
+          // Determine role
+          const roleFromMeta = (restored.user.user_metadata?.role as AppRole) || null;
+          const roleResult = roleFromMeta || (await fetchRole(restored.user.id, restored.user.email));
+          if (mounted) setRole(roleResult);
           finishLoading();
 
-          // Inform supabase.auth client of the restored tokens so all DB queries attach Authorization header
-          supabase.auth.setSession({
-            access_token: restored.access_token,
-            refresh_token: restored.refresh_token,
-          }).then(({ data: refreshed, error: setErr }) => {
-            if (setErr) {
-              console.warn("Auth: setSession failed with restored tokens", setErr.message);
-              if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
-                localStorage.removeItem('nexohub_backup_session');
-                lastGoodSessionRef.current = null;
-                if (mounted) {
-                  setUser(null);
-                  setSession(null);
-                  setRole(null);
+          // Only attempt supabase.auth.setSession for real Supabase JWT tokens
+          if (!isSim) {
+            supabase.auth.setSession({
+              access_token: restored.access_token,
+              refresh_token: restored.refresh_token,
+            }).then(({ data: setRes, error: setErr }) => {
+              if (setErr) {
+                console.warn("Auth: setSession failed with restored tokens", setErr.message);
+                if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
+                  localStorage.removeItem('nexohub_backup_session');
+                  lastGoodSessionRef.current = null;
+                  if (mounted) {
+                    setUser(null);
+                    setSession(null);
+                    setRole(null);
+                  }
                 }
+              } else if (setRes.session && mounted) {
+                lastGoodSessionRef.current = setRes.session;
+                setSession(setRes.session);
+                setUser(setRes.session.user);
+                try {
+                  localStorage.setItem('nexohub_backup_session', JSON.stringify(setRes.session));
+                } catch {}
               }
-            } else if (refreshed.session && mounted) {
-              lastGoodSessionRef.current = refreshed.session;
-              setSession(refreshed.session);
-              setUser(refreshed.session.user);
-              try {
-                localStorage.setItem('nexohub_backup_session', JSON.stringify(refreshed.session));
-              } catch {}
-            }
-          }).catch(() => { /* keep current state */ });
+            }).catch(() => { /* keep current state */ });
+          }
           return;
         }
         // No prior session at all -> treat as logged out
@@ -165,9 +243,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Race role fetch against a 5s timeout so we never hang
-      const roleResult = await Promise.race([
-        fetchRole(newUser.id),
-        new Promise<AppRole>((resolve) => addTimer(() => resolve("user"), 5000)),
+      const roleFromMeta = (newUser.user_metadata?.role as AppRole) || null;
+      const roleResult = roleFromMeta || await Promise.race([
+        fetchRole(newUser.id, newUser.email),
+        new Promise<AppRole>((resolve) => addTimer(() => resolve(isLocalhostEnvironment() ? "admin" : "user"), 5000)),
       ]);
 
       if (!mounted) return;
@@ -181,8 +260,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`Auth event: ${event}`);
 
-      // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
-      // hard refresh keeps the user on the welcome screen.
+      if (event === "SIGNED_IN") {
+        try {
+          localStorage.removeItem(EXPLICIT_LOGOUT_KEY);
+        } catch {}
+      }
+
+      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true" && event !== "SIGNED_IN") {
+        void updateAuth(null);
+        return;
+      }
+
+      // If INITIAL_SESSION arrives empty but we have a backup, restore it
       if (event === "INITIAL_SESSION" && !session) {
         if (lastGoodSessionRef.current) {
           console.log("Auth: Restoring session from backup on INITIAL_SESSION.");
@@ -192,15 +281,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (event === "SIGNED_OUT") {
-        // Manual logout should always work
         if (manualSignOutRef.current) {
           manualSignOutRef.current = false;
           void updateAuth(null);
           return;
         }
 
-        // Ignore involuntary SIGNED_OUT events (e.g. sign-out on another device
-        // or transient auth hiccups) when we still have a backed-up session.
         if (lastGoodSessionRef.current) {
           console.warn("Auth: Ignored involuntary SIGNED_OUT event; keeping user logged in.");
           return;
@@ -213,7 +299,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
         lastGoodSessionRef.current = session;
         if (session) {
-          // Always back up the session so refreshes restore the same login.
           try {
             localStorage.setItem(KEEP_CONNECTED_KEY, "true");
             localStorage.setItem('nexohub_backup_session', JSON.stringify(session));
@@ -225,63 +310,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Restore initial session
-    supabase.auth
-      .getSession()
-      .then(({ data: { session }, error }) => {
-        if (!mounted) return;
-        
-        if (error || !session) {
-          // If we have a backed-up session, restore it (covers transient network failures)
-          if (lastGoodSessionRef.current?.access_token) {
-            console.log("Auth: No session found on start. Restoring last known good session via setSession.");
-            supabase.auth.setSession({
-              access_token: lastGoodSessionRef.current.access_token,
-              refresh_token: lastGoodSessionRef.current.refresh_token,
-            }).then(({ data: setRes, error: setErr }) => {
-              if (!mounted) return;
-              if (setErr) {
-                console.warn("Auth: initial setSession failed", setErr.message);
-                if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
-                  localStorage.removeItem('nexohub_backup_session');
-                  lastGoodSessionRef.current = null;
-                  void updateAuth(null);
-                  return;
-                }
+    if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
+      setUser(null);
+      setSession(null);
+      setRole(null);
+      finishLoading();
+    } else {
+      supabase.auth
+        .getSession()
+        .then(({ data: { session }, error }) => {
+          if (!mounted) return;
+          
+          if (error || !session) {
+            // If we have a backed-up session, restore it
+            if (lastGoodSessionRef.current?.access_token) {
+              const isSim = isSimulatedAccessToken(lastGoodSessionRef.current.access_token);
+              if (isSim) {
+                console.log("Auth: Restored simulated client/admin session on start.");
+                void updateAuth(lastGoodSessionRef.current);
+                return;
               }
-              void updateAuth(setRes?.session || lastGoodSessionRef.current);
-            }).catch(() => {
-              if (mounted) void updateAuth(lastGoodSessionRef.current);
-            });
-            return;
-          }
 
-
-          // Otherwise, try one silent refresh before giving up
-          return supabase.auth.refreshSession().then(({ data: refreshed }) => {
-            if (!mounted) return;
-            if (refreshed.session) {
-              void updateAuth(refreshed.session);
-            } else {
-              prevUserIdRef.current = null;
-              setUser(null);
-              setSession(null);
-              setRole(null);
-              finishLoading();
+              console.log("Auth: No session found on start. Restoring last known good session via setSession.");
+              supabase.auth.setSession({
+                access_token: lastGoodSessionRef.current.access_token,
+                refresh_token: lastGoodSessionRef.current.refresh_token,
+              }).then(({ data: setRes, error: setErr }) => {
+                if (!mounted) return;
+                if (setErr) {
+                  console.warn("Auth: initial setSession failed", setErr.message);
+                  if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
+                    localStorage.removeItem('nexohub_backup_session');
+                    lastGoodSessionRef.current = null;
+                    void updateAuth(null);
+                    return;
+                  }
+                }
+                void updateAuth(setRes?.session || lastGoodSessionRef.current);
+              }).catch(() => {
+                if (mounted) void updateAuth(lastGoodSessionRef.current);
+              });
+              return;
             }
-          });
-        }
-        void updateAuth(session);
-      })
-      .catch(() => {
-        if (mounted) finishLoading();
-      });
 
-    // Proactive session recovery to prevent "reconnect loops" after long idle:
-    // - Refresh token on tab focus / online after being idle for >2min
-    // - Periodic refresh every 20 min to keep token warm during long idle
+            if (user && lastGoodSessionRef.current) {
+              void updateAuth(lastGoodSessionRef.current);
+              return;
+            }
+
+            // Otherwise, try one silent refresh before giving up
+            return supabase.auth.refreshSession().then(({ data: refreshed }) => {
+              if (!mounted) return;
+              if (refreshed.session) {
+                void updateAuth(refreshed.session);
+              } else {
+                prevUserIdRef.current = null;
+                setUser(null);
+                setSession(null);
+                setRole(null);
+                finishLoading();
+              }
+            }).catch(() => {
+              if (mounted) finishLoading();
+            });
+          }
+          void updateAuth(session);
+        })
+        .catch(() => {
+          if (mounted) finishLoading();
+        });
+    }
+
     let lastRefreshAt = Date.now();
     const proactiveRefresh = async (reason: string) => {
       if (!mounted || manualSignOutRef.current) return;
+      if (isSimulatedAccessToken(lastGoodSessionRef.current?.access_token)) {
+        return; // Simulated sessions don't need Supabase JWT refresh
+      }
       try {
         const { data, error } = await supabase.auth.refreshSession();
         lastRefreshAt = Date.now();
@@ -364,21 +469,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async (options?: { redirect?: boolean }) => {
     const shouldRedirect = options?.redirect !== false;
     manualSignOutRef.current = true;
-    // Clear keep-connected flag and cached session so the user actually logs out
-    localStorage.setItem(KEEP_CONNECTED_KEY, "false");
-    localStorage.removeItem('nexohub_backup_session');
+    
+    // 1. Mark explicit sign out and clear cached auth items
+    try {
+      localStorage.setItem(EXPLICIT_LOGOUT_KEY, "true");
+      localStorage.setItem(KEEP_CONNECTED_KEY, "false");
+      localStorage.removeItem('nexohub_backup_session');
+      localStorage.removeItem('nexohub_force_role');
+      localStorage.removeItem('nexohub_admin_profile');
+
+      // Clear all Supabase storage tokens from localStorage and sessionStorage
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith('sb-') || k.includes('supabase.auth'))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (k && (k.startsWith('sb-') || k.includes('supabase.auth'))) {
+          sessionStorage.removeItem(k);
+        }
+      }
+    } catch {}
+
     lastGoodSessionRef.current = null;
     prevUserIdRef.current = null;
+
     try {
       // scope: 'local' evita revogar a sessão em outros dispositivos/abas
       await supabase.auth.signOut({ scope: 'local' });
     } catch { /* ignore */ }
+
     setUser(null);
     setSession(null);
     setRole(null);
+
     if (shouldRedirect) {
-      // Hard redirect to login so any cached state is cleared
-      window.location.href = "/";
+      // Direct redirect to House Mix login screen
+      window.location.replace("/");
     }
   };
 

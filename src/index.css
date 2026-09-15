@@ -454,6 +454,19 @@
   scrollbar-color: var(--layout-scrollbar-color, #555555) transparent;
 }
 
+/* ====== Roteiro popup modal scrollbar ====== */
+.roteiro-modal-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.roteiro-modal-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+
+
 /* ====== Form styling for masterview content area ====== */
 .mv-content-area {
   background-color: var(--layout-page-bg, #ffffff);
@@ -566,8 +579,8 @@ input.login-input:focus {
   box-shadow: 0 4px 12px color-mix(in srgb, var(--layout-button-bg, #0d0446) 25%, transparent);
 }
 
-.mv-content-area p,
-.mv-content-area span {
+.mv-content-area p:not([data-nexo-skip] *),
+.mv-content-area span:not([data-nexo-skip] *) {
   color: var(--layout-page-text, #0d0446);
 }
 /* Allow white text inside dark-background containers within mv-content-area */
@@ -599,24 +612,101 @@ input.login-input:focus {
   color: var(--layout-accent-color, #be0101) !important;
 }
 
-/* Select dropdown inside mv-content-area — portal renders outside, use global override */
+/* Select & Menu dropdowns: mouse over line uses the active royal blue (#0055ff) */
 [data-radix-popper-content-wrapper] [role="listbox"] {
-  background-color: var(--layout-page-bg, rgba(20, 20, 25, 0.95)) !important;
-  color: var(--layout-page-text, #e4e4e7) !important;
-  border: none !important;
-  border-radius: 14px !important;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.25) !important;
-  backdrop-filter: blur(20px) !important;
+  background-color: var(--layout-page-bg, #ffffff) !important;
+  color: var(--layout-page-text, #0d0446) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
-[data-radix-popper-content-wrapper] [role="option"] {
-  color: var(--layout-page-text, #e4e4e7) !important;
-  border-radius: 8px !important;
+[data-radix-popper-content-wrapper] [role="option"],
+[role="listbox"] [role="option"],
+[data-radix-select-viewport] [role="option"],
+[data-radix-popper-content-wrapper] [role="menuitem"],
+[role="menu"] [role="menuitem"],
+[data-radix-popper-content-wrapper] [role="menuitemcheckbox"],
+[data-radix-popper-content-wrapper] [role="menuitemradio"] {
+  color: var(--layout-page-text, #0d0446) !important;
+  border-radius: 10px !important;
+  transition: background-color 100ms ease, color 100ms ease !important;
+  cursor: pointer !important;
 }
 
-[data-radix-popper-content-wrapper] [role="option"][data-highlighted] {
-  background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important;
-  color: var(--layout-accent-color, #2563eb) !important;
+/* Mouse over / highlighted line: vibrant royal blue (#0055ff) with crisp white text */
+[data-radix-popper-content-wrapper] [role="option"][data-highlighted],
+[data-radix-popper-content-wrapper] [role="option"]:hover,
+[data-radix-popper-content-wrapper] [role="option"]:focus,
+[data-radix-popper-content-wrapper] [role="option"][data-state="checked"],
+[role="listbox"] [role="option"][data-highlighted],
+[role="listbox"] [role="option"]:hover,
+[role="listbox"] [role="option"]:focus,
+[data-radix-select-viewport] [role="option"][data-highlighted],
+[data-radix-select-viewport] [role="option"]:hover,
+[data-radix-select-viewport] [role="option"]:focus,
+[data-radix-popper-content-wrapper] [role="menuitem"][data-highlighted],
+[data-radix-popper-content-wrapper] [role="menuitem"]:hover,
+[data-radix-popper-content-wrapper] [role="menuitem"]:focus,
+[data-radix-popper-content-wrapper] [role="menuitemcheckbox"][data-highlighted],
+[data-radix-popper-content-wrapper] [role="menuitemradio"][data-highlighted],
+[role="menu"] [role="menuitem"][data-highlighted],
+[role="menu"] [role="menuitem"]:hover,
+[role="menu"] [role="menuitem"]:focus,
+[role="menu"] [role="menuitemcheckbox"][data-highlighted],
+[role="menu"] [role="menuitemradio"][data-highlighted],
+[cmdk-item][data-selected="true"],
+[cmdk-item]:hover {
+  background-color: #0055ff !important;
+  color: #ffffff !important;
+}
+
+/* Force all text nodes, headings and sublabels inside the highlighted item to pure white */
+[data-radix-popper-content-wrapper] [role="option"][data-highlighted] *,
+[data-radix-popper-content-wrapper] [role="option"]:hover *,
+[data-radix-popper-content-wrapper] [role="option"]:focus *,
+[data-radix-popper-content-wrapper] [role="option"][data-state="checked"] *,
+[role="listbox"] [role="option"][data-highlighted] *,
+[role="listbox"] [role="option"]:hover *,
+[role="listbox"] [role="option"]:focus *,
+[data-radix-select-viewport] [role="option"][data-highlighted] *,
+[data-radix-select-viewport] [role="option"]:hover *,
+[data-radix-select-viewport] [role="option"]:focus *,
+[data-radix-popper-content-wrapper] [role="menuitem"][data-highlighted] *,
+[data-radix-popper-content-wrapper] [role="menuitem"]:hover *,
+[data-radix-popper-content-wrapper] [role="menuitem"]:focus *,
+[role="menu"] [role="menuitem"][data-highlighted] *,
+[role="menu"] [role="menuitem"]:hover *,
+[role="menu"] [role="menuitem"]:focus *,
+[cmdk-item][data-selected="true"] *,
+[cmdk-item]:hover * {
+  color: #ffffff !important;
+}
+
+/* Ensure checkmarks, chevrons, icons become white */
+[data-radix-popper-content-wrapper] [role="option"][data-highlighted] svg,
+[data-radix-popper-content-wrapper] [role="option"]:hover svg,
+[data-radix-popper-content-wrapper] [role="menuitem"][data-highlighted] svg,
+[data-radix-popper-content-wrapper] [role="menuitem"]:hover svg,
+[role="listbox"] [role="option"][data-highlighted] svg,
+[role="listbox"] [role="option"]:hover svg,
+[role="menu"] [role="menuitem"][data-highlighted] svg,
+[role="menu"] [role="menuitem"]:hover svg,
+[data-radix-select-viewport] [role="option"][data-highlighted] svg,
+[data-radix-select-viewport] [role="option"]:hover svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Studio and category badges inside highlighted options turn into crisp frosted white pills */
+[data-radix-popper-content-wrapper] [role="option"][data-highlighted] span[class*="bg-"],
+[data-radix-popper-content-wrapper] [role="option"]:hover span[class*="bg-"],
+[role="listbox"] [role="option"][data-highlighted] span[class*="bg-"],
+[role="listbox"] [role="option"]:hover span[class*="bg-"],
+[data-radix-select-viewport] [role="option"][data-highlighted] span[class*="bg-"],
+[data-radix-select-viewport] [role="option"]:hover span[class*="bg-"] {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
 }
 
 /* Tables follow layout colors */
@@ -1057,62 +1147,70 @@ table:not([data-no-row-hover]) tbody tr:hover {
 }
 
 /* ─── SkyGlass Form Utilities ─── */
-.input-skyglass,
-.mv-content-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):not(.sr-only),
-.mv-content-area select,
-.mv-content-area textarea {
-  background: color-mix(in srgb, var(--layout-page-bg, #ffffff) 95%, var(--layout-page-text, #1a1a1a) 5%) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1.5px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent) !important;
-  border-radius: 12px !important;
-  color: var(--layout-page-text, #1a1a1a) !important;
-  font-size: 0.8125rem;
-  padding: 0.5rem 0.875rem;
-  transition: all 0.25s cubic-bezier(.4,0,.2,1);
-  outline: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+/* ─── Nexo Form Design System (Visual Layout idêntico ao Super Admin > Cadastro de Cliente) ─── */
+.mv-content-area:not(.keep-dark-layout) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):not(.sr-only),
+.mv-content-area:not(.keep-dark-layout) select,
+.mv-content-area:not(.keep-dark-layout) textarea {
+  background: #f8fafc !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 9999px !important;
+  height: 44px;
+  padding: 0 20px !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 12px !important;
+  color: #0f172a !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
 }
-.input-skyglass:focus,
-.mv-content-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):not(.sr-only):focus,
-.mv-content-area select:focus,
-.mv-content-area textarea:focus {
-  border-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 50%, transparent) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent), inset 0 1px 0 rgba(255,255,255,0.08) !important;
-  background: rgba(255,255,255,0.10) !important;
+
+.mv-content-area:not(.keep-dark-layout) textarea {
+  height: auto !important;
+  border-radius: 20px !important;
+  padding: 12px 20px !important;
 }
-.input-skyglass::placeholder,
-.mv-content-area input::placeholder,
-.mv-content-area textarea::placeholder {
-  color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent) !important;
+
+.mv-content-area:not(.keep-dark-layout) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):not(.sr-only):focus,
+.mv-content-area:not(.keep-dark-layout) select:focus,
+.mv-content-area:not(.keep-dark-layout) textarea:focus {
+  border-color: #0055ff !important;
+  box-shadow: 0 0 0 3px rgba(0, 85, 255, 0.12) !important;
+  background: #ffffff !important;
 }
-.mv-content-area select option {
-  background: #1a1a2e;
-  color: #e4e4e7;
+
+.mv-content-area:not(.keep-dark-layout) input::placeholder,
+.mv-content-area:not(.keep-dark-layout) textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.mv-content-area:not(.keep-dark-layout) select option {
+  background: #ffffff;
+  color: #0f172a;
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: 12px;
 }
-.mv-content-area select {
+
+.mv-content-area:not(.keep-dark-layout) select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 32px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230055ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 18px center !important;
+  padding-right: 44px !important;
 }
 
-/* SkyGlass Labels */
-.label-skyglass,
-.mv-content-area label:not(.cursor-pointer) {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent);
-  margin-bottom: 0.375rem;
-  display: block;
+/* Form Labels — idêntico ao labelStyle de ClientesPage.tsx (Super Admin) */
+.mv-content-area:not(.keep-dark-layout) label:not(.cursor-pointer) {
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.2px !important;
+  text-transform: uppercase !important;
+  color: #64748b !important;
+  margin-bottom: 6px !important;
+  display: block !important;
 }
+
 
 /* SkyGlass Form Groups */
 .form-group-skyglass {
@@ -1259,20 +1357,27 @@ table:not([data-no-row-hover]) tbody tr:hover {
    NEXO FORM DESIGN SYSTEM
    Padrão visual (cyan + lime + pill + Montserrat) para forms.
    ============================================================ */
+/* ============================================================
+   NEXO FORM DESIGN SYSTEM
+   Padrão visual alinhado ao Super Admin > Cadastro de Cliente
+   (White cards, #0055ff electric blue, #f8fafc pill inputs, Montserrat)
+   ============================================================ */
 .nx-form-card {
-  background: #D6F4FB;
-  border-radius: 2rem;
-  padding: 2rem 2.25rem;
+  background: #ffffff;
+  border-radius: 1.5rem;
+  padding: 1.75rem 2rem;
   font-family: "Montserrat", system-ui, sans-serif;
-  color: #0A0A0A;
+  color: #002132;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03);
 }
 
 .nx-form-title {
   font-family: "Montserrat", system-ui, sans-serif;
-  font-weight: 800;
+  font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #0A0A0A;
+  color: #002132;
   font-size: 1.05rem;
   margin-bottom: 1.5rem;
 }
@@ -1297,23 +1402,23 @@ table:not([data-no-row-hover]) tbody tr:hover {
   height: 40px;
   padding: 0 1rem;
   background: #ffffff;
-  border: 1px solid rgba(10, 10, 10, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 9999px;
   font-family: "Montserrat", system-ui, sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #0A0A0A;
+  color: #011c5b;
   box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04);
 }
-.nx-chip .nx-dot { width: 8px; height: 8px; border-radius: 9999px; background: #00BFF0; }
+.nx-chip .nx-dot { width: 8px; height: 8px; border-radius: 9999px; background: #0055ff; }
 .nx-chip.nx-chip-success .nx-dot { background: #22c55e; }
 .nx-chip.nx-chip-danger .nx-dot { background: #ef4444; }
 
 .nx-table-head {
-  background: #00BFF0;
+  background: #0055ff;
   color: #ffffff;
   font-family: "Montserrat", system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 0.75rem;
@@ -1325,7 +1430,7 @@ table:not([data-no-row-hover]) tbody tr:hover {
   gap: 0.75rem;
   height: 44px;
   padding: 0 1rem 0 0.35rem;
-  background: #00BFF0;
+  background: #0055ff;
   border-radius: 9999px;
   color: #ffffff;
   font-family: "Montserrat", system-ui, sans-serif;
@@ -1335,10 +1440,9 @@ table:not([data-no-row-hover]) tbody tr:hover {
   font-size: 0.8125rem;
 }
 
-/* Checkboxes nativos herdam o cyan do design system (exceto os .sr-only,
-   que são inputs escondidos usados para toggles pill customizados). */
+/* Checkboxes nativos herdam o azul do design system */
 input[type="checkbox"]:not(.sr-only) {
-  accent-color: #00BFF0;
+  accent-color: #0055ff;
   width: 18px;
   height: 18px;
   cursor: pointer;
@@ -1347,14 +1451,12 @@ input[type="checkbox"]:not(.sr-only) {
 
 /* Rádios nativos também acompanham o padrão */
 input[type="radio"]:not(.sr-only) {
-  accent-color: #00BFF0;
+  accent-color: #0055ff;
   cursor: pointer;
 }
 
 /* ============================================================
-   SELECT NATIVO — pill branco + chevron cyan, alinhado ao mockup
-   Componentes shadcn <Select> já são estilizados via primitive.
-   Use `data-nx-skip` num <select> para escapar deste estilo.
+   SELECT NATIVO — pill f8fafc + chevron blue, alinhado ao ClientesPage
    ============================================================ */
 select:not([data-nx-skip]) {
   appearance: none;
@@ -1363,24 +1465,25 @@ select:not([data-nx-skip]) {
   height: 44px;
   padding: 0 44px 0 20px;
   border-radius: 9999px;
-  border: 1px solid rgba(10, 10, 10, 0.10);
-  background-color: #ffffff;
-  color: #0A0A0A;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background-color: #f8fafc;
+  color: #0f172a;
   font-family: "Montserrat", system-ui, sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
-  box-shadow: inset 0 1px 2px rgba(10, 10, 10, 0.06);
+  text-transform: uppercase;
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300BFF0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230055ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
   background-position: right 16px center;
   background-size: 16px 16px;
 }
 select:not([data-nx-skip]):focus {
   outline: none;
-  border-color: #00BFF0;
-  box-shadow: 0 0 0 2px rgba(0, 191, 240, 0.35);
+  background-color: #ffffff;
+  border-color: #0055ff;
+  box-shadow: 0 0 0 2px rgba(0, 85, 255, 0.2);
 }
 select:not([data-nx-skip]):disabled {
   opacity: 0.5;
@@ -1388,37 +1491,32 @@ select:not([data-nx-skip]):disabled {
 }
 select:not([data-nx-skip]) option {
   background: #ffffff;
-  color: #0A0A0A;
+  color: #0f172a;
   padding: 8px;
 }
 select:not([data-nx-skip]) option:checked {
-  background: #D6F4FB;
-  color: #0A0A0A;
+  background: #0055ff;
+  color: #ffffff;
   font-weight: 600;
 }
 
-
-
-
-
 /* ============================================================
    NEXO STYLE PASS — escopo aplicado com class="nexo-scope"
-   Reproduz o visual do "Cadastro do Ouvinte" em qualquer tela
-   sem alterar a lógica interna dos componentes.
-   Tokens: CYAN #00BFF0 | LIME #C6F03C | CARD_BG #D6F4FB
-           DARK #0A2540 | FONT Montserrat
+   Alinhado exatamente à tela Super Admin > Cadastro de Cliente
+   Tokens: BLUE #0055ff | CARD_BG #ffffff | INPUT_BG #f8fafc
+           DARK #002132 | LABELS #64748b | FONT Montserrat
    ============================================================ */
 
 .nexo-scope {
   font-family: 'Montserrat', system-ui, sans-serif !important;
-  --layout-accent-color: #00BFF0;
+  --layout-accent-color: #0055ff;
   --layout-page-bg: #ffffff;
-  --layout-page-text: #0A2540;
-  --layout-header-bg: #0A2540;
+  --layout-page-text: #002132;
+  --layout-header-bg: #002132;
   --layout-header-text: #ffffff;
-  --layout-border-color: #00BFF0;
-  color: #0A2540;
-  background: linear-gradient(180deg, #F1FAFD 0%, #ffffff 100%);
+  --layout-border-color: rgba(226, 232, 240, 0.9);
+  color: #002132;
+  background: transparent;
   min-height: 100%;
   padding: 20px 24px 40px;
   border-radius: 24px;
@@ -1429,41 +1527,43 @@ select:not([data-nx-skip]) option:checked {
 }
 
 /* Titles */
-.nexo-scope h1,
-.nexo-scope h2,
-.nexo-scope h3 {
-  color: #0A2540 !important;
+.nexo-scope h1:not([data-nexo-skip] *),
+.nexo-scope h2:not([data-nexo-skip] *),
+.nexo-scope h3:not([data-nexo-skip] *) {
+  color: #002132 !important;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  font-weight: 800 !important;
+  font-weight: 900 !important;
 }
 
-.nexo-scope h4,
-.nexo-scope h5,
-.nexo-scope h6 {
-  color: #0A2540 !important;
+.nexo-scope h4:not([data-nexo-skip] *),
+.nexo-scope h5:not([data-nexo-skip] *),
+.nexo-scope h6:not([data-nexo-skip] *) {
+  color: #002132 !important;
   font-weight: 700 !important;
 }
 
-/* Convert generic cards/panels to Nexo card look */
+/* Convert generic cards/panels to white card look matching ClientesPage */
 .nexo-scope [class*="rounded-2xl"]:not([data-nexo-skip]):not([data-nexo-skip] *),
+.nexo-scope [class*="rounded-3xl"]:not([data-nexo-skip]):not([data-nexo-skip] *),
 .nexo-scope [class*="rounded-xl"]:not([data-nexo-skip]):not([data-nexo-skip] *) {
-  background: #D6F4FB !important;
-  box-shadow: 0 2px 12px rgba(10, 37, 64, 0.05) !important;
-  color: #0A2540 !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03) !important;
+  color: #002132 !important;
 }
 
 .nexo-scope [class*="rounded-2xl"] [class*="rounded-xl"]:not([data-nexo-skip]):not([data-nexo-skip] *),
 .nexo-scope [class*="rounded-2xl"] [class*="rounded-2xl"]:not([data-nexo-skip]):not([data-nexo-skip] *) {
-  background: #ffffff !important;
-  border: 1.5px solid #00BFF0 !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
 }
 
-/* Buttons — pill lime */
+/* Buttons — pill blue #0055ff */
 .nexo-scope button:not([class*="rounded-full"]):not([role="tab"]):not([data-nexo-skip]) {
-  border-radius: 999px !important;
+  border-radius: 9999px !important;
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   letter-spacing: 1px;
   text-transform: uppercase;
   font-size: 12px !important;
@@ -1473,31 +1573,33 @@ select:not([data-nx-skip]) option:checked {
 .nexo-scope button[type="submit"],
 .nexo-scope button.bg-primary,
 .nexo-scope button[data-nexo="primary"] {
-  background: #C6F03C !important;
-  color: #0A2540 !important;
-  border: 2px solid transparent !important;
-  box-shadow: 0 4px 14px rgba(198, 240, 60, 0.35) !important;
+  background: #0055ff !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(0, 85, 255, 0.25) !important;
 }
 
 .nexo-scope button[type="submit"]:hover,
 .nexo-scope button.bg-primary:hover,
 .nexo-scope button[data-nexo="primary"]:hover {
-  transform: translateY(-1px);
+  background: #0047d4 !important;
+  box-shadow: 0 6px 20px rgba(0, 85, 255, 0.35) !important;
 }
 
-/* Inputs / selects / textareas — pill cyan */
+/* Inputs / selects / textareas — pill #f8fafc */
 .nexo-scope input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]),
 .nexo-scope select,
 .nexo-scope textarea {
-  background: #ffffff !important;
-  border: 2px solid #00BFF0 !important;
-  border-radius: 999px !important;
-  color: #0A2540 !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 9999px !important;
+  color: #0f172a !important;
   font-family: 'Montserrat', sans-serif !important;
-  font-size: 13px !important;
-  padding: 10px 20px !important;
+  font-size: 12px !important;
+  padding: 0 20px !important;
   outline: none !important;
   box-shadow: none !important;
+  text-transform: uppercase;
 }
 
 .nexo-scope textarea {
@@ -1509,20 +1611,22 @@ select:not([data-nx-skip]) option:checked {
 .nexo-scope input:focus,
 .nexo-scope select:focus,
 .nexo-scope textarea:focus {
-  border-color: #0A2540 !important;
+  background: #ffffff !important;
+  border-color: #0055ff !important;
 }
 
 .nexo-scope label {
-  color: #0A2540 !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 1px;
+  color: #64748b !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
 }
 
 /* Table look */
-.nexo-scope table th {
-  color: #0A2540 !important;
+.nexo-scope table:not(.rdp-table):not([class*="rdp"]) th:not([class*="rdp"]) {
+  background: #0055ff !important;
+  color: #ffffff !important;
   font-weight: 800 !important;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -1533,15 +1637,15 @@ select:not([data-nx-skip]) option:checked {
 .nexo-scope .text-muted-foreground,
 .nexo-scope [class*="opacity-60"],
 .nexo-scope [class*="opacity-70"] {
-  color: #64748B !important;
+  color: #64748b !important;
 }
 
-/* Small popup variant — sem gradient de fundo, mais compacto */
+/* Small popup variant */
 .nexo-scope[data-nexo-variant="popup"] {
-  background: #D6F4FB;
+  background: #ffffff;
   padding: 0;
   border-radius: 24px;
-  border: 2px solid #00BFF0;
+  border: 1px solid rgba(226, 232, 240, 0.9);
   min-height: 0;
   height: auto;
 }
@@ -1871,43 +1975,137 @@ img, video, canvas, svg { max-width: 100%; }
 }
 
 
-/* ── Super Admin Home Banner: Elegant Bottom Blue Ambient Glow ── */
-@keyframes superadmin-banner-glow {
+/* ── Super Admin Home Banner: Living Ambient Light Aurora ── */
+@keyframes superadmin-light-core {
   0% {
-    transform: translateX(-50%) translateY(24%) scaleX(0.95);
-    opacity: 0.65;
+    transform: translateX(-50%) translateY(18%) scale(0.95);
+    opacity: 0.55;
+    filter: blur(44px) brightness(1);
+  }
+  25% {
+    transform: translateX(-50%) translateY(8%) scale(1.06);
+    opacity: 0.78;
+    filter: blur(40px) brightness(1.2);
   }
   50% {
-    transform: translateX(-50%) translateY(8%) scaleX(1.12);
+    /* Peak luminescence: luzes mais fortes e vibrantes */
+    transform: translateX(-50%) translateY(-4%) scale(1.22);
+    opacity: 1;
+    filter: blur(32px) brightness(1.5);
+  }
+  75% {
+    transform: translateX(-50%) translateY(6%) scale(1.08);
+    opacity: 0.82;
+    filter: blur(38px) brightness(1.25);
+  }
+  100% {
+    transform: translateX(-50%) translateY(18%) scale(0.95);
+    opacity: 0.55;
+    filter: blur(44px) brightness(1);
+  }
+}
+
+@keyframes superadmin-light-cyan {
+  0% {
+    transform: translateX(-20%) translateY(15%) scaleX(0.9);
+    opacity: 0.35;
+    filter: blur(36px) brightness(0.9);
+  }
+  40% {
+    transform: translateX(12%) translateY(-10%) scaleX(1.2);
     opacity: 0.95;
+    filter: blur(26px) brightness(1.45);
+  }
+  70% {
+    transform: translateX(25%) translateY(4%) scaleX(1.05);
+    opacity: 0.7;
+    filter: blur(32px) brightness(1.15);
   }
   100% {
-    transform: translateX(-50%) translateY(24%) scaleX(0.95);
-    opacity: 0.65;
+    transform: translateX(-20%) translateY(15%) scaleX(0.9);
+    opacity: 0.35;
+    filter: blur(36px) brightness(0.9);
   }
 }
 
-@keyframes superadmin-banner-drift {
+@keyframes superadmin-light-drift {
   0% {
-    transform: translateX(-15%) scale(0.92);
-    opacity: 0.45;
+    transform: translateX(10%) translateY(12%) scale(0.9);
+    opacity: 0.35;
+    filter: blur(44px);
   }
   50% {
-    transform: translateX(15%) scale(1.1);
-    opacity: 0.85;
+    transform: translateX(-25%) translateY(-12%) scale(1.2);
+    opacity: 0.9;
+    filter: blur(34px) brightness(1.4);
   }
   100% {
-    transform: translateX(-15%) scale(0.92);
-    opacity: 0.45;
+    transform: translateX(10%) translateY(12%) scale(0.9);
+    opacity: 0.35;
+    filter: blur(44px);
   }
 }
 
-.superadmin-ambient-glow {
-  animation: superadmin-banner-glow 7.5s ease-in-out infinite;
+@keyframes superadmin-light-accent {
+  0%, 100% {
+    transform: scale(0.92) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2) rotate(4deg);
+    opacity: 0.85;
+    filter: blur(28px) brightness(1.35);
+  }
 }
 
-.superadmin-ambient-drift {
-  animation: superadmin-banner-drift 11s ease-in-out infinite;
+@keyframes superadmin-light-border {
+  0% {
+    background-position: 0% 50%;
+    opacity: 0.6;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(0, 190, 255, 0.7), 0 0 40px rgba(0, 85, 255, 0.4);
+  }
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.6;
+  }
+}
+
+.superadmin-light-core {
+  animation: superadmin-light-core 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity, filter;
+}
+
+.superadmin-light-cyan {
+  animation: superadmin-light-cyan 10.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity, filter;
+}
+
+.superadmin-light-drift {
+  animation: superadmin-light-drift 12s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity, filter;
+}
+
+.superadmin-light-accent {
+  animation: superadmin-light-accent 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity, filter;
+}
+
+.superadmin-light-border {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 85, 255, 0.4) 15%,
+    rgba(0, 210, 255, 1) 50%,
+    rgba(79, 70, 229, 0.8) 85%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: superadmin-light-border 6s ease-in-out infinite;
+  box-shadow: 0 0 14px rgba(0, 190, 255, 0.45);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1917,8 +2115,43 @@ img, video, canvas, svg { max-width: 100%; }
   .nexo-cover-anim,
   .aurora-wave-bar,
   .aurora-glow-bg,
-  .superadmin-ambient-glow,
-  .superadmin-ambient-drift { animation: none; }
+  .superadmin-light-core,
+  .superadmin-light-cyan,
+  .superadmin-light-drift,
+  .superadmin-light-accent,
+  .superadmin-light-border { animation: none; }
+}
+
+/* Sleek table vertical scrollbar */
+.nexo-table-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  transition: width 0.2s ease-out, height 0.2s ease-out;
+}
+.nexo-table-scroll:hover::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.nexo-table-scroll::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 999px;
+}
+.nexo-table-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+.nexo-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.nexo-table-scroll::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.nexo-table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
 }
 
 

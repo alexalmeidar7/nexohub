@@ -15,6 +15,8 @@ const DialogClose = DialogPrimitive.Close;
 interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
   overlayClassName?: string;
   contentZIndex?: string;
+  hideCloseButton?: boolean;
+  closeButtonClassName?: string;
 }
 
 const DialogOverlay = React.forwardRef<
@@ -35,7 +37,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, style, overlayClassName, contentZIndex, ...props }, ref) => (
+>(({ className, children, style, overlayClassName, contentZIndex, hideCloseButton, closeButtonClassName, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay className={overlayClassName} />
     <DialogPrimitive.Content
@@ -56,10 +58,19 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full w-7 h-7 flex items-center justify-center ring-offset-background transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none" style={{ backgroundColor: "rgba(0,0,0,0.1)", color: "var(--layout-page-text, #1a1a1a)" }}>
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideCloseButton && (
+        <DialogPrimitive.Close
+          className={cn(
+            "absolute right-4 top-4 rounded-full w-8 h-8 flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer z-50",
+            "bg-white/95 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200/80 shadow-xs",
+            "focus:outline-none focus:ring-2 focus:ring-[#0055ff]/30 disabled:pointer-events-none",
+            closeButtonClassName,
+          )}
+        >
+          <X className="h-4 w-4 stroke-[2.2]" />
+          <span className="sr-only">Fechar</span>
+        </DialogPrimitive.Close>
+      )}
     </DialogPrimitive.Content>
   </DialogPortal>
 ));

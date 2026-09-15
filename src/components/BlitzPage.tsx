@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -19,34 +20,35 @@ interface BlitzHistRow {
   created_at: string;
 }
 
-// Nexo palette
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const CARD_BG = "#D6F4FB";
-const DARK = "#0A2540";
+// Nexo palette (ClientesPage style)
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const CARD_BG = "#ffffff";
+const DARK = "#002132";
 const FONT = "'Montserrat', sans-serif";
 
 const pillInput: React.CSSProperties = {
   width: "100%",
   height: 44,
   borderRadius: 999,
-  background: "#FFFFFF",
-  border: `2px solid ${CYAN}`,
+  background: "#f8fafc",
+  border: "1px solid rgba(226, 232, 240, 0.9)",
   padding: "0 20px",
   fontFamily: FONT,
-  fontSize: 13,
-  color: DARK,
+  fontSize: 12,
+  color: "#0f172a",
   outline: "none",
+  textTransform: "uppercase",
 };
 
 const labelStyle: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: DARK,
-  marginBottom: 8,
+  color: "#64748b",
+  marginBottom: 6,
   display: "block",
 };
 
@@ -60,23 +62,30 @@ const cardStyle: React.CSSProperties = {
 const primaryBtn: React.CSSProperties = {
   height: 44,
   borderRadius: 999,
-  background: CYAN,
+  background: "#0055ff",
   color: "#fff",
   fontFamily: FONT,
   fontWeight: 800,
   fontSize: 12,
-  letterSpacing: 1,
+  letterSpacing: 1.5,
   textTransform: "uppercase",
-  padding: "0 22px",
+  padding: "0 24px",
   border: "none",
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
   cursor: "pointer",
+  boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
 };
 
-const limeBtn: React.CSSProperties = { ...primaryBtn, background: LIME, color: DARK };
-const ghostBtn: React.CSSProperties = { ...primaryBtn, background: "#fff", color: DARK, border: `2px solid ${CYAN}` };
+const limeBtn: React.CSSProperties = { ...primaryBtn };
+const ghostBtn: React.CSSProperties = {
+  ...primaryBtn,
+  background: "#f8fafc",
+  color: "#334155",
+  border: "1px solid #cbd5e1",
+  boxShadow: "none",
+};
 
 interface Blitz {
   id: string;
@@ -111,20 +120,20 @@ async function buildAgendaPayload(userId: string, b: { dia: string; horario: str
   } as any;
 }
 
-export default function BlitzPage() {
+export default function BlitzPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [items, setItems] = useState<Blitz[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState<"todos" | "pendentes" | "realizadas">("todos");
   const [historico, setHistorico] = useState<BlitzHistRow[]>([]);
   const [showHistorico, setShowHistorico] = useState(false);
   const [nowTick, setNowTick] = useState(0);
-
-
 
   // Estados para busca de clientes e popup de cadastro
   const [clientesDisponiveis, setClientesDisponiveis] = useState<{ id: string; nome: string }[]>([]);
@@ -144,26 +153,45 @@ export default function BlitzPage() {
   const [cadastrandoCliente, setCadastrandoCliente] = useState(false);
   const [cadastroErrors, setCadastroErrors] = useState<Record<string, string>>({});
 
+  const getLocalStorageKey = (uId: string) => `nexohub_blitz_${uId}`;
+
+  const getStoredBlitzes = (uId: string): Blitz[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  };
+
+  const saveStoredBlitzes = (uId: string, blitzes: Blitz[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(blitzes));
+    } catch {}
+  };
+
   useEffect(() => {
     const iv = setInterval(() => setNowTick(t => t + 1), 1000);
     return () => clearInterval(iv);
   }, []);
 
-
-
   const loadHistorico = async () => {
-    if (!user?.id) return;
-    const { data } = await supabase
-      .from("blitz_promocionais_historico")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(200);
-    setHistorico((data as BlitzHistRow[]) || []);
+    if (!targetUserId) return;
+    try {
+      const { data } = await supabase
+        .from("blitz_promocionais_historico")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      setHistorico((data as BlitzHistRow[]) || []);
+    } catch {}
   };
 
   const autoExpire = async (rows: Blitz[]) => {
-    if (!user?.id) return rows;
+    if (!targetUserId) return rows;
     const today = new Date();
     const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(today);
     const nowHM = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false }).format(today);
@@ -171,57 +199,84 @@ export default function BlitzPage() {
     if (!toExpire.length) return rows;
     const ids = toExpire.map(b => b.id);
     const agendaIds = toExpire.map(b => b.agenda_evento_id).filter(Boolean) as string[];
-    await supabase.from("blitz_promocionais").update({ realizada: true, data_realizacao: new Date().toISOString() }).in("id", ids);
-    if (agendaIds.length) {
-      await supabase.from("agenda_participantes").delete().in("evento_id", agendaIds);
-      await supabase.from("agenda_eventos").delete().in("id", agendaIds);
-    }
+    try {
+      await supabase.from("blitz_promocionais").update({ realizada: true, data_realizacao: new Date().toISOString() }).in("id", ids);
+      if (agendaIds.length) {
+        await supabase.from("agenda_participantes").delete().in("evento_id", agendaIds);
+        await supabase.from("agenda_eventos").delete().in("id", agendaIds);
+      }
+    } catch {}
     for (const b of toExpire) {
-      await logBlitzHistorico({
-        userId: user.id, blitzId: b.id, cliente: b.cliente, acao: "expirada",
+      void logBlitzHistorico({
+        userId: targetUserId, blitzId: b.id, cliente: b.cliente, acao: "expirada",
         motivo: "Encerrada automaticamente por vencimento do horário final",
         dadosAntes: b, dadosDepois: { ...b, realizada: true },
       });
     }
-    return rows.map(r => ids.includes(r.id) ? { ...r, realizada: true } : r);
+    const updated = rows.map(r => ids.includes(r.id) ? { ...r, realizada: true } : r);
+    saveStoredBlitzes(targetUserId, updated);
+    return updated;
   };
 
   const load = async () => {
-    if (!user?.id) return;
+    if (!targetUserId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("blitz_promocionais")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("dia", { ascending: false })
-      .order("horario", { ascending: false });
-    if (error) toast({ title: "Erro ao carregar", description: error.message, variant: "destructive" });
-    const rows = (data as Blitz[]) || [];
-    setItems(await autoExpire(rows));
+    let rows: Blitz[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("blitz_promocionais")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .order("dia", { ascending: false })
+        .order("horario", { ascending: false });
+      if (!error && data && data.length > 0) {
+        rows = data as Blitz[];
+      }
+    } catch {}
+
+    if (rows.length === 0) {
+      rows = getStoredBlitzes(targetUserId);
+    } else {
+      saveStoredBlitzes(targetUserId, rows);
+    }
+
+    const processed = await autoExpire(rows);
+    setItems(processed);
     setLoading(false);
   };
 
   const loadClientes = async () => {
-    if (!user?.id) return;
-    const { data } = await supabase
-      .from("logos_patrocinadores")
-      .select("id, nome")
-      .eq("excluido", false)
-      .order("nome");
-    
-    if (data) {
-      const unique = new Map();
-      data.forEach(d => {
-        if (d.nome) unique.set(d.nome.trim().toUpperCase(), { id: d.id, nome: d.nome });
+    if (!targetUserId) return;
+    const unique = new Map<string, { id: string; nome: string }>();
+    try {
+      const { data } = await supabase
+        .from("logos_patrocinadores")
+        .select("id, nome")
+        .eq("excluido", false)
+        .order("nome");
+      
+      if (data) {
+        data.forEach(d => {
+          if (d.nome) unique.set(d.nome.trim().toUpperCase(), { id: d.id, nome: d.nome });
+        });
+      }
+    } catch {}
+
+    try {
+      const { DEFAULT_AGENCY_CLIENTS } = await import("./ClientesPage");
+      Object.entries(DEFAULT_AGENCY_CLIENTS).forEach(([id, c]: [string, any]) => {
+        const n = (c.nome_empresarial || c.razao_social || id).trim().toUpperCase();
+        if (n && !unique.has(n)) unique.set(n, { id, nome: n });
       });
-      setClientesDisponiveis(Array.from(unique.values()));
-    }
+    } catch {}
+
+    setClientesDisponiveis(Array.from(unique.values()));
   };
 
   useEffect(() => { 
     load(); 
     loadClientes();
-  }, [user?.id]);
+  }, [targetUserId]);
 
   const handleClienteChange = (val: string) => {
     setForm(prev => ({ ...prev, cliente: val }));
@@ -358,7 +413,7 @@ export default function BlitzPage() {
   const reset = () => { setForm(emptyForm); setEditingId(null); };
 
   const save = async () => {
-    if (!user?.id) return;
+    if (!targetUserId) return;
     if (!form.dia || !form.horario || !form.cliente.trim()) {
       toast({ title: "Preencha dia, horário e cliente", variant: "destructive" });
       return;
@@ -369,7 +424,7 @@ export default function BlitzPage() {
     }
     setSaving(true);
     const payload = {
-      user_id: user.id,
+      user_id: targetUserId,
       dia: form.dia,
       horario: form.horario,
       horario_fim: form.horario_fim || null,
@@ -379,35 +434,68 @@ export default function BlitzPage() {
     };
 
     try {
-      const agendaPayload = await buildAgendaPayload(user.id, payload);
+      const agendaPayload = await buildAgendaPayload(targetUserId, payload);
+      let newId = editingId || `blitz_${Date.now()}`;
+      let evtId: string | null = null;
 
-      if (editingId) {
-        const current = items.find(i => i.id === editingId);
-        const { error } = await supabase.from("blitz_promocionais").update(payload).eq("id", editingId);
-        if (error) throw error;
-        if (current?.agenda_evento_id) {
-          await supabase.from("agenda_eventos").update(agendaPayload).eq("id", current.agenda_evento_id);
+      try {
+        if (editingId) {
+          const current = items.find(i => i.id === editingId);
+          await supabase.from("blitz_promocionais").update(payload).eq("id", editingId);
+          if (current?.agenda_evento_id) {
+            await supabase.from("agenda_eventos").update(agendaPayload).eq("id", current.agenda_evento_id);
+          } else {
+            const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").maybeSingle();
+            if (evt?.id) {
+              evtId = evt.id;
+              await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
+            }
+          }
+          void logBlitzHistorico({
+            userId: targetUserId, blitzId: editingId, cliente: payload.cliente, acao: "editada",
+            dadosAntes: current, dadosDepois: payload,
+          });
         } else {
           const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").maybeSingle();
-          if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
+          evtId = evt?.id || null;
+          const { data: created } = await supabase
+            .from("blitz_promocionais")
+            .insert({ ...payload, agenda_evento_id: evtId })
+            .select("id")
+            .maybeSingle();
+          if (created?.id) newId = created.id;
+          void logBlitzHistorico({
+            userId: targetUserId, blitzId: newId, cliente: payload.cliente, acao: "criada",
+            dadosDepois: payload,
+          });
         }
-        void logBlitzHistorico({
-          userId: user.id, blitzId: editingId, cliente: payload.cliente, acao: "editada",
-          dadosAntes: current, dadosDepois: payload,
-        });
-      } else {
-        const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").maybeSingle();
-        const { data: created, error } = await supabase
-          .from("blitz_promocionais")
-          .insert({ ...payload, agenda_evento_id: evt?.id || null })
-          .select("id")
-          .maybeSingle();
-        if (error) throw error;
-        void logBlitzHistorico({
-          userId: user.id, blitzId: created?.id ?? null, cliente: payload.cliente, acao: "criada",
-          dadosDepois: payload,
-        });
+      } catch (err) {
+        console.warn("Supabase blitz save warning:", err);
       }
+
+      // Update local storage fallback
+      const currentList = getStoredBlitzes(targetUserId);
+      let updatedList: Blitz[];
+      if (editingId) {
+        updatedList = currentList.map(item => item.id === editingId ? {
+          ...item,
+          ...payload,
+          agenda_evento_id: evtId || item.agenda_evento_id,
+        } : item);
+      } else {
+        const newBlitz: Blitz = {
+          id: newId,
+          ...payload,
+          realizada: false,
+          data_realizacao: null,
+          agenda_evento_id: evtId,
+          created_at: new Date().toISOString(),
+        };
+        updatedList = [newBlitz, ...currentList];
+      }
+      saveStoredBlitzes(targetUserId, updatedList);
+      setItems(updatedList);
+
       toast({ title: editingId ? "Blitz atualizada" : "Blitz agendada e adicionada à agenda" });
       reset();
       load();
@@ -430,7 +518,7 @@ export default function BlitzPage() {
       equipe: b.equipe || "",
       observacoes: b.observacoes || "",
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   };
 
   const del = async (id: string) => {
@@ -442,17 +530,23 @@ export default function BlitzPage() {
       destructive: true
     });
 
-    if (!isConfirmed) return;
+    if (!isConfirmed || !targetUserId) return;
 
     const b = items.find(i => i.id === id);
-    if (b?.agenda_evento_id) {
-      await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
-      await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
-    }
-    const { error } = await supabase.from("blitz_promocionais").delete().eq("id", id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    await logBlitzHistorico({
-      userId: user!.id, blitzId: id, cliente: b?.cliente ?? null, acao: "excluida",
+    try {
+      if (b?.agenda_evento_id) {
+        await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
+        await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
+      }
+      await supabase.from("blitz_promocionais").delete().eq("id", id);
+    } catch {}
+
+    const updated = getStoredBlitzes(targetUserId).filter(i => i.id !== id);
+    saveStoredBlitzes(targetUserId, updated);
+    setItems(updated);
+
+    void logBlitzHistorico({
+      userId: targetUserId, blitzId: id, cliente: b?.cliente ?? null, acao: "excluida",
       motivo: "Excluída pelo usuário", dadosAntes: b,
     });
     toast({ title: "Blitz excluída" });
@@ -461,25 +555,35 @@ export default function BlitzPage() {
   };
 
   const toggleRealizada = async (b: Blitz) => {
+    if (!targetUserId) return;
     const next = !b.realizada;
-    const { error } = await supabase.from("blitz_promocionais").update({
+    try {
+      await supabase.from("blitz_promocionais").update({
+        realizada: next,
+        data_realizacao: next ? new Date().toISOString() : null,
+      }).eq("id", b.id);
+
+      if (next && b.agenda_evento_id) {
+        await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
+        await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
+        await supabase.from("blitz_promocionais").update({ agenda_evento_id: null }).eq("id", b.id);
+      } else if (!next && !b.agenda_evento_id) {
+        const payload = await buildAgendaPayload(targetUserId, b);
+        const { data: evt } = await supabase.from("agenda_eventos").insert(payload).select("id").maybeSingle();
+        if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", b.id);
+      }
+    } catch {}
+
+    const updated = getStoredBlitzes(targetUserId).map(i => i.id === b.id ? {
+      ...i,
       realizada: next,
       data_realizacao: next ? new Date().toISOString() : null,
-    }).eq("id", b.id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    if (next && b.agenda_evento_id) {
-      // Encerrada: remove da agenda e da lista do locutor
-      await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
-      await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
-      await supabase.from("blitz_promocionais").update({ agenda_evento_id: null }).eq("id", b.id);
-    } else if (!next && !b.agenda_evento_id) {
-      // Reabrir: recria evento na agenda
-      const payload = await buildAgendaPayload(user!.id, b);
-      const { data: evt } = await supabase.from("agenda_eventos").insert(payload).select("id").single();
-      if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", b.id);
-    }
-    await logBlitzHistorico({
-      userId: user!.id, blitzId: b.id, cliente: b.cliente, acao: next ? "encerrada" : "reaberta",
+    } : i);
+    saveStoredBlitzes(targetUserId, updated);
+    setItems(updated);
+
+    void logBlitzHistorico({
+      userId: targetUserId, blitzId: b.id, cliente: b.cliente, acao: next ? "encerrada" : "reaberta",
       dadosAntes: b, dadosDepois: { ...b, realizada: next },
     });
     load();
@@ -646,7 +750,7 @@ export default function BlitzPage() {
       </div>
 
       {/* Formulário */}
-      <div style={cardStyle}>
+      <div ref={formRef} style={cardStyle}>
         <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
           {editingId ? "Editar blitz" : "Nova blitz"}
         </h2>

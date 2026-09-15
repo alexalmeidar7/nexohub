@@ -57,10 +57,92 @@ export function readMusicStart(userId: string | null | undefined): number {
 
 export const MUSIC_DATA_EVENT = "masterview:music-data-updated";
 
+/**
+ * Emergency pruning function to free localStorage space when browser quota is reached.
+ */
+export function pruneLocalStorageEmergency(currentUserId?: string | null): void {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+
+      // 1. Remove artist image cache entries (can be re-fetched)
+      if (k.startsWith("nexo:artistImg:")) {
+        keysToRemove.push(k);
+        continue;
+      }
+
+      // 2. Remove other users' music keys
+      if (
+        (k.startsWith("masterview_music_data::") ||
+          k.startsWith("masterview_music_start::") ||
+          k.startsWith("bot_xml_last_run::")) &&
+        currentUserId &&
+        !k.endsWith(`::${currentUserId}`)
+      ) {
+        keysToRemove.push(k);
+        continue;
+      }
+
+      // 3. Remove legacy global music keys and old logs
+      if (
+        k === LEGACY_MUSIC_DATA_KEY ||
+        k === LEGACY_MUSIC_START_KEY ||
+        k === LEGACY_BOT_XML_LAST_RUN_KEY ||
+        k.startsWith("boleto_logs_") ||
+        k.startsWith("bot_xml_") ||
+        k.startsWith("_temp_")
+      ) {
+        keysToRemove.push(k);
+        continue;
+      }
+
+      // 4. Remove any heavy cache entries (> 100KB with data URI)
+      try {
+        const val = localStorage.getItem(k);
+        if (val && val.length > 100000 && val.includes("data:image/")) {
+          keysToRemove.push(k);
+        }
+      } catch {}
+    }
+
+    keysToRemove.forEach((k) => {
+      try { localStorage.removeItem(k); } catch {}
+    });
+  } catch {}
+}
+
 export function writeMusicData(userId: string | null | undefined, data: unknown): void {
   const key = musicDataKey(userId);
   if (!key) return;
-  localStorage.setItem(key, JSON.stringify(data));
+
+  // Sanitize data: don't store oversized base64 images in localStorage
+  let safeData: any = data;
+  if (data && typeof data === "object" && "capa" in (data as any)) {
+    const rawCapa = (data as any).capa;
+    if (typeof rawCapa === "string" && rawCapa.startsWith("data:") && rawCapa.length > 50000) {
+      safeData = { ...(data as any), capa: "" };
+    }
+  }
+
+  try {
+    localStorage.setItem(key, JSON.stringify(safeData));
+  } catch (err) {
+    console.warn("localStorage quota exceeded in writeMusicData, attempting cleanup...", err);
+    try {
+      pruneLocalStorageEmergency(userId);
+      // If still failing, strip capa completely
+      if (safeData && typeof safeData === "object" && "capa" in safeData) {
+        safeData = { ...safeData, capa: "" };
+      }
+      localStorage.setItem(key, JSON.stringify(safeData));
+    } catch (finalErr) {
+      console.warn("Could not save music data to localStorage even after pruning:", finalErr);
+    }
+  }
+
   // Notify same-tab listeners (storage event only fires cross-tab)
   try {
     window.dispatchEvent(new CustomEvent(MUSIC_DATA_EVENT, { detail: { userId, data } }));
@@ -70,14 +152,28 @@ export function writeMusicData(userId: string | null | undefined, data: unknown)
 export function writeMusicStart(userId: string | null | undefined, ts: number): void {
   const key = musicStartKey(userId);
   if (!key) return;
-  localStorage.setItem(key, String(ts));
+  try {
+    localStorage.setItem(key, String(ts));
+  } catch (err) {
+    console.warn("Could not write music start to localStorage:", err);
+  }
+}
+
+export function writeBotXmlLastRun(userId: string | null | undefined, ts: number): void {
+  const key = botXmlLastRunKey(userId);
+  if (!key) return;
+  try {
+    localStorage.setItem(key, String(ts));
+  } catch (err) {
+    console.warn("Could not write bot XML last run to localStorage:", err);
+  }
 }
 
 export function clearMusicData(userId: string | null | undefined): void {
   const dk = musicDataKey(userId);
   const sk = musicStartKey(userId);
-  if (dk) localStorage.removeItem(dk);
-  if (sk) localStorage.removeItem(sk);
+  if (dk) try { localStorage.removeItem(dk); } catch {}
+  if (sk) try { localStorage.removeItem(sk); } catch {}
 }
 
 /**
@@ -91,13 +187,16 @@ export function ensureMusicScopeForUser(userId: string | null | undefined): void
   try { localStorage.removeItem(LEGACY_MUSIC_START_KEY); } catch {}
   try { localStorage.removeItem(LEGACY_BOT_XML_LAST_RUN_KEY); } catch {}
 
+  // Proactively prune stale caches on session startup
+  pruneLocalStorageEmergency(userId);
+
   if (!userId) return;
 
-  const previous = localStorage.getItem(ACTIVE_USER_KEY);
-  if (previous === userId) return;
-
-  // User changed — clear per-user keys belonging to other users to be safe.
   try {
+    const previous = localStorage.getItem(ACTIVE_USER_KEY);
+    if (previous === userId) return;
+
+    // User changed — clear per-user keys belonging to other users to be safe.
     const toRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
@@ -111,8 +210,36 @@ export function ensureMusicScopeForUser(userId: string | null | undefined): void
         toRemove.push(k);
       }
     }
-    toRemove.forEach((k) => localStorage.removeItem(k));
-  } catch {}
+    toRemove.forEach((k) => {
+      try { localStorage.removeItem(k); } catch {}
+    });
 
-  localStorage.setItem(ACTIVE_USER_KEY, userId);
+    localStorage.setItem(ACTIVE_USER_KEY, userId);
+  } catch {}
+}
+
+/**
+ * Parses XML/text schedule string (e.g. "HH:MM:SS", "HH:MM", "YYYY-MM-DD HH:MM:SS")
+ * into a unix epoch timestamp in milliseconds.
+ */
+export function parseHorarioToTimestamp(horarioStr?: string | null): number | null {
+  if (!horarioStr) return null;
+  const str = horarioStr.trim();
+  if (str.includes("-") || str.includes("/")) {
+    const parsedDate = new Date(str.replace(/\//g, "-"));
+    if (!isNaN(parsedDate.getTime())) return parsedDate.getTime();
+  }
+  const match = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!match) return null;
+  const now = new Date();
+  const h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const s = parseInt(match[3] || "0", 10);
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s);
+  const diff = now.getTime() - d.getTime();
+  if (diff < -60000) {
+    // Horário futuro por mais de 1 min: provavelmente iniciou no dia anterior
+    d.setDate(d.getDate() - 1);
+  }
+  return d.getTime();
 }

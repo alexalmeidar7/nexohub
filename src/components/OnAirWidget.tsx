@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 
 const DashboardGradeDialog = lazyRetry(() => import("./DashboardGradeDialog"));
 
@@ -25,29 +27,84 @@ const DIAS_MAP: Record<number, string> = {
   1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
 };
 
-async function getProgramas(userId?: string): Promise<Programa[]> {
-  let query = supabase
-    .from("programas")
-    .select("*, thumb, apresentador_id, apresentadores_ids")
-    .eq("ativo", true)
-    .order("horario_inicio");
+import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 
-  if (userId) query = query.eq("user_id", userId);
-
-  const { data } = await query;
-  if (!data) return [];
-  return data.map(p => ({
+export function getProgramasSync(userId?: string, userEmail?: string | null): Programa[] {
+  const syncData = getStationDatabaseSync(userId || userEmail);
+  if (syncData?.programas && syncData.programas.length > 0) {
+    return syncData.programas.map(p => ({
+      id: p.id,
+      nome: p.nome,
+      apresentadorId: p.apresentador_id || "",
+      apresentadoresIds: p.apresentadores_ids || [],
+      selo: p.selo || p.thumb || p.capa || "",
+      diasSemana: p.dias_semana || [],
+      horarioInicio: p.horario_inicio,
+      horarioFim: p.horario_fim,
+      estudio: p.estudio || "",
+      classificacaoEtaria: p.classificacao_etaria || "Livre",
+    }));
+  }
+  const clientAcc = findClientAccountById(userId) || findClientAccountByEmail(userEmail);
+  const fallback = getClientHouseMixProgramsSync(clientAcc?.id, clientAcc?.email);
+  return fallback.map(p => ({
     id: p.id,
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
     apresentadoresIds: p.apresentadores_ids || [],
-    selo: p.selo || p.thumb || "",
+    selo: p.selo || p.thumb || p.capa || "",
     diasSemana: p.dias_semana || [],
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
     estudio: p.estudio || "",
-    classificacaoEtaria: p.classificacao_etaria || "",
+    classificacaoEtaria: "Livre",
   }));
+}
+
+export async function getProgramas(userId?: string, userEmail?: string | null): Promise<Programa[]> {
+  try {
+    let query = supabase
+      .from("programas")
+      .select("*, thumb, apresentador_id, apresentadores_ids")
+      .eq("ativo", true)
+      .order("horario_inicio");
+
+    if (userId) query = query.eq("user_id", userId);
+
+    const { data } = await query;
+    if (data && data.length > 0) {
+      return data.map(p => ({
+        id: p.id,
+        nome: p.nome,
+        apresentadorId: p.apresentador_id || "",
+        apresentadoresIds: p.apresentadores_ids || [],
+        selo: p.selo || p.thumb || "",
+        diasSemana: p.dias_semana || [],
+        horarioInicio: p.horario_inicio,
+        horarioFim: p.horario_fim,
+        estudio: p.estudio || "",
+        classificacaoEtaria: p.classificacao_etaria || "",
+      }));
+    }
+  } catch {}
+
+  const stationData = await fetchStationDatabaseData(userId || userEmail);
+  if (stationData?.programas && stationData.programas.length > 0) {
+    return stationData.programas.map(p => ({
+      id: p.id,
+      nome: p.nome,
+      apresentadorId: p.apresentador_id || "",
+      apresentadoresIds: p.apresentadores_ids || [],
+      selo: p.selo || p.thumb || p.capa || "",
+      diasSemana: p.dias_semana || [],
+      horarioInicio: p.horario_inicio,
+      horarioFim: p.horario_fim,
+      estudio: p.estudio || "",
+      classificacaoEtaria: p.classificacao_etaria || "Livre",
+    }));
+  }
+
+  return getProgramasSync(userId, userEmail);
 }
 
 export function findCurrentProgram(programas: Programa[]): { programa: Programa; progress: number } | null {
@@ -139,16 +196,28 @@ export interface NextProgramProp {
 interface OnAirWidgetProps {
   compact?: boolean;
   nextProgram?: NextProgramProp | null;
+  effectiveUserId?: string | null;
 }
 
-export default function OnAirWidget({ compact = false, nextProgram }: OnAirWidgetProps) {
+export default function OnAirWidget({ compact = false, nextProgram, effectiveUserId }: OnAirWidgetProps) {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
+  const targetUserId = effectiveUserId || user?.id;
+  const initialPrograms = getProgramasSync(targetUserId, user?.email);
+  const initialCurrent = findCurrentProgram(initialPrograms);
+  const initialNexts = findNextPrograms(initialPrograms, 3);
+
+  const [loading, setLoading] = useState(false);
+  const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(initialCurrent);
   const liveProgress = useProgramProgress(onAir?.programa?.horarioInicio, onAir?.programa?.horarioFim);
-  const [apresentadoresAtuais, setApresentadoresAtuais] = useState<ApresentadorInfo[]>([]);
+  const [apresentadoresAtuais, setApresentadoresAtuais] = useState<ApresentadorInfo[]>(() => {
+    const syncData = getStationDatabaseSync(targetUserId || user?.email);
+    if (syncData?.currentPresenter) {
+      return [{ nome: syncData.currentPresenter.nome, foto: syncData.currentPresenter.foto }];
+    }
+    return [{ nome: "—", foto: "" }];
+  });
   const [apresentadorIndex, setApresentadorIndex] = useState(0);
-  const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
+  const [nextPrograms, setNextPrograms] = useState<Programa[]>(initialNexts);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string; capa?: string; artista_url?: string }>({} as any);
@@ -198,30 +267,36 @@ export default function OnAirWidget({ compact = false, nextProgram }: OnAirWidge
 
   // Fetch user avatar
   useEffect(() => {
-    if (!user) return;
-    supabase.from("profiles").select("avatar_url, nome").eq("user_id", user.id).maybeSingle()
+    const uid = targetUserId || user?.id;
+    if (!uid) return;
+    supabase.from("profiles").select("avatar_url, nome").eq("user_id", uid).maybeSingle()
       .then(({ data }) => {
         if (data?.avatar_url) setUserAvatar(data.avatar_url);
       });
-  }, [user]);
+  }, [targetUserId, user]);
 
   // Fetch stereo from streaming channel
   useEffect(() => {
-    if (!user) return;
-    supabase.from("streaming_channels").select("is_stereo").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle()
+    const uid = targetUserId || user?.id;
+    if (!uid) return;
+    supabase.from("streaming_channels").select("is_stereo").eq("user_id", uid).eq("active", true).limit(1).maybeSingle()
       .then(({ data }) => { setIsStereo(!!data?.is_stereo); });
-  }, [user]);
+  }, [targetUserId, user]);
   useEffect(() => {
     const update = async () => {
-      const [programasData, apresentadoresData] = await Promise.all([getProgramas(user?.id), getApresentadores()]);
+      const uid = targetUserId || user?.id;
+      const [programasData, apresentadoresData] = await Promise.all([
+        getProgramas(uid, user?.email),
+        getApresentadores(uid, user?.email)
+      ]);
       
       let filteredProgramas = programasData;
-      if (user) {
+      if (uid) {
         const today = new Date().toISOString().split("T")[0];
         const { data: cancelledEvents } = await supabase
           .from("agenda_eventos")
           .select("programa_id")
-          .eq("user_id", user.id)
+          .eq("user_id", uid)
           .eq("data", today)
           .eq("status", "cancelado");
         
@@ -242,8 +317,21 @@ export default function OnAirWidget({ compact = false, nextProgram }: OnAirWidge
           .map(id => apresentadoresData.find(a => a.id === id))
           .filter(Boolean) as any[];
         
-        setApresentadoresAtuais(list.length > 0 ? list : [{ nome: "—", foto: "", background_url: "" }]);
+        if (list.length > 0) {
+          setApresentadoresAtuais(list);
+        } else if (apresentadoresData.length > 0) {
+          setApresentadoresAtuais(apresentadoresData);
+        } else {
+          const syncDb = getStationDatabaseSync(uid || user?.email);
+          if (syncDb?.currentPresenter?.foto) {
+            setApresentadoresAtuais([{ nome: syncDb.currentPresenter.nome, foto: syncDb.currentPresenter.foto }]);
+          } else {
+            setApresentadoresAtuais([{ nome: "—", foto: "", background_url: "" }]);
+          }
+        }
         setApresentadorIndex(0);
+      } else if (apresentadoresData.length > 0) {
+        setApresentadoresAtuais(apresentadoresData);
       }
       const nexts = findNextPrograms(filteredProgramas, 3);
       setNextPrograms(nexts);
@@ -258,7 +346,7 @@ export default function OnAirWidget({ compact = false, nextProgram }: OnAirWidge
     update();
     const interval = setInterval(update, 30 * 1000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, targetUserId]);
 
   // Rotate presenters every 10 seconds if there's more than one
   useEffect(() => {

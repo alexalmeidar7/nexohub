@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic } from "lucide-react";
-import XmlLinkRow from "@/components/XmlLinkRow";
-import XmlSection from "@/components/XmlSection";
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
 
@@ -217,9 +215,10 @@ interface SocialItem {
   iconPng?: string;
 }
 
-export default function BroadcastPage() {
+export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
-  const userSlug = useUserSlug(user?.id);
+  const targetUserId = effectiveUserId || user?.id;
+  const userSlug = useUserSlug(targetUserId);
 
 
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
@@ -244,7 +243,7 @@ export default function BroadcastPage() {
   const [allProgramasFull, setAllProgramasFull] = useState<any[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir" | "assuntos" | "xml">("preview");
+  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir" | "assuntos">("preview");
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
   const [nextProgramInfo, setNextProgramInfo] = useState<NextProgramInfo | null>(null);
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
@@ -948,31 +947,34 @@ export default function BroadcastPage() {
     void handleSave(next);
   }, [handleSave]);
 
-  const NAVY = "#0A2540";
-  const NAVY_DEEP = "#07192b";
-  const NAVY_SOFT = "#0d2a45";
-  const NAVY_BORDER = "#1a3a5a";
-  const CYAN = "#00BFF0";
-  const LIME = "#C6F03C";
+  const NAVY = "#002132";
+  const NAVY_DEEP = "#ffffff";
+  const NAVY_SOFT = "#f8fafc";
+  const NAVY_BORDER = "rgba(226, 232, 240, 0.9)";
+  const CYAN = "#0055ff";
+  const LIME = "#0055ff";
 
   const inputStyle: React.CSSProperties = {
-    backgroundColor: NAVY_DEEP,
+    backgroundColor: "#f8fafc",
     border: `1px solid ${NAVY_BORDER}`,
-    color: "#fff",
+    color: "#0f172a",
     outline: "none",
-    fontFamily: "'Manrope', sans-serif",
+    fontFamily: "'Montserrat', sans-serif",
+    borderRadius: 999,
   };
 
   const cardStyle: React.CSSProperties = {
-    backgroundColor: NAVY_DEEP,
+    backgroundColor: "#ffffff",
     border: `1px solid ${NAVY_BORDER}`,
-    borderRadius: 14,
+    borderRadius: 24,
+    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
   };
 
   const sectionHeaderStyle: React.CSSProperties = {
     fontFamily: "'Sora', sans-serif",
     fontWeight: 700,
     letterSpacing: "0.14em",
+    color: "#002132",
   };
 
   // Load Sora + Manrope once
@@ -982,7 +984,7 @@ export default function BroadcastPage() {
     const link = document.createElement("link");
     link.id = id;
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap";
+    link.href = "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap";
     document.head.appendChild(link);
   }, []);
 
@@ -1059,11 +1061,11 @@ export default function BroadcastPage() {
       <div className="flex items-center gap-2.5">
         <span
           className="inline-flex items-center justify-center rounded-md text-[10px] font-black"
-          style={{ width: 22, height: 22, backgroundColor: color, color: NAVY, fontFamily: "'Sora', sans-serif" }}
+          style={{ width: 22, height: 22, backgroundColor: color, color: "#ffffff", fontFamily: "'Sora', sans-serif" }}
         >
           {n}
         </span>
-        <h2 className="text-white text-[11px] uppercase" style={sectionHeaderStyle}>{label}</h2>
+        <h2 className="text-[#002132] text-[11px] uppercase font-bold tracking-wider" style={sectionHeaderStyle}>{label}</h2>
       </div>
       {right}
     </div>
@@ -1074,7 +1076,7 @@ export default function BroadcastPage() {
       className="px-3 pt-3 pb-4 h-full min-h-0"
       style={{ fontFamily: "'Manrope', sans-serif", backgroundColor: "transparent" }}
     >
-      <div className="w-full h-full min-h-0 flex flex-col gap-4">
+      <div className="w-full max-w-6xl mx-auto h-full min-h-0 flex flex-col gap-4">
         {/* Header handled by Dashboard Portal */}
         <div id="module-header-title" style={{ display: "none" }}>
           vMix — Broadcast
@@ -1082,23 +1084,23 @@ export default function BroadcastPage() {
 
         {/* ── Command bar (slim, clean) ── */}
         <div
-          className="flex items-center justify-between gap-4 px-4 h-14 rounded-xl shrink-0"
-          style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+          className="flex items-center justify-between gap-4 px-4 h-14 rounded-xl shrink-0 bg-white"
+          style={{ border: `1px solid ${NAVY_BORDER}` }}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: CYAN }}>
-              <Code2 size={16} style={{ color: NAVY }} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${CYAN}15` }}>
+              <Code2 size={16} style={{ color: CYAN }} />
             </div>
             <div className="min-w-0 leading-tight">
-              <div className="text-white text-[13px] font-bold tracking-[0.12em] uppercase" style={{ fontFamily: "'Sora', sans-serif" }}>
+              <div className="text-slate-800 text-[13px] font-bold tracking-[0.12em] uppercase" style={{ fontFamily: "'Sora', sans-serif" }}>
                 Broadcast
               </div>
               <div className="flex items-center gap-1.5 min-w-0">
                 <span
                   className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: programaNome ? "#4ade80" : "#64748b" }}
+                  style={{ backgroundColor: programaNome ? "#22c55e" : "#94a3b8" }}
                 />
-                <span className="text-[10px] font-medium uppercase tracking-wider truncate text-white/60">
+                <span className="text-[10px] font-semibold uppercase tracking-wider truncate text-slate-500">
                   {programaNome || "Sem programa no ar"}
                 </span>
               </div>
@@ -1107,16 +1109,16 @@ export default function BroadcastPage() {
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="hidden md:flex items-baseline gap-2">
-              <span className="text-[9px] uppercase font-semibold tracking-[0.2em] text-white/40">Clock</span>
-              <span className="text-[15px] font-bold tabular-nums" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>
+              <span className="text-[9px] uppercase font-semibold tracking-[0.2em] text-slate-400">Clock</span>
+              <span className="text-[15px] font-bold tabular-nums text-[#0055ff]" style={{ fontFamily: "'Sora', sans-serif" }}>
                 {clockStr}
               </span>
             </div>
             <button
               onClick={() => handleSave()}
               disabled={saving}
-              className="flex items-center gap-2 h-9 px-4 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: LIME, color: NAVY, fontFamily: "'Sora', sans-serif" }}
+              className="flex items-center gap-2 h-9 px-4 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-opacity hover:opacity-90 disabled:opacity-50 text-white bg-[#0055ff] shadow-xs cursor-pointer"
+              style={{ fontFamily: "'Sora', sans-serif" }}
             >
               {saving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
               Salvar
@@ -1125,20 +1127,20 @@ export default function BroadcastPage() {
         </div>
 
         {/* ── Navigation (segmented, always labelled) ── */}
-        <div className="flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-          {(["preview", "insert", "assuntos", "ticker", "aseguir", "xml"] as const).map(tabId => {
+        <div className="flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto bg-white" style={{ border: `1px solid ${NAVY_BORDER}` }}>
+          {(["preview", "insert", "assuntos", "ticker", "aseguir"] as const).map(tabId => {
             const active = activeTab === tabId;
-            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", assuntos: "Título", ticker: "Ticker", aseguir: "A Seguir", xml: "XML" };
-            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock, xml: Code2 };
+            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", assuntos: "Título", ticker: "Ticker", aseguir: "A Seguir" };
+            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock };
             const Icon = Icons[tabId];
             return (
               <button
                 key={tabId}
                 onClick={() => setActiveTab(tabId)}
-                className="flex items-center justify-center gap-2 flex-1 min-w-[104px] h-9 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-colors"
+                className="flex items-center justify-center gap-2 flex-1 min-w-[104px] h-9 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-colors cursor-pointer"
                 style={{
                   backgroundColor: active ? CYAN : "transparent",
-                  color: active ? NAVY : "rgba(255,255,255,0.55)",
+                  color: active ? "#ffffff" : "#64748b",
                   fontFamily: "'Sora', sans-serif",
                 }}
               >
@@ -1218,29 +1220,28 @@ export default function BroadcastPage() {
         )}
 
         {activeTab === "insert" && (
-          <div className="max-w-3xl mx-auto flex flex-col gap-6">
+          <div className="max-w-3xl mx-auto flex flex-col gap-6 w-full">
             {/* Robust Control Bento */}
             <div 
-              className="p-6 rounded-2xl flex flex-col gap-5" 
+              className="p-6 rounded-2xl flex flex-col gap-5 bg-white" 
               style={{ 
                 ...cardStyle, 
-                border: `1px solid ${CYAN}30`, 
-                background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)`,
-                boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)"
+                border: `1px solid ${NAVY_BORDER}`, 
+                boxShadow: "0 4px 20px rgba(0,0,0,0.04)"
               }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}15` }}>
                     <TrendingUp size={16} style={{ color: CYAN }} />
                   </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-800" style={{ fontFamily: "'Sora', sans-serif" }}>
                     Painel de Controle
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  <span className="text-[8px] font-black text-green-500 uppercase">Online</span>
+                  <span className="text-[9px] font-black text-green-700 uppercase">Online</span>
                 </div>
               </div>
 
@@ -1248,24 +1249,24 @@ export default function BroadcastPage() {
                 <div className="flex flex-col gap-4">
                   {/* Imagem que será enviada no insert */}
                   <div>
-                    <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-white/60">Imagem do Insert Live</div>
-                    <div className="rounded-xl overflow-hidden bg-black/50 border border-white/5 p-2">
+                    <div className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 text-slate-600">Imagem do Insert Live</div>
+                    <div className="rounded-xl overflow-hidden bg-slate-50 border border-slate-200 p-2">
                       <img src={insertLiveArt} alt="Insert Live" className="w-full max-h-56 object-contain" />
                     </div>
                   </div>
 
                   {/* Horários programados */}
                   <div>
-                    <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-2 text-white/60">Horários de Inserção Automática</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 text-slate-600">Horários de Inserção Automática</div>
                     {insertLiveSchedule.length === 0 ? (
-                      <p className="text-[10px] text-white/50 italic">Sem horários calculados para hoje.</p>
+                      <p className="text-[11px] text-slate-400 italic">Sem horários calculados para hoje.</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {insertLiveSchedule.map(t => (
                           <span
                             key={t}
                             className="px-3 py-1.5 rounded-lg text-[12px] font-bold tabular-nums"
-                            style={{ backgroundColor: `${CYAN}18`, border: `1px solid ${CYAN}45`, color: CYAN }}
+                            style={{ backgroundColor: `${CYAN}12`, border: `1px solid ${CYAN}35`, color: CYAN }}
                           >
                             {t}
                           </span>
@@ -1277,24 +1278,24 @@ export default function BroadcastPage() {
                   <button
                     onClick={handleInsertNow}
                     disabled={insertingNow}
-                    className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-[0.98] shadow-lg"
-                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 12px 24px rgba(220,38,38,0.3)" }}
+                    className="w-full py-3.5 rounded-2xl text-[12px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer"
+                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
                   >
                     <Youtube size={16} />
                     {insertingNow ? "Live Ativa (30s)" : "Inserir Agora (Manual)"}
                   </button>
                 </div>
               ) : (
-                <p className="text-[11px] text-white/50 italic">
+                <p className="text-[11px] text-slate-500 italic">
                   Nenhuma imagem de Insert Live cadastrada para hoje (arte 5 do evento de live na agenda).
                 </p>
               )}
 
-              <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Sincronização Ativa</span>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sincronização Ativa</span>
                 <div className="flex gap-1">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="w-1 h-3 rounded-full bg-cyan-500/20" />
+                    <div key={i} className="w-1.5 h-3 rounded-full bg-[#0055ff]" />
                   ))}
                 </div>
               </div>
@@ -1303,10 +1304,10 @@ export default function BroadcastPage() {
         )}
 
         {activeTab === "assuntos" && (
-          <div className="max-w-3xl mx-auto flex flex-col gap-6">
+          <div className="max-w-3xl mx-auto flex flex-col gap-6 w-full">
             {/* Seletor de modo de envio do título */}
-            <div className="p-4 rounded-2xl" style={cardStyle}>
-              <div className="text-[9px] font-black uppercase tracking-[0.2em] mb-3 text-white/60">Como enviar o título ao XML</div>
+            <div className="p-5 rounded-2xl bg-white" style={cardStyle}>
+              <div className="text-[10px] font-black uppercase tracking-[0.15em] mb-3 text-slate-600">Como enviar o título ao XML</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {([
                   { v: "simples" as const, label: "Título Simples", desc: "Digite o assunto e ele vai automaticamente para o XML broadcast" },
@@ -1321,14 +1322,14 @@ export default function BroadcastPage() {
                         setData(nextData);
                         void handleSave(nextData);
                       }}
-                      className="text-left p-4 rounded-xl transition-all"
+                      className="text-left p-4 rounded-xl transition-all cursor-pointer"
                       style={{
-                        backgroundColor: on ? `${CYAN}18` : NAVY_DEEP,
-                        border: `1px solid ${on ? CYAN : NAVY_BORDER}`,
+                        backgroundColor: on ? `${CYAN}10` : "#f8fafc",
+                        border: `1.5px solid ${on ? CYAN : NAVY_BORDER}`,
                       }}
                     >
-                      <span className="text-[11px] font-black uppercase tracking-widest block" style={{ color: on ? CYAN : "#ffffff90" }}>{label}</span>
-                      <p className="text-[10px] mt-1" style={{ color: "#ffffff60" }}>{desc}</p>
+                      <span className="text-[11px] font-black uppercase tracking-widest block" style={{ color: on ? CYAN : "#0f172a" }}>{label}</span>
+                      <p className="text-[11px] mt-1 text-slate-500">{desc}</p>
                     </button>
                   );
                 })}
@@ -1337,32 +1338,26 @@ export default function BroadcastPage() {
 
             {/* Conteúdo do Título Simples */}
             {(data.tituloMode || "simples") === "simples" && (
-            <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+            <div className="p-6 rounded-2xl bg-white" style={cardStyle}>
               <div className="space-y-6">
-                {true && (
-
-                  <div className="relative group">
-                    <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
-                    <input
-                      type="text"
-                      value={data.assunto}
-                      onChange={e => setData({ ...data, assunto: e.target.value })}
-                      onBlur={onFieldBlur}
-                      placeholder="Defina o assunto principal..."
-                      className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none outline-none"
-                      style={inputStyle}
-                    />
-                    <p className="text-[9px] mt-2" style={{ color: "#ffffff50" }}>Enviado automaticamente para o XML broadcast ao sair do campo.</p>
-                  </div>
-                )}
-
-
-
+                <div className="relative group">
+                  <label className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 block text-slate-600">Assunto / Título</label>
+                  <input
+                    type="text"
+                    value={data.assunto}
+                    onChange={e => setData({ ...data, assunto: e.target.value })}
+                    onBlur={onFieldBlur}
+                    placeholder="Defina o assunto principal..."
+                    className="w-full px-5 py-3.5 rounded-full text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#0055ff]/20 outline-none"
+                    style={inputStyle}
+                  />
+                  <p className="text-[10px] mt-2 text-slate-400">Enviado automaticamente para o XML broadcast ao sair do campo.</p>
+                </div>
 
                 <div className="relative group">
-                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Apresentador (Substituir)</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 block text-slate-600">Apresentador (Substituir)</label>
                   <div className="relative">
-                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     <input
                       type="text"
                       value={data.locutor_override}
@@ -1386,14 +1381,13 @@ export default function BroadcastPage() {
                       onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
                       onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
                       placeholder={locutorNome || "Nome do locutor..."}
-                      className="w-full pl-12 pr-5 py-4 rounded-2xl text-[13px] font-medium border-none outline-none"
+                      className="w-full pl-11 pr-5 py-3.5 rounded-full text-[13px] font-medium outline-none"
                       style={inputStyle}
                     />
                   </div>
 
-
                   {showLocutorDropdown && locutorSearchResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-2 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl" style={{ backgroundColor: "rgba(10,37,64,0.95)", border: `1px solid ${NAVY_BORDER}` }}>
+                    <div className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl overflow-hidden bg-white border border-slate-200">
                       {locutorSearchResults.map((r, i) => (
                         <button
                           key={i}
@@ -1405,13 +1399,13 @@ export default function BroadcastPage() {
                             setShowLocutorDropdown(false);
                             setLocutorSearchResults([]);
                           }}
-                          className="w-full text-left px-4 py-3 text-xs flex items-center gap-3 text-white hover:bg-white/5 transition-colors"
+                          className="w-full text-left px-4 py-3 text-xs flex items-center gap-3 text-slate-800 hover:bg-slate-50 transition-colors cursor-pointer"
                           style={{ borderBottom: i < locutorSearchResults.length - 1 ? `1px solid ${NAVY_BORDER}` : "none" }}
                         >
-                          {r.foto && <img src={r.foto} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10" />}
+                          {r.foto && <img src={r.foto} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />}
                           <div className="flex-1 min-w-0">
-                            <span className="font-bold block truncate">{r.nome}</span>
-                            {r.instagram && <span className="text-[9px] text-[#00BFF0]">@{r.instagram.replace("@", "")}</span>}
+                            <span className="font-bold block truncate text-slate-800">{r.nome}</span>
+                            {r.instagram && <span className="text-[10px] text-[#0055ff]">@{r.instagram.replace("@", "")}</span>}
                           </div>
                         </button>
                       ))}
@@ -1424,7 +1418,7 @@ export default function BroadcastPage() {
             )}
 
             {(data.tituloMode || "simples") === "web" && (
-              <div className="p-6 rounded-2xl" style={cardStyle}>
+              <div className="p-6 rounded-2xl bg-white" style={cardStyle}>
                 <SectionHeader n="01" label="Título Web · Mensagens Rotativas" color={CYAN} />
                 <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
               </div>
@@ -1440,14 +1434,14 @@ export default function BroadcastPage() {
             <div
               className="p-4 rounded-xl mb-3"
               style={{
-                backgroundColor: data.tickerRssEnabled ? "rgba(0,191,240,0.10)" : NAVY_DEEP,
+                backgroundColor: data.tickerRssEnabled ? "rgba(0,85,255,0.06)" : "#f8fafc",
                 border: `1px solid ${data.tickerRssEnabled ? CYAN : NAVY_BORDER}`,
               }}
             >
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div className="min-w-0">
-                  <span className="text-[12px] font-semibold text-white block">Fonte RSS / XML personalizada</span>
-                  <p className="text-[10px]" style={{ color: "#ffffff60" }}>
+                  <span className="text-[12px] font-bold text-slate-800 block">Fonte RSS / XML personalizada</span>
+                  <p className="text-[10px] text-slate-500">
                     Cole a URL de um feed RSS/XML — os títulos alimentam o item "Notícias" do ticker.
                   </p>
                 </div>
@@ -1462,7 +1456,7 @@ export default function BroadcastPage() {
                     }}
                     style={{ accentColor: CYAN }}
                   />
-                  <span className="text-[11px]" style={{ color: data.tickerRssEnabled ? CYAN : "#ffffff70" }}>
+                  <span className="text-[11px] font-medium" style={{ color: data.tickerRssEnabled ? CYAN : "#64748b" }}>
                     {data.tickerRssEnabled ? "Ligado" : "Desligado"}
                   </span>
                 </label>
@@ -1482,8 +1476,8 @@ export default function BroadcastPage() {
                 <button
                   onClick={() => handleSave()}
                   disabled={saving}
-                  className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
-                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 8px 14px ${LIME}25` }}
+                  className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02] text-white shadow-sm cursor-pointer"
+                  style={{ backgroundColor: "#0055ff", boxShadow: "0 4px 14px rgba(0,85,255,0.25)" }}
                 >
                   {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   Salvar Ticker
@@ -1493,7 +1487,7 @@ export default function BroadcastPage() {
               {data.tickerRssEnabled && data.tickerRssUrl && (
                 <div className="mt-3">
                   <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-[10px] uppercase tracking-wide" style={{ color: "#ffffff60" }}>
+                    <span className="text-[10px] uppercase tracking-wide font-bold text-slate-500">
                       Preview do feed
                     </span>
                     <div className="flex items-center gap-1.5 text-[10px]">
@@ -1508,7 +1502,7 @@ export default function BroadcastPage() {
                           boxShadow: rssStatus.state === "loading" ? "0 0 8px #eab308" : undefined,
                         }}
                       />
-                      <span style={{ color: "#ffffff80" }}>
+                      <span className="text-slate-600 font-medium">
                         {rssStatus.state === "ok" && `${rssStatus.count} títulos${rssStatus.via && rssStatus.via !== "direct" ? ` · via ${rssStatus.via}` : ""}`}
                         {rssStatus.state === "loading" && "carregando…"}
                         {rssStatus.state === "error" && "erro"}
@@ -1519,28 +1513,26 @@ export default function BroadcastPage() {
 
                   {rssStatus.state === "error" && (
                     <div
-                      className="text-[10.5px] p-2 rounded-md mb-2"
-                      style={{ backgroundColor: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)", color: "#fecaca" }}
+                      className="text-[10.5px] p-2 rounded-md mb-2 bg-red-50 border border-red-200 text-red-700"
                     >
                       {rssStatus.message}
-                      <div className="text-[9.5px] mt-1" style={{ color: "#fecaca90" }}>
+                      <div className="text-[9.5px] mt-1 text-red-600">
                         Alguns sites (Cloudflare/anti-bot) bloqueiam servidores. Tente um feed alternativo do mesmo portal.
                       </div>
                     </div>
                   )}
 
                   <div
-                    className="rounded-md p-2 max-h-40 overflow-auto space-y-1"
-                    style={{ backgroundColor: "rgba(0,0,0,0.35)", border: `1px dashed ${NAVY_BORDER}` }}
+                    className="rounded-md p-2 max-h-40 overflow-auto space-y-1 bg-white border border-slate-200"
                   >
                     {newsTitles.length === 0 ? (
-                      <div className="text-[10.5px] text-center py-3" style={{ color: "#ffffff50" }}>
+                      <div className="text-[10.5px] text-center py-3 text-slate-400">
                         {rssStatus.state === "loading" ? "Buscando títulos…" : "Nenhum título recebido ainda."}
                       </div>
                     ) : (
                       newsTitles.slice(0, 15).map((t, i) => (
-                        <div key={i} className="flex items-start gap-2 text-[11px]" style={{ color: "#ffffffcc" }}>
-                          <span className="shrink-0 text-[9.5px] font-mono" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
+                        <div key={i} className="flex items-start gap-2 text-[11px] text-slate-700">
+                          <span className="shrink-0 text-[9.5px] font-mono font-bold" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
                           <span className="min-w-0 truncate">{t}</span>
                         </div>
                       ))
@@ -1563,7 +1555,7 @@ export default function BroadcastPage() {
                     <label
                       className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
                       style={{
-                        backgroundColor: active ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                        backgroundColor: active ? "rgba(0,85,255,0.06)" : "#ffffff",
                         border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
                       }}
                     >
@@ -1577,18 +1569,18 @@ export default function BroadcastPage() {
                         }}
                         style={{ accentColor: CYAN }}
                       />
-                      <span style={{ color: active ? CYAN : "#ffffff60" }}>{icon}</span>
+                      <span style={{ color: active ? CYAN : "#64748b" }}>{icon}</span>
                       <div className="min-w-0 flex-1">
-                        <span className="text-[12px] font-semibold text-white block">{label}</span>
-                        <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
+                        <span className="text-[12px] font-bold text-slate-800 block">{label}</span>
+                        <p className="text-[10px] text-slate-500 truncate">{desc}</p>
                       </div>
                     </label>
 
                     {/* Seleção da fonte das notícias (roteiro) */}
                     {key === "tickerNews" && active && (
                       <div
-                        className="mt-2 ml-4 p-3 rounded-xl space-y-2"
-                        style={{ backgroundColor: NAVY_DEEP, border: `1px dashed ${CYAN}55` }}
+                        className="mt-2 ml-4 p-3 rounded-xl space-y-2 bg-slate-50 border border-slate-200"
+                        style={{ borderLeft: `3px solid ${CYAN}` }}
                       >
                         <div className="text-[9px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>
                           Fonte das notícias
@@ -1612,7 +1604,7 @@ export default function BroadcastPage() {
                             </option>
                           ))}
                         </select>
-                        <p className="text-[9.5px]" style={{ color: "#ffffff60" }}>
+                        <p className="text-[9.5px] text-slate-500">
                           Escolha de qual roteiro os títulos serão exibidos no ticker.
                         </p>
                       </div>
@@ -1623,7 +1615,7 @@ export default function BroadcastPage() {
                       <label
                         className="mt-2 flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
                         style={{
-                          backgroundColor: data.showQrCode ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                          backgroundColor: data.showQrCode ? "rgba(0,85,255,0.06)" : "#ffffff",
                           border: `1px solid ${data.showQrCode ? CYAN : NAVY_BORDER}`,
                         }}
                       >
@@ -1637,10 +1629,10 @@ export default function BroadcastPage() {
                           }}
                           style={{ accentColor: CYAN }}
                         />
-                        <span style={{ color: data.showQrCode ? CYAN : "#ffffff60" }}><Phone size={12} /></span>
+                        <span style={{ color: data.showQrCode ? CYAN : "#64748b" }}><Phone size={12} /></span>
                         <div className="min-w-0 flex-1">
-                          <span className="text-[12px] font-semibold text-white block">QR Code (WhatsApp)</span>
-                          <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>Exibir QR para interação ao vivo</p>
+                          <span className="text-[12px] font-bold text-slate-800 block">QR Code (WhatsApp)</span>
+                          <p className="text-[10px] text-slate-500 truncate">Exibir QR para interação ao vivo</p>
                         </div>
                       </label>
                     )}
@@ -1648,14 +1640,14 @@ export default function BroadcastPage() {
                     {/* Submenu — seleção de redes sociais */}
                     {key === "tickerSocials" && active && (
                       <div
-                        className="mt-2 ml-4 p-3 rounded-xl space-y-1.5"
-                        style={{ backgroundColor: NAVY_DEEP, border: `1px dashed ${CYAN}55` }}
+                        className="mt-2 ml-4 p-3 rounded-xl space-y-1.5 bg-slate-50 border border-slate-200"
+                        style={{ borderLeft: `3px solid ${CYAN}` }}
                       >
                         <div className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>
                           Redes enviadas ao ticker
                         </div>
                         {empresaSocials.length === 0 ? (
-                          <p className="text-[10px] italic" style={{ color: "#ffffff60" }}>Nenhuma rede social configurada na empresa.</p>
+                          <p className="text-[10px] italic text-slate-400">Nenhuma rede social configurada na empresa.</p>
                         ) : (
                           empresaSocials.map(s => {
                             const selected = selectedSocialTypes.includes(s.tipo);
@@ -1675,8 +1667,8 @@ export default function BroadcastPage() {
                                   }}
                                   style={{ accentColor: CYAN }}
                                 />
-                                <span style={{ color: selected ? CYAN : "#ffffff60" }}>{s.icon}</span>
-                                <span className="text-[11px] truncate" style={{ color: selected ? "#fff" : "#ffffff70" }}>{s.valor}</span>
+                                <span style={{ color: selected ? CYAN : "#64748b" }}>{s.icon}</span>
+                                <span className="text-[11px] truncate font-medium" style={{ color: selected ? "#0f172a" : "#64748b" }}>{s.valor}</span>
                               </label>
                             );
                           })
@@ -1701,7 +1693,7 @@ export default function BroadcastPage() {
             <label
               className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer mt-4"
               style={{
-                backgroundColor: data.tickerUnitario ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                backgroundColor: data.tickerUnitario ? "rgba(0,85,255,0.06)" : "#ffffff",
                 border: `1px solid ${data.tickerUnitario ? CYAN : NAVY_BORDER}`,
               }}
               title="Quando ativo, o XML entrega apenas um item do ticker por vez, rotacionando a cada 4 segundos."
@@ -1717,28 +1709,27 @@ export default function BroadcastPage() {
                 style={{ accentColor: CYAN }}
               />
               <div className="min-w-0">
-                <span className="text-[12px] font-semibold text-white block">Envio Unitário</span>
-                <p className="text-[10px]" style={{ color: "#ffffff60" }}>Entrega um item por vez no XML, trocando a cada 4s</p>
+                <span className="text-[12px] font-bold text-slate-800 block">Envio Unitário</span>
+                <p className="text-[10px] text-slate-500">Entrega um item por vez no XML, trocando a cada 4s</p>
               </div>
             </label>
 
             {/* Preview do ticker (o que está sendo enviado no XML) */}
             <div
-              className="mt-4 p-3 rounded-xl"
-              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+              className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200"
             >
               <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-                <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff70" }}>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
                   Preview do Ticker · o que sai no XML
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(198,240,60,0.15)", color: LIME }}>
+                  <div className="text-[9.5px] px-2 py-0.5 rounded-full font-bold bg-blue-50 text-[#0055ff] border border-blue-200">
                     Atualiza no XML a cada 5 min
                     {tickerSyncedAt
                       ? ` · ${tickerSyncedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
                       : ""}
                   </div>
-                  <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>
+                  <div className="text-[9.5px] px-2 py-0.5 rounded-full font-bold bg-blue-50 text-[#0055ff] border border-blue-200">
                     {data.tickerUnitario ? "Unitário · 4s por item" : "Contínuo"}
                   </div>
                 </div>
@@ -1746,15 +1737,14 @@ export default function BroadcastPage() {
 
 
               <div
-                className="overflow-hidden rounded-md relative"
-                style={{ backgroundColor: "#FFFFFF", border: "1px solid #FFFFFF", height: 34 }}
+                className="overflow-hidden rounded-md relative bg-white border border-slate-200"
+                style={{ height: 34 }}
               >
                 {composedTicker ? (
                   <div
-                    className="text-[13px] font-semibold absolute whitespace-nowrap"
+                    className="text-[13px] font-semibold absolute whitespace-nowrap text-slate-900"
                     style={{
                       lineHeight: "34px",
-                      color: NAVY,
                       animation: `tickerSlidePv ${Math.max(18, Math.round(composedTicker.length * 0.22))}s linear infinite`,
                     }}
                   >
@@ -1767,7 +1757,7 @@ export default function BroadcastPage() {
                     `}</style>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-[11px]" style={{ color: "#0A254080" }}>
+                  <div className="flex items-center justify-center h-full text-[11px] text-slate-400">
                     Ative fontes acima ou digite um texto para ver o preview.
                   </div>
                 )}
@@ -1780,19 +1770,18 @@ export default function BroadcastPage() {
                   Textos no ticker ({tickerItems.length})
                 </div>
                 <div
-                  className="rounded-md p-2 max-h-56 overflow-auto space-y-1"
-                  style={{ backgroundColor: "rgba(0,0,0,0.35)", border: `1px dashed ${NAVY_BORDER}` }}
+                  className="rounded-md p-2 max-h-56 overflow-auto space-y-1 bg-white border border-slate-200"
                 >
                   {tickerItems.length === 0 ? (
-                    <div className="text-[10.5px] text-center py-3" style={{ color: "#ffffff50" }}>
+                    <div className="text-[10.5px] text-center py-3 text-slate-400">
                       Nenhum texto ativo no ticker.
                     </div>
                   ) : (
                     tickerItems.map((it, i) => (
                       <div key={i} className="flex items-start gap-2 text-[11px]">
-                        <span className="shrink-0 text-[9.5px] font-mono" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
-                        <span className="shrink-0 text-[9px] uppercase font-bold px-1.5 rounded" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>{it.source}</span>
-                        <span className="min-w-0 flex-1" style={{ color: "#ffffffcc" }}>{it.text}</span>
+                        <span className="shrink-0 text-[9.5px] font-mono font-bold" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
+                        <span className="shrink-0 text-[9px] uppercase font-bold px-1.5 rounded bg-blue-50 text-[#0055ff] border border-blue-100">{it.source}</span>
+                        <span className="min-w-0 flex-1 text-slate-700">{it.text}</span>
                       </div>
                     ))
                   )}
@@ -1811,10 +1800,10 @@ export default function BroadcastPage() {
                   <div key={i} className="flex items-center gap-2 text-[11px]">
                     <span
                       className="inline-block rounded-full"
-                      style={{ width: 6, height: 6, backgroundColor: row.on ? "#22c55e" : "#64748b" }}
+                      style={{ width: 6, height: 6, backgroundColor: row.on ? "#22c55e" : "#94a3b8" }}
                     />
-                    <span style={{ color: row.on ? "#ffffffcc" : "#ffffff50", minWidth: 70 }}>{row.label}</span>
-                    <span className="truncate" style={{ color: row.on ? "#ffffff90" : "#ffffff40" }}>{row.value}</span>
+                    <span className="font-medium" style={{ color: row.on ? "#0f172a" : "#94a3b8", minWidth: 70 }}>{row.label}</span>
+                    <span className="truncate" style={{ color: row.on ? "#334155" : "#cbd5e1" }}>{row.value}</span>
                   </div>
                 ))}
               </div>
@@ -1830,7 +1819,7 @@ export default function BroadcastPage() {
             <label
               className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer mt-4"
               style={{
-                backgroundColor: data.aSeguirEnabled ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                backgroundColor: data.aSeguirEnabled ? "rgba(0,85,255,0.06)" : "#ffffff",
                 border: `1px solid ${data.aSeguirEnabled ? CYAN : NAVY_BORDER}`,
               }}
             >
@@ -1845,8 +1834,8 @@ export default function BroadcastPage() {
                 style={{ accentColor: CYAN }}
               />
               <div className="min-w-0">
-                <span className="text-[12px] font-semibold text-white block">Habilitar módulo A Seguir</span>
-                <p className="text-[10px]" style={{ color: "#ffffff60" }}>
+                <span className="text-[12px] font-bold text-slate-800 block">Habilitar módulo A Seguir</span>
+                <p className="text-[10px] text-slate-500">
                   Envia no XML BROADCAST o nódulo <code>&lt;a_seguir&gt;</code> com foto do locutor (.png),
                   logo do programa (.png) e o texto "começa às: HH:MM" do próximo programa da grade.
                 </p>
@@ -1862,14 +1851,13 @@ export default function BroadcastPage() {
                 return (
                   <div
                     key={key}
-                    className="p-4 rounded-xl"
-                    style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, opacity: data.aSeguirEnabled ? 1 : 0.55 }}
+                    className="p-4 rounded-xl bg-slate-50 border border-slate-200"
+                    style={{ opacity: data.aSeguirEnabled ? 1 : 0.55 }}
                   >
                     <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>{label}</div>
-                    <p className="text-[10px] mb-3" style={{ color: "#ffffff55" }}>{hint}</p>
+                    <p className="text-[10px] mb-3 text-slate-500">{hint}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {options.map(({ v, l }) => {
-
                         const active = current === v;
                         return (
                           <button
@@ -1883,9 +1871,9 @@ export default function BroadcastPage() {
                             }}
                             className="px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide transition-colors"
                             style={{
-                              backgroundColor: active ? CYAN : "rgba(255,255,255,0.06)",
-                              color: active ? "#04121b" : "#ffffffcc",
-                              border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
+                              backgroundColor: active ? CYAN : "#ffffff",
+                              color: active ? "#ffffff" : "#334155",
+                              border: `1px solid ${active ? CYAN : "#cbd5e1"}`,
                               cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
                             }}
                           >
@@ -1901,13 +1889,12 @@ export default function BroadcastPage() {
 
             {data.aSeguirEnabled && (
               <div
-                className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px]"
-                style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${LIME}40`, color: "#ffffff80" }}
+                className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px] bg-blue-50 border border-blue-200"
               >
-                <span className="font-bold uppercase tracking-widest" style={{ color: LIME }}>
+                <span className="font-bold uppercase tracking-widest text-[#0055ff]">
                   Envio automático em backend ativo
                 </span>
-                <span className="font-mono">
+                <span className="font-mono text-slate-600">
                   {aSeguirSentAt
                     ? `último envio ${aSeguirSentAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
                     : "aguardando primeiro ciclo…"}
@@ -1916,13 +1903,11 @@ export default function BroadcastPage() {
             )}
 
             {/* Countdown status */}
-
-
             <div
               className="mt-4 p-4 rounded-xl"
               style={{
-                backgroundColor: data.aSeguirEnabled ? "rgba(0,191,240,0.08)" : NAVY_DEEP,
-                border: `1px solid ${data.aSeguirEnabled ? CYAN : NAVY_BORDER}`,
+                backgroundColor: data.aSeguirEnabled ? "rgba(0,85,255,0.05)" : "#f8fafc",
+                border: `1px solid ${data.aSeguirEnabled ? "rgba(0,85,255,0.3)" : NAVY_BORDER}`,
               }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -1930,8 +1915,8 @@ export default function BroadcastPage() {
                 <span
                   className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
                   style={{
-                    backgroundColor: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? LIME : "#0d2a45") : "#0d2a45",
-                    color: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? NAVY : "#ffffff70") : "#ffffff70",
+                    backgroundColor: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? "#22c55e" : "#e2e8f0") : "#e2e8f0",
+                    color: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? "#ffffff" : "#64748b") : "#64748b",
                   }}
                 >
                   {data.aSeguirEnabled ? (nextProgramInfo?.isForced ? "Forçado agora" : nextProgramInfo?.isInWindow ? "No ar no XML" : "Aguardando") : "Desligado"}
@@ -1939,48 +1924,47 @@ export default function BroadcastPage() {
               </div>
 
               {!data.aSeguirEnabled ? (
-                <p className="text-[11px]" style={{ color: "#ffffff60" }}>
+                <p className="text-[11px] text-slate-500">
                   Habilite o módulo A Seguir para ver a contagem regressiva.
                 </p>
               ) : !nextProgramInfo ? (
-                <p className="text-[11px]" style={{ color: "#ffffff60" }}>
+                <p className="text-[11px] text-slate-500">
                   Nenhum programa seguinte encontrado na grade.
                 </p>
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span style={{ color: "#ffffff80" }}>Próximo programa</span>
-                    <span className="font-semibold text-white truncate max-w-[55%]">
+                    <span className="text-slate-500 font-medium">Próximo programa</span>
+                    <span className="font-bold text-slate-800 truncate max-w-[55%]">
                       {nextProgramInfo.next?.nome || "—"} às {(nextProgramInfo.next?.horario_inicio || "").toString().slice(0, 5)}
                     </span>
                   </div>
 
                   {(nextProgramInfo.isInWindow || nextProgramInfo.isForced) ? (
                     <div className="flex items-center justify-between text-[11px]">
-                      <span style={{ color: "#ffffff80" }}>XML preenchido por mais</span>
-                      <span className="font-mono font-bold" style={{ color: LIME }}>
+                      <span className="text-slate-500 font-medium">XML preenchido por mais</span>
+                      <span className="font-mono font-bold text-green-600">
                         {formatCountdown(nextProgramInfo.isForced ? nextProgramInfo.forcedRemainingSeconds : nextProgramInfo.windowCloseSeconds)}
                       </span>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between text-[11px]">
-                      <span style={{ color: "#ffffff80" }}>XML será preenchido em</span>
+                      <span className="text-slate-500 font-medium">XML será preenchido em</span>
                       <span className="font-mono font-bold" style={{ color: CYAN }}>
                         {formatCountdown(nextProgramInfo.windowOpenSeconds)}
                       </span>
                     </div>
                   )}
 
-
                   <div className="flex items-center justify-between text-[11px]">
-                    <span style={{ color: "#ffffff80" }}>Permanecerá no XML</span>
-                    <span className="font-mono font-bold text-white">
+                    <span className="text-slate-500 font-medium">Permanecerá no XML</span>
+                    <span className="font-mono font-bold text-slate-800">
                       {formatCountdown(nextProgramInfo.actualDurationSeconds)}
                     </span>
                   </div>
 
-                  <div className="pt-2 text-[10px]" style={{ color: "#ffffff60" }}>
-                    As imagens e textos entram <strong style={{ color: "#fff" }}>{formatCountdown(nextProgramInfo.windowOpenSeconds)}</strong> antes do início do próximo programa e ficam no XML por <strong style={{ color: "#fff" }}>{formatCountdown(nextProgramInfo.actualDurationSeconds)}</strong>.
+                  <div className="pt-2 text-[10px] text-slate-500">
+                    As imagens e textos entram <strong className="text-slate-700">{formatCountdown(nextProgramInfo.windowOpenSeconds)}</strong> antes do início do próximo programa e ficam no XML por <strong className="text-slate-700">{formatCountdown(nextProgramInfo.actualDurationSeconds)}</strong>.
                   </div>
                 </div>
               )}
@@ -1988,8 +1972,7 @@ export default function BroadcastPage() {
 
             {/* Prévia do XML */}
             <div
-              className="mt-4 p-4 rounded-xl"
-              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${aSeguirActive ? LIME : NAVY_BORDER}` }}
+              className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200"
             >
               <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
                 <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>
@@ -1998,8 +1981,8 @@ export default function BroadcastPage() {
                 <span
                   className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
                   style={{
-                    backgroundColor: aSeguirActive ? LIME : "#0d2a45",
-                    color: aSeguirActive ? NAVY : "#ffffff70",
+                    backgroundColor: aSeguirActive ? "#22c55e" : "#e2e8f0",
+                    color: aSeguirActive ? "#ffffff" : "#64748b",
                   }}
                 >
                   {aSeguirActive ? "Valores no XML agora" : "Fora da janela (blanck)"}
@@ -2011,11 +1994,11 @@ export default function BroadcastPage() {
                   { label: "Logo do programa (.png)", url: aSeguirXmlPreview.programa_logo, caption: aSeguirXmlPreview.programa_nome || "—", contain: true },
                   { label: "Foto do locutor (.png)", url: aSeguirXmlPreview.locutor_foto, caption: aSeguirXmlPreview.locutor_nome || "—", contain: false },
                 ]).map(({ label, url, caption, contain }) => (
-                  <div key={label} className="rounded-lg overflow-hidden" style={{ border: `1px solid ${NAVY_BORDER}` }}>
-                    <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider" style={{ color: "#ffffff70", backgroundColor: "rgba(255,255,255,0.04)" }}>
+                  <div key={label} className="rounded-lg overflow-hidden border border-slate-200 bg-white">
+                    <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100">
                       {label}
                     </div>
-                    <div className="relative w-full" style={{ paddingBottom: "56.25%", backgroundColor: "#0a1a2b" }}>
+                    <div className="relative w-full" style={{ paddingBottom: "56.25%", backgroundColor: "#f1f5f9" }}>
                       <img
                         src={url}
                         alt={label}
@@ -2023,12 +2006,12 @@ export default function BroadcastPage() {
                         style={{ objectFit: contain ? "contain" : "cover", opacity: aSeguirActive ? 1 : 0.35 }}
                       />
                     </div>
-                    <div className="px-2 py-1.5 text-[10px] truncate text-white">{caption}</div>
+                    <div className="px-2 py-1.5 text-[10px] truncate font-bold text-slate-800">{caption}</div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-3 rounded-lg overflow-hidden" style={{ border: `1px solid ${NAVY_BORDER}` }}>
+              <div className="mt-3 rounded-lg overflow-hidden border border-slate-200 bg-white">
                 {([
                   ["ativo", aSeguirXmlPreview.ativo],
                   ["programa_nome", aSeguirXmlPreview.programa_nome],
@@ -2055,10 +2038,10 @@ export default function BroadcastPage() {
                   <div
                     key={field}
                     className="flex items-start gap-3 px-3 py-1.5 text-[10px]"
-                    style={{ backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.03)" : "transparent" }}
+                    style={{ backgroundColor: i % 2 === 0 ? "#f8fafc" : "#ffffff" }}
                   >
-                    <span className="font-mono shrink-0 w-[110px]" style={{ color: CYAN }}>{field}</span>
-                    <span className="font-mono break-all" style={{ color: value ? "#ffffffdd" : "#ffffff45" }} title={value || ""}>
+                    <span className="font-mono font-bold shrink-0 w-[110px]" style={{ color: CYAN }}>{field}</span>
+                    <span className="font-mono break-all font-medium" style={{ color: value ? "#0f172a" : "#94a3b8" }} title={value || ""}>
                       {short || "(vazio)"}
                     </span>
                   </div>
@@ -2067,22 +2050,21 @@ export default function BroadcastPage() {
 
               </div>
 
-              <p className="mt-2 text-[10px]" style={{ color: "#ffffff55" }}>
+              <p className="mt-2 text-[10px] text-slate-500">
                 As imagens são convertidas para .png pelo servidor no momento do envio — a prévia mostra a origem cadastrada.
               </p>
             </div>
 
             <div
-              className="mt-4 p-5 rounded-2xl flex flex-col gap-4"
-              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${CYAN}30`, background: `${CYAN}05` }}
+              className="mt-4 p-5 rounded-2xl flex flex-col gap-4 bg-slate-50 border border-slate-200"
             >
               <div className="min-w-0">
-                <div className="text-[12px] font-black text-white uppercase tracking-widest mb-1">Manual Force</div>
-                <p className="text-[10px]" style={{ color: "#ffffff60" }}>
+                <div className="text-[12px] font-black uppercase tracking-widest mb-1 text-slate-800">Manual Force</div>
+                <p className="text-[10px] text-slate-500">
                   Força o envio das informações do próximo programa ao XML pelo tempo configurado, ignorando a janela automática.
                 </p>
                 {data.aSeguirForceUntil && new Date(data.aSeguirForceUntil).getTime() > Date.now() && (
-                  <p className="text-[10px] mt-2 font-bold" style={{ color: LIME }}>
+                  <p className="text-[10px] mt-2 font-bold text-green-600">
                     STATUS: ATIVO ATÉ {new Date(data.aSeguirForceUntil).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                   </p>
                 )}
@@ -2099,12 +2081,11 @@ export default function BroadcastPage() {
                   void handleSave(nextData);
                   toast.success(`Módulo A Seguir forçado por ${Math.round(dur / 60 * 10) / 10} min`);
                 }}
-                className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+                className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02] text-white shadow-sm cursor-pointer"
                 style={{
-                  backgroundColor: data.aSeguirEnabled ? LIME : "rgba(255,255,255,0.05)",
-                  color: data.aSeguirEnabled ? NAVY : "#ffffff30",
+                  backgroundColor: data.aSeguirEnabled ? "#0055ff" : "#cbd5e1",
                   cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
-                  boxShadow: data.aSeguirEnabled ? `0 8px 14px ${LIME}25` : "none"
+                  boxShadow: data.aSeguirEnabled ? "0 4px 14px rgba(0,85,255,0.25)" : "none"
                 }}
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
@@ -2112,7 +2093,7 @@ export default function BroadcastPage() {
               </button>
             </div>
 
-            <div className="mt-4 p-4 rounded-xl text-[11px] leading-relaxed" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#ffffff80" }}>
+            <div className="mt-4 p-4 rounded-xl text-[11px] leading-relaxed bg-slate-50 border border-slate-200 text-slate-600">
               <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>Campos no XML</div>
               <div>a_seguir/ativo</div>
               <div>a_seguir/programa_nome</div>
@@ -2122,36 +2103,11 @@ export default function BroadcastPage() {
               <div>a_seguir/locutor_foto (.png)</div>
               <div>a_seguir/horario</div>
               <div>a_seguir/texto → "começa às: 14:00"</div>
-              <p className="mt-3" style={{ color: "#ffffff60" }}>
+              <p className="mt-3 text-slate-500">
                 As informações entram no XML conforme a antecedência configurada e permanecem até o horário de início do programa.
                 Fora dessa janela, as imagens ficam com <code>blanck.png</code> e os textos vazios.
               </p>
             </div>
-          </div>
-        )}
-
-
-        {activeTab === "xml" && (
-          <div className="max-w-3xl mx-auto p-6 rounded-2xl space-y-3" style={cardStyle}>
-            <SectionHeader n="03" label="Endpoints XML" color={CYAN} />
-            <XmlSection title="Endpoints XML">
-              <XmlLinkRow
-                label="Broadcast XML"
-                kicker="XML"
-                permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`}
-              />
-              <XmlLinkRow
-                label="Broadcast JSON"
-                kicker="JSON"
-                permanentUrl={`https://nexohub.lovable.app/functions/v1/serve-json-broadcast/${userSlug || "p"}/vmix.json`}
-              />
-              <XmlLinkRow
-                label="TClock Shows"
-                kicker="XML"
-                permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`}
-              />
-
-            </XmlSection>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, Suspense, Fragment } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star, Minimize2, Maximize2 } from "lucide-react";
+import { Plus, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, Loader2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star, Minimize2, Maximize2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -12,11 +12,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { readMusicData, readMusicStart, musicDataKey, musicStartKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { readMusicData, readMusicStart, musicDataKey, musicStartKey, MUSIC_DATA_EVENT, writeMusicData } from "@/lib/musicStorageKeys";
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import AudioSpectrum from "@/components/AudioSpectrum";
 import AutoScrollText from "@/components/player/AutoScrollText";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
 
 
 /* Typewriter text component — animates character-by-character on text change */
@@ -103,30 +105,7 @@ function normalizeDashboardSettings(raw: unknown): DashboardSettingsPayload {
   return { items: [] };
 }
 
-const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
-  { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
-  { label: "Programas", page: "programas", icon: "PlaySquare" },
-  { label: "Roteiro", page: "noticias", icon: "FileText" },
-  { label: "Notícias", page: "noticias", icon: "Newspaper" },
-  { label: "Música no Ar", page: "musica", icon: "Music" },
-  { label: "Agenda", page: "agenda", icon: "CalendarDays" },
-  { label: "Player Config", page: "playerconfig", icon: "Settings" },
-  { label: "Player Externo", external: "player", icon: "MonitorPlay" },
-  { label: "Testemunhais", page: "testemunhais", icon: "MessageSquareQuote" },
-  { label: "Promoções", page: "promocoes", icon: "Tag" },
-  { label: "Logos", page: "logos", icon: "Image" },
-  { label: "Roll", page: "preroll", icon: "Film" },
-  { label: "Shopping", page: "shopping", icon: "ShoppingCart" },
-  { label: "vMix", page: "vmix", icon: "Monitor" },
-  { label: "Corte de Vídeo", page: "cortevideo", icon: "Scissors" },
-  { label: "Tela Promo", external: "telapromo", icon: "Tag" },
-  { label: "Configurações", page: "configuracoes", icon: "Settings" },
-];
 
-const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather" | "player"; description: string }[] = [
-  { label: "Dados Estatísticos", type: "stats", description: "Visualizações do pre-roll e audiência do player" },
-  { label: "Player", type: "player", description: "Ouça ou assista seus canais cadastrados" },
-];
 
 // Widgets descontinuados — removidos automaticamente ao carregar
 const DEPRECATED_WIDGETS = new Set(["agenda", "musica", "weather"]);
@@ -143,15 +122,12 @@ function getIcon(name: string) {
 interface Props {
   onNavigate: (page: Page) => void;
   effectiveUserId?: string | null;
+  isActive?: boolean;
 }
 
-export default function CustomizableDashboard({ onNavigate, effectiveUserId }: Props) {
+export default function CustomizableDashboard({ onNavigate, effectiveUserId, isActive = true }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [addStep, setAddStep] = useState<"choose" | "link" | "widget">("choose");
-  const [editMode, setEditMode] = useState(false);
-  const [draggedId, setDraggedId] = useState<string | null>(null);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
   const [playerCompactMap, setPlayerCompactMap] = useState<Record<string, boolean>>({});
   // Using effectiveUserId from props if provided, otherwise using internal logic as fallback
@@ -169,7 +145,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     return () => { cancelled = true; };
   }, [user]);
 
-  const dataUserId = effectiveUserId || user?.id;
+  const dataUserId = resolvedUserId || effectiveUserId || user?.id;
 
   // On-air program info
   interface OnAirProgram {
@@ -191,6 +167,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   const [footerEl, setFooterEl] = useState<HTMLElement | null>(null);
   const [playerMaxHeight, setPlayerMaxHeight] = useState<number>(400);
   useEffect(() => {
+    if (!isActive) return;
     const findSlot = () => {
       setOnAirSlot(document.getElementById("on-air-info-slot"));
       setFooterEl(document.querySelector("footer"));
@@ -199,10 +176,11 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     const obs = new MutationObserver(findSlot);
     obs.observe(document.body, { childList: true, subtree: true });
     return () => obs.disconnect();
-  }, []);
+  }, [isActive]);
 
   // Dynamically compute player widget height so it fits between the blue on-air box and the page footer
   useEffect(() => {
+    if (!isActive) return;
     const compute = () => {
       const anchorTop = onAirSlot?.getBoundingClientRect().bottom ?? 120;
       const footerTop = footerEl?.getBoundingClientRect().top ?? window.innerHeight;
@@ -216,16 +194,16 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     };
     compute();
     window.addEventListener("resize", compute);
-    const interval = window.setInterval(compute, 800);
+    const interval = window.setInterval(compute, 2000);
     return () => {
       window.removeEventListener("resize", compute);
       window.clearInterval(interval);
     };
-  }, [onAirSlot, footerEl]);
+  }, [onAirSlot, footerEl, isActive]);
 
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isActive) return;
     let cancelled = false;
     const fetchOnAir = async () => {
       const [{ data: empresa }, { data }] = await Promise.all([
@@ -347,7 +325,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       { id: "default-player", type: "widget", widgetType: "player" },
     ];
     const stripDeprecated = (arr: DashboardItem[]) =>
-      arr.filter(i => !(i.type === "widget" && i.widgetType && DEPRECATED_WIDGETS.has(i.widgetType)));
+      arr.filter(i => i.type !== "link" && !(i.type === "widget" && i.widgetType && DEPRECATED_WIDGETS.has(i.widgetType)));
 
     const loadItems = async () => {
       // Try DB first
@@ -366,10 +344,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       if (Array.isArray(normalized.items) && normalized.items.length > 0) {
         const cleaned = stripDeprecated(normalized.items);
         setItems(cleaned);
-        // Persist cleanup if we actually removed something
-        if (cleaned.length !== normalized.items.length && user) {
-          try { await mergeUserDashboardItems(user.id, { items: cleaned as unknown[] }); } catch {}
-        }
         return;
       }
 
@@ -381,7 +355,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
           if (Array.isArray(parsed) && parsed.length > 0) {
             const cleaned = stripDeprecated(parsed as DashboardItem[]);
             setItems(cleaned);
-            await mergeUserDashboardItems(user.id, { items: cleaned as unknown[] });
             return;
           }
         }
@@ -389,91 +362,12 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
         // ignore invalid local data
       }
 
-      // No items anywhere → seed defaults
+      // Seed defaults
       setItems(DEFAULT_ITEMS);
-      try {
-        await mergeUserDashboardItems(user.id, { items: DEFAULT_ITEMS as unknown[] });
-      } catch {}
     };
     loadItems();
   }, [user, dataUserId]);
 
-  const saveItems = useCallback(async (newItems: DashboardItem[]) => {
-    setItems(newItems);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
-
-    if (!user) return;
-
-    try {
-      await mergeUserDashboardItems(user.id, {
-        items: newItems as unknown[],
-      });
-    } catch (error) {
-      console.error("Erro ao salvar dashboard_items:", error);
-    }
-  }, [user]);
-
-  const addLink = (opt: typeof linkOptions[0]) => {
-    const newItem: DashboardItem = {
-      id: `link-${Date.now()}`,
-      type: "link",
-      linkPage: opt.page,
-      linkExternal: opt.external,
-      linkLabel: opt.label,
-      linkIcon: opt.icon,
-    };
-    saveItems([...items, newItem]);
-    setShowAddDialog(false);
-    setAddStep("choose");
-  };
-
-  const addWidget = (opt: typeof widgetOptions[0]) => {
-    // Prevent duplicates
-    if (items.some(i => i.type === "widget" && i.widgetType === opt.type)) return;
-    const newItem: DashboardItem = {
-      id: `widget-${Date.now()}`,
-      type: "widget",
-      widgetType: opt.type,
-    };
-    saveItems([...items, newItem]);
-    setShowAddDialog(false);
-    setAddStep("choose");
-  };
-
-  const removeItem = (id: string) => {
-    saveItems(items.filter(i => i.id !== id));
-  };
-
-  const handleLinkClick = (item: DashboardItem) => {
-    if (editMode) return;
-    if (item.linkExternal === "player") {
-      window.open(`/user/${resolvedUserId}/nexohub/player`, "_blank");
-    } else if (item.linkExternal === "telapromo") {
-      window.open(`/user/${resolvedUserId}/nexohub/telapromo`, "_blank");
-    } else if (item.linkPage) {
-      onNavigate(item.linkPage);
-    }
-  };
-
-  // Drag and drop
-  const handleDragStart = (id: string) => setDraggedId(id);
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    setDragOverId(targetId);
-  };
-  const handleDrop = (targetId: string) => {
-    if (!draggedId || draggedId === targetId) { setDragOverId(null); return; }
-    const newItems = [...items];
-    const fromIdx = newItems.findIndex(i => i.id === draggedId);
-    const toIdx = newItems.findIndex(i => i.id === targetId);
-    const [moved] = newItems.splice(fromIdx, 1);
-    newItems.splice(toIdx, 0, moved);
-    saveItems(newItems);
-    setDragOverId(null);
-  };
-  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
-
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
 
@@ -492,80 +386,26 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
   }, [items]);
 
+  // Find player item for headless engine
+  const playerItem = items.find(i => i.type === "widget" && i.widgetType === "player");
+
   return (
     <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1">
-
-
-      {/* Section: Atalhos */}
-      {items.filter(i => i.type === "link").length > 0 && (
-        <div className="mb-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Atalhos rápidos</p>
-          <div className="flex flex-wrap gap-3 sm:gap-4">
-            {items.filter(i => i.type === "link").map(item => {
-              const Icon = getIcon(item.linkIcon || "Link2");
-              const isDragging = draggedId === item.id;
-              const isDragOver = dragOverId === item.id && draggedId !== item.id;
-              return (
-                <div
-                  key={item.id}
-                  className={`relative group cursor-pointer animate-scale-in ${isDragging ? "opacity-40 scale-95" : ""}`}
-                  draggable
-                  onDragStart={() => handleDragStart(item.id)}
-                  onDragOver={(e) => handleDragOver(e, item.id)}
-                  onDrop={() => handleDrop(item.id)}
-                  onDragEnd={handleDragEnd}
-                  onMouseEnter={() => {
-                    if (item.linkPage === "agenda") void import("./AgendaPage");
-                  }}
-                  onTouchStart={() => {
-                    if (item.linkPage === "agenda") void import("./AgendaPage");
-                  }}
-                  onClick={() => handleLinkClick(item)}
-                >
-                    <div
-                      className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-start justify-between p-5 transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1 overflow-hidden relative isolate"
-                      style={{
-                        background: isDragOver
-                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 22%, var(--layout-button-bg, #8b0000)) 0%, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, var(--layout-button-bg, #8b0000)) 100%)`
-                          : `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #8b0000) 88%, black 12%) 0%, color-mix(in srgb, var(--layout-button-bg, #8b0000) 76%, black 24%) 100%)`,
-                        boxShadow: isDragOver
-                          ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`
-                          : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`,
-                        backgroundClip: "padding-box",
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.boxShadow = `0 12px 40px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`;
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.boxShadow = isDragOver
-                          ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`
-                          : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`;
-                      }}
-                    >
-                      {/* Subtle gradient overlay on top */}
-                      <div className="absolute inset-px rounded-[21px] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 38%, transparent 65%)" }} />
-                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative z-[1]" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, transparent)" }}>
-                        <Icon size={20} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
-                      </div>
-                      <div className="w-full relative z-[1]">
-                        <span className="text-[12px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
-                        {item.linkExternal && <ExternalLink size={9} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />}
-                      </div>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                    className="absolute top-2.5 right-2.5 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-                    style={{ background: "rgba(0,0,0,0.6)" }}
-                  >
-                    <X size={9} style={{ color: "#fff", opacity: 0.7 }} />
-                  </button>
-                </div>
-              );
-            })}
-            {/* Add button removido */}
-          </div>
+      {/* DashboardPlayerWidget mounted headlessly — provides audio engine + emits player:music events */}
+      {playerItem && (
+        <div style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none", opacity: 0, zIndex: -999 }}>
+          <Suspense fallback={null}>
+            <DashboardPlayerWidget
+              dataUserId={dataUserId || undefined}
+              isActive={isActive}
+              onVideoChange={(active) => setPlayerVideoActive(active ? playerItem.id : null)}
+              onCompactChange={(c) => setPlayerCompactMap(m => ({ ...m, [playerItem.id]: c }))}
+            />
+          </Suspense>
         </div>
       )}
+
+
 
       {/* On-Air Program Info — rendered into cyan box via portal when slot exists */}
       {onAirProgram && (() => {
@@ -645,7 +485,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       {/* Spacer to push widgets to bottom */}
       <div className="flex-1" />
 
-      {items.filter(i => i.type === "widget").length > 0 && (
+      {items.filter(i => i.type === "widget" && i.widgetType !== "player").length > 0 && (
         <div className="mb-2">
           <div className="flex items-center gap-2 mb-3 animate-fade-in">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "#002132" }}>Widgets</p>
@@ -653,12 +493,13 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
 
-            {items.filter(i => i.type === "widget").map(item => {
-              const isDragging = draggedId === item.id;
-              const isDragOver = dragOverId === item.id && draggedId !== item.id;
+            {items.filter(i => i.type === "widget" && i.widgetType !== "player").map(item => {
               const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
-              return (
+
+                return (
                 <Fragment key={item.id}>
+                {/* Player widget: hidden from grid UI — runs as headless audio engine */}
+                {/* The FloatingMiniPlayer consumes player:music events emitted by DashboardPlayerWidget */}
                 <div
                   className={
                     (item.widgetType === "player"
@@ -666,13 +507,15 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       : "") +
                     "relative"
                   }
-                  style={item.widgetType === "player" ? { height: playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px` } : undefined}
+                  style={item.widgetType === "player"
+                    ? { display: "none" }
+                    : undefined}
                 >
                 <div
-                  className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
+                  className="relative group rounded-3xl animate-fade-in flex flex-col"
                   style={{
                     background: "var(--layout-widget-bg, #1a1a1a)",
-                    boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
                     aspectRatio: item.widgetType === "player" ? (playerVideoActive === item.id ? "16 / 9" : "1 / 1") : undefined,
                     height: item.widgetType === "player" ? "100%" : "280px",
@@ -681,39 +524,21 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                     overflow: item.widgetType === "player" ? "hidden" : "hidden",
                     transition: item.widgetType === "player" ? "aspect-ratio 0.4s cubic-bezier(0.4,0,0.2,1), min-height 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.35s cubic-bezier(0.4,0,0.2,1)" : undefined,
                   }}
-                  onDragOver={(e) => handleDragOver(e, item.id)}
-                  onDrop={() => handleDrop(item.id)}
-                  onDragEnd={handleDragEnd}
                 >
                   {item.widgetType !== "player" && (
                     <div
-                      className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0"
+                      className="flex items-center gap-2 px-5 py-3 flex-shrink-0"
                       style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
-                      draggable
-                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
                     >
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
-                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                        {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #0055ff) 15%, transparent)" }}>
+                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                        {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
                       </div>
                       <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
                         {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
                       </span>
-                      <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
-                    </div>
-                  )}
-                  {/* Handle de arrastar do player removido */}
-                  {item.widgetType !== "player" && (
-                    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                        style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
-                      >
-                        <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
-                      </button>
                     </div>
                   )}
                   <div className={`${item.widgetType === "player" ? "p-0" : "p-4"} flex-1 ${item.widgetType === "player" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
@@ -722,7 +547,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
                       {item.widgetType === "stats" && <StatsWidget dataUserId={dataUserId || undefined} />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                      {item.widgetType === "player" && <DashboardPlayerWidget dataUserId={dataUserId || undefined} onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} onCompactChange={(c) => setPlayerCompactMap(m => ({ ...m, [item.id]: c }))} />}
+                      {item.widgetType === "player" && <DashboardPlayerWidget dataUserId={dataUserId || undefined} isActive={isActive} onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} onCompactChange={(c) => setPlayerCompactMap(m => ({ ...m, [item.id]: c }))} />}
                     </Suspense>
                   </div>
                 </div>
@@ -742,156 +567,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       )}
 
 
-      {/* Empty state */}
-      {items.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center py-20 animate-fade-in">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
-            <Plus size={28} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
-          </div>
-          <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
-          <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
-        </div>
-      )}
 
-      {/* Add Dialog */}
-      {showAddDialog && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => { setShowAddDialog(false); setAddStep("choose"); }}>
-          <div className="absolute inset-0 bg-black/60" />
-          <div
-            className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
-            style={{
-               background: "rgba(18, 18, 20, 0.97)",
-               boxShadow: "0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
-             }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-base" style={{ color: "var(--layout-nav-text, #fff)" }}>
-                {addStep === "choose" ? "O que deseja adicionar?" : addStep === "link" ? "Escolha um atalho" : "Escolha um widget"}
-              </h3>
-              <button onClick={() => { setShowAddDialog(false); setAddStep("choose"); }} className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}>
-                <X size={14} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
-              </button>
-            </div>
-
-            {addStep === "choose" && (
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setAddStep("link")}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
-                  style={{ background: "rgba(255,255,255,0.06)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
-                >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
-                    <Link2 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-sm" style={{ color: "var(--layout-nav-text, #fff)" }}>Botão com Link</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Atalho para um módulo</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setAddStep("widget")}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
-                  style={{ background: "rgba(255,255,255,0.06)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
-                >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
-                    <BarChart3 size={20} style={{ color: "var(--layout-button-text, #fff)" }} />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-sm" style={{ color: "var(--layout-nav-text, #fff)" }}>Widget</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.4 }}>Dados em tempo real</p>
-                  </div>
-                </button>
-              </div>
-            )}
-
-            {addStep === "link" && (
-              <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
-                {linkOptions.map(opt => {
-                  const Icon = getIcon(opt.icon);
-                  const exists = items.some(i => i.type === "link" && (
-                    (opt.page && i.linkPage === opt.page) ||
-                    (opt.external && i.linkExternal === opt.external)
-                  ));
-                  return (
-                    <button
-                      key={opt.label}
-                      onClick={() => addLink(opt)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
-                      style={{
-                        background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
-                        boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
-                        opacity: exists ? 0.4 : 1,
-                        color: "#fff",
-                      }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; } }}
-                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                    >
-                      <Icon size={16} />
-                      <span className="font-semibold">{opt.label}</span>
-                      {opt.external && <ExternalLink size={10} className="text-white/30 ml-auto" />}
-                      {exists && <span className="text-[10px] text-white/30 ml-auto">Já adicionado</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {addStep === "widget" && (
-              <div className="space-y-2">
-                {widgetOptions.map(opt => {
-                  const exists = items.some(i => i.type === "widget" && i.widgetType === opt.type);
-                  return (
-                    <button
-                      key={opt.type}
-                      onClick={() => !exists && addWidget(opt)}
-                      disabled={exists}
-                      className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
-                      style={{
-                        background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
-                        boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
-                        opacity: exists ? 0.4 : 1,
-                        color: "#fff",
-                      }}
-                      onMouseEnter={e => { if (!exists) { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)"; } }}
-                      onMouseLeave={e => { e.currentTarget.style.background = exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
-                        {opt.type === "agenda" && <CalendarDays size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
-                        {opt.type === "musica" && <Music size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
-                        {opt.type === "stats" && <BarChart3 size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
-                        {opt.type === "weather" && <CloudSun size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
-                        {opt.type === "player" && <Radio size={14} style={{ color: "var(--layout-button-text, #fff)" }} />}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{opt.label}</p>
-                        <p className="text-white/40 text-[11px] mt-0.5">{opt.description}</p>
-                        {exists && <p className="text-[10px] text-white/30 mt-1">Já adicionado</p>}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {addStep !== "choose" && (
-              <button
-                onClick={() => setAddStep("choose")}
-                className="mt-3 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all hover:scale-105"
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.8)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
-              >
-                ← Voltar
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Scroll down hint — visible on hover, auto-scrolls */}
       {showScrollHint && (
@@ -1750,13 +1426,12 @@ function VolumeSliderControl({ compactMode, isMuted, volume, toggleMute, handleV
     <div className="relative" onMouseEnter={() => { cancelClose(); setOpen(true); }} onMouseLeave={scheduleClose}>
       <button
         onClick={toggleMute}
-        className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
-        style={{ background: "#c8ff00" }}
+        className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-md bg-white/10 hover:bg-white/20 border border-white/10 text-white`}
         title={isMuted ? "Ativar som" : "Mudo"}
       >
         {isMuted || volume === 0
-          ? <VolumeX size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} />
-          : <Volume2 size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} fill="#001e2d" />}
+          ? <VolumeX size={compactMode ? 12 : 13} className="text-white/70" />
+          : <Volume2 size={compactMode ? 12 : 13} className="text-white" />}
       </button>
       {/* Invisible bridge so cursor can travel from button to slider without gap */}
       <div
@@ -1774,7 +1449,7 @@ function VolumeSliderControl({ compactMode, isMuted, volume, toggleMute, handleV
         onMouseEnter={cancelClose}
         onMouseLeave={scheduleClose}
       >
-        <div className="rounded-full px-2 py-1.5 sm:px-3 sm:py-2 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
+        <div className="rounded-full px-2.5 py-1.5 sm:px-3 sm:py-2 flex items-center shadow-xl border border-white/10" style={{ background: "rgba(0, 30, 45, 0.95)", backdropFilter: "blur(16px)" }}>
           <input
             type="range"
             min={0}
@@ -1786,9 +1461,9 @@ function VolumeSliderControl({ compactMode, isMuted, volume, toggleMute, handleV
             onTouchStart={e => e.stopPropagation()}
             onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
             draggable={false}
-            className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-20 sm:w-24"
+            className="volume-slider-nexo h-1 appearance-none rounded-full cursor-pointer w-20 sm:w-24"
             style={{
-              background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
+              background: `linear-gradient(to right, #0055ff ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) ${(isMuted ? 0 : volume) * 100}%)`,
             }}
           />
         </div>
@@ -1797,7 +1472,7 @@ function VolumeSliderControl({ compactMode, isMuted, volume, toggleMute, handleV
   );
 }
 
-function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void; onCompactChange?: (compact: boolean) => void }) {
+function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange, isActive = true }: { dataUserId?: string; onVideoChange?: (active: boolean) => void; onCompactChange?: (compact: boolean) => void; isActive?: boolean }) {
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
   const volumeStorageKey = uid ? `dashboard_player_volume_${uid}` : "dashboard_player_volume_anon";
@@ -1868,7 +1543,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   useEffect(() => {
     if (!uid) return;
     const fetchChannels = async () => {
-      let { data, error } = await supabase
+      // 1. Direct query
+      let { data } = await supabase
         .from("streaming_channels")
         .select("*")
         .eq("user_id", uid)
@@ -1876,23 +1552,44 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         .neq("type", "catalog")
         .order("numero_canal");
 
-      if (!error && (!data || data.length === 0)) {
-        const fallback = await supabase
-          .from("streaming_channels")
-          .select("*")
-          .eq("user_id", uid)
-          .eq("active", true)
-          .neq("type", "catalog")
-          .order("numero_canal");
-        data = fallback.data;
-        error = fallback.error;
+      if (data && data.length > 0) {
+        setChannels(data);
+        return;
       }
 
-      if (error) return;
-      if (data && data.length > 0) setChannels(data);
+      // 2. Synchronous station database cache
+      const syncData = getStationDatabaseSync(uid || user?.email);
+      if (syncData?.channels && syncData.channels.length > 0) {
+        setChannels(syncData.channels);
+        return;
+      }
+
+      // 3. Remote station database edge function
+      const stationData = await fetchStationDatabaseData(uid || user?.email);
+      if (stationData?.channels && stationData.channels.length > 0) {
+        setChannels(stationData.channels);
+        return;
+      }
+
+      // 4. Fallback to all active channels
+      const { data: allActive } = await supabase
+        .from("streaming_channels")
+        .select("*")
+        .eq("active", true)
+        .neq("type", "catalog")
+        .order("numero_canal");
+      if (allActive && allActive.length > 0) {
+        setChannels(allActive);
+      }
     };
     fetchChannels();
-  }, [uid]);
+  }, [uid, user?.email]);
+
+  useEffect(() => {
+    if (channels.length > 0 && activeIdx >= channels.length) {
+      setActiveIdx(0);
+    }
+  }, [channels, activeIdx]);
 
   useEffect(() => {
     const effectiveUid = dataUserId || uid;
@@ -1948,17 +1645,55 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
-    // Keep a slow poll as safety net for writers that bypass the helper
-    const iv = setInterval(poll, 3000);
+    // Supabase Realtime subscriptions for instant live cover and track updates
+    let settingsSub: any = null;
+    let musicasSub: any = null;
+    if (effectiveUid) {
+      settingsSub = supabase
+        .channel(`music-user-settings-${effectiveUid}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_settings",
+            filter: `user_id=eq.${effectiveUid}`,
+          },
+          () => {
+            void fetchFromDb();
+          }
+        )
+        .subscribe();
+
+      musicasSub = supabase
+        .channel(`music-history-${effectiveUid}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "musicas_tocadas",
+            filter: `user_id=eq.${effectiveUid}`,
+          },
+          () => {
+            void fetchFromDb();
+          }
+        )
+        .subscribe();
+    }
+
+    const iv = setInterval(poll, 1500);
     // Periodic DB refresh so the widget catches updates written while the user
     // isn't on the MúsicaNoAr page (which is the only writer of localStorage).
-    const dbIv = setInterval(fetchFromDb, 8000);
+    const dbIv = setInterval(fetchFromDb, 2500);
     return () => {
       cancelled = true;
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
       clearInterval(iv);
       clearInterval(dbIv);
+      if (settingsSub) supabase.removeChannel(settingsSub);
+      if (musicasSub) supabase.removeChannel(musicasSub);
     };
   }, [dataUserId, uid]);
 
@@ -2277,11 +2012,32 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
   // ── Global bridge: allow other components (nav header) to toggle/observe playback ──
   const togglePlayRef = useRef(togglePlay);
+  const goPrevRef = useRef<(() => void) | undefined>(undefined);
+  const goNextRef = useRef<(() => void) | undefined>(undefined);
+  const handleVolumeRef = useRef<((val: number) => void) | undefined>(undefined);
   useEffect(() => { togglePlayRef.current = togglePlay; });
+
+
   useEffect(() => {
     const handler = () => togglePlayRef.current?.();
     window.addEventListener("player:toggle", handler);
     return () => window.removeEventListener("player:toggle", handler);
+  }, []);
+  useEffect(() => {
+    const onPrev = () => goPrevRef.current?.();
+    const onNext = () => goNextRef.current?.();
+    const onVol = (e: Event) => {
+      const v = (e as CustomEvent).detail?.volume;
+      if (typeof v === "number") handleVolumeRef.current?.(v);
+    };
+    window.addEventListener("player:prev", onPrev);
+    window.addEventListener("player:next", onNext);
+    window.addEventListener("player:volume", onVol as EventListener);
+    return () => {
+      window.removeEventListener("player:prev", onPrev);
+      window.removeEventListener("player:next", onNext);
+      window.removeEventListener("player:volume", onVol as EventListener);
+    };
   }, []);
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("player:state", {
@@ -2293,6 +2049,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       },
     }));
   }, [isPlaying, isLoading, activeChannel]);
+
 
 
   const switchTo = (idx: number) => {
@@ -2318,6 +2075,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
   const goNext = () => { if (channels.length > 1) switchTo((activeIdx + 1) % channels.length); };
   const goPrev = () => { if (channels.length > 1) switchTo((activeIdx - 1 + channels.length) % channels.length); };
+  // Sync nav refs after function definitions (can't reference them before this point)
+  goPrevRef.current = goPrev;
+  goNextRef.current = goNext;
+
 
   const toggleMute = () => {
     const m = !isMuted;
@@ -2333,6 +2094,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     if (val === 0) setIsMuted(true);
     else if (isMuted) { setIsMuted(false); if (audioRef.current) audioRef.current.muted = false; if (videoRef.current) videoRef.current.muted = false; }
   };
+  handleVolumeRef.current = handleVolume;
+
 
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
 
@@ -2347,6 +2110,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
+    setArtistBgUrl(null);
     let cancelled = false;
     (async () => {
       try {
@@ -2360,11 +2124,59 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => { cancelled = true; };
   }, [currentMusic?.artista]);
 
+  // Resolve cover art if currentMusic has title/artist but no capa
+  useEffect(() => {
+    const tit = currentMusic?.titulo?.trim();
+    const art = currentMusic?.artista?.trim();
+    if (!tit && !art) return;
+    if (currentMusic?.capa) return;
+    if (currentMusic?.excecao) return;
+
+    let cancelled = false;
+    const syncCover = getTrackCoverSync(tit || "", art || "");
+    if (syncCover) {
+      setCurrentMusic(prev => (prev && prev.titulo === tit && prev.artista === art ? { ...prev, capa: syncCover } : prev));
+      if (uid) {
+        const cur = readMusicData(uid);
+        if (cur && cur.titulo === tit && cur.artista === art && !cur.capa) {
+          writeMusicData(uid, { ...cur, capa: syncCover });
+        }
+      }
+      return;
+    }
+
+    void fetchTrackCover(tit || "", art || "").then(cover => {
+      if (cancelled || !cover) return;
+      setCurrentMusic(prev => {
+        if (!prev || prev.titulo !== tit || prev.artista !== art) return prev;
+        return { ...prev, capa: cover };
+      });
+      if (uid) {
+        const cur = readMusicData(uid);
+        if (cur && cur.titulo === tit && cur.artista === art && !cur.capa) {
+          writeMusicData(uid, { ...cur, capa: cover });
+        }
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [currentMusic?.titulo, currentMusic?.artista, currentMusic?.capa, currentMusic?.excecao, uid]);
+
   // Faixas da lista de EXCEÇÕES (ex.: BREAK) sempre usam a capa cadastrada
   // na exceção (própria ou a imagem geral da lista) — nunca a imagem do artista.
   const displayArt = currentMusic?.excecao
     ? (currentMusic.excecao.capa_url || currentMusic.capa || channelLogo)
-    : (artistBgUrl || currentMusic?.capa || channelLogo);
+    : (currentMusic?.capa || artistBgUrl || channelLogo);
+
+  // Emit rich music/art data so FloatingMiniPlayer & HomeGradientBackground can sync without prop drilling
+  useEffect(() => {
+    const detail = { displayArt, currentMusic, channels, activeIdx, activeChannel, isPlaying, isLoading, isMuted, volume };
+    try {
+      (window as any).__lastPlayerMusicState = detail;
+    } catch {}
+    window.dispatchEvent(new CustomEvent("player:music", { detail }));
+  }, [displayArt, currentMusic, channels, activeIdx, activeChannel, isPlaying, isLoading, isMuted, volume]);
+
 
   // Crossfade for background art
   const [visibleArt, setVisibleArt] = useState(displayArt);
@@ -2494,7 +2306,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             {isPlaying && !isVideo && audioRef.current ? (
-              <AudioSpectrum audioElement={audioRef.current} style="bars" barColor="#c8ff00" />
+              <AudioSpectrum audioElement={audioRef.current} style="bars" barColor="#0055ff" />
             ) : (
               <Tv size={40} className="text-white/10" />
             )}
@@ -2557,11 +2369,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           {/* Status label — only in standard mode */}
           {!compactMode && (
             <div className="flex flex-col min-w-0">
-              <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate" style={{ color: "#c8ff00" }}>
+              <span className="text-[13px] sm:text-[15px] md:text-[16px] font-bold lowercase tracking-tight truncate text-white/90">
                 {isLoading ? "carregando..." : isPlaying ? "tocando" : "pausado"}
               </span>
               {isPlaying && !isLoading && (
-                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/70 leading-none mt-0.5">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#0055ff] leading-none mt-0.5">
                   {isVideo ? "vídeo" : "áudio"}
                 </span>
               )}
@@ -2575,10 +2387,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               {currentMusic ? (
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1]" style={{ color: "#c8ff00" }}>
+                    <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1] text-white">
                       <AutoScrollText text={currentMusic.titulo || ""} />
                     </p>
-                    <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15]" style={{ color: "#ffffff" }}>
+                    <p className="text-[10px] sm:text-[11px] font-medium leading-[1.15] text-slate-400">
                       <AutoScrollText text={currentMusic.artista || ""} />
                     </p>
                   </div>
@@ -2589,7 +2401,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
                     {activeChannel?.name}
                   </p>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <span className="text-[8px] font-bold px-1 py-0.5 rounded" style={{ background: "color-mix(in srgb, #c8ff00 26%, transparent)", color: "#c8ff00" }}>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-[#0055ff]/30 bg-[#0055ff]/15 text-[#0055ff]">
                       CH {activeChannel?.numero_canal}
                     </span>
                     {isVideo && <span className="text-[8px] font-bold uppercase tracking-wider text-white/60">Vídeo</span>}
@@ -2602,10 +2414,10 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           {/* Channel navigation arrows — bottom-right corner in standard mode */}
           {!compactMode && channels.length > 1 && (
             <div className="absolute bottom-2.5 right-2.5 sm:bottom-3.5 sm:right-3.5 flex gap-1 z-20">
-              <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Canal anterior">
+              <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110 bg-white/10 hover:bg-white/20 border border-white/10 text-white" title="Canal anterior">
                 <ChevronLeft size={12} className="text-white/80" />
               </button>
-              <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Próximo canal">
+              <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110 bg-white/10 hover:bg-white/20 border border-white/10 text-white" title="Próximo canal">
                 <ChevronRight size={12} className="text-white/80" />
               </button>
             </div>
@@ -2617,15 +2429,14 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           >
             <button
               onClick={togglePlay}
-              className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
-              style={{ background: "#001e2d" }}
+              className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-[0_2px_12px_rgba(0,85,255,0.4)] bg-[#0055ff] hover:bg-[#0048db] text-white active:scale-95`}
               title={isLoading ? "Carregando..." : isPlaying ? "Pausar" : "Reproduzir"}
             >
               {isLoading
-                ? <Loader2 size={compactMode ? 12 : 14} className="animate-spin" style={{ color: "#c8ff00" }} />
+                ? <Loader2 size={compactMode ? 12 : 14} className="animate-spin text-white" />
                 : isPlaying
-                  ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
-                  : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
+                  ? <Pause size={compactMode ? 11 : 12} style={{ color: "#ffffff" }} fill="#ffffff" />
+                  : <Play size={compactMode ? 11 : 12} style={{ color: "#ffffff", marginLeft: 1 }} fill="#ffffff" />}
             </button>
             <VolumeSliderControl
               compactMode={compactMode}
@@ -2648,16 +2459,15 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
                     onVideoChange?.(true);
                   }
                 }}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg relative"
-                style={{ background: "#001e2d" }}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-md relative bg-white/10 hover:bg-white/20 border border-white/10 text-white"
                 title={videoActive ? "Tela cheia" : "Ativar vídeo"}
               >
                 {videoActive ? (
-                  <Maximize2 size={12} style={{ color: "#c8ff00" }} />
+                  <Maximize2 size={12} className="text-white/80" />
                 ) : (
                   <>
-                    <Tv size={12} style={{ color: "#c8ff00" }} />
-                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#c8ff00] animate-pulse" />
+                    <Tv size={12} className="text-white/80" />
+                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#0055ff] shadow-[0_0_8px_#0055ff] animate-pulse" />
                   </>
                 )}
               </button>
@@ -2670,8 +2480,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       <style>{`
         @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
         @keyframes wave-bar { 0% { height: 6px; } 25% { height: 42px; } 50% { height: 14px; } 75% { height: 56px; } 100% { height: 22px; } }
-        .volume-slider-lime::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 11px; height: 11px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; }
-        .volume-slider-lime::-moz-range-thumb { width: 11px; height: 11px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; }
+        .volume-slider-nexo::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 10px; height: 10px; border-radius: 9999px; background: #ffffff; border: 1.5px solid #0055ff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .volume-slider-nexo::-moz-range-thumb { width: 10px; height: 10px; border-radius: 9999px; background: #ffffff; border: 1.5px solid #0055ff; cursor: pointer; }
       `}</style>
     </div>
   );

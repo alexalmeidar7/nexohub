@@ -58,6 +58,7 @@ import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
+import { pruneLocalStorageEmergency } from "@/lib/musicStorageKeys";
 
 import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
@@ -84,11 +85,13 @@ const CenarioTelaFull = lazyRetry(() => import("./pages/CenarioTelaFull"));
 const CenarioEstudioWebTela = lazyRetry(() => import("./pages/CenarioEstudioWebTela"));
 const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
 const VmixAssunto = lazyRetry(() => import("./pages/VmixAssunto"));
+const XmlPublicEndpoint = lazyRetry(() => import("./pages/XmlPublicEndpoint"));
 
 interface ErrorBoundaryState {
   hasError: boolean;
   retryCount: number;
   remountKey: number;
+  errorMessage?: string;
 }
 
 // Auto-heal delays: remount the failing subtree in place instead of showing a
@@ -99,8 +102,8 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
   state: ErrorBoundaryState = { hasError: false, retryCount: 0, remountKey: 0 };
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMessage: error?.message || String(error) };
   }
 
   componentDidCatch(error: Error) {
@@ -108,10 +111,20 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
 
     console.error("[NavigationErrorBoundary]", {
       message: error.message,
+      stack: error.stack,
       path: window.location.pathname,
       isChunkError,
       attempt: this.state.retryCount,
     });
+
+    this.setState({ errorMessage: error?.message || String(error) });
+
+    const msg = (error?.message || "").toLowerCase();
+    if (msg.includes("quota") || msg.includes("setitem") || error?.name === "QuotaExceededError") {
+      try {
+        pruneLocalStorageEmergency();
+      } catch {}
+    }
 
     // A rejected React.lazy import is cached by React, so remounting it cannot
     // recover on its own — reload once (cache-busted) when allowed.
@@ -146,7 +159,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
         this.retryTimer = null;
       }
       if (this.state.hasError || this.state.retryCount > 0) {
-        this.setState({ hasError: false, retryCount: 0 });
+        this.setState({ hasError: false, retryCount: 0, errorMessage: undefined });
       }
     }
   }
@@ -156,11 +169,19 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
   }
 
   handleRetry = () => {
-    this.setState((prev) => ({ hasError: false, retryCount: 0, remountKey: prev.remountKey + 1 }));
+    this.setState((prev) => ({ hasError: false, retryCount: 0, remountKey: prev.remountKey + 1, errorMessage: undefined }));
   };
 
   handleReload = () => {
     if (!recoverFromChunkFailure(true)) window.location.reload();
+  };
+
+  handleClearCacheAndLogin = () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {}
+    window.location.href = "/";
   };
 
   render() {
@@ -169,39 +190,50 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
       const healing = this.state.retryCount < AUTO_HEAL_DELAYS_MS.length;
 
       if (isPlayer && healing) {
-        return <PlayerSyncLoader size={32} />;
+        return <PlayerSyncLoader size={44} />;
       }
 
       return (
         <div
-          className="h-screen w-screen flex flex-col items-center justify-center gap-4"
-          style={{ backgroundColor: isPlayer ? "#000" : "#131519", color: "#fff" }}
+          className="h-screen w-screen flex flex-col items-center justify-center gap-4 px-4 text-center"
+          style={{ backgroundColor: isPlayer ? "#000" : "#000000", color: "#fff" }}
         >
           {healing ? (
             <>
-              <LoadingSpinner size={32} />
+              <LoadingSpinner size={44} color="#ffffff" />
               <p className="text-sm opacity-60">
                 Sincronizando ambiente...
               </p>
             </>
           ) : (
-
             <>
               <p className="text-lg font-semibold">Erro ao carregar a página</p>
-              <div className="flex gap-3">
+              {this.state.errorMessage && (
+                <div className="max-w-xl p-3 bg-red-950/40 border border-red-500/30 rounded-lg text-xs text-red-200 font-mono text-left break-words">
+                  {this.state.errorMessage}
+                </div>
+              )}
+              <div className="flex flex-wrap items-center justify-center gap-3">
                 <button
                   onClick={this.handleRetry}
-                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 cursor-pointer"
                   style={{ backgroundColor: "#268ffa" }}
                 >
                   Tentar novamente
                 </button>
                 <button
                   onClick={this.handleReload}
-                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 cursor-pointer"
                   style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
                 >
                   Recarregar página
+                </button>
+                <button
+                  onClick={this.handleClearCacheAndLogin}
+                  className="px-6 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90 cursor-pointer text-amber-300 border border-amber-500/40"
+                  style={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
+                >
+                  Limpar sessão e ir para Login
                 </button>
               </div>
             </>
@@ -285,6 +317,10 @@ const App = () => (
             <Route path="/:userSlug/player/catalog" element={<PlayerCatalog />} />
             <Route path="/:userSlug/player/app" element={<PlayerApp />} />
             <Route path="/:userSlug/telainterativatelao" element={<TelaInterativa />} />
+
+            {/* Public XML Feeds */}
+            <Route path="/xml/:slug/:file" element={<XmlPublicEndpoint />} />
+            <Route path="/xml/:file" element={<XmlPublicEndpoint />} />
 
 
 

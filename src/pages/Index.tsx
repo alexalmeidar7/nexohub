@@ -14,9 +14,17 @@ export default function Index() {
   const [hasUser, setHasUser] = useState(false);
   usePageTitle("Login");
 
+  const isExplicitLogout = typeof window !== "undefined" && localStorage.getItem("nexohub_explicit_logout") === "true";
+
   useEffect(() => {
     let mounted = true;
     
+    if (isExplicitLogout) {
+      setHasUser(false);
+      setIsChecking(false);
+      return;
+    }
+
     // Se o hook de auth já terminou, usamos o valor dele
     if (!loading) {
       setHasUser(!!user);
@@ -29,13 +37,10 @@ export default function Index() {
       try {
         const { data } = await supabase.auth.getSession();
         if (mounted) {
-          if (data.session?.user) {
+          if (data.session?.user && localStorage.getItem("nexohub_explicit_logout") !== "true") {
             setHasUser(true);
             setIsChecking(false);
           }
-          // Não setamos isChecking(false) se não houver usuário aqui, 
-          // pois ainda queremos esperar o `loading` do useAuth se possível,
-          // mas vamos colocar um timeout de segurança.
         }
       } catch (e) {
         console.error("Quick check failed", e);
@@ -46,13 +51,21 @@ export default function Index() {
 
     const timer = setTimeout(() => {
       if (mounted) setIsChecking(false);
-    }, 2000); // 2 segundos de timeout para a tela de login aparecer
+    }, 1000); // 1 segundo de timeout para a tela de login aparecer
 
     return () => {
       mounted = false;
       clearTimeout(timer);
     };
-  }, [user, loading]);
+  }, [user, loading, isExplicitLogout]);
+
+  if (isExplicitLogout) {
+    return (
+      <Suspense fallback={<LoadingSpinner fullscreen />}>
+        <LoginScreen />
+      </Suspense>
+    );
+  }
 
   if (loading && isChecking && !hasUser) {
     return <LoadingSpinner fullscreen />;

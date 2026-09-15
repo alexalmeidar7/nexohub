@@ -1,6 +1,6 @@
-﻿export default function AgendaPageSkeleton() {
+export default function AgendaPageSkeleton() {
   return (
-    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* 1. Top Header Card Skeleton */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex items-center justify-between gap-4 flex-wrap animate-pulse">
         <div className="flex items-center gap-4">
@@ -17,10 +17,10 @@
         </div>
       </section>
 
-      {/* 2. Main Two Columns Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-pulse">
-        {/* Left Column: Mini Calendar & Side Cards */}
-        <div className="lg:col-span-4 space-y-5">
+      {/* 2. Main Three Columns Skeleton (Matching AgendaPage 3-column grid) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_320px] 2xl:grid-cols-[300px_1fr_340px] gap-5 items-stretch animate-pulse">
+        {/* Left Column: Mini Calendar & Upcoming Events */}
+        <div className="w-full space-y-5">
           {/* Mini Calendar Card */}
           <div className="bg-white rounded-3xl p-5 border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-4">
             <div className="flex items-center justify-between px-1">
@@ -69,10 +69,10 @@
           </div>
         </div>
 
-        {/* Right Column: GoogleWeekGrid Skeleton */}
-        <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col">
+        {/* Center Column: GoogleWeekGrid Skeleton */}
+        <div className="overflow-hidden h-full flex flex-col bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
           {/* Toolbar */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-100">
+          <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <div className="h-8 w-16 rounded-full bg-slate-100" />
               <div className="w-8 h-8 rounded-full bg-slate-100" />
@@ -97,8 +97,8 @@
           </div>
 
           {/* Hourly Grid Rows */}
-          <div className="divide-y divide-slate-50 p-2 space-y-2">
-            {Array.from({ length: 7 }).map((_, r) => (
+          <div className="divide-y divide-slate-50 p-2 space-y-2 flex-1">
+            {Array.from({ length: 8 }).map((_, r) => (
               <div key={r} className="grid grid-cols-8 items-center h-12 relative">
                 <div className="h-2.5 w-10 bg-slate-200/70 rounded text-[10px]" />
                 <div className="col-span-7 h-full border-l border-slate-100 grid grid-cols-7 relative">
@@ -107,14 +107,69 @@
                       <div className="h-2 w-16 bg-[#0055ff]/40 rounded" />
                     </div>
                   )}
-                  {r === 4 && (
-                    <div className="col-start-5 col-span-1 h-9 my-auto rounded-xl bg-purple-500/15 border border-purple-500/30 p-2">
+                  {r === 3 && (
+                    <div className="col-start-4 col-span-1 h-9 my-auto rounded-xl bg-emerald-500/15 border border-emerald-500/30 p-2">
+                      <div className="h-2 w-14 bg-emerald-500/40 rounded" />
+                    </div>
+                  )}
+                  {r === 5 && (
+                    <div className="col-start-5 col-span-2 h-9 my-auto rounded-xl bg-purple-500/15 border border-purple-500/30 p-2">
                       <div className="h-2 w-12 bg-purple-500/40 rounded" />
                     </div>
                   )}
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Right Column: Today's Feed Skeleton (With Client Logo circles) */}
+        <div className="w-full flex flex-col">
+          <div className="overflow-hidden h-full flex flex-col bg-white rounded-3xl border border-slate-100/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-100 bg-white flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-28 bg-slate-200 rounded" />
+                <div className="h-4 w-6 bg-slate-100 rounded-full" />
+              </div>
+              <div className="h-4 w-12 bg-blue-100 rounded-full" />
+            </div>
+
+            {/* Subheader: Selected date */}
+            <div className="px-5 py-2.5 bg-slate-50/60 border-b border-slate-100/80 flex items-center justify-between">
+              <div className="h-3 w-36 bg-slate-200 rounded" />
+              <div className="h-3 w-12 bg-blue-200 rounded" />
+            </div>
+
+            {/* Feed Timeline Items */}
+            <div className="p-5 flex-1 space-y-6 relative">
+              {/* Vertical timeline line */}
+              <div className="absolute left-[33px] top-6 bottom-6 w-[2px] bg-slate-100" />
+
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="relative flex items-start gap-3 pl-1">
+                  {/* Timeline dot */}
+                  <div className="w-4 h-4 rounded-full bg-[#0055ff]/20 border-2 border-[#0055ff] shrink-0 mt-0.5 relative z-10" />
+
+                  {/* Event item box */}
+                  <div className="flex-1 rounded-2xl p-3.5 bg-slate-50/80 border border-slate-100 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="h-3 w-16 bg-blue-100 rounded" />
+                      <div className="h-3 w-14 bg-slate-200 rounded-full" />
+                    </div>
+
+                    <div className="h-3.5 w-3/4 bg-slate-200 rounded" />
+                    <div className="h-2.5 w-1/2 bg-slate-100 rounded" />
+
+                    {/* Circle logo do cliente underneath */}
+                    <div className="pt-1 flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-slate-200 shrink-0 border border-slate-100 shadow-sm" />
+                      <div className="h-2.5 w-24 bg-slate-200 rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

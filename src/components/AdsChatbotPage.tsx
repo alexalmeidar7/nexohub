@@ -9,7 +9,7 @@ import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { cn, scrollToForm } from "@/lib/utils";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
@@ -27,15 +27,15 @@ interface Campaign {
   created_at: string;
 }
 
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const BG = "#D6F4FB";
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const BG = "#ffffff";
 const INK = "#002132";
 
 const inputCls =
-  "w-full h-11 px-4 rounded-full text-sm bg-white outline-none transition-all " +
-  "border-2 border-[#00BFF0]/30 focus:border-[#00BFF0] focus:ring-4 focus:ring-[#00BFF0]/15 " +
-  "placeholder:text-[#002132]/40 text-[#002132]";
+  "w-full h-11 px-5 rounded-full text-xs font-semibold uppercase bg-[#f8fafc] outline-none transition-all " +
+  "border border-slate-200/90 focus:bg-white focus:border-[#0055ff] " +
+  "placeholder:text-slate-400 text-[#0f172a]";
 
 const textareaCls =
   "w-full px-4 py-3 rounded-2xl text-sm bg-white outline-none transition-all resize-none " +
@@ -47,6 +47,7 @@ const labelCls =
 
 export default function AdsChatbotPage() {
   const { user } = useAuth();
+  const formRef = useRef<HTMLFormElement>(null);
   const [items, setItems] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -136,7 +137,7 @@ export default function AdsChatbotPage() {
       setScheduledTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
     } else { setScheduledDate(undefined); setScheduledTime(""); }
     setImagePreview(c.image_url || ""); setImageFile(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   }
 
   async function remove(id: string) {
@@ -179,7 +180,7 @@ export default function AdsChatbotPage() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <form ref={formRef} onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* LEFT: image */}
           <div className="lg:col-span-1">
             <div className="rounded-2xl bg-white p-4 h-full flex flex-col" style={{ boxShadow: "0 4px 20px rgba(0,33,50,0.06)" }}>

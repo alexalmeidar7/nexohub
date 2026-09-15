@@ -4,6 +4,7 @@ import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { confirmDialog } from "@/lib/confirmDialog";
 import { Button } from "@/components/ui/button";
 import { useVmixCategories, VmixCategoryCreator, VmixCategoryPanel } from "@/components/vmix/VmixCategories";
 import NdiWebrtcMonitor from "@/components/vmix/NdiWebrtcMonitor";
@@ -3135,7 +3136,13 @@ function SwitcherUI({
   };
 
   const deleteAudioMonitor = async (button: any) => {
-    if (!window.confirm(`Excluir o monitor de áudio "${button.nome}"?`)) return;
+    const confirmed = await confirmDialog({
+      title: "Excluir Monitor de Áudio",
+      message: `Excluir o monitor de áudio "${button.nome}"?`,
+      confirmLabel: "Excluir",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const { error } = await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", button.id);
     if (error) {
       toast({ title: "Erro ao excluir monitor", description: error.message, variant: "destructive" });
@@ -4458,7 +4465,13 @@ function SwitcherUI({
                                 <button
                                   onClick={async (e) => { 
                                     e.stopPropagation(); 
-                                    if (confirm(`Deseja duplicar a automação "${prog.nome}"?`)) {
+                                    const confirmed = await confirmDialog({
+                                      title: "Duplicar Automação",
+                                      message: `Deseja duplicar a automação "${prog.nome}"?`,
+                                      confirmLabel: "Duplicar",
+                                      destructive: false,
+                                    });
+                                    if (confirmed) {
                                       try {
                                         const { data: newProg, error: pError } = await supabase
                                           .from("programas")
@@ -4509,7 +4522,13 @@ function SwitcherUI({
                                 <button
                                   onClick={async (e) => { 
                                     e.stopPropagation(); 
-                                    if (confirm(`Excluir a automação "${prog.nome}" permanentemente?`)) {
+                                    const confirmed = await confirmDialog({
+                                      title: "Excluir Automação",
+                                      message: `Excluir a automação "${prog.nome}" permanentemente?`,
+                                      confirmLabel: "Excluir",
+                                      destructive: true,
+                                    });
+                                    if (confirmed) {
                                       const { error } = await supabase.from("programas").delete().eq("id", prog.id);
                                       if (!error) {
                                         setProgramas(prev => prev.filter(p => p.id !== prog.id));

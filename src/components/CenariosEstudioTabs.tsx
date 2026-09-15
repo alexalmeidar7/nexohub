@@ -13,7 +13,7 @@ const SUB_TABS: { id: SubTab; label: string; icon: typeof ImageIcon }[] = [
   { id: "web", label: "Cenário web", icon: Globe },
 ];
 
-export default function CenariosEstudioTabs() {
+export default function CenariosEstudioTabs({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const [tab, setTab] = useState<SubTab>("imagens");
 
   return (
@@ -54,7 +54,7 @@ export default function CenariosEstudioTabs() {
       </div>
 
       <Suspense fallback={<ModulePageSkeleton />}>
-        {tab === "imagens" ? <CenariosEstudioPage /> : <CenariosEstudioWebPage />}
+        {tab === "imagens" ? <CenariosEstudioPage effectiveUserId={effectiveUserId} /> : <CenariosEstudioWebPage effectiveUserId={effectiveUserId} />}
       </Suspense>
     </div>
   );

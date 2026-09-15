@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
-import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, CheckCircle2 } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, CheckCircle2, Radio, Disc } from "lucide-react";
 import { lazyRetry } from "@/lib/lazyRetry";
 const InfoMusicSection = lazyRetry(() => import("./InfoMusicSection"));
 const TranscricaoStreamingPanel = lazyRetry(() => import("./TranscricaoStreamingPanel"));
-import XmlLinkRow from "./XmlLinkRow";
-import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { findCurrentProgram } from "./OnAirWidget";
@@ -13,12 +11,16 @@ import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import { matchesMusicException, getMusicExceptions, MusicException } from "@/lib/musicExceptions";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { fetchTrackCover } from "@/lib/musicCoverResolver";
 
 interface MusicData {
   titulo: string;
   artista: string;
   duracao: number;
   capa: string;
+  horario?: string;
+  fileModifiedAt?: number;
 }
 
 interface UploadLogEntry {
@@ -227,12 +229,48 @@ function extractMusicFromDoc(doc: Document): MusicData | null {
     if (duracao > 600) duracao = duracao / 1000;
   }
 
+  const rawHorario = (
+    doc.querySelector("horario")?.textContent ||
+    doc.querySelector("hora")?.textContent ||
+    doc.querySelector("hora_inicio")?.textContent ||
+    doc.querySelector("horainicio")?.textContent ||
+    doc.querySelector("time")?.textContent ||
+    doc.querySelector("start_time")?.textContent ||
+    doc.querySelector("data_hora")?.textContent ||
+    ""
+  ).trim();
+
   return {
     titulo: titulo || "Sem titulo",
     artista: artista || "Desconhecido",
     duracao,
     capa,
+    horario: rawHorario || undefined,
   };
+}
+
+function parseHorarioToTimestamp(horarioStr?: string | null): number | null {
+  if (!horarioStr) return null;
+  const str = horarioStr.trim();
+  // Formato ISO ou com data YYYY-MM-DD HH:MM:SS
+  if (str.includes("-") || str.includes("/")) {
+    const parsedDate = new Date(str.replace(/\//g, "-"));
+    if (!isNaN(parsedDate.getTime())) return parsedDate.getTime();
+  }
+  // Formato HH:MM:SS ou HH:MM
+  const match = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!match) return null;
+  const now = new Date();
+  const h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const s = parseInt(match[3] || "0", 10);
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s);
+  const diff = now.getTime() - d.getTime();
+  if (diff < -60000) {
+    // Horário futuro por mais de 1 min: provavelmente iniciou no dia anterior
+    d.setDate(d.getDate() - 1);
+  }
+  return d.getTime();
 }
 
 function formatTime(seconds: number): string {
@@ -250,14 +288,10 @@ function formatTimeMs(seconds: number): string {
 
 async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<string> {
   try {
-    const query = encodeURIComponent(`${artista} ${titulo}`);
-    const res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&limit=1`);
-    const data = await res.json();
-    if (data.results && data.results.length > 0) {
-      return data.results[0].artworkUrl100?.replace("100x100", "600x600") || "";
-    }
-  } catch { }
-  return "";
+    return await fetchTrackCover(titulo, artista);
+  } catch {
+    return "";
+  }
 }
 
 async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]> {
@@ -323,14 +357,67 @@ export { getMusicData } from "@/lib/musicData";
 
 export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
-  const dataUserId = effectiveUserId || user?.id || null;
+  const clientAcc = user ? (findClientAccountByEmail(user.email || "") || findClientAccountById(user.id)) : null;
+
+  const dataUserId = useMemo(() => {
+    if (effectiveUserId) return effectiveUserId;
+    if (clientAcc && !clientAcc.isAdmin) return clientAcc.id;
+    if (user?.id && !clientAcc?.isAdmin) return user.id;
+    // Para admin/desenvolvimento sem rádio explícita no prop, aponta para a emissora principal (Positiva FM)
+    return "d17e65af-e407-466f-9b60-b55c43399513";
+  }, [effectiveUserId, clientAcc, user?.id]);
+
+  const candidateUserIds = useMemo(() => {
+    const ids = [
+      effectiveUserId,
+      clientAcc?.id,
+      clientAcc?.parentUserId,
+      user?.id,
+    ].filter(Boolean) as string[];
+    if (ids.length === 0) {
+      ids.push("d17e65af-e407-466f-9b60-b55c43399513");
+    }
+    return Array.from(new Set(ids));
+  }, [effectiveUserId, clientAcc?.id, clientAcc?.parentUserId, user?.id]);
+
   // Per-user scoped localStorage keys (prevents cross-tenant music leak)
   const MUSIC_DATA_KEY = dataUserId ? `masterview_music_data::${dataUserId}` : "masterview_music_data::__none__";
   const MUSIC_START_KEY = dataUserId ? `masterview_music_start::${dataUserId}` : "masterview_music_start::__none__";
   const [xmlUrl, setXmlUrl] = useState(DEFAULT_XML_URL);
-  const [music, setMusic] = useState<MusicData | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
+  const [music, setMusic] = useState<MusicData | null>(() => {
+    try {
+      const stored = getMusicData(dataUserId);
+      if (stored?.music) return stored.music;
+      for (const uid of candidateUserIds) {
+        const s = getMusicData(uid);
+        if (s?.music) return s.music;
+      }
+    } catch {}
+    return null;
+  });
+  const [startTime, setStartTime] = useState<number | null>(() => {
+    try {
+      for (const uid of [dataUserId, ...candidateUserIds]) {
+        const raw = localStorage.getItem(`masterview_music_start::${uid}`);
+        if (raw) {
+          const val = parseInt(raw, 10);
+          if (!isNaN(val) && val > 0) return val;
+        }
+      }
+    } catch {}
+    return null;
+  });
+  const [elapsed, setElapsed] = useState<number>(() => {
+    try {
+      const stored = getMusicData(dataUserId);
+      if (stored && typeof stored.elapsed === "number") return stored.elapsed;
+      for (const uid of candidateUserIds) {
+        const s = getMusicData(uid);
+        if (s && typeof s.elapsed === "number") return s.elapsed;
+      }
+    } catch {}
+    return 0;
+  });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const coverCacheRef = useRef<Record<string, string>>({});
@@ -391,9 +478,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  // Seção "Configuração das Origens" e "XML Musica no Ar" iniciam fechadas (expansíveis)
+  // Seção "Configuração das Origens" inicia fechada (expansível)
   const [showConfig, setShowConfig] = useState(false);
-  const [showXmlNoAr, setShowXmlNoAr] = useState(false);
   const [allExceptions, setAllExceptions] = useState<MusicException[]>([]);
 
   useEffect(() => {
@@ -477,6 +563,32 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       const di = data?.dashboard_items as any;
       if (di?.local_xml_filename) {
         setLocalFileName(di.local_xml_filename);
+      }
+      // Restaurar faixa e tempo real tocando do banco se ainda ativa (evita começar contagem do zero ao entrar na página)
+      if (di?.music_current_title && di.music_current_title !== "Sem título" && di.music_current_title !== "Aguardando leitura...") {
+        const dbStart = typeof di.music_start_time === "number" ? di.music_start_time : null;
+        const dur = typeof di.music_current_duration === "number" && di.music_current_duration > 0
+          ? di.music_current_duration
+          : (typeof di.music_current_duracao === "number" && di.music_current_duracao > 0 ? di.music_current_duracao : 180);
+        if (dbStart && dbStart > 0) {
+          const now = Date.now();
+          const el = Math.max(0, (now - dbStart) / 1000);
+          if (el < dur + 600) {
+            const initialMusic: MusicData = {
+              titulo: di.music_current_title,
+              artista: di.music_current_artist || "Desconhecido",
+              duracao: dur,
+              capa: di.music_current_cover || "",
+            };
+            setMusic(prev => prev || initialMusic);
+            setStartTime(prev => prev || dbStart);
+            setElapsed(prev => (prev > 0 ? prev : Math.min(dur, el)));
+            try {
+              localStorage.setItem(MUSIC_START_KEY, dbStart.toString());
+              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(initialMusic));
+            } catch {}
+          }
+        }
       }
       // Restore saved source mode
       const savedMode = (data as any)?.music_source_mode;
@@ -597,7 +709,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     }
   }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId, music]);
 
-  const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta", rawXml?: string) => {
+  const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta", rawXml?: string, fileModifiedAt?: number) => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
     const incomingIsPlaceholder = (!data.titulo || data.titulo.toLowerCase() === "sem titulo" || data.titulo.toLowerCase() === "sem título")
@@ -626,30 +738,110 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
     }
 
-    if (!prev || prev.titulo !== data.titulo || prev.artista !== data.artista) {
-      // Guard against overwriting a fresher entry from useGlobalMusicSync:
-      // if localStorage was updated < 5s ago with a DIFFERENT song, skip writing
-      const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
-      if (source !== "pasta" && existingStartStr && prev) {
-        const existingStart = parseInt(existingStartStr, 10);
-        const age = Date.now() - existingStart;
-        // If localStorage has recent data (< 5s old) with a different song than
-        // what we're about to write, useGlobalMusicSync likely has fresher data
-        if (age < 5000 && (prev.titulo !== data.titulo || prev.artista !== data.artista)) {
-          // Don't overwrite — just sync component state to localStorage
-          setMusic(prev);
-          setStartTime(existingStart);
-          setElapsed((Date.now() - existingStart) / 1000);
-          return;
+    const cleanT = (data.titulo || "").trim().toLowerCase();
+    const cleanA = (data.artista || "").trim().toLowerCase();
+
+    // 1. Verificar se a faixa já é a mesma que está tocando no estado ou no armazenamento
+    let existingStart: number | null = null;
+
+    if (musicRef.current && musicRef.current.titulo?.trim().toLowerCase() === cleanT && musicRef.current.artista?.trim().toLowerCase() === cleanA) {
+      if (startTimeRef.current && startTimeRef.current > 0) {
+        existingStart = startTimeRef.current;
+      }
+    }
+
+    if (!existingStart) {
+      const startStr = localStorage.getItem(MUSIC_START_KEY);
+      if (startStr && prev && prev.titulo?.trim().toLowerCase() === cleanT && prev.artista?.trim().toLowerCase() === cleanA) {
+        const parsedStart = parseInt(startStr, 10);
+        if (!isNaN(parsedStart) && parsedStart > 0) {
+          existingStart = parsedStart;
         }
       }
+    }
 
-      const now = Date.now();
+    if (!existingStart) {
+      for (const uid of candidateUserIds) {
+        try {
+          const rawM = localStorage.getItem(`masterview_music_data::${uid}`);
+          const rawS = localStorage.getItem(`masterview_music_start::${uid}`);
+          if (rawM && rawS) {
+            const parsed = JSON.parse(rawM);
+            if (parsed.titulo?.trim().toLowerCase() === cleanT && parsed.artista?.trim().toLowerCase() === cleanA) {
+              const st = parseInt(rawS, 10);
+              if (!isNaN(st) && st > 0) {
+                existingStart = st;
+                break;
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+
+    const isSameTrack = !!existingStart || (!!prev && prev.titulo?.trim().toLowerCase() === cleanT && prev.artista?.trim().toLowerCase() === cleanA);
+
+    if (isSameTrack && existingStart) {
+      // A faixa NÃO mudou: NÃO reiniciar do zero, manter o momento que leu o arquivo e continuar contagem
+      const dur = data.duracao > 0 ? data.duracao : (prev?.duracao && prev.duracao > 0 ? prev.duracao : 180);
+      const el = Math.max(0, (Date.now() - existingStart) / 1000);
+      setStartTime(existingStart);
+      setElapsed(dur > 0 ? Math.min(dur, el) : el);
+      if (data.capa && (!prev?.capa || prev.capa !== data.capa)) {
+        try {
+          localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...data, capa: data.capa }));
+        } catch {}
+      }
+      setMusic(prev?.capa && !data.capa ? { ...data, capa: prev.capa } : data);
+      return;
+    }
+
+    // 2. Faixa REALMENTE nova (trocou título/artista): determinar o momento exato que iniciou
+    let songStartTime: number | null = parseHorarioToTimestamp(data.horario);
+    if (!songStartTime || Math.abs(Date.now() - songStartTime) > 12 * 3600 * 1000) {
+      songStartTime = null;
+    }
+
+    // Se for arquivo local (pasta), usa o timestamp de modificação real do arquivo no disco
+    if (!songStartTime && source === "pasta" && typeof fileModifiedAt === "number" && fileModifiedAt > 0) {
+      const fileAge = Date.now() - fileModifiedAt;
+      const maxAge = Math.max(600_000, (data.duracao || 180) * 1000);
+      if (fileAge >= 0 && fileAge < maxAge) {
+        songStartTime = fileModifiedAt;
+      }
+    }
+
+    // Se for online com timestamp de modificação
+    if (!songStartTime && typeof fileModifiedAt === "number" && fileModifiedAt > 0) {
+      const fileAge = Date.now() - fileModifiedAt;
+      const maxAge = Math.max(600_000, (data.duracao || 180) * 1000);
+      if (fileAge >= 0 && fileAge < maxAge) {
+        songStartTime = fileModifiedAt;
+      }
+    }
+
+    // Fallback: o momento em que este client leu o arquivo novo
+    if (!songStartTime) {
+      songStartTime = Date.now();
+    }
+
+    const dur = data.duracao > 0 ? data.duracao : 180;
+    const currentElapsed = Math.max(0, (Date.now() - songStartTime) / 1000);
+
+    try {
       localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
-      localStorage.setItem(MUSIC_START_KEY, now.toString());
-      setMusic(data);
-      setStartTime(now);
-      setElapsed(0);
+      localStorage.setItem(MUSIC_START_KEY, songStartTime.toString());
+      candidateUserIds.forEach(uid => {
+        try {
+          localStorage.setItem(`masterview_music_data::${uid}`, JSON.stringify(data));
+          localStorage.setItem(`masterview_music_start::${uid}`, songStartTime!.toString());
+        } catch {}
+      });
+    } catch {}
+
+    setMusic(data);
+    setStartTime(songStartTime);
+    setElapsed(dur > 0 ? Math.min(dur, currentElapsed) : currentElapsed);
       
       // Log to history with real artist/music (never null — use fallback text so column is always populated)
       if (dataUserId && source) {
@@ -745,11 +937,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           try {
             // Push fresh track info + clear old curiosity IMMEDIATELY
             const basePatch: Record<string, any> = {
-              music_start_time: now,
+              music_start_time: songStartTime,
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
-              music_current_duration: Math.round(data.duracao || 0),
+              music_current_duration: Math.round(data.duracao || 180),
               music_current_curiosity: "",
             };
             await mergeUserDashboardItems(dataUserId, basePatch);
@@ -765,7 +957,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             });
 
             if (curData?.curiosidade) {
-              const stillCurrent = localStorage.getItem(MUSIC_START_KEY) === String(now);
+              const stillCurrent = localStorage.getItem(MUSIC_START_KEY) === String(songStartTime);
               if (stillCurrent) {
                 await mergeUserDashboardItems(dataUserId, { music_current_curiosity: curData.curiosidade });
               }
@@ -781,13 +973,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         lastSourceRef.current = source;
         setSourceStats(prev => ({ ...prev, [source]: prev[source] + 1 }));
       }
-    } else {
-      if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
-        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
-      }
-      setMusic(prev.capa && !data.capa ? { ...data, capa: prev.capa } : data);
-    }
-  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId]);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId, candidateUserIds]);
 
   // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
@@ -982,10 +1168,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const currentRaw = localStorage.getItem(MUSIC_DATA_KEY);
             const current = currentRaw ? JSON.parse(currentRaw) : null;
             if (!current || current.titulo !== parsed.titulo || current.artista !== parsed.artista) {
-              processMusicRef.current(parsed, "pasta", text);
+              processMusicRef.current(parsed, "pasta", text, file.lastModified);
             }
           } catch {
-            processMusicRef.current(parsed, "pasta", text);
+            processMusicRef.current(parsed, "pasta", text, file.lastModified);
           }
 
         }
@@ -1001,7 +1187,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
-        processMusicRef.current(parsed, "pasta", text);
+        processMusicRef.current(parsed, "pasta", text, file.lastModified);
 
       } else if (isStoppedXmlPayload(text)) {
         // Automação sem música tocando — limpa o card em vez de manter
@@ -1065,7 +1251,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     setLocalFileContent(text);
 
     const parsed = parseXmlString(text);
-    if (parsed) await processMusic(parsed, "pasta", text);
+    if (parsed) await processMusic(parsed, "pasta", text, file.lastModified);
 
     syncToStorage(text);
     setLocalMonitoring(true);
@@ -1138,6 +1324,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           if (!data?.publicUrl) continue;
           const res = await fetch(data.publicUrl + `?t=${Date.now()}`);
           if (!res.ok) continue;
+          const lastModHeader = res.headers.get("last-modified");
+          const fileModifiedAt = lastModHeader ? new Date(lastModHeader).getTime() : undefined;
           const text = await res.text();
           if (!text) continue;
           if (text === localFileContentRef.current) return;
@@ -1148,7 +1336,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           setLocalError(null);
           setLocalActivating(false);
           const parsed = parseXmlString(text);
-          if (parsed) processMusicRef.current(parsed, "pasta", text);
+          if (parsed) processMusicRef.current(parsed, "pasta", text, fileModifiedAt);
           else if (isStoppedXmlPayload(text)) clearMusicRef.current("pasta");
           return;
         }
@@ -1231,8 +1419,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   }, [music?.titulo, music?.artista, music?.duracao, MUSIC_START_KEY]);
 
 
-  // Load music data from localStorage first, then try DB for start time persistence
+  // Sincronização contínua com o banco de dados (lê o que o cliente na rádio salva em tempo real)
   useEffect(() => {
+    // Carregar dados locais iniciais se disponíveis
     const stored = getMusicData(dataUserId || undefined);
     if (stored) {
       setMusic(stored.music);
@@ -1246,37 +1435,277 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setStartTime(st);
       setElapsed(stored.elapsed);
     }
-    // Also try to restore from DB if localStorage has no start time
-    if (!dataUserId) return;
-    const restoreFromDb = async () => {
-      const { data: settings } = await supabase
-        .from("user_settings")
-        .select("dashboard_items")
-        .eq("user_id", dataUserId)
-        .maybeSingle();
-      const items = settings?.dashboard_items as Record<string, any> | null;
-      if (!items?.music_start_time) return;
-      const dbStartTime = items.music_start_time as number;
-      const dbTitle = items.music_current_title as string;
-      const dbArtist = items.music_current_artist as string;
-      // Use DB start time if it matches the current song and localStorage doesn't have it or is stale
-      const currentRaw = localStorage.getItem(MUSIC_DATA_KEY);
-      if (currentRaw) {
-        const current = JSON.parse(currentRaw);
-        if (current.titulo === dbTitle && current.artista === dbArtist) {
-          const localStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
-          // If localStorage start is newer than DB, keep it; otherwise use DB
-          if (!localStart || Math.abs(localStart - dbStartTime) > 5000) {
-            localStorage.setItem(MUSIC_START_KEY, dbStartTime.toString());
-            setStartTime(dbStartTime);
-            const el = (Date.now() - dbStartTime) / 1000;
-            setElapsed(Math.min(el, current.duracao || 999));
+
+    if (!dataUserId && candidateUserIds.length === 0) return;
+    let isCancelled = false;
+
+    const sanitizeTrackInfo = (rawMusica: string, rawArtista: string) => {
+      let t = (rawMusica || "").trim();
+      let a = (rawArtista || "").trim();
+
+      // Remove prefixos como !SB - (standby)
+      if (t.toUpperCase().startsWith("!SB - ")) {
+        t = t.replace(/^!SB\s*-\s*/i, "").trim();
+      }
+
+      // Se o artista for genérico como STANDBY'S ou vazio e o título tiver " - ", separar Artista - Título
+      if ((a.toUpperCase().includes("STANDBY") || !a) && t.includes(" - ")) {
+        const parts = t.split(" - ");
+        a = parts[0].trim();
+        t = parts.slice(1).join(" - ").trim();
+      }
+
+      return { titulo: t, artista: a || "Desconhecido" };
+    };
+
+    const syncFromDatabase = async () => {
+      // Se este navegador estiver monitorando ativamente um arquivo local saudável, preservamos a fonte local
+      if (isLocalSourceHealthy() && localMonitoring) return;
+
+      const targetIds = candidateUserIds.length > 0 ? candidateUserIds : (dataUserId ? [dataUserId] : []);
+
+      for (const uid of targetIds) {
+        if (isCancelled) return;
+        try {
+          // 1. Ler user_settings (dashboard_items)
+          const { data: settings } = await supabase
+            .from("user_settings")
+            .select("dashboard_items")
+            .eq("user_id", uid)
+            .maybeSingle();
+
+          if (isCancelled) return;
+
+          const di = (settings?.dashboard_items || {}) as Record<string, any>;
+          const dbTitle = (di.music_current_title || "").toString().trim();
+          const dbArtist = (di.music_current_artist || "").toString().trim();
+          const dbCover = (di.music_current_cover || "").toString();
+          const dbStart = typeof di.music_start_time === "number" && di.music_start_time > 0 ? di.music_start_time : null;
+          const dbDuracao = typeof di.music_current_duration === "number" && di.music_current_duration > 0
+            ? di.music_current_duration
+            : (typeof di.music_current_duracao === "number" && di.music_current_duracao > 0 ? di.music_current_duracao : 180);
+
+          if (dbTitle && dbTitle.toLowerCase() !== "sem título" && dbTitle.toLowerCase() !== "sem titulo" && dbTitle.toLowerCase() !== "aguardando leitura...") {
+            const { titulo: cleanT, artista: cleanA } = sanitizeTrackInfo(dbTitle, dbArtist);
+            
+            // Verificar se esta música já é a que está tocando no estado ou no localStorage
+            const isSameTrack = (musicRef.current &&
+              musicRef.current.titulo?.trim().toLowerCase() === cleanT.toLowerCase() &&
+              musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
+
+            let resolvedStart = dbStart;
+            if (isSameTrack && startTimeRef.current && startTimeRef.current > 0) {
+              resolvedStart = startTimeRef.current;
+            } else if (isSameTrack) {
+              const lsStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
+              if (lsStart > 0) resolvedStart = lsStart;
+            }
+
+            if (!resolvedStart || resolvedStart <= 0) {
+              resolvedStart = Date.now();
+            }
+
+            const now = Date.now();
+            const el = Math.max(0, (now - resolvedStart) / 1000);
+
+            setMusic((prev) => {
+              if (prev?.titulo === cleanT && prev?.artista === cleanA && (prev?.capa === dbCover || !dbCover)) {
+                return prev;
+              }
+              if (!dbCover) {
+                fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
+                  if (cov) {
+                    setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
+                  }
+                }).catch(() => {});
+              }
+              return {
+                titulo: cleanT,
+                artista: cleanA,
+                duracao: dbDuracao,
+                capa: dbCover || (prev?.titulo === cleanT ? (prev?.capa || "") : ""),
+              };
+            });
+
+            // NÃO reiniciar contagem se a faixa já estiver tocando
+            if (!isSameTrack || !startTimeRef.current) {
+              setStartTime(resolvedStart);
+              setElapsed(Math.min(dbDuracao, el));
+            }
+
+            try {
+              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({
+                titulo: cleanT,
+                artista: cleanA,
+                duracao: dbDuracao,
+                capa: dbCover,
+              }));
+              localStorage.setItem(MUSIC_START_KEY, resolvedStart.toString());
+            } catch {}
+            return;
           }
+
+          // 2. Se dashboard_items não tiver a música, buscar de musicas_tocadas
+          const { data: lastPlayed } = await supabase
+            .from("musicas_tocadas")
+            .select("musica, artista, horario, dia, created_at")
+            .eq("user_id", uid)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (isCancelled) return;
+
+          let trackTitle = (lastPlayed?.musica || "").trim();
+          let trackArtist = (lastPlayed?.artista || "").trim();
+
+          let edgeTop: any = null;
+          if (!trackTitle) {
+            try {
+              const edgeResp = await fetch(
+                `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/public-music-history?user_id=${encodeURIComponent(uid)}&limit=3`,
+                {
+                  headers: {
+                    apikey: (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                  },
+                }
+              );
+              const edgeJson = await edgeResp.json();
+              if (edgeJson?.ok && Array.isArray(edgeJson.items) && edgeJson.items.length > 0) {
+                edgeTop = edgeJson.items[0];
+                trackTitle = (edgeTop.musica || "").trim();
+                trackArtist = (edgeTop.artista || "").trim();
+              }
+            } catch (edgeErr) {
+              // fallback silent
+            }
+          }
+
+          if (trackTitle && trackTitle.toLowerCase() !== "sem título" && trackTitle.toLowerCase() !== "sem titulo" && trackTitle.toLowerCase() !== "aguardando leitura...") {
+            const { titulo: cleanT, artista: cleanA } = sanitizeTrackInfo(trackTitle, trackArtist);
+
+            const isSameTrack = (musicRef.current &&
+              musicRef.current.titulo?.trim().toLowerCase() === cleanT.toLowerCase() &&
+              musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
+
+            let trackStartTime = parseHorarioToTimestamp(lastPlayed?.horario || edgeTop?.horario);
+            if (!trackStartTime && (lastPlayed?.created_at || edgeTop?.created_at)) {
+              trackStartTime = new Date(lastPlayed?.created_at || edgeTop?.created_at).getTime();
+            }
+            if (isSameTrack && startTimeRef.current && startTimeRef.current > 0) {
+              trackStartTime = startTimeRef.current;
+            }
+            if (!trackStartTime || trackStartTime <= 0) {
+              trackStartTime = Date.now();
+            }
+
+            const now = Date.now();
+            const el = Math.max(0, (now - trackStartTime) / 1000);
+
+            setMusic((prev) => {
+              if (prev?.titulo === cleanT && prev?.artista === cleanA && prev?.capa) {
+                return prev;
+              }
+              const currentCapa = (prev?.titulo === cleanT && prev?.capa) ? prev.capa : "";
+              // Buscar capa do Deezer / iTunes em background se ainda não existir
+              if (!currentCapa) {
+                fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
+                  if (cov) {
+                    setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
+                    try {
+                      const currRaw = localStorage.getItem(MUSIC_DATA_KEY);
+                      if (currRaw) {
+                        const parsed = JSON.parse(currRaw);
+                        if (parsed.titulo === cleanT) {
+                          localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...parsed, capa: cov }));
+                        }
+                      }
+                    } catch {}
+                  }
+                }).catch(() => {});
+              }
+
+              return {
+                titulo: cleanT,
+                artista: cleanA,
+                duracao: 180,
+                capa: currentCapa,
+              };
+            });
+
+            if (!isSameTrack || !startTimeRef.current) {
+              setStartTime(trackStartTime);
+              setElapsed(Math.min(180, el));
+            }
+
+            try {
+              const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
+              let existingCapa = "";
+              if (prevRaw) {
+                try {
+                  const p = JSON.parse(prevRaw);
+                  if (p.titulo === cleanT && p.capa) existingCapa = p.capa;
+                } catch {}
+              }
+              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({
+                titulo: cleanT,
+                artista: cleanA,
+                duracao: 180,
+                capa: existingCapa,
+              }));
+              localStorage.setItem(MUSIC_START_KEY, trackStartTime.toString());
+            } catch {}
+            return;
+          }
+        } catch (err) {
+          console.warn(`[MusicaNoAr] Erro ao sincronizar para o uid ${uid}:`, err);
         }
       }
     };
-    restoreFromDb();
-  }, [dataUserId, MUSIC_DATA_KEY, MUSIC_START_KEY]);
+
+    // Leitura inicial imediata
+    syncFromDatabase();
+
+    // Supabase Realtime: escutar atualizações instantâneas de user_settings e musicas_tocadas para todos os candidatos
+    const channels = candidateUserIds.map((uid) =>
+      supabase
+        .channel(`musica-no-ar-realtime-${uid}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_settings",
+            filter: `user_id=eq.${uid}`,
+          },
+          () => {
+            syncFromDatabase();
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "musicas_tocadas",
+            filter: `user_id=eq.${uid}`,
+          },
+          () => {
+            syncFromDatabase();
+          }
+        )
+        .subscribe()
+    );
+
+    // Polling a cada 2.5s para garantir consistência caso haja latência de rede
+    const pollInterval = setInterval(syncFromDatabase, 2500);
+
+    return () => {
+      isCancelled = true;
+      clearInterval(pollInterval);
+      channels.forEach((ch) => supabase.removeChannel(ch));
+    };
+  }, [dataUserId, JSON.stringify(candidateUserIds), MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalSourceHealthy, localMonitoring]);
 
   const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
@@ -1337,7 +1766,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     if (!opts.lastReadAt) return { key: "ativando", label: "AGUARDANDO 1ª LEITURA", bg: "#dbeafe", fg: "#1d4ed8", border: "#bfdbfe", pulse: true };
     if (opts.delayed) return { key: "atrasado", label: "ATRASADO", bg: "#fef3c7", fg: "#b45309", border: "#fde68a", pulse: true };
     const ageSec = (nowTick - opts.lastReadAt) / 1000;
-    if (ageSec < 10) return { key: "lendo", label: "LENDO", bg: "#0d0446", fg: "#C6F03C", border: "#C6F03C", pulse: true };
+    if (ageSec < 10) return { key: "lendo", label: "LENDO", bg: "#eef2ff", fg: "#0055ff", border: "#c7d2fe", pulse: true };
     return { key: "ok", label: "OK", bg: "#dcfce7", fg: "#166534", border: "#bbf7d0" };
   };
 
@@ -1374,24 +1803,39 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   ));
 
   const matchedException = matchesMusicException(allExceptions, music?.artista, music?.titulo);
-  const hasCover = (matchedException?.capa_url || music?.capa) && (matchedException?.capa_url || music?.capa || "").length > 0;
-  const useFallback = !isBreak && !hasCover && presenterFallback;
+  const isPlayingSong = !!(
+    music &&
+    music.titulo &&
+    music.titulo.trim() !== "" &&
+    music.titulo.toLowerCase() !== "sem título" &&
+    music.titulo.toLowerCase() !== "sem titulo" &&
+    music.titulo.toLowerCase() !== "aguardando leitura..."
+  );
+
+  const useFallback = !isBreak && !isPlayingSong && presenterFallback;
   
-  const displayTitulo = isBreak ? "Intervalo" : (useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura..."));
-  const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
-  const displayCover = isBreak ? null : (matchedException?.artista_url || matchedException?.capa_url || displayCoverLegacy());
+  const displayTitulo = isBreak
+    ? "Intervalo"
+    : (isPlayingSong
+      ? music!.titulo
+      : (presenterFallback ? presenterFallback.nome : (music?.titulo || "Aguardando leitura...")));
 
-  function displayCoverLegacy() {
-    if (useFallback) return presenterFallback!.foto;
-    return music?.capa || "";
-  }
+  const displayArtista = isBreak
+    ? ""
+    : (isPlayingSong
+      ? music!.artista
+      : (presenterFallback ? "no ar agora" : (music?.artista || "Interprete")));
 
-  // Nexo Form palette
-  const NEXO_DARK = "#0A2540";
-  const NEXO_CYAN = "#00BFF0";
-  const NEXO_CARD_BG = "#D6F4FB";
-  const NEXO_LIME = "#C6F03C";
-  const NEXO_LIGHT_BLUE = "#D6F4FB";
+  const displayCover = isBreak
+    ? null
+    : (matchedException?.artista_url || matchedException?.capa_url || music?.capa || (presenterFallback ? presenterFallback.foto : null));
+
+  // Nexo Form palette (House Mix Modern Standard)
+  const NEXO_DARK = "#002132";
+  const NEXO_CYAN = "#0055ff";
+  const NEXO_CARD_BG = "#ffffff";
+  const NEXO_LIME = "#0055ff";
+  const NEXO_LIGHT_BLUE = "#f8fafc";
 
   // Paleta extraída da capa para gradiente elegante do box de música
   const coverPalette = useCoverPalette(displayCover || null);
@@ -1481,193 +1925,261 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const xmlCuriosidade = curiosidade ? escapeXml(curiosidade) : "";
 
-  if (!music && !presenterFallback) {
-    return (
-      <div className="animate-pulse">
-        <div className="rounded-2xl overflow-hidden p-5" style={{ background: "var(--layout-header-bg, #0d0446)", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.12)" }}>
-              <Music size={20} style={{ color: "var(--layout-header-text, #ffffff)" }} />
-            </div>
-            <div className="h-5 w-32 rounded" style={{ backgroundColor: "rgba(255,255,255,0.1)" }} />
-          </div>
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-slider-bg, #0d0d0d)" }}>
-            <div className="flex gap-4 p-4">
-              <div className="w-40 h-40 rounded-xl shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.05)" }} />
-              <div className="flex-1 space-y-3 py-2">
-                <div className="h-6 w-48 rounded" style={{ backgroundColor: "rgba(255,255,255,0.08)" }} />
-                <div className="h-4 w-32 rounded" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
-                <div className="h-2 w-full rounded-full mt-8" style={{ backgroundColor: "rgba(255,255,255,0.05)" }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const bothActive = isOnlineSelected && isLocalSelected;
 
   return (
-    <div className="nexo-scope space-y-4">
+    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
 
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Música no Ar
       </div>
       <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-      {/* ═══ MAIN MUSIC CARD (Nexo Form style) ═══ */}
+      {/* ═══ MAIN MUSIC CARD ═══ */}
       <section
+        className="relative space-y-5 rounded-3xl p-6 sm:p-7 transition-all"
         style={{
-          background: NEXO_CARD_BG,
-          borderRadius: 28,
-          padding: "24px 28px 28px",
-          boxShadow: "0 4px 18px rgba(0, 191, 240, 0.1)",
-          border: "1px solid rgba(0, 191, 240, 0.25)",
+          backgroundColor: "#ffffff",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
         }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        {/* Header matching the design system of all other sections */}
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div
-              className="flex items-center justify-center shadow-sm"
-              style={{ width: 40, height: 40, borderRadius: 999, background: "#FFFFFF", border: `2px solid ${NEXO_CYAN}` }}
-            >
-              <Music size={18} style={{ color: NEXO_CYAN }} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>
-                Música no Ar
-              </h3>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-
-                {bothActive && (
-                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #16a34a", color: "#16a34a" }}>
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ backgroundColor: "#22c55e" }} />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: "#22c55e" }} />
-                    </span>
-                    Dual
-                  </span>
-                )}
-                {onlineError && (
-                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
-                    <AlertTriangle size={10} className="shrink-0" /> Online: erro
-                  </span>
-                )}
-                {!onlineError && onlineDelay && (
-                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #eab308", color: "#a16207" }}>
-                    <AlertTriangle size={10} className="shrink-0" /> Online: sem resposta +30s
-                  </span>
-                )}
-                {localError && (
-                  <span className="inline-flex items-center gap-1 shadow-sm" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #ef4444", color: "#ef4444" }}>
-                    <AlertTriangle size={10} className="shrink-0" /> Local: erro
-                  </span>
-                )}
+            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#0055ff" }} />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-50 shadow-xs">
+                <Radio size={18} style={{ color: "#0055ff" }} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: "#002132" }}>
+                  MÚSICA NO AR
+                </h3>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1 }}>
+                  Sincronização e Monitoramento em Tempo Real
+                </span>
               </div>
             </div>
           </div>
+
+          {/* Header Status Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {bothActive && (
+              <span
+                className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs"
+                style={{ backgroundColor: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" }}
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#22c55e" }} />
+                </span>
+                Dual Ativo
+              </span>
+            )}
+
+            {/* Source Indicator */}
+            <span
+              className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs"
+              style={{
+                backgroundColor: lastSource ? "#eff6ff" : "#F1F5F9",
+                color: lastSource ? "#0055ff" : "#94A3B8",
+                border: lastSource ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
+              }}
+            >
+              {lastSource === "pasta" ? <FolderOpen size={10} /> : lastSource === "online" ? <Globe size={10} /> : null}
+              {lastSource === "pasta" ? "Local ativo" : lastSource === "online" ? "Online ativo" : "Aguardando"}
+            </span>
+
+            {/* Status badge: No Ar Agora / Intervalo / Aguardando */}
+            <span
+              className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs"
+              style={{
+                backgroundColor: isBreak ? "#fef2f2" : (music && music.titulo) ? "rgba(38, 143, 250, 0.1)" : "#f8fafc",
+                color: isBreak ? "#ef4444" : (music && music.titulo) ? "#0055ff" : "#64748b",
+                border: `1px solid ${isBreak ? "#fecaca" : (music && music.titulo) ? "rgba(38, 143, 250, 0.3)" : "#e2e8f0"}`,
+              }}
+            >
+              <span className="relative flex h-2 w-2">
+                {isBreak ? (
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                ) : (music && music.titulo) ? (
+                  <>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0055ff] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0055ff]" />
+                  </>
+                ) : (
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-400" />
+                )}
+              </span>
+              {isBreak ? "Intervalo Comercial" : (music && music.titulo) ? "No Ar Agora" : "Standby"}
+            </span>
+
+            {onlineError && (
+              <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 shadow-xs">
+                <AlertTriangle size={10} className="shrink-0" /> Online: erro
+              </span>
+            )}
+            {!onlineError && onlineDelay && (
+              <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 shadow-xs">
+                <AlertTriangle size={10} className="shrink-0" /> Online: sem resposta +30s
+              </span>
+            )}
+            {localError && (
+              <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 shadow-xs">
+                <AlertTriangle size={10} className="shrink-0" /> Local: erro
+              </span>
+            )}
+          </div>
         </div>
 
-
         {/* Player card */}
-        <div className="w-full">
+        <div data-nexo-skip="" className="w-full">
           <div
+            data-nexo-skip=""
             key={`${displayTitulo}-${displayArtista}`}
-            className="rounded-2xl overflow-hidden relative transition-all duration-700 shadow-xl"
-            style={{ 
-              background: musicBoxBg || "linear-gradient(135deg, #0A2540 0%, #0F2D4A 50%, #081B2E 100%)",
-              minHeight: "160px"
+            className="rounded-3xl overflow-hidden relative transition-all duration-700 shadow-xl"
+            style={{
+              background: "linear-gradient(135deg, #0055ff 0%, #003399 28%, #001f5c 55%, #000d26 80%, #000000 100%)",
+              border: "1px solid rgba(0, 85, 255, 0.35)",
+              boxShadow: "0 20px 40px -15px rgba(0, 85, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
+              minHeight: "170px",
             }}
           >
-            {/* Subtle scrim overlay to guarantee text legibility over any cover color */}
-            <div 
-              className="absolute inset-0 pointer-events-none"
+            {/* Dynamic ambient color glow from album cover & Nexo brand */}
+            <div
+              className="absolute inset-0 pointer-events-none transition-all duration-1000"
               style={{
-                background: "linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.55) 100%)",
-                zIndex: 0
+                background: coverPalette
+                  ? `radial-gradient(circle at 15% 50%, ${coverPalette.primary}38 0%, transparent 65%), radial-gradient(circle at 85% 20%, #0055ff30 0%, transparent 60%)`
+                  : "radial-gradient(circle at 15% 50%, rgba(38,143,250,0.22) 0%, transparent 65%), radial-gradient(circle at 85% 20%, rgba(0,85,255,0.25) 0%, transparent 60%)",
               }}
             />
 
-            <div className="relative z-10 p-5 md:p-6 flex flex-col md:flex-row gap-5 md:gap-6 items-center justify-between">
+            {/* Subtle glass reflection overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 40%, rgba(0, 0, 0, 0.35) 100%)",
+                zIndex: 1,
+              }}
+            />
+
+            <div className="relative z-10 p-5 sm:p-7 flex flex-col lg:flex-row gap-6 items-center justify-between">
               {/* Left Column: Cover + Info + Progress */}
-              <div className="flex items-center gap-5 min-w-0 flex-1 w-full">
-                {/* Cover image (Flat, clean, NO border, NO badge, NO glow) */}
-                <div 
-                  className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 overflow-hidden rounded-xl bg-transparent"
-                  style={{ border: "none", boxShadow: "none", outline: "none" }}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 min-w-0 flex-1 w-full">
+                {/* Cover image container */}
+                <div
+                  className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0 overflow-hidden rounded-2xl bg-black/40 shadow-2xl transition-all duration-300"
+                  style={{
+                    border: "2px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 12px 28px -6px rgba(0, 0, 0, 0.7), 0 0 20px rgba(38, 143, 250, 0.15)",
+                  }}
                 >
                   {loadingCover && !isBreak && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
-                      <Loader2 className="animate-spin" size={24} style={{ color: NEXO_CYAN }} />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20 backdrop-blur-xs">
+                      <Loader2 className="animate-spin" size={26} style={{ color: "#38bdf8" }} />
                     </div>
                   )}
                   {isBreak ? (
-                    <div className="w-full h-full flex items-center justify-center bg-red-600">
-                      <span className="text-white font-black text-sm tracking-wider uppercase">Intervalo</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-red-600 to-rose-800 text-white p-2 text-center">
+                      <span className="font-black text-xs sm:text-sm tracking-widest uppercase drop-shadow">Intervalo</span>
+                      <span className="text-[9px] font-semibold text-white/80 mt-1 uppercase">Comercial</span>
                     </div>
                   ) : displayCover ? (
-                    <img 
-                      key={displayCover} 
-                      src={displayCover} 
-                      alt="Capa" 
-                      className="nexo-cover-anim object-cover w-full h-full"
-                      style={{ border: "none", outline: "none", boxShadow: "none" }} 
-                    />
+                    <>
+                      <img
+                        key={displayCover}
+                        src={displayCover}
+                        alt="Capa"
+                        className="nexo-cover-anim object-cover w-full h-full"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
+                    </>
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-white/5 text-white/40">
-                      <Music size={28} />
-                      <span className="italic text-[9px]">{music ? "Sem capa" : "Aguardando..."}</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-white/10 to-white/5 text-white/50">
+                      <Disc size={34} className="text-[#38bdf8]/70" />
+                      <span className="italic text-[10px] font-medium tracking-wider uppercase text-white/60">
+                        {music ? "Sem capa" : "Aguardando..."}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Live badge overlay on cover */}
+                  {music && music.titulo && !isBreak && (
+                    <div className="absolute bottom-2 left-2 right-2 flex justify-center z-10 pointer-events-none">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-widest text-white shadow-sm">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#22c55e]" />
+                        </span>
+                        Ao Vivo
+                      </span>
                     </div>
                   )}
                 </div>
 
                 {/* Song Info & Progress */}
-                <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
+                <div className="flex-1 flex flex-col justify-center min-w-0 w-full gap-3 text-center sm:text-left">
                   <div className="space-y-1.5">
-                    <div 
-                      className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight truncate text-white"
-                      style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}
+                    {/* Top subtle category / on-air tracker */}
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-1.5 drop-shadow-sm" style={{ color: "#ffffff" }}>
+                        <Radio size={12} className={music && music.titulo && !isBreak ? "animate-pulse" : ""} style={{ color: "#ffffff" }} />
+                        {isBreak ? "Intervalo" : (music && music.titulo) ? "Em Execução" : "Aguardando Programação"}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <div
+                      className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight truncate"
+                      style={{ color: "#ffffff", textShadow: "0 2px 10px rgba(0,0,0,0.7)" }}
+                      title={displayTitulo}
                     >
                       {displayTitulo}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span 
-                        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-md bg-black/30 backdrop-blur-md text-white border border-white/10"
-                      >
-                        <User size={13} className="text-[#00BFF0] shrink-0" />
-                        <span className="truncate max-w-[320px] text-white font-bold">{displayArtista}</span>
+
+                    {/* Artist & Badges */}
+                    <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-black px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 shadow-xs max-w-full" style={{ color: "#ffffff" }}>
+                        <User size={13} className="text-[#38bdf8] shrink-0" />
+                        <span className="truncate max-w-[260px] sm:max-w-[380px] font-extrabold" style={{ color: "#ffffff" }}>{displayArtista}</span>
                       </span>
+
+                      {lastSource && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(255, 255, 255, 0.85)" }}>
+                          {lastSource === "pasta" ? <FolderOpen size={11} className="text-[#38bdf8]" /> : <Globe size={11} className="text-[#38bdf8]" />}
+                          <span>{lastSource === "pasta" ? "Local" : "Online"}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* High-visibility Responsive Progress Bar */}
                   {music && music.duracao > 0 && (
-                    <div className="space-y-1.5 mt-1 w-full max-w-xl">
+                    <div className="space-y-1.5 mt-1.5 w-full max-w-xl">
                       <div className="flex items-center justify-between text-xs font-mono font-bold">
-                        <span className="text-white flex items-center gap-1.5 drop-shadow-sm">
-                          <Clock size={13} className="text-[#C6F03C]" />
-                          <span className="text-white font-black text-sm tracking-wide">{formatTime(elapsed)}</span>
+                        <span className="flex items-center gap-1.5 drop-shadow-sm" style={{ color: "#ffffff" }}>
+                          <Clock size={13} style={{ color: "#ffffff" }} />
+                          <span className="font-black text-sm tracking-wide" style={{ color: "#ffffff" }}>{formatTime(elapsed)}</span>
                         </span>
-                        <span className="text-white/80 text-[11px] font-medium drop-shadow-sm">
-                          -{formatTime(Math.max(0, music.duracao - elapsed))}
+                        <span className="text-[10px] font-mono font-bold tracking-widest uppercase drop-shadow-sm" style={{ color: "rgba(255, 255, 255, 0.75)" }}>
+                          Restante -{formatTime(Math.max(0, music.duracao - elapsed))}
                         </span>
-                        <span className="text-white font-black text-sm tracking-wide drop-shadow-sm">
+                        <span className="font-black text-sm tracking-wide drop-shadow-sm" style={{ color: "#ffffff" }}>
                           {formatTime(music.duracao)}
                         </span>
                       </div>
-                      
-                      {/* Track with clear fill */}
-                      <div 
-                        className="w-full h-2.5 rounded-full overflow-hidden bg-black/40 border border-white/15"
-                      >
-                        <div 
-                          className="h-full rounded-full"
-                          style={{ 
+
+                      {/* Track with luminous fill */}
+                      <div className="w-full h-2.5 rounded-full overflow-hidden bg-black/50 border border-white/15 relative shadow-inner">
+                        <div
+                          className="h-full rounded-full transition-all duration-200"
+                          style={{
                             width: `${Math.max(1, Math.min(100, (elapsed / music.duracao) * 100))}%`,
-                            background: "linear-gradient(90deg, #00BFF0 0%, #C6F03C 100%)",
-                            transition: "width 0.2s linear"
+                            background: "linear-gradient(90deg, #003db8 0%, #0055ff 55%, #268ffa 100%)",
+                            boxShadow: "0 0 14px rgba(0, 85, 255, 0.85)",
                           }}
                         />
                       </div>
@@ -1676,90 +2188,25 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 </div>
               </div>
 
-              {/* Right Column: Aurora Soundwave Spectrum (Ultra-fine, high-density, elegant) */}
-              <div className="hidden lg:flex flex-col items-end justify-center gap-2.5 shrink-0 pl-6 border-l border-white/15">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#00BFF0] drop-shadow-sm">
-                  <span className="h-2 w-2 rounded-full bg-[#00BFF0] animate-ping" />
-                  Transmissão Ativa
-                </div>
-                
-                {/* Aurora Soundwave Container */}
-                <div 
-                  className="relative flex items-center justify-center h-16 w-56 px-3 py-1.5 rounded-xl overflow-hidden"
+              {/* Right Column: Aurora Gradient Box */}
+              <div className="hidden lg:flex flex-col items-center justify-center shrink-0 pl-6 border-l border-white/15">
+                {/* Aurora Animated Gradient Container */}
+                <div
+                  className="relative flex items-center justify-center h-16 w-56 px-3.5 py-1.5 rounded-2xl overflow-hidden"
                   style={{
-                    background: "rgba(0, 0, 0, 0.45)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)"
+                    background: "rgba(0, 15, 28, 0.7)",
+                    border: "1px solid rgba(255, 255, 255, 0.14)",
+                    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.4)",
                   }}
                 >
                   {/* Organic Aurora Cloud Light Drift */}
-                  <div 
-                    className="absolute inset-0 pointer-events-none aurora-glow-bg"
+                  <div
+                    className="absolute -inset-3 pointer-events-none aurora-glow-bg"
                     style={{
-                      background: "radial-gradient(circle at 60% 40%, rgba(0, 191, 240, 0.7) 0%, rgba(30, 80, 255, 0.5) 45%, rgba(0, 230, 150, 0.4) 75%, transparent 100%)",
-                      filter: "blur(10px)"
+                      background: "radial-gradient(circle at 60% 40%, rgba(0, 85, 255, 0.85) 0%, rgba(56, 189, 248, 0.65) 45%, rgba(0, 230, 150, 0.55) 75%, transparent 100%)",
+                      filter: "blur(10px)",
                     }}
                   />
-
-                  {/* 36 Fine, Elegant Waveform Bars with Smooth Harmonic Heights */}
-                  <div className="relative z-10 flex items-center justify-between w-full h-full gap-[2px]">
-                    {[
-                      { h: "20%", dur: "1.1s", delay: "0.15s" },
-                      { h: "32%", dur: "0.95s", delay: "0.4s" },
-                      { h: "48%", dur: "1.3s", delay: "0.05s" },
-                      { h: "64%", dur: "0.85s", delay: "0.55s" },
-                      { h: "78%", dur: "1.15s", delay: "0.2s" },
-                      { h: "90%", dur: "1.0s", delay: "0.45s" },
-                      { h: "100%", dur: "1.4s", delay: "0.1s" },
-                      { h: "92%", dur: "0.9s", delay: "0.3s" },
-                      { h: "82%", dur: "1.25s", delay: "0.6s" },
-                      { h: "68%", dur: "1.05s", delay: "0.25s" },
-                      { h: "55%", dur: "0.8s", delay: "0.5s" },
-                      { h: "72%", dur: "1.35s", delay: "0.15s" },
-                      { h: "88%", dur: "0.95s", delay: "0.35s" },
-                      { h: "98%", dur: "1.2s", delay: "0.0s" },
-                      { h: "85%", dur: "0.85s", delay: "0.4s" },
-                      { h: "70%", dur: "1.1s", delay: "0.2s" },
-                      { h: "80%", dur: "1.4s", delay: "0.5s" },
-                      { h: "94%", dur: "0.9s", delay: "0.1s" },
-                      { h: "100%", dur: "1.25s", delay: "0.3s" },
-                      { h: "92%", dur: "1.05s", delay: "0.6s" },
-                      { h: "82%", dur: "0.85s", delay: "0.25s" },
-                      { h: "74%", dur: "1.3s", delay: "0.45s" },
-                      { h: "88%", dur: "0.95s", delay: "0.05s" },
-                      { h: "96%", dur: "1.15s", delay: "0.35s" },
-                      { h: "78%", dur: "1.4s", delay: "0.15s" },
-                      { h: "65%", dur: "0.9s", delay: "0.5s" },
-                      { h: "75%", dur: "1.2s", delay: "0.2s" },
-                      { h: "86%", dur: "1.0s", delay: "0.4s" },
-                      { h: "72%", dur: "1.35s", delay: "0.1s" },
-                      { h: "58%", dur: "0.85s", delay: "0.3s" },
-                      { h: "44%", dur: "1.1s", delay: "0.55s" },
-                      { h: "52%", dur: "0.95s", delay: "0.25s" },
-                      { h: "40%", dur: "1.25s", delay: "0.45s" },
-                      { h: "30%", dur: "0.9s", delay: "0.1s" },
-                      { h: "22%", dur: "1.15s", delay: "0.35s" },
-                      { h: "15%", dur: "0.8s", delay: "0.2s" },
-                    ].map((bar, i) => (
-                      <div
-                        key={i}
-                        className="w-[1.5px] rounded-full aurora-wave-bar"
-                        style={{
-                          height: bar.h,
-                          animationDuration: bar.dur,
-                          animationDelay: bar.delay,
-                          background: i < 12 
-                            ? "linear-gradient(to top, rgba(0, 230, 150, 0.75), rgba(0, 191, 240, 1))" 
-                            : i < 24 
-                            ? "linear-gradient(to top, rgba(0, 191, 240, 0.85), rgba(59, 130, 246, 1))" 
-                            : "linear-gradient(to top, rgba(59, 130, 246, 0.85), rgba(139, 92, 246, 0.75))",
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="text-[9px] font-bold text-white/70 tracking-wider uppercase drop-shadow-sm">
-                  Áudio Master • Streaming ao Vivo
                 </div>
               </div>
             </div>
@@ -1769,12 +2216,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
 
 
-      {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
+      {/* ═══ COLLAPSIBLE CONFIG SECTION ═══ */}
       <section
-        className="group/config relative space-y-5 rounded-2xl p-5"
+        className="group/config relative space-y-5 rounded-3xl p-6 transition-all"
         style={{
-          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
-          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
+          backgroundColor: "#ffffff",
+          border: "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
         }}
       >
         <div
@@ -1782,21 +2230,21 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           onClick={() => setShowConfig(v => !v)}
         >
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: NEXO_CYAN }} />
+            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#0055ff" }} />
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
-                <Settings size={18} style={{ color: NEXO_CYAN }} />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-blue-50">
+                <Settings size={18} style={{ color: "#0055ff" }} />
               </div>
               <div>
-                <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: NEXO_CYAN }}>
+                <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: "#002132" }}>
                   CONFIGURAÇÃO DAS ORIGENS
                 </h3>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1 }}>
                   XML Online, Pasta Local e Sincronização
                 </span>
               </div>
             </div>
-            <div className="ml-2 transition-transform duration-200" style={{ transform: showConfig ? "rotate(180deg)" : "rotate(0deg)", color: NEXO_DARK }}>
+            <div className="ml-2 transition-transform duration-200" style={{ transform: showConfig ? "rotate(180deg)" : "rotate(0deg)", color: "#002132" }}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -1805,7 +2253,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <span
               className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
-              style={{ backgroundColor: lastSource ? "#ECFEFF" : "#F1F5F9", color: lastSource ? "#0891B2" : "#94A3B8" }}
+              style={{ backgroundColor: lastSource ? "#eff6ff" : "#F1F5F9", color: lastSource ? "#0055ff" : "#94A3B8" }}
             >
               {lastSource === "pasta" ? "Local ativo" : lastSource === "online" ? "Online ativo" : "Aguardando"}
             </span>
@@ -1826,28 +2274,25 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
                 {/* ── ONLINE SOURCE ── */}
                 <div 
-                  className={`rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl ${isOnlineSelected ? "nexo-source-active" : ""}`}
+                  className={`rounded-3xl p-7 space-y-6 relative overflow-hidden transition-all duration-300 group/source ${isOnlineSelected ? "nexo-source-active" : ""}`}
                   style={{ 
-                    background: isOnlineSelected ? NEXO_CYAN : "#F8FAFC", 
-                    border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
-                    boxShadow: isOnlineSelected ? `0 12px 40px ${NEXO_CYAN}55` : undefined,
-                    ["--nexo-source-tint" as string]: "rgba(255,255,255,0.14)",
-                    ["--nexo-source-sweep" as string]: "rgba(255,255,255,0.35)",
+                    background: "#ffffff", 
+                    border: `2px solid ${isOnlineSelected ? "#0055ff" : "rgba(226, 232, 240, 0.9)"}`,
+                    boxShadow: isOnlineSelected ? "0 8px 30px rgba(0, 85, 255, 0.12)" : "0 2px 12px rgba(0,0,0,0.02)",
                   }}
                 >
 
                   <div className="flex items-center gap-4">
                     <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300" 
                       style={{ 
-                        background: isOnlineSelected ? "#FFFFFF" : "#E2E8F0",
+                        background: isOnlineSelected ? "#0055ff" : "#f1f5f9",
                       }}
                     >
-                      <Globe size={24} style={{ color: isOnlineSelected ? NEXO_CYAN : NEXO_DARK }} />
-
+                      <Globe size={22} style={{ color: isOnlineSelected ? "#ffffff" : "#64748b" }} />
                     </div>
                     <div>
-                      <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
+                      <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: "#002132" }}>
                         Origem Online
                       </h4>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sincronização via XML</span>
@@ -1857,7 +2302,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">URL do Feed XML</label>
-                    <div className="flex items-center gap-3 p-1 rounded-2xl bg-white border-2 border-slate-200">
+                    <div className="flex items-center gap-3 p-1 rounded-full bg-[#f8fafc] border border-slate-200">
                       <div className="pl-4">
                         <Globe size={16} className="text-slate-400" />
                       </div>
@@ -1870,14 +2315,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                             setOnlineError(null);
                           }
                         }}
-                        className="flex-1 py-3 text-sm font-semibold outline-none bg-transparent"
-                        style={{ color: NEXO_DARK }}
+                        className="flex-1 py-2 text-xs font-semibold outline-none bg-transparent"
+                        style={{ color: "#002132" }}
                         placeholder="https://exemplo.com/feed.xml"
                       />
                       <button 
                         onClick={() => void saveUrl(xmlUrl)} 
-                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 shadow-md" 
-                        style={{ backgroundColor: NEXO_CYAN, color: "#FFFFFF" }}
+                        className="h-10 px-6 rounded-full flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 shadow-xs" 
+                        style={{ backgroundColor: "#0055ff", color: "#FFFFFF" }}
                       >
                         Salvar
                       </button>
@@ -1887,14 +2332,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     type="button"
                     onClick={toggleOnlineSource}
                     disabled={!hasValidOnlineUrl}
-                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:brightness-105"
+                    className="w-full h-12 flex items-center justify-center gap-2.5 px-6 rounded-full font-black text-[11px] uppercase tracking-[0.15em] transition-all hover:brightness-105"
                     style={{
-                      backgroundColor: isOnlineSelected ? NEXO_DARK : "#FFFFFF",
-                      color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK,
-                      border: `2px solid ${isOnlineSelected ? NEXO_DARK : "#E2E8F0"}`,
+                      backgroundColor: isOnlineSelected ? "#0055ff" : "#f8fafc",
+                      color: isOnlineSelected ? "#FFFFFF" : "#002132",
+                      border: `1px solid ${isOnlineSelected ? "#0055ff" : "rgba(226, 232, 240, 0.9)"}`,
                     }}
                   >
-                    {onlineActivating ? <Loader2 size={18} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    {onlineActivating ? <Loader2 size={16} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
                     {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Ativo" : "Ativar"}
                   </button>
                 </div>
@@ -1902,34 +2347,31 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className={`rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl ${isLocalSelected ? "nexo-source-active" : ""}`}
+                className={`rounded-3xl p-7 space-y-6 relative overflow-hidden transition-all duration-300 group/source-local ${isLocalSelected ? "nexo-source-active" : ""}`}
                 style={{ 
-                  background: isLocalSelected ? NEXO_LIME : "#F8FAFC", 
-                  border: `2px solid ${isLocalSelected ? NEXO_LIME : "#E2E8F0"}`,
-                  boxShadow: isLocalSelected ? `0 12px 40px ${NEXO_LIME}66` : undefined,
-                  ["--nexo-source-tint" as string]: "rgba(255,255,255,0.18)",
-                  ["--nexo-source-sweep" as string]: "rgba(255,255,255,0.6)",
+                  background: "#ffffff", 
+                  border: `2px solid ${isLocalSelected ? "#0055ff" : "rgba(226, 232, 240, 0.9)"}`,
+                  boxShadow: isLocalSelected ? "0 8px 30px rgba(0, 85, 255, 0.12)" : "0 2px 12px rgba(0,0,0,0.02)",
                 }}
               >
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300" 
                     style={{ 
-                      background: isLocalSelected ? "#FFFFFF" : "#E2E8F0",
+                      background: isLocalSelected ? "#0055ff" : "#f1f5f9",
                     }}
                   >
-                    <FolderOpen size={24} style={{ color: NEXO_DARK }} />
-
+                    <FolderOpen size={22} style={{ color: isLocalSelected ? "#ffffff" : "#64748b" }} />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
+                    <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: "#002132" }}>
                       Origem Local
                     </h4>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura de Arquivo Local</span>
                   </div>
                   
                   {/* Device Name inside Local Source Box */}
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-100 shadow-sm">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200 shadow-xs">
                     <Monitor size={12} className="text-slate-400" />
                     {editingDeviceName ? (
                       <div className="flex items-center gap-1">
@@ -1937,7 +2379,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                           value={deviceNameInput}
                           onChange={e => setDeviceNameInput(e.target.value)}
                           className="px-1.5 py-0.5 rounded text-[10px] font-bold outline-none bg-slate-50"
-                          style={{ color: NEXO_DARK, width: 100 }}
+                          style={{ color: "#002132", width: 100 }}
                           autoFocus
                           onKeyDown={e => {
                             if (e.key === "Enter") {
@@ -1958,8 +2400,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     ) : (
                       <button 
                         onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} 
-                        className="text-[10px] font-bold uppercase tracking-wider hover:text-cyan-500 transition-colors"
-                        style={{ color: NEXO_DARK }}
+                        className="text-[10px] font-bold uppercase tracking-wider hover:text-blue-600 transition-colors"
+                        style={{ color: "#002132" }}
                       >
                         {currentDeviceName}
                       </button>
@@ -1970,11 +2412,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Arquivo XML ou TXT</label>
-                    <div className="flex items-center gap-3 p-1 rounded-2xl bg-white border-2 border-slate-200">
+                    <div className="flex items-center gap-3 p-1 rounded-full bg-[#f8fafc] border border-slate-200">
                       <div className="pl-4">
                         <FolderOpen size={16} className="text-slate-400" />
                       </div>
-                      <div className="flex-1 py-3 text-sm font-semibold truncate" style={{ color: NEXO_DARK }}>
+                      <div className="flex-1 py-2 text-xs font-semibold truncate" style={{ color: "#002132" }}>
                         {localFileName || <span className="text-slate-400 font-medium italic">Selecione o arquivo...</span>}
                       </div>
                       <button
@@ -1985,8 +2427,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                             fileInputRef.current?.click();
                           }
                         }}
-                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 shadow-md"
-                        style={{ backgroundColor: NEXO_DARK, color: "#FFFFFF" }}
+                        className="h-10 px-6 rounded-full flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 shadow-xs"
+                        style={{ backgroundColor: "#0055ff", color: "#FFFFFF" }}
                       >
                         <Upload size={14} className="mr-2" />
                         Arquivo
@@ -1998,14 +2440,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     type="button"
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
-                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:brightness-105"
+                    className="w-full h-12 flex items-center justify-center gap-2.5 px-6 rounded-full font-black text-[11px] uppercase tracking-[0.15em] transition-all hover:brightness-105"
                     style={{
-                      backgroundColor: isLocalSelected ? NEXO_DARK : "#FFFFFF",
-                      color: isLocalSelected ? "#FFFFFF" : NEXO_DARK,
-                      border: `2px solid ${isLocalSelected ? NEXO_DARK : "#E2E8F0"}`,
+                      backgroundColor: isLocalSelected ? "#0055ff" : "#f8fafc",
+                      color: isLocalSelected ? "#FFFFFF" : "#002132",
+                      border: `1px solid ${isLocalSelected ? "#0055ff" : "rgba(226, 232, 240, 0.9)"}`,
                     }}
                   >
-                    {localActivating ? <Loader2 size={18} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    {localActivating ? <Loader2 size={16} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
                     {localActivating ? "Sincronizando..." : isLocalSelected ? "Ativo" : "Ativar"}
                   </button>
                 </div>
@@ -2145,74 +2587,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
 
 
-      {/* ═══ XML MUSICA NO AR (EXPANSÍVEL) ═══ */}
-      <section className="mt-8 mb-12">
-        <div
-          className="rounded-2xl p-5 space-y-5"
-          style={{
-            backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
-          }}
-        >
-          <div
-            className="flex items-center justify-between mb-2 cursor-pointer group"
-            onClick={() => setShowXmlNoAr((v) => !v)}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: NEXO_CYAN }} />
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
-                  <Music size={18} style={{ color: NEXO_CYAN }} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black uppercase tracking-tighter m-0" style={{ color: NEXO_CYAN }}>
-                    XML MUSICA NO AR
-                  </h3>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
-                    Link XML e Payload de Transmissão
-                  </span>
-                </div>
-              </div>
-              <div
-                className="ml-2 transition-transform duration-200"
-                style={{ transform: showXmlNoAr ? "rotate(180deg)" : "rotate(0deg)", color: NEXO_DARK }}
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <span
-                className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
-                style={{ backgroundColor: "#ECFEFF", color: "#0891B2" }}
-              >
-                Link ativo
-              </span>
-              {showXmlNoAr && (
-                <button
-                  type="button"
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-black/40 hover:text-black/70 hover:bg-black/5"
-                  onClick={() => setShowXmlNoAr(false)}
-                  title="Fechar seção"
-                >
-                  <ChevronUp size={16} />
-                </button>
-              )}
-            </div>
-          </div>
 
-          {showXmlNoAr && (
-            <div className="rounded-2xl p-6 animate-in fade-in slide-in-from-top-4 duration-300" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
-              <XmlLinkRow 
-                label="XML MUSICA NO AR" 
-                scopeKey={dataUserId || undefined} 
-                xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} 
-              />
-            </div>
-          )}
-        </div>
-      </section>
 
       </div>
     </div>

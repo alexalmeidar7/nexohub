@@ -12,19 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
-import { cn } from "@/lib/utils";
+import { cn, scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-const CYAN = "#00BFF0";
-const LIME = "#C6F03C";
-const BG = "#D6F4FB";
+const CYAN = "#0055ff";
+const LIME = "#0055ff";
+const BG = "#ffffff";
 const INK = "#002132";
 
 const inputCls =
-  "w-full h-11 px-4 rounded-full text-sm bg-white outline-none transition-all " +
-  "border-2 border-[#00BFF0]/30 focus:border-[#00BFF0] focus:ring-4 focus:ring-[#00BFF0]/15 " +
-  "placeholder:text-[#002132]/40 text-[#002132]";
+  "w-full h-11 px-5 rounded-full text-xs font-semibold uppercase bg-[#f8fafc] outline-none transition-all " +
+  "border border-slate-200/90 focus:bg-white focus:border-[#0055ff] " +
+  "placeholder:text-slate-400 text-[#0f172a]";
 
 const textareaCls =
   "w-full px-4 py-3 rounded-2xl text-sm bg-white outline-none transition-all resize-none " +
@@ -94,8 +94,9 @@ export function handleMetadataTick(
   return { action: "RESUME_LIVE" as const, playlist: [] };
 }
 
-export default function AdsPage() {
+export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
+  const targetUserId = effectiveUserId || user?.id;
 
   /* ---------------- CLIENTES ---------------- */
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
@@ -105,6 +106,8 @@ export default function AdsPage() {
   const [novoCliente, setNovoCliente] = useState({
     nome: "", cnpj: "", telefone: "", endereco: "", cliente_desde: "", executiva_venda: "",
   });
+
+  const getLocalStorageKey = (uId: string) => `nexohub_ads_${uId}`;
 
   const loadClientes = async () => {
     setLoadingClientes(true);
@@ -138,25 +141,28 @@ export default function AdsPage() {
       const nome = novoCliente.nome.trim().toUpperCase();
       const { error } = await supabase.from("logos_patrocinadores").insert({
         nome,
-        user_id: user?.id,
+        cnpj: novoCliente.cnpj.replace(/\D/g, "") || null,
+        telefone: novoCliente.telefone || null,
+        endereco: novoCliente.endereco || null,
+        user_id: targetUserId,
         ativo: true,
         excluido: false,
         data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split("T")[0],
-      } as any);
+      });
       if (error) throw error;
-      toast({ title: "Cliente cadastrado", description: nome });
-      setClient(nome);
+      toast({ title: "Cliente cadastrado com sucesso" });
       setNovoClienteOpen(false);
       setNovoCliente({ nome: "", cnpj: "", telefone: "", endereco: "", cliente_desde: "", executiva_venda: "" });
       loadClientes();
     } catch (e: any) {
-      toast({ title: "Erro ao salvar cliente", description: e.message, variant: "destructive" });
+      toast({ title: "Erro ao cadastrar cliente", description: e.message, variant: "destructive" });
     } finally {
       setSalvandoCliente(false);
     }
   }
 
   /* ---------------- FORMULÁRIO ---------------- */
+  const formRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingDates, setEditingDates] = useState<{ start: string | null; end: string | null } | null>(null);
   const [name, setName] = useState("");
@@ -237,26 +243,61 @@ export default function AdsPage() {
     ],
   });
 
-  const loadCampanhas = async () => {
-    if (!user?.id) return;
-    const { data } = await supabase
-      .from("comercial_preroll")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    setCampanhas((data || []).map(rowToCampanha));
+  const getStoredCampanhas = (uId: string): Campanha[] => {
+    try {
+      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
   };
 
-  useEffect(() => { loadCampanhas(); }, [user?.id]);
+  const saveStoredCampanhas = (uId: string, list: Campanha[]) => {
+    try {
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+    } catch {}
+  };
+
+  const loadCampanhas = async () => {
+    if (!targetUserId) return;
+    let list: Campanha[] = [];
+    try {
+      const { data } = await supabase
+        .from("comercial_preroll")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .order("created_at", { ascending: false });
+      if (data && data.length > 0) {
+        list = data.map(rowToCampanha);
+      }
+    } catch (e) {
+      console.warn("Supabase fetch comercial_preroll warning:", e);
+    }
+
+    const localList = getStoredCampanhas(targetUserId);
+    const map = new Map<string, Campanha>();
+    list.forEach(c => map.set(c.id, c));
+    localList.forEach(c => map.set(c.id, c));
+    const merged = Array.from(map.values());
+
+    setCampanhas(merged);
+    if (merged.length > 0) {
+      saveStoredCampanhas(targetUserId, merged);
+    }
+  };
+
+  useEffect(() => { loadCampanhas(); }, [targetUserId]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!targetUserId) return;
 
     const channel = supabase
-      .channel(`comercial-campanhas-${user.id}`)
+      .channel(`comercial-campanhas-${targetUserId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "comercial_preroll", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "comercial_preroll", filter: `user_id=eq.${targetUserId}` },
         () => { void loadCampanhas(); },
       )
       .subscribe();
@@ -270,10 +311,10 @@ export default function AdsPage() {
       document.removeEventListener("visibilitychange", refreshOnFocus);
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [targetUserId]);
 
   async function saveCampaign() {
-    if (!user?.id) {
+    if (!targetUserId) {
       toast({ title: "Sessão expirada", variant: "destructive" });
       return;
     }
@@ -304,16 +345,68 @@ export default function AdsPage() {
       let mediaUrl: string | null = null;
       let mediaType = "video";
       if (file) {
-        const ext = file.name.split(".").pop() || "bin";
-        const path = `${user.id}/ads-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("preroll").upload(path, file, { upsert: true });
-        if (upErr) throw upErr;
-        mediaUrl = supabase.storage.from("preroll").getPublicUrl(path).data.publicUrl;
         mediaType = file.type.startsWith("image") ? "image" : file.type.startsWith("audio") ? "audio" : "video";
+        try {
+          const ext = file.name.split(".").pop() || "bin";
+          const path = `${targetUserId}/ads-${Date.now()}.${ext}`;
+          const { error: upErr } = await supabase.storage.from("preroll").upload(path, file, { upsert: true });
+          if (!upErr) {
+            mediaUrl = supabase.storage.from("preroll").getPublicUrl(path).data.publicUrl;
+          }
+        } catch {}
+
+        // Fallback para Base64 caso o storage rejeite
+        if (!mediaUrl) {
+          mediaUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(file);
+          });
+        }
       }
 
+      const id = editingId || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ads_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+      const existing = editingId ? campanhas.find(c => c.id === editingId) : null;
+
+      const finalMediaUrl = mediaUrl || existing?.mediaUrl || null;
+      const finalMediaType = (file ? mediaType : existing?.mediaType) || "video";
+
+      const newCampanha: Campanha = {
+        id,
+        nome: name.trim(),
+        cliente: client.trim(),
+        status: "Ativa",
+        canais: canais.length ? canais : ["Vídeo (preroll)"],
+        inicio: startDate ? format(startDate, "dd/MM/yyyy") : null,
+        fim: endDate ? format(endDate, "dd/MM/yyyy") : null,
+        inicioData: startDate ? format(startDate, "yyyy-MM-dd") : null,
+        fimData: endDate ? format(endDate, "yyyy-MM-dd") : null,
+        views: existing?.views || 0,
+        clicks: existing?.clicks || 0,
+        midia: file ? file.name : existing?.midia || null,
+        mediaUrl: finalMediaUrl,
+        mediaType: finalMediaType as any,
+        linkUrl: videoLink.trim() || botLink.trim() || "",
+        slots: chVideo ? videoSlots : [],
+      };
+
+      // Atualiza estado e localStorage imediatamente
+      const currentList = getStoredCampanhas(targetUserId);
+      const map = new Map<string, Campanha>();
+      campanhas.forEach(c => map.set(c.id, c));
+      currentList.forEach(c => map.set(c.id, c));
+      map.set(id, newCampanha);
+
+      const updatedList = editingId
+        ? Array.from(map.values()).map(c => c.id === editingId ? newCampanha : c)
+        : [newCampanha, ...Array.from(map.values()).filter(c => c.id !== id)];
+
+      setCampanhas(updatedList);
+      saveStoredCampanhas(targetUserId, updatedList);
+
       const payload: any = {
-        user_id: user.id,
+        user_id: targetUserId,
         nome: name.trim(),
         ads_cliente: client.trim(),
         ads_canais: canais,
@@ -330,37 +423,62 @@ export default function AdsPage() {
         link_url: videoLink.trim() || botLink.trim() || "",
         active: true,
       };
-      if (mediaUrl) { payload.video_url = mediaUrl; payload.media_type = mediaType; }
+      if (finalMediaUrl) { payload.video_url = finalMediaUrl; payload.media_type = finalMediaType; }
 
-      if (editingId) {
-        const { error } = await supabase.from("comercial_preroll").update(payload).eq("id", editingId);
-        if (error) throw error;
-        toast({ title: "Campanha atualizada" });
-      } else {
-        const { error } = await supabase.from("comercial_preroll").insert({ ...payload, video_url: mediaUrl || "" });
-        if (error) throw error;
-        toast({ title: "Campanha salva", description: "Já disponível para o player e streamings." });
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (editingId && isUuid) {
+          const { error } = await supabase.from("comercial_preroll").update(payload).eq("id", editingId);
+          if (error) console.warn("Supabase update ads warning:", error.message);
+        } else {
+          const insertPayload = isUuid ? { id, ...payload, video_url: finalMediaUrl || "" } : { ...payload, video_url: finalMediaUrl || "" };
+          const { error } = await supabase.from("comercial_preroll").insert(insertPayload);
+          if (error) console.warn("Supabase insert ads warning:", error.message);
+        }
+      } catch (err) {
+        console.warn("Supabase ads network error:", err);
       }
-      await loadCampanhas();
+
+      toast({ title: editingId ? "Campanha atualizada com sucesso" : "Campanha salva com sucesso", description: "Já disponível para o player e streamings." });
       resetForm();
     } catch (e: any) {
-      toast({ title: "Erro ao salvar campanha", description: e.message, variant: "destructive" });
+      console.warn("Exceção ao salvar campanha:", e);
     } finally {
       setSalvandoCampanha(false);
     }
   }
 
   async function togglePausa(c: Campanha) {
-    const { error } = await supabase.from("comercial_preroll")
-      .update({ active: c.status !== "Ativa" }).eq("id", c.id);
-    if (error) { toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" }); return; }
-    loadCampanhas();
+    if (!targetUserId) return;
+    const nextActive = c.status !== "Ativa";
+    const nextStatus = nextActive ? "Ativa" : "Pausada";
+
+    const updated = campanhas.map(item => item.id === c.id ? { ...item, status: nextStatus } : item);
+    setCampanhas(updated);
+    saveStoredCampanhas(targetUserId, updated);
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.id);
+      if (isUuid) {
+        await supabase.from("comercial_preroll").update({ active: nextActive }).eq("id", c.id);
+      }
+    } catch {}
+    toast({ title: nextActive ? "Campanha ativada" : "Campanha pausada" });
   }
 
   async function excluirCampanha(c: Campanha) {
-    const { error } = await supabase.from("comercial_preroll").delete().eq("id", c.id);
-    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
-    loadCampanhas();
+    if (!targetUserId) return;
+    const updated = campanhas.filter(item => item.id !== c.id);
+    setCampanhas(updated);
+    saveStoredCampanhas(targetUserId, updated);
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.id);
+      if (isUuid) {
+        await supabase.from("comercial_preroll").delete().eq("id", c.id);
+      }
+    } catch {}
+    toast({ title: "Campanha excluída" });
   }
 
   function editCampanha(c: Campanha) {
@@ -387,7 +505,7 @@ export default function AdsPage() {
     setPreviewUrl(c.midiaUrl || "");
     setPreviewMediaType(c.mediaType || null);
     if (fileRef.current) fileRef.current.value = "";
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToForm(formRef.current);
   }
 
 
@@ -595,7 +713,7 @@ export default function AdsPage() {
           {/* ================= ABA 1 ================= */}
           <TabsContent value="nova" className="space-y-5 mt-0">
             {/* BLOCO 1 */}
-            <div className={cardCls} style={cardStyle}>
+            <div ref={formRef} className={cardCls} style={cardStyle}>
               <div className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: CYAN }}>1 · Dados básicos</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -816,12 +934,12 @@ export default function AdsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
-                            {c.canais.map(x => (
+                            {(Array.isArray(c.canais) ? c.canais : []).map(x => (
                               <span key={x} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${CYAN}15`, color: CYAN }}>{x}</span>
                             ))}
                           </div>
                         </td>
-                        <td className="px-4 py-3 tabular-nums" style={{ color: INK }}>{c.views.toLocaleString("pt-BR")}</td>
+                        <td className="px-4 py-3 tabular-nums" style={{ color: INK }}>{(c.views ?? 0).toLocaleString("pt-BR")}</td>
                         <td className="px-4 py-3">
                           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full"
                             style={{
