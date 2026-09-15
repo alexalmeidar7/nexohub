@@ -7,27 +7,38 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { supabase } from "@/integrations/supabase/client";
 
 const LoginScreen = lazyRetry(() => import("@/components/LoginScreen"));
+const SIGNED_OUT_FLAG = "nexohub_signed_out";
 
 export default function Index() {
   const { user, loading } = useAuth();
+  const explicitlySignedOut = (() => {
+    try {
+      return (
+        new URLSearchParams(window.location.search).get("signed_out") === "1" ||
+        localStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
+        sessionStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
+        localStorage.getItem("nexohub_explicit_logout") === "true"
+      );
+    } catch {
+      return false;
+    }
+  })();
   const [isChecking, setIsChecking] = useState(true);
   const [hasUser, setHasUser] = useState(false);
   usePageTitle("Login");
 
-  const isExplicitLogout = typeof window !== "undefined" && localStorage.getItem("nexohub_explicit_logout") === "true";
-
   useEffect(() => {
     let mounted = true;
     
-    if (isExplicitLogout) {
+    if (explicitlySignedOut) {
       setHasUser(false);
       setIsChecking(false);
       return;
     }
 
     // Se o hook de auth já terminou, usamos o valor dele
-    if (!loading) {
-      setHasUser(!!user);
+    if (!loading || explicitlySignedOut) {
+      setHasUser(explicitlySignedOut ? false : !!user);
       setIsChecking(false);
       return;
     }
@@ -35,6 +46,13 @@ export default function Index() {
     // Fallback: verificação rápida direta no Supabase para evitar travar no "Sincronizando"
     const quickCheck = async () => {
       try {
+        if (explicitlySignedOut) {
+          if (mounted) {
+            setHasUser(false);
+            setIsChecking(false);
+          }
+          return;
+        }
         const { data } = await supabase.auth.getSession();
         if (mounted) {
           if (data.session?.user && localStorage.getItem("nexohub_explicit_logout") !== "true") {
@@ -57,21 +75,13 @@ export default function Index() {
       mounted = false;
       clearTimeout(timer);
     };
-  }, [user, loading, isExplicitLogout]);
-
-  if (isExplicitLogout) {
-    return (
-      <Suspense fallback={<LoadingSpinner fullscreen />}>
-        <LoginScreen />
-      </Suspense>
-    );
-  }
+  }, [user, loading, explicitlySignedOut]);
 
   if (loading && isChecking && !hasUser) {
     return <LoadingSpinner fullscreen />;
   }
 
-  if (!user && !hasUser) {
+  if (explicitlySignedOut || (!user && !hasUser)) {
     return (
       <Suspense fallback={<LoadingSpinner fullscreen />}>
         <LoginScreen />

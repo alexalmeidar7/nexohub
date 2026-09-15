@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { clearSignOutFlag } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getCurrentReturnPath, getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
@@ -68,6 +69,7 @@ export default function GoogleCheckPage() {
     setError(null);
     try {
       setOAuthReturnPath(getCurrentReturnPath());
+      clearSignOutFlag();
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },

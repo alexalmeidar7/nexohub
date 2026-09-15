@@ -48,6 +48,7 @@ export function getProgramasSync(userId?: string, userEmail?: string | null): Pr
   const clientAcc = findClientAccountById(userId) || findClientAccountByEmail(userEmail);
   const fallback = getClientHouseMixProgramsSync(clientAcc?.id, clientAcc?.email);
   return fallback.map(p => ({
+
     id: p.id,
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
@@ -67,7 +68,9 @@ export async function getProgramas(userId?: string, userEmail?: string | null): 
       .from("programas")
       .select("*, thumb, apresentador_id, apresentadores_ids")
       .eq("ativo", true)
+      .ilike("estudio", "%fm%")
       .order("horario_inicio");
+
 
     if (userId) query = query.eq("user_id", userId);
 

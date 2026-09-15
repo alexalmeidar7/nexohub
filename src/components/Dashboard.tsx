@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, Suspense, startTransition } f
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, CloudRain, DollarSign, Package, MessageCircle } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, CloudRain, DollarSign, Package, MessageCircle, DatabaseBackup } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,10 +81,12 @@ const ModulosPage = lazyRetry(() => import("./ModulosPage"));
 const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
 const HouseMixPage = lazyRetry(() => import("./HouseMixPage"));
 const ProdutosPage = lazyRetry(() => import("./ProdutosPage"));
+const PacotesPage = lazyRetry(() => import("./PacotesPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
 const FloatingMiniPlayer = lazyRetry(() => import("./FloatingMiniPlayer"));
 const HomeGradientBackground = lazyRetry(() => import("./HomeGradientBackground"));
 const FloatingOnAirPresenter = lazyRetry(() => import("./FloatingOnAirPresenter"));
+const BackupPage = lazyRetry(() => import("./BackupPage"));
 
 
 
@@ -98,7 +100,7 @@ import SuperAdminHeader from "./SuperAdminHeader";
 import HouseMixHeader from "./HouseMixHeader";
 import ServerClock from "./ServerClock";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -172,6 +174,7 @@ const sidebarMenu: MenuItem[] = [
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
@@ -252,6 +255,7 @@ export const adminModulosGroups: MenuItem[] = [
   {
     icon: Wrench, label: "ferramentas", children: [
       { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
@@ -352,6 +356,8 @@ const pageTitle: Record<Page, string> = {
   financeiro: "Gestão Financeira & Cobranças",
   chatbot: "Chatbot & Atendimento",
   housemix: "Gestão do Produto House Mix",
+  produtos: "Produtos",
+  backup: "Ferramentas — Backup / Importar",
 };
 
 interface DashboardProps {
@@ -1578,6 +1584,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <CortesVideoPage />
                 </div>
               )}
+              {currentPage === "backup" && <BackupPage effectiveUserId={effectiveUserId} />}
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage effectiveUserId={effectiveUserId} />}
               {currentPage === "tp" && <TeleprompterPage />}
@@ -1663,7 +1670,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     };
                     handleChildClick(child as any, parent);
                   }}
-                  onNavigate={setCurrentPage}
+                  onNavigate={(p) => setCurrentPage(p as Page)}
                 />
               )}
               {!isAdmin && currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}

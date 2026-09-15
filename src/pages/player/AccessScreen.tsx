@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { clearSignOutFlag } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable/index";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ export default function AccessScreen({ logoUrl, onLoginSuccess }: AccessScreenPr
     try {
       // Use the Lovable app origin as redirect to avoid custom domain OAuth issues
       setOAuthReturnPath(getCurrentReturnPath());
+      clearSignOutFlag();
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: {

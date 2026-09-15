@@ -214,7 +214,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
           .maybeSingle(),
         supabase
           .from("programas")
-          .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome), data_especifica")
+          .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
           .eq("user_id", dataUserId!)
           .eq("ativo", true)
           .ilike("estudio", "%fm%"),

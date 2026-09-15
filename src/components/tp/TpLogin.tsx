@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { clearSignOutFlag } from "@/hooks/useAuth";
 import { Loader2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexo from "@/assets/logo-nexo.png";
@@ -22,6 +23,7 @@ export default function TpLogin({ authLoading, onLoginSuccess }: TpLoginProps) {
       return;
     }
     setLoading(true);
+    clearSignOutFlag();
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {

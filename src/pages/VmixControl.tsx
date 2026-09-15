@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { clearSignOutFlag } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Clock, ExternalLink, RefreshCw } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
@@ -48,6 +49,7 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
     e.preventDefault();
     setError("");
     setSigning(true);
+    clearSignOutFlag();
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (err) setError("E-mail ou senha incorretos.");
     setSigning(false);

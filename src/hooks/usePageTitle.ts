@@ -9,7 +9,7 @@ let cachedEmpresaLogo: string | null = null;
 // don't refetch the same empresa info on every navigation.
 const slugHeadCache = new Map<string, { nome: string | null; logo: string | null }>();
 
-const DEFAULT_FAVICON = "/favicon.ico";
+const DEFAULT_FAVICON = "/favicon.png";
 const DEFAULT_TITLE = "NexoHub";
 
 export function usePageTitle(pageName: string) {

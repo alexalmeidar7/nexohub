@@ -5,7 +5,53 @@ import { ensureMusicScopeForUser } from "@/lib/musicStorageKeys";
 
 type AppRole = "admin" | "user";
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
+const SIGNED_OUT_FLAG = "nexohub_signed_out";
 const EXPLICIT_LOGOUT_KEY = "nexohub_explicit_logout";
+
+function hasExplicitSignOut() {
+  try {
+    return (
+      new URLSearchParams(window.location.search).get("signed_out") === "1" ||
+      localStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
+      sessionStorage.getItem(SIGNED_OUT_FLAG) === "true" ||
+      localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Cancela o bloqueio de logout (novo login realizado). */
+export function clearSignOutFlag() {
+  try {
+    localStorage.removeItem(SIGNED_OUT_FLAG);
+    sessionStorage.removeItem(SIGNED_OUT_FLAG);
+    localStorage.removeItem(EXPLICIT_LOGOUT_KEY);
+  } catch { /* ignore */ }
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("signed_out") === "1") {
+      url.searchParams.delete("signed_out");
+      window.history.replaceState({}, "", url.toString());
+    }
+  } catch { /* ignore */ }
+}
+
+/** Remove qualquer token de sessão persistido (local e session storage). */
+function purgeStoredAuth() {
+  const isAuthKey = (k: string) =>
+    k === "nexohub_backup_session" ||
+    k === "nexohub_force_role" ||
+    k === "nexohub_admin_profile" ||
+    (k.startsWith("sb-") && k.includes("auth-token")) ||
+    k.startsWith("supabase.auth.");
+  try {
+    Object.keys(localStorage).filter(isAuthKey).forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+  try {
+    Object.keys(sessionStorage).filter(isAuthKey).forEach((k) => sessionStorage.removeItem(k));
+  } catch { /* ignore */ }
+}
 
 interface AuthContextType {
   user: User | null;
@@ -77,14 +123,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Check if user has explicitly logged out
-    const isExplicitlyLoggedOut = typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true";
-    if (isExplicitlyLoggedOut) {
-      lastGoodSessionRef.current = null;
+    // Se o usuário saiu explicitamente, não restauramos nada até um novo login.
+    let signedOutIntentionally = hasExplicitSignOut();
+    if (signedOutIntentionally) {
+      manualSignOutRef.current = true;
       try {
-        localStorage.removeItem('nexohub_backup_session');
-        localStorage.removeItem('nexohub_force_role');
-      } catch {}
+        localStorage.setItem(SIGNED_OUT_FLAG, "true");
+        sessionStorage.setItem(SIGNED_OUT_FLAG, "true");
+        localStorage.setItem(EXPLICIT_LOGOUT_KEY, "true");
+      } catch { /* ignore */ }
+      purgeStoredAuth();
+      void supabase.auth.signOut({ scope: "local" }).catch(() => { /* ignore */ });
+      lastGoodSessionRef.current = null;
       setUser(null);
       setSession(null);
       setRole(null);
@@ -92,8 +142,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Restore the last known good session from backup on boot if not already loaded
-    if (!lastGoodSessionRef.current) {
+    // Always try to restore the last known good session from backup on boot,
+    // so a hard refresh keeps the user signed in and on the welcome screen
+    // without requiring an explicit "keep connected" opt-in.
+    if (!signedOutIntentionally && !lastGoodSessionRef.current) {
       const backup = localStorage.getItem('nexohub_backup_session');
       if (backup) {
         try {
@@ -260,18 +312,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`Auth event: ${event}`);
 
-      if (event === "SIGNED_IN") {
-        try {
-          localStorage.removeItem(EXPLICIT_LOGOUT_KEY);
-        } catch {}
+      // Depois de um logout explícito, ignoramos sessões residuais
+      // (broker do preview, outra aba, cache) até um novo login de fato.
+      // Um novo login bem-sucedido sempre cancela o bloqueio de logout,
+      // independente da tela usada (player, Google, TP, vMix...).
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+        clearSignOutFlag();
       }
 
-      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true" && event !== "SIGNED_IN") {
+      signedOutIntentionally = hasExplicitSignOut();
+      if (signedOutIntentionally) {
+        if (session) purgeStoredAuth();
+        lastGoodSessionRef.current = null;
         void updateAuth(null);
         return;
       }
+      if (event === "SIGNED_IN" && session) {
+        manualSignOutRef.current = false;
+      }
 
-      // If INITIAL_SESSION arrives empty but we have a backup, restore it
+      // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
+      // hard refresh keeps the user on the welcome screen.
       if (event === "INITIAL_SESSION" && !session) {
         if (lastGoodSessionRef.current) {
           console.log("Auth: Restoring session from backup on INITIAL_SESSION.");
@@ -281,8 +342,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (event === "SIGNED_OUT") {
+        // Manual logout should always work (flag stays set until the reload)
         if (manualSignOutRef.current) {
-          manualSignOutRef.current = false;
           void updateAuth(null);
           return;
         }
@@ -469,33 +530,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async (options?: { redirect?: boolean }) => {
     const shouldRedirect = options?.redirect !== false;
     manualSignOutRef.current = true;
-    
-    // 1. Mark explicit sign out and clear cached auth items
+    // Marca o logout como intencional e apaga tudo que possa restaurar a sessão
     try {
-      localStorage.setItem(EXPLICIT_LOGOUT_KEY, "true");
       localStorage.setItem(KEEP_CONNECTED_KEY, "false");
-      localStorage.removeItem('nexohub_backup_session');
-      localStorage.removeItem('nexohub_force_role');
-      localStorage.removeItem('nexohub_admin_profile');
-
-      // Clear all Supabase storage tokens from localStorage and sessionStorage
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && (k.startsWith('sb-') || k.includes('supabase.auth'))) {
-          keysToRemove.push(k);
-        }
-      }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
-
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const k = sessionStorage.key(i);
-        if (k && (k.startsWith('sb-') || k.includes('supabase.auth'))) {
-          sessionStorage.removeItem(k);
-        }
-      }
-    } catch {}
-
+      localStorage.setItem(SIGNED_OUT_FLAG, "true");
+      sessionStorage.setItem(SIGNED_OUT_FLAG, "true");
+      localStorage.setItem(EXPLICIT_LOGOUT_KEY, "true");
+    } catch { /* ignore */ }
+    purgeStoredAuth();
     lastGoodSessionRef.current = null;
     prevUserIdRef.current = null;
 
@@ -503,14 +545,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // scope: 'local' evita revogar a sessão em outros dispositivos/abas
       await supabase.auth.signOut({ scope: 'local' });
     } catch { /* ignore */ }
-
+    // A chamada acima pode falhar por rede; garantimos a limpeza de novo
+    purgeStoredAuth();
     setUser(null);
     setSession(null);
     setRole(null);
 
     if (shouldRedirect) {
-      // Direct redirect to House Mix login screen
-      window.location.replace("/");
+      // Hard redirect to login so any cached state is cleared
+      window.location.replace("/?signed_out=1");
     }
   };
 

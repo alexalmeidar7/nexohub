@@ -877,6 +877,7 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
               ))}
             </div>
           </section>
+
         </>
       )}
     </div>
