@@ -43,7 +43,21 @@ function sanitizeFolder(id: string): string {
 }
 
 function prettifyLabel(label: string): string {
-  if (label === "APENAS XML" || label.toLowerCase() === "apenas xml") return "Apenas XML";
+  if (
+    label === "APENAS XML" ||
+    label.toLowerCase() === "apenas xml" ||
+    label.toLowerCase() === "broadcast" ||
+    label.toLowerCase() === "xml broadcast"
+  ) {
+    return "Broadcast";
+  }
+  if (
+    label === "XML GERAL" ||
+    label.toLowerCase() === "geral" ||
+    label.toLowerCase() === "xml geral"
+  ) {
+    return "Geral (Todos os Feeds)";
+  }
   const cleaned = label.replace(/^xml\s+/i, "").trim();
   if (!cleaned) return label;
   return cleaned

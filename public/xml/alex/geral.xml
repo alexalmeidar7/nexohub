@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<geral versao="1.0">
+  <gerado_em>2026-09-15T21:42:52.623Z</gerado_em>
+
+  <!-- DADOS DA EMISSORA -->
+  <estacao>
+    <nome>Nexo Brasil Super Admin</nome>
+    <slug>alex</slug>
+    <cidade>Goiânia - GO</cidade>
+    <frequencia>Rede Nexo</frequencia>
+    <uid>29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5</uid>
+  </estacao>
+
+  <!-- NO AR (Música, Programa e Apresentador) -->
+  <no_ar>
+    <musica_atual>
+      <titulo>Programação Musical</titulo>
+      <capa_url></capa_url>
+      <curiosidade></curiosidade>
+      <texto_completo>Programação Musical</texto_completo>
+    </musica_atual>
+
+    <programa_atual>
+      <nome>Programação Nexo Brasil Super Admin</nome>
+      <estudio>Estudio FM</estudio>
+    </programa_atual>
+
+    <apresentador_atual>
+      <nome>Locutor no Ar</nome>
+      <foto_url></foto_url>
+      <social>@alex</social>
+    </apresentador_atual>
+
+    <a_seguir>
+      <ativo>1</ativo>
+      <programa_nome>Próxima Atração</programa_nome>
+      <horario></horario>
+      <locutor_nome></locutor_nome>
+      <locutor_foto></locutor_foto>
+    </a_seguir>
+  </no_ar>
+
+  <!-- PREVISÃO DO TEMPO -->
+  <previsao_tempo>
+    <cidade>Goiânia - GO</cidade>
+    <atual>
+      <temperatura>26ºC</temperatura>
+      <descricao>Tempo Firme e Ensolarado</descricao>
+      <minima>21°</minima>
+      <maxima>32°</maxima>
+      <umidade>52%</umidade>
+      <vento>11 km/h</vento>
+      <icone_url></icone_url>
+    </atual>
+  </previsao_tempo>
+
+  <!-- ROTEIRO E ALINHAMENTO DO ESTÚDIO -->
+  <roteiro>
+    <programa>Programação Nexo Brasil Super Admin</programa>
+    <estudio>Estudio FM</estudio>
+    <data>2026-09-15</data>
+    <horario>00:00</horario>
+  </roteiro>
+
+  <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->
+  <interatividade>
+    <batalha ativa="1">
+      <titulo>Batalha Musical</titulo>
+      <musica_a>
+        <nome>Música 1</nome>
+        <artista>Artista 1</artista>
+        <porcentagem>0%</porcentagem>
+      </musica_a>
+      <musica_b>
+        <nome>Música 2</nome>
+        <artista>Artista 2</artista>
+        <porcentagem>0%</porcentagem>
+      </musica_b>
+    </batalha>
+
+    <enquete ativa="1">
+      <pergunta></pergunta>
+      <opcao_a></opcao_a>
+      <opcao_b></opcao_b>
+    </enquete>
+
+    <quiz ativa="1">
+      <pergunta></pergunta>
+      <resposta_correta>A</resposta_correta>
+    </quiz>
+  </interatividade>
+
+  <!-- PATROCINADORES / LOGOMARCAS -->
+  <patrocinadores>
+    <patrocinador>
+      <nome>Patrocinador Oficial</nome>
+      <logo_url>https://nexohub.lovable.app/default-sponsor-logo.png</logo_url>
+    </patrocinador>
+  </patrocinadores>
+</geral>

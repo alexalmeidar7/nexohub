@@ -1893,7 +1893,7 @@ export default function ConfiguracoesPage({
               </div>
             </div>
             <span className="text-[10px] font-bold text-[#0055ff] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100 uppercase tracking-wider">
-              8 Feeds
+              9 Feeds
             </span>
           </div>
           <XmlsConfigSection targetUid={targetUid} user={user} />

@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <empresa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</empresa_logo>
-    <programa_nome>Programação Positiva FM 99.1</programa_nome>
-    <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
-    <programa_thumb></programa_thumb>
-    <locutor_nome>Locutor no Ar</locutor_nome>
-    <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
-    <locutor_social>@positivafm</locutor_social>
-    <rede_social_atual>Instagram</rede_social_atual>
-    <rede_social_icone>instagram</rede_social_icone>
-    <logo_patrocinador>https://nexohub.lovable.app/default-sponsor-logo.png</logo_patrocinador>
-    <titulo>No Ar na Positiva FM 99.1</titulo>
+    <empresa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/empresa-logo.png?v=3261554925</empresa_logo>
+    <programa_nome>Sertanejo bom demais - 2ª Edição</programa_nome>
+    <programa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2-logo.png</programa_logo>
+    <programa_thumb>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2-thumb-hd.png</programa_thumb>
+    <locutor_nome>Vanessa Reis</locutor_nome>
+    <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/9d64c3c7-d45c-4cf5-b941-333e7eed8c85-locutor.png</locutor_foto>
+    <locutor_social>@vanessareis.oficial</locutor_social>
+    <rede_social_atual>(62) 3942-9910</rede_social_atual>
+    <rede_social_icone>https://img.icons8.com/ios-filled/200/ffffff/whatsapp.png</rede_social_icone>
+    <logo_patrocinador>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/sponsor-4-nobreak_cia.png</logo_patrocinador>
+    <titulo></titulo>
     <fundo_assunto></fundo_assunto>
-    <qrcode_link>https://housemix.nexobrasil.net</qrcode_link>
-    <ticker>Acompanhe a melhor programação em 99.1 FM</ticker>
-    <insert_live></insert_live>
-    <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
-    <musica_atual>Música em Reprodução</musica_atual>
-    <musica_capa>https://nexohub.lovable.app/default-sponsor-logo.png</musica_capa>
-    <deezer_artist_img></deezer_artist_img>
-    <banner_l></banner_l>
-    <temperatura>26ºC</temperatura>
-    <ico_temperatura>sun</ico_temperatura>
+    <qrcode_link>https://wa.me/6239429910</qrcode_link>
+    <ticker></ticker>
+    <insert_live>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</insert_live>
+    <curiosidade></curiosidade>
+    <musica_atual>BREAK - BREAK</musica_atual>
+    <musica_capa>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/music-cover-break_break.png?v=0x600bbjpg</musica_capa>
+    <deezer_artist_img>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/artist-break.png</deezer_artist_img>
+    <banner_l>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/promo-banner-l-1.png</banner_l>
+    <temperatura>27°</temperatura>
+    <ico_temperatura>https://img.icons8.com/ios-filled/200/ffffff/light-rain.png</ico_temperatura>
     <infos_canto>
-      <titulo>Positiva FM 99.1</titulo>
-      <descricao>Goiânia - GO</descricao>
-      <ico_categoria>radio</ico_categoria>
-      <temp_atual>26ºC</temp_atual>
-      <ico_temp_atual>sun</ico_temp_atual>
+      <titulo>trânsito</titulo>
+      <descricao>trânsito tá de boa agora .... use cinto de segurança!</descricao>
+      <ico_categoria>https://img.icons8.com/ios-filled/200/ffffff/car.png</ico_categoria>
+      <temp_atual></temp_atual>
+      <ico_temp_atual>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</ico_temp_atual>
     </infos_canto>
     <a_seguir>
-      <ativo>1</ativo>
-      <programa_nome>Próximo Programa</programa_nome>
-      <nome_programa>Próximo Programa</nome_programa>
-      <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
-      <locutor_nome>Equipe da Rádio</locutor_nome>
-      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
-      <horario>12:00</horario>
-      <texto>Fique conectado!</texto>
+      <ativo>0</ativo>
+      <programa_nome></programa_nome>
+      <nome_programa></nome_programa>
+      <programa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</programa_logo>
+      <locutor_nome></locutor_nome>
+      <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</locutor_foto>
+      <horario></horario>
+      <texto></texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-15T14:20:41.991Z</atualizado_em>
+      <atualizado_em>2026-09-15T21:42:34.013Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

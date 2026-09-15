@@ -311,6 +311,157 @@ function generateFallbackQuiz(st: StationConfig): string {
 `;
 }
 
+function extractTag(xml: string, tag: string): string {
+  const m = xml.match(new RegExp(`<${tag}(?:\\s+[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  if (!m) return "";
+  const inner = m[1].trim();
+  return inner.replace(/<[^>]+>/g, "").trim();
+}
+
+function generateCombinedGeralXml(
+  st: StationConfig,
+  tempoXml: string,
+  broadcastXml: string,
+  roteiroXml: string,
+  logosXml: string,
+  batalhaXml: string,
+  enqueteXml: string,
+  quizXml: string,
+  remoteGeral?: string | null
+): string {
+  if (remoteGeral && remoteGeral.includes("<geral") && remoteGeral.includes("</geral>")) {
+    return remoteGeral;
+  }
+
+  const now = new Date().toISOString();
+  const musicaAtual = extractTag(broadcastXml, "musica_atual") || "Programação Musical";
+  const musicaCapa = extractTag(broadcastXml, "musica_capa") || "";
+  const curiosidade = extractTag(broadcastXml, "curiosidade") || "";
+  const programaNome = extractTag(broadcastXml, "programa_nome") || `Programação ${st.name}`;
+  const locutorNome = extractTag(broadcastXml, "locutor_nome") || "Locutor no Ar";
+  const locutorFoto = extractTag(broadcastXml, "locutor_foto") || "";
+  const locutorSocial = extractTag(broadcastXml, "locutor_social") || `@${st.slug}`;
+  const aSeguirNome = extractTag(broadcastXml, "programa_nome") || extractTag(broadcastXml, "nome_programa") || "";
+  const aSeguirHorario = extractTag(broadcastXml, "horario") || "";
+  const aSeguirLocutor = extractTag(broadcastXml, "locutor_nome") || "";
+  const aSeguirFoto = extractTag(broadcastXml, "locutor_foto") || "";
+
+  const tempAtual = extractTag(tempoXml, "temperatura") || extractTag(broadcastXml, "temperatura") || st.tempDefault;
+  const tempDesc = extractTag(tempoXml, "descricao") || extractTag(tempoXml, "descricao_tempo") || "Tempo Firme e Ensolarado";
+  const tempMin = extractTag(tempoXml, "minima") || "20°C";
+  const tempMax = extractTag(tempoXml, "maxima") || "31°C";
+  const tempUmidade = extractTag(tempoXml, "umidade") || extractTag(tempoXml, "humidade") || "50%";
+  const tempVento = extractTag(tempoXml, "vento") || "10 km/h";
+  const tempIcone = extractTag(tempoXml, "icone_url") || extractTag(tempoXml, "url_imagem_icone") || "";
+
+  const roteiroProg = extractTag(roteiroXml, "programa") || programaNome;
+  const roteiroEstudio = extractTag(roteiroXml, "estudio") || "Estúdio FM";
+  const roteiroData = extractTag(roteiroXml, "data") || now.slice(0, 10);
+  const roteiroHorario = extractTag(roteiroXml, "horario") || extractTag(roteiroXml, "hora") || "00:00";
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<geral versao="1.0">
+  <gerado_em>${now}</gerado_em>
+
+  <!-- DADOS DA EMISSORA -->
+  <estacao>
+    <nome>${st.name}</nome>
+    <slug>${st.slug}</slug>
+    <cidade>${st.city}</cidade>
+    <frequencia>${st.freqDefault}</frequencia>
+    <uid>${st.uid}</uid>
+  </estacao>
+
+  <!-- NO AR (Música, Programa e Apresentador) -->
+  <no_ar>
+    <musica_atual>
+      <titulo>${musicaAtual}</titulo>
+      <capa_url>${musicaCapa}</capa_url>
+      <curiosidade>${curiosidade}</curiosidade>
+      <texto_completo>${musicaAtual}</texto_completo>
+    </musica_atual>
+
+    <programa_atual>
+      <nome>${programaNome}</nome>
+      <estudio>${roteiroEstudio}</estudio>
+    </programa_atual>
+
+    <apresentador_atual>
+      <nome>${locutorNome}</nome>
+      <foto_url>${locutorFoto}</foto_url>
+      <social>${locutorSocial}</social>
+    </apresentador_atual>
+
+    <a_seguir>
+      <ativo>1</ativo>
+      <programa_nome>${aSeguirNome || "Próxima Atração"}</programa_nome>
+      <horario>${aSeguirHorario}</horario>
+      <locutor_nome>${aSeguirLocutor}</locutor_nome>
+      <locutor_foto>${aSeguirFoto}</locutor_foto>
+    </a_seguir>
+  </no_ar>
+
+  <!-- PREVISÃO DO TEMPO -->
+  <previsao_tempo>
+    <cidade>${st.city}</cidade>
+    <atual>
+      <temperatura>${tempAtual}</temperatura>
+      <descricao>${tempDesc}</descricao>
+      <minima>${tempMin}</minima>
+      <maxima>${tempMax}</maxima>
+      <umidade>${tempUmidade}</umidade>
+      <vento>${tempVento}</vento>
+      <icone_url>${tempIcone}</icone_url>
+    </atual>
+  </previsao_tempo>
+
+  <!-- ROTEIRO E ALINHAMENTO DO ESTÚDIO -->
+  <roteiro>
+    <programa>${roteiroProg}</programa>
+    <estudio>${roteiroEstudio}</estudio>
+    <data>${roteiroData}</data>
+    <horario>${roteiroHorario}</horario>
+  </roteiro>
+
+  <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->
+  <interatividade>
+    <batalha ativa="${batalhaXml.includes("<artista1_nome>") ? "1" : "0"}">
+      <titulo>${extractTag(batalhaXml, "titulo") || "Batalha Musical"}</titulo>
+      <musica_a>
+        <nome>${extractTag(batalhaXml, "artista1_musica") || "Música 1"}</nome>
+        <artista>${extractTag(batalhaXml, "artista1_nome") || "Artista 1"}</artista>
+        <porcentagem>${extractTag(batalhaXml, "artista1_porcentagem") || "50%"}</porcentagem>
+      </musica_a>
+      <musica_b>
+        <nome>${extractTag(batalhaXml, "artista2_musica") || "Música 2"}</nome>
+        <artista>${extractTag(batalhaXml, "artista2_nome") || "Artista 2"}</artista>
+        <porcentagem>${extractTag(batalhaXml, "artista2_porcentagem") || "50%"}</porcentagem>
+      </musica_b>
+    </batalha>
+
+    <enquete ativa="${enqueteXml.includes("<pergunta>") ? "1" : "0"}">
+      <pergunta>${extractTag(enqueteXml, "pergunta") || ""}</pergunta>
+      <opcao_a>${extractTag(enqueteXml, "opcao1_texto") || ""}</opcao_a>
+      <opcao_b>${extractTag(enqueteXml, "opcao2_texto") || ""}</opcao_b>
+    </enquete>
+
+    <quiz ativa="${quizXml.includes("<pergunta>") ? "1" : "0"}">
+      <pergunta>${extractTag(quizXml, "pergunta") || ""}</pergunta>
+      <resposta_correta>${extractTag(quizXml, "resposta_correta") || "A"}</resposta_correta>
+    </quiz>
+  </interatividade>
+
+  <!-- PATROCINADORES / LOGOMARCAS -->
+  <patrocinadores>
+    <patrocinador>
+      <nome>Patrocinador Oficial</nome>
+      <logo_url>https://nexohub.lovable.app/default-sponsor-logo.png</logo_url>
+    </patrocinador>
+  </patrocinadores>
+</geral>
+`;
+}
+
 export async function generateAllUserXmls() {
   const baseXmlDir = resolve("public/xml");
   if (!existsSync(baseXmlDir)) {
@@ -323,7 +474,7 @@ export async function generateAllUserXmls() {
     console.log(`Processing station: ${st.name} (${st.slug}, uid: ${st.uid})...`);
 
     // 1. Fetch live XMLs from Supabase
-    const [tempoRemote, roteiroRemote, broadcastRemote, logosRemote, batalhaRemote, enqueteRemote, quizRemote] =
+    const [tempoRemote, roteiroRemote, broadcastRemote, logosRemote, batalhaRemote, enqueteRemote, quizRemote, geralRemote] =
       await Promise.all([
         fetchRemoteXml(`${SUPABASE_BASE}/storage/v1/object/public/xml-files/xml-tempo-${st.uid}.xml`),
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-roteiro-estudio?user_id=${st.uid}&estudio=Estudio%20FM`),
@@ -332,6 +483,7 @@ export async function generateAllUserXmls() {
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-batalha?user_id=${st.uid}`),
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-enquete?user_id=${st.uid}`),
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-quiz?user_id=${st.uid}`),
+        fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-geral?user_id=${st.uid}&slug=${st.slug}`),
       ]);
 
     const tempoContent = tempoRemote || generateFallbackTempo(st);
@@ -344,8 +496,20 @@ export async function generateAllUserXmls() {
     const batalhaContent = batalhaRemote && batalhaRemote.includes("<artista1_nome>") ? batalhaRemote : generateFallbackBatalha(st);
     const enqueteContent = enqueteRemote && enqueteRemote.includes("<pergunta>") ? enqueteRemote : generateFallbackEnquete(st);
     const quizContent = quizRemote && quizRemote.includes("<pergunta>") ? quizRemote : generateFallbackQuiz(st);
+    const geralContent = generateCombinedGeralXml(
+      st,
+      tempoContent,
+      broadcastContent,
+      roteiroContent,
+      logosContent,
+      batalhaContent,
+      enqueteContent,
+      quizContent,
+      geralRemote
+    );
 
     const files: Record<string, string> = {
+      "geral.xml": geralContent,
       "tempo.xml": tempoContent,
       "roteiro.xml": roteiroContent,
       "musica.xml": musicaContent,

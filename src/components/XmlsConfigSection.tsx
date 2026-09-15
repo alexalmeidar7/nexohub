@@ -26,6 +26,13 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
     const baseUrl = "https://housemix.nexobrasil.net/xml";
     return [
       {
+        label: "XML GERAL",
+        kicker: "FEED UNIFICADO",
+        url: `${baseUrl}/${resolvedSlug}/geral.xml`,
+        supabaseUrl: `${supabaseUrl}/functions/v1/serve-xml-geral?user_id=${resolvedUid}&slug=${resolvedSlug}`,
+        description: "Feed mestre em tempo real unificando todos os XMLs: No Ar, Música, Tempo, Roteiro, Interatividade e Patrocinadores",
+      },
+      {
         label: "XML TEMPO",
         kicker: "XML",
         url: `${baseUrl}/${resolvedSlug}/tempo.xml`,
@@ -54,11 +61,11 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
         description: "Logomarcas dos patrocinadores ativos",
       },
       {
-        label: "APENAS XML",
+        label: "XML BROADCAST",
         kicker: "XML",
         url: `${baseUrl}/${resolvedSlug}/broadcast.xml`,
         supabaseUrl: `${supabaseUrl}/functions/v1/serve-xml-broadcast?user_id=${resolvedUid}`,
-        description: "Feed mestre unificado com todos os dados do ar",
+        description: "Feed mestre com todos os dados do ar (Broadcast)",
       },
       {
         label: "XML BATALHA MUSICAL",

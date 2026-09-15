@@ -27,7 +27,9 @@ export default function XmlPublicEndpoint() {
 
   // Build corresponding Supabase fallback URL
   let supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-broadcast?user_id=${stationUid}`;
-  if (filename.includes("tempo")) {
+  if (filename.includes("geral")) {
+    supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-geral?user_id=${stationUid}&slug=${cleanSlug}`;
+  } else if (filename.includes("tempo")) {
     supabaseFallbackUrl = `${SUPABASE_BASE}/storage/v1/object/public/xml-files/xml-tempo-${stationUid}.xml`;
   } else if (filename.includes("roteiro")) {
     supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-roteiro-estudio?user_id=${stationUid}&estudio=Estudio%20FM`;

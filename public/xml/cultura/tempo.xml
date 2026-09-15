@@ -3,13 +3,13 @@
   <cidade>Chapadão do Sul</cidade>
   <atual date="Agora">
     <cidade>Chapadão do Sul</cidade>
-    <temperatura>26ºC</temperatura>
+    <temperatura>22ºC</temperatura>
     <descricao>Parcialmente limpo</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-1-d.png</icone_url>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-1-n.png</icone_url>
     <minima>16ºC</minima>
     <maxima>28ºC</maxima>
-    <humidade>53%</humidade>
-    <precipitacao>93%</precipitacao>
+    <humidade>79%</humidade>
+    <precipitacao>100%</precipitacao>
   </atual>
   <amanha date="2026-09-16">
     <temperatura_minima>16ºC</temperatura_minima>
@@ -25,7 +25,7 @@
     <minima>16ºC</minima>
     <maxima>28ºC</maxima>
     <humidade>99%</humidade>
-    <precipitacao>8%</precipitacao>
+    <precipitacao>18%</precipitacao>
   </dia>
   <dia date="2026-09-17">
     <cidade>Chapadão do Sul</cidade>
@@ -34,28 +34,28 @@
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-51-d.png</icone_url>
     <minima>18ºC</minima>
     <maxima>31ºC</maxima>
-    <humidade>90%</humidade>
-    <precipitacao>2%</precipitacao>
+    <humidade>89%</humidade>
+    <precipitacao>10%</precipitacao>
   </dia>
   <dia date="2026-09-18">
     <cidade>Chapadão do Sul</cidade>
     <temperatura>26ºC</temperatura>
-    <descricao>Parcialmente nublado</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-2-d.png</icone_url>
+    <descricao>Pancadas leves</descricao>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-80-d.png</icone_url>
     <minima>19ºC</minima>
-    <maxima>32ºC</maxima>
-    <humidade>94%</humidade>
-    <precipitacao>18%</precipitacao>
+    <maxima>33ºC</maxima>
+    <humidade>93%</humidade>
+    <precipitacao>34%</precipitacao>
   </dia>
   <dia date="2026-09-19">
     <cidade>Chapadão do Sul</cidade>
-    <temperatura>27ºC</temperatura>
-    <descricao>Garoa</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-53-d.png</icone_url>
-    <minima>21ºC</minima>
+    <temperatura>26ºC</temperatura>
+    <descricao>Garoa leve</descricao>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-51-d.png</icone_url>
+    <minima>20ºC</minima>
     <maxima>33ºC</maxima>
-    <humidade>83%</humidade>
-    <precipitacao>45%</precipitacao>
+    <humidade>88%</humidade>
+    <precipitacao>47%</precipitacao>
   </dia>
   <dia date="2026-09-20">
     <cidade>Chapadão do Sul</cidade>
@@ -63,8 +63,8 @@
     <descricao>Parcialmente nublado</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-2-d.png</icone_url>
     <minima>20ºC</minima>
-    <maxima>35ºC</maxima>
-    <humidade>82%</humidade>
-    <precipitacao>24%</precipitacao>
+    <maxima>34ºC</maxima>
+    <humidade>79%</humidade>
+    <precipitacao>22%</precipitacao>
   </dia>
 </previsao>

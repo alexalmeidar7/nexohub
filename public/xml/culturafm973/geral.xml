@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<geral versao="1.0">
+  <gerado_em>2026-09-15T21:42:51.130Z</gerado_em>
+
+  <!-- DADOS DA EMISSORA -->
+  <estacao>
+    <nome>Cultura FM 97.3</nome>
+    <slug>culturafm973</slug>
+    <cidade>Santos - SP</cidade>
+    <frequencia>97.3 FM</frequencia>
+    <uid>66337743-4e4f-4950-b58f-750b0c76861e</uid>
+  </estacao>
+
+  <!-- NO AR (Música, Programa e Apresentador) -->
+  <no_ar>
+    <musica_atual>
+      <titulo>Música em Reprodução</titulo>
+      <capa_url>https://nexohub.lovable.app/default-sponsor-logo.png</capa_url>
+      <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
+      <texto_completo>Música em Reprodução</texto_completo>
+    </musica_atual>
+
+    <programa_atual>
+      <nome>Programação Cultura FM 97.3</nome>
+      <estudio>Estudio FM</estudio>
+    </programa_atual>
+
+    <apresentador_atual>
+      <nome>Locutor no Ar</nome>
+      <foto_url>https://nexohub.lovable.app/default-sponsor-logo.png</foto_url>
+      <social>@culturafm973</social>
+    </apresentador_atual>
+
+    <a_seguir>
+      <ativo>1</ativo>
+      <programa_nome>Programação Cultura FM 97.3</programa_nome>
+      <horario>12:00</horario>
+      <locutor_nome>Locutor no Ar</locutor_nome>
+      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
+    </a_seguir>
+  </no_ar>
+
+  <!-- PREVISÃO DO TEMPO -->
+  <previsao_tempo>
+    <cidade>Santos - SP</cidade>
+    <atual>
+      <temperatura>22ºC</temperatura>
+      <descricao>Parcialmente limpo</descricao>
+      <minima>16ºC</minima>
+      <maxima>28ºC</maxima>
+      <umidade>79%</umidade>
+      <vento>10 km/h</vento>
+      <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-1-n.png</icone_url>
+    </atual>
+  </previsao_tempo>
+
+  <!-- ROTEIRO E ALINHAMENTO DO ESTÚDIO -->
+  <roteiro>
+    <programa>Jornal da Cultura</programa>
+    <estudio>Estudio FM</estudio>
+    <data>2026-07-22</data>
+    <horario>00:00</horario>
+  </roteiro>
+
+  <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->
+  <interatividade>
+    <batalha ativa="1">
+      <titulo>Batalha Musical</titulo>
+      <musica_a>
+        <nome>Música 1</nome>
+        <artista>Artista 1</artista>
+        <porcentagem>0%</porcentagem>
+      </musica_a>
+      <musica_b>
+        <nome>Música 2</nome>
+        <artista>Artista 2</artista>
+        <porcentagem>0%</porcentagem>
+      </musica_b>
+    </batalha>
+
+    <enquete ativa="1">
+      <pergunta></pergunta>
+      <opcao_a></opcao_a>
+      <opcao_b></opcao_b>
+    </enquete>
+
+    <quiz ativa="1">
+      <pergunta></pergunta>
+      <resposta_correta>A</resposta_correta>
+    </quiz>
+  </interatividade>
+
+  <!-- PATROCINADORES / LOGOMARCAS -->
+  <patrocinadores>
+    <patrocinador>
+      <nome>Patrocinador Oficial</nome>
+      <logo_url>https://nexohub.lovable.app/default-sponsor-logo.png</logo_url>
+    </patrocinador>
+  </patrocinadores>
+</geral>
