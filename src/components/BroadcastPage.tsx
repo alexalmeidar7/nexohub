@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic } from "lucide-react";
+import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic } from "lucide-react";
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
@@ -1071,13 +1071,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     document.head.appendChild(link);
   }, []);
 
-  // Live clock
-  const [nowClock, setNowClock] = useState(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNowClock(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
   // A Seguir countdown
   useEffect(() => {
     if (!user) return;
@@ -1135,10 +1128,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   })();
 
 
-
-
-  const clockStr = `${String(nowClock.getHours()).padStart(2, "0")}:${String(nowClock.getMinutes()).padStart(2, "0")}:${String(nowClock.getSeconds()).padStart(2, "0")}`;
-
   const SectionHeader = ({ n, label, color = CYAN, right }: { n: string; label: string; color?: string; right?: React.ReactNode }) => (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2.5">
@@ -1190,23 +1179,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="hidden md:flex items-baseline gap-2">
-              <span className="text-[9px] uppercase font-semibold tracking-[0.2em] text-slate-400">Clock</span>
-              <span className="text-[15px] font-bold tabular-nums text-[#0055ff]" style={{ fontFamily: "'Sora', sans-serif" }}>
-                {clockStr}
-              </span>
+          {saving && (
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 shrink-0">
+              <RefreshCw size={12} className="animate-spin text-[#0055ff]" />
+              <span>Salvando...</span>
             </div>
-            <button
-              onClick={() => handleSave()}
-              disabled={saving}
-              className="flex items-center gap-2 h-9 px-4 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-opacity hover:opacity-90 disabled:opacity-50 text-white bg-[#0055ff] shadow-xs cursor-pointer"
-              style={{ fontFamily: "'Sora', sans-serif" }}
-            >
-              {saving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
-              Salvar
-            </button>
-          </div>
+          )}
         </div>
 
         {/* ── Navigation (segmented, always labelled) ── */}
