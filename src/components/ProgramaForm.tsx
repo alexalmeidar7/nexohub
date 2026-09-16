@@ -619,6 +619,12 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       const allStations = Array.from(new Set([...metaNames, ...defaultStations])).filter(Boolean).sort();
       setClientesList(allStations.length > 0 ? allStations : ["INTERATIVA FM"]);
 
+      const currentClientAccount = (targetUserId ? findClientAccountById(targetUserId) : null) ||
+        (user?.email ? findClientAccountByEmail(user.email) : null);
+      if (currentClientAccount?.nome) {
+        setSelectedCliente(currentClientAccount.nome);
+      }
+
       // Carrega programas customizados salvos
       const allCustomProgs: Programa[] = [];
       try {
@@ -1448,23 +1454,8 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         {formOpen && (<>
 
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
-          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Building2 size={12} /> Cliente / Emissora</span>}>
-            <Select value={selectedCliente || undefined} onValueChange={setSelectedCliente}>
-              <SelectTrigger style={pillSelectTrigger}>
-                <SelectValue placeholder="Selecione o Cliente" />
-              </SelectTrigger>
-              <SelectContent className="max-h-56">
-                {clientesList.filter(cli => typeof cli === "string" && cli.trim() !== "").map(cli => (
-                  <SelectItem key={cli} value={cli}>
-                    {cli}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label="Nome do Programa" span="lg:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+          <Field label="Nome do Programa" span="col-span-full">
             <input
               ref={nomeInputRef}
               style={pillInput}
@@ -1528,7 +1519,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             </Select>
           </Field>
 
-          <Field label="Apresentadores" span="lg:col-span-2">
+          <Field label="Apresentadores">
             <Popover open={apresentadorComboOpen} onOpenChange={setApresentadorComboOpen}>
               <PopoverTrigger asChild>
                 <button style={pillSelectTrigger}>
@@ -1675,7 +1666,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             <input style={pillInput} type="time" step="1" value={horarioFim} onChange={(e) => setHorarioFim(e.target.value)} />
           </Field>
 
-          <Field label="Descrição" span="md:col-span-2 lg:col-span-3">
+          <Field label="Descrição" span="col-span-full">
             <Textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -1696,7 +1687,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             />
           </Field>
 
-          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Calendar size={12} /> {variavel ? "Agendamento do Programa Variável" : "Dias da Semana"}</span>} span="md:col-span-2 lg:col-span-3">
+          <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Calendar size={12} /> {variavel ? "Agendamento do Programa Variável" : "Dias da Semana"}</span>} span="col-span-full">
             {variavel && (
               <div style={{ display: "flex", gap: 6, marginBottom: 12, padding: 4, width: "fit-content", borderRadius: 999, background: "#FFFFFF", border: `1px solid ${CYAN}` }}>
                 {([
@@ -1759,78 +1750,80 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             )}
           </Field>
 
-          <Field label="Selo (1080×1080 PNG alpha)">
-            <div className="flex items-center gap-3">
-              {uploadBox(selo, handleSelo, 74, 74, "Selo")}
-              {selo && (
-                <div className="flex flex-col gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(selo, `selo_${nome || "programa"}.png`)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
-                  >
-                    <Download size={11} /> Baixar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelo("")}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
-                  >
-                    <Trash2 size={11} /> Remover
-                  </button>
-                </div>
-              )}
-            </div>
-          </Field>
-          <Field label="Capa (226×302 PNG alpha)">
-            <div className="flex items-center gap-3">
-              {uploadBox(capa, handleCapa, 64, 86, "Capa")}
-              {capa && (
-                <div className="flex flex-col gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(capa, `capa_${nome || "programa"}.png`)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
-                  >
-                    <Download size={11} /> Baixar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCapa("")}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
-                  >
-                    <Trash2 size={11} /> Remover
-                  </button>
-                </div>
-              )}
-            </div>
-          </Field>
-          <Field label="Thumb (1920×1080 PNG)">
-            <div className="flex items-center gap-3">
-              {uploadBox(thumb, handleThumb, 110, 62, "Thumb")}
-              {thumb && (
-                <div className="flex flex-col gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(thumb, `thumb_${nome || "programa"}.png`)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
-                  >
-                    <Download size={11} /> Baixar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setThumb("")}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
-                  >
-                    <Trash2 size={11} /> Remover
-                  </button>
-                </div>
-              )}
-            </div>
-          </Field>
+          <div className="col-span-full grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <Field label="Selo (1080×1080 PNG alpha)">
+              <div className="flex items-center gap-3">
+                {uploadBox(selo, handleSelo, 74, 74, "Selo")}
+                {selo && (
+                  <div className="flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(selo, `selo_${nome || "programa"}.png`)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
+                    >
+                      <Download size={11} /> Baixar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelo("")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
+                    >
+                      <Trash2 size={11} /> Remover
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Field>
+            <Field label="Capa (226×302 PNG alpha)">
+              <div className="flex items-center gap-3">
+                {uploadBox(capa, handleCapa, 64, 86, "Capa")}
+                {capa && (
+                  <div className="flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(capa, `capa_${nome || "programa"}.png`)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
+                    >
+                      <Download size={11} /> Baixar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCapa("")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
+                    >
+                      <Trash2 size={11} /> Remover
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Field>
+            <Field label="Thumb (1920×1080 PNG)">
+              <div className="flex items-center gap-3">
+                {uploadBox(thumb, handleThumb, 110, 62, "Thumb")}
+                {thumb && (
+                  <div className="flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(thumb, `thumb_${nome || "programa"}.png`)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-[#0055ff] border border-blue-200/70 transition-colors shadow-xs"
+                    >
+                      <Download size={11} /> Baixar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setThumb("")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 transition-colors shadow-xs"
+                    >
+                      <Trash2 size={11} /> Remover
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Field>
+          </div>
 
           {variavel && agendamentoVariavel === "data" && (
-            <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#B45309" }}><CalendarDays size={12} /> Data Específica do Programa Variável</span>} span="md:col-span-2 lg:col-span-3">
+            <Field label={<span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#B45309" }}><CalendarDays size={12} /> Data Específica do Programa Variável</span>} span="col-span-full">
               <Popover>
                 <PopoverTrigger asChild>
                   <button style={{ ...pillSelectTrigger, borderColor: "#F59E0B" }}>

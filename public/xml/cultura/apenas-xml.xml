@@ -1,46 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <empresa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</empresa_logo>
-    <programa_nome>Programação Cultura FM 97.3</programa_nome>
-    <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
-    <programa_thumb></programa_thumb>
-    <locutor_nome>Locutor no Ar</locutor_nome>
-    <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
-    <locutor_social>@culturafm973</locutor_social>
-    <rede_social_atual>Instagram</rede_social_atual>
-    <rede_social_icone>instagram</rede_social_icone>
-    <logo_patrocinador>https://nexohub.lovable.app/default-sponsor-logo.png</logo_patrocinador>
-    <titulo>No Ar na Cultura FM 97.3</titulo>
+    <empresa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/empresa-logo.png?v=4832726790</empresa_logo>
+    <programa_nome>Cultura Agro</programa_nome>
+    <programa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/52b6811e-d243-49ba-949a-808d4b4fcbd5-logo.png</programa_logo>
+    <programa_thumb>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/52b6811e-d243-49ba-949a-808d4b4fcbd5-thumb-hd.png</programa_thumb>
+    <locutor_nome>Azevedo Júnior</locutor_nome>
+    <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/9941a00a-de99-43f8-994c-6d69e4198485-locutor.png</locutor_foto>
+    <locutor_social>@azevedojuniorlocutoroficial</locutor_social>
+    <rede_social_atual>@RádioCulturaFM97.3</rede_social_atual>
+    <rede_social_icone>https://img.icons8.com/ios-filled/200/ffffff/youtube-play.png</rede_social_icone>
+    <logo_patrocinador>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png</logo_patrocinador>
+    <titulo></titulo>
     <fundo_assunto></fundo_assunto>
-    <qrcode_link>https://housemix.nexobrasil.net</qrcode_link>
-    <ticker>Acompanhe a melhor programação em 97.3 FM</ticker>
-    <insert_live></insert_live>
-    <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
-    <musica_atual>Música em Reprodução</musica_atual>
-    <musica_capa>https://nexohub.lovable.app/default-sponsor-logo.png</musica_capa>
+    <qrcode_link>https://wa.me/67999991375</qrcode_link>
+    <ticker></ticker>
+    <insert_live>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</insert_live>
+    <curiosidade></curiosidade>
+    <musica_atual>Voltar pra Mim - Sandy, Ludmilla</musica_atual>
+    <musica_capa>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/music-cover-sandy__ludmilla_voltar_pra_mim.png?v=0x600bbjpg</musica_capa>
     <deezer_artist_img></deezer_artist_img>
     <banner_l></banner_l>
-    <temperatura>24ºC</temperatura>
-    <ico_temperatura>sun</ico_temperatura>
+    <temperatura>17°</temperatura>
+    <ico_temperatura>https://img.icons8.com/ios-filled/200/ffffff/partly-cloudy-day.png</ico_temperatura>
     <infos_canto>
-      <titulo>Cultura FM 97.3</titulo>
-      <descricao>Goiânia - GO</descricao>
-      <ico_categoria>radio</ico_categoria>
-      <temp_atual>24ºC</temp_atual>
-      <ico_temp_atual>sun</ico_temp_atual>
+      <titulo>cotação</titulo>
+      <descricao>Dólar R$ 5,15
+Euro R$ 5,94</descricao>
+      <ico_categoria>https://img.icons8.com/ios-filled/200/ffffff/us-dollar-circled.png</ico_categoria>
+      <temp_atual></temp_atual>
+      <ico_temp_atual>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</ico_temp_atual>
     </infos_canto>
     <a_seguir>
-      <ativo>1</ativo>
-      <programa_nome>Próximo Programa</programa_nome>
-      <nome_programa>Próximo Programa</nome_programa>
-      <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
-      <locutor_nome>Equipe da Rádio</locutor_nome>
-      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
-      <horario>12:00</horario>
-      <texto>Fique conectado!</texto>
+      <ativo>0</ativo>
+      <programa_nome></programa_nome>
+      <nome_programa></nome_programa>
+      <programa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</programa_logo>
+      <locutor_nome></locutor_nome>
+      <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</locutor_foto>
+      <horario></horario>
+      <texto></texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-15T21:42:51.130Z</atualizado_em>
+      <atualizado_em>2026-09-16T10:29:28.236Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>
