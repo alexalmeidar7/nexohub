@@ -383,14 +383,42 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         }
 
         // Fetch sponsor logos for this program
-        const { data: logos } = await supabase
-          .from("logos_patrocinadores")
-          .select("nome, logo_url")
-          .eq("user_id", uid)
-          .eq("programa_id", prog.id)
-          .eq("ativo", true)
-          .eq("excluido", false);
-        if (logos && logos.length > 0) setSponsorLogos(logos);
+        let finalLogos: { nome: string; logo_url: string }[] = [];
+        try {
+          const { data: logos } = await supabase
+            .from("logos_patrocinadores")
+            .select("nome, logo_url, programa_id, ativo, excluido")
+            .eq("user_id", uid)
+            .eq("ativo", true)
+            .eq("excluido", false);
+          if (logos && logos.length > 0) {
+            const progLogos = logos.filter(l => !l.programa_id || l.programa_id === prog.id);
+            finalLogos.push(...progLogos.map(l => ({ nome: l.nome, logo_url: l.logo_url })));
+          }
+        } catch (err) {
+          console.warn("[BroadcastPage] Logos fetch notice:", err);
+        }
+
+        // Merge local storage logos for this station
+        try {
+          const raw = localStorage.getItem(`nexohub_logos_${uid}`);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((l: any) => {
+                if (l.ativo !== false && !l.excluido && (!l.programa_id || l.programa_id === prog.id || l.programa_id === "__none__")) {
+                  if (!finalLogos.some(fl => fl.logo_url === l.logo_url)) {
+                    finalLogos.push({ nome: l.nome || "", logo_url: l.logo_url });
+                  }
+                }
+              });
+            }
+          }
+        } catch {}
+
+        if (finalLogos.length > 0) {
+          setSponsorLogos(finalLogos);
+        }
       }
     } catch (e) {
       console.warn("[BroadcastPage] Programas load notice:", e);

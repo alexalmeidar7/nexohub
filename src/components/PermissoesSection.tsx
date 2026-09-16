@@ -50,6 +50,7 @@ const MODULE_GROUPS = [
     items: [
       { key: "testemunhais", label: "Citações" },
       { key: "promocoes", label: "Promoções" },
+      { key: "logos", label: "Logos" },
       { key: "configtelapromo", label: "Config Tela Promo" },
       { key: "telapromo", label: "Tela Promo" },
       { key: "shopping", label: "Shopping" },
@@ -60,7 +61,6 @@ const MODULE_GROUPS = [
     category: "vMix",
     items: [
       { key: "broadcast", label: "Broadcast" },
-      { key: "logos", label: "Logos" },
       { key: "cenario", label: "Cenário 1 e 2" },
       { key: "batalha", label: "Batalha Musical" },
       { key: "enquete", label: "Enquete" },

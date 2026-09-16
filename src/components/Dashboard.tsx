@@ -962,6 +962,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           subUserModules.has("cadastros")
         );
       }
+      if (page === "logos") {
+        return (
+          subUserModules.has("logos") ||
+          subUserModules.has("comercial") ||
+          subUserModules.has("g:comercial") ||
+          subUserModules.has("c:comercial:logos") ||
+          subUserModules.has("vmix") ||
+          subUserModules.has("g:vmix") ||
+          subUserModules.has("c:vmix:logos")
+        );
+      }
       // Granular check: the page key itself is stored in allowed_modules
       return subUserModules.has(page);
     }

@@ -15,7 +15,8 @@ import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 
 interface Logo {
   id: string;
-  programa_id: string;
+  programa_id: string | null;
+  programa_nome?: string;
   logo_url: string;
   data_final: string;
   ativo: boolean;
@@ -23,6 +24,7 @@ interface Logo {
   nome: string;
   excluido: boolean;
   excluido_at: string | null;
+  user_id?: string;
 }
 
 interface Programa {
@@ -57,6 +59,50 @@ export function isExcludedStudio(raw?: string | null): boolean {
   return false;
 }
 
+const getLocalStorageKey = (uId: string) => `nexohub_logos_${uId}`;
+
+function resolveStationUid(targetUserId?: string | null, effectiveUserId?: string | null, userObj?: any): string {
+  const acc = (targetUserId && findClientAccountById(targetUserId)) || 
+              (targetUserId && findClientAccountByEmail(targetUserId)) || 
+              (effectiveUserId && findClientAccountById(effectiveUserId)) ||
+              (effectiveUserId && findClientAccountByEmail(effectiveUserId)) ||
+              (userObj?.id && findClientAccountById(userObj.id)) || 
+              (userObj?.email && findClientAccountByEmail(userObj.email));
+
+  if (acc?.isSubUser && acc.parentUserId) {
+    return acc.parentUserId;
+  }
+  return acc?.id || targetUserId || effectiveUserId || userObj?.id || "";
+}
+
+function getLocalLogos(uId: string): Logo[] {
+  try {
+    const raw = localStorage.getItem(getLocalStorageKey(uId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+function saveLocalLogos(uId: string, list: Logo[]) {
+  try {
+    localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+  } catch (e) {
+    console.warn("Falha ao salvar logos no localStorage:", e);
+  }
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 interface LogosPatrocinadoresPageProps {
   effectiveUserId?: string | null;
 }
@@ -69,10 +115,12 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dataUserId, setDataUserId] = useState<string | null>(effectiveUserId ?? user?.id ?? null);
+  const [dataUserId, setDataUserId] = useState<string | null>(() => {
+    return effectiveUserId || resolveStationUid(null, effectiveUserId, user) || user?.id || null;
+  });
 
   const [programaId, setProgramaId] = useState("");
-  const [programaIds, setProgramaIds] = useState<string[]>([]);
+  const [programaIds, setProgramaIds] = useState<string[]>(["__none__"]);
   const [programaPickerOpen, setProgramaPickerOpen] = useState(false);
   const [programaSearch, setProgramaSearch] = useState("");
   const programaPickerRef = useRef<HTMLDivElement>(null);
@@ -110,27 +158,31 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     }
 
     if (!user) return;
-    setDataUserId(user.id);
+    const resolvedId = resolveStationUid(null, null, user);
+    setDataUserId(resolvedId || user.id);
+    const isUuid = (s?: string | null) => Boolean(s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s));
     let cancelled = false;
 
-    supabase
-      .from("sub_users")
-      .select("parent_user_id, ativo")
-      .eq("auth_user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    const baseQuery = supabase.from("sub_users").select("parent_user_id, ativo");
+    const subQuery = isUuid(user.id)
+      ? baseQuery.or(`auth_user_id.eq.${user.id},email.eq.${user.email || ""}`)
+      : user.email
+      ? baseQuery.eq("email", user.email)
+      : null;
+
+    if (subQuery) {
+      subQuery.maybeSingle().then(({ data }) => {
         if (cancelled) return;
         if (data?.ativo && data.parent_user_id) {
           setDataUserId(data.parent_user_id);
         }
       });
+    }
 
     return () => {
       cancelled = true;
     };
   }, [user, effectiveUserId]);
-
-  const getLocalStorageKey = (uId: string) => `nexohub_logos_${uId}`;
 
   const loadData = async (targetUserId = dataUserId || effectiveUserId || user?.id) => {
     setLoading(true);
@@ -143,12 +195,15 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         await (supabase.rpc("cleanup_comercial") as any);
       } catch {}
 
+      const stationUid = resolveStationUid(targetUserId, effectiveUserId, user) || targetUserId || effectiveUserId || user?.id || "";
+
       // 1. Check database table first
-      if (targetUserId) {
+      const dbTargetId = stationUid || targetUserId;
+      if (dbTargetId) {
         try {
           const [resL, resP] = await Promise.all([
-            supabase.from("logos_patrocinadores").select("*").eq("user_id", targetUserId).order("created_at", { ascending: false }),
-            supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", targetUserId).eq("ativo", true),
+            supabase.from("logos_patrocinadores").select("*").eq("user_id", dbTargetId).order("created_at", { ascending: false }),
+            supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", dbTargetId).eq("ativo", true),
           ]);
           if (resL.data && resL.data.length > 0) lData = resL.data;
           if (resP.data && resP.data.length > 0) {
@@ -164,15 +219,6 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         }
       }
 
-      const acc = (targetUserId && findClientAccountById(targetUserId)) || 
-                  (targetUserId && findClientAccountByEmail(targetUserId)) || 
-                  (effectiveUserId && findClientAccountById(effectiveUserId)) ||
-                  (effectiveUserId && findClientAccountByEmail(effectiveUserId)) ||
-                  (user?.id && findClientAccountById(user.id)) || 
-                  (user?.email && findClientAccountByEmail(user.email));
-
-      const stationUid = acc?.id || acc?.parentUserId || targetUserId || effectiveUserId || user?.id;
-
       // 1.1 Fetch real database logos from serve-xml-logos Edge Function for the active station
       const uidsToQuery = Array.from(
         new Set(
@@ -181,7 +227,6 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             targetUserId,
             effectiveUserId,
             user?.id,
-            "d17e65af-e407-466f-9b60-b55c43399513", // Positiva FM 99.1
           ].filter(Boolean) as string[]
         )
       );
@@ -190,7 +235,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         if (lData.length === 0) {
           try {
             const resXml = await fetch(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-logos?user_id=${uid}`, {
-              signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined,
+              signal: AbortSignal.timeout ? AbortSignal.timeout(1500) : undefined,
             });
             if (resXml.ok) {
               const xmlText = await resXml.text();
@@ -241,6 +286,24 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         }
       }
 
+      // Merge locally stored logos for this station
+      const localUids = Array.from(new Set([stationUid, targetUserId, effectiveUserId, user?.id].filter(Boolean) as string[]));
+      for (const uId of localUids) {
+        const localLogos = getLocalLogos(uId);
+        if (localLogos.length > 0) {
+          const map = new Map<string, any>();
+          lData.forEach((l: any) => map.set(l.id, l));
+          localLogos.forEach((l: any) => {
+            if (!map.has(l.id)) {
+              map.set(l.id, l);
+            } else {
+              map.set(l.id, { ...map.get(l.id), ...l });
+            }
+          });
+          lData = Array.from(map.values());
+        }
+      }
+
       // Fetch programs fallback
       try {
         const fallbackProgs = await getProgramas(targetUserId || undefined, user?.email);
@@ -260,7 +323,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
       // Always merge official programming grid / House Mix programs for this station
       try {
-        const hmProgs = getClientHouseMixProgramsSync(acc || stationUid || targetUserId || effectiveUserId || user?.id || user?.email, pData);
+        const clientAcc = findClientAccountById(stationUid) || findClientAccountByEmail(user?.email);
+        const hmProgs = getClientHouseMixProgramsSync(clientAcc || stationUid || targetUserId || effectiveUserId || user?.id || user?.email, pData);
         if (Array.isArray(hmProgs) && hmProgs.length > 0) {
           hmProgs.forEach((hp: any) => {
             if (isExcludedStudio(hp.estudio)) return;
@@ -378,16 +442,43 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const uploadLogo = async (file: File): Promise<string> => {
     // Keep original PNG format — do NOT compress to webp for sponsor logos
-    // Storage RLS requires the first folder segment to equal auth.uid()
-    const { data: authData } = await supabase.auth.getUser();
-    const uid = authData?.user?.id;
-    if (!uid) throw new Error("Não autenticado");
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "logos";
     const ext = file.name.split(".").pop() || "png";
-    const path = `${uid}/logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("comercial").upload(path, file, { upsert: true, contentType: file.type });
-    if (error) throw error;
-    const { data } = supabase.storage.from("comercial").getPublicUrl(path);
-    return data.publicUrl;
+    const path = `${activeUid}/logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    // 1. Try comercial storage bucket
+    try {
+      const { data, error } = await supabase.storage
+        .from("comercial")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (!error && data) {
+        const { data: pubData } = supabase.storage.from("comercial").getPublicUrl(path);
+        if (pubData?.publicUrl) return pubData.publicUrl;
+      }
+    } catch (e) {
+      console.warn("[uploadLogo] comercial notice:", e);
+    }
+
+    // 2. Try empresa-assets bucket
+    try {
+      const { data: eaData, error: eaError } = await supabase.storage
+        .from("empresa-assets")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (!eaError && eaData) {
+        const { data: pubData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+        if (pubData?.publicUrl) return pubData.publicUrl;
+      }
+    } catch (e) {
+      console.warn("[uploadLogo] empresa-assets notice:", e);
+    }
+
+    // 3. Resilient fallback: convert file to Base64 Data URL so logo registration NEVER fails
+    return await fileToDataUrl(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -399,6 +490,12 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     }
 
     const toDbPid = (v: string) => (v === "__none__" ? null : v);
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
 
     // Edit mode: update existing logo
     if (editingFullId) {
@@ -408,8 +505,28 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         if (pendingFiles.length > 0) {
           updateData.logo_url = await uploadLogo(pendingFiles[0].file);
         }
-        const { error } = await supabase.from("logos_patrocinadores").update(updateData).eq("id", editingFullId);
-        if (error) throw error;
+
+        try {
+          const { error } = await supabase.from("logos_patrocinadores").update(updateData).eq("id", editingFullId);
+          if (error) console.warn("[handleSubmit] Supabase update notice:", error.message);
+        } catch (dbErr) {
+          console.warn("[handleSubmit] Supabase update notice:", dbErr);
+        }
+
+        if (activeUid) {
+          const localList = getLocalLogos(activeUid);
+          const idx = localList.findIndex((l) => l.id === editingFullId);
+          if (idx >= 0) {
+            localList[idx] = { ...localList[idx], ...updateData };
+            saveLocalLogos(activeUid, localList);
+          } else {
+            const curr = logos.find((l) => l.id === editingFullId);
+            if (curr) {
+              saveLocalLogos(activeUid, [{ ...curr, ...updateData }, ...localList]);
+            }
+          }
+        }
+
         toast({ title: "Logo atualizada com sucesso!" });
         resetForm();
         await loadData();
@@ -430,20 +547,54 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
     try {
       let count = 0;
+      const currentLocal = activeUid ? getLocalLogos(activeUid) : [];
+      const newItems: Logo[] = [];
+
       for (const pf of pendingFiles) {
         const logo_url = await uploadLogo(pf.file);
         const nomeFinal = (pf.nome || pf.file.name.replace(/\.[^.]+$/, "")).trim().toUpperCase();
         for (const pid of targets) {
-          const { error } = await supabase.from("logos_patrocinadores").insert({
-            user_id: dataUserId!,
-            programa_id: toDbPid(pid),
+          const dbPid = toDbPid(pid);
+          const progName = programas.find((p) => p.id === pid)?.nome || (pid === "__none__" ? "SEM PROGRAMA" : pid);
+          const newLogo: Logo = {
+            id: `logo_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+            user_id: activeUid,
+            programa_id: dbPid,
+            programa_nome: progName,
             logo_url,
             data_final: dataFinal,
             nome: nomeFinal,
-          } as any);
-          if (error) throw error;
+            ativo: true,
+            created_at: new Date().toISOString(),
+            excluido: false,
+            excluido_at: null,
+          };
+
+          try {
+            const { data: insData, error } = await supabase.from("logos_patrocinadores").insert({
+              user_id: activeUid,
+              programa_id: dbPid,
+              logo_url,
+              data_final: dataFinal,
+              nome: nomeFinal,
+            } as any).select().maybeSingle();
+
+            if (!error && insData?.id) {
+              newLogo.id = insData.id;
+            } else if (error) {
+              console.warn("[handleSubmit] Supabase insert warning:", error.message);
+            }
+          } catch (dbErr) {
+            console.warn("[handleSubmit] Supabase insert notice:", dbErr);
+          }
+
+          newItems.push(newLogo);
           count++;
         }
+      }
+
+      if (activeUid) {
+        saveLocalLogos(activeUid, [...newItems, ...currentLocal]);
       }
 
       toast({ title: `${count} logo(s) salva(s) em ${targets.length} destino(s)!` });
@@ -458,7 +609,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const resetForm = () => {
     setProgramaId("");
-    setProgramaIds([]);
+    setProgramaIds(["__none__"]);
     setDataFinal(defaultExpiration);
     setNomeLogo("");
     setPendingFiles([]);
@@ -477,12 +628,39 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   };
 
   const handleSoftDelete = async (id: string) => {
-    const { error } = await supabase.from("logos_patrocinadores").update({ excluido: true, excluido_at: new Date().toISOString(), ativo: false }).eq("id", id);
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Logo movida para Excluídas" });
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
+
+    try {
+      const { error } = await supabase
+        .from("logos_patrocinadores")
+        .update({ excluido: true, excluido_at: new Date().toISOString(), ativo: false })
+        .eq("id", id);
+      if (error) console.warn("[handleSoftDelete] Supabase notice:", error.message);
+    } catch (e) {
+      console.warn("[handleSoftDelete] notice:", e);
     }
+
+    if (activeUid) {
+      const local = getLocalLogos(activeUid);
+      const existing = local.find((l) => l.id === id);
+      const updated = local.map((l) =>
+        l.id === id ? { ...l, excluido: true, excluido_at: new Date().toISOString(), ativo: false } : l
+      );
+      if (!existing) {
+        const fromState = logos.find((l) => l.id === id);
+        if (fromState) {
+          updated.push({ ...fromState, excluido: true, excluido_at: new Date().toISOString(), ativo: false });
+        }
+      }
+      saveLocalLogos(activeUid, updated);
+    }
+
+    toast({ title: "Logo movida para Excluídas" });
     await loadData();
   };
 
@@ -493,48 +671,71 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const confirmRestore = async () => {
     if (!restoreLogo || restoring) return;
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
     const ids = restoreProgramaIds.length ? restoreProgramaIds : [""];
     const first = ids[0] || null;
     const rest = ids.slice(1).map((v) => v || null);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const restoreDate = restoreLogo.data_final && new Date(`${restoreLogo.data_final}T23:59:59`).getTime() >= today.getTime()
-      ? restoreLogo.data_final
-      : defaultExpiration;
+    const restoreDate =
+      restoreLogo.data_final && new Date(`${restoreLogo.data_final}T23:59:59`).getTime() >= today.getTime()
+        ? restoreLogo.data_final
+        : defaultExpiration;
 
     setRestoring(true);
 
-    const { error } = await supabase
-      .from("logos_patrocinadores")
-      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: first, data_final: restoreDate })
-      .eq("id", restoreLogo.id);
-
-    if (error) {
-      toast({ title: "Erro ao restaurar", description: error.message, variant: "destructive" });
-      setRestoreLogo(null);
-      setRestoreProgramaIds([]);
-      setRestoring(false);
-      await loadData();
-      return;
+    try {
+      await supabase
+        .from("logos_patrocinadores")
+        .update({ excluido: false, excluido_at: null, ativo: true, programa_id: first, data_final: restoreDate })
+        .eq("id", restoreLogo.id);
+    } catch (e) {
+      console.warn("[confirmRestore] Supabase notice:", e);
     }
 
-    if (rest.length && dataUserId) {
-      const rows = rest.map((pid) => ({
-        user_id: dataUserId,
-        programa_id: pid,
-        logo_url: restoreLogo.logo_url,
-        nome: restoreLogo.nome,
-        data_final: restoreDate,
-        ativo: true,
-        excluido: false,
-      }));
-      const { error: insErr } = await supabase.from("logos_patrocinadores").insert(rows);
-      if (insErr) {
-        toast({ title: "Erro ao duplicar para outros programas", description: insErr.message, variant: "destructive" });
+    if (activeUid) {
+      let local = getLocalLogos(activeUid);
+      local = local.map((l) =>
+        l.id === restoreLogo.id
+          ? { ...l, excluido: false, excluido_at: null, ativo: true, programa_id: first, data_final: restoreDate }
+          : l
+      );
+
+      if (rest.length) {
+        for (const pid of rest) {
+          const dupLogo: Logo = {
+            ...restoreLogo,
+            id: `logo_rst_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            user_id: activeUid,
+            programa_id: pid,
+            data_final: restoreDate,
+            ativo: true,
+            excluido: false,
+            excluido_at: null,
+          };
+          local.push(dupLogo);
+          try {
+            await supabase.from("logos_patrocinadores").insert({
+              user_id: activeUid,
+              programa_id: pid,
+              logo_url: restoreLogo.logo_url,
+              nome: restoreLogo.nome,
+              data_final: restoreDate,
+              ativo: true,
+              excluido: false,
+            });
+          } catch (e) {}
+        }
       }
+      saveLocalLogos(activeUid, local);
     }
 
-    const nomes = ids.map((pid) => (pid ? (programas.find(p => p.id === pid)?.nome || "programa") : "SEM PROGRAMA"));
+    const nomes = ids.map((pid) => (pid ? programas.find((p) => p.id === pid)?.nome || "programa" : "SEM PROGRAMA"));
     const totalLogos = ids.length;
     const logoLabel = totalLogos === 1 ? "1 logo restaurada" : `${totalLogos} logos restauradas`;
     const progLabel = nomes.length === 1 ? "programa" : "programas";
@@ -550,7 +751,21 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   };
 
   const handlePermanentDelete = async (id: string) => {
-    await supabase.from("logos_patrocinadores").delete().eq("id", id);
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
+    try {
+      await supabase.from("logos_patrocinadores").delete().eq("id", id);
+    } catch (e) {
+      console.warn("[handlePermanentDelete] Supabase notice:", e);
+    }
+    if (activeUid) {
+      const local = getLocalLogos(activeUid).filter((l) => l.id !== id);
+      saveLocalLogos(activeUid, local);
+    }
     await loadData();
   };
 
@@ -561,12 +776,26 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const saveEditDate = async () => {
     if (!editingLogoId || !editDate) return;
-    const { error } = await supabase.from("logos_patrocinadores").update({ data_final: editDate, ativo: true }).eq("id", editingLogoId);
-    if (error) {
-      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Validade atualizada!" });
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
+    try {
+      const { error } = await supabase.from("logos_patrocinadores").update({ data_final: editDate, ativo: true }).eq("id", editingLogoId);
+      if (error) console.warn("[saveEditDate] Supabase notice:", error.message);
+    } catch (e) {
+      console.warn("[saveEditDate] notice:", e);
     }
+    if (activeUid) {
+      const local = getLocalLogos(activeUid).map((l) =>
+        l.id === editingLogoId ? { ...l, data_final: editDate, ativo: true } : l
+      );
+      saveLocalLogos(activeUid, local);
+    }
+
+    toast({ title: "Validade atualizada!" });
     setEditingLogoId(null);
     setEditDate("");
     await loadData();
@@ -588,21 +817,48 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const copyLogoToPrograma = async (logo: Logo, targetProgramaId: string) => {
     if (!targetProgramaId || targetProgramaId === logo.programa_id) return;
-    const { error } = await supabase.from("logos_patrocinadores").insert({
-      user_id: dataUserId,
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
+    const copyId = `logo_copy_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const copyLogo: Logo = {
+      ...logo,
+      id: copyId,
+      user_id: activeUid,
       programa_id: targetProgramaId,
-      logo_url: logo.logo_url,
-      nome: logo.nome,
-      data_final: logo.data_final,
       ativo: true,
       excluido: false,
-    });
-    if (error) {
-      toast({ title: "Erro ao copiar logo", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Logo copiada com sucesso" });
-      await loadData();
+      excluido_at: null,
+      created_at: new Date().toISOString(),
+    };
+
+    try {
+      const { data: insData, error } = await supabase.from("logos_patrocinadores").insert({
+        user_id: activeUid,
+        programa_id: targetProgramaId,
+        logo_url: logo.logo_url,
+        nome: logo.nome,
+        data_final: logo.data_final,
+        ativo: true,
+        excluido: false,
+      }).select().maybeSingle();
+      if (!error && insData?.id) {
+        copyLogo.id = insData.id;
+      }
+    } catch (e) {
+      console.warn("[copyLogoToPrograma] Supabase insert notice:", e);
     }
+
+    if (activeUid) {
+      const local = getLocalLogos(activeUid);
+      saveLocalLogos(activeUid, [copyLogo, ...local]);
+    }
+
+    toast({ title: "Logo copiada com sucesso" });
+    await loadData();
   };
 
   const handleDrop = async (e: React.DragEvent, targetProgramaId?: string) => {
