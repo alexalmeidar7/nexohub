@@ -2154,5 +2154,24 @@ img, video, canvas, svg { max-width: 100%; }
   scrollbar-color: #cbd5e1 #f8fafc;
 }
 
-
-
+/* House Mix Draggable Window Blue Scrollbar */
+.custom-housemix-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-housemix-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 85, 255, 0.04);
+  border-radius: 9999px;
+}
+.custom-housemix-scrollbar::-webkit-scrollbar-thumb {
+  background: #0055ff;
+  border-radius: 9999px;
+  border: 1.5px solid #ffffff;
+}
+.custom-housemix-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0044cc;
+}
+.custom-housemix-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #0055ff rgba(0, 85, 255, 0.04);
+}

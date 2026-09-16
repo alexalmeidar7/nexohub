@@ -99,6 +99,7 @@ import nexoCantoLogo from "@/assets/nexo_canto.png";
 import logoNxo from "@/assets/logo-nxo.png";
 import SuperAdminHeader from "./SuperAdminHeader";
 import HouseMixHeader from "./HouseMixHeader";
+import HouseMixWindow from "./HouseMixWindow";
 import ServerClock from "./ServerClock";
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup";
@@ -438,11 +439,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return "dashboard";
   });
 
+  // Modo Janela de teste para House Mix na página de cadastro de clientes
+  const isWindowMode = !isAdmin && currentPage === "clientes";
+
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       
       if (resolved !== prev) {
+        // Se navegou diretamente para a página (ex: pelo menu), remove da lista de minimizados
+        setMinimizedModules((minPrev) => minPrev.filter((p) => p !== resolved));
         try { window.dispatchEvent(new CustomEvent("app:page-change", { detail: { page: resolved } })); } catch { /* noop */ }
       }
       return resolved;
@@ -1277,7 +1283,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {!isAdmin && (
         <Suspense fallback={null}>
           <FloatingMiniPlayer
-            isBehindPages={currentPage !== "dashboard"}
+            isBehindPages={currentPage !== "dashboard" && !isWindowMode}
             effectiveUserId={effectiveUserId}
           />
         </Suspense>
@@ -1287,7 +1293,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {!isAdmin && (
         <Suspense fallback={null}>
           <FloatingOnAirPresenter
-            isBehindPages={currentPage !== "dashboard"}
+            isBehindPages={currentPage !== "dashboard" && !isWindowMode}
             effectiveUserId={effectiveUserId}
           />
         </Suspense>
@@ -1322,7 +1328,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             playerState={playerState}
             allowedPages={subUserModules !== null ? subUserModules : (planModules ?? enabledModules)}
             showBots={subUserModules === null}
-            pageTitle={currentPage !== "dashboard" ? pageTitle[currentPage] : undefined}
+            pageTitle={currentPage !== "dashboard" && !isWindowMode ? pageTitle[currentPage] : undefined}
             onGoBack={() => {
               setMinimizedModules(prev => prev.filter(p => p !== currentPage));
               setCurrentPage("dashboard");
@@ -1519,12 +1525,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className={`${!isAdmin ? (currentPage === "cortevideo" ? "w-full flex flex-col flex-1 min-h-0" : "max-w-[1600px] mx-auto w-full flex flex-col flex-1 min-h-0") : "w-full flex flex-col flex-1"}`}>
 
           {/* Module actions portal (used by pages for global action buttons) */}
-          {currentPage !== "dashboard" && !isAdmin && (
+          {currentPage !== "dashboard" && !isAdmin && !isWindowMode && (
             <div id="module-actions-portal" className="flex items-center gap-2 justify-end" />
           )}
 
           <div className={`relative flex-1 h-full ${isAdmin ? "max-w-[1600px] mx-auto w-full flex flex-col" : ""}`}>
-            <div ref={contentScrollRef} className={`flex-1 h-full ${currentPage === "cortevideo" ? "overflow-hidden !p-0" : "overflow-y-auto overflow-x-hidden"} ${isAdmin ? "rounded-3xl" : "rounded-2xl"} ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : (currentPage === "cortevideo" ? { padding: 0 } : { padding: isAdmin ? "1.5rem" : "0.5rem" })}>
+            <div ref={contentScrollRef} className={`flex-1 h-full ${currentPage === "cortevideo" ? "overflow-hidden !p-0" : "overflow-y-auto overflow-x-hidden"} ${isAdmin ? "rounded-3xl" : "rounded-2xl"} ${currentPage !== "dashboard" && !isWindowMode ? "mv-content-area" : ""}`} style={(currentPage === "dashboard" || isWindowMode) ? {} : (currentPage === "cortevideo" ? { padding: 0 } : { padding: isAdmin ? "1.5rem" : "0.5rem" })}>
             <Suspense fallback={
               <ModulePageSkeleton
                 variant={
@@ -1542,13 +1548,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               />
             }>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
-              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
+              <div style={{ display: (currentPage === "dashboard" || isWindowMode) ? "block" : "none", height: (currentPage === "dashboard" || isWindowMode) ? "auto" : 0, overflow: (currentPage === "dashboard" || isWindowMode) ? "visible" : "hidden" }}>
                 {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
                 <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  {isAdmin ? <AdminClientsDashboard onNavigate={setCurrentPage} /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} isActive={currentPage === "dashboard"} />}
+                  {isAdmin ? <AdminClientsDashboard onNavigate={setCurrentPage} /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} isActive={currentPage === "dashboard" || isWindowMode} />}
                 </div>
               </div>
 
@@ -1567,7 +1573,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <PrevisaoTempo effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "clientes" || (minimizedModules.includes("clientes") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "clientes" || (minimizedModules.includes("clientes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
                   <ClientesPage effectiveUserId={effectiveUserId} />
                 </div>
@@ -1773,7 +1779,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               
             </Suspense>
             </div>
-            {currentPage !== "dashboard" && showContentScrollIndicator && (
+            {currentPage !== "dashboard" && !isWindowMode && showContentScrollIndicator && (
               <div
                 className="absolute inset-y-4 right-2 z-30 flex items-stretch justify-center pointer-events-auto select-none group/scroll"
                 style={{ width: "32px" }}
@@ -1837,10 +1843,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
+        {/* House Mix Window Mode (Draggable Window Modal for Clientes Test) */}
+        {!isAdmin && (currentPage === "clientes" || (minimizedModules.includes("clientes") && currentPage === "dashboard")) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CADASTRO DE CLIENTES"
+            isOpen={currentPage === "clientes"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "clientes"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("clientes")) return prev;
+                return [...prev, "clientes"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="clientes" />}>
+              <ClientesPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
         {/* Minimized Modules Bar */}
         {minimizedModules.length > 0 && currentPage === "dashboard" && (
           <div 
-            className="fixed bottom-4 left-[80px] z-[70] flex flex-wrap gap-3 pointer-events-none p-2"
+            className={`fixed bottom-4 ${!isAdmin ? "left-1/2 -translate-x-1/2" : "left-[80px]"} z-[70] flex flex-wrap items-center justify-center gap-3 pointer-events-none p-2`}
             style={{ maxWidth: "calc(100vw - 120px)" }}
           >
             {minimizedModules.map((mod, idx) => (
