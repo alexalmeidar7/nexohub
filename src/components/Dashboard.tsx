@@ -120,8 +120,7 @@ interface MenuItem {
   children?: MenuChild[];
   pillMode?: string;
 }
-
-
+const isUuid = (str?: string | null): boolean => !!str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 
 const sidebarMenu: MenuItem[] = [
@@ -586,20 +585,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   // Fetch on-air presenter photo
   useEffect(() => {
-    const uid = effectiveUserId || user?.id;
+    const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
+    const uid = effectiveUserId || clientAcc?.parentUserId || (clientAcc?.id && isUuid(clientAcc.id) ? clientAcc.id : null) || (user?.id && isUuid(user.id) ? user.id : null);
     if (!uid) return;
     let cancelled = false;
     const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
     const load = async () => {
-      const [progRes, empRes] = await Promise.all([
-        supabase
-          .from("programas")
-          .select("id, nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
-          .eq("user_id", uid)
-          .eq("ativo", true)
-          .ilike("estudio", "%fm%"),
-        supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
-      ]);
+      let progRes: any = { data: null };
+      let empRes: any = { data: null };
+      if (isUuid(uid)) {
+        [progRes, empRes] = await Promise.all([
+          supabase
+            .from("programas")
+            .select("id, nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
+            .eq("user_id", uid)
+            .eq("ativo", true)
+            .ilike("estudio", "%fm%"),
+          supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
+        ]);
+      }
       let data = progRes.data;
       let tz: string | null = (empRes.data as any)?.timezone || null;
 
@@ -701,17 +705,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   // Helper: find current on-air program and fetch only its thumb
   const findCurrentOnAirThumb = useCallback(async (overrideUserId?: string) => {
-    const uid = overrideUserId || effectiveUserId || user?.id;
+    const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
+    const uid = overrideUserId || effectiveUserId || clientAcc?.parentUserId || (clientAcc?.id && isUuid(clientAcc.id) ? clientAcc.id : null) || (user?.id && isUuid(user.id) ? user.id : null);
     if (!uid) return null;
-    const [{ data }, { data: emp }] = await Promise.all([
-      supabase
-        .from("programas")
-        .select("id, dias_semana, horario_inicio, horario_fim, selo")
-        .eq("user_id", uid)
-        .eq("ativo", true)
-        .ilike("estudio", "%fm%"),
-      supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
-    ]);
+    let data: any = null;
+    let emp: any = null;
+    if (isUuid(uid)) {
+      const res = await Promise.all([
+        supabase
+          .from("programas")
+          .select("id, dias_semana, horario_inicio, horario_fim, selo")
+          .eq("user_id", uid)
+          .eq("ativo", true)
+          .ilike("estudio", "%fm%"),
+        supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
+      ]);
+      data = res[0].data;
+      emp = res[1].data;
+    }
     let progList = data;
     if (!progList || progList.length === 0) {
       const stationDb = await fetchStationDatabaseData(uid || user?.email);
@@ -795,16 +806,71 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     let cancelled = false;
 
     const loadAll = async () => {
-      const [modulesRes, empresaRes, subUserRes] = await Promise.all([
-        supabase.from("client_modules").select("module_key, enabled").eq("user_id", user.id),
-        supabase.from("empresa_config").select("*").eq("user_id", user.id).maybeSingle(),
-        supabase.from("sub_users").select("allowed_modules, parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle(),
-      ]);
-
-      if (cancelled) return;
-
       // Check if this user is a client account or sub-user
       const clientAcc = findClientAccountByEmail(user.email) || findClientAccountById(user.id);
+
+      if (clientAcc?.isSubUser && clientAcc.parentUserId) {
+        const parentId = clientAcc.parentUserId;
+        setSubUserModules(new Set(clientAcc.allowedModules || []));
+        setEffectiveUserId(parentId);
+        setParentEmail(clientAcc.parentEmail || null);
+
+        const [parentModulesRes, parentEmpresaRes, parentProfileRes] = await Promise.all([
+          supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
+          supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
+          supabase.from("profiles").select("email").eq("user_id", parentId).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        if (parentProfileRes.data?.email) setParentEmail(parentProfileRes.data.email);
+        if (parentModulesRes.data && parentModulesRes.data.length > 0) {
+          setEnabledModules(new Set(parentModulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
+        }
+        const pd = parentEmpresaRes.data;
+        const parentCfg = {
+          nome: pd?.nome || clientAcc.nome || "",
+          logo: pd?.logo || "",
+          backgroundUrl: pd?.background_url || "",
+          endereco: pd?.endereco || clientAcc.cidade || "",
+          telefoneComercial: pd?.telefone_comercial || "",
+          telefoneParticipacao: pd?.telefone_participacao || "",
+          site: pd?.site || "",
+          instagram: pd?.instagram || "",
+          facebook: pd?.facebook || "",
+          youtube: pd?.youtube || "",
+          plano: pd?.plano || clientAcc.plano || "",
+        };
+        setEmpresa(parentCfg);
+        setEmpresaTimezone((pd as any)?.timezone || clientAcc.timezone || null);
+        if (parentCfg.plano) {
+          supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
+            if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
+          });
+        }
+        setInitialLoading(false);
+
+        const thumb = await findCurrentOnAirThumb(parentId);
+        if (!cancelled) {
+          const finalThumb = thumb || parentCfg.backgroundUrl || null;
+          prevThumbRef.current = finalThumb;
+          setOnAirThumb(finalThumb);
+        }
+        return;
+      }
+
+      const isUserUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+      let modulesRes: any = { data: null };
+      let empresaRes: any = { data: null };
+      let subUserRes: any = { data: null };
+
+      if (isUserUuid) {
+        [modulesRes, empresaRes, subUserRes] = await Promise.all([
+          supabase.from("client_modules").select("module_key, enabled").eq("user_id", user.id),
+          supabase.from("empresa_config").select("*").eq("user_id", user.id).maybeSingle(),
+          supabase.from("sub_users").select("allowed_modules, parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle(),
+        ]);
+      }
+
+      if (cancelled) return;
 
       // Check if this user is a sub-user
       if (subUserRes.data && subUserRes.data.ativo) {
@@ -851,32 +917,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           const finalThumb = thumb || parentCfg.backgroundUrl || null;
           prevThumbRef.current = finalThumb;
           setOnAirThumb(finalThumb);
-        }
-        return;
-      } else if (clientAcc?.isSubUser) {
-        setSubUserModules(new Set(clientAcc.allowedModules || []));
-        setEffectiveUserId(clientAcc.parentUserId || null);
-        setParentEmail(clientAcc.parentEmail || null);
-        const parentCfg = {
-          nome: clientAcc.nome,
-          logo: "",
-          backgroundUrl: "",
-          endereco: clientAcc.cidade,
-          telefoneComercial: "",
-          telefoneParticipacao: "",
-          site: "",
-          instagram: "",
-          facebook: "",
-          youtube: "",
-          plano: clientAcc.plano,
-        };
-        setEmpresa(parentCfg);
-        setEmpresaTimezone(clientAcc.timezone);
-        setInitialLoading(false);
-        const thumb = await findCurrentOnAirThumb(clientAcc.parentUserId || undefined);
-        if (!cancelled) {
-          prevThumbRef.current = thumb;
-          setOnAirThumb(thumb);
         }
         return;
       }
@@ -973,6 +1013,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           subUserModules.has("c:vmix:logos")
         );
       }
+      if (page === "broadcast" || page === "cenario" || page === "vmix") {
+        return (
+          subUserModules.has(page) ||
+          subUserModules.has("vmix") ||
+          subUserModules.has("g:vmix") ||
+          subUserModules.has(`c:vmix:${page}`) ||
+          subUserModules.has("comercial") ||
+          subUserModules.has("producao") ||
+          true
+        );
+      }
       // Granular check: the page key itself is stored in allowed_modules
       return subUserModules.has(page);
     }
@@ -993,7 +1044,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "clientes" ||
       page === "logos" ||
       page === "roteiros" ||
-      page === "agenda"
+      page === "agenda" ||
+      page === "broadcast" ||
+      page === "cenario" ||
+      page === "vmix"
     ) {
       return true;
     }
@@ -1077,6 +1131,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       currentPage !== "programas" &&
       currentPage !== "apresentadores" &&
       currentPage !== "ouvintes" &&
+      currentPage !== "broadcast" &&
+      currentPage !== "cenario" &&
+      currentPage !== "vmix" &&
       !isAdmin &&
       !isModuleEnabled(currentPage)
     ) {
@@ -2346,16 +2403,20 @@ function useGlobalMusicXmlUpload() {
     if (!user) return;
 
     const uploadMusicXml = async () => {
+      const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
+      const targetUid = clientAcc?.parentUserId || (clientAcc?.id && isUuid(clientAcc.id) ? clientAcc.id : null) || (user?.id && isUuid(user.id) ? user.id : null);
+      if (!targetUid || !isUuid(targetUid)) return;
+
       const { data: settings } = await supabase
         .from("user_settings")
         .select("music_xml_url")
-        .eq("user_id", user.id)
+        .eq("user_id", targetUid)
         .maybeSingle();
 
       if (!settings?.music_xml_url) return;
 
       try {
-        const m = getMusicData(user.id);
+        const m = getMusicData(targetUid);
         const titulo = m?.music?.titulo || "Sem titulo";
         const interprete = m?.music?.artista || "Desconhecido";
         let capa = m?.music?.capa || "";
@@ -2404,9 +2465,15 @@ function ComercialWidgets() {
 
   useEffect(() => {
     if (!user) return;
+    const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
+    const targetUid = clientAcc?.parentUserId || (clientAcc?.id && isUuid(clientAcc.id) ? clientAcc.id : null) || (user?.id && isUuid(user.id) ? user.id : null);
+    if (!targetUid || !isUuid(targetUid)) {
+      setLoading(false);
+      return;
+    }
     const fetchData = async () => {
       const [{ count }] = await Promise.all([
-        supabase.from("logos_patrocinadores").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true),
+        supabase.from("logos_patrocinadores").select("*", { count: "exact", head: true }).eq("user_id", targetUid).eq("ativo", true),
       ]);
       setTotalLogos(count || 0);
       setLoading(false);
@@ -2539,33 +2606,42 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
 
   useEffect(() => {
     if (!user) return;
-    const fetchData = async () => {
-      // Fetch user profile for event types config
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("event_types_config")
-        .eq("user_id", user.id)
-        .single();
-      
-      if (profile?.event_types_config) {
-        setEventTypesConfig(profile.event_types_config);
-      }
+    const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
+    const stationUid = clientAcc?.parentUserId || (clientAcc?.id && isUuid(clientAcc.id) ? clientAcc.id : null) || (user?.id && isUuid(user.id) ? user.id : null);
 
-      const { data: evts } = await supabase
-        .from("agenda_eventos")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("data");
+    const fetchData = async () => {
+      if (stationUid && isUuid(stationUid)) {
+        // Fetch user profile for event types config
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("event_types_config")
+          .eq("user_id", stationUid)
+          .maybeSingle();
+        
+        if (profile?.event_types_config) {
+          setEventTypesConfig(profile.event_types_config);
+        }
+
+        const { data: evts } = await supabase
+          .from("agenda_eventos")
+          .select("*")
+          .eq("user_id", stationUid)
+          .order("data");
+        
+        if (evts) setEventos(evts);
+      }
       
       let progs: any[] = [];
-      try {
-        const { data: pData } = await supabase.from("programas").select("*").eq("user_id", user.id);
-        if (pData && pData.length > 0) progs = pData;
-      } catch {}
+      if (stationUid && isUuid(stationUid)) {
+        try {
+          const { data: pData } = await supabase.from("programas").select("*").eq("user_id", stationUid);
+          if (pData && pData.length > 0) progs = pData;
+        } catch {}
+      }
 
       if (progs.length === 0) {
         try {
-          const fallbackData = await fetchStationDatabaseData(effectiveUserId || user.id || user.email);
+          const fallbackData = await fetchStationDatabaseData(stationUid || user.email);
           if (fallbackData?.programas && fallbackData.programas.length > 0) {
             progs = fallbackData.programas;
           }

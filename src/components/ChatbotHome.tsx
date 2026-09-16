@@ -5,8 +5,11 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { toast } from "@/hooks/use-toast";
 import { confirmDialog } from "@/lib/confirmDialog";
+
+const isUuid = (str?: string | null): boolean => !!str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 type Tab = "inbox" | "flows" | "broadcast" | "settings";
 
@@ -23,6 +26,9 @@ interface Message {
 export default function ChatbotHome() {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("inbox");
+  const acc = (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user.email));
+  const rawUid = acc?.parentUserId || acc?.id || user?.id || "";
+  const effectiveUserId = isUuid(rawUid) ? rawUid : "";
 
   return (
     <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
@@ -69,10 +75,10 @@ export default function ChatbotHome() {
           <div className="p-10 text-center text-sm" style={{ color: "#002132" }}>Faça login para usar o Chatbot.</div>
         ) : (
           <>
-            {tab === "inbox"     && <InboxTab userId={user.id} />}
-            {tab === "flows"     && <FlowsTab userId={user.id} />}
-            {tab === "broadcast" && <BroadcastTab userId={user.id} />}
-            {tab === "settings"  && <SettingsTab userId={user.id} />}
+            {tab === "inbox"     && <InboxTab userId={effectiveUserId} />}
+            {tab === "flows"     && <FlowsTab userId={effectiveUserId} />}
+            {tab === "broadcast" && <BroadcastTab userId={effectiveUserId} />}
+            {tab === "settings"  && <SettingsTab userId={effectiveUserId} />}
           </>
         )}
       </div>
@@ -147,6 +153,15 @@ function InboxTab({ userId }: { userId: string }) {
   // Load contacts + realtime
   useEffect(() => {
     let mounted = true;
+    if (!userId || !isUuid(userId)) {
+      const local = localStorage.getItem(DEMO_CONTACTS_STORAGE_KEY);
+      if (local) {
+        try { setContacts(JSON.parse(local)); } catch { setContacts(DEFAULT_DEMO_CONTACTS); }
+      } else {
+        setContacts(DEFAULT_DEMO_CONTACTS);
+      }
+      return;
+    }
     (async () => {
       try {
         const { data } = await supabase.from("wa_contacts").select("*")
@@ -412,6 +427,11 @@ function FlowsTab({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
 
   async function load() {
+    if (!userId || !isUuid(userId)) {
+      setFlows([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data } = await supabase.from("wa_flows").select("*").eq("user_id", userId).order("created_at");
     setFlows(data || []);
@@ -420,6 +440,7 @@ function FlowsTab({ userId }: { userId: string }) {
   useEffect(() => { load(); }, [userId]);
 
   async function ensureDefault() {
+    if (!userId || !isUuid(userId)) return;
     const { data } = await supabase.from("wa_flows").select("id").eq("user_id", userId).eq("is_default", true).maybeSingle();
     if (data) return;
     await supabase.from("wa_flows").insert({
@@ -497,13 +518,17 @@ function BroadcastTab({ userId }: { userId: string }) {
   const [sending, setSending] = useState(false);
 
   async function load() {
+    if (!userId || !isUuid(userId)) {
+      setList([]);
+      return;
+    }
     const { data } = await supabase.from("wa_broadcasts").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(20);
     setList(data || []);
   }
   useEffect(() => { load(); }, [userId]);
 
   async function create(sendNow: boolean) {
-    if (!name.trim() || !message.trim()) return;
+    if (!name.trim() || !message.trim() || !userId || !isUuid(userId)) return;
     setSending(true);
     const { data, error } = await supabase.from("wa_broadcasts").insert({
       user_id: userId, name: name.trim(), message: message.trim(), status: "draft",
@@ -590,6 +615,7 @@ function SettingsTab({ userId }: { userId: string }) {
   const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
 
   useEffect(() => {
+    if (!userId || !isUuid(userId)) return;
     (async () => {
       const { data } = await supabase.from("wa_config").select("*").eq("user_id", userId).maybeSingle();
       if (data) { setCfg(data); setPhoneNumberId(data.phone_number_id); setDisplayPhone(data.display_phone || ""); }
@@ -597,7 +623,7 @@ function SettingsTab({ userId }: { userId: string }) {
   }, [userId]);
 
   async function save() {
-    if (!phoneNumberId.trim()) return;
+    if (!phoneNumberId.trim() || !userId || !isUuid(userId)) return;
     setSaving(true);
     const payload = { user_id: userId, phone_number_id: phoneNumberId.trim(), display_phone: displayPhone.trim() || null, active: true };
     const { error } = cfg

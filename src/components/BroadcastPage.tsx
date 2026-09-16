@@ -7,6 +7,7 @@ import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, New
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 
 
 
@@ -219,7 +220,14 @@ interface SocialItem {
 export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
   const targetUserId = effectiveUserId || user?.id;
-  const userSlug = useUserSlug(targetUserId);
+  const acc = (targetUserId && findClientAccountById(targetUserId)) || 
+              (targetUserId && findClientAccountByEmail(targetUserId)) || 
+              (effectiveUserId && findClientAccountById(effectiveUserId)) ||
+              (effectiveUserId && findClientAccountByEmail(effectiveUserId)) ||
+              (user?.id && findClientAccountById(user.id)) || 
+              (user?.email && findClientAccountByEmail(user?.email));
+  const stationUid = acc?.parentUserId || acc?.id || targetUserId || user?.id || "";
+  const userSlug = useUserSlug(stationUid);
 
 
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
@@ -279,12 +287,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   // Auto-sync foto/instagram/cargo whenever locutor_override matches a registered apresentador
   useEffect(() => {
     const nome = (data.locutor_override || "").trim();
-    if (!user || nome.length < 2) return;
+    if (!stationUid || nome.length < 2) return;
     const t = setTimeout(async () => {
       const { data: ap } = await supabase
         .from("apresentadores")
         .select("nome, foto, instagram, cargo")
-        .eq("user_id", user.id)
+        .eq("user_id", stationUid)
         .ilike("nome", nome)
         .limit(1)
         .maybeSingle();
@@ -295,12 +303,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [data.locutor_override, user]);
+  }, [data.locutor_override, stationUid]);
 
   // Load data
   const loadInitialData = useCallback(async () => {
-    if (!user) return;
-    const uid = targetUserId || user.id;
+    const uid = stationUid;
+    if (!uid) return;
     
     let emp: any = null;
     try {
@@ -497,7 +505,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
   // Load programa_assuntos (broadcast_assuntos) for active program
   useEffect(() => {
-    if (!user || !activeProgramaId) {
+    if (!stationUid || !activeProgramaId) {
       setProgramaAssuntos([]);
       return;
     }
@@ -505,7 +513,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       const { data: row } = await supabase
         .from("broadcast_assuntos")
         .select("mensagens, mensagens_enabled, rotation_seconds")
-        .eq("user_id", user.id)
+        .eq("user_id", stationUid)
         .eq("programa_id", activeProgramaId)
         .maybeSingle();
       if (row) {
@@ -518,11 +526,11 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         setProgramaAssuntos([]);
       }
     })();
-  }, [user, activeProgramaId]);
+  }, [stationUid, activeProgramaId]);
 
 
   useEffect(() => {
-    if (!user) return;
+    if (!stationUid) return;
     (async () => {
       await loadInitialData();
       const now = new Date();
@@ -532,7 +540,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       const { data: liveEvents } = await supabase
         .from("agenda_eventos")
         .select("artes_urls, programa_id")
-        .eq("user_id", user.id)
+        .eq("user_id", stationUid)
         .eq("tipo_evento", "live")
         .eq("data", todayStr)
         .limit(1);
@@ -565,7 +573,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         }
       }
       // Accent color
-      const { data: settings } = await supabase.from("user_settings").select("dashboard_items, weather_city, weather_lat, weather_lon").eq("user_id", user.id).maybeSingle();
+      const { data: settings } = await supabase.from("user_settings").select("dashboard_items, weather_city, weather_lat, weather_lon").eq("user_id", stationUid).maybeSingle();
       if (settings?.dashboard_items && typeof settings.dashboard_items === "object") {
         const lc = (settings.dashboard_items as any).layout_colors;
         if (lc?.accentColor) setAccentColor(lc.accentColor);
@@ -606,7 +614,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         const { data: rows } = await supabase
           .from("roteiros")
           .select("tickertitulos, conteudo_html, tipo_programa, created_at")
-          .eq("user_id", user.id)
+          .eq("user_id", stationUid)
           .ilike("tipo_programa", "%jorn%")
           .order("created_at", { ascending: false })
           .limit(5);
@@ -622,7 +630,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           const { data: anyRows } = await supabase
             .from("roteiros")
             .select("tickertitulos, conteudo_html, created_at")
-            .eq("user_id", user.id)
+            .eq("user_id", stationUid)
             .not("tickertitulos", "is", null)
             .order("created_at", { ascending: false })
             .limit(3);
@@ -664,17 +672,17 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       }
 
       // Load saved broadcast data
-      const { data: us } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
+      const { data: us } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
       if (us?.cenario_config && typeof us.cenario_config === "object") {
         const bc = (us.cenario_config as any).broadcast;
         if (bc) setData({ ...defaultBroadcast, ...bc });
       }
     })();
-  }, [user]);
+  }, [stationUid]);
 
   // Detect program change every 60s — refresh locutor + reset override on switch
   useEffect(() => {
-    if (!user) return;
+    if (!stationUid) return;
     const refreshActiveProgram = async () => {
       const now = new Date();
       const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:00`;
@@ -682,7 +690,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       const { data: progs } = await supabase
         .from("programas")
         .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana")
-        .eq("user_id", user.id)
+        .eq("user_id", stationUid)
         .eq("ativo", true)
         .lte("horario_inicio", nowTime)
         .gte("horario_fim", nowTime)
@@ -795,12 +803,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   // Lista de roteiros disponíveis para escolher a fonte das notícias do ticker
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const targetId = stationUid || user?.id;
+      if (!targetId) return;
       const { data: rows } = await supabase
         .from("roteiros")
         .select("id, programa_nome, tipo_programa, data_programa, created_at, tickertitulos")
-        .eq("user_id", user.id)
+        .eq("user_id", targetId)
         .order("created_at", { ascending: false })
         .limit(40);
       setRoteirosOptions(
@@ -923,24 +931,24 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo, sponsorLogos]);
 
   const handleSave = useCallback(async (payload?: BroadcastData) => {
-    if (!user) return;
+    if (!stationUid) return;
     setSaving(true);
     const toastId = toast("Atualizando XML...", { icon: <RefreshCw size={14} className="animate-spin" /> });
     try {
-      const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
+      const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
       const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
       const nextData = payload || latestDataRef.current;
       
       await supabase.from("user_settings").update({
         cenario_config: { ...existing, broadcast: nextData } as any,
-      }).eq("user_id", user.id);
+      }).eq("user_id", stationUid);
 
       toast.success("XML atualizado!", { id: toastId });
     } catch {
       toast.error("Erro ao salvar", { id: toastId });
     }
     setSaving(false);
-  }, [user]);
+  }, [stationUid]);
 
   const onFieldBlur = useCallback(() => {
     handleSave();
@@ -951,14 +959,14 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   // backend em silêncio, para o XML do vMix sempre servir texto atualizado.
   const [tickerSyncedAt, setTickerSyncedAt] = useState<Date | null>(null);
   useEffect(() => {
-    if (!user) return;
+    if (!stationUid) return;
     const syncTicker = async () => {
       try {
         await loadInitialData();
         const { data: cur } = await supabase
           .from("user_settings")
           .select("cenario_config")
-          .eq("user_id", user.id)
+          .eq("user_id", stationUid)
           .maybeSingle();
         const existing = (cur?.cenario_config && typeof cur.cenario_config === "object")
           ? cur.cenario_config as Record<string, any>
@@ -971,7 +979,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         await supabase
           .from("user_settings")
           .update({ cenario_config: { ...existing, broadcast } as any })
-          .eq("user_id", user.id);
+          .eq("user_id", stationUid);
         setTickerSyncedAt(new Date());
       } catch {
         /* silencioso — próxima janela de 5min tenta de novo */
@@ -980,7 +988,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     void syncTicker();
     const id = setInterval(syncTicker, 5 * 60 * 1000);
     return () => clearInterval(id);
-  }, [user, loadInitialData]);
+  }, [stationUid, loadInitialData]);
 
   // ── Módulo A SEGUIR: envio contínuo em backend ──
   // Quando habilitado, o XML é regerado no backend (serve-xml-broadcast
@@ -989,12 +997,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   // registramos o último envio para o usuário acompanhar.
   const [aSeguirSentAt, setASeguirSentAt] = useState<Date | null>(null);
   useEffect(() => {
-    if (!user || !data.aSeguirEnabled) return;
+    if (!stationUid || !data.aSeguirEnabled) return;
     const every = Math.max(15, Number(data.aSeguirRefreshSeconds) || 60) * 1000;
     let cancelled = false;
     const push = async () => {
       try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user.id}&aseguir=1&t=${Date.now()}`;
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${stationUid}&aseguir=1&t=${Date.now()}`;
         await fetch(url, { cache: "no-store" });
         if (!cancelled) setASeguirSentAt(new Date());
       } catch {
@@ -1004,37 +1012,37 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     void push();
     const timer = setInterval(push, every);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [user, data.aSeguirEnabled, data.aSeguirRefreshSeconds]);
+  }, [stationUid, data.aSeguirEnabled, data.aSeguirRefreshSeconds]);
 
 
 
 
   const handleInsertNow = useCallback(async () => {
-    if (!user || !insertLiveArt) return;
+    if (!stationUid || !insertLiveArt) return;
     setInsertingNow(true);
     try {
-      const { data: cur } = await supabase.from("user_settings").select("cenario_config").eq("user_id", user.id).maybeSingle();
+      const { data: cur } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
       const existing = (cur?.cenario_config && typeof cur.cenario_config === "object") ? cur.cenario_config as Record<string, any> : {};
       const broadcast = { ...(existing.broadcast || {}), insertLiveManualUntil: new Date(Date.now() + 30_000).toISOString() };
-      await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", user.id);
+      await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", stationUid);
       toast.success("Insert Live ativo por 30 segundos!");
       setTimeout(() => setInsertingNow(false), 30_000);
     } catch {
       toast.error("Erro ao inserir");
       setInsertingNow(false);
     }
-  }, [user, insertLiveArt]);
+  }, [stationUid, insertLiveArt]);
 
   const [uploadingBg, setUploadingBg] = useState(false);
   const handleBgUpload = useCallback(async (file: File) => {
-    if (!user || !file) return;
+    if (!stationUid || !file) return;
     if (file.type !== "image/png") {
       toast.error("A imagem deve ser .png");
       return;
     }
     setUploadingBg(true);
     try {
-      const path = `broadcast/${user.id}/assunto-bg-${Date.now()}.png`;
+      const path = `broadcast/${stationUid}/assunto-bg-${Date.now()}.png`;
       const { error } = await supabase.storage
         .from("empresa-assets")
         .upload(path, file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
@@ -1462,11 +1470,11 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                       onChange={async e => {
                         const val = e.target.value;
                         setData({ ...data, locutor_override: val });
-                        if (val.trim().length >= 2 && user) {
+                        if (val.trim().length >= 2 && stationUid) {
                           const { data: results } = await supabase
                             .from("apresentadores")
                             .select("nome, instagram, foto")
-                            .eq("user_id", user.id)
+                            .eq("user_id", stationUid)
                             .ilike("nome", `%${val.trim()}%`)
                             .limit(5);
                           setLocutorSearchResults(results || []);
@@ -1518,7 +1526,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             {(data.tituloMode || "simples") === "web" && (
               <div className="p-6 rounded-2xl bg-white" style={cardStyle}>
                 <SectionHeader n="01" label="Título Web · Mensagens Rotativas" color={CYAN} />
-                <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
+                <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={stationUid} />
               </div>
             )}
           </div>

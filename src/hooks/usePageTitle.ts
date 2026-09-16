@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 
 let cachedEmpresaNome: string | null = null;
 let cachedEmpresaLogo: string | null = null;
@@ -29,13 +30,22 @@ export function usePageTitle(pageName: string) {
       return;
     }
     if (!user) return;
+    const acc = findClientAccountById(user.id) || findClientAccountByEmail(user.email);
+    if (acc?.nome) {
+      cachedEmpresaNome = acc.nome;
+      setEmpresaNome(acc.nome);
+    }
+    const rawUid = acc?.parentUserId || acc?.id || user.id;
+    const targetUid = rawUid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUid) ? rawUid : null;
+    if (!targetUid) return;
+
     supabase
       .from("empresa_config")
       .select("nome, logo")
-      .eq("user_id", user.id)
+      .eq("user_id", targetUid)
       .maybeSingle()
       .then(({ data }) => {
-        const nome = data?.nome || "NexoHub";
+        const nome = data?.nome || acc?.nome || "NexoHub";
         cachedEmpresaNome = nome;
         setEmpresaNome(nome);
 

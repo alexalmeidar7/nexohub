@@ -115,6 +115,16 @@ export function useLayoutColors() {
   // Resolve effective user id (parent for sub-users)
   useEffect(() => {
     if (!user) return;
+    const acc = findClientAccountById(user.id) || findClientAccountByEmail(user.email);
+    if (acc?.parentUserId) {
+      setEffectiveUserId(acc.parentUserId);
+      return;
+    }
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+    if (!isUuid) {
+      setEffectiveUserId(acc?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(acc.id) ? acc.id : null);
+      return;
+    }
     supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle().then(({ data }) => {
       if (data?.ativo && data.parent_user_id) {
         setEffectiveUserId(data.parent_user_id);
@@ -125,12 +135,11 @@ export function useLayoutColors() {
   }, [user]);
 
   const fetchColors = useCallback(() => {
-    if (!effectiveUserId && !user) return;
-    const targetId = effectiveUserId || user?.id;
+    if (!effectiveUserId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(effectiveUserId)) return;
     supabase
       .from("user_settings")
       .select("dashboard_items")
-      .eq("user_id", targetId)
+      .eq("user_id", effectiveUserId)
       .maybeSingle()
       .then(({ data }) => {
         if (

@@ -1,11 +1,22 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 
 export function useUserSlug(userId?: string) {
-  const [slug, setSlug] = useState<string | null>(null);
+  const [slug, setSlug] = useState<string | null>(() => {
+    if (!userId) return null;
+    const acc = findClientAccountById(userId) || findClientAccountByEmail(userId);
+    return acc?.slug || null;
+  });
 
   useEffect(() => {
     if (!userId) return;
+    const acc = findClientAccountById(userId) || findClientAccountByEmail(userId);
+    if (acc?.slug) {
+      setSlug(acc.slug);
+      return;
+    }
+    const resolvedId = acc?.parentUserId || acc?.id || userId;
     (async () => {
       // O slug no nexohub é derivado do nome da rádio na empresa_config quando não há um campo explícito,
       // mas o App.tsx usa :userSlug vindo da URL. Para fins de linkagem de endpoints,
@@ -13,7 +24,7 @@ export function useUserSlug(userId?: string) {
       const { data } = await supabase
         .from("empresa_config")
         .select("nome")
-        .eq("user_id", userId)
+        .eq("user_id", resolvedId)
         .maybeSingle();
       
       if (data?.nome) {
@@ -25,11 +36,12 @@ export function useUserSlug(userId?: string) {
           .slice(0, 32);
         setSlug(cleanSlug);
       } else {
-        setSlug(userId.slice(0, 8));
+        setSlug(resolvedId.slice(0, 8));
       }
     })();
   }, [userId]);
 
   return slug;
 }
+
 

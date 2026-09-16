@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Mail, Trash2, Bell, ChevronRight, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AdminMessage {
@@ -33,11 +34,22 @@ export default function MessageNotification() {
   useEffect(() => {
     if (!user) return;
 
+    const acc = (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user.email));
+    const rawUid = acc?.parentUserId || acc?.id || user?.id || null;
+    const targetUid = rawUid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUid) ? rawUid : null;
+
     const fetchMessages = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("admin_messages")
-        .select("id, subject, message, is_read, created_at")
-        .or(`recipient_id.eq.${user.id},is_broadcast.eq.true`)
+        .select("id, subject, message, is_read, created_at");
+
+      if (targetUid) {
+        query = query.or(`recipient_id.eq.${targetUid},is_broadcast.eq.true`);
+      } else {
+        query = query.eq("is_broadcast", true);
+      }
+
+      const { data } = await query
         .order("created_at", { ascending: false })
         .limit(20);
       if (data) setMessages(data as AdminMessage[]);
@@ -46,13 +58,13 @@ export default function MessageNotification() {
     fetchMessages();
 
     const channel = supabase
-      .channel(`user-messages-${user.id}`)
+      .channel(`user-messages-${targetUid || user.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "admin_messages" },
         (payload) => {
           const msg = payload.new as any;
-          if (msg.recipient_id === user.id || msg.is_broadcast) {
+          if ((targetUid && msg.recipient_id === targetUid) || msg.is_broadcast) {
             setMessages((prev) => [msg as AdminMessage, ...prev].slice(0, 20));
           }
         }

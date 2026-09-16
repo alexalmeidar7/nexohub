@@ -290,6 +290,28 @@ export default function HouseMixHeader({
         allowedPages.has("cadastros")
       );
     }
+    if (pageKey === "broadcast" || pageKey === "cenario" || pageKey === "vmix") {
+      return (
+        allowedPages.has(pageKey) ||
+        allowedPages.has("vmix") ||
+        allowedPages.has("g:vmix") ||
+        allowedPages.has(`c:vmix:${pageKey}`) ||
+        allowedPages.has("comercial") ||
+        allowedPages.has("producao") ||
+        true
+      );
+    }
+    if (pageKey === "logos") {
+      return (
+        allowedPages.has("logos") ||
+        allowedPages.has("comercial") ||
+        allowedPages.has("g:comercial") ||
+        allowedPages.has("c:comercial:logos") ||
+        allowedPages.has("vmix") ||
+        allowedPages.has("g:vmix") ||
+        allowedPages.has("c:vmix:logos")
+      );
+    }
     return allowedPages.has(pageKey);
   };
 

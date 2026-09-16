@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { defaultPlayerColors, type PlayerColors, type ScreenBgConfig, buildBgStyle, defaultScreenBg } from "@/components/PlayerLayoutCustomizer";
 
 type ScreenTab = "loading" | "login" | "home" | "live" | "catalog";
@@ -49,7 +50,9 @@ export function usePlayerColors(externalUserId?: string | null) {
 
   // If an explicit externalUserId is provided (public/slug mode), it takes priority
   // over the logged-in user to prevent cross-user color contamination.
-  const effectiveUserId = externalUserId || user?.id || null;
+  const acc = (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user.email));
+  const rawTargetId = externalUserId || acc?.parentUserId || acc?.id || user?.id || null;
+  const effectiveUserId = rawTargetId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawTargetId) ? rawTargetId : null;
 
   const fetchColors = useCallback(async () => {
     if (!effectiveUserId) return;

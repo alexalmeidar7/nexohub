@@ -19,6 +19,7 @@ import { isCulturaFmXmlPayload, culturaFmXmlToPseudoXml } from "@/lib/culturaFmX
 import { fetchArtistImageCached } from "@/lib/artistImageCache";
 import { matchesMusicException } from "@/lib/musicExceptions";
 import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 
 
 
@@ -122,6 +123,9 @@ function getCurrentProgram(
 
 export function useGlobalMusicSync(enabled: boolean = true) {
   const { user } = useAuth();
+  const acc = (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user?.email));
+  const stationUserId = acc?.parentUserId || acc?.id || user?.id;
+
   const coverCacheRef = useRef<Record<string, string>>({});
   const cachedSettingsRef = useRef<{ url: string | null; mode: string; localFileName: string | null; localStoragePath: string | null }>({
     url: null,
@@ -140,9 +144,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
   useEffect(() => {
     if (!user || !enabled) return;
-    const MUSIC_DATA_KEY = musicDataKey(user.id)!;
-    const MUSIC_START_KEY = musicStartKey(user.id)!;
-    const BOT_XML_LAST_RUN_KEY = botXmlLastRunKey(user.id)!;
+    const targetId = stationUserId || user.id;
+    const MUSIC_DATA_KEY = musicDataKey(targetId)!;
+    const MUSIC_START_KEY = musicStartKey(targetId)!;
+    const BOT_XML_LAST_RUN_KEY = botXmlLastRunKey(targetId)!;
 
     // Quando o XML devolve "STANDBY MUSICAL" (título ou artista), usamos a
     // foto do locutor do programa que está no ar como capa/imagem do artista.
@@ -155,7 +160,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         const { data } = await supabase
           .from("programas")
           .select("horario_inicio, horario_fim, dias_semana, ativo, variavel, data_variavel, apresentadores(foto)")
-          .eq("user_id", user.id)
+          .eq("user_id", targetId)
           .eq("ativo", true)
           .ilike("estudio", "%fm%");
         const d = new Date();
@@ -194,10 +199,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           excecao: matchedExcecao, // Store exception details for other widgets
         };
 
-        writeMusicData(user.id, masked);
-        writeMusicStart(user.id, Date.now());
-        if (user?.id) {
-          void mergeUserDashboardItems(user.id, {
+        writeMusicData(targetId, masked);
+        writeMusicStart(targetId, Date.now());
+        if (targetId) {
+          void mergeUserDashboardItems(targetId, {
             music_current_title: "",
             music_current_artist: "",
             music_current_cover: matchedExcecao.capa_url || photo || "",
@@ -213,8 +218,8 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         const photo = await getOnAirPresenterPhoto();
         if (photo) data.capa = photo;
         applyMusicData(data);
-        if (photo && user?.id) {
-          void mergeUserDashboardItems(user.id, {
+        if (photo && targetId) {
+          void mergeUserDashboardItems(targetId, {
             music_current_title: data.titulo,
             music_current_artist: data.artista,
             music_current_cover: photo,
@@ -244,13 +249,13 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         const { data: programas } = await supabase
           .from("programas")
           .select("nome, horario_inicio, horario_fim, dias_semana, variavel, data_variavel, ativo")
-          .eq("user_id", user.id)
+          .eq("user_id", targetId)
           .eq("ativo", true);
 
         const programa = getCurrentProgram(programas || []);
 
         const { error } = await supabase.from("musicas_tocadas").upsert({
-          user_id: user.id,
+          user_id: targetId,
           dia: day,
           horario: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`,
           programa,
@@ -304,12 +309,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             }
           }
           const now = songStartTime || Date.now();
-          writeMusicData(user.id, data);
-          writeMusicStart(user.id, now);
+          writeMusicData(targetId, data);
+          writeMusicStart(targetId, now);
 
           (async () => {
             await applyTrackChangeWithCuriosityGuard({
-              userId: user.id,
+              userId: targetId,
               now,
               data,
               merge: mergeUserDashboardItems,
@@ -318,7 +323,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
                   body: {
                     artista: data.artista,
                     musica: data.titulo,
-                    userId: user.id,
+                    userId: targetId,
                     deezerArtistImg: data.capa,
                   },
                 });
@@ -330,10 +335,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           })();
         }
       } else if (data.capa && (!prev?.capa || prev.capa !== data.capa)) {
-        writeMusicData(user.id, { ...(prev as any), capa: data.capa });
+        writeMusicData(targetId, { ...(prev as any), capa: data.capa });
         (async () => {
           try {
-            await mergeUserDashboardItems(user.id, { music_current_cover: data.capa });
+            await mergeUserDashboardItems(targetId, { music_current_cover: data.capa });
           } catch {}
         })();
       }
@@ -375,11 +380,11 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           if (!sameTrack) return;
 
           if (data.capa && cur.capa !== data.capa) {
-            writeMusicData(user.id, { ...cur, capa: data.capa });
+            writeMusicData(targetId, { ...cur, capa: data.capa });
           }
 
-          if (user?.id) {
-            void mergeUserDashboardItems(user.id, {
+          if (targetId) {
+            void mergeUserDashboardItems(targetId, {
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
@@ -433,12 +438,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           supabase
             .from("user_settings")
             .select("music_xml_url, music_source_mode, dashboard_items, infomusic_excecoes_capa_url, infomusic_excecoes_artista_url")
-            .eq("user_id", user.id)
+            .eq("user_id", targetId)
             .maybeSingle(),
           supabase
             .from("infomusic_excecoes")
             .select("id, termo, capa_url, artista_url, background_url")
-            .eq("user_id", user.id)
+            .eq("user_id", targetId)
         ]);
 
         const settings = settingsRes.data;
@@ -474,8 +479,8 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         // fall back to the legacy flat path for older tenants.
         const candidates = [
           localStoragePath,
-          `${user.id}/local-xml-${user.id}.xml`,
-          `local-xml-${user.id}.xml`,
+          `${targetId}/local-xml-${targetId}.xml`,
+          `local-xml-${targetId}.xml`,
         ].filter(Boolean) as string[];
         for (const filePath of candidates) {
           try {
@@ -492,9 +497,9 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             if (!rawText) continue;
             // Jornal FM: se o arquivo local é TXT ("ARTISTA - MUSICA"),
             // convertemos on-the-fly para o pseudo-XML antes de parsear.
-            const text = isJornalFmTxtPayload(user.id, rawText)
+            const text = isJornalFmTxtPayload(targetId, rawText)
               ? (jornalFmTxtToPseudoXml(rawText) ?? rawText)
-              : isCulturaFmXmlPayload(user.id, rawText)
+              : isCulturaFmXmlPayload(targetId, rawText)
               ? (culturaFmXmlToPseudoXml(rawText) ?? rawText)
               : rawText;
             const data = parseXml(text);
@@ -511,7 +516,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             }
             lastLocalSyncAtRef.current = Date.now();
             void processTrackData(data);
-            writeBotXmlLastRun(user.id, Date.now());
+            writeBotXmlLastRun(targetId, Date.now());
             return true;
           } catch {
             // try next candidate
@@ -544,7 +549,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
         onlineStoppedRef.current = false;
         void processTrackData(data);
-        writeBotXmlLastRun(user.id, Date.now());
+        writeBotXmlLastRun(targetId, Date.now());
         return "ok";
       };
 
@@ -557,7 +562,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       if (!localSynced && onlineResult !== "ok") {
         try {
           const targetUids = [
-            user.id,
+            targetId,
             "d17e65af-e407-466f-9b60-b55c43399513", // Positiva FM 99.1
           ];
 
@@ -609,7 +614,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           }
 
           if (foundTrack) {
-            const cur = readMusicData(user.id);
+            const cur = readMusicData(targetId);
             const isSameTrack = cur && cur.titulo === foundTrack.titulo && cur.artista === foundTrack.artista;
             if (!isSameTrack) {
               const initialCover = getTrackCoverSync(foundTrack.titulo, foundTrack.artista) || "";
@@ -636,7 +641,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         localStorage.removeItem(MUSIC_START_KEY);
         if (hadTrack) {
           try {
-            await mergeUserDashboardItems(user.id, {
+            await mergeUserDashboardItems(targetId, {
               music_start_time: null,
               music_current_title: "",
               music_current_artist: "",

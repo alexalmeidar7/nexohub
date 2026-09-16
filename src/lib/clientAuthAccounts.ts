@@ -86,7 +86,8 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     parentEmail: "positivafm@positivafm.com.br",
     allowedModules: [
       "dashboard", "programas", "apresentadores", "musica", "agenda",
-      "sorteios", "promocoes", "testemunhais", "logos", "site", "comercial"
+      "sorteios", "promocoes", "testemunhais", "logos", "site", "comercial",
+      "broadcast", "vmix", "cenario"
     ],
     layoutColors: {
       cardBgColor: "#d8ff3e",
@@ -136,7 +137,8 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     parentEmail: "interativafmgynaovivo@gmail.com",
     allowedModules: [
       "dashboard", "programas", "apresentadores", "musica", "agenda",
-      "sorteios", "promocoes", "testemunhais", "logos", "site", "comercial"
+      "sorteios", "promocoes", "testemunhais", "logos", "site", "comercial",
+      "broadcast", "vmix", "cenario"
     ],
     layoutColors: {
       cardBgColor: "#ffffff",

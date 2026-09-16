@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Copy, Check, Loader2, Smile, Save } from "lucide-react";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 
 const CYAN = "#00BFF0";
 const NAVY_BORDER = "rgba(255,255,255,0.08)";
@@ -31,6 +32,9 @@ interface Props {
 }
 
 export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, userId }: Props) {
+  const acc = (userId && findClientAccountById(userId)) || (userId && findClientAccountByEmail(userId));
+  const stationUserId = acc?.parentUserId || acc?.id || userId;
+
   const [programasList, setProgramasList] = useState<Array<{ id: string; nome: string }>>([]);
   const [selectedProgramaId, setSelectedProgramaId] = useState<string | null>(activeProgramaId);
   const [selectedProgramaNome, setSelectedProgramaNome] = useState<string>(programaNome || "");
@@ -58,18 +62,18 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
 
   // Load all user programs for the selector
   useEffect(() => {
-    if (!userId) return;
+    if (!stationUserId) return;
     (async () => {
       const { data } = await supabase
         .from("programas")
         .select("id, nome")
-        .eq("user_id", userId)
+        .eq("user_id", stationUserId)
         .order("nome", { ascending: true });
       setProgramasList((data as any) || []);
       const { data: cfg } = await supabase
         .from("broadcast_assuntos")
         .select("programa_id, mensagens")
-        .eq("user_id", userId);
+        .eq("user_id", stationUserId);
       const ids = new Set<string>();
       (cfg || []).forEach((row: any) => {
         const arr = Array.isArray(row.mensagens) ? row.mensagens : [];
@@ -77,7 +81,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       });
       setConfiguredIds(ids);
     })();
-  }, [userId]);
+  }, [stationUserId]);
 
   // Load required web fonts once for preview
   useEffect(() => {
@@ -120,7 +124,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
 
   // Load selected program assuntos
   useEffect(() => {
-    if (!userId || !selectedProgramaId) {
+    if (!stationUserId || !selectedProgramaId) {
       setMensagens(["", "", ""]);
       setEnabled([true, true, true]);
       setFontFamily("Inter");
@@ -131,7 +135,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       const { data } = await supabase
         .from("broadcast_assuntos")
         .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color")
-        .eq("user_id", userId)
+        .eq("user_id", stationUserId)
         .eq("programa_id", selectedProgramaId)
         .maybeSingle();
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
@@ -147,12 +151,12 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setTextColor(((data as any)?.text_color as string) || "#000000");
       setLoading(false);
     })();
-  }, [userId, selectedProgramaId]);
+  }, [stationUserId, selectedProgramaId]);
 
   const publicUrl = useMemo(() => {
-    if (!userId) return "";
-    return `${window.location.origin}/vmix/assunto/${userId}`;
-  }, [userId]);
+    if (!stationUserId) return "";
+    return `${window.location.origin}/vmix/assunto/${stationUserId}`;
+  }, [stationUserId]);
 
   const copyUrl = async () => {
     if (!publicUrl) return;
@@ -185,7 +189,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   };
 
   const handleSave = async () => {
-    if (!userId || !selectedProgramaId) {
+    if (!stationUserId || !selectedProgramaId) {
       toast.error("Selecione um programa para salvar os assuntos.");
       return;
     }
@@ -195,7 +199,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       .from("broadcast_assuntos")
       .upsert(
         {
-          user_id: userId,
+          user_id: stationUserId,
           programa_id: selectedProgramaId,
           mensagens: payload,
           mensagens_enabled: enabled,
