@@ -7,6 +7,7 @@ import { getProgramas, getProgramasSync, findCurrentProgram } from "@/components
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
 
 export interface FloatingOnAirPresenterProps {
   isBehindPages?: boolean;
@@ -43,11 +44,14 @@ export default function FloatingOnAirPresenter({
     const syncPrograms = getProgramasSync(targetUid, user?.email);
     const current = findCurrentProgram(syncPrograms);
 
-    const progNome = current?.programa?.nome || syncDb?.currentProgram?.nome || "Programação Normal";
-    const hInicio = current?.programa?.horarioInicio || syncDb?.currentProgram?.horario_inicio || "00:00";
-    const hFim = current?.programa?.horarioFim || syncDb?.currentProgram?.horario_fim || "23:59";
-    const apNome = syncDb?.currentPresenter?.nome || "—";
-    const apFoto = syncDb?.currentPresenter?.foto || "";
+    const active = current?.programa || syncDb?.currentProgram;
+    const progNome = active?.nome || "Programação Normal";
+    const hInicio = active?.horarioInicio || active?.horario_inicio || "00:00";
+    const hFim = active?.horarioFim || active?.horario_fim || "23:59";
+
+    const ap = resolvePresenterForProgram(active, syncDb?.apresentadores || [], targetUid || user?.email);
+    const apNome = ap?.nome || "—";
+    const apFoto = ap?.foto || "";
 
     return {
       programaNome: progNome,
@@ -60,6 +64,7 @@ export default function FloatingOnAirPresenter({
 
   const [showNextProg, setShowNextProg] = useState(false);
   const [nextProgInfo, setNextProgInfo] = useState<OnAirDisplayState | null>(() => {
+    const syncDb = getStationDatabaseSync(targetUid || user?.email);
     const syncPrograms = getProgramasSync(targetUid, user?.email);
     if (syncPrograms && syncPrograms.length > 0) {
       const mapped = syncPrograms.map((p) => ({
@@ -70,12 +75,13 @@ export default function FloatingOnAirPresenter({
       }));
       const { next } = resolveEffectiveOnAir(mapped, new Date());
       if (next) {
+        const nextAp = resolvePresenterForProgram(next, syncDb?.apresentadores || [], targetUid || user?.email);
         return {
           programaNome: next.nome || "A Seguir",
           horarioInicio: next.horario_inicio || next.horarioInicio || "00:00",
           horarioFim: next.horario_fim || next.horarioFim || "23:59",
-          locutorNome: "—",
-          locutorFoto: "",
+          locutorNome: nextAp?.nome || "—",
+          locutorFoto: nextAp?.foto || "",
         };
       }
     }
@@ -136,28 +142,7 @@ export default function FloatingOnAirPresenter({
       }
 
       if (nextProg) {
-        const nextApId =
-          nextProg.apresentador_id ||
-          nextProg.apresentadorId ||
-          nextProg.apresentadores_ids?.[0] ||
-          nextProg.apresentadoresIds?.[0];
-
-        let nextAp = apresentadoresData.find((a) => a.id === nextApId);
-        if (!nextAp && nextProg.nome) {
-          nextAp = apresentadoresData.find(
-            (a) =>
-              a.nome &&
-              (nextProg.nome.toLowerCase().includes(a.nome.toLowerCase()) ||
-                a.nome.toLowerCase().includes(nextProg.nome.toLowerCase()))
-          );
-        }
-
-        if (!nextAp || !nextAp.foto) {
-          const apWithPhoto = apresentadoresData.find((a) => a.foto && a.foto.trim() !== "");
-          if (apWithPhoto) {
-            nextAp = apWithPhoto;
-          }
-        }
+        const nextAp = resolvePresenterForProgram(nextProg, apresentadoresData, uid || targetEmail);
 
         setNextProgInfo({
           programaNome: nextProg.nome || "A Seguir",
@@ -169,34 +154,7 @@ export default function FloatingOnAirPresenter({
       }
 
       if (activeProg) {
-        const apId =
-          activeProg.apresentador_id ||
-          activeProg.apresentadorId ||
-          activeProg.apresentadores_ids?.[0] ||
-          activeProg.apresentadoresIds?.[0];
-
-        let ap = apresentadoresData.find((a) => a.id === apId);
-        if (!ap && activeProg.nome) {
-          ap = apresentadoresData.find(
-            (a) =>
-              a.nome &&
-              (activeProg.nome.toLowerCase().includes(a.nome.toLowerCase()) ||
-                a.nome.toLowerCase().includes(activeProg.nome.toLowerCase()))
-          );
-        }
-
-        // If program has no specific presenter (e.g. musical block), select the station's featured presenter with photo
-        if (!ap || !ap.foto) {
-          const syncDb = getStationDatabaseSync(uid || targetEmail);
-          if (syncDb?.currentPresenter?.foto) {
-            ap = syncDb.currentPresenter as any;
-          } else {
-            const apWithPhoto = apresentadoresData.find((a) => a.foto && a.foto.trim() !== "");
-            if (apWithPhoto) {
-              ap = apWithPhoto;
-            }
-          }
-        }
+        const ap = resolvePresenterForProgram(activeProg, apresentadoresData, uid || targetEmail);
 
         const nextState: OnAirDisplayState = {
           programaNome: activeProg.nome || "Programação Normal",
@@ -228,15 +186,12 @@ export default function FloatingOnAirPresenter({
           }, 220);
         }
       } else {
-        // Fallback to station DB
-        const syncDb = getStationDatabaseSync(uid || targetEmail);
-        if (syncDb?.currentPresenter) {
-          setOnAirInfo((prev) => ({
-            ...prev,
-            locutorNome: syncDb.currentPresenter?.nome || prev.locutorNome,
-            locutorFoto: syncDb.currentPresenter?.foto || prev.locutorFoto,
-          }));
-        }
+        setOnAirInfo((prev) => ({
+          ...prev,
+          programaNome: "Programação Normal",
+          locutorNome: "—",
+          locutorFoto: "",
+        }));
       }
     } catch {}
   }, [targetUid, user, targetEmail, timezone]);

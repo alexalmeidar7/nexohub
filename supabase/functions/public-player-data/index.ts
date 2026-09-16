@@ -306,15 +306,45 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Encontra locutor do programa NO AR agora
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const diaAtual = dayNames[now.getDay()];
-    const todayStr = now.toISOString().slice(0, 10);
+    // Encontra locutor do programa NO AR agora no fuso da emissora
+    const stationTz = empresaRes.data?.timezone || "America/Sao_Paulo";
+    let localHour = now.getUTCHours();
+    let localMin = now.getUTCMinutes();
+    let diaAtual = "";
+    let todayStr = "";
+    try {
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: stationTz,
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour12: false,
+      });
+      const parts = fmt.formatToParts(now);
+      const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+      const wdMap: Record<string, string> = {
+        Sun: "Domingo", Mon: "Segunda", Tue: "Terça", Wed: "Quarta", Thu: "Quinta", Fri: "Sexta", Sat: "Sábado"
+      };
+      const hRaw = parseInt(get("hour"), 10);
+      localHour = Number.isFinite(hRaw) ? hRaw % 24 : localHour;
+      localMin = parseInt(get("minute"), 10) || localMin;
+      diaAtual = wdMap[get("weekday")] || "Segunda";
+      todayStr = `${get("year")}-${get("month")}-${get("day")}`;
+    } catch {
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      diaAtual = dayNames[now.getDay()];
+      todayStr = now.toISOString().slice(0, 10);
+    }
+    const localTime = `${String(localHour).padStart(2, "0")}:${String(localMin).padStart(2, "0")}`;
+
     const currentProgram = (programasRes.data || []).find((p: any) => {
       const ini = String(p.horario_inicio || "").slice(0, 5);
       const fim = String(p.horario_fim || "").slice(0, 5);
       if (!ini || !fim) return false;
-      const inRange = ini <= fim ? (currentTime >= ini && currentTime <= fim) : (currentTime >= ini || currentTime <= fim);
+      const inRange = ini <= fim ? (localTime >= ini && localTime <= fim) : (localTime >= ini || localTime <= fim);
       if (!inRange) return false;
       if (p.variavel) return p.data_variavel === todayStr;
       const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];

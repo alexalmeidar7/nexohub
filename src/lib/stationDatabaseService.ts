@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { findClientAccountByEmail, findClientAccountById, ClientAccountInfo } from "./clientAuthAccounts";
 import { getClientHouseMixProgramsSync, HouseMixProgramInfo } from "./houseMixProgramasService";
+import { CANONICAL_PRESENTERS } from "./onAirPresenterResolver";
 
 export interface StationDatabaseData {
   userId: string;
@@ -71,7 +72,7 @@ export function getStationDatabaseSync(userIdOrEmailOrSlug?: string | null): Sta
       slug: acc.slug,
       channels: [],
       programas: fallbackPrograms,
-      apresentadores: [],
+      apresentadores: Object.values(CANONICAL_PRESENTERS),
       prerolls: [],
       empresa: {
         nome_fantasia: acc.nome,
@@ -142,14 +143,18 @@ export async function fetchStationDatabaseData(
         programas: Array.isArray(data.programas) && data.programas.length > 0
           ? data.programas
           : fallbackPrograms,
-        apresentadores: Array.isArray(data.apresentadores) ? data.apresentadores : [],
+        apresentadores: Array.isArray(data.apresentadores) && data.apresentadores.length > 0
+          ? data.apresentadores
+          : Object.values(CANONICAL_PRESENTERS),
         prerolls: Array.isArray(data.prerolls) ? data.prerolls : [],
         empresa: data.empresa || (acc ? { nome_fantasia: acc.nome, razao_social: acc.razaoSocial, cidade: acc.cidade } : null),
         shopProducts: Array.isArray(data.shopProducts) ? data.shopProducts : [],
         musicData: data.musicData || null,
         musicStartTime: data.musicStartTime || null,
         currentProgram: data.currentProgram || null,
-        currentPresenter: data.currentPresenter || null,
+        currentPresenter: data.currentPresenter
+          ? (CANONICAL_PRESENTERS[data.currentPresenter.id] ? { ...data.currentPresenter, foto: data.currentPresenter.foto || CANONICAL_PRESENTERS[data.currentPresenter.id].foto } : data.currentPresenter)
+          : null,
         lastUpdated: Date.now(),
       };
 

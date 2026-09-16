@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
+import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
 
 const DashboardGradeDialog = lazyRetry(() => import("./DashboardGradeDialog"));
 
@@ -214,6 +214,12 @@ export default function OnAirWidget({ compact = false, nextProgram, effectiveUse
   const liveProgress = useProgramProgress(onAir?.programa?.horarioInicio, onAir?.programa?.horarioFim);
   const [apresentadoresAtuais, setApresentadoresAtuais] = useState<ApresentadorInfo[]>(() => {
     const syncData = getStationDatabaseSync(targetUserId || user?.email);
+    if (initialCurrent?.programa) {
+      const resolved = resolvePresenterForProgram(initialCurrent.programa, syncData?.apresentadores || [], targetUserId || user?.email);
+      if (resolved.nome && resolved.nome !== "—") {
+        return [{ nome: resolved.nome, foto: resolved.foto, background_url: (resolved as any).background_url || resolved.foto }];
+      }
+    }
     if (syncData?.currentPresenter) {
       return [{ nome: syncData.currentPresenter.nome, foto: syncData.currentPresenter.foto }];
     }
@@ -221,7 +227,15 @@ export default function OnAirWidget({ compact = false, nextProgram, effectiveUse
   });
   const [apresentadorIndex, setApresentadorIndex] = useState(0);
   const [nextPrograms, setNextPrograms] = useState<Programa[]>(initialNexts);
-  const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
+  const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>(() => {
+    const syncData = getStationDatabaseSync(targetUserId || user?.email);
+    const apMap: Record<string, ApresentadorInfo> = {};
+    initialNexts.forEach(p => {
+      const res = resolvePresenterForProgram(p, syncData?.apresentadores || [], targetUserId || user?.email);
+      apMap[p.id] = { nome: res.nome || "—", foto: res.foto || "" };
+    });
+    return apMap;
+  });
   const [isHovered, setIsHovered] = useState(false);
   const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string; capa?: string; artista_url?: string }>({} as any);
   const [gradeOpen, setGradeOpen] = useState(false);
@@ -312,22 +326,20 @@ export default function OnAirWidget({ compact = false, nextProgram, effectiveUse
       const current = findCurrentProgram(filteredProgramas);
       setOnAir(current);
       if (current) {
-        const ids = current.programa.apresentadoresIds && current.programa.apresentadoresIds.length > 0 
-          ? current.programa.apresentadoresIds 
-          : [current.programa.apresentadorId];
-        
-        const list = ids
-          .map(id => apresentadoresData.find(a => a.id === id))
-          .filter(Boolean) as any[];
-        
-        if (list.length > 0) {
-          setApresentadoresAtuais(list);
-        } else if (apresentadoresData.length > 0) {
-          setApresentadoresAtuais(apresentadoresData);
+        const resolved = resolvePresenterForProgram(current.programa, apresentadoresData, uid || user?.email);
+        if (resolved.nome && resolved.nome !== "—") {
+          setApresentadoresAtuais([{ nome: resolved.nome, foto: resolved.foto, background_url: (resolved as any).background_url || resolved.foto }]);
         } else {
-          const syncDb = getStationDatabaseSync(uid || user?.email);
-          if (syncDb?.currentPresenter?.foto) {
-            setApresentadoresAtuais([{ nome: syncDb.currentPresenter.nome, foto: syncDb.currentPresenter.foto }]);
+          const ids = current.programa.apresentadoresIds && current.programa.apresentadoresIds.length > 0 
+            ? current.programa.apresentadoresIds 
+            : [current.programa.apresentadorId];
+          
+          const list = ids
+            .map(id => apresentadoresData.find(a => a.id === id))
+            .filter(Boolean) as any[];
+          
+          if (list.length > 0) {
+            setApresentadoresAtuais(list);
           } else {
             setApresentadoresAtuais([{ nome: "—", foto: "", background_url: "" }]);
           }
@@ -340,8 +352,8 @@ export default function OnAirWidget({ compact = false, nextProgram, effectiveUse
       setNextPrograms(nexts);
       const apMap: Record<string, ApresentadorInfo> = {};
       nexts.forEach(p => {
-        const ap = apresentadoresData.find(a => a.id === p.apresentadorId);
-        apMap[p.id] = { nome: ap?.nome || "—", foto: ap?.foto || "" };
+        const resNext = resolvePresenterForProgram(p, apresentadoresData, uid || user?.email);
+        apMap[p.id] = { nome: resNext.nome || "—", foto: resNext.foto || "" };
       });
       setNextApresentadores(apMap);
       setLoading(false);

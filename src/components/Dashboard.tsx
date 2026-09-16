@@ -28,6 +28,7 @@ import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAut
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import { fetchStationDatabaseData, preloadAllStationsDatabase, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { getApresentadores } from "./ApresentadorForm";
+import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
 
 
 // Lazy-load all tab pages for faster initial render
@@ -669,17 +670,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         }
         if (!foto) {
           const aps = await getApresentadores(uid, user?.email);
-          const found = current.apresentador_id ? aps.find(a => a.id === current.apresentador_id) : null;
-          if (found?.foto) {
-            foto = found.foto;
-          } else if (aps.length > 0 && aps[0].foto) {
-            foto = aps[0].foto;
-          } else {
-            const syncDb = getStationDatabaseSync(uid || user?.email);
-            if (syncDb?.currentPresenter?.foto) {
-              foto = syncDb.currentPresenter.foto;
-            }
-          }
+          const resCurrent = resolvePresenterForProgram(current, aps, uid || user?.email);
+          foto = resCurrent.foto || null;
         }
         if (!cancelled) setOnAirLocutorFoto(foto);
       }
@@ -694,11 +686,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         }
         if (!apFoto || !apNome) {
           const aps = await getApresentadores(uid, user?.email);
-          const found = next.apresentador_id ? aps.find(a => a.id === next.apresentador_id) : null;
-          if (found) {
-            if (!apNome) apNome = found.nome;
-            if (!apFoto) apFoto = found.foto;
-          }
+          const resNext = resolvePresenterForProgram(next, aps, uid || user?.email);
+          if (!apNome) apNome = resNext.nome || "";
+          if (!apFoto) apFoto = resNext.foto || null;
         }
         if (!cancelled) setNextProgram({ foto: apFoto, apresentador: apNome, programa: next.nome, inicio: next.horario_inicio, fim: next.horario_fim });
       } else if (!cancelled) setNextProgram(null);
