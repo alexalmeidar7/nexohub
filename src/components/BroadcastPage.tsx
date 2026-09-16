@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic } from "lucide-react";
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
+import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 
 
 
@@ -244,6 +245,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir" | "assuntos">("preview");
+  const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState<number>(() => Date.now());
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
   const [nextProgramInfo, setNextProgramInfo] = useState<NextProgramInfo | null>(null);
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
@@ -297,92 +300,172 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   // Load data
   const loadInitialData = useCallback(async () => {
     if (!user) return;
+    const uid = targetUserId || user.id;
     
-    // Empresa config (logo + socials + timezone)
-    const { data: emp } = await supabase
-      .from("empresa_config")
-      .select("logo, nome, instagram, facebook, youtube, site, telefone_participacao, timezone")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    let emp: any = null;
+    try {
+      // Empresa config (logo + socials + timezone + video_stream_api_url)
+      const { data: empData } = await supabase
+        .from("empresa_config")
+        .select("logo, nome, instagram, facebook, youtube, site, telefone_participacao, timezone, video_stream_api_url")
+        .eq("user_id", uid)
+        .maybeSingle();
+      emp = empData;
 
-    if (emp?.logo) setEmpresaLogo(emp.logo);
-    if (emp?.timezone) setTimezone(emp.timezone);
+      if (emp?.logo) setEmpresaLogo(emp.logo);
+      if (emp?.timezone) setTimezone(emp.timezone);
 
-    // Build social list from empresa_config
-    const socials: SocialItem[] = [];
-    if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.png" });
-    if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.png" });
-    if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.png" });
-    if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.png" });
-    if (emp?.telefone_participacao) {
-      socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.png" });
-      setWhatsappNumber(emp.telefone_participacao);
-    }
-    setEmpresaSocials(socials);
-
-    // All programs (for linking assunto background and A Seguir countdown)
-    const { data: allProgs } = await supabase
-      .from("programas")
-      .select("id, nome")
-      .eq("user_id", user.id)
-      .eq("ativo", true)
-      .order("nome");
-    if (allProgs) setAllProgramas(allProgs);
-
-    const { data: allProgsFull } = await supabase
-      .from("programas")
-      .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
-      .eq("user_id", user.id)
-      .eq("ativo", true);
-    if (allProgsFull) setAllProgramasFull(allProgsFull);
-
-
-    // Current program – match by time AND day of week
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    const nowTime = `${hh}:${mm}:00`;
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const todayName = dayNames[now.getDay()];
-
-    const { data: progs } = await supabase
-      .from("programas")
-      .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana")
-      .eq("user_id", user.id)
-      .eq("ativo", true)
-      .lte("horario_inicio", nowTime)
-      .gte("horario_fim", nowTime)
-      .contains("dias_semana", [todayName]);
-
-    const prog = progs?.find(() => true);
-    if (prog) {
-      setActiveProgramaId(prog.id);
-      setProgramaNome(prog.nome);
-      const logoUrl = prog.selo || null;
-      if (logoUrl) setProgramaLogo(logoUrl);
-
-      const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
-      if (apIds.length > 0) {
-        const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
-        if (ap) {
-          setLocutorNome(ap.nome);
-          if (ap.foto) setLocutorFoto(ap.foto);
-          if (ap.instagram) setLocutorInstagram(ap.instagram);
-          if (ap.cargo) setLocutorCargo(ap.cargo);
-        }
+      // Build social list from empresa_config
+      const socials: SocialItem[] = [];
+      if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.png" });
+      if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.png" });
+      if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.png" });
+      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.png" });
+      if (emp?.telefone_participacao) {
+        socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.png" });
+        setWhatsappNumber(emp.telefone_participacao);
       }
-
-      // Fetch sponsor logos for this program
-      const { data: logos } = await supabase
-        .from("logos_patrocinadores")
-        .select("nome, logo_url")
-        .eq("user_id", user.id)
-        .eq("programa_id", prog.id)
-        .eq("ativo", true)
-        .eq("excluido", false);
-      if (logos && logos.length > 0) setSponsorLogos(logos);
+      setEmpresaSocials(socials);
+    } catch (e) {
+      console.warn("[BroadcastPage] Empresa config load notice:", e);
     }
-  }, [user]);
+
+    try {
+      // All programs (for linking assunto background and A Seguir countdown)
+      const { data: allProgs } = await supabase
+        .from("programas")
+        .select("id, nome")
+        .eq("user_id", uid)
+        .eq("ativo", true)
+        .order("nome");
+      if (allProgs) setAllProgramas(allProgs);
+
+      const { data: allProgsFull } = await supabase
+        .from("programas")
+        .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
+        .eq("user_id", uid)
+        .eq("ativo", true);
+      if (allProgsFull) setAllProgramasFull(allProgsFull);
+
+      // Current program – match by time AND day of week
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const nowTime = `${hh}:${mm}:00`;
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const todayName = dayNames[now.getDay()];
+
+      const { data: progs } = await supabase
+        .from("programas")
+        .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana")
+        .eq("user_id", uid)
+        .eq("ativo", true)
+        .lte("horario_inicio", nowTime)
+        .gte("horario_fim", nowTime)
+        .contains("dias_semana", [todayName]);
+
+      const prog = progs?.find(() => true);
+      if (prog) {
+        setActiveProgramaId(prog.id);
+        setProgramaNome(prog.nome);
+        const logoUrl = prog.selo || null;
+        if (logoUrl) setProgramaLogo(logoUrl);
+
+        const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
+        if (apIds.length > 0) {
+          const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
+          if (ap) {
+            setLocutorNome(ap.nome);
+            if (ap.foto) setLocutorFoto(ap.foto);
+            if (ap.instagram) setLocutorInstagram(ap.instagram);
+            if (ap.cargo) setLocutorCargo(ap.cargo);
+          }
+        }
+
+        // Fetch sponsor logos for this program
+        const { data: logos } = await supabase
+          .from("logos_patrocinadores")
+          .select("nome, logo_url")
+          .eq("user_id", uid)
+          .eq("programa_id", prog.id)
+          .eq("ativo", true)
+          .eq("excluido", false);
+        if (logos && logos.length > 0) setSponsorLogos(logos);
+      }
+    } catch (e) {
+      console.warn("[BroadcastPage] Programas load notice:", e);
+    }
+
+    // Video streaming channel resolution for broadcast preview
+    let foundVideoUrl: string | null = null;
+    const isVideo = (ch: any) => {
+      const t = String(ch?.type || "").toLowerCase();
+      const u = String(ch?.url || "").toLowerCase();
+      return (
+        t === "video_live" ||
+        t === "video" ||
+        t === "tv" ||
+        t === "hls" ||
+        u.includes(".m3u8") ||
+        u.includes("video") ||
+        u.includes("youtube.com/live")
+      );
+    };
+
+    try {
+      // 1. Check Supabase streaming_channels
+      const { data: dbChannels } = await supabase
+        .from("streaming_channels")
+        .select("url, type, active, name")
+        .eq("user_id", uid)
+        .eq("active", true)
+        .order("numero_canal", { ascending: true });
+
+      const chVideo = dbChannels?.find(isVideo);
+      if (chVideo?.url) {
+        foundVideoUrl = chVideo.url.trim();
+      }
+    } catch {}
+
+    // 2. Fallback to fetchStationDatabaseData and getStationDatabaseSync
+    if (!foundVideoUrl) {
+      try {
+        const station =
+          (await fetchStationDatabaseData(userSlug)) ||
+          (await fetchStationDatabaseData(user?.email)) ||
+          (await fetchStationDatabaseData(uid)) ||
+          getStationDatabaseSync(userSlug || user?.email || uid);
+        const stVideo = station?.channels?.find((ch: any) => (ch.active ?? true) && isVideo(ch));
+        if (stVideo?.url) {
+          foundVideoUrl = stVideo.url.trim();
+        }
+      } catch (err) {
+        console.warn("[BroadcastPage] Station database channel fetch notice:", err);
+      }
+    }
+
+    // 3. Fallback to localStorage
+    if (!foundVideoUrl) {
+      try {
+        const raw = localStorage.getItem(`nexohub_streaming_channels_${uid}`);
+        if (raw) {
+          const localChannels = JSON.parse(raw);
+          const lVideo = Array.isArray(localChannels) ? localChannels.find((ch: any) => (ch.active ?? true) && isVideo(ch)) : null;
+          if (lVideo?.url) {
+            foundVideoUrl = lVideo.url.trim();
+          }
+        }
+      } catch {}
+    }
+
+    // 4. Fallback to empresa_config video_stream_api_url
+    if (!foundVideoUrl && (emp as any)?.video_stream_api_url) {
+      foundVideoUrl = (emp as any).video_stream_api_url.trim();
+    }
+
+    setVideoStreamUrl(foundVideoUrl);
+    setReloadKey(Date.now());
+  }, [user, targetUserId, userSlug]);
 
   // Load programa_assuntos (broadcast_assuntos) for active program
   useEffect(() => {
@@ -1136,7 +1219,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             return (
               <button
                 key={tabId}
-                onClick={() => setActiveTab(tabId)}
+                onClick={() => {
+                  if (tabId === "preview") {
+                    setReloadKey(Date.now());
+                  }
+                  setActiveTab(tabId);
+                }}
                 className="flex items-center justify-center gap-2 flex-1 min-w-[104px] h-9 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-colors cursor-pointer"
                 style={{
                   backgroundColor: active ? CYAN : "transparent",
@@ -1155,10 +1243,16 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
 
         {/* ── Tab panels ── */}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-10">
 
         {activeTab === "preview" && (
-        <div className="w-full max-w-[1280px] mx-auto flex flex-col gap-6 min-h-0">
+        <div 
+          className="w-full mx-auto flex flex-col items-center gap-6 min-h-0 pb-10"
+          style={{ 
+            maxWidth: "min(780px, calc((100vh - 360px) * 16 / 9))",
+            width: "100%"
+          }}
+        >
             {/* 16:9 preview stage with Tally Border */}
             <div 
               className="w-full relative rounded-2xl overflow-hidden group transition-all duration-500"
@@ -1199,21 +1293,19 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                   insertLiveArt={insertLiveArt}
                   programaAssuntos={programaAssuntos}
                   programaAssuntoRotation={programaAssuntoRotation}
+                  videoStreamUrl={videoStreamUrl}
+                  reloadKey={reloadKey}
                 />
                 
-                {/* Floating Status HUD */}
-                <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
-                  <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Master</span>
-                  </div>
-                  {insertingNow && (
+                {/* Floating Status HUD (Master badge removed as requested) */}
+                {insertingNow && (
+                  <div className="absolute top-4 left-4 flex gap-2 pointer-events-none z-20">
                     <div className="px-3 py-1.5 rounded-lg bg-[#ef4444]/90 backdrop-blur-md border border-white/20 flex items-center gap-2 shadow-lg">
                       <Youtube size={12} className="text-white" />
                       <span className="text-[10px] font-black text-white uppercase tracking-widest">LIVE ACTIVE</span>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
         </div>
@@ -2119,12 +2211,158 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 }
 
 
+/* ─── Video Live Preview (Streaming de Vídeo no frame do broadcast) ─── */
+let hlsModule: typeof import("hls.js") | null = null;
+const getHls = async () => {
+  if (!hlsModule) hlsModule = await import("hls.js");
+  return hlsModule.default;
+};
+
+function VideoLivePreview({ streamUrl, reloadKey }: { streamUrl: string; reloadKey?: number }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<any>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !streamUrl) return;
+
+    let cancelled = false;
+    setIsLoaded(false);
+    setHasError(false);
+
+    // If YouTube URL
+    const isYouTube = streamUrl.includes("youtube.com") || streamUrl.includes("youtu.be");
+    if (isYouTube) return;
+
+    (async () => {
+      try {
+        const Hls = await getHls();
+        if (cancelled) return;
+
+        if (hlsRef.current) {
+          hlsRef.current.destroy();
+          hlsRef.current = null;
+        }
+
+        const isHls = streamUrl.includes(".m3u8") || !streamUrl.match(/\.(mp4|webm|ogg)($|\?)/i);
+
+        if (isHls && Hls.isSupported()) {
+          const hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 0,
+            maxBufferLength: 4,
+            liveSyncDurationCount: 2,
+            liveMaxLatencyDurationCount: 4,
+          });
+          hlsRef.current = hls;
+          hls.loadSource(streamUrl);
+          hls.attachMedia(video);
+
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (!cancelled) {
+              video.play().catch(() => {});
+            }
+          });
+          hls.on(Hls.Events.FRAG_LOADED, () => {
+            if (!cancelled) {
+              setIsLoaded(true);
+            }
+          });
+          hls.on(Hls.Events.ERROR, (_event: any, data: any) => {
+            if (data.fatal) {
+              console.warn("[BroadcastPreview] HLS error:", data.type);
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                hls.startLoad();
+              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                hls.recoverMediaError();
+              } else {
+                setHasError(true);
+              }
+            }
+          });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = streamUrl;
+          video.addEventListener("loadeddata", () => {
+            if (!cancelled) {
+              video.play().catch(() => {});
+              setIsLoaded(true);
+            }
+          });
+          video.addEventListener("error", () => {
+            if (!cancelled) setHasError(true);
+          });
+        } else {
+          video.src = streamUrl;
+          video.addEventListener("loadeddata", () => {
+            if (!cancelled) {
+              video.play().catch(() => {});
+              setIsLoaded(true);
+            }
+          });
+          video.addEventListener("error", () => {
+            if (!cancelled) setHasError(true);
+          });
+        }
+      } catch (err) {
+        console.warn("[BroadcastPreview] Video init warning:", err);
+        setHasError(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [streamUrl, reloadKey]);
+
+  if (hasError || !streamUrl) {
+    return null;
+  }
+
+  const isYouTube = streamUrl.includes("youtube.com") || streamUrl.includes("youtu.be");
+  if (isYouTube) {
+    let videoId = "";
+    const match = streamUrl.match(/(?:v=|embed\/|shorts\/|live\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (match) videoId = match[1];
+    if (!videoId) return null;
+    return (
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${videoId}`}
+          className="w-full h-full object-cover border-0 pointer-events-none scale-105"
+          allow="autoplay; encrypted-media"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+      <video
+        ref={videoRef}
+        muted
+        autoPlay
+        playsInline
+        loop
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+}
+
 /* ─── Mockup Preview component with animations ─── */
 function MockupPreview({
   empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
   locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
   empresaSocials, composedTicker, sponsorLogos, assuntoBgUrl, insertLiveArt,
   programaAssuntos = [], programaAssuntoRotation = 7,
+  videoStreamUrl, reloadKey,
 }: {
   empresaLogo: string; programaNome: string; programaLogo: string;
   displayLocutor: string; locutorInstagram: string; locutorFoto: string;
@@ -2135,6 +2373,8 @@ function MockupPreview({
   insertLiveArt?: string;
   programaAssuntos?: string[];
   programaAssuntoRotation?: number;
+  videoStreamUrl?: string | null;
+  reloadKey?: number;
 }) {
   // Social cycling animation
   const [socialIdx, setSocialIdx] = useState(0);
@@ -2199,10 +2439,15 @@ function MockupPreview({
         boxShadow: "0 24px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
       }}
     >
+      {/* Video Streaming Preview (se o usuário tem canal de vídeo streaming cadastrado; senão, mantém preto) */}
+      {videoStreamUrl ? (
+        <VideoLivePreview streamUrl={videoStreamUrl} reloadKey={reloadKey} />
+      ) : null}
+
       {/* Safe area guides (invisible but layout-based on 1920x1080 proportions) */}
 
       {/* ── Top bar ── */}
-      <div className="absolute flex items-center justify-between" style={{ top: "5%", left: "4%", right: "4%" }}>
+      <div className="absolute z-10 flex items-center justify-between pointer-events-none" style={{ top: "5%", left: "4%", right: "4%" }}>
         {/* Logo empresa + logos patrocinadores ao lado */}
         <div className="flex items-center gap-3">
           {empresaLogo ? (
@@ -2254,7 +2499,7 @@ function MockupPreview({
       </div>
 
       {/* ── Bottom section ── */}
-      <div className="absolute" style={{ bottom: "4%", left: "4%", right: "4%" }}>
+      <div className="absolute z-10 pointer-events-none" style={{ bottom: "4%", left: "4%", right: "4%" }}>
 
         {/* Locutor + QR + Assunto + Insert Live row */}
         <div className="flex items-end gap-2">
