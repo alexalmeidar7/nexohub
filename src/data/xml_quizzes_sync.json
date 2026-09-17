@@ -1,32 +1,4 @@
 {
-  "positivafm": [
-    {
-      "id": "quiz_1",
-      "pergunta": "Qual o maior festival de música?",
-      "resposta1": "Rock in Rio",
-      "resposta2": "Lollapalooza",
-      "resposta3": "Tomorrowland",
-      "resposta4": "Coachella",
-      "resposta_correta": 1,
-      "data_quiz": "2026-09-16",
-      "horario_inicio": "00:00",
-      "horario_fim": "23:59",
-      "explicacao": "O Rock in Rio é um dos maiores do mundo."
-    }
-  ],
-  "d17e65af-e407-466f-9b60-b55c43399513": [
-    {
-      "id": "quiz_1",
-      "pergunta": "Qual o maior festival de música?",
-      "resposta1": "Rock in Rio",
-      "resposta2": "Lollapalooza",
-      "resposta3": "Tomorrowland",
-      "resposta4": "Coachella",
-      "resposta_correta": 1,
-      "data_quiz": "2026-09-16",
-      "horario_inicio": "00:00",
-      "horario_fim": "23:59",
-      "explicacao": "O Rock in Rio é um dos maiores do mundo."
-    }
-  ]
+  "positivafm": [],
+  "d17e65af-e407-466f-9b60-b55c43399513": []
 }

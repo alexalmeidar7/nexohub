@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <enquete>
-    <pergunta>Qual dessas coisas você mais demora para decidir?</pergunta>
-    <resposta1>🍽️ O que pedir para comer</resposta1>
-    <resposta2>👕 Que roupa usar</resposta2>
-    <resposta3>🎁 O que comprar de presente</resposta3>
-    <resposta4>📺 O que assistir</resposta4>
-    <resposta_correta>1</resposta_correta>
-    <horario_inicio>08:00</horario_inicio>
-    <horario_fim>12:59</horario_fim>
+    <pergunta></pergunta>
+    <resposta1></resposta1>
+    <resposta2></resposta2>
+    <resposta3></resposta3>
+    <resposta4></resposta4>
   </enquete>
 </items>

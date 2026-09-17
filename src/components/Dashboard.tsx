@@ -361,6 +361,32 @@ const pageTitle: Record<Page, string> = {
   backup: "Ferramentas — Backup / Importar",
 };
 
+const HOUSEMIX_MODULE_DISPLAY_NAMES: Partial<Record<Page, string>> = {
+  site: "Gestor de Site",
+  playerconfig: "Configuração do Player",
+  preroll: "ADS / Pré-Roll",
+  testemunhais: "Citações",
+  promocoes: "Promoções",
+  logos: "Logos",
+  configtelapromo: "Config Módulo Locutor",
+  broadcast: "Broadcast",
+  cenario: "Cenários",
+  batalha: "Batalha Musical",
+  enquete: "Enquete",
+  quiz: "Quiz",
+  cortevideo: "Cortes de Vídeo",
+  sorteios: "Sorteios",
+  blitz: "Blitz Promocionais",
+  noticias: "Roteiro de Programa",
+  musica: "Música no Ar",
+  agenda: "Agenda",
+  clientes: "Cadastro de Clientes",
+  apresentadores: "Cadastro de Participantes",
+  ouvintes: "Cadastro de Ouvintes",
+  programas: "Cadastro de Programas",
+  previsao: "Cidade Tempo",
+};
+
 interface DashboardProps {
   onLogout?: () => void;
   defaultPage?: Page;
@@ -400,7 +426,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     "apresentadores", "ouvintes", "programas", "clientes", "previsao", "sorteios",
     "blitz", "noticias", "musica", "agenda", "site", "playerconfig", "preroll",
     "testemunhais", "promocoes", "logos", "broadcast", "cenario", "batalha",
-    "enquete", "quiz", "cortevideo"
+    "enquete", "quiz", "cortevideo", "configtelapromo"
   ];
 
   // State for minimized modules (array to allow multiple)
@@ -440,7 +466,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     return "dashboard";
   });
 
-  // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda)
+  // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda, Gestor de Site, Player, Comercial, vMix, Ferramentas)
   const HOUSEMIX_WINDOW_PAGES: Page[] = [
     "clientes",
     "apresentadores",
@@ -452,6 +478,19 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     "noticias",
     "musica",
     "agenda",
+    "site",
+    "playerconfig",
+    "preroll",
+    "testemunhais",
+    "promocoes",
+    "logos",
+    "configtelapromo",
+    "broadcast",
+    "cenario",
+    "batalha",
+    "enquete",
+    "quiz",
+    "cortevideo",
   ];
   const isWindowMode = !isAdmin && HOUSEMIX_WINDOW_PAGES.includes(currentPage);
 
@@ -1638,34 +1677,38 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               )}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
               {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" isSuperAdmin={isAdmin} effectiveUserId={effectiveUserId} />}
-              {(currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && currentPage === "dashboard")) && (
                 <div className="keep-dark-layout" style={{ display: currentPage === "playerconfig" ? "block" : "none" }}>
                   <ConfiguracoesPage section="player" effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "testemunhais" || (minimizedModules.includes("testemunhais") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "testemunhais" || (minimizedModules.includes("testemunhais") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "testemunhais" ? "block" : "none" }}>
                   <TestemunhaisPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "promocoes" || (minimizedModules.includes("promocoes") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "promocoes" || (minimizedModules.includes("promocoes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "promocoes" ? "block" : "none" }}>
                   <PromocoesPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {currentPage === "configtelapromo" && <ConfigTelaPromoPage effectiveUserId={effectiveUserId} />}
-              {(currentPage === "logos" || (minimizedModules.includes("logos") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "configtelapromo" || (minimizedModules.includes("configtelapromo") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "configtelapromo" ? "block" : "none" }}>
+                  <ConfigTelaPromoPage effectiveUserId={effectiveUserId} />
+                </div>
+              )}
+              {isAdmin && (currentPage === "logos" || (minimizedModules.includes("logos") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "logos" ? "block" : "none" }}>
                   <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
               {currentPage === "shopping" && <ShoppingPage effectiveUserId={effectiveUserId} />}
-              {(currentPage === "preroll" || (minimizedModules.includes("preroll") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "preroll" || (minimizedModules.includes("preroll") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "preroll" ? "block" : "none" }}>
                   <PreRollPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "cortevideo" || (minimizedModules.includes("cortevideo") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "cortevideo" || (minimizedModules.includes("cortevideo") && currentPage === "dashboard")) && (
                 <div className={currentPage === "cortevideo" ? "h-full w-full flex flex-col flex-1 min-h-0" : ""} style={{ display: currentPage === "cortevideo" ? "flex" : "none", height: currentPage === "cortevideo" ? "100%" : undefined }}>
                   <CortesVideoPage />
                 </div>
@@ -1674,32 +1717,32 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage effectiveUserId={effectiveUserId} />}
               {currentPage === "tp" && <TeleprompterPage />}
-              {(currentPage === "cenario" || (minimizedModules.includes("cenario") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "cenario" || (minimizedModules.includes("cenario") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "cenario" ? "block" : "none" }}>
                   <CenariosPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "broadcast" || (minimizedModules.includes("broadcast") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "broadcast" || (minimizedModules.includes("broadcast") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "broadcast" ? "block" : "none" }}>
                   <BroadcastPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "batalha" || (minimizedModules.includes("batalha") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "batalha" || (minimizedModules.includes("batalha") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "batalha" ? "block" : "none" }}>
                   <BatalhaMusicalPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "enquete" || (minimizedModules.includes("enquete") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "enquete" || (minimizedModules.includes("enquete") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "enquete" ? "block" : "none" }}>
                   <EnquetePage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "quiz" || (minimizedModules.includes("quiz") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "quiz" || (minimizedModules.includes("quiz") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "quiz" ? "block" : "none" }}>
                   <QuizPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "site" || (minimizedModules.includes("site") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "site" || (minimizedModules.includes("site") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "site" ? "block" : "none" }}>
                   <SitePage effectiveUserId={effectiveUserId || user?.id || null} />
                 </div>
@@ -2105,6 +2148,321 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           </HouseMixWindow>
         )}
 
+        {/* House Mix Window Mode - Gestor de Site */}
+        {!isAdmin && (currentPage === "site" || (minimizedModules.includes("site") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – GESTOR DE SITE"
+            isOpen={currentPage === "site"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "site"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("site")) return prev;
+                return [...prev, "site"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <SitePage effectiveUserId={effectiveUserId || user?.id || null} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Configuração do Player */}
+        {!isAdmin && (currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CONFIGURAÇÃO DO PLAYER"
+            isOpen={currentPage === "playerconfig"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "playerconfig"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("playerconfig")) return prev;
+                return [...prev, "playerconfig"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <div className="keep-dark-layout">
+              <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+                <ConfiguracoesPage section="player" effectiveUserId={effectiveUserId} />
+              </Suspense>
+            </div>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - ADS / Pré-Roll */}
+        {!isAdmin && (currentPage === "preroll" || (minimizedModules.includes("preroll") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – ADS / PRÉ-ROLL"
+            isOpen={currentPage === "preroll"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "preroll"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("preroll")) return prev;
+                return [...prev, "preroll"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <PreRollPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Citações */}
+        {!isAdmin && (currentPage === "testemunhais" || (minimizedModules.includes("testemunhais") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CITAÇÕES"
+            isOpen={currentPage === "testemunhais"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "testemunhais"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("testemunhais")) return prev;
+                return [...prev, "testemunhais"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <TestemunhaisPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Promoções */}
+        {!isAdmin && (currentPage === "promocoes" || (minimizedModules.includes("promocoes") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – PROMOÇÕES"
+            isOpen={currentPage === "promocoes"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "promocoes"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("promocoes")) return prev;
+                return [...prev, "promocoes"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <PromocoesPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Logos dos Patrocinadores */}
+        {!isAdmin && (currentPage === "logos" || (minimizedModules.includes("logos") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – LOGOS DOS PATROCINADORES"
+            isOpen={currentPage === "logos"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "logos"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("logos")) return prev;
+                return [...prev, "logos"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+              <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Config Módulo Locutor */}
+        {!isAdmin && (currentPage === "configtelapromo" || (minimizedModules.includes("configtelapromo") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CONFIG MÓDULO LOCUTOR"
+            isOpen={currentPage === "configtelapromo"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "configtelapromo"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("configtelapromo")) return prev;
+                return [...prev, "configtelapromo"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <ConfigTelaPromoPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Broadcast */}
+        {!isAdmin && (currentPage === "broadcast" || (minimizedModules.includes("broadcast") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – BROADCAST"
+            isOpen={currentPage === "broadcast"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "broadcast"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("broadcast")) return prev;
+                return [...prev, "broadcast"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <BroadcastPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Cenários */}
+        {!isAdmin && (currentPage === "cenario" || (minimizedModules.includes("cenario") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CENÁRIOS"
+            isOpen={currentPage === "cenario"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "cenario"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("cenario")) return prev;
+                return [...prev, "cenario"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <CenariosPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Batalha Musical */}
+        {!isAdmin && (currentPage === "batalha" || (minimizedModules.includes("batalha") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – BATALHA MUSICAL"
+            isOpen={currentPage === "batalha"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "batalha"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("batalha")) return prev;
+                return [...prev, "batalha"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <BatalhaMusicalPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Enquete */}
+        {!isAdmin && (currentPage === "enquete" || (minimizedModules.includes("enquete") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – ENQUETE"
+            isOpen={currentPage === "enquete"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "enquete"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("enquete")) return prev;
+                return [...prev, "enquete"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <EnquetePage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Quiz */}
+        {!isAdmin && (currentPage === "quiz" || (minimizedModules.includes("quiz") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – QUIZ"
+            isOpen={currentPage === "quiz"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "quiz"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("quiz")) return prev;
+                return [...prev, "quiz"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <QuizPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Corte de Vídeo */}
+        {!isAdmin && (currentPage === "cortevideo" || (minimizedModules.includes("cortevideo") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CORTES DE VÍDEO"
+            isOpen={currentPage === "cortevideo"}
+            bodyClassName="flex-1 overflow-hidden p-0 bg-[#f8fafc] flex flex-col"
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "cortevideo"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("cortevideo")) return prev;
+                return [...prev, "cortevideo"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <CortesVideoPage />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
         {/* Minimized Modules Bar */}
         {minimizedModules.length > 0 && (currentPage === "dashboard" || isWindowMode) && (
           <div 
@@ -2123,7 +2481,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                     setMinimizedModules(prev => prev.filter(m => m !== mod));
                     setCurrentPage(mod);
                   }}
-                  title={`Restaurar ${pageTitle[mod] || mod}`}
+                  title={`Restaurar ${HOUSEMIX_MODULE_DISPLAY_NAMES[mod] || pageTitle[mod] || mod}`}
                 >
                   {/* Glowing Cyan Indicator Dot (matches window title bar) */}
                   <span className="w-2 h-2 rounded-full bg-[#38bdf8] shrink-0 shadow-[0_0_8px_#38bdf8] animate-pulse" />
@@ -2147,7 +2505,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                       if (mod === "batalha") return <Swords size={15} />;
                       if (mod === "enquete" || mod === "quiz") return <HelpCircle size={15} />;
                       if (mod === "cortevideo") return <Scissors size={15} />;
-                      if (mod === "playerconfig") return <Settings size={15} />;
+                      if (mod === "playerconfig" || mod === "configtelapromo") return <Settings size={15} />;
                       if (mod === "apresentadores") return <Mic2 size={15} />;
                       if (mod === "clientes") return <Building2 size={15} />;
                       if (mod === "ouvintes") return <Users size={15} />;
@@ -2158,7 +2516,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
 
                   {/* Title (matches window uppercase title style) */}
                   <span className="text-white text-[12px] font-bold uppercase tracking-wider truncate max-w-[220px]">
-                    {pageTitle[mod] || mod}
+                    {HOUSEMIX_MODULE_DISPLAY_NAMES[mod] || pageTitle[mod] || mod}
                   </span>
 
                   {/* XML Ativo indicator for musica */}

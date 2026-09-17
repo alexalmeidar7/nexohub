@@ -140,7 +140,10 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   };
 
   const loadData = async () => {
-    if (!ownerId) return;
+    if (!ownerId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
 
     let tList: Testemunhal[] = [];

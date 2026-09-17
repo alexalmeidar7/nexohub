@@ -443,12 +443,16 @@ export default function ConfiguracoesPage({
   const [loadingCep, setLoadingCep] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      const tid = targetUid || user.id;
-      getEmpresaConfig(tid, user.email).then(c => { setConfig(c); setLoading(false); });
-      supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria, estudio").eq("user_id", tid).eq("ativo", true).order("nome").then(({ data }) => {
-        if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L", estudio: (p as any).estudio || "" })));
-      });
+    const tid = targetUid || user?.id;
+    if (tid || user) {
+      getEmpresaConfig(tid, user?.email).then(c => { setConfig(c); setLoading(false); }).catch(() => setLoading(false));
+      if (tid) {
+        supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria, estudio").eq("user_id", tid).eq("ativo", true).order("nome").then(({ data }) => {
+          if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L", estudio: (p as any).estudio || "" })));
+        }).catch(() => {});
+      }
+    } else {
+      setLoading(false);
     }
     loadCanais();
     try {

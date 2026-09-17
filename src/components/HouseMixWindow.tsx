@@ -8,6 +8,7 @@ interface HouseMixWindowProps {
   onClose: () => void;
   onMinimize: () => void;
   children: React.ReactNode;
+  bodyClassName?: string;
 }
 
 export default function HouseMixWindow({
@@ -16,6 +17,7 @@ export default function HouseMixWindow({
   onClose,
   onMinimize,
   children,
+  bodyClassName,
 }: HouseMixWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
@@ -163,7 +165,7 @@ export default function HouseMixWindow({
       </div>
 
       {/* Window Body (scrollable with custom blue scrollbar) */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6 custom-housemix-scrollbar bg-[#f8fafc]">
+      <div className={bodyClassName || "flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6 custom-housemix-scrollbar bg-[#f8fafc]"}>
         {children}
       </div>
     </div>

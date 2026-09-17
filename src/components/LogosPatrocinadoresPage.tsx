@@ -116,7 +116,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dataUserId, setDataUserId] = useState<string | null>(() => {
-    return effectiveUserId || resolveStationUid(null, effectiveUserId, user) || user?.id || null;
+    return effectiveUserId || resolveStationUid(null, effectiveUserId, user) || user?.id || "positivafm";
   });
 
   const [programaId, setProgramaId] = useState("");
@@ -984,7 +984,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     }))
     .filter((g) => g.logos.length > 0);
 
-  if (loading || !dataUserId) {
+  if (loading) {
     return (
       <div className="nexo-scope">
         <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent overflow-hidden">
