@@ -625,14 +625,10 @@ export function getClientHouseMixProgramsSync(
   const matchedSupabase: HouseMixProgram[] = [];
   safeProgs.forEach((p) => {
     if (!p) return;
-    const matchUser = p.user_id && (p.user_id === clientObj.user_id || p.user_id === clientObj.id);
+    const matchUser = p.user_id && (p.user_id === clientObj.user_id || p.user_id === clientObj.id || p.user_id === (clientObj as any).parentUserId);
     const matchClientName = p.cliente_nome && normalizeClientKey(p.cliente_nome) === normKey;
-    const matchText =
-      (p.estudio && (p.estudio.toUpperCase().includes(normKey) || normKey.includes(p.estudio.toUpperCase()))) ||
-      (p.nome && (p.nome.toUpperCase().includes(normKey) || normKey.includes(p.nome.toUpperCase()))) ||
-      (p.descricao && p.descricao.toUpperCase().includes(normKey));
 
-    if (matchUser || matchClientName || matchText) {
+    if (matchUser || matchClientName) {
       matchedSupabase.push({
         id: p.id,
         user_id: p.user_id,
@@ -659,8 +655,8 @@ export function getClientHouseMixProgramsSync(
   const storedCustom = getStoredCustomPrograms();
   const customList = storedCustom[normKey] || (clientObj.id ? storedCustom[clientObj.id] : []) || [];
 
-  // 3. Grade padrão da emissora
-  const defaultProfile = DEFAULT_STATION_DATA[normKey] || DEFAULT_STATION_DATA["INTERATIVA FM"];
+  // 3. Grade padrão da emissora (apenas se existir perfil específico para este cliente)
+  const defaultProfile = DEFAULT_STATION_DATA[normKey];
   const defaultList: HouseMixProgram[] = (defaultProfile?.programas || []).map((def, idx) => ({
     id: `housemix_${normKey.replace(/\s+/g, "_").toLowerCase()}_${idx + 1}`,
     nome: def.nome,
@@ -689,7 +685,7 @@ export function getClientHouseMixProgramsSync(
   // 4. Resolve estúdios disponíveis
   const defaultEstudios = defaultProfile?.estudios || [
     "ESTÚDIO FM",
-    "ESTÚDIO GRAVAÇÃO & PODCAST",
+    "PODCAST",
   ];
   const customEstudios = (getStoredCustomEstudios()[normKey] || (clientObj.id ? getStoredCustomEstudios()[clientObj.id] : [])) || [];
   const programEstudios = finalProgramas.map((p) => p.estudio).filter(Boolean);

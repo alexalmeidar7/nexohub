@@ -154,6 +154,7 @@ export async function getProgramas(targetUserId?: string | null, userEmail?: str
   const acc = findClientAccountById(targetUserId) || findClientAccountByEmail(userEmail || targetUserId);
   const effectiveId = acc?.parentUserId || acc?.id || targetUserId;
   const targetSlug = acc?.slug || targetUserId;
+  const stationName = acc?.nome || acc?.razaoSocial || "";
 
   try {
     let query = supabase.from("programas").select("*");
@@ -180,6 +181,7 @@ export async function getProgramas(targetUserId?: string | null, userEmail?: str
         dataVariavel: (p as any).data_variavel || null,
         classificacaoEtaria: (p as any).classificacao_etaria || "",
         tipoPrograma: (p as any).tipo_programa || "Musical",
+        cliente: stationName || (p as any).cliente || (p as any).cliente_nome || (acc ? normalizeClientKey(acc.nome) : undefined),
       }));
     }
   } catch (err) {
@@ -207,6 +209,7 @@ export async function getProgramas(targetUserId?: string | null, userEmail?: str
         dataVariavel: (p as any).data_variavel || (p as any).dataVariavel || null,
         classificacaoEtaria: (p as any).classificacao_etaria || (p as any).classificacaoEtaria || "",
         tipoPrograma: (p as any).tipo_programa || (p as any).tipoPrograma || "Musical",
+        cliente: stationName || (p as any).cliente || (p as any).cliente_nome || (acc ? normalizeClientKey(acc.nome) : undefined),
       }));
     }
   } catch (err) {
@@ -233,6 +236,7 @@ export async function getProgramas(targetUserId?: string | null, userEmail?: str
     dataVariavel: null,
     classificacaoEtaria: p.classificacao_etaria || p.classificacaoEtaria || "Livre",
     tipoPrograma: p.tipo_programa || p.tipoPrograma || "Musical",
+    cliente: stationName || (p as any).cliente || (p as any).cliente_nome || (acc ? normalizeClientKey(acc.nome) : undefined),
   }));
 }
 
@@ -555,10 +559,36 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     setApresentadoresIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  // Resolve current account & station
+  const currentClientAccount = useMemo(() => {
+    return (targetUserId ? findClientAccountById(targetUserId) : null) ||
+      (user?.email ? findClientAccountByEmail(user.email) : null) ||
+      (targetUserId ? findClientAccountByEmail(targetUserId) : null);
+  }, [targetUserId, user?.email]);
+
+  const currentStationKey = useMemo(() => {
+    return normalizeClientKey(currentClientAccount?.nome || currentClientAccount?.slug || "");
+  }, [currentClientAccount]);
+
+  const isClientStation = useMemo(() => {
+    return !!currentStationKey && currentStationKey !== "NEXO BRASIL" && (!currentClientAccount?.isAdmin);
+  }, [currentStationKey, currentClientAccount]);
+
   // Cliente / Emissora selection & filter
   const [clientesList, setClientesList] = useState<string[]>([]);
-  const [selectedCliente, setSelectedCliente] = useState<string>("INTERATIVA FM");
-  const [filterCliente, setFilterCliente] = useState<string>("todos");
+  const [selectedCliente, setSelectedCliente] = useState<string>(() => {
+    const acc = (targetUserId ? findClientAccountById(targetUserId) : null) ||
+      (user?.email ? findClientAccountByEmail(user.email) : null);
+    return acc?.nome || "POSITIVA FM";
+  });
+  const [filterCliente, setFilterCliente] = useState<string>(() => {
+    const acc = (targetUserId ? findClientAccountById(targetUserId) : null) ||
+      (user?.email ? findClientAccountByEmail(user.email) : null);
+    if (acc && !acc.isAdmin) {
+      return acc.nome;
+    }
+    return "todos";
+  });
 
   // Grade filter
   const [gradeEstudioFilter, setGradeEstudioFilter] = useState("todos");
@@ -592,6 +622,12 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
   const load = async () => {
     setLoadingData(true);
     try {
+      const acc = (targetUserId ? findClientAccountById(targetUserId) : null) ||
+        (user?.email ? findClientAccountByEmail(user.email) : null) ||
+        (targetUserId ? findClientAccountByEmail(targetUserId) : null);
+      const stationKey = normalizeClientKey(acc?.nome || acc?.slug || "");
+      const isClient = !!stationKey && stationKey !== "NEXO BRASIL" && (!acc?.isAdmin);
+
       const [ap, pg] = await Promise.all([
         getApresentadores(targetUserId, user?.email).catch(e => {
           console.warn("Error getting apresentadores:", e);
@@ -604,65 +640,131 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       ]);
       setApresentadores(Array.isArray(ap) ? ap : []);
 
-      // Carrega clientes conhecidos
-      let metaNames: string[] = [];
-      try {
-        const meta = getStoredMetadata() || {};
-        metaNames = Object.keys(meta).map(k => {
-          const item = meta[k];
-          return (item?.nome_empresarial || item?.razao_social || k || "").trim().toUpperCase();
-        }).filter(Boolean);
-      } catch (err) {
-        console.warn("Error getting stored metadata:", err);
-      }
-      const defaultStations = DEFAULT_STATION_DATA ? Object.keys(DEFAULT_STATION_DATA) : [];
-      const allStations = Array.from(new Set([...metaNames, ...defaultStations])).filter(Boolean).sort();
-      setClientesList(allStations.length > 0 ? allStations : ["INTERATIVA FM"]);
-
-      const currentClientAccount = (targetUserId ? findClientAccountById(targetUserId) : null) ||
-        (user?.email ? findClientAccountByEmail(user.email) : null);
-      if (currentClientAccount?.nome) {
-        setSelectedCliente(currentClientAccount.nome);
+      if (acc?.nome) {
+        setSelectedCliente(acc.nome);
+        if (isClient) {
+          setFilterCliente(acc.nome);
+          setClientesList([acc.nome]);
+        }
       }
 
-      // Carrega programas customizados salvos
-      const allCustomProgs: Programa[] = [];
+      if (!isClient) {
+        // Carrega clientes conhecidos para Super Admin
+        let metaNames: string[] = [];
+        try {
+          const meta = getStoredMetadata() || {};
+          metaNames = Object.keys(meta).map(k => {
+            const item = meta[k];
+            return (item?.nome_empresarial || item?.razao_social || k || "").trim().toUpperCase();
+          }).filter(Boolean);
+        } catch (err) {
+          console.warn("Error getting stored metadata:", err);
+        }
+        const defaultStations = DEFAULT_STATION_DATA ? Object.keys(DEFAULT_STATION_DATA) : [];
+        const allStations = Array.from(new Set([...metaNames, ...defaultStations])).filter(Boolean).sort();
+        setClientesList(allStations.length > 0 ? allStations : [acc?.nome || "POSITIVA FM"]);
+      }
+
+      // Carrega programas customizados salvos no localStorage SEM cruzar clientes
+      const matchingCustomProgs: Programa[] = [];
       try {
         const customProgsObj = getStoredCustomPrograms() || {};
-        Object.entries(customProgsObj).forEach(([cliKey, progs]) => {
-          (progs || []).forEach(p => {
-            allCustomProgs.push({
-              id: p.id || `custom_${Date.now()}_${Math.random()}`,
-              nome: p.nome || "Programa Sem Nome",
-              apresentadorId: p.apresentador_id || (p as any).apresentadorId || "",
-              apresentadoresIds: p.apresentadores_ids || (p as any).apresentadoresIds || [],
-              selo: p.selo || "",
-              capa: p.capa || "",
-              thumb: p.thumb || "",
-              diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
-              horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
-              horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
-              estudio: p.estudio || "Estúdio FM",
-              ativo: p.ativo ?? true,
-              variavel: false,
-              descricao: p.descricao || "",
-              dataVariavel: null,
-              classificacaoEtaria: "",
-              tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
-              cliente: cliKey,
+
+        if (isClient && stationKey) {
+          // Higieniza qualquer item contaminado salvo com chave da emissora
+          let storageNeedsUpdate = false;
+          if (customProgsObj[stationKey]) {
+            const origLen = customProgsObj[stationKey].length;
+            customProgsObj[stationKey] = customProgsObj[stationKey].filter(p => {
+              const pCli = normalizeClientKey(p.cliente || p.cliente_nome || "");
+              return !pCli || pCli === stationKey;
+            });
+            if (customProgsObj[stationKey].length !== origLen) {
+              storageNeedsUpdate = true;
+            }
+          }
+          if (storageNeedsUpdate) {
+            try {
+              localStorage.setItem("nexohub_housemix_programs_v2", JSON.stringify(customProgsObj));
+            } catch {}
+          }
+
+          const keysToMatch = new Set([
+            stationKey,
+            normalizeClientKey(acc?.nome),
+            normalizeClientKey(acc?.razaoSocial),
+            acc?.id,
+            targetUserId,
+            acc?.slug,
+          ].filter(Boolean));
+
+          Object.entries(customProgsObj).forEach(([cliKey, progs]) => {
+            const normK = normalizeClientKey(cliKey);
+            if (keysToMatch.has(cliKey) || (normK && keysToMatch.has(normK))) {
+              (progs || []).forEach(p => {
+                const progCli = normalizeClientKey(p.cliente || p.cliente_nome || "");
+                if (!progCli || progCli === stationKey) {
+                  matchingCustomProgs.push({
+                    id: p.id || `custom_${Date.now()}_${Math.random()}`,
+                    nome: p.nome || "Programa Sem Nome",
+                    apresentadorId: p.apresentador_id || (p as any).apresentadorId || "",
+                    apresentadoresIds: p.apresentadores_ids || (p as any).apresentadoresIds || [],
+                    selo: p.selo || "",
+                    capa: p.capa || "",
+                    thumb: p.thumb || "",
+                    diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+                    horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
+                    horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
+                    estudio: p.estudio || "Estúdio FM",
+                    ativo: p.ativo ?? true,
+                    variavel: false,
+                    descricao: p.descricao || "",
+                    dataVariavel: null,
+                    classificacaoEtaria: "",
+                    tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
+                    cliente: acc?.nome || stationKey,
+                  });
+                }
+              });
+            }
+          });
+        } else if (!isClient) {
+          Object.entries(customProgsObj).forEach(([cliKey, progs]) => {
+            (progs || []).forEach(p => {
+              matchingCustomProgs.push({
+                id: p.id || `custom_${Date.now()}_${Math.random()}`,
+                nome: p.nome || "Programa Sem Nome",
+                apresentadorId: p.apresentador_id || (p as any).apresentadorId || "",
+                apresentadoresIds: p.apresentadores_ids || (p as any).apresentadoresIds || [],
+                selo: p.selo || "",
+                capa: p.capa || "",
+                thumb: p.thumb || "",
+                diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+                horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
+                horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
+                estudio: p.estudio || "Estúdio FM",
+                ativo: p.ativo ?? true,
+                variavel: false,
+                descricao: p.descricao || "",
+                dataVariavel: null,
+                classificacaoEtaria: "",
+                tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
+                cliente: cliKey,
+              });
             });
           });
-        });
+        }
       } catch (err) {
         console.warn("Error reading custom progs:", err);
       }
 
       let combinedProgs = Array.isArray(pg) ? [...pg] : [];
-      if (combinedProgs.length === 0 && allCustomProgs.length === 0 && DEFAULT_STATION_DATA) {
-        Object.entries(DEFAULT_STATION_DATA).forEach(([stationName, def]) => {
+      if (combinedProgs.length === 0 && matchingCustomProgs.length === 0) {
+        if (isClient && stationKey && DEFAULT_STATION_DATA?.[stationKey]) {
+          const def = DEFAULT_STATION_DATA[stationKey];
           (def.programas || []).forEach((p, idx) => {
             combinedProgs.push({
-              id: `def_${stationName.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
+              id: `def_${stationKey.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
               nome: p.nome || "Programa",
               apresentadorId: "",
               apresentadoresIds: [],
@@ -679,21 +781,37 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
               dataVariavel: null,
               classificacaoEtaria: "",
               tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
-              cliente: stationName,
+              cliente: acc?.nome || stationKey,
             });
           });
-        });
+        }
       } else {
         const existingIds = new Set(combinedProgs.map(p => p.id));
-        allCustomProgs.forEach(p => {
+        matchingCustomProgs.forEach(p => {
           if (!existingIds.has(p.id)) combinedProgs.push(p);
         });
+      }
+
+      // FILTRAGEM ESTRITA: garante que programas de outras emissoras NUNCA apareçam
+      if (isClient && stationKey) {
+        combinedProgs = combinedProgs.filter(p => {
+          if (p.cliente) {
+            const pNorm = normalizeClientKey(p.cliente);
+            if (pNorm && pNorm !== stationKey) {
+              return false;
+            }
+          }
+          return true;
+        }).map(p => ({
+          ...p,
+          cliente: p.cliente || acc?.nome || stationKey
+        }));
       }
 
       combinedProgs.sort((a, b) => (a.horarioInicio || "").localeCompare(b.horarioInicio || ""));
       setProgramas(combinedProgs);
 
-      // Mantém a lista configurada de estúdios cadastrados (default: ESTÚDIO FM e PODCAST)
+      // Mantém a lista configurada de estúdios cadastrados
       setEstudios(getStoredEstudios());
     } catch (err) {
       console.error("Erro fatal ao carregar ProgramaForm:", err);
@@ -702,7 +820,15 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     }
   };
 
-  useEffect(() => { load(); }, [targetUserId, user?.email]);
+  useEffect(() => {
+    if (currentClientAccount?.nome) {
+      setSelectedCliente(currentClientAccount.nome);
+      if (isClientStation) {
+        setFilterCliente(currentClientAccount.nome);
+      }
+    }
+    load();
+  }, [targetUserId, user?.email]);
 
   useEffect(() => {
     nomeDraftRef.current = nome;
@@ -883,7 +1009,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     if (horarioInicio >= horarioFim) { setConflictMsg("O horário de início deve ser antes do fim."); return; }
     if (!estudio.trim()) { setConflictMsg("Informe o estúdio."); return; }
 
-    const effectiveOwnerId = targetUserId || user.id;
+    const effectiveOwnerId = currentClientAccount?.id || targetUserId || user.id;
 
     if (variavel) {
       if (agendamentoVariavel === "data" && !dataVariavel) { setConflictMsg("Selecione a data para o programa variável."); return; }
@@ -1079,7 +1205,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       const updated = [...current, est];
       setEstudios(updated);
       localStorage.setItem(ESTUDIOS_STORAGE_KEY, JSON.stringify(updated));
-      saveCustomStudio(est, selectedCliente || "INTERATIVA FM");
+      saveCustomStudio(est, selectedCliente || currentClientAccount?.nome || "POSITIVA FM");
     }
     setEstudio(est);
     setNewEstudio("");
@@ -1141,10 +1267,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       const normF = normalizeClientKey(filterCliente);
       filtered = filtered.filter(p => {
         const pCli = normalizeClientKey(p.cliente || "");
-        const matchName = (p.nome || "").toUpperCase().includes(normF);
-        const matchDesc = (p.descricao || "").toUpperCase().includes(normF);
-        const matchEst = (p.estudio || "").toUpperCase().includes(normF);
-        return pCli === normF || matchName || matchDesc || matchEst;
+        return pCli === normF;
       });
     }
     return filtered;
@@ -1207,10 +1330,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       const normF = normalizeClientKey(filterCliente);
       sorted = sorted.filter(p => {
         const pCli = normalizeClientKey(p.cliente || "");
-        const matchName = (p.nome || "").toUpperCase().includes(normF);
-        const matchDesc = (p.descricao || "").toUpperCase().includes(normF);
-        const matchEst = (p.estudio || "").toUpperCase().includes(normF);
-        return pCli === normF || matchName || matchDesc || matchEst;
+        return pCli === normF;
       });
     }
     if (periodoFilter !== "todos") {
@@ -1893,21 +2013,28 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
               </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <div style={{ minWidth: 180 }}>
-                <Select value={filterCliente || "todos"} onValueChange={setFilterCliente}>
-                  <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
-                    <SelectValue placeholder="Filtrar por Cliente" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-56">
-                    <SelectItem value="todos">Todos os Clientes</SelectItem>
-                    {clientesList.filter(cli => typeof cli === "string" && cli.trim() !== "").map(cli => (
-                      <SelectItem key={cli} value={cli}>
-                        {cli}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {isClientStation ? (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 999, background: "#E0F2FE", color: "#0369A1", fontSize: 11, fontWeight: 800, letterSpacing: 0.5 }}>
+                  <Building2 size={13} />
+                  <span>{currentClientAccount?.nome || currentStationKey}</span>
+                </div>
+              ) : (
+                <div style={{ minWidth: 180 }}>
+                  <Select value={filterCliente || "todos"} onValueChange={setFilterCliente}>
+                    <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                      <SelectValue placeholder="Filtrar por Cliente" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-56">
+                      <SelectItem value="todos">Todos os Clientes</SelectItem>
+                      {clientesList.filter(cli => typeof cli === "string" && cli.trim() !== "").map(cli => (
+                        <SelectItem key={cli} value={cli}>
+                          {cli}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div style={{ display: "inline-flex", gap: 4, background: CARD_BG, borderRadius: 999, padding: 4 }}>
                 {([
@@ -1967,7 +2094,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span>{p.nome}</span>
                             {p.variavel && <span style={{ fontSize: 9, padding: "1px 8px", borderRadius: 999, fontWeight: 800, background: "#FEF3C7", color: "#92400E", letterSpacing: 0.5 }}>VAR</span>}
-                            {p.cliente && (
+                            {p.cliente && !isClientStation && (
                               <span style={{ fontSize: 9, padding: "1px 7px", borderRadius: 999, fontWeight: 800, background: "#E0F2FE", color: "#0369A1", letterSpacing: 0.4 }}>
                                 {p.cliente}
                               </span>
