@@ -5,6 +5,7 @@ import { usePageTitle, applyPublicHead, usePublicHead } from "@/hooks/usePageTit
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
+import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users, MessageSquareQuote } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
@@ -36,6 +37,7 @@ interface ProgramaGrade {
   apresentadoresIds: string[];
   selo: string;
   capa: string;
+  thumb?: string;
   diasSemana: string[];
   horarioInicio: string;
   horarioFim: string;
@@ -303,9 +305,18 @@ export default function PromocoesKiosk() {
       }
 
       const mapped = (data.programas || []).map((p: any) => ({
-        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", apresentadoresIds: p.apresentadores_ids || [], selo: p.selo || "",
-        capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
-        horarioFim: p.horario_fim, descricao: p.descricao || "",
+        id: p.id,
+        mergedIds: [p.id],
+        nome: p.nome,
+        apresentadorId: p.apresentador_id || "",
+        apresentadoresIds: p.apresentadores_ids || [],
+        selo: p.selo || "",
+        capa: p.capa || p.thumb || p.selo || "",
+        thumb: p.thumb || "",
+        diasSemana: p.dias_semana || [],
+        horarioInicio: p.horario_inicio,
+        horarioFim: p.horario_fim,
+        descricao: p.descricao || "",
         schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
@@ -318,6 +329,17 @@ export default function PromocoesKiosk() {
     };
 
     const loadAuth = async () => {
+      let localUid: string | null = null;
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        localUid = authData?.user?.id || null;
+      } catch { /* ignore */ }
+      if (!localUid && typeof window !== "undefined") {
+        try {
+          localUid = JSON.parse(localStorage.getItem("nexohub_backup_session") || "{}")?.user?.id || null;
+        } catch { /* ignore */ }
+      }
+
       const [empresaData, { data: promoData }, { data: progsData }, { data: testData }, { data: settingsData }] = await Promise.all([
         getEmpresaConfig(),
         supabase.from("promocoes").select("*").order("data_inicio"),
@@ -333,15 +355,13 @@ export default function PromocoesKiosk() {
           lon: (settingsData as any).weather_lon != null ? Number((settingsData as any).weather_lon) : null,
         });
       }
-      try {
-        const { data: authData } = await supabase.auth.getUser();
-        const uid = authData?.user?.id;
-        if (uid) {
-          setAudienceUserId(uid);
+      if (localUid) {
+        setAudienceUserId(localUid);
+        try {
           const { data: ec } = await supabase
             .from("empresa_config")
             .select("audio_stream_api_url, audio_stream_xpath, video_stream_api_url, video_stream_xpath")
-            .eq("user_id", uid as any)
+            .eq("user_id", localUid as any)
             .maybeSingle();
           if (ec) {
             setStreamCfg({
@@ -351,8 +371,8 @@ export default function PromocoesKiosk() {
               videoXpath: (ec as any).video_stream_xpath || "",
             });
           }
-        }
-      } catch { /* ignore */ }
+        } catch { /* ignore */ }
+      }
 
       if (settingsData?.cenario_config) {
         const raw = settingsData.cenario_config as any;
@@ -364,9 +384,8 @@ export default function PromocoesKiosk() {
       const allPromos = promoData || [];
       setPromocoes(allPromos);
       let activeTestemunhais = testData || [];
-      try {
-        const localUid = authData?.user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("nexohub_backup_session") || "{}")?.user?.id : null);
-        if (localUid) {
+      if (localUid) {
+        try {
           const rawLocal = localStorage.getItem(`nexohub_testemunhais_${localUid}`);
           if (rawLocal) {
             const parsed = JSON.parse(rawLocal);
@@ -377,18 +396,40 @@ export default function PromocoesKiosk() {
               activeTestemunhais = Array.from(map.values());
             }
           }
-        }
-      } catch {}
+        } catch {}
+      }
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
 
+      let rawProgs = progsData || [];
+      if (rawProgs.length === 0) {
+        const stationData = getStationDatabaseSync(localUid || undefined);
+        if (stationData?.programas && stationData.programas.length > 0) {
+          rawProgs = stationData.programas;
+        } else if (localUid) {
+          try {
+            const fetched = await fetchStationDatabaseData(localUid);
+            if (fetched?.programas && fetched.programas.length > 0) {
+              rawProgs = fetched.programas;
+            }
+          } catch { /* ignore */ }
+        }
+      }
 
-
-      const mapped = (progsData || []).map((p: any) => ({
-        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", apresentadoresIds: p.apresentadores_ids || [], selo: p.selo || "",
-        capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
-        horarioFim: p.horario_fim, descricao: p.descricao || "",
+      const mapped = rawProgs.map((p: any) => ({
+        id: p.id,
+        mergedIds: [p.id],
+        nome: p.nome,
+        apresentadorId: p.apresentador_id || "",
+        apresentadoresIds: p.apresentadores_ids || [],
+        selo: p.selo || "",
+        capa: p.capa || p.thumb || p.selo || "",
+        thumb: p.thumb || "",
+        diasSemana: p.dias_semana || [],
+        horarioInicio: p.horario_inicio,
+        horarioFim: p.horario_fim,
+        descricao: p.descricao || "",
         schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
@@ -591,7 +632,7 @@ export default function PromocoesKiosk() {
       const tIds = getTestemunhalProgramIds(t);
       if (tIds.length === 0) return false;
       const matchesId = tIds.some(id => baseIds.has(id));
-      const isWithinDate = t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today;
+      const isWithinDate = (!t.data_inicio || t.data_inicio <= today) && (!t.data_fim || t.data_fim >= today);
       return matchesId && isWithinDate;
     });
 
@@ -613,9 +654,10 @@ export default function PromocoesKiosk() {
   const canonicalCoverByName = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of programas) {
-      if (!p.capa) continue;
+      const cover = p.capa || p.thumb || p.selo || "";
+      if (!cover) continue;
       const key = normalizeProgramName(p.nome);
-      if (!map.has(key)) map.set(key, p.capa);
+      if (!map.has(key)) map.set(key, cover);
     }
     return map;
   }, [programas]);
@@ -727,8 +769,7 @@ export default function PromocoesKiosk() {
   const programIdsWithTestemunhais = new Set(
     testemunhais
       .filter(t =>
-        t.data_inicio && t.data_fim &&
-        t.data_inicio <= todayDateStr && t.data_fim >= todayDateStr
+        (!t.data_inicio || t.data_inicio <= todayDateStr) && (!t.data_fim || t.data_fim >= todayDateStr)
       )
       .flatMap(t => getTestemunhalProgramIds(t))
   );
@@ -1317,7 +1358,11 @@ export default function PromocoesKiosk() {
             ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
             : -1;
           const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
-          const currentProg = scheduleList[activeIdx] ?? null;
+          const currentProg = scheduleList[activeIdx]
+            ?? (onAirProgram ? programas.find(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome)) : null)
+            ?? scheduleList[0]
+            ?? (programas[0] as any)
+            ?? null;
           const goPrev = (e: React.MouseEvent) => {
             e.stopPropagation();
             e.preventDefault();
@@ -1377,9 +1422,9 @@ export default function PromocoesKiosk() {
                 )}
               </div>
 
-              {currentProg?.capa && (
+              {currentProg && (
                 <div
-                  className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
+                  className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03] shadow-2xl border border-white/10"
                   style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1388,9 +1433,9 @@ export default function PromocoesKiosk() {
                       // citação considere todos os IDs das grades duplicadas.
                       setSelectedProgram({
                         ...currentProg,
-                        mergedIds: [...currentProg.mergedIds],
-                        diasSemana: [...currentProg.diasSemana],
-                        schedules: currentProg.schedules.map(schedule => ({
+                        mergedIds: [...(currentProg.mergedIds || [currentProg.id])],
+                        diasSemana: [...(currentProg.diasSemana || [])],
+                        schedules: (currentProg.schedules || []).map(schedule => ({
                           ...schedule,
                           dias: [...schedule.dias],
                         })),
@@ -1398,26 +1443,68 @@ export default function PromocoesKiosk() {
                       stopAutoScroll();
                     }
                   }}
-                  title="Citações"
+                  title={`Citações - ${currentProg.nome}`}
                 >
-                    <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
+                  {/* Badge No Ar (se for o programa atual) */}
+                  {onAirProgram && normalizeProgramName(onAirProgram.nome) === normalizeProgramName(currentProg.nome) ? (
+                    <div className="pointer-events-none absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md z-20 flex items-center gap-1.5 shadow-lg bg-red-600 text-white">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                      No Ar
+                    </div>
+                  ) : null}
+
+                  {/* Badge Citações */}
+                  <div
+                    className="pointer-events-none absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md z-20 whitespace-nowrap shadow-lg transition-opacity duration-200"
+                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}
+                  >
                     Citações
                   </div>
-                  <div
-                    key={`${normalizeProgramName(currentProg.nome)}-${currentProg.capa}`}
-                    aria-label={currentProg.nome}
-                    className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-                    style={{
-                      backgroundImage: `url(${currentProg.capa})`,
-                      animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
-                    }}
-                  />
+
+                  {/* Imagem de Capa ou Fallback */}
+                  {(() => {
+                    const coverImg = currentProg.capa || (currentProg as any).thumb || (currentProg as any).selo || "";
+                    if (coverImg) {
+                      return (
+                        <div
+                          key={`${normalizeProgramName(currentProg.nome)}-${coverImg}`}
+                          aria-label={currentProg.nome}
+                          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                          style={{
+                            backgroundImage: `url(${coverImg})`,
+                            animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
+                          }}
+                        />
+                      );
+                    }
+                    return (
+                      <div
+                        key={normalizeProgramName(currentProg.nome)}
+                        className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-3 text-center"
+                        style={{
+                          background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
+                        }}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 text-red-400">
+                          <Radio size={24} className="animate-pulse" />
+                        </div>
+                        <span className="text-xs font-bold text-white line-clamp-2">{currentProg.nome}</span>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Gradiente inferior com nome do programa e indicação de clique */}
+                  <div className="absolute inset-x-0 bottom-0 pt-8 pb-2 px-2.5 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 flex flex-col justify-end pointer-events-none">
+                    <span className="text-xs font-bold text-white leading-tight drop-shadow line-clamp-1">{currentProg.nome}</span>
+                    <span className="text-[10px] text-white/70 drop-shadow">Clique para ver citação</span>
+                  </div>
+
                   {scheduleList.length > 1 && (
                     <>
                       <button
                         type="button"
                         onClick={goPrev}
-                        className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-10"
+                        className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-20"
                         aria-label="Programa anterior"
                       >
                         <ChevronLeft size={16} />
@@ -1425,7 +1512,7 @@ export default function PromocoesKiosk() {
                       <button
                         type="button"
                         onClick={goNext}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-10"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-20"
                         aria-label="Próximo programa"
                       >
                         <ChevronRight size={16} />
@@ -1657,6 +1744,7 @@ export default function PromocoesKiosk() {
         }
       }}>
         <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:!w-10 [&>button]:!h-10 [&>button]:!rounded-full [&>button]:!flex [&>button]:!items-center [&>button]:!justify-center [&>button]:!text-white [&>button]:!font-bold [&>button]:!transition [&>button]:!shadow-[0_0_12px_rgba(0,0,0,0.4)] [&>button]:hover:!scale-110 [&>button]:!top-3 [&>button]:!right-3 [&>button_svg]:!w-[18px] [&>button_svg]:!h-[18px] [&>button]:!border-none" style={{ backgroundColor: "#111111", "--layout-accent-color": "var(--layout-accent-color, #a60101)" } as any}>
+          <DialogTitle className="sr-only">Citações do Programa {selectedProgram?.nome}</DialogTitle>
           {/* Custom style to override shadcn close button colors to match theme */}
           <style>{`
             [data-state=open] .promo-dialog-close-theme button {
@@ -1690,11 +1778,21 @@ export default function PromocoesKiosk() {
               {/* Header com Logo e Horário */}
               <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 flex-shrink-0 gap-3" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <div className="flex items-center gap-4">
-                    {selectedProgram?.capa && (
-                      <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10">
-                        <img src={selectedProgram.capa} alt={selectedProgram.nome} className="w-full h-full object-cover" />
-                      </div>
-                    )}
+                    {(() => {
+                      const dlgCover = selectedProgram?.capa || (selectedProgram as any)?.thumb || (selectedProgram as any)?.selo || "";
+                      if (dlgCover) {
+                        return (
+                          <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">
+                            <img src={dlgCover} alt={selectedProgram?.nome} className="w-full h-full object-cover" />
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 text-red-400 border border-white/10">
+                          <Radio size={24} />
+                        </div>
+                      );
+                    })()}
                     <div className="flex flex-col">
                       <h2 className="text-xl font-black tracking-tight" style={{ color: "white" }}>{selectedProgram?.nome}</h2>
                       <div className="flex items-center gap-2 mt-1">
