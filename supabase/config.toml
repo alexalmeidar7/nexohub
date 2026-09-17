@@ -80,3 +80,16 @@ verify_jwt = false
 
 [functions.entrega-premio]
 verify_jwt = false
+
+[functions.serve-xml-enquete]
+verify_jwt = false
+
+[functions.serve-xml-quiz]
+verify_jwt = false
+
+[functions.serve-xml-batalha]
+verify_jwt = false
+
+[functions.serve-xml-geral]
+verify_jwt = false
+

@@ -77,6 +77,14 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: targetSlug, userId: uId, enquetes: list }),
       }).catch(() => {});
+
+      // Sincroniza imediatamente com a Supabase Edge Function para vMix remoto
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      fetch(`${supabaseUrl}/functions/v1/serve-xml-enquete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, enquetes: list }),
+      }).catch(() => {});
     } catch {}
   };
 
@@ -151,8 +159,22 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
         }]);
 
       if (error) {
-        console.warn("Supabase enquete insert warning (mantido localmente):", error.message);
+        console.warn("Supabase enquete insert warning:", error.message);
       }
+
+      // Envia diretamente para a Edge Function via POST (com service role) para garantir atualização no vMix
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      await fetch(`${supabaseUrl}/functions/v1/serve-xml-enquete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          slug: targetSlug,
+          user_id: targetUserId,
+          enquete: newEnquete,
+          enquetes: updated,
+        }),
+      }).catch((e) => console.warn("Erro ao sincronizar enquete com Edge Function:", e));
     } catch (err) {
       console.warn("Supabase enquete save network error:", err);
     } finally {
@@ -198,6 +220,17 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
           .delete()
           .eq("id", id);
       }
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      await fetch(`${supabaseUrl}/functions/v1/serve-xml-enquete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          slug: targetSlug,
+          user_id: targetUserId,
+          id,
+        }),
+      }).catch(() => {});
     } catch (err) {
       console.warn("Erro ao excluir enquete no Supabase:", err);
     }

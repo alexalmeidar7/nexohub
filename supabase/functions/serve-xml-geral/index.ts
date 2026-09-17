@@ -33,6 +33,12 @@ const DIAS_MAP: Record<number, string> = {
   1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
 };
 
+function normTime(t: any, def = "00:00"): string {
+  const str = String(t ?? def).trim();
+  const [h, m] = str.split(":");
+  return `${(h || "0").padStart(2, "0")}:${(m || "00").slice(0, 2).padEnd(2, "0")}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -123,21 +129,21 @@ serve(async (req) => {
     const logos = logosRes.data || [];
     const roteiros = roteirosRes.data || [];
     const activeBatalha = (batalhaRes.data || []).find((b: any) => {
-      const ini = (b.horario_inicio || "00:00").slice(0, 5);
-      const fim = (b.horario_fim || "23:59").slice(0, 5);
+      const ini = normTime(b.horario_inicio, "00:00");
+      const fim = normTime(b.horario_fim, "23:59");
       return ini <= fim ? (currentHourStr >= ini && currentHourStr <= fim) : (currentHourStr >= ini || currentHourStr <= fim);
     }) || null;
 
     // Filter active enquete and quiz for the current minute
     const activeEnquete = (enquetesRes.data || []).find((e: any) => {
-      const ini = (e.horario_inicio || "00:00").slice(0, 5);
-      const fim = (e.horario_fim || "23:59").slice(0, 5);
+      const ini = normTime(e.horario_inicio, "00:00");
+      const fim = normTime(e.horario_fim, "23:59");
       return ini <= fim ? (currentHourStr >= ini && currentHourStr <= fim) : (currentHourStr >= ini || currentHourStr <= fim);
     }) || null;
 
     const activeQuiz = (quizRes.data || []).find((q: any) => {
-      const ini = (q.horario_inicio || "00:00").slice(0, 5);
-      const fim = (q.horario_fim || "23:59").slice(0, 5);
+      const ini = normTime(q.horario_inicio, "00:00");
+      const fim = normTime(q.horario_fim, "23:59");
       return ini <= fim ? (currentHourStr >= ini && currentHourStr <= fim) : (currentHourStr >= ini || currentHourStr <= fim);
     }) || null;
 

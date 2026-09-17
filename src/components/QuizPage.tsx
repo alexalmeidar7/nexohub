@@ -79,6 +79,14 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: targetSlug, userId: uId, quizzes: list }),
       }).catch(() => {});
+
+      // Sincroniza imediatamente com a Supabase Edge Function para vMix remoto
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      fetch(`${supabaseUrl}/functions/v1/serve-xml-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, quizzes: list }),
+      }).catch(() => {});
     } catch {}
   };
 
@@ -153,8 +161,22 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
         }]);
 
       if (error) {
-        console.warn("Supabase quiz insert warning (mantido localmente):", error.message);
+        console.warn("Supabase quiz insert warning:", error.message);
       }
+
+      // Envia diretamente para a Edge Function via POST (com service role) para garantir atualização no vMix
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      await fetch(`${supabaseUrl}/functions/v1/serve-xml-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          slug: targetSlug,
+          user_id: targetUserId,
+          quiz: newQuiz,
+          quizzes: updated,
+        }),
+      }).catch((e) => console.warn("Erro ao sincronizar quiz com Edge Function:", e));
     } catch (err) {
       console.warn("Supabase quiz save network error:", err);
     } finally {
@@ -200,6 +222,17 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
           .delete()
           .eq("id", id);
       }
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      await fetch(`${supabaseUrl}/functions/v1/serve-xml-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          slug: targetSlug,
+          user_id: targetUserId,
+          id,
+        }),
+      }).catch(() => {});
     } catch (err) {
       console.warn("Erro ao excluir quiz no Supabase:", err);
     }

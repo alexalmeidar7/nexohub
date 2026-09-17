@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <enquete>
-    <pergunta></pergunta>
-    <resposta1></resposta1>
-    <resposta2></resposta2>
-    <resposta3></resposta3>
-    <resposta4></resposta4>
+    <emissora>Jornal FM 96.5</emissora>
+    <pergunta>Qual música você quer ouvir no próximo bloco?</pergunta>
+    <resposta1>Opção 1</resposta1>
+    <resposta2>Opção 2</resposta2>
+    <resposta3>Opção 3</resposta3>
+    <resposta4>Opção 4</resposta4>
   </enquete>
 </items>

@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 const esc = (s: any) =>
@@ -12,6 +13,15 @@ const esc = (s: any) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+
+const isUUID = (str: any) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || "").trim());
+
+function normTime(t: any, def = "00:00"): string {
+  const str = String(t ?? def).trim();
+  const [h, m] = str.split(":");
+  return `${(h || "0").padStart(2, "0")}:${(m || "00").slice(0, 2).padEnd(2, "0")}`;
+}
 
 const SLUG_TO_UID: Record<string, string> = {
   positivafm: "d17e65af-e407-466f-9b60-b55c43399513",
@@ -32,7 +42,111 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const sb = createClient(supabaseUrl, serviceKey);
+
+  // Get current date and time in America/Sao_Paulo (Brasília)
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  
+  const parts = formatter.formatToParts(new Date());
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value;
+  const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+  const currentTime = `${getPart("hour")}:${getPart("minute")}`;
+
   try {
+    // ── POST: SALVAR / EXCLUIR / SINCRONIZAR ENQUETES VIA SERVICE ROLE (IGNORA RLS) ──
+    if (req.method === "POST") {
+      let body: any = {};
+      try {
+        body = await req.json();
+      } catch {
+        body = {};
+      }
+
+      const action = body.action || "save";
+      const rawUser = (body.user_id || body.userId || "").trim();
+      const rawSlug = (body.slug || "").trim().toLowerCase();
+      const targetUid = SLUG_TO_UID[rawSlug] || SLUG_TO_UID[rawUser.toLowerCase()] || (isUUID(rawUser) ? rawUser : "d17e65af-e407-466f-9b60-b55c43399513");
+
+      if (action === "delete") {
+        const idToDelete = body.id || body.enqueteId;
+        if (idToDelete && isUUID(idToDelete)) {
+          await sb.from("enquetes_agendadas").delete().eq("id", idToDelete);
+        } else if (body.pergunta) {
+          await sb.from("enquetes_agendadas").delete().eq("user_id", targetUid).eq("pergunta", body.pergunta);
+        }
+        return new Response(JSON.stringify({ ok: true, action: "deleted" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "sync" && Array.isArray(body.enquetes)) {
+        for (const item of body.enquetes) {
+          const row: any = {
+            user_id: targetUid,
+            pergunta: item.pergunta || "",
+            resposta1: item.resposta1 || "",
+            resposta2: item.resposta2 || "",
+            resposta3: item.resposta3 || "",
+            resposta4: item.resposta4 || "",
+            resposta_correta: Number(item.resposta_correta) || 1,
+            data_enquete: item.data_enquete || today,
+            horario_inicio: item.horario_inicio || "00:00",
+            horario_fim: item.horario_fim || "23:59",
+          };
+          if (isUUID(item.id)) row.id = item.id;
+          await sb.from("enquetes_agendadas").upsert(row);
+        }
+        return new Response(JSON.stringify({ ok: true, action: "synced", count: body.enquetes.length }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Default: save single enquete
+      const eq = body.enquete || body;
+      if (eq.pergunta && eq.resposta1) {
+        const row: any = {
+          user_id: targetUid,
+          pergunta: eq.pergunta,
+          resposta1: eq.resposta1,
+          resposta2: eq.resposta2 || "",
+          resposta3: eq.resposta3 || "",
+          resposta4: eq.resposta4 || "",
+          resposta_correta: Number(eq.resposta_correta) || 1,
+          data_enquete: eq.data_enquete || today,
+          horario_inicio: eq.horario_inicio || "00:00",
+          horario_fim: eq.horario_fim || "23:59",
+        };
+        if (isUUID(eq.id)) row.id = eq.id;
+        const { data, error } = await sb.from("enquetes_agendadas").upsert(row).select();
+        if (error) {
+          console.error("[serve-xml-enquete] Save error:", error);
+          return new Response(JSON.stringify({ ok: false, error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ ok: true, action: "saved", data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: false, error: "Dados incompletos da enquete" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── GET: SERVIR XML DA ENQUETE ATIVA ──
     const url = new URL(req.url);
     const rawUserId = url.searchParams.get("user_id") || "";
     const rawSlug = url.searchParams.get("slug") || "";
@@ -40,28 +154,7 @@ Deno.serve(async (req) => {
     const cleanInput = (rawUserId || rawSlug).toLowerCase().trim();
     const resolvedUid = SLUG_TO_UID[cleanInput] || rawUserId || "d17e65af-e407-466f-9b60-b55c43399513";
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, serviceKey);
-
-    // Get current date and time in America/Sao_Paulo
-    const formatter = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "America/Sao_Paulo",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    
-    const parts = formatter.formatToParts(new Date());
-    const getPart = (type: string) => parts.find(p => p.type === type)?.value;
-    
-    const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
-    const currentTime = `${getPart("hour")}:${getPart("minute")}`;
-    
-    console.log(`[serve-xml-enquete] Checking for userId: ${resolvedUid}, Date: ${today}, Time: ${currentTime}`);
+    console.log(`[serve-xml-enquete] GET for userId: ${resolvedUid}, Date: ${today}, Time: ${currentTime}`);
 
     // Query scheduled enquetes for today
     const { data: list, error: queryErr } = await sb
@@ -76,14 +169,20 @@ Deno.serve(async (req) => {
     }
 
     // Filter by time window (including cross-midnight)
-    const scheduled = (list || []).find((e: any) => {
-      const start = (e.horario_inicio || "00:00").slice(0, 5);
-      const end = (e.horario_fim || "23:59").slice(0, 5);
+    let scheduled = (list || []).find((e: any) => {
+      const start = normTime(e.horario_inicio, "00:00");
+      const end = normTime(e.horario_fim, "23:59");
       if (start <= end) {
         return currentTime >= start && currentTime <= end;
       }
       return currentTime >= start || currentTime <= end;
     });
+
+    // Fallback: se solicitado preview ou latest, ou se existe apenas 1 enquete cadastrada para hoje
+    const allowLatest = url.searchParams.get("latest") === "1" || url.searchParams.get("preview") === "1";
+    if (!scheduled && (list || []).length > 0 && allowLatest) {
+      scheduled = list[0];
+    }
 
     let pergunta = "", r1 = "", r2 = "", r3 = "", r4 = "";
     let correta = 1, ini = "", fim = "";
@@ -117,7 +216,8 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
       },
     });
   } catch (err) {

@@ -25,6 +25,12 @@ export function getBrasiliaDateTime(): { today: string; currentTime: string } {
   }
 }
 
+export function normTime(t: any, def = "00:00"): string {
+  const str = String(t ?? def).trim();
+  const [h, m] = str.split(":");
+  return `${(h || "0").padStart(2, "0")}:${(m || "00").slice(0, 2).padEnd(2, "0")}`;
+}
+
 export function isScheduleActive(
   itemDate: string,
   startTime: string,
@@ -35,12 +41,12 @@ export function isScheduleActive(
   if (!itemDate || !startTime || !endTime) return false;
   const { today, currentTime } = getBrasiliaDateTime();
   const targetDate = refDate || today;
-  const targetTime = refTime || currentTime;
+  const targetTime = normTime(refTime || currentTime);
 
   if (itemDate !== targetDate) return false;
 
-  const start = startTime.slice(0, 5);
-  const end = endTime.slice(0, 5);
+  const start = normTime(startTime, "00:00");
+  const end = normTime(endTime, "23:59");
 
   if (start <= end) {
     return targetTime >= start && targetTime <= end;
@@ -60,10 +66,11 @@ export function getScheduleStatus(
   }
   if (itemDate > today) return "scheduled";
   if (itemDate === today) {
-    const start = startTime.slice(0, 5);
-    const end = endTime.slice(0, 5);
-    if (currentTime < start) return "scheduled";
-    if (currentTime > end) return "expired";
+    const curr = normTime(currentTime);
+    const start = normTime(startTime, "00:00");
+    const end = normTime(endTime, "23:59");
+    if (curr < start) return "scheduled";
+    if (curr > end) return "expired";
   }
   return "expired";
 }

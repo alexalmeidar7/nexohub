@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 const esc = (s: any) =>
@@ -12,6 +13,15 @@ const esc = (s: any) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+
+const isUUID = (str: any) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || "").trim());
+
+function normTime(t: any, def = "00:00"): string {
+  const str = String(t ?? def).trim();
+  const [h, m] = str.split(":");
+  return `${(h || "0").padStart(2, "0")}:${(m || "00").slice(0, 2).padEnd(2, "0")}`;
+}
 
 const SLUG_TO_UID: Record<string, string> = {
   positivafm: "d17e65af-e407-466f-9b60-b55c43399513",
@@ -32,7 +42,114 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const sb = createClient(supabaseUrl, serviceKey);
+
+  // Get current date and time in America/Sao_Paulo (Brasília)
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const getPart = (type: string) => parts.find((p) => p.type === type)?.value;
+
+  const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+  const currentTime = `${getPart("hour")}:${getPart("minute")}`;
+
   try {
+    // ── POST: SALVAR / EXCLUIR / SINCRONIZAR BATALHAS VIA SERVICE ROLE (IGNORA RLS) ──
+    if (req.method === "POST") {
+      let body: any = {};
+      try {
+        body = await req.json();
+      } catch {
+        body = {};
+      }
+
+      const action = body.action || "save";
+      const rawUser = (body.user_id || body.userId || "").trim();
+      const rawSlug = (body.slug || "").trim().toLowerCase();
+      const targetUid = SLUG_TO_UID[rawSlug] || SLUG_TO_UID[rawUser.toLowerCase()] || (isUUID(rawUser) ? rawUser : "d17e65af-e407-466f-9b60-b55c43399513");
+
+      if (action === "delete") {
+        const idToDelete = body.id || body.batalhaId;
+        if (idToDelete && isUUID(idToDelete)) {
+          await sb.from("batalhas_agendadas").delete().eq("id", idToDelete);
+        }
+        return new Response(JSON.stringify({ ok: true, action: "deleted" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "sync" && Array.isArray(body.batalhas)) {
+        for (const item of body.batalhas) {
+          const row: any = {
+            user_id: targetUid,
+            artista1_nome: item.artista1_nome || "",
+            artista1_musica: item.artista1_musica || "",
+            artista1_porcentagem: Number(item.artista1_porcentagem ?? 50),
+            artista1_imagem: item.artista1_imagem || "",
+            artista2_nome: item.artista2_nome || "",
+            artista2_musica: item.artista2_musica || "",
+            artista2_porcentagem: Number(item.artista2_porcentagem ?? 50),
+            artista2_imagem: item.artista2_imagem || "",
+            data_batalha: item.data_batalha || today,
+            horario_inicio: item.horario_inicio || "00:00",
+            horario_fim: item.horario_fim || "23:59",
+          };
+          if (isUUID(item.id)) row.id = item.id;
+          await sb.from("batalhas_agendadas").upsert(row);
+        }
+        return new Response(JSON.stringify({ ok: true, action: "synced", count: body.batalhas.length }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Default: save single batalha
+      const bt = body.batalha || body;
+      if (bt.artista1_nome || bt.artista2_nome) {
+        const row: any = {
+          user_id: targetUid,
+          artista1_nome: bt.artista1_nome || "",
+          artista1_musica: bt.artista1_musica || "",
+          artista1_porcentagem: Number(bt.artista1_porcentagem ?? 50),
+          artista1_imagem: bt.artista1_imagem || "",
+          artista2_nome: bt.artista2_nome || "",
+          artista2_musica: bt.artista2_musica || "",
+          artista2_porcentagem: Number(bt.artista2_porcentagem ?? 50),
+          artista2_imagem: bt.artista2_imagem || "",
+          data_batalha: bt.data_batalha || today,
+          horario_inicio: bt.horario_inicio || "00:00",
+          horario_fim: bt.horario_fim || "23:59",
+        };
+        if (isUUID(bt.id)) row.id = bt.id;
+        const { data, error } = await sb.from("batalhas_agendadas").upsert(row).select();
+        if (error) {
+          console.error("[serve-xml-batalha] Save error:", error);
+          return new Response(JSON.stringify({ ok: false, error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ ok: true, action: "saved", data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: false, error: "Dados incompletos da batalha" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── GET: SERVIR XML DA BATALHA ATIVA ──
     const url = new URL(req.url);
     const rawUserId = url.searchParams.get("user_id") || "";
     const rawSlug = url.searchParams.get("slug") || "";
@@ -40,28 +157,7 @@ Deno.serve(async (req) => {
     const cleanInput = (rawUserId || rawSlug).toLowerCase().trim();
     const resolvedUid = SLUG_TO_UID[cleanInput] || rawUserId || "d17e65af-e407-466f-9b60-b55c43399513";
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, serviceKey);
-
-    // Get current date and time in America/Sao_Paulo (Brasília)
-    const formatter = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "America/Sao_Paulo",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-
-    const parts = formatter.formatToParts(new Date());
-    const getPart = (type: string) => parts.find((p) => p.type === type)?.value;
-
-    const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
-    const currentTime = `${getPart("hour")}:${getPart("minute")}`;
-
-    console.log(`[serve-xml-batalha] Checking for userId: ${resolvedUid}, Date: ${today}, Time: ${currentTime}`);
+    console.log(`[serve-xml-batalha] GET for userId: ${resolvedUid}, Date: ${today}, Time: ${currentTime}`);
 
     // Query scheduled battles for today
     const { data: list, error: queryErr } = await sb
@@ -76,14 +172,19 @@ Deno.serve(async (req) => {
     }
 
     // Filter by time window (supporting midnight crossing)
-    const scheduled = (list || []).find((b: any) => {
-      const start = (b.horario_inicio || "00:00").slice(0, 5);
-      const end = (b.horario_fim || "23:59").slice(0, 5);
+    let scheduled = (list || []).find((b: any) => {
+      const start = normTime(b.horario_inicio, "00:00");
+      const end = normTime(b.horario_fim, "23:59");
       if (start <= end) {
         return currentTime >= start && currentTime <= end;
       }
       return currentTime >= start || currentTime <= end;
     });
+
+    const allowLatest = url.searchParams.get("latest") === "1" || url.searchParams.get("preview") === "1";
+    if (!scheduled && (list || []).length > 0 && allowLatest) {
+      scheduled = list[0];
+    }
 
     let nome1 = "", musica1 = "", pct1 = "", img1 = "";
     let nome2 = "", musica2 = "", pct2 = "", img2 = "";
@@ -122,14 +223,8 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0, proxy-revalidate",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
         "Pragma": "no-cache",
-        "Expires": "0",
-        "Surrogate-Control": "no-store",
-        "CDN-Cache-Control": "no-store",
-        "Vary": "*",
-        "Last-Modified": new Date().toUTCString(),
-        "ETag": `"${Date.now()}"`,
       },
     });
   } catch (err: any) {

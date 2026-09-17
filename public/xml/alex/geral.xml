@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-17T11:48:18.817Z</gerado_em>
+  <gerado_em>2026-09-17T13:30:39.169Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -69,23 +69,23 @@
       <musica_a>
         <nome>Música 1</nome>
         <artista>Artista 1</artista>
-        <porcentagem>0%</porcentagem>
+        <porcentagem>50%</porcentagem>
       </musica_a>
       <musica_b>
         <nome>Música 2</nome>
         <artista>Artista 2</artista>
-        <porcentagem>0%</porcentagem>
+        <porcentagem>50%</porcentagem>
       </musica_b>
     </batalha>
 
     <enquete ativa="1">
-      <pergunta></pergunta>
+      <pergunta>Qual música você quer ouvir no próximo bloco?</pergunta>
       <opcao_a></opcao_a>
       <opcao_b></opcao_b>
     </enquete>
 
     <quiz ativa="1">
-      <pergunta></pergunta>
+      <pergunta>Qual o maior sucesso musical deste ano?</pergunta>
       <resposta_correta>A</resposta_correta>
     </quiz>
   </interatividade>

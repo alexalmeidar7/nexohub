@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { writeFileSync, mkdirSync, existsSync, readFileSync } from "fs";
 import { resolve, join } from "path";
 
 const SUPABASE_BASE = "https://zzjfzxxvxbspbdkodoix.supabase.co";
@@ -492,10 +492,97 @@ export async function generateAllUserXmls() {
     const logosContent = logosRemote || generateFallbackLogos(st);
     const musicaContent = generateMusicaXml(st, broadcastRemote);
 
-    // If batalha, enquete, quiz from Supabase have empty content tags, keep them or enrich if needed
-    const batalhaContent = batalhaRemote && batalhaRemote.includes("<artista1_nome>") ? batalhaRemote : generateFallbackBatalha(st);
-    const enqueteContent = enqueteRemote && enqueteRemote.includes("<pergunta>") ? enqueteRemote : generateFallbackEnquete(st);
-    const quizContent = quizRemote && quizRemote.includes("<pergunta>") ? quizRemote : generateFallbackQuiz(st);
+    // If batalha, enquete, quiz from Supabase have empty content tags, check local sync store
+    let batalhaContent = (batalhaRemote && extractTag(batalhaRemote, "artista1_nome").length > 0) ? batalhaRemote : "";
+    let enqueteContent = (enqueteRemote && extractTag(enqueteRemote, "pergunta").length > 0) ? enqueteRemote : "";
+    let quizContent = (quizRemote && extractTag(quizRemote, "pergunta").length > 0) ? quizRemote : "";
+
+    try {
+      if (!enqueteContent) {
+        const enqSyncPath = resolve("src/data/xml_enquetes_sync.json");
+        if (existsSync(enqSyncPath)) {
+          const syncData = JSON.parse(readFileSync(enqSyncPath, "utf-8"));
+          const list = syncData[st.slug] || syncData[st.uid] || [];
+          if (list.length > 0 && list[0]?.pergunta) {
+            const eq = list[0];
+            enqueteContent = `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <enquete>
+    <pergunta>${eq.pergunta}</pergunta>
+    <resposta1>${eq.resposta1 || ""}</resposta1>
+    <resposta2>${eq.resposta2 || ""}</resposta2>
+    <resposta3>${eq.resposta3 || ""}</resposta3>
+    <resposta4>${eq.resposta4 || ""}</resposta4>
+    <resposta_correta>${eq.resposta_correta || 1}</resposta_correta>
+    <horario_inicio>${eq.horario_inicio || "00:00"}</horario_inicio>
+    <horario_fim>${eq.horario_fim || "23:59"}</horario_fim>
+  </enquete>
+</items>`;
+          }
+        }
+      }
+    } catch {}
+
+    try {
+      if (!quizContent) {
+        const qzSyncPath = resolve("src/data/xml_quizzes_sync.json");
+        if (existsSync(qzSyncPath)) {
+          const syncData = JSON.parse(readFileSync(qzSyncPath, "utf-8"));
+          const list = syncData[st.slug] || syncData[st.uid] || [];
+          if (list.length > 0 && list[0]?.pergunta) {
+            const qz = list[0];
+            quizContent = `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <dados>
+    <pergunta>${qz.pergunta}</pergunta>
+    <resposta1>${qz.resposta1 || ""}</resposta1>
+    <resposta2>${qz.resposta2 || ""}</resposta2>
+    <resposta3>${qz.resposta3 || ""}</resposta3>
+    <resposta4>${qz.resposta4 || ""}</resposta4>
+    <resposta_correta>${qz.resposta_correta || 1}</resposta_correta>
+    <horario_inicio>${qz.horario_inicio || "00:00"}</horario_inicio>
+    <horario_fim>${qz.horario_fim || "23:59"}</horario_fim>
+    <explicacao>${qz.explicacao || ""}</explicacao>
+    <imagem_resposta>${qz.imagem_resposta || ""}</imagem_resposta>
+  </dados>
+</items>`;
+          }
+        }
+      }
+    } catch {}
+
+    try {
+      if (!batalhaContent) {
+        const batSyncPath = resolve("src/data/xml_batalhas_sync.json");
+        if (existsSync(batSyncPath)) {
+          const syncData = JSON.parse(readFileSync(batSyncPath, "utf-8"));
+          const list = syncData[st.slug] || syncData[st.uid] || [];
+          if (list.length > 0 && (list[0]?.artista1_nome || list[0]?.artista2_nome)) {
+            const bt = list[0];
+            batalhaContent = `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <batalha>
+    <artista1_nome>${bt.artista1_nome || ""}</artista1_nome>
+    <artista1_musica>${bt.artista1_musica || ""}</artista1_musica>
+    <artista1_porcentagem>${bt.artista1_porcentagem ?? 50}%</artista1_porcentagem>
+    <artista1_imagem>${bt.artista1_imagem || ""}</artista1_imagem>
+    <artista2_nome>${bt.artista2_nome || ""}</artista2_nome>
+    <artista2_musica>${bt.artista2_musica || ""}</artista2_musica>
+    <artista2_porcentagem>${bt.artista2_porcentagem ?? 50}%</artista2_porcentagem>
+    <artista2_imagem>${bt.artista2_imagem || ""}</artista2_imagem>
+    <horario_inicio>${bt.horario_inicio || "00:00"}</horario_inicio>
+    <horario_fim>${bt.horario_fim || "23:59"}</horario_fim>
+  </batalha>
+</items>`;
+          }
+        }
+      }
+    } catch {}
+
+    batalhaContent = batalhaContent || generateFallbackBatalha(st);
+    enqueteContent = enqueteContent || generateFallbackEnquete(st);
+    quizContent = quizContent || generateFallbackQuiz(st);
+
     const geralContent = generateCombinedGeralXml(
       st,
       tempoContent,

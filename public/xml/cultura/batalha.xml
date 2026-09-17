@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
-    <artista1_nome></artista1_nome>
-    <artista1_musica></artista1_musica>
-    <artista1_porcentagem>0%</artista1_porcentagem>
-    <artista1_imagem></artista1_imagem>
-    <artista2_nome></artista2_nome>
-    <artista2_musica></artista2_musica>
-    <artista2_porcentagem>0%</artista2_porcentagem>
-    <artista2_imagem></artista2_imagem>
+    <emissora>Cultura FM 97.3</emissora>
+    <artista1_nome>Artista 1</artista1_nome>
+    <artista1_musica>Música 1</artista1_musica>
+    <artista1_porcentagem>50%</artista1_porcentagem>
+    <artista1_imagem>https://nexohub.lovable.app/default-sponsor-logo.png</artista1_imagem>
+    <artista2_nome>Artista 2</artista2_nome>
+    <artista2_musica>Música 2</artista2_musica>
+    <artista2_porcentagem>50%</artista2_porcentagem>
+    <artista2_imagem>https://nexohub.lovable.app/default-sponsor-logo.png</artista2_imagem>
   </batalha>
 </items>

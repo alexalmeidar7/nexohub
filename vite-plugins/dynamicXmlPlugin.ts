@@ -38,6 +38,12 @@ function escapeXml(str: any): string {
     .replace(/'/g, "&apos;");
 }
 
+function normTime(t: any, def = "00:00"): string {
+  const str = String(t ?? def).trim();
+  const [h, m] = str.split(":");
+  return `${(h || "0").padStart(2, "0")}:${(m || "00").slice(0, 2).padEnd(2, "0")}`;
+}
+
 function isScheduleActive(
   itemDate: string,
   startTime: string,
@@ -47,8 +53,8 @@ function isScheduleActive(
 ): boolean {
   if (!itemDate || !startTime || !endTime) return false;
   if (itemDate !== targetDate) return false;
-  const start = startTime.slice(0, 5);
-  const end = endTime.slice(0, 5);
+  const start = normTime(startTime, "00:00");
+  const end = normTime(endTime, "23:59");
   if (start <= end) {
     return targetTime >= start && targetTime <= end;
   }

@@ -348,6 +348,14 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: targetSlug, userId: uId, batalhas: list }),
       }).catch(() => {});
+
+      // Sincroniza imediatamente com a Supabase Edge Function para vMix remoto
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      fetch(`${supabaseUrl}/functions/v1/serve-xml-batalha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, batalhas: list }),
+      }).catch(() => {});
     } catch {}
   };
 
@@ -452,12 +460,26 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (editingId && isUuid) {
         const { error } = await supabase.from("batalhas_agendadas").update(payload).eq("id", editingId);
-        if (error) console.warn("Supabase update batalha warning (mantido localmente):", error.message);
+        if (error) console.warn("Supabase update batalha warning:", error.message);
       } else {
         const insertPayload = isUuid ? { id, ...payload } : payload;
         const { error } = await supabase.from("batalhas_agendadas").insert([insertPayload]);
-        if (error) console.warn("Supabase insert batalha warning (mantido localmente):", error.message);
+        if (error) console.warn("Supabase insert batalha warning:", error.message);
       }
+
+      // Envia diretamente para a Edge Function via POST (com service role) para garantir atualização no vMix
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      await fetch(`${supabaseUrl}/functions/v1/serve-xml-batalha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          slug: targetSlug,
+          user_id: targetUserId,
+          batalha: newBatalha,
+          batalhas: updated,
+        }),
+      }).catch((e) => console.warn("Erro ao sincronizar batalha com Edge Function:", e));
     } catch (err) {
       console.warn("Supabase batalha network warning:", err);
     } finally {
@@ -484,6 +506,17 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
         const { error } = await supabase.from("batalhas_agendadas").delete().eq("id", id);
         if (error) console.warn("Supabase delete batalha warning:", error.message);
       }
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+      await fetch(`${supabaseUrl}/functions/v1/serve-xml-batalha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          slug: targetSlug,
+          user_id: targetUserId,
+          id,
+        }),
+      }).catch(() => {});
     } catch (err) {
       console.warn("Erro ao excluir batalha no Supabase:", err);
     }

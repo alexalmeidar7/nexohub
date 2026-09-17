@@ -3,17 +3,17 @@
   <cidade>Inhumas</cidade>
   <atual date="Agora">
     <cidade>Inhumas</cidade>
-    <temperatura>26ºC</temperatura>
-    <descricao>Parcialmente nublado</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-2-d.png</icone_url>
+    <temperatura>31ºC</temperatura>
+    <descricao>Céu limpo</descricao>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
     <minima>20ºC</minima>
     <maxima>33ºC</maxima>
-    <humidade>55%</humidade>
-    <precipitacao>49%</precipitacao>
+    <humidade>38%</humidade>
+    <precipitacao>73%</precipitacao>
   </atual>
   <amanha date="2026-09-18">
     <temperatura_minima>22ºC</temperatura_minima>
-    <temperatura_maxima>34ºC</temperatura_maxima>
+    <temperatura_maxima>33ºC</temperatura_maxima>
     <url_imagem_icone>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-51-d.png</url_imagem_icone>
     <descricao_tempo>Garoa leve</descricao_tempo>
   </amanha>
@@ -23,9 +23,9 @@
     <descricao>Garoa leve</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-51-d.png</icone_url>
     <minima>22ºC</minima>
-    <maxima>34ºC</maxima>
-    <humidade>66%</humidade>
-    <precipitacao>16%</precipitacao>
+    <maxima>33ºC</maxima>
+    <humidade>63%</humidade>
+    <precipitacao>41%</precipitacao>
   </dia>
   <dia date="2026-09-19">
     <cidade>Inhumas</cidade>
@@ -33,38 +33,38 @@
     <descricao>Céu limpo</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
     <minima>22ºC</minima>
-    <maxima>33ºC</maxima>
-    <humidade>61%</humidade>
-    <precipitacao>2%</precipitacao>
+    <maxima>34ºC</maxima>
+    <humidade>57%</humidade>
+    <precipitacao>4%</precipitacao>
   </dia>
   <dia date="2026-09-20">
     <cidade>Inhumas</cidade>
     <temperatura>29ºC</temperatura>
-    <descricao>Nublado</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
+    <descricao>Parcialmente limpo</descricao>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-1-d.png</icone_url>
     <minima>24ºC</minima>
     <maxima>35ºC</maxima>
-    <humidade>48%</humidade>
+    <humidade>45%</humidade>
     <precipitacao>0%</precipitacao>
   </dia>
   <dia date="2026-09-21">
     <cidade>Inhumas</cidade>
-    <temperatura>29ºC</temperatura>
-    <descricao>Nublado</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
+    <temperatura>30ºC</temperatura>
+    <descricao>Parcialmente limpo</descricao>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-1-d.png</icone_url>
     <minima>24ºC</minima>
     <maxima>35ºC</maxima>
-    <humidade>45%</humidade>
-    <precipitacao>2%</precipitacao>
+    <humidade>42%</humidade>
+    <precipitacao>6%</precipitacao>
   </dia>
   <dia date="2026-09-22">
     <cidade>Inhumas</cidade>
-    <temperatura>29ºC</temperatura>
+    <temperatura>30ºC</temperatura>
     <descricao>Nublado</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
-    <minima>23ºC</minima>
+    <minima>24ºC</minima>
     <maxima>36ºC</maxima>
     <humidade>48%</humidade>
-    <precipitacao>5%</precipitacao>
+    <precipitacao>6%</precipitacao>
   </dia>
 </previsao>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-17T11:48:24.823Z</gerado_em>
+  <gerado_em>2026-09-17T13:30:45.176Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -44,11 +44,11 @@
   <previsao_tempo>
     <cidade>Goiânia - GO</cidade>
     <atual>
-      <temperatura>27ºC</temperatura>
+      <temperatura>31ºC</temperatura>
       <descricao>Céu limpo</descricao>
-      <minima>22ºC</minima>
+      <minima>23ºC</minima>
       <maxima>35ºC</maxima>
-      <umidade>50%</umidade>
+      <umidade>34%</umidade>
       <vento>10 km/h</vento>
       <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
     </atual>
@@ -69,23 +69,23 @@
       <musica_a>
         <nome>Música 1</nome>
         <artista>Artista 1</artista>
-        <porcentagem>0%</porcentagem>
+        <porcentagem>50%</porcentagem>
       </musica_a>
       <musica_b>
         <nome>Música 2</nome>
         <artista>Artista 2</artista>
-        <porcentagem>0%</porcentagem>
+        <porcentagem>50%</porcentagem>
       </musica_b>
     </batalha>
 
     <enquete ativa="1">
-      <pergunta></pergunta>
+      <pergunta>Qual música você quer ouvir no próximo bloco?</pergunta>
       <opcao_a></opcao_a>
       <opcao_b></opcao_b>
     </enquete>
 
     <quiz ativa="1">
-      <pergunta></pergunta>
+      <pergunta>Qual o maior sucesso musical deste ano?</pergunta>
       <resposta_correta>A</resposta_correta>
     </quiz>
   </interatividade>
