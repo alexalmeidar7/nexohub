@@ -320,7 +320,7 @@ const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as an
 
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
-  previsao: "Previsão do Tempo",
+  previsao: "Cidade Tempo",
   noticias: "Roteiro de Programa",
   apresentadores: "Cadastro de Participantes",
   ouvintes: "Cadastro de Ouvintes",
@@ -363,9 +363,10 @@ const pageTitle: Record<Page, string> = {
 
 interface DashboardProps {
   onLogout?: () => void;
+  defaultPage?: Page;
 }
 
-export default function Dashboard({ onLogout }: DashboardProps) {
+export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const { user, role } = useAuth();
   const isLocal = typeof window !== "undefined" && (
     window.location.hostname === "localhost" ||
@@ -439,8 +440,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return "dashboard";
   });
 
-  // Modo Janela para House Mix (Cadastro de Clientes, Cadastro de Participantes)
-  const HOUSEMIX_WINDOW_PAGES: Page[] = ["clientes", "apresentadores"];
+  // Modo Janela para House Mix (Cadastro de Clientes, Participantes, Ouvintes, Programas, Cidade Tempo)
+  const HOUSEMIX_WINDOW_PAGES: Page[] = ["clientes", "apresentadores", "ouvintes", "programas", "previsao"];
   const isWindowMode = !isAdmin && HOUSEMIX_WINDOW_PAGES.includes(currentPage);
 
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
@@ -448,8 +449,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       
       if (resolved !== prev) {
-        // Se navegou diretamente para a página (ex: pelo menu), remove da lista de minimizados
-        setMinimizedModules((minPrev) => minPrev.filter((p) => p !== resolved));
+        // Se estava em uma janela HouseMix e abriu outra janela HouseMix, minimiza a anterior
+        if (HOUSEMIX_WINDOW_PAGES.includes(prev) && HOUSEMIX_WINDOW_PAGES.includes(resolved)) {
+          setMinimizedModules((minPrev) => {
+            const cleaned = minPrev.filter((p) => p !== resolved);
+            return cleaned.includes(prev) ? cleaned : [...cleaned, prev];
+          });
+        } else {
+          // Se navegou diretamente para a página (ex: pelo menu), remove da lista de minimizados
+          setMinimizedModules((minPrev) => minPrev.filter((p) => p !== resolved));
+        }
         try { window.dispatchEvent(new CustomEvent("app:page-change", { detail: { page: resolved } })); } catch { /* noop */ }
       }
       return resolved;
@@ -1138,6 +1147,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       currentPage !== "programas" &&
       currentPage !== "apresentadores" &&
       currentPage !== "ouvintes" &&
+      currentPage !== "previsao" &&
       currentPage !== "broadcast" &&
       currentPage !== "cenario" &&
       currentPage !== "vmix" &&
@@ -1569,7 +1579,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ApresentadorForm effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "previsao" || (minimizedModules.includes("previsao") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "previsao" || (minimizedModules.includes("previsao") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
                   <PrevisaoTempo effectiveUserId={effectiveUserId} />
                 </div>
@@ -1579,7 +1589,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ClientesPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "ouvintes" || (minimizedModules.includes("ouvintes") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "ouvintes" || (minimizedModules.includes("ouvintes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "ouvintes" ? "block" : "none" }}>
                   <OuvintesPage effectiveUserId={effectiveUserId} />
                 </div>
@@ -1599,7 +1609,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <RoteiroPrograma effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "programas" || (minimizedModules.includes("programas") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "programas" || (minimizedModules.includes("programas") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "programas" ? "block" : "none" }}>
                   <ProgramaForm effectiveUserId={effectiveUserId} />
                 </div>
@@ -1892,6 +1902,78 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </HouseMixWindow>
         )}
 
+        {/* House Mix Window Mode - Cadastro de Ouvintes */}
+        {!isAdmin && (currentPage === "ouvintes" || (minimizedModules.includes("ouvintes") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CADASTRO DE OUVINTES"
+            isOpen={currentPage === "ouvintes"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "ouvintes"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("ouvintes")) return prev;
+                return [...prev, "ouvintes"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <OuvintesPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Cadastro de Programas */}
+        {!isAdmin && (currentPage === "programas" || (minimizedModules.includes("programas") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CADASTRO DE PROGRAMAS"
+            isOpen={currentPage === "programas"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "programas"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("programas")) return prev;
+                return [...prev, "programas"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <ProgramaForm effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Cadastro de Cidade Tempo */}
+        {!isAdmin && (currentPage === "previsao" || (minimizedModules.includes("previsao") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CIDADE TEMPO"
+            isOpen={currentPage === "previsao"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "previsao"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("previsao")) return prev;
+                return [...prev, "previsao"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <PrevisaoTempo effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
         {/* Minimized Modules Bar */}
         {minimizedModules.length > 0 && (currentPage === "dashboard" || isWindowMode) && (
           <div 
@@ -1945,6 +2027,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         if (mod === "playerconfig") return <Settings size={16} color="#fff" />;
                         if (mod === "apresentadores") return <Mic2 size={16} color="#fff" />;
                         if (mod === "clientes") return <Building2 size={16} color="#fff" />;
+                        if (mod === "ouvintes") return <Users size={16} color="#fff" />;
+                        if (mod === "programas") return <Radio size={16} color="#fff" />;
                         return <Users size={16} color="#fff" />;
                       })()}
                     </div>

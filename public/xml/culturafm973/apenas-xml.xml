@@ -2,33 +2,34 @@
 <items>
   <dados>
     <empresa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/empresa-logo.png?v=4832726790</empresa_logo>
-    <programa_nome>Cultura Agro</programa_nome>
-    <programa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/52b6811e-d243-49ba-949a-808d4b4fcbd5-logo.png</programa_logo>
-    <programa_thumb>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/52b6811e-d243-49ba-949a-808d4b4fcbd5-thumb-hd.png</programa_thumb>
+    <programa_nome>Manhã da Cultura</programa_nome>
+    <programa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/df42e385-5159-4d8c-88ff-6653671bc2ec-logo.png</programa_logo>
+    <programa_thumb>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/df42e385-5159-4d8c-88ff-6653671bc2ec-thumb-hd.png</programa_thumb>
     <locutor_nome>Azevedo Júnior</locutor_nome>
     <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/9941a00a-de99-43f8-994c-6d69e4198485-locutor.png</locutor_foto>
     <locutor_social>@azevedojuniorlocutoroficial</locutor_social>
-    <rede_social_atual>(67) 99999-1375</rede_social_atual>
-    <rede_social_icone>https://img.icons8.com/ios-filled/200/ffffff/whatsapp.png</rede_social_icone>
-    <logo_patrocinador>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png</logo_patrocinador>
+    <rede_social_atual>culturanoticias.com.br</rede_social_atual>
+    <rede_social_icone>https://img.icons8.com/ios-filled/200/ffffff/domain.png</rede_social_icone>
+    <logo_patrocinador>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/sponsor-2-supervalo.png</logo_patrocinador>
     <titulo></titulo>
     <fundo_assunto></fundo_assunto>
     <qrcode_link>https://wa.me/67999991375</qrcode_link>
     <ticker></ticker>
     <insert_live>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</insert_live>
     <curiosidade></curiosidade>
-    <musica_atual>TRILHA LUZEIRO ALMIR SATER - CULTURA AGRO - CULTURA AGRO</musica_atual>
-    <musica_capa>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/music-cover-cultura_agro_trilha_luzeiro_almir_sater___cultura_agro.png?v=0x600bbjpg</musica_capa>
+    <musica_atual>TR - MANHA CULTURA2 - Desconhecido</musica_atual>
+    <musica_capa></musica_capa>
     <deezer_artist_img></deezer_artist_img>
     <banner_l></banner_l>
-    <temperatura>19°</temperatura>
+    <temperatura>22°</temperatura>
     <ico_temperatura>https://img.icons8.com/ios-filled/200/ffffff/sun.png</ico_temperatura>
     <infos_canto>
-      <titulo>tempo agora</titulo>
-      <descricao></descricao>
-      <ico_categoria>https://img.icons8.com/ios-filled/200/ffffff/cloud.png</ico_categoria>
-      <temp_atual>19°</temp_atual>
-      <ico_temp_atual>https://img.icons8.com/ios-filled/200/ffffff/sun.png</ico_temp_atual>
+      <titulo>cotação</titulo>
+      <descricao>Dólar R$ 5,15
+Euro R$ 5,93</descricao>
+      <ico_categoria>https://img.icons8.com/ios-filled/200/ffffff/us-dollar-circled.png</ico_categoria>
+      <temp_atual></temp_atual>
+      <ico_temp_atual>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</ico_temp_atual>
     </infos_canto>
     <a_seguir>
       <ativo>0</ativo>
@@ -40,7 +41,7 @@
       <horario></horario>
       <texto></texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-17T10:58:45.416Z</atualizado_em>
+      <atualizado_em>2026-09-17T11:48:14.895Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

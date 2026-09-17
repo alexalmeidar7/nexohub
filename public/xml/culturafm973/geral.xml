@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-17T10:58:47.713Z</gerado_em>
+  <gerado_em>2026-09-17T11:48:17.358Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -14,14 +14,14 @@
   <!-- NO AR (Música, Programa e Apresentador) -->
   <no_ar>
     <musica_atual>
-      <titulo>TRILHA LUZEIRO ALMIR SATER - CULTURA AGRO - CULTURA AGRO</titulo>
-      <capa_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/music-cover-cultura_agro_trilha_luzeiro_almir_sater___cultura_agro.png?v=0x600bbjpg</capa_url>
+      <titulo>TR - MANHA CULTURA2 - Desconhecido</titulo>
+      <capa_url></capa_url>
       <curiosidade></curiosidade>
-      <texto_completo>TRILHA LUZEIRO ALMIR SATER - CULTURA AGRO - CULTURA AGRO</texto_completo>
+      <texto_completo>TR - MANHA CULTURA2 - Desconhecido</texto_completo>
     </musica_atual>
 
     <programa_atual>
-      <nome>Cultura Agro</nome>
+      <nome>Manhã da Cultura</nome>
       <estudio>Estudio FM</estudio>
     </programa_atual>
 
@@ -33,7 +33,7 @@
 
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Cultura Agro</programa_nome>
+      <programa_nome>Manhã da Cultura</programa_nome>
       <horario></horario>
       <locutor_nome>Azevedo Júnior</locutor_nome>
       <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/66337743-4e4f-4950-b58f-750b0c76861e/9941a00a-de99-43f8-994c-6d69e4198485-locutor.png</locutor_foto>
@@ -44,11 +44,11 @@
   <previsao_tempo>
     <cidade>Santos - SP</cidade>
     <atual>
-      <temperatura>19ºC</temperatura>
+      <temperatura>22ºC</temperatura>
       <descricao>Céu limpo</descricao>
       <minima>17ºC</minima>
       <maxima>32ºC</maxima>
-      <umidade>77%</umidade>
+      <umidade>67%</umidade>
       <vento>10 km/h</vento>
       <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
     </atual>
