@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sparkles, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle } from "lucide-react";
+import { Sparkles, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { confirmDialog } from "@/lib/confirmDialog";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { getScheduleStatus, isScheduleActive, getBrasiliaDateTime } from "@/lib/scheduledItemUtils";
 
 interface QuizAgendado {
   id: string;
@@ -25,11 +27,21 @@ interface QuizAgendado {
 
 export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
-  const targetUserId = effectiveUserId || user?.id;
+  const clientAcc = findClientAccountByEmail(user?.email || "") || findClientAccountById(user?.id || "");
+  const targetUserId = effectiveUserId || clientAcc?.parentUserId || clientAcc?.id || user?.id;
+  const targetSlug = clientAcc?.slug || (user as any)?.user_metadata?.slug || "positivafm";
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [quizzes, setQuizzes] = useState<QuizAgendado[]>([]);
   const [showForm, setShowForm] = useState(true);
+  const [, setTick] = useState(0);
+
+  // Auto-refresh badges and active state every 10 seconds
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 10000);
+    return () => clearInterval(timer);
+  }, []);
   
   const [formData, setFormData] = useState({
     pergunta: "",
@@ -48,7 +60,7 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
 
   const getStoredQuizzes = (uId: string): QuizAgendado[] => {
     try {
-      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      const raw = localStorage.getItem(getLocalStorageKey(uId)) || localStorage.getItem(`nexohub_quizzes_${targetSlug}`);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) return parsed;
@@ -60,15 +72,20 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
   const saveStoredQuizzes = (uId: string, list: QuizAgendado[]) => {
     try {
       localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+      localStorage.setItem(`nexohub_quizzes_${targetSlug}`, JSON.stringify(list));
+      // Sincroniza com o servidor local e endpoints XML em tempo real
+      fetch("/api/sync-xml-quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: targetSlug, userId: uId, quizzes: list }),
+      }).catch(() => {});
     } catch {}
   };
 
   const fetchQuizzes = async () => {
     if (!targetUserId) return;
     
-    const now = new Date();
-    const today = todayInBrasilia();
-    const currentTime = now.toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const { today, currentTime } = getBrasiliaDateTime();
 
     let rows: any[] = [];
     try {
@@ -209,15 +226,27 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
             <p className="text-xs text-slate-400 font-medium">Agendamento e controle de quizzes</p>
           </div>
         </div>
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          className={`h-11 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer ${
-            showForm ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-[#0055ff] hover:bg-[#0047d4] text-white shadow-md hover:shadow-blue-500/20"
-          }`}
-        >
-          {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {showForm ? "Cancelar" : "Novo Quiz"}
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/xml/${targetSlug}/quiz.xml`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-11 px-5 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm"
+            title="Abrir feed XML do Quiz no navegador ou vMix"
+          >
+            <ExternalLink size={15} className="text-[#0055ff]" />
+            <span>XML QUIZ</span>
+          </a>
+          <button 
+            onClick={() => setShowForm(!showForm)}
+            className={`h-11 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer ${
+              showForm ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-[#0055ff] hover:bg-[#0047d4] text-white shadow-md hover:shadow-blue-500/20"
+            }`}
+          >
+            {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {showForm ? "Cancelar" : "Novo Quiz"}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -373,72 +402,92 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
                 <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Data / Horário</th>
                 <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Pergunta</th>
                 <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Opções</th>
+                <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Status</th>
                 <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "right" }}>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {quizzes.length > 0 ? quizzes.map((q, idx) => (
-                <tr
-                  key={q.id}
-                  style={{
-                    background: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC",
-                    transition: "background 0.2s ease"
-                  }}
-                  className="hover:bg-[#F1F5F9]"
-                >
-                  <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
-                    <div className="flex flex-col">
-                      <span style={{ fontWeight: 700 }}>
-                        {new Date(q.data_quiz + 'T12:00:00').toLocaleDateString('pt-BR')}
-                      </span>
-                      <span style={{ fontSize: 10, opacity: 0.6 }}>
-                        {q.horario_inicio} - {q.horario_fim}
-                      </span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 500, color: "#0A2540" }}>
-                    <p>{q.pergunta}</p>
-                    {q.explicacao && <p style={{ fontSize: 10, color: "#64748B", marginTop: 4, fontStyle: "italic" }}>{q.explicacao}</p>}
-                  </td>
-                  <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
-                    <div className="flex flex-wrap gap-2">
-                      {[q.resposta1, q.resposta2, q.resposta3, q.resposta4].filter(Boolean).map((resp, i) => (
-                        <span 
-                          key={i} 
-                          style={{ 
-                            padding: "2px 8px", 
-                            background: q.resposta_correta === (i + 1) ? "#C6F03C" : "#D6F4FB", 
-                            borderRadius: 999, 
-                            fontSize: 10, 
-                            color: "#0A2540", 
-                            fontWeight: 600,
-                            border: q.resposta_correta === (i + 1) ? "1px solid #0A254022" : "none"
-                          }}
-                        >
-                          {resp}
+              {quizzes.length > 0 ? quizzes.map((q, idx) => {
+                const status = getScheduleStatus(q.data_quiz, q.horario_inicio, q.horario_fim);
+                return (
+                  <tr
+                    key={q.id}
+                    style={{
+                      background: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC",
+                      transition: "background 0.2s ease"
+                    }}
+                    className="hover:bg-[#F1F5F9]"
+                  >
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
+                      <div className="flex flex-col">
+                        <span style={{ fontWeight: 700 }}>
+                          {new Date(q.data_quiz + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td style={{ padding: "14px 20px", textAlign: "right" }}>
-                    <button
-                      onClick={() => handleDelete(q.id)}
-                      style={{
-                        width: 32, height: 32, borderRadius: 12,
-                        background: "#FEE2E2", border: "none", cursor: "pointer",
-                        display: "inline-flex", alignItems: "center", justifyContent: "center",
-                        color: "#DC2626", transition: "all 0.2s"
-                      }}
-                      className="hover:scale-110 active:scale-95"
-                      title="Excluir"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              )) : (
+                        <span style={{ fontSize: 10, opacity: 0.6 }}>
+                          {q.horario_inicio} - {q.horario_fim}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 500, color: "#0A2540" }}>
+                      <p>{q.pergunta}</p>
+                      {q.explicacao && <p style={{ fontSize: 10, color: "#64748B", marginTop: 4, fontStyle: "italic" }}>{q.explicacao}</p>}
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
+                      <div className="flex flex-wrap gap-2">
+                        {[q.resposta1, q.resposta2, q.resposta3, q.resposta4].filter(Boolean).map((resp, i) => (
+                          <span 
+                            key={i} 
+                            style={{ 
+                              padding: "2px 8px", 
+                              background: q.resposta_correta === (i + 1) ? "#C6F03C" : "#D6F4FB", 
+                              borderRadius: 999, 
+                              fontSize: 10, 
+                              color: "#0A2540", 
+                              fontWeight: 600,
+                              border: q.resposta_correta === (i + 1) ? "1px solid #0A254022" : "none"
+                            }}
+                          >
+                            {resp}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 12 }}>
+                      {status === "active" ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 animate-pulse">
+                          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                          NO AR AGORA
+                        </span>
+                      ) : status === "scheduled" ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-blue-50 text-[#0055ff] border border-blue-200/80">
+                          AGENDADO
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">
+                          ENCERRADO
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: "14px 20px", textAlign: "right" }}>
+                      <button
+                        onClick={() => handleDelete(q.id)}
+                        style={{
+                          width: 32, height: 32, borderRadius: 12,
+                          background: "#FEE2E2", border: "none", cursor: "pointer",
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          color: "#DC2626", transition: "all 0.2s"
+                        }}
+                        className="hover:scale-110 active:scale-95"
+                        title="Excluir"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              }) : (
                 <tr>
-                  <td colSpan={4} style={{ padding: "48px 0", textAlign: "center", color: "#64748B" }}>
+                  <td colSpan={5} style={{ padding: "48px 0", textAlign: "center", color: "#64748B" }}>
                     <HelpCircle size={48} className="mx-auto mb-3 opacity-20" />
                     <p style={{ fontSize: 14, fontWeight: 500 }}>Nenhum quiz agendado no momento.</p>
                   </td>

@@ -1,0 +1,30 @@
+{
+  "positivafm": [
+    {
+      "id": "test-enq-1",
+      "pergunta": "Qual o melhor estilo musical do Brasil?",
+      "resposta1": "Sertanejo",
+      "resposta2": "Pop Rock",
+      "resposta3": "MPB",
+      "resposta4": "Eletrônico",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-16",
+      "horario_inicio": "00:00",
+      "horario_fim": "23:59"
+    }
+  ],
+  "d17e65af-e407-466f-9b60-b55c43399513": [
+    {
+      "id": "test-enq-1",
+      "pergunta": "Qual o melhor estilo musical do Brasil?",
+      "resposta1": "Sertanejo",
+      "resposta2": "Pop Rock",
+      "resposta3": "MPB",
+      "resposta4": "Eletrônico",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-16",
+      "horario_inicio": "00:00",
+      "horario_fim": "23:59"
+    }
+  ]
+}

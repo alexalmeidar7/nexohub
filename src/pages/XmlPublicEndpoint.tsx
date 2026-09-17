@@ -1,7 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Check, Copy, Download, ExternalLink, RefreshCw, FileCode } from "lucide-react";
 import { findClientAccountById, findClientAccountByEmail, CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
+import {
+  getBrasiliaDateTime,
+  isScheduleActive,
+  buildEnqueteXml,
+  buildQuizXml,
+  escapeXml,
+} from "@/lib/scheduledItemUtils";
 
 const SUPABASE_BASE = "https://zzjfzxxvxbspbdkodoix.supabase.co";
 
@@ -38,19 +45,51 @@ export default function XmlPublicEndpoint() {
   } else if (filename.includes("batalha")) {
     supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-batalha?user_id=${stationUid}`;
   } else if (filename.includes("enquete")) {
-    supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-enquete?user_id=${stationUid}`;
+    supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-enquete?user_id=${stationUid}&slug=${cleanSlug}`;
   } else if (filename.includes("quiz")) {
-    supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-quiz?user_id=${stationUid}`;
+    supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-quiz?user_id=${stationUid}&slug=${cleanSlug}`;
   }
 
-  useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    setError(null);
+  const loadXml = useCallback(async (isMounted = true) => {
+    try {
+      const { today, currentTime } = getBrasiliaDateTime();
 
-    const loadXml = async () => {
-      try {
-        // 1. Try static file first
+      // Special dynamic handler for enquete.xml
+      if (filename.includes("enquete")) {
+        // 1. Check local storage for station scheduled enquetes
+        const localKeys = [
+          `nexohub_enquetes_${stationUid}`,
+          `nexohub_enquetes_${cleanSlug}`,
+          `nexohub_enquetes_${account?.slug || ""}`,
+        ];
+        let localEnquetes: any[] = [];
+        for (const k of localKeys) {
+          try {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              const p = JSON.parse(raw);
+              if (Array.isArray(p) && p.length > 0) {
+                localEnquetes = p;
+                break;
+              }
+            }
+          } catch {}
+        }
+
+        const activeEnquete = localEnquetes.find((e: any) =>
+          isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
+        );
+
+        if (activeEnquete) {
+          const generated = buildEnqueteXml(activeEnquete);
+          if (isMounted) {
+            setXmlContent(generated.trim());
+            setLoading(false);
+          }
+          return;
+        }
+
+        // 2. Try fetching from endpoint
         const staticUrl = `/xml/${cleanSlug}/${filename}`;
         const res = await fetch(staticUrl);
         if (res.ok) {
@@ -64,25 +103,117 @@ export default function XmlPublicEndpoint() {
           }
         }
 
-        // 2. If static file not found on host, immediately redirect to working Supabase XML
-        if (supabaseFallbackUrl) {
-          window.location.replace(supabaseFallbackUrl);
-          return;
-        }
-      } catch (err: any) {
+        // 3. Fallback: clean empty XML
         if (isMounted) {
-          setError(err?.message || "Erro ao carregar feed XML");
+          setXmlContent(buildEnqueteXml(null).trim());
           setLoading(false);
         }
+        return;
       }
-    };
 
-    loadXml();
+      // Special dynamic handler for quiz.xml
+      if (filename.includes("quiz")) {
+        // 1. Check local storage for station scheduled quizzes
+        const localKeys = [
+          `nexohub_quizzes_${stationUid}`,
+          `nexohub_quizzes_${cleanSlug}`,
+          `nexohub_quizzes_${account?.slug || ""}`,
+        ];
+        let localQuizzes: any[] = [];
+        for (const k of localKeys) {
+          try {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              const p = JSON.parse(raw);
+              if (Array.isArray(p) && p.length > 0) {
+                localQuizzes = p;
+                break;
+              }
+            }
+          } catch {}
+        }
+
+        const activeQuiz = localQuizzes.find((q: any) =>
+          isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
+        );
+
+        if (activeQuiz) {
+          const generated = buildQuizXml(activeQuiz);
+          if (isMounted) {
+            setXmlContent(generated.trim());
+            setLoading(false);
+          }
+          return;
+        }
+
+        // 2. Try fetching from endpoint
+        const staticUrl = `/xml/${cleanSlug}/${filename}`;
+        const res = await fetch(staticUrl);
+        if (res.ok) {
+          const text = await res.text();
+          if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
+            if (isMounted) {
+              setXmlContent(text.trim());
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        // 3. Fallback: clean empty XML
+        if (isMounted) {
+          setXmlContent(buildQuizXml(null).trim());
+          setLoading(false);
+        }
+        return;
+      }
+
+      // 1. Try static file first
+      const staticUrl = `/xml/${cleanSlug}/${filename}`;
+      const res = await fetch(staticUrl);
+      if (res.ok) {
+        const text = await res.text();
+        if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
+          if (isMounted) {
+            setXmlContent(text.trim());
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      // 2. If static file not found on host, immediately redirect to working Supabase XML
+      if (supabaseFallbackUrl) {
+        window.location.replace(supabaseFallbackUrl);
+        return;
+      }
+    } catch (err: any) {
+      if (isMounted) {
+        setError(err?.message || "Erro ao carregar feed XML");
+        setLoading(false);
+      }
+    }
+  }, [cleanSlug, filename, supabaseFallbackUrl, stationUid, account?.slug]);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    loadXml(isMounted);
+
+    // Auto-refresh dynamic XML every 10 seconds to transition on schedule
+    const interval = setInterval(() => {
+      if (isMounted && (filename.includes("enquete") || filename.includes("quiz") || filename.includes("geral"))) {
+        loadXml(isMounted);
+      }
+    }, 10000);
 
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
-  }, [cleanSlug, filename, supabaseFallbackUrl, stationName]);
+  }, [loadXml, filename]);
 
   const handleCopy = () => {
     if (!xmlContent) return;

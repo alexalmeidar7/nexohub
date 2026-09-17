@@ -40,20 +40,49 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const slugParam = (url.searchParams.get("slug") || "").toLowerCase().trim();
     let userId = url.searchParams.get("user_id") || url.searchParams.get("uid") || "";
+    const rawSlug = url.searchParams.get("slug");
 
-    if (!userId && slugParam) {
-      userId = KNOWN_SLUG_MAP[slugParam] || "";
-    }
+    const SLUG_TO_UID: Record<string, string> = {
+      positivafm: "d17e65af-e407-466f-9b60-b55c43399513",
+      positiva: "d17e65af-e407-466f-9b60-b55c43399513",
+      p: "d17e65af-e407-466f-9b60-b55c43399513",
+      sub_positiva_opec: "d17e65af-e407-466f-9b60-b55c43399513",
+      interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+      interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+      transmissao: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+      jornal: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+      culturafm973: "66337743-4e4f-4950-b58f-750b0c76861e",
+      cultura: "66337743-4e4f-4950-b58f-750b0c76861e",
+      alex: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+    };
 
-    if (!userId) {
+    if (rawSlug && SLUG_TO_UID[rawSlug.toLowerCase()]) {
+      userId = SLUG_TO_UID[rawSlug.toLowerCase()];
+    } else if (userId && SLUG_TO_UID[userId.toLowerCase()]) {
+      userId = SLUG_TO_UID[userId.toLowerCase()];
+    } else if (!userId) {
       userId = "b2f70324-d086-4a5d-a407-cbc4acf98dce"; // Default
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, serviceKey);
+
+    // Get current date and time in America/Sao_Paulo
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(new Date());
+    const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "";
+    const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+    const currentHourStr = `${getPart("hour")}:${getPart("minute")}`;
 
     // Resolve sub-user parent if needed
     const { data: subUser } = await sb
@@ -83,8 +112,8 @@ serve(async (req) => {
       sb.from("logos_patrocinadores").select("*").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false),
       sb.from("roteiros").select("*").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10),
       sb.from("batalha_schedules").select("*").eq("user_id", ownerId).eq("ativo", true).limit(1),
-      sb.from("enquetes").select("*").eq("user_id", ownerId).eq("ativo", true).limit(1),
-      sb.from("quiz").select("*").eq("user_id", ownerId).eq("ativo", true).limit(1),
+      sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }),
+      sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }),
     ]);
 
     const empresa = empresaRes.data || {};
@@ -92,15 +121,25 @@ serve(async (req) => {
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
-    const roteiros = roteiroRes.data || [];
+    const roteiros = roteirosRes.data || [];
     const activeBatalha = batalhaRes.data?.[0] || null;
-    const activeEnquete = enquetesRes.data?.[0] || null;
-    const activeQuiz = quizRes.data?.[0] || null;
+
+    // Filter active enquete and quiz for the current minute
+    const activeEnquete = (enquetesRes.data || []).find((e: any) => {
+      const ini = (e.horario_inicio || "00:00").slice(0, 5);
+      const fim = (e.horario_fim || "23:59").slice(0, 5);
+      return ini <= fim ? (currentHourStr >= ini && currentHourStr <= fim) : (currentHourStr >= ini || currentHourStr <= fim);
+    }) || null;
+
+    const activeQuiz = (quizRes.data || []).find((q: any) => {
+      const ini = (q.horario_inicio || "00:00").slice(0, 5);
+      const fim = (q.horario_fim || "23:59").slice(0, 5);
+      return ini <= fim ? (currentHourStr >= ini && currentHourStr <= fim) : (currentHourStr >= ini || currentHourStr <= fim);
+    }) || null;
 
     // Calculate current time & on-air program
     const now = new Date();
     const currentDayName = DIAS_MAP[now.getDay()];
-    const currentHourStr = now.toTimeString().slice(0, 5); // "14:35"
 
     let currentProgram = programas.find((p: any) => {
       const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
@@ -331,10 +370,17 @@ serve(async (req) => {
     if (activeEnquete) {
       xmlParts.push('    <enquete ativa="1">');
       xmlParts.push(`      <pergunta>${esc(activeEnquete.pergunta || "")}</pergunta>`);
-      xmlParts.push(`      <opcao_a>${esc(activeEnquete.opcao1 || "Opção 1")}</opcao_a>`);
-      xmlParts.push(`      <votos_a>${activeEnquete.votos1 || 0}</votos_a>`);
-      xmlParts.push(`      <opcao_b>${esc(activeEnquete.opcao2 || "Opção 2")}</opcao_b>`);
-      xmlParts.push(`      <votos_b>${activeEnquete.votos2 || 0}</votos_b>`);
+      xmlParts.push(`      <opcao_a>${esc(activeEnquete.resposta1 || "Opção 1")}</opcao_a>`);
+      xmlParts.push(`      <votos_a>0</votos_a>`);
+      xmlParts.push(`      <opcao_b>${esc(activeEnquete.resposta2 || "Opção 2")}</opcao_b>`);
+      xmlParts.push(`      <votos_b>0</votos_b>`);
+      xmlParts.push(`      <resposta1>${esc(activeEnquete.resposta1 || "")}</resposta1>`);
+      xmlParts.push(`      <resposta2>${esc(activeEnquete.resposta2 || "")}</resposta2>`);
+      xmlParts.push(`      <resposta3>${esc(activeEnquete.resposta3 || "")}</resposta3>`);
+      xmlParts.push(`      <resposta4>${esc(activeEnquete.resposta4 || "")}</resposta4>`);
+      xmlParts.push(`      <resposta_correta>${esc(activeEnquete.resposta_correta || 1)}</resposta_correta>`);
+      xmlParts.push(`      <horario_inicio>${esc(activeEnquete.horario_inicio || "")}</horario_inicio>`);
+      xmlParts.push(`      <horario_fim>${esc(activeEnquete.horario_fim || "")}</horario_fim>`);
       xmlParts.push('    </enquete>');
     } else {
       xmlParts.push('    <enquete ativa="0"></enquete>');
@@ -342,13 +388,32 @@ serve(async (req) => {
 
     // Quiz
     if (activeQuiz) {
+      const corretaNum = Number(activeQuiz.resposta_correta) || 1;
+      const corretaTexto =
+        corretaNum === 1
+          ? activeQuiz.resposta1
+          : corretaNum === 2
+          ? activeQuiz.resposta2
+          : corretaNum === 3
+          ? activeQuiz.resposta3
+          : activeQuiz.resposta4;
+
       xmlParts.push('    <quiz ativo="1">');
       xmlParts.push(`      <pergunta>${esc(activeQuiz.pergunta || "")}</pergunta>`);
       xmlParts.push(`      <alternativa_a>${esc(activeQuiz.resposta1 || "")}</alternativa_a>`);
       xmlParts.push(`      <alternativa_b>${esc(activeQuiz.resposta2 || "")}</alternativa_b>`);
       xmlParts.push(`      <alternativa_c>${esc(activeQuiz.resposta3 || "")}</alternativa_c>`);
       xmlParts.push(`      <alternativa_d>${esc(activeQuiz.resposta4 || "")}</alternativa_d>`);
-      xmlParts.push(`      <resposta_correta>${esc(activeQuiz.resposta_correta || "A")}</resposta_correta>`);
+      xmlParts.push(`      <resposta1>${esc(activeQuiz.resposta1 || "")}</resposta1>`);
+      xmlParts.push(`      <resposta2>${esc(activeQuiz.resposta2 || "")}</resposta2>`);
+      xmlParts.push(`      <resposta3>${esc(activeQuiz.resposta3 || "")}</resposta3>`);
+      xmlParts.push(`      <resposta4>${esc(activeQuiz.resposta4 || "")}</resposta4>`);
+      xmlParts.push(`      <resposta_correta>${esc(activeQuiz.resposta_correta || 1)}</resposta_correta>`);
+      xmlParts.push(`      <resposta_correta_texto>${esc(corretaTexto || "")}</resposta_correta_texto>`);
+      xmlParts.push(`      <horario_inicio>${esc(activeQuiz.horario_inicio || "")}</horario_inicio>`);
+      xmlParts.push(`      <horario_fim>${esc(activeQuiz.horario_fim || "")}</horario_fim>`);
+      xmlParts.push(`      <explicacao>${esc(activeQuiz.explicacao || "")}</explicacao>`);
+      xmlParts.push(`      <imagem_resposta>${esc(activeQuiz.imagem_resposta || "")}</imagem_resposta>`);
       xmlParts.push('    </quiz>');
     } else {
       xmlParts.push('    <quiz ativo="0"></quiz>');

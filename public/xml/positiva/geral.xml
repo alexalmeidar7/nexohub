@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-16T11:49:26.348Z</gerado_em>
+  <gerado_em>2026-09-17T01:41:28.238Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -14,29 +14,29 @@
   <!-- NO AR (Música, Programa e Apresentador) -->
   <no_ar>
     <musica_atual>
-      <titulo>Programação Musical</titulo>
-      <capa_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/music-cover-unknown_track.png?v=6844880png</capa_url>
-      <curiosidade></curiosidade>
-      <texto_completo>Programação Musical</texto_completo>
+      <titulo>Música em Reprodução</titulo>
+      <capa_url>https://nexohub.lovable.app/default-sponsor-logo.png</capa_url>
+      <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
+      <texto_completo>Música em Reprodução</texto_completo>
     </musica_atual>
 
     <programa_atual>
-      <nome>Bom dia Positiva</nome>
+      <nome>Programação Positiva FM 99.1</nome>
       <estudio>Estudio FM</estudio>
     </programa_atual>
 
     <apresentador_atual>
-      <nome>Márcio Rodrigues</nome>
-      <foto_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/f3601b21-fd66-4795-9021-4d91992e3b6e-locutor.png</foto_url>
-      <social>@marciorodrigues.radio</social>
+      <nome>Locutor no Ar</nome>
+      <foto_url>https://nexohub.lovable.app/default-sponsor-logo.png</foto_url>
+      <social>@positivafm</social>
     </apresentador_atual>
 
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Bom dia Positiva</programa_nome>
-      <horario></horario>
-      <locutor_nome>Márcio Rodrigues</locutor_nome>
-      <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/d17e65af-e407-466f-9b60-b55c43399513/f3601b21-fd66-4795-9021-4d91992e3b6e-locutor.png</locutor_foto>
+      <programa_nome>Programação Positiva FM 99.1</programa_nome>
+      <horario>12:00</horario>
+      <locutor_nome>Locutor no Ar</locutor_nome>
+      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
     </a_seguir>
   </no_ar>
 
@@ -44,13 +44,13 @@
   <previsao_tempo>
     <cidade>Goiânia - GO</cidade>
     <atual>
-      <temperatura>25ºC</temperatura>
+      <temperatura>28ºC</temperatura>
       <descricao>Céu limpo</descricao>
-      <minima>21ºC</minima>
+      <minima>20ºC</minima>
       <maxima>34ºC</maxima>
-      <umidade>60%</umidade>
+      <umidade>44%</umidade>
       <vento>10 km/h</vento>
-      <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
+      <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-n.png</icone_url>
     </atual>
   </previsao_tempo>
 
