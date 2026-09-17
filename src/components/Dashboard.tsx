@@ -385,6 +385,7 @@ const HOUSEMIX_MODULE_DISPLAY_NAMES: Partial<Record<Page, string>> = {
   ouvintes: "Cadastro de Ouvintes",
   programas: "Cadastro de Programas",
   previsao: "Cidade Tempo",
+  configuracoes: "Configurações",
 };
 
 interface DashboardProps {
@@ -426,7 +427,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     "apresentadores", "ouvintes", "programas", "clientes", "previsao", "sorteios",
     "blitz", "noticias", "musica", "agenda", "site", "playerconfig", "preroll",
     "testemunhais", "promocoes", "logos", "broadcast", "cenario", "batalha",
-    "enquete", "quiz", "cortevideo", "configtelapromo"
+    "enquete", "quiz", "cortevideo", "configtelapromo", "configuracoes"
   ];
 
   // State for minimized modules (array to allow multiple)
@@ -466,7 +467,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     return "dashboard";
   });
 
-  // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda, Gestor de Site, Player, Comercial, vMix, Ferramentas)
+  // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda, Gestor de Site, Player, Comercial, vMix, Ferramentas, Configurações)
   const HOUSEMIX_WINDOW_PAGES: Page[] = [
     "clientes",
     "apresentadores",
@@ -491,6 +492,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     "enquete",
     "quiz",
     "cortevideo",
+    "configuracoes",
   ];
   const isWindowMode = !isAdmin && HOUSEMIX_WINDOW_PAGES.includes(currentPage);
 
@@ -1676,7 +1678,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                 </div>
               )}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
-              {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" isSuperAdmin={isAdmin} effectiveUserId={effectiveUserId} />}
+              {isAdmin && currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" isSuperAdmin={isAdmin} effectiveUserId={effectiveUserId} />}
               {isAdmin && (currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && currentPage === "dashboard")) && (
                 <div className="keep-dark-layout" style={{ display: currentPage === "playerconfig" ? "block" : "none" }}>
                   <ConfiguracoesPage section="player" effectiveUserId={effectiveUserId} />
@@ -2463,6 +2465,30 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           </HouseMixWindow>
         )}
 
+        {/* House Mix Window Mode - Configurações */}
+        {!isAdmin && (currentPage === "configuracoes" || (minimizedModules.includes("configuracoes") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CONFIGURAÇÕES"
+            isOpen={currentPage === "configuracoes"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "configuracoes"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("configuracoes")) return prev;
+                return [...prev, "configuracoes"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="configuracoes" />}>
+              <ConfiguracoesPage section="empresa" isSuperAdmin={isAdmin} effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
         {/* Minimized Modules Bar */}
         {minimizedModules.length > 0 && (currentPage === "dashboard" || isWindowMode) && (
           <div 
@@ -2505,7 +2531,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                       if (mod === "batalha") return <Swords size={15} />;
                       if (mod === "enquete" || mod === "quiz") return <HelpCircle size={15} />;
                       if (mod === "cortevideo") return <Scissors size={15} />;
-                      if (mod === "playerconfig" || mod === "configtelapromo") return <Settings size={15} />;
+                      if (mod === "playerconfig" || mod === "configtelapromo" || mod === "configuracoes") return <Settings size={15} />;
                       if (mod === "apresentadores") return <Mic2 size={15} />;
                       if (mod === "clientes") return <Building2 size={15} />;
                       if (mod === "ouvintes") return <Users size={15} />;

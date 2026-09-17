@@ -1038,8 +1038,10 @@ export default function HouseMixHeader({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => onNavigate("configuracoes")}
-                  className="w-9 h-9 shrink-0 rounded-full bg-[#0055ff] hover:bg-[#0042cc] text-white flex items-center justify-center transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:scale-105 active:scale-95 cursor-pointer"
+                  onClick={() => onNavigate(currentPage === "configuracoes" ? "dashboard" : "configuracoes")}
+                  className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:scale-105 active:scale-95 cursor-pointer ${
+                    currentPage === "configuracoes" ? "bg-[#002680] ring-2 ring-white text-white font-bold" : "bg-[#0055ff] hover:bg-[#0042cc] text-white"
+                  }`}
                   title="Configurações da Empresa"
                 >
                   <Settings className="w-4 h-4 text-white" />
