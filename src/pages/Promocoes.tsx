@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { useParams, Navigate } from "react-router-dom";
 import { usePageTitle, applyPublicHead, usePublicHead } from "@/hooks/usePageTitle";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
@@ -110,6 +111,7 @@ function getUniqueBanners(promocoes: Promocao[]) {
 }
 
 export default function PromocoesKiosk() {
+  const { user } = useAuth();
   const { userSlug } = useParams<{ userSlug?: string }>();
   const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
   const isPublicMode = !!validSlug;
@@ -152,6 +154,34 @@ export default function PromocoesKiosk() {
   const [audienceDetailsOpen, setAudienceDetailsOpen] = useState(false);
   const [audienceChart, setAudienceChart] = useState<Array<{ hora: string; audio: number; video: number; total: number; programa: string }>>([]);
   const [audienceChartLoading, setAudienceChartLoading] = useState(false);
+
+  const isPositivaUser = useMemo(() => {
+    // 1. URL slug (ex.: /positivafm/locutor ou /positiva/locutor)
+    const slug = (userSlug || "").toLowerCase();
+    if (slug.includes("positiva")) return true;
+
+    // 2. Nome da emissora no config (ex.: "Positiva FM 99.1")
+    const empNome = (config?.nome || "").toLowerCase();
+    if (empNome.includes("positiva")) return true;
+
+    // 3. ID da emissora/usuário Positiva FM
+    if (audienceUserId === "d17e65af-e407-466f-9b60-b55c43399513") return true;
+
+    // 4. Usuário autenticado
+    const authEmail = (user?.email || "").toLowerCase();
+    if (authEmail.includes("positiva")) return true;
+    if (user?.id === "d17e65af-e407-466f-9b60-b55c43399513") return true;
+
+    // 5. Fallback storage de sessão
+    try {
+      const backup = JSON.parse(localStorage.getItem("nexohub_backup_session") || "{}");
+      const email = (backup?.user?.email || "").toLowerCase();
+      if (email.includes("positiva")) return true;
+      if (backup?.user?.id === "d17e65af-e407-466f-9b60-b55c43399513") return true;
+    } catch {}
+
+    return false;
+  }, [userSlug, config?.nome, audienceUserId, user?.email, user?.id]);
 
   useEffect(() => {
     if (!audienceDetailsOpen || !audienceUserId) return;
@@ -1186,8 +1216,8 @@ export default function PromocoesKiosk() {
           userId={audienceUserId}
         />
 
-        {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) */}
-        {(() => {
+        {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) - oculta para usuário Positiva */}
+        {!isPositivaUser && (() => {
           const a = Math.max(0, audioCount ?? 0);
           const v = Math.max(0, videoCount ?? 0);
           const total = a + v;
