@@ -439,8 +439,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return "dashboard";
   });
 
-  // Modo Janela de teste para House Mix na página de cadastro de clientes
-  const isWindowMode = !isAdmin && currentPage === "clientes";
+  // Modo Janela para House Mix (Cadastro de Clientes, Cadastro de Participantes)
+  const HOUSEMIX_WINDOW_PAGES: Page[] = ["clientes", "apresentadores"];
+  const isWindowMode = !isAdmin && HOUSEMIX_WINDOW_PAGES.includes(currentPage);
 
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
@@ -1563,7 +1564,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {!isAdmin && currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "financeiro" && <FinanceiroSuperAdminPage />}
               {currentPage === "chatbot" && <ChatbotHome />}
-              {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
                   <ApresentadorForm effectiveUserId={effectiveUserId} />
                 </div>
@@ -1843,8 +1844,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {/* House Mix Window Mode (Draggable Window Modal for Clientes Test) */}
-        {!isAdmin && (currentPage === "clientes" || (minimizedModules.includes("clientes") && currentPage === "dashboard")) && (
+        {/* House Mix Window Mode - Cadastro de Clientes */}
+        {!isAdmin && (currentPage === "clientes" || (minimizedModules.includes("clientes") && (currentPage === "dashboard" || isWindowMode))) && (
           <HouseMixWindow
             title="HOUSE MIX – CADASTRO DE CLIENTES"
             isOpen={currentPage === "clientes"}
@@ -1867,8 +1868,32 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </HouseMixWindow>
         )}
 
+        {/* House Mix Window Mode - Cadastro de Participantes */}
+        {!isAdmin && (currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CADASTRO DE PARTICIPANTES"
+            isOpen={currentPage === "apresentadores"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "apresentadores"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("apresentadores")) return prev;
+                return [...prev, "apresentadores"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <ApresentadorForm effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
         {/* Minimized Modules Bar */}
-        {minimizedModules.length > 0 && currentPage === "dashboard" && (
+        {minimizedModules.length > 0 && (currentPage === "dashboard" || isWindowMode) && (
           <div 
             className={`fixed bottom-4 ${!isAdmin ? "left-1/2 -translate-x-1/2" : "left-[80px]"} z-[70] flex flex-wrap items-center justify-center gap-3 pointer-events-none p-2`}
             style={{ maxWidth: "calc(100vw - 120px)" }}
@@ -1918,6 +1943,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         if (mod === "enquete" || mod === "quiz") return <HelpCircle size={16} color="#fff" />;
                         if (mod === "cortevideo") return <Scissors size={16} color="#fff" />;
                         if (mod === "playerconfig") return <Settings size={16} color="#fff" />;
+                        if (mod === "apresentadores") return <Mic2 size={16} color="#fff" />;
+                        if (mod === "clientes") return <Building2 size={16} color="#fff" />;
                         return <Users size={16} color="#fff" />;
                       })()}
                     </div>
