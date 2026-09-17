@@ -3069,23 +3069,6 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
               </Select>
             )}
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => setCalendarModalOpen(true)}
-                    className="w-10 h-10 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white transition-all shadow-sm flex items-center justify-center active:scale-95 cursor-pointer shrink-0"
-                    aria-label="Calendário"
-                  >
-                    <CalendarIcon size={16} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-slate-900 text-white border-0 text-xs rounded-lg px-2.5 py-1">
-                  Calendário
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
 
             <TooltipProvider>
               <Tooltip>
