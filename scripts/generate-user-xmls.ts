@@ -439,15 +439,35 @@ function generateCombinedGeralXml(
       </musica_b>
     </batalha>
 
-    <enquete ativa="${enqueteXml.includes("<pergunta>") ? "1" : "0"}">
-      <pergunta>${extractTag(enqueteXml, "pergunta") || ""}</pergunta>
-      <opcao_a>${extractTag(enqueteXml, "opcao1_texto") || ""}</opcao_a>
-      <opcao_b>${extractTag(enqueteXml, "opcao2_texto") || ""}</opcao_b>
+    <enquete ativa="${enqueteXml.includes("<pergunta>") && extractTag(enqueteXml, "pergunta") ? "1" : "0"}">
+      <pergunta>${extractTag(enqueteXml, "pergunta")}</pergunta>
+      <opcao_a>${extractTag(enqueteXml, "resposta1") || extractTag(enqueteXml, "opcao_a") || extractTag(enqueteXml, "opcao1_texto")}</opcao_a>
+      <opcao_b>${extractTag(enqueteXml, "resposta2") || extractTag(enqueteXml, "opcao_b") || extractTag(enqueteXml, "opcao2_texto")}</opcao_b>
+      <resposta1>${extractTag(enqueteXml, "resposta1")}</resposta1>
+      <resposta2>${extractTag(enqueteXml, "resposta2")}</resposta2>
+      <resposta3>${extractTag(enqueteXml, "resposta3")}</resposta3>
+      <resposta4>${extractTag(enqueteXml, "resposta4")}</resposta4>
+      <resposta_correta>${extractTag(enqueteXml, "resposta_correta") || "1"}</resposta_correta>
+      <horario_inicio>${extractTag(enqueteXml, "horario_inicio")}</horario_inicio>
+      <horario_fim>${extractTag(enqueteXml, "horario_fim")}</horario_fim>
     </enquete>
 
-    <quiz ativa="${quizXml.includes("<pergunta>") ? "1" : "0"}">
-      <pergunta>${extractTag(quizXml, "pergunta") || ""}</pergunta>
-      <resposta_correta>${extractTag(quizXml, "resposta_correta") || "A"}</resposta_correta>
+    <quiz ativa="${quizXml.includes("<pergunta>") && extractTag(quizXml, "pergunta") ? "1" : "0"}">
+      <pergunta>${extractTag(quizXml, "pergunta")}</pergunta>
+      <alternativa_a>${extractTag(quizXml, "resposta1") || extractTag(quizXml, "alternativa_a")}</alternativa_a>
+      <alternativa_b>${extractTag(quizXml, "resposta2") || extractTag(quizXml, "alternativa_b")}</alternativa_b>
+      <alternativa_c>${extractTag(quizXml, "resposta3") || extractTag(quizXml, "alternativa_c")}</alternativa_c>
+      <alternativa_d>${extractTag(quizXml, "resposta4") || extractTag(quizXml, "alternativa_d")}</alternativa_d>
+      <resposta1>${extractTag(quizXml, "resposta1")}</resposta1>
+      <resposta2>${extractTag(quizXml, "resposta2")}</resposta2>
+      <resposta3>${extractTag(quizXml, "resposta3")}</resposta3>
+      <resposta4>${extractTag(quizXml, "resposta4")}</resposta4>
+      <resposta_correta>${extractTag(quizXml, "resposta_correta") || "1"}</resposta_correta>
+      <resposta_correta_texto>${extractTag(quizXml, "resposta_correta_texto")}</resposta_correta_texto>
+      <horario_inicio>${extractTag(quizXml, "horario_inicio")}</horario_inicio>
+      <horario_fim>${extractTag(quizXml, "horario_fim")}</horario_fim>
+      <explicacao>${extractTag(quizXml, "explicacao")}</explicacao>
+      <imagem_resposta>${extractTag(quizXml, "imagem_resposta")}</imagem_resposta>
     </quiz>
   </interatividade>
 
