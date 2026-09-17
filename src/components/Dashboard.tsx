@@ -440,8 +440,19 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     return "dashboard";
   });
 
-  // Modo Janela para House Mix (Cadastro de Clientes, Participantes, Ouvintes, Programas, Cidade Tempo)
-  const HOUSEMIX_WINDOW_PAGES: Page[] = ["clientes", "apresentadores", "ouvintes", "programas", "previsao"];
+  // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda)
+  const HOUSEMIX_WINDOW_PAGES: Page[] = [
+    "clientes",
+    "apresentadores",
+    "ouvintes",
+    "programas",
+    "previsao",
+    "sorteios",
+    "blitz",
+    "noticias",
+    "musica",
+    "agenda",
+  ];
   const isWindowMode = !isAdmin && HOUSEMIX_WINDOW_PAGES.includes(currentPage);
 
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
@@ -1594,17 +1605,17 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                   <OuvintesPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "sorteios" || (minimizedModules.includes("sorteios") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "sorteios" || (minimizedModules.includes("sorteios") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "sorteios" ? "block" : "none" }}>
                   <SorteiosPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "blitz" || (minimizedModules.includes("blitz") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "blitz" || (minimizedModules.includes("blitz") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "blitz" ? "block" : "none" }}>
                   <BlitzPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "noticias" || (minimizedModules.includes("noticias") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "noticias" || (minimizedModules.includes("noticias") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "noticias" ? "block" : "none" }}>
                   <RoteiroPrograma effectiveUserId={effectiveUserId} />
                 </div>
@@ -1615,12 +1626,12 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                 </div>
               )}
               {/* MusicaNoAr mounted only when active or minimized on dashboard */}
-              {(currentPage === "musica" || (minimizedModules.includes("musica") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "musica" || (minimizedModules.includes("musica") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
                   <MusicaNoAr effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {(currentPage === "agenda" || (minimizedModules.includes("agenda") && currentPage === "dashboard")) && (
+              {isAdmin && (currentPage === "agenda" || (minimizedModules.includes("agenda") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "agenda" ? "block" : "none" }}>
                   <AgendaPage effectiveUserId={effectiveUserId} />
                 </div>
@@ -1970,6 +1981,126 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           >
             <Suspense fallback={<ModulePageSkeleton variant="form" />}>
               <PrevisaoTempo effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Sorteios */}
+        {!isAdmin && (currentPage === "sorteios" || (minimizedModules.includes("sorteios") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – SORTEIOS"
+            isOpen={currentPage === "sorteios"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "sorteios"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("sorteios")) return prev;
+                return [...prev, "sorteios"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+              <SorteiosPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Blitz Promocionais */}
+        {!isAdmin && (currentPage === "blitz" || (minimizedModules.includes("blitz") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – BLITZ PROMOCIONAIS"
+            isOpen={currentPage === "blitz"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "blitz"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("blitz")) return prev;
+                return [...prev, "blitz"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+              <BlitzPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Roteiro de Programa */}
+        {!isAdmin && (currentPage === "noticias" || (minimizedModules.includes("noticias") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – ROTEIRO DE PROGRAMA"
+            isOpen={currentPage === "noticias"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "noticias"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("noticias")) return prev;
+                return [...prev, "noticias"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+              <RoteiroPrograma effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Música no Ar */}
+        {!isAdmin && (currentPage === "musica" || (minimizedModules.includes("musica") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – MÚSICA NO AR"
+            isOpen={currentPage === "musica"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "musica"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("musica")) return prev;
+                return [...prev, "musica"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+              <MusicaNoAr effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Agenda */}
+        {!isAdmin && (currentPage === "agenda" || (minimizedModules.includes("agenda") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – AGENDA"
+            isOpen={currentPage === "agenda"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "agenda"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("agenda")) return prev;
+                return [...prev, "agenda"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<AgendaPageSkeleton />}>
+              <AgendaPage effectiveUserId={effectiveUserId} />
             </Suspense>
           </HouseMixWindow>
         )}
