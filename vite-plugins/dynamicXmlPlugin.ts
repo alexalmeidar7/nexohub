@@ -335,9 +335,45 @@ export function dynamicXmlPlugin(): Plugin {
           return;
         }
 
-        // 4. Intercept GET requests for enquete.xml, quiz.xml, batalha.xml, and geral.xml
+        // 4. POST /api/sync-xml-roteiro
+        if (req.method === "POST" && url.startsWith("/api/sync-xml-roteiro")) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => {
+            try {
+              const parsed = JSON.parse(body);
+              const slug = normalizeSlug(parsed.slug || "positivafm");
+              const xml = parsed.xml;
+              if (xml && typeof xml === "string") {
+                writeStaticXml(slug, "roteiro.xml", xml);
+              }
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, slug }));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ ok: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // 5. Intercept GET requests for enquete.xml, quiz.xml, batalha.xml, roteiro.xml, and geral.xml
         if (req.method === "GET") {
           const cleanUrl = url.split("?")[0];
+          const matchRoteiro = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/roteiro\.xml$/i);
+          if (matchRoteiro) {
+            const rawSlug = matchRoteiro[1];
+            const slug = normalizeSlug(rawSlug);
+            const rPath = path.join(rootDir, "public", "xml", slug, "roteiro.xml");
+            if (fs.existsSync(rPath)) {
+              const rXml = fs.readFileSync(rPath, "utf-8");
+              res.setHeader("Content-Type", "application/xml; charset=utf-8");
+              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(rXml);
+              return;
+            }
+          }
           const matchEnquete = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/enquete\.xml$/i);
           const matchQuiz = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/quiz\.xml$/i);
           const matchBatalha = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/batalha\.xml$/i);

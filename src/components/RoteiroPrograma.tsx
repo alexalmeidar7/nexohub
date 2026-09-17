@@ -827,51 +827,102 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       if (r?.id) combinedMap.set(r.id, r);
     });
     dbRoteiros.forEach((r) => {
-      if (r?.id) combinedMap.set(r.id, r);
+      if (r?.id) {
+        const localItem = combinedMap.get(r.id);
+        if (localItem) {
+          const localPush = localItem.xml_pushed_at ? new Date(localItem.xml_pushed_at).getTime() : 0;
+          const dbPush = r.xml_pushed_at ? new Date(r.xml_pushed_at).getTime() : 0;
+          const newestPush = localPush > dbPush ? localItem.xml_pushed_at : r.xml_pushed_at;
+          combinedMap.set(r.id, {
+            ...localItem,
+            ...r,
+            xml_pushed_at: newestPush || localItem.xml_pushed_at || r.xml_pushed_at,
+          });
+        } else {
+          combinedMap.set(r.id, r);
+        }
+      }
     });
 
     let data = Array.from(combinedMap.values());
     data.sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
 
-    // Save all merged roteiros across all candidate user IDs
-    candidateUserIds.forEach((uid) => saveStoredRoteiros(uid, data));
+    // Save only if we actually have data
+    if (data.length > 0) {
+      candidateUserIds.forEach((uid) => saveStoredRoteiros(uid, data));
+    }
 
     // Se a tabela estiver vazia, busca os arquivos XML REAIS gravados no Storage (empresa-assets/express/{userId})
     if (data.length === 0) {
       try {
-        const { data: files } = await supabase.storage
-          .from("empresa-assets")
-          .list(`express/${effectiveUserId}`, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+        let files: any[] = [];
+        try {
+          const res = await supabase.storage
+            .from("empresa-assets")
+            .list(`express/${effectiveUserId}`, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+          if (res.data && res.data.length > 0) {
+            files = res.data;
+          }
+        } catch {}
+
+        if (files.length === 0) {
+          try {
+            const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+            const sbUrl = (import.meta as any).env?.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+            const res = await fetch(`${sbUrl}/storage/v1/object/list/empresa-assets`, {
+              method: "POST",
+              headers: {
+                "apikey": anonKey,
+                "Authorization": `Bearer ${anonKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                prefix: `express/${effectiveUserId}`,
+                limit: 100,
+                sortBy: { column: "created_at", order: "desc" },
+              }),
+            });
+            if (res.ok) {
+              const listData = await res.json();
+              if (Array.isArray(listData) && listData.length > 0) {
+                files = listData;
+              }
+            }
+          } catch (listErr) {
+            console.warn("Erro ao listar storage com anonKey:", listErr);
+          }
+        }
 
         if (files && files.length > 0) {
           const xmlFiles = files.filter(f => f.name.endsWith(".xml"));
-          const parsedRoteiros: any[] = [];
-
-          for (const file of xmlFiles) {
-            try {
-              const { data: pubUrl } = supabase.storage
-                .from("empresa-assets")
-                .getPublicUrl(`express/${effectiveUserId}/${file.name}`);
-              const fileUrl = pubUrl.publicUrl;
-              const res = await fetch(fileUrl);
-              if (res.ok) {
-                const xmlContent = await res.text();
-                const parsed = parseXmlToRoteiro(
-                  xmlContent,
-                  fileUrl,
-                  file.name.replace(".xml", ""),
-                  effectiveUserId,
-                  file.created_at || file.updated_at,
-                  progs
-                );
-                if (parsed) {
-                  parsedRoteiros.push(parsed);
+          const recentXmlFiles = xmlFiles.slice(0, 30);
+          const parsedResults = await Promise.all(
+            recentXmlFiles.map(async (file) => {
+              try {
+                const { data: pubUrl } = supabase.storage
+                  .from("empresa-assets")
+                  .getPublicUrl(`express/${effectiveUserId}/${file.name}`);
+                const fileUrl = pubUrl.publicUrl;
+                const res = await fetch(fileUrl);
+                if (res.ok) {
+                  const xmlContent = await res.text();
+                  return parseXmlToRoteiro(
+                    xmlContent,
+                    fileUrl,
+                    file.name.replace(".xml", ""),
+                    effectiveUserId,
+                    file.created_at || file.updated_at,
+                    progs
+                  );
                 }
+              } catch (err) {
+                console.warn("Erro ao processar XML de roteiro:", file.name, err);
               }
-            } catch (err) {
-              console.warn("Erro ao processar XML de roteiro:", file.name, err);
-            }
-          }
+              return null;
+            })
+          );
+
+          const parsedRoteiros: any[] = parsedResults.filter(Boolean);
 
           if (parsedRoteiros.length > 0) {
             // Deduplica mantendo a versão mais recente de cada programa
@@ -885,7 +936,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
             }
             data = Array.from(progMap.values());
             data.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-            saveStoredRoteiros(effectiveUserId, data);
+            candidateUserIds.forEach((uid) => saveStoredRoteiros(uid, data));
           }
         }
       } catch (e) {
@@ -1068,27 +1119,200 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
   const regenerateXmlForRoteiro = async (r: any): Promise<boolean> => {
     try {
-      if (!r?.subtitulo || !String(r.subtitulo).startsWith("express_xml::")) return false;
+      if (!r) return false;
 
-      // Delega geração + upload à edge function (service role bypassa RLS do storage,
-      // que exige foldername[1] = auth.uid() e falha para paths express/<owner>/...).
-      const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID || "zzjfzxxvxbspbdkodoix";
-      const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
-      const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${r.id}&force=1&persist=1&t=${Date.now()}`;
-      const resp = await fetch(fnUrl, {
-        headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
-        cache: "no-store",
+      let parts: any = {};
+      try {
+        let raw = r.participantes;
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        parts = Array.isArray(raw) ? { blocos: [], participantes: raw } : (raw || {});
+      } catch {
+        parts = {};
+      }
+
+      const pList: any[] = parts.participantes || [];
+      const blocosList: any[] = parts.blocos || [];
+      const escaladaItems: any[] = parts.escaladaList || [];
+      const podcastData = parts.podcastData;
+      const isPodcast = !!podcastData;
+
+      // Construct valid XML for Programa Express / vMix
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
+      xml += `  <programa>${escXml(r.programa_nome || "")}</programa>\n`;
+      xml += `  <estudio>${escXml(r.estudio || "")}</estudio>\n`;
+      xml += `  <data>${r.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
+      if (r.horario) {
+        xml += `  <horario>${escXml(r.horario)}</horario>\n`;
+        xml += `  <hora>${escXml(r.horario)}</hora>\n`;
+      }
+
+      if (pList.length > 0) {
+        xml += `  <participantes>\n`;
+        pList.forEach((p: any) => {
+          xml += `    <item>\n`;
+          xml += `      <nome>${escXml(p.nome || "")}</nome>\n`;
+          xml += `      <cargo>${escXml(p.cargo || "")}</cargo>\n`;
+          xml += `      <instagram>${escXml(p.instagram || "")}</instagram>\n`;
+          xml += `    </item>\n`;
+        });
+        xml += `  </participantes>\n`;
+      }
+
+      if (isPodcast) {
+        const podcast = podcastData;
+        xml += `  <roteiro>\n`;
+        xml += `    <tituloTarja>${escXml(podcast.tituloTarja || "")}</tituloTarja>\n`;
+        xml += `    <introducao>${escXml(podcast.introducao || "")}</introducao>\n`;
+        xml += `    <perguntas>\n`;
+        (podcast.perguntas || []).filter((p: any) => p?.trim()).forEach((p: any, i: number) => { 
+          xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`; 
+        });
+        xml += `    </perguntas>\n`;
+        xml += `    <concluindo>${escXml(podcast.concluindo || "")}</concluindo>\n`;
+        xml += `  </roteiro>\n`;
+      } else {
+        if (escaladaItems.length > 0) {
+          xml += `  <escalada>\n`;
+          escaladaItems.forEach((e: any, i: number) => {
+            xml += `    <item ordem="${i + 1}">\n`;
+            xml += `      <titulo>${escXml(typeof e === "string" ? e : e.titulo || "")}</titulo>\n`;
+            xml += `      <imagem>${escXml(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n`;
+            xml += `    </item>\n`;
+          });
+          xml += `  </escalada>\n`;
+        }
+
+        blocosList.forEach((b: any, bi: number) => {
+          xml += `  <bloco numero="${bi + 1}">\n`;
+          (b.noticias || []).forEach((n: any, ni: number) => {
+            if (!n.titulo) return;
+            xml += `    <noticia ordem="${ni + 1}">\n`;
+            xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
+            xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
+            xml += `      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n`;
+            xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
+            xml += `      <escalada>${n.escalada || false}</escalada>\n`;
+            xml += `    </noticia>\n`;
+          });
+          xml += `  </bloco>\n`;
+        });
+      }
+
+      xml += `</programaExpress>`;
+
+      // Extract storage file path if subtitulo has express_xml:: URL
+      let filePath = "";
+      let xmlUrl = "";
+      if (r.subtitulo?.startsWith("express_xml::")) {
+        try {
+          xmlUrl = r.subtitulo.replace("express_xml::", "");
+          const urlObj = new URL(xmlUrl);
+          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+          if (pathMatch) filePath = decodeURIComponent(pathMatch[1]);
+        } catch {}
+      }
+
+      const cleanId = String(r.id || "").replace(/^express_/, "");
+      const owner = r.user_id || propEffectiveUserId || resolvedUserId || user?.id || "d17e65af-e407-466f-9b60-b55c43399513";
+      if (!filePath) {
+        filePath = `express/${owner}/express_${cleanId}.xml`;
+      }
+
+      // 1. Sync to local /api/sync-xml-roteiro (writes to public/xml/[slug]/roteiro.xml)
+      try {
+        const clientAcc = findClientAccountById(owner) || findClientAccountByEmail(user?.email);
+        const slug = clientAcc?.slug || "positivafm";
+        await fetch("/api/sync-xml-roteiro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, userId: owner, estudio: r.estudio, xml, roteiro: r }),
+        });
+      } catch {}
+
+      // 2. Upload to Supabase Storage (empresa-assets)
+      try {
+        const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml; charset=utf-8" });
+        const { data: upData } = await supabase.storage.from("empresa-assets").upload(filePath, blob, {
+          upsert: true,
+          contentType: "application/xml; charset=utf-8",
+          cacheControl: "0",
+        });
+        if (!xmlUrl && upData) {
+          const { data: pubData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
+          if (pubData?.publicUrl) xmlUrl = pubData.publicUrl;
+        }
+      } catch (upErr) {
+        console.warn("[RegenXML] Storage direct upload warning:", upErr);
+      }
+
+      // 3. Optional edge function invoke if cleanId is a valid UUID in roteiros table
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+      if (isUuid) {
+        try {
+          const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID || "zzjfzxxvxbspbdkodoix";
+          const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+          const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${cleanId}&force=1&persist=1&t=${Date.now()}`;
+          await fetch(fnUrl, {
+            headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+            cache: "no-store",
+          });
+        } catch {}
+      }
+
+      // 4. Update xml_pushed_at timestamp
+      const nowIso = new Date().toISOString();
+      r.xml_pushed_at = nowIso;
+      if (xmlUrl && !r.subtitulo) {
+        r.subtitulo = `express_xml::${xmlUrl}`;
+      }
+
+      // Update Supabase DB table
+      try {
+        const updatePayload: any = { xml_pushed_at: nowIso };
+        if (isUuid) {
+          await supabase.from("roteiros").update(updatePayload).eq("id", cleanId);
+        }
+        if (r.user_id && r.programa_nome) {
+          await supabase.from("roteiros").update(updatePayload).eq("user_id", r.user_id).eq("programa_nome", r.programa_nome);
+        }
+      } catch {}
+
+      // Update LocalStorage across all candidate uids
+      const candidateUids = Array.from(new Set([
+        r.user_id,
+        owner,
+        user?.id,
+        propEffectiveUserId,
+        resolvedUserId,
+        "d17e65af-e407-466f-9b60-b55c43399513"
+      ].filter(Boolean) as string[]));
+
+      candidateUids.forEach((uid) => {
+        try {
+          const list = getStoredRoteiros(uid);
+          if (Array.isArray(list) && list.length > 0) {
+            const idx = list.findIndex((item: any) =>
+              item.id === r.id ||
+              (item.programa_nome === r.programa_nome && item.estudio === r.estudio)
+            );
+            if (idx >= 0) {
+              list[idx] = { ...list[idx], xml_pushed_at: nowIso };
+              saveStoredRoteiros(uid, list);
+            }
+          }
+        } catch {}
       });
-      if (!resp.ok) {
-        console.warn("[RegenXML] roteiro-xml fetch falhou", resp.status);
-        return false;
-      }
-      const xml = await resp.text();
-      if (!xml || xml.includes("<error>")) {
-        console.warn("[RegenXML] xml inválido", xml.slice(0, 200));
-        return false;
-      }
-      await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
+
+      // Update in-memory state
+      setHistorico((prev) =>
+        prev.map((item) =>
+          item.id === r.id || (item.programa_nome === r.programa_nome && item.estudio === r.estudio)
+            ? { ...item, xml_pushed_at: nowIso }
+            : item
+        )
+      );
+
       return true;
     } catch (e) {
       console.warn(`[RegenXML] Error on roteiro ${r?.id}:`, e);
@@ -1281,7 +1505,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
                         const [yy, mm, dd] = (r.data_programa || "").split("-").map(Number);
                         const dataFormatada = yy ? format(new Date(yy, (mm || 1) - 1, dd || 1), "dd/MM/yyyy") : "";
-                        const hasXml = typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::");
+                        const hasXml = (typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::")) || String(r.id || "").startsWith("express_") || !!r.participantes;
                         const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
                         const cleanTitulo = (r.titulo || "").replace("[AUTO]", "").trim();
                         return (
@@ -1406,7 +1630,13 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                                   const ok = await regenerateXmlForRoteiro(r);
                                   if (ok) {
                                     const now = new Date().toISOString();
-                                    await supabase.from("roteiros").update({ xml_pushed_at: now }).eq("id", r.id);
+                                    try {
+                                      const cleanId = String(r.id || "").replace(/^express_/, "");
+                                      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+                                      if (isUuid) {
+                                        await supabase.from("roteiros").update({ xml_pushed_at: now }).eq("id", cleanId);
+                                      }
+                                    } catch {}
                                     toast.success("O XML atualizado com sucesso!");
                                     fetchHistorico();
                                   } else toast.error("Falha ao enviar XML");
@@ -1550,11 +1780,17 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                           const ok = await regenerateXmlForRoteiro(r);
                           if (ok) {
                             const now = new Date().toISOString();
-                            await supabase.from("roteiros").update({ 
-                              xml_pushed_at: now,
-                              agendado_para_envio: null,
-                              enviado_agendamento: true 
-                            }).eq("id", r.id);
+                            try {
+                              const cleanId = String(r.id || "").replace(/^express_/, "");
+                              const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+                              if (isUuid) {
+                                await supabase.from("roteiros").update({ 
+                                  xml_pushed_at: now,
+                                  agendado_para_envio: null,
+                                  enviado_agendamento: true 
+                                }).eq("id", cleanId);
+                              }
+                            } catch {}
                             toast.success("Roteiro enviado para o vMix com sucesso!");
                             fetchHistorico();
                           } else {

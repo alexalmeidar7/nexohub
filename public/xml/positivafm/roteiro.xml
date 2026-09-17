@@ -1,69 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <programaExpress>
   <programa>Primeira Hora Positiva</programa>
-  <estudio>Estudio FM</estudio>
-  <data>2026-04-16</data>
-  <participantes>
-    <item>
-      <nome>Alysson Lima</nome>
-      <cargo>Jornalista</cargo>
-      <instagram>@alyssonlima</instagram>
+  <estudio>ESTÚDIO FM</estudio>
+  <data>2026-04-17</data>
+  <horario>07:02</horario>
+  <hora>07:02</hora>
+  <escalada>
+    <item ordem="1">
+      <titulo>Procon Goiânia registra variação de até 125% em preços da cesta básica</titulo>
+      <imagem></imagem>
     </item>
-    <item>
-      <nome>Jane Borges</nome>
-      <cargo>Jornalista</cargo>
-      <instagram>@janeborges</instagram>
+    <item ordem="2">
+      <titulo>Ex-presidente do BRB é preso em nova fase da Operação Banco Master</titulo>
+      <imagem></imagem>
     </item>
-  </participantes>
+    <item ordem="3">
+      <titulo>Caldas Novas será a pioneira em Goiás na vacinação contra a chikungunya</titulo>
+      <imagem></imagem>
+    </item>
+    <item ordem="4">
+      <titulo>INSS libera consulta e pagamento do 13º antecipado para milhões de segurados</titulo>
+      <imagem></imagem>
+    </item>
+    <item ordem="5">
+      <titulo>Governo projeta salário mínimo de R$ 1.717 para 2027</titulo>
+      <imagem></imagem>
+    </item>
+    <item ordem="6">
+      <titulo>Dono da página 'Choquei' é mantido preso pela Justiça</titulo>
+      <imagem>https://daqui.opopular.com.br/image/policy:1.3398607:1776257202/image.jpg</imagem>
+    </item>
+  </escalada>
   <bloco numero="1">
     <noticia ordem="1">
-      <titulo>Justiça marca audiência para adolescente bêbado que atropelou e matou casal em Goiânia</titulo>
-      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/foto-87-1789490047.webp</imagem>
+      <titulo>Adolescente morre enquanto jogava bola em Heitoraí</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://daqui.opopular.com.br/image/policy:1.3399080:1776344707/image.jpg</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="2">
-      <titulo>Greve chega ao fim e administrativos da Educação voltam ao trabalho em Goiânia</titulo>
-      <imagem>https://ohoje.com/wp-content/uploads/2026/09/WhatsApp_Image_2020-12-18_at_11.51.24.webp</imagem>
+      <titulo>Ginecologista é suspeito de crimes sexuais contra pacientes durante exames e consultas em Goiânia e Senador Canedo</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://daqui.opopular.com.br/image/policy:1.3399131:1776352881/image.jpg</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="3">
-      <titulo>Avanço de canal de umidade traz chuvas isoladas para Goiânia e outras regiões; confira previsão do tempo</titulo>
-      <imagem>https://cdn.diariodegoias.com.br/wp-content/uploads/1781145972/2024/12/Chuva-e-sol-em-Goias-scaled.jpg</imagem>
-      <escalada>false</escalada>
+      <titulo>Dono da página 'Choquei' é mantido preso pela Justiça</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://daqui.opopular.com.br/image/policy:1.3398607:1776257202/image.jpg</imagem>
+      <escalada>true</escalada>
     </noticia>
     <noticia ordem="4">
-      <titulo>Goiânia cria cartão que pode bancar gás, luz, água e aluguel</titulo>
-      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/cartao-goiania-1789504266.webp</imagem>
+      <titulo>Paralisação de servidores da educação pode afetar milhares de alunos em Goiânia nesta sexta-feira (17)</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://portal6.com.br/wp-content/uploads/2026/04/772498-20260417-011120-99ca2b.jpg</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="5">
-      <titulo>Julgamento sobre futuro de Moraes pode ficar parado no STF até dezembro</titulo>
-      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/09/ministros-andre-mendonca-alexandre-de-moraes-dias-toffoli-plenario-stf.jpg?w=1200&amp;h=630&amp;crop=1</imagem>
+      <titulo>Goiás decreta situação de emergência após alta em casos de Síndrome Respiratória Aguda Grave</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://portal6.com.br/wp-content/uploads/2026/04/772256-20260416-185423-235c7c.jpeg</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="6">
-      <titulo>CNT/MDA: Lula soma 47,3% contra 40% de Flávio Bolsonaro</titulo>
-      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/lula-e-flavio-1789502658.webp</imagem>
+      <titulo>Brinquedos do Mutirama passam por testes antes da reabertura ao público</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://uploads.maisgoias.com.br/2025/10/24193457/image.jpg</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="7">
-      <titulo>PRTB substitui Pablo Marçal e indica Leonardo Avalanche como candidato a presidente</titulo>
-      <imagem>https://uploads.maisgoias.com.br/2026/09/avalanche-1788982281.webp</imagem>
+      <titulo>STF decide que piso nacional deve ser pago a professores temporários</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://portal6.com.br/wp-content/uploads/2026/04/772446-20260416-232725-fc0390.webp</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="8">
-      <titulo>Sancionado, novo Move Brasil garante R$ 30 bilhões para motoristas e entregadores de app comprarem veículos próprios</titulo>
-      <imagem>https://cdn.diariodegoias.com.br/wp-content/uploads/2026/09/15115929/55529071195_c86e44e660_o-856x481.webp</imagem>
+      <titulo>Novas regras do Minha Casa, Minha Vida passam a valer no final do mês; entenda o que muda</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://portal6.com.br/wp-content/uploads/2026/03/751022-20260304-170701-9c0906.jpg</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="9">
-      <titulo>Fed e Copom decidem juros nesta quarta com apostas em rumos opostos</titulo>
-      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/06/ChatGPT-Image-16-de-jun.-de-2026-22_00_23.png?w=1200&amp;h=630&amp;crop=1</imagem>
+      <titulo>Ramagem agradece Trump após soltura e chama PF brasileira de 'polícia de jagunços'</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://uploads.maisgoias.com.br/2025/12/16195918/1200-800-2025-12-16t165912-776.webp</imagem>
       <escalada>false</escalada>
     </noticia>
     <noticia ordem="10">
-      <titulo>Saída temporária de presos em SP: 3ª &quot;saidinha&quot; de 2026 inicia</titulo>
-      <imagem>https://istoe.com.br/wp-content/uploads/2026/09/Saida-no-Complexo-Penitenciario-1-1200x630.png</imagem>
+      <titulo>Justiça italiana dá segunda sentença favorável à extradição de Zambelli para o Brasil</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://uploads.maisgoias.com.br/2025/03/360c9fe4-carla-zambelli-11.jpg</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="11">
+      <titulo>Hugo Motta marca sessão da Câmara nesta sexta para acelerar PEC 6x1</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2025/09/HUGO-MOTTA-24-09-25.jpg?w=1200&amp;h=630&amp;crop=1</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="12">
+      <titulo>Ex-presidente do BRB passa primeira noite preso na Papuda</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2025/12/Foto-Lucio-Bernardo-Jr-Agencia-Brasilia-e1769724893827.avif?w=984&amp;h=554&amp;crop=1</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="13">
+      <titulo>Farra da hora extra na Câmara: grupo de 13 “vips” recebeu R$ 9,3 milhões</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://i.metroimg.com/kW4DMHXflhrTpEapQIjjPcC51q4ODlloywkheMCdZoM/w:1200/q:90/f:webp/plain/https://images.metroimg.com/2022/08/Fachada-do-Congresso-Naciaconal-em-Brasilia-DF_-30.jpg</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="14">
+      <titulo>Trump anuncia cessar-fogo entre Israel e Líbano por dez dias</titulo>
+      <resumo></resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://imagens.ebc.com.br/vAlQ6b9a3ceWeyLiVSrojSlDRM8=/1600x800/https://agenciabrasil.ebc.com.br/sites/default/files/thumbnails/image/2026/01/10/trump.jpg?itok=_-KOtwaw</imagem>
       <escalada>false</escalada>
     </noticia>
   </bloco>
