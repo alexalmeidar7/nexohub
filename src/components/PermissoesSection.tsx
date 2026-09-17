@@ -69,7 +69,7 @@ const MODULE_GROUPS = [
   {
     category: "Ferramentas",
     items: [
-      { key: "cortevideo", label: "Corte de Vídeo" },
+      { key: "cortevideo", label: "Editor de Vídeo" },
       { key: "backup", label: "Backup / Importar" },
     ],
   },

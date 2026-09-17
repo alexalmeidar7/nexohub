@@ -91,7 +91,7 @@ const DEFAULT_PERMS: Perms = {
     "c:vmix:batalha musical",
     "c:vmix:enquete",
     "c:vmix:quiz",
-    "c:ferramentas:corte de vídeo",
+    "c:ferramentas:editor de vídeo",
     "c:ferramentas:abrir TP externo",
   ],
   comercial: [

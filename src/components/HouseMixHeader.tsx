@@ -869,7 +869,7 @@ export default function HouseMixHeader({
                           }`}
                         >
                           <Scissors size={13} className="text-white/70" />
-                          <span>corte de vídeo</span>
+                          <span>editor de vídeo</span>
                         </button>
                       )}
                       <button

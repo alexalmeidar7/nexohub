@@ -474,7 +474,7 @@ function LinkPreview({ page, external }: { page?: Page; external?: string }) {
     case "configuracoes": return <GenericPreview icon={Settings} text="Configurações gerais" />;
     case "playerconfig": return <GenericPreview icon={Settings} text="Config. do Player" />;
     case "vmix": return <GenericPreview icon={Monitor} text="Controle de transmissão" />;
-    case "cortevideo": return <GenericPreview icon={Scissors} text="Cortes de vídeo" />;
+    case "cortevideo": return <GenericPreview icon={Scissors} text="Editor de vídeo" />;
     case "curtidas": return <GenericPreview icon={Music} text="Músicas curtidas" />;
     default:
       if (external === "player") return <GenericPreview icon={MonitorPlay} text="Player ao vivo" />;

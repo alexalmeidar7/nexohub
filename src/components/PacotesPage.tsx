@@ -50,7 +50,7 @@ const EXTRA_MODULES: ModuleDef[] = [
   { key: "sorteios", name: "Módulo Sorteios" },
   { key: "blitz", name: "Módulo Blitz" },
   { key: "site", name: "Módulo Site" },
-  { key: "cortevideo", name: "Módulo Ferramentas — Corte de Vídeo" },
+  { key: "cortevideo", name: "Módulo Ferramentas — Editor de Vídeo" },
   { key: "ouvintes", name: "Módulo Cadastro de Ouvintes" },
 ];
 

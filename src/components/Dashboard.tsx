@@ -174,7 +174,7 @@ const sidebarMenu: MenuItem[] = [
   },
   {
     icon: Wrench, label: "ferramentas", children: [
-      { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: Scissors, label: "editor de vídeo", page: "cortevideo" },
       { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
@@ -255,7 +255,7 @@ export const adminModulosGroups: MenuItem[] = [
   },
   {
     icon: Wrench, label: "ferramentas", children: [
-      { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: Scissors, label: "editor de vídeo", page: "cortevideo" },
       { icon: DatabaseBackup, label: "backup / importar", page: "backup" },
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
@@ -335,7 +335,7 @@ const pageTitle: Record<Page, string> = {
   shopping: "Comercial — Shopping",
   preroll: "ADS",
   propostas: "Comercial — Propostas Comerciais",
-  cortevideo: "Ferramentas — Cortes de Vídeo",
+  cortevideo: "Ferramentas — Editor de Vídeo",
   tp: "Ferramentas — TP",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
@@ -374,7 +374,7 @@ const HOUSEMIX_MODULE_DISPLAY_NAMES: Partial<Record<Page, string>> = {
   batalha: "Batalha Musical",
   enquete: "Enquete",
   quiz: "Quiz",
-  cortevideo: "Cortes de Vídeo",
+  cortevideo: "Editor de Vídeo",
   sorteios: "Sorteios",
   blitz: "Blitz Promocionais",
   noticias: "Roteiro de Programa",
@@ -2438,10 +2438,10 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           </HouseMixWindow>
         )}
 
-        {/* House Mix Window Mode - Corte de Vídeo */}
+        {/* House Mix Window Mode - Editor de Vídeo */}
         {!isAdmin && (currentPage === "cortevideo" || (minimizedModules.includes("cortevideo") && (currentPage === "dashboard" || isWindowMode))) && (
           <HouseMixWindow
-            title="HOUSE MIX – CORTES DE VÍDEO"
+            title="HOUSE MIX – EDITOR DE VÍDEO"
             isOpen={currentPage === "cortevideo"}
             bodyClassName="flex-1 overflow-hidden p-0 bg-[#f8fafc] flex flex-col"
             onClose={() => {
