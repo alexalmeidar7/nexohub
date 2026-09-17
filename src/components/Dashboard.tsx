@@ -1977,83 +1977,80 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         {/* Minimized Modules Bar */}
         {minimizedModules.length > 0 && (currentPage === "dashboard" || isWindowMode) && (
           <div 
-            className={`fixed bottom-4 ${!isAdmin ? "left-1/2 -translate-x-1/2" : "left-[80px]"} z-[70] flex flex-wrap items-center justify-center gap-3 pointer-events-none p-2`}
+            className={`fixed bottom-5 ${!isAdmin ? "left-1/2 -translate-x-1/2" : "left-[88px]"} z-[70] flex flex-wrap items-center justify-center gap-2.5 pointer-events-none p-1`}
             style={{ maxWidth: "calc(100vw - 120px)" }}
           >
             {minimizedModules.map((mod, idx) => (
               <div 
                 key={mod}
-                className="animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto"
-                style={{ animationDelay: `${idx * 100}ms` }}
+                className="animate-in slide-in-from-bottom-3 duration-200 pointer-events-auto"
+                style={{ animationDelay: `${idx * 80}ms` }}
               >
                 <div 
-                  className="flex items-center justify-between px-3 py-2 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[160px] group transition-all hover:bg-black/60 hover:scale-[1.02] hover:border-white/20 active:scale-95"
-                  style={{ borderLeft: `4px solid ${layoutColors.accentColor}` }}
+                  className="flex items-center gap-2.5 h-10 pl-3.5 pr-2 rounded-full bg-[#0055ff] border border-white/20 shadow-[0_8px_24px_rgba(0,85,255,0.4)] group transition-all duration-200 hover:bg-[#0047d4] hover:shadow-[0_10px_28px_rgba(0,85,255,0.55)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none"
+                  onClick={() => {
+                    setMinimizedModules(prev => prev.filter(m => m !== mod));
+                    setCurrentPage(mod);
+                  }}
+                  title={`Restaurar ${pageTitle[mod] || mod}`}
                 >
-                  <div className="flex items-center gap-3 overflow-hidden flex-1 cursor-pointer"
-                    onClick={() => {
-                      setMinimizedModules(prev => prev.filter(m => m !== mod));
-                      setCurrentPage(mod);
-                    }}
-                  >
-                    <div 
-                      className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${layoutColors.accentColor}, color-mix(in srgb, ${layoutColors.accentColor}, #000 30%))` 
-                      }}
-                    >
-                      {(() => {
-                        if (mod === "sorteios") return <Gift size={16} color="#fff" />;
-                        if (mod === "previsao") return <CloudRain size={16} color="#fff" />;
-                        if (mod === "agenda") return <CalendarDays size={16} color="#fff" />;
-                        if (mod === "musica") return (
-                          <div className="relative">
-                            <Music size={16} color="#fff" />
-                            <div className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-emerald-500 rounded-full border border-black/40 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" title="XML Ativo" />
-                          </div>
-                        );
-                        if (mod === "blitz") return <Siren size={16} color="#fff" />;
-                        if (mod === "noticias") return <FileText size={16} color="#fff" />;
-                        if (mod === "broadcast") return <Radio size={16} color="#fff" />;
-                        if (mod === "site") return <Globe size={16} color="#fff" />;
-                        if (mod === "promocoes") return <Tag size={16} color="#fff" />;
-                        if (mod === "logos") return <Image size={16} color="#fff" />;
-                        if (mod === "preroll") return <Film size={16} color="#fff" />;
-                        if (mod === "testemunhais") return <MessageSquareQuote size={16} color="#fff" />;
-                        if (mod === "cenario") return <MonitorPlay size={16} color="#fff" />;
-                        if (mod === "batalha") return <Swords size={16} color="#fff" />;
-                        if (mod === "enquete" || mod === "quiz") return <HelpCircle size={16} color="#fff" />;
-                        if (mod === "cortevideo") return <Scissors size={16} color="#fff" />;
-                        if (mod === "playerconfig") return <Settings size={16} color="#fff" />;
-                        if (mod === "apresentadores") return <Mic2 size={16} color="#fff" />;
-                        if (mod === "clientes") return <Building2 size={16} color="#fff" />;
-                        if (mod === "ouvintes") return <Users size={16} color="#fff" />;
-                        if (mod === "programas") return <Radio size={16} color="#fff" />;
-                        return <Users size={16} color="#fff" />;
-                      })()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1 group-hover:text-white/60 transition-colors">
-                        {mod === "musica" ? "XML ATIVO" : "Aberto"}
-                      </p>
-                      <p className="text-xs font-bold truncate text-white group-hover:text-[#00BFF0] transition-colors">
-                        {pageTitle[mod] || mod}
-                      </p>
-                    </div>
+                  {/* Glowing Cyan Indicator Dot (matches window title bar) */}
+                  <span className="w-2 h-2 rounded-full bg-[#38bdf8] shrink-0 shadow-[0_0_8px_#38bdf8] animate-pulse" />
+
+                  {/* Clean Icon */}
+                  <div className="flex-shrink-0 text-white flex items-center justify-center">
+                    {(() => {
+                      if (mod === "sorteios") return <Gift size={15} />;
+                      if (mod === "previsao") return <CloudRain size={15} />;
+                      if (mod === "agenda") return <CalendarDays size={15} />;
+                      if (mod === "musica") return <Music size={15} />;
+                      if (mod === "blitz") return <Siren size={15} />;
+                      if (mod === "noticias") return <FileText size={15} />;
+                      if (mod === "broadcast") return <Radio size={15} />;
+                      if (mod === "site") return <Globe size={15} />;
+                      if (mod === "promocoes") return <Tag size={15} />;
+                      if (mod === "logos") return <Image size={15} />;
+                      if (mod === "preroll") return <Film size={15} />;
+                      if (mod === "testemunhais") return <MessageSquareQuote size={15} />;
+                      if (mod === "cenario") return <MonitorPlay size={15} />;
+                      if (mod === "batalha") return <Swords size={15} />;
+                      if (mod === "enquete" || mod === "quiz") return <HelpCircle size={15} />;
+                      if (mod === "cortevideo") return <Scissors size={15} />;
+                      if (mod === "playerconfig") return <Settings size={15} />;
+                      if (mod === "apresentadores") return <Mic2 size={15} />;
+                      if (mod === "clientes") return <Building2 size={15} />;
+                      if (mod === "ouvintes") return <Users size={15} />;
+                      if (mod === "programas") return <Radio size={15} />;
+                      return <Users size={15} />;
+                    })()}
                   </div>
 
-                  <div className="flex items-center gap-1.5 ml-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMinimizedModules(prev => prev.filter(m => m !== mod));
-                      }}
-                      className="w-7 h-7 rounded-full flex items-center justify-center bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all"
-                      title="Fechar"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
+                  {/* Title (matches window uppercase title style) */}
+                  <span className="text-white text-[12px] font-bold uppercase tracking-wider truncate max-w-[220px]">
+                    {pageTitle[mod] || mod}
+                  </span>
+
+                  {/* XML Ativo indicator for musica */}
+                  {mod === "musica" && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)] shrink-0" title="XML Ativo" />
+                  )}
+
+                  {/* Subtle vertical divider */}
+                  <div className="h-4 w-px bg-white/20 mx-0.5 shrink-0" />
+
+                  {/* Clean Close Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMinimizedModules(prev => prev.filter(m => m !== mod));
+                    }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer shrink-0"
+                    title="Fechar"
+                    aria-label="Fechar"
+                  >
+                    <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </button>
                 </div>
               </div>
             ))}
