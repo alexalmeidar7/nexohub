@@ -4172,12 +4172,16 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                               <div className="flex items-center gap-2 min-w-0">
                                 {/* Círculo com a foto do apresentador do programa */}
                                 {presenterPhoto ? (
-                                  <img
-                                    src={presenterPhoto}
-                                    alt={presenter?.nome || "Apresentador"}
+                                  <div
                                     title={presenter?.nome ? `Apresentador: ${presenter.nome}` : "Apresentador"}
-                                    className="w-7 h-7 rounded-full object-cover border border-slate-200 shadow-sm shrink-0 bg-white ring-2 ring-white"
-                                  />
+                                    className="w-7 h-7 rounded-full flex items-center justify-center overflow-hidden border border-slate-200 shadow-sm shrink-0 bg-[#0055ff] ring-2 ring-white"
+                                  >
+                                    <img
+                                      src={presenterPhoto}
+                                      alt={presenter?.nome || "Apresentador"}
+                                      className="w-full h-full object-cover object-top"
+                                    />
+                                  </div>
                                 ) : (
                                   <div
                                     title={presenter?.nome ? `Apresentador: ${presenter.nome}` : "Apresentador"}
