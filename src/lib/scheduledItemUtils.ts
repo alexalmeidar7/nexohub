@@ -106,6 +106,21 @@ export interface QuizData {
   imagem_resposta?: string;
 }
 
+export interface BatalhaData {
+  id?: string;
+  artista1_nome: string;
+  artista1_musica: string;
+  artista1_porcentagem?: number;
+  artista1_imagem?: string;
+  artista2_nome: string;
+  artista2_musica: string;
+  artista2_porcentagem?: number;
+  artista2_imagem?: string;
+  data_batalha: string;
+  horario_inicio: string;
+  horario_fim: string;
+}
+
 export function buildEnqueteXml(enquete?: EnqueteData | null): string {
   if (!enquete || !enquete.pergunta) {
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -183,6 +198,42 @@ export function buildQuizXml(quiz?: QuizData | null): string {
     <explicacao>${escapeXml(quiz.explicacao || "")}</explicacao>
     <imagem_resposta>${escapeXml(quiz.imagem_resposta || "")}</imagem_resposta>
   </dados>
+</items>
+`;
+}
+
+export function buildBatalhaXml(batalha?: BatalhaData | null): string {
+  if (!batalha || (!batalha.artista1_nome && !batalha.artista2_nome)) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <batalha>
+    <artista1_nome></artista1_nome>
+    <artista1_musica></artista1_musica>
+    <artista1_porcentagem>0%</artista1_porcentagem>
+    <artista1_imagem></artista1_imagem>
+    <artista2_nome></artista2_nome>
+    <artista2_musica></artista2_musica>
+    <artista2_porcentagem>0%</artista2_porcentagem>
+    <artista2_imagem></artista2_imagem>
+  </batalha>
+</items>
+`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <batalha>
+    <artista1_nome>${escapeXml(batalha.artista1_nome)}</artista1_nome>
+    <artista1_musica>${escapeXml(batalha.artista1_musica)}</artista1_musica>
+    <artista1_porcentagem>${escapeXml(batalha.artista1_porcentagem ?? 50)}%</artista1_porcentagem>
+    <artista1_imagem>${escapeXml(batalha.artista1_imagem || "")}</artista1_imagem>
+    <artista2_nome>${escapeXml(batalha.artista2_nome)}</artista2_nome>
+    <artista2_musica>${escapeXml(batalha.artista2_musica)}</artista2_musica>
+    <artista2_porcentagem>${escapeXml(batalha.artista2_porcentagem ?? 50)}%</artista2_porcentagem>
+    <artista2_imagem>${escapeXml(batalha.artista2_imagem || "")}</artista2_imagem>
+    <horario_inicio>${escapeXml(batalha.horario_inicio || "")}</horario_inicio>
+    <horario_fim>${escapeXml(batalha.horario_fim || "")}</horario_fim>
+  </batalha>
 </items>
 `;
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
-import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff } from "lucide-react";
+import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { getBrasiliaDateTime } from "@/lib/scheduledItemUtils";
 
 interface Artista {
   nome: string;
@@ -91,7 +93,18 @@ async function fetchArtistImage(artistName: string, skip = 0): Promise<string> {
 
 export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
-  const targetUserId = effectiveUserId || user?.id;
+  const clientAcc = findClientAccountByEmail(user?.email || "") || findClientAccountById(user?.id || "");
+  const targetUserId = effectiveUserId || clientAcc?.parentUserId || clientAcc?.id || user?.id;
+  const targetSlug = clientAcc?.slug || (user as any)?.user_metadata?.slug || "positivafm";
+
+  const [, setTick] = useState(0);
+
+  // Auto-refresh badges and active state every 10 seconds
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 10000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [artista1, setArtista1] = useState<Artista>({ ...EMPTY_ARTIST });
   const [artista2, setArtista2] = useState<Artista>({ ...EMPTY_ARTIST });
   const [percentagesTouched, setPercentagesTouched] = useState(false);
@@ -316,7 +329,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
   const getStoredBatalhas = (uId: string): BatalhaAgendada[] => {
     try {
-      const raw = localStorage.getItem(getLocalStorageKey(uId));
+      const raw = localStorage.getItem(getLocalStorageKey(uId)) || localStorage.getItem(`nexohub_batalhas_${targetSlug}`);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) return parsed;
@@ -328,13 +341,19 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
   const saveStoredBatalhas = (uId: string, list: BatalhaAgendada[]) => {
     try {
       localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+      localStorage.setItem(`nexohub_batalhas_${targetSlug}`, JSON.stringify(list));
+      // Sincroniza com o servidor local e endpoints XML em tempo real
+      fetch("/api/sync-xml-batalha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: targetSlug, userId: uId, batalhas: list }),
+      }).catch(() => {});
     } catch {}
   };
 
   const loadBatalhas = async () => {
     if (!targetUserId) return;
-    const today = todayInBrasilia();
-    const now = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const { today, currentTime } = getBrasiliaDateTime();
     let rows: any[] = [];
     try {
       const { data } = await supabase
@@ -360,7 +379,8 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     // Filter out past battles for today
     const filtered = (merged ?? []).filter((b: any) => {
       if (b.data_batalha > today) return true;
-      return b.horario_fim >= now;
+      if (b.data_batalha === today && b.horario_fim >= currentTime) return true;
+      return false;
     }) as BatalhaAgendada[];
 
     setBatalhas(filtered);
@@ -525,13 +545,28 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
         <div ref={formRef} className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
 
         {/* Card Header */}
-        <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: borderSubtle }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
-            <Swords size={20} style={{ color: accentColor }} />
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: borderSubtle }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
+              <Swords size={20} style={{ color: accentColor }} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Batalha Musical</h3>
+              <p className="text-[11px]" style={{ color: subtleText }}>Configure os artistas e acompanhe a disputa</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Batalha Musical</h3>
-            <p className="text-[11px]" style={{ color: subtleText }}>Configure os artistas e acompanhe a disputa</p>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/xml/${targetSlug}/batalha.xml`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-slate-200/40 transition shadow-sm"
+              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+              title="Abrir feed XML da Batalha Musical no navegador ou vMix"
+            >
+              <ExternalLink size={15} style={{ color: accentColor }} />
+              <span>XML BATALHA</span>
+            </a>
           </div>
         </div>
 

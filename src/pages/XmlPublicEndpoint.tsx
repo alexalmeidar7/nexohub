@@ -7,6 +7,7 @@ import {
   isScheduleActive,
   buildEnqueteXml,
   buildQuizXml,
+  buildBatalhaXml,
   escapeXml,
 } from "@/lib/scheduledItemUtils";
 
@@ -163,6 +164,63 @@ export default function XmlPublicEndpoint() {
         // 3. Fallback: clean empty XML
         if (isMounted) {
           setXmlContent(buildQuizXml(null).trim());
+          setLoading(false);
+        }
+        return;
+      }
+
+      // Special dynamic handler for batalha.xml
+      if (filename.includes("batalha")) {
+        // 1. Check local storage for station scheduled battles
+        const localKeys = [
+          `nexohub_batalhas_${stationUid}`,
+          `nexohub_batalhas_${cleanSlug}`,
+          `nexohub_batalhas_${account?.slug || ""}`,
+        ];
+        let localBatalhas: any[] = [];
+        for (const k of localKeys) {
+          try {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              const p = JSON.parse(raw);
+              if (Array.isArray(p) && p.length > 0) {
+                localBatalhas = p;
+                break;
+              }
+            }
+          } catch {}
+        }
+
+        const activeBat = localBatalhas.find((b: any) =>
+          isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
+        );
+
+        if (activeBat) {
+          const generated = buildBatalhaXml(activeBat);
+          if (isMounted) {
+            setXmlContent(generated.trim());
+            setLoading(false);
+          }
+          return;
+        }
+
+        // 2. Try fetching from endpoint
+        const staticUrl = `/xml/${cleanSlug}/${filename}`;
+        const res = await fetch(staticUrl);
+        if (res.ok) {
+          const text = await res.text();
+          if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
+            if (isMounted) {
+              setXmlContent(text.trim());
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        // 3. Fallback: clean empty XML
+        if (isMounted) {
+          setXmlContent(buildBatalhaXml(null).trim());
           setLoading(false);
         }
         return;

@@ -32,3 +32,20 @@ CREATE POLICY "Anon can update quiz_agendados" ON public.quiz_agendados
 
 CREATE POLICY "Anon can delete quiz_agendados" ON public.quiz_agendados
   FOR DELETE TO anon USING (true);
+
+DROP POLICY IF EXISTS "Anon can select batalhas_agendadas" ON public.batalhas_agendadas;
+DROP POLICY IF EXISTS "Anon can insert batalhas_agendadas" ON public.batalhas_agendadas;
+DROP POLICY IF EXISTS "Anon can update batalhas_agendadas" ON public.batalhas_agendadas;
+DROP POLICY IF EXISTS "Anon can delete batalhas_agendadas" ON public.batalhas_agendadas;
+
+CREATE POLICY "Anon can select batalhas_agendadas" ON public.batalhas_agendadas
+  FOR SELECT TO anon USING (true);
+
+CREATE POLICY "Anon can insert batalhas_agendadas" ON public.batalhas_agendadas
+  FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY "Anon can update batalhas_agendadas" ON public.batalhas_agendadas
+  FOR UPDATE TO anon USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon can delete batalhas_agendadas" ON public.batalhas_agendadas
+  FOR DELETE TO anon USING (true);

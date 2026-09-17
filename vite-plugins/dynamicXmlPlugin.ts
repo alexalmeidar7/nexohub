@@ -134,6 +134,42 @@ function buildQuizXml(quiz?: any): string {
 `;
 }
 
+function buildBatalhaXml(batalha?: any): string {
+  if (!batalha || (!batalha.artista1_nome && !batalha.artista2_nome)) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <batalha>
+    <artista1_nome></artista1_nome>
+    <artista1_musica></artista1_musica>
+    <artista1_porcentagem>0%</artista1_porcentagem>
+    <artista1_imagem></artista1_imagem>
+    <artista2_nome></artista2_nome>
+    <artista2_musica></artista2_musica>
+    <artista2_porcentagem>0%</artista2_porcentagem>
+    <artista2_imagem></artista2_imagem>
+  </batalha>
+</items>
+`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <batalha>
+    <artista1_nome>${escapeXml(batalha.artista1_nome)}</artista1_nome>
+    <artista1_musica>${escapeXml(batalha.artista1_musica)}</artista1_musica>
+    <artista1_porcentagem>${escapeXml(batalha.artista1_porcentagem ?? 50)}%</artista1_porcentagem>
+    <artista1_imagem>${escapeXml(batalha.artista1_imagem || "")}</artista1_imagem>
+    <artista2_nome>${escapeXml(batalha.artista2_nome)}</artista2_nome>
+    <artista2_musica>${escapeXml(batalha.artista2_musica)}</artista2_musica>
+    <artista2_porcentagem>${escapeXml(batalha.artista2_porcentagem ?? 50)}%</artista2_porcentagem>
+    <artista2_imagem>${escapeXml(batalha.artista2_imagem || "")}</artista2_imagem>
+    <horario_inicio>${escapeXml(batalha.horario_inicio || "")}</horario_inicio>
+    <horario_fim>${escapeXml(batalha.horario_fim || "")}</horario_fim>
+  </batalha>
+</items>
+`;
+}
+
 const SLUG_MAP: Record<string, string> = {
   positiva: "positivafm",
   p: "positivafm",
@@ -157,6 +193,7 @@ export function dynamicXmlPlugin(): Plugin {
   const rootDir = process.cwd();
   const enquetesFile = path.join(rootDir, "src", "data", "xml_enquetes_sync.json");
   const quizzesFile = path.join(rootDir, "src", "data", "xml_quizzes_sync.json");
+  const batalhasFile = path.join(rootDir, "src", "data", "xml_batalhas_sync.json");
 
   function readSyncData(filePath: string): Record<string, any[]> {
     try {
@@ -258,11 +295,46 @@ export function dynamicXmlPlugin(): Plugin {
           return;
         }
 
-        // 3. Intercept GET requests for enquete.xml, quiz.xml, and geral.xml
+        // 3. POST /api/sync-xml-batalha
+        if (req.method === "POST" && url.startsWith("/api/sync-xml-batalha")) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => {
+            try {
+              const parsed = JSON.parse(body);
+              const slug = normalizeSlug(parsed.slug || "positivafm");
+              const userId = parsed.userId || slug;
+              const batalhas = Array.isArray(parsed.batalhas) ? parsed.batalhas : [];
+
+              const store = readSyncData(batalhasFile);
+              store[slug] = batalhas;
+              if (userId) store[userId] = batalhas;
+              writeSyncData(batalhasFile, store);
+
+              // Update static file on disk immediately
+              const { today, currentTime } = getBrasiliaDateTime();
+              const active = batalhas.find((b: any) =>
+                isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
+              );
+              const xml = buildBatalhaXml(active);
+              writeStaticXml(slug, "batalha.xml", xml);
+
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, count: batalhas.length, active: !!active }));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ ok: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // 4. Intercept GET requests for enquete.xml, quiz.xml, batalha.xml, and geral.xml
         if (req.method === "GET") {
           const cleanUrl = url.split("?")[0];
           const matchEnquete = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/enquete\.xml$/i);
           const matchQuiz = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/quiz\.xml$/i);
+          const matchBatalha = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/batalha\.xml$/i);
           const matchGeral = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/geral\.xml$/i);
 
           if (matchEnquete) {
@@ -307,6 +379,27 @@ export function dynamicXmlPlugin(): Plugin {
             return;
           }
 
+          if (matchBatalha) {
+            const rawSlug = matchBatalha[1];
+            const slug = normalizeSlug(rawSlug);
+            const { today, currentTime } = getBrasiliaDateTime();
+
+            const store = readSyncData(batalhasFile);
+            const list = store[slug] || store[rawSlug] || [];
+            const active = list.find((b: any) =>
+              isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
+            );
+
+            const xml = buildBatalhaXml(active);
+            writeStaticXml(slug, "batalha.xml", xml);
+
+            res.setHeader("Content-Type", "application/xml; charset=utf-8");
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.end(xml);
+            return;
+          }
+
           if (matchGeral) {
             const rawSlug = matchGeral[1];
             const slug = normalizeSlug(rawSlug);
@@ -322,6 +415,12 @@ export function dynamicXmlPlugin(): Plugin {
             const quizList = quizStore[slug] || quizStore[rawSlug] || [];
             const activeQuiz = quizList.find((q: any) =>
               isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
+            );
+
+            const batStore = readSyncData(batalhasFile);
+            const batList = batStore[slug] || batStore[rawSlug] || [];
+            const activeBat = batList.find((b: any) =>
+              isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
             );
 
             // Read base geral.xml from disk if exists
@@ -381,6 +480,39 @@ export function dynamicXmlPlugin(): Plugin {
                 : `<quiz ativo="0"></quiz>`;
 
               geralXml = geralXml.replace(/<quiz[\s\S]*?<\/quiz>/i, quizBlock);
+
+              // Inject active batalha
+              const batalhaBlock = activeBat
+                ? `<batalha ativa="1">
+      <titulo>Batalha Musical</titulo>
+      <musica_a>
+        <nome>${escapeXml(activeBat.artista1_musica || "")}</nome>
+        <artista>${escapeXml(activeBat.artista1_nome || "")}</artista>
+        <votos>0</votos>
+        <porcentagem>${escapeXml(activeBat.artista1_porcentagem ?? 50)}%</porcentagem>
+        <capa_url>${escapeXml(activeBat.artista1_imagem || "")}</capa_url>
+      </musica_a>
+      <musica_b>
+        <nome>${escapeXml(activeBat.artista2_musica || "")}</nome>
+        <artista>${escapeXml(activeBat.artista2_nome || "")}</artista>
+        <votos>0</votos>
+        <porcentagem>${escapeXml(activeBat.artista2_porcentagem ?? 50)}%</porcentagem>
+        <capa_url>${escapeXml(activeBat.artista2_imagem || "")}</capa_url>
+      </musica_b>
+      <artista1_nome>${escapeXml(activeBat.artista1_nome || "")}</artista1_nome>
+      <artista1_musica>${escapeXml(activeBat.artista1_musica || "")}</artista1_musica>
+      <artista1_porcentagem>${escapeXml(activeBat.artista1_porcentagem ?? 50)}%</artista1_porcentagem>
+      <artista1_imagem>${escapeXml(activeBat.artista1_imagem || "")}</artista1_imagem>
+      <artista2_nome>${escapeXml(activeBat.artista2_nome || "")}</artista2_nome>
+      <artista2_musica>${escapeXml(activeBat.artista2_musica || "")}</artista2_musica>
+      <artista2_porcentagem>${escapeXml(activeBat.artista2_porcentagem ?? 50)}%</artista2_porcentagem>
+      <artista2_imagem>${escapeXml(activeBat.artista2_imagem || "")}</artista2_imagem>
+      <horario_inicio>${escapeXml(activeBat.horario_inicio || "")}</horario_inicio>
+      <horario_fim>${escapeXml(activeBat.horario_fim || "")}</horario_fim>
+    </batalha>`
+                : `<batalha ativa="0"></batalha>`;
+
+              geralXml = geralXml.replace(/<batalha[\s\S]*?<\/batalha>/i, batalhaBlock);
 
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");

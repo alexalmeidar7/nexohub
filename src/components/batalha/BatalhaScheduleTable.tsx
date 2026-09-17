@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pencil, Trash2, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getScheduleStatus } from "@/lib/scheduledItemUtils";
 
 export interface BatalhaAgendada {
   id: string;
@@ -107,11 +108,14 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDe
               <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Horário</th>
               <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Artista 1</th>
               <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Artista 2</th>
+              <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Status</th>
               <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "right" }}>Ações</th>
             </tr>
           </thead>
           <tbody>
-            {batalhas.map((b, idx) => (
+            {batalhas.map((b, idx) => {
+              const status = getScheduleStatus(b.data_batalha, b.horario_inicio, b.horario_fim);
+              return (
               <tr
                 key={b.id}
                 style={{
@@ -131,6 +135,22 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDe
                 </td>
                 <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 700, color: DARK }}>
                   {b.artista2_nome || "—"} <span style={{ fontWeight: 500, color: CYAN, fontSize: 11 }}>({b.artista2_porcentagem}%)</span>
+                </td>
+                <td style={{ padding: "14px 20px", fontSize: 12 }}>
+                  {status === "active" ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                      NO AR AGORA
+                    </span>
+                  ) : status === "scheduled" ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-blue-50 text-[#0055ff] border border-blue-200/80">
+                      AGENDADA
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">
+                      ENCERRADA
+                    </span>
+                  )}
                 </td>
                 <td style={{ padding: "14px 20px", textAlign: "right" }}>
                   <div style={{ display: "inline-flex", gap: 8 }}>
@@ -165,7 +185,7 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDe
                   </div>
                 </td>
               </tr>
-            ))}
+            ); })}
           </tbody>
         </table>
       </div>

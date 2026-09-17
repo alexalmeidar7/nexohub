@@ -111,7 +111,7 @@ serve(async (req) => {
       sb.from("xml_upload_history").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6),
       sb.from("logos_patrocinadores").select("*").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false),
       sb.from("roteiros").select("*").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10),
-      sb.from("batalha_schedules").select("*").eq("user_id", ownerId).eq("ativo", true).limit(1),
+      sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }),
       sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }),
       sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }),
     ]);
@@ -122,7 +122,11 @@ serve(async (req) => {
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
     const roteiros = roteirosRes.data || [];
-    const activeBatalha = batalhaRes.data?.[0] || null;
+    const activeBatalha = (batalhaRes.data || []).find((b: any) => {
+      const ini = (b.horario_inicio || "00:00").slice(0, 5);
+      const fim = (b.horario_fim || "23:59").slice(0, 5);
+      return ini <= fim ? (currentHourStr >= ini && currentHourStr <= fim) : (currentHourStr >= ini || currentHourStr <= fim);
+    }) || null;
 
     // Filter active enquete and quiz for the current minute
     const activeEnquete = (enquetesRes.data || []).find((e: any) => {
@@ -346,21 +350,31 @@ serve(async (req) => {
     // Batalha
     if (activeBatalha) {
       xmlParts.push('    <batalha ativa="1">');
-      xmlParts.push(`      <titulo>${esc(activeBatalha.titulo || "Batalha Musical")}</titulo>`);
+      xmlParts.push('      <titulo>Batalha Musical</titulo>');
       xmlParts.push('      <musica_a>');
-      xmlParts.push(`        <nome>${esc(activeBatalha.musica_a || "Música A")}</nome>`);
-      xmlParts.push(`        <artista>${esc(activeBatalha.artista_a || "Artista A")}</artista>`);
-      xmlParts.push(`        <votos>${activeBatalha.votos_a || 0}</votos>`);
-      xmlParts.push(`        <porcentagem>${activeBatalha.pct_a || "50"}%</porcentagem>`);
-      xmlParts.push(`        <capa_url>${esc(activeBatalha.capa_a || "")}</capa_url>`);
+      xmlParts.push(`        <nome>${esc(activeBatalha.artista1_musica || "")}</nome>`);
+      xmlParts.push(`        <artista>${esc(activeBatalha.artista1_nome || "")}</artista>`);
+      xmlParts.push('        <votos>0</votos>');
+      xmlParts.push(`        <porcentagem>${esc(activeBatalha.artista1_porcentagem ?? 50)}%</porcentagem>`);
+      xmlParts.push(`        <capa_url>${esc(activeBatalha.artista1_imagem || "")}</capa_url>`);
       xmlParts.push('      </musica_a>');
       xmlParts.push('      <musica_b>');
-      xmlParts.push(`        <nome>${esc(activeBatalha.musica_b || "Música B")}</nome>`);
-      xmlParts.push(`        <artista>${esc(activeBatalha.artista_b || "Artista B")}</artista>`);
-      xmlParts.push(`        <votos>${activeBatalha.votos_b || 0}</votos>`);
-      xmlParts.push(`        <porcentagem>${activeBatalha.pct_b || "50"}%</porcentagem>`);
-      xmlParts.push(`        <capa_url>${esc(activeBatalha.capa_b || "")}</capa_url>`);
+      xmlParts.push(`        <nome>${esc(activeBatalha.artista2_musica || "")}</nome>`);
+      xmlParts.push(`        <artista>${esc(activeBatalha.artista2_nome || "")}</artista>`);
+      xmlParts.push('        <votos>0</votos>');
+      xmlParts.push(`        <porcentagem>${esc(activeBatalha.artista2_porcentagem ?? 50)}%</porcentagem>`);
+      xmlParts.push(`        <capa_url>${esc(activeBatalha.artista2_imagem || "")}</capa_url>`);
       xmlParts.push('      </musica_b>');
+      xmlParts.push(`      <artista1_nome>${esc(activeBatalha.artista1_nome || "")}</artista1_nome>`);
+      xmlParts.push(`      <artista1_musica>${esc(activeBatalha.artista1_musica || "")}</artista1_musica>`);
+      xmlParts.push(`      <artista1_porcentagem>${esc(activeBatalha.artista1_porcentagem ?? 50)}%</artista1_porcentagem>`);
+      xmlParts.push(`      <artista1_imagem>${esc(activeBatalha.artista1_imagem || "")}</artista1_imagem>`);
+      xmlParts.push(`      <artista2_nome>${esc(activeBatalha.artista2_nome || "")}</artista2_nome>`);
+      xmlParts.push(`      <artista2_musica>${esc(activeBatalha.artista2_musica || "")}</artista2_musica>`);
+      xmlParts.push(`      <artista2_porcentagem>${esc(activeBatalha.artista2_porcentagem ?? 50)}%</artista2_porcentagem>`);
+      xmlParts.push(`      <artista2_imagem>${esc(activeBatalha.artista2_imagem || "")}</artista2_imagem>`);
+      xmlParts.push(`      <horario_inicio>${esc(activeBatalha.horario_inicio || "")}</horario_inicio>`);
+      xmlParts.push(`      <horario_fim>${esc(activeBatalha.horario_fim || "")}</horario_fim>`);
       xmlParts.push('    </batalha>');
     } else {
       xmlParts.push('    <batalha ativa="0"></batalha>');

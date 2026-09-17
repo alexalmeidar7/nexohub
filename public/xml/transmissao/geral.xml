@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-17T10:32:13.348Z</gerado_em>
+  <gerado_em>2026-09-17T10:58:42.338Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -45,12 +45,12 @@
     <cidade>Inhumas - GO</cidade>
     <atual>
       <temperatura>23ºC</temperatura>
-      <descricao>Parcialmente nublado</descricao>
+      <descricao>Nublado</descricao>
       <minima>20ºC</minima>
       <maxima>33ºC</maxima>
-      <umidade>71%</umidade>
+      <umidade>68%</umidade>
       <vento>10 km/h</vento>
-      <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-2-d.png</icone_url>
+      <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
     </atual>
   </previsao_tempo>
 
