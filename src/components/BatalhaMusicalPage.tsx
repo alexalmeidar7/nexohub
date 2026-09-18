@@ -329,19 +329,50 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
   const getStoredBatalhas = (uId: string): BatalhaAgendada[] => {
     try {
-      const raw = localStorage.getItem(getLocalStorageKey(uId)) || localStorage.getItem(`nexohub_batalhas_${targetSlug}`);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+      const keys = [
+        getLocalStorageKey(uId),
+        `nexohub_batalhas_${targetSlug}`,
+        clientAcc?.slug ? `nexohub_batalhas_${clientAcc.slug}` : null,
+        clientAcc?.id ? `nexohub_batalhas_${clientAcc.id}` : null,
+        clientAcc?.parentUserId ? `nexohub_batalhas_${clientAcc.parentUserId}` : null,
+      ].filter(Boolean) as string[];
+
+      const map = new Map<string, BatalhaAgendada>();
+      for (const k of keys) {
+        const raw = localStorage.getItem(k);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((b: BatalhaAgendada) => {
+                if (b && (b.artista1_nome || b.artista2_nome)) {
+                  const key = b.id || `${b.data_batalha}_${b.horario_inicio}_${b.artista1_nome}`;
+                  map.set(key, b);
+                }
+              });
+            }
+          } catch {}
+        }
       }
+      return Array.from(map.values());
     } catch {}
     return [];
   };
 
   const saveStoredBatalhas = (uId: string, list: BatalhaAgendada[]) => {
     try {
-      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
-      localStorage.setItem(`nexohub_batalhas_${targetSlug}`, JSON.stringify(list));
+      const keys = [
+        getLocalStorageKey(uId),
+        `nexohub_batalhas_${targetSlug}`,
+        clientAcc?.slug ? `nexohub_batalhas_${clientAcc.slug}` : null,
+        clientAcc?.id ? `nexohub_batalhas_${clientAcc.id}` : null,
+        clientAcc?.parentUserId ? `nexohub_batalhas_${clientAcc.parentUserId}` : null,
+      ].filter(Boolean) as string[];
+
+      for (const k of keys) {
+        localStorage.setItem(k, JSON.stringify(list));
+      }
+
       // Sincroniza com o servidor local e endpoints XML em tempo real
       fetch("/api/sync-xml-batalha", {
         method: "POST",
@@ -361,38 +392,66 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
   const loadBatalhas = async () => {
     if (!targetUserId) return;
-    const { today, currentTime } = getBrasiliaDateTime();
     let rows: any[] = [];
     try {
       const { data } = await supabase
         .from("batalhas_agendadas")
         .select("*")
         .eq("user_id", targetUserId)
-        .gte("data_batalha", today)
         .order("data_batalha", { ascending: true })
         .order("horario_inicio", { ascending: true });
-      if (data) {
+      if (data && Array.isArray(data)) {
         rows = data;
       }
     } catch (err) {
       console.warn("Supabase load batalhas warning:", err);
     }
 
+    // Busca também do endpoint de sincronização do servidor
+    let serverList: BatalhaAgendada[] = [];
+    try {
+      const res = await fetch(`/api/sync-xml-batalha?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.batalhas)) {
+          serverList = json.batalhas;
+        }
+      }
+    } catch {}
+
     const localList = getStoredBatalhas(targetUserId);
     const map = new Map<string, BatalhaAgendada>();
-    rows.forEach((r: any) => map.set(r.id, r));
-    localList.forEach((r: any) => map.set(r.id, r));
-    const merged = Array.from(map.values());
 
-    // Filter out past battles for today
-    const filtered = (merged ?? []).filter((b: any) => {
-      if (b.data_batalha > today) return true;
-      if (b.data_batalha === today && b.horario_fim >= currentTime) return true;
-      return false;
-    }) as BatalhaAgendada[];
+    // Mescla todas as fontes preservando o ID
+    rows.forEach((r: any) => {
+      if (r && (r.artista1_nome || r.artista2_nome)) {
+        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
+        map.set(key, r);
+      }
+    });
+    serverList.forEach((r: any) => {
+      if (r && (r.artista1_nome || r.artista2_nome)) {
+        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
+        map.set(key, r);
+      }
+    });
+    localList.forEach((r: any) => {
+      if (r && (r.artista1_nome || r.artista2_nome)) {
+        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
+        map.set(key, r);
+      }
+    });
 
-    setBatalhas(filtered);
-    saveStoredBatalhas(targetUserId, filtered);
+    const merged = Array.from(map.values()).sort((a, b) => {
+      if (a.data_batalha !== b.data_batalha) {
+        return a.data_batalha.localeCompare(b.data_batalha);
+      }
+      return a.horario_inicio.localeCompare(b.horario_inicio);
+    });
+
+    // Mantém todas as batalhas (ativas, agendadas e encerradas) na tabela
+    setBatalhas(merged);
+    saveStoredBatalhas(targetUserId, merged);
   };
 
   useEffect(() => {
@@ -418,17 +477,17 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       return;
     }
     setSaving(true);
-    const id = editingId || `bat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const id = editingId || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `bat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
     const newBatalha: BatalhaAgendada = {
       id,
       user_id: targetUserId,
       artista1_nome: artista1.nome,
       artista1_musica: artista1.musica,
-      artista1_porcentagem: editingId ? artista1.porcentagem : 0,
+      artista1_porcentagem: artista1.porcentagem ?? 0,
       artista1_imagem: artista1.imagemUrl,
       artista2_nome: artista2.nome,
       artista2_musica: artista2.musica,
-      artista2_porcentagem: editingId ? artista2.porcentagem : 0,
+      artista2_porcentagem: artista2.porcentagem ?? 0,
       artista2_imagem: artista2.imagemUrl,
       data_batalha: schedDate,
       horario_inicio: schedStart,
@@ -437,7 +496,10 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
     // Atualiza imediatamente localmente
     const currentList = getStoredBatalhas(targetUserId);
-    const updated = [newBatalha, ...currentList.filter(b => b.id !== id)];
+    const updated = [newBatalha, ...currentList.filter(b => b.id !== id)].sort((a, b) => {
+      if (a.data_batalha !== b.data_batalha) return a.data_batalha.localeCompare(b.data_batalha);
+      return a.horario_inicio.localeCompare(b.horario_inicio);
+    });
     setBatalhas(updated);
     saveStoredBatalhas(targetUserId, updated);
 
@@ -445,11 +507,11 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       user_id: targetUserId,
       artista1_nome: artista1.nome,
       artista1_musica: artista1.musica,
-      artista1_porcentagem: editingId ? artista1.porcentagem : 0,
+      artista1_porcentagem: artista1.porcentagem ?? 0,
       artista1_imagem: artista1.imagemUrl,
       artista2_nome: artista2.nome,
       artista2_musica: artista2.musica,
-      artista2_porcentagem: editingId ? artista2.porcentagem : 0,
+      artista2_porcentagem: artista2.porcentagem ?? 0,
       artista2_imagem: artista2.imagemUrl,
       data_batalha: schedDate,
       horario_inicio: schedStart,

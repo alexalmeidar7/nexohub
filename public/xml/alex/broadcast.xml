@@ -24,9 +24,9 @@
     <temperatura></temperatura>
     <ico_temperatura></ico_temperatura>
     <infos_canto>
-      <titulo>trânsito</titulo>
-      <descricao>trânsito tá de boa agora .... use cinto de segurança!</descricao>
-      <ico_categoria>https://img.icons8.com/ios-filled/200/ffffff/car.png</ico_categoria>
+      <titulo>tempo agora</titulo>
+      <descricao></descricao>
+      <ico_categoria>https://img.icons8.com/ios-filled/200/ffffff/cloud.png</ico_categoria>
       <temp_atual></temp_atual>
       <ico_temp_atual>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</ico_temp_atual>
     </infos_canto>
@@ -40,7 +40,7 @@
       <horario></horario>
       <texto></texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-18T15:07:37.154Z</atualizado_em>
+      <atualizado_em>2026-09-18T15:31:13.998Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

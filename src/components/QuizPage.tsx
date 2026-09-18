@@ -58,21 +58,46 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
 
   const getLocalStorageKey = (uId: string) => `nexohub_quizzes_${uId}`;
 
+  const getStorageKeys = (uId: string): string[] => {
+    return Array.from(new Set([
+      getLocalStorageKey(uId),
+      getLocalStorageKey(targetSlug),
+      `nexohub_quizzes_${uId}`,
+      `nexohub_quizzes_${targetSlug}`,
+      clientAcc?.id ? `nexohub_quizzes_${clientAcc.id}` : null,
+      clientAcc?.parentUserId ? `nexohub_quizzes_${clientAcc.parentUserId}` : null,
+    ].filter(Boolean) as string[]));
+  };
+
   const getStoredQuizzes = (uId: string): QuizAgendado[] => {
+    const map = new Map<string, QuizAgendado>();
     try {
-      const raw = localStorage.getItem(getLocalStorageKey(uId)) || localStorage.getItem(`nexohub_quizzes_${targetSlug}`);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+      const keys = getStorageKeys(uId);
+      for (const key of keys) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((q: QuizAgendado) => {
+              if (q && q.id) {
+                map.set(q.id, { ...(map.get(q.id) || {}), ...q });
+              }
+            });
+          }
+        }
       }
     } catch {}
-    return [];
+    return Array.from(map.values());
   };
 
   const saveStoredQuizzes = (uId: string, list: QuizAgendado[]) => {
     try {
-      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
-      localStorage.setItem(`nexohub_quizzes_${targetSlug}`, JSON.stringify(list));
+      const keys = getStorageKeys(uId);
+      const json = JSON.stringify(list);
+      for (const key of keys) {
+        localStorage.setItem(key, json);
+      }
+
       // Sincroniza com o servidor local e endpoints XML em tempo real
       fetch("/api/sync-xml-quiz", {
         method: "POST",
@@ -92,8 +117,6 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
 
   const fetchQuizzes = async () => {
     if (!targetUserId) return;
-    
-    const { today, currentTime } = getBrasiliaDateTime();
 
     let rows: any[] = [];
     try {
@@ -110,21 +133,34 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
       console.warn("Supabase fetch quizzes warning:", err);
     }
 
+    // Tenta carregar do servidor local caso o browser tenha sido limpo
+    let serverQuizzes: QuizAgendado[] = [];
+    try {
+      const resp = await fetch(`/api/sync-xml-quiz?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
+      if (resp.ok) {
+        const json = await resp.json();
+        if (Array.isArray(json?.quizzes)) {
+          serverQuizzes = json.quizzes;
+        }
+      }
+    } catch {}
+
     const localList = getStoredQuizzes(targetUserId);
     const map = new Map<string, QuizAgendado>();
-    rows.forEach(q => map.set(q.id, q));
-    localList.forEach(q => map.set(q.id, q));
-    const merged = Array.from(map.values());
 
-    // Filter valid quizzes (not finished)
-    const validQuizzes = merged.filter(q => {
-      if (q.data_quiz > today) return true;
-      if (q.data_quiz === today && q.horario_fim >= currentTime) return true;
-      return false;
+    serverQuizzes.forEach(q => q?.id && map.set(q.id, q));
+    rows.forEach(q => q?.id && map.set(q.id, q));
+    localList.forEach(q => q?.id && map.set(q.id, { ...(map.get(q.id) || {}), ...q }));
+
+    // Não descartamos quizzes anteriores: mantemos todos para histórico e exibição de status no painel
+    const merged = Array.from(map.values()).sort((a, b) => {
+      const dateCmp = (b.data_quiz || "").localeCompare(a.data_quiz || "");
+      if (dateCmp !== 0) return dateCmp;
+      return (b.horario_inicio || "").localeCompare(a.horario_inicio || "");
     });
 
-    setQuizzes(validQuizzes as QuizAgendado[]);
-    saveStoredQuizzes(targetUserId, validQuizzes as QuizAgendado[]);
+    setQuizzes(merged);
+    saveStoredQuizzes(targetUserId, merged);
     setLoading(false);
   };
 
@@ -140,7 +176,7 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
     }
 
     setSaving(true);
-    const id = `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const newQuiz: QuizAgendado = {
       id,
       ...formData,
@@ -153,12 +189,18 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
     saveStoredQuizzes(targetUserId, updated);
 
     try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      const insertPayload: any = {
+        ...formData,
+        user_id: targetUserId,
+      };
+      if (isUuid) {
+        insertPayload.id = id;
+      }
+
       const { error } = await supabase
         .from("quiz_agendados")
-        .insert([{
-          ...formData,
-          user_id: targetUserId,
-        }]);
+        .insert([insertPayload]);
 
       if (error) {
         console.warn("Supabase quiz insert warning:", error.message);

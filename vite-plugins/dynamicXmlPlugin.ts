@@ -389,6 +389,45 @@ export function dynamicXmlPlugin(): Plugin {
           return;
         }
 
+        // 3b. GET /api/sync-xml-batalha
+        if (req.method === "GET" && url.startsWith("/api/sync-xml-batalha")) {
+          const parsedUrl = new URL(url, "http://localhost");
+          const rawSlug = parsedUrl.searchParams.get("slug") || "positivafm";
+          const slug = normalizeSlug(rawSlug);
+          const userId = parsedUrl.searchParams.get("userId") || slug;
+          const store = readSyncData(batalhasFile);
+          const batalhas = store[slug] || store[userId] || store[rawSlug] || [];
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ ok: true, batalhas }));
+          return;
+        }
+
+        // 3c. GET /api/sync-xml-enquete
+        if (req.method === "GET" && url.startsWith("/api/sync-xml-enquete")) {
+          const parsedUrl = new URL(url, "http://localhost");
+          const rawSlug = parsedUrl.searchParams.get("slug") || "positivafm";
+          const slug = normalizeSlug(rawSlug);
+          const userId = parsedUrl.searchParams.get("userId") || slug;
+          const store = readSyncData(enquetesFile);
+          const enquetes = store[slug] || store[userId] || store[rawSlug] || [];
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ ok: true, enquetes }));
+          return;
+        }
+
+        // 3d. GET /api/sync-xml-quiz
+        if (req.method === "GET" && url.startsWith("/api/sync-xml-quiz")) {
+          const parsedUrl = new URL(url, "http://localhost");
+          const rawSlug = parsedUrl.searchParams.get("slug") || "positivafm";
+          const slug = normalizeSlug(rawSlug);
+          const userId = parsedUrl.searchParams.get("userId") || slug;
+          const store = readSyncData(quizzesFile);
+          const quizzes = store[slug] || store[userId] || store[rawSlug] || [];
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ ok: true, quizzes }));
+          return;
+        }
+
         // 4. POST /api/sync-xml-roteiro
         if (req.method === "POST" && url.startsWith("/api/sync-xml-roteiro")) {
           let body = "";

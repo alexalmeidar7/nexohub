@@ -8,7 +8,7 @@
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-1-d.png</icone_url>
     <minima>20ºC</minima>
     <maxima>34ºC</maxima>
-    <humidade>32%</humidade>
+    <humidade>31%</humidade>
     <precipitacao>20%</precipitacao>
   </atual>
   <amanha date="2026-09-19">

@@ -112,17 +112,15 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
     const map = new Map<string, EnqueteAgendada>();
     rows.forEach(r => map.set(r.id, r));
     localList.forEach(r => map.set(r.id, r));
-    const merged = Array.from(map.values());
-
-    // Filtrar apenas as enquetes que ainda não terminaram
-    const validEnquetes = merged.filter(e => {
-      if (e.data_enquete > today) return true;
-      if (e.data_enquete === today && e.horario_fim >= currentTime) return true;
-      return false;
+    const merged = Array.from(map.values()).sort((a, b) => {
+      if (a.data_enquete !== b.data_enquete) {
+        return a.data_enquete.localeCompare(b.data_enquete);
+      }
+      return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
     });
 
-    setEnquetes(validEnquetes as EnqueteAgendada[]);
-    saveStoredEnquetes(targetUserId, validEnquetes as EnqueteAgendada[]);
+    setEnquetes(merged as EnqueteAgendada[]);
+    saveStoredEnquetes(targetUserId, merged as EnqueteAgendada[]);
     setLoading(false);
   };
 
