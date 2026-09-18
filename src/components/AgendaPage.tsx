@@ -1929,14 +1929,27 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     return true;
   };
 
-  // Solicita a exclusão — se recorrente, abre diálogo de escolha
+  // Solicita a exclusão — se recorrente, abre diálogo de escolha; se único, confirmação direta
   const requestDelete = async (evt: Evento, occurrenceDateStr?: string) => {
-    const isRecorrente = evt.recorrencia && evt.recorrencia !== "unico";
+    const isRecorrente = Boolean(evt.recorrencia && evt.recorrencia !== "unico");
+    const dateStr = occurrenceDateStr || evt.data || format(selectedDate || now, "yyyy-MM-dd");
     if (!isRecorrente) {
-      if (await confirmDialog("Tem certeza que deseja excluir este evento?")) handleDelete(evt.id);
+      const formattedDate = format(new Date(dateStr + "T12:00:00"), "dd/MM/yyyy");
+      const eventName = evt.youtube_titulo || evt.programa?.nome || evt.descricao || "este evento";
+      const confirmed = await confirmDialog({
+        title: "Excluir Evento",
+        message: `Deseja realmente excluir "${eventName}" do dia ${formattedDate}?`,
+        confirmLabel: "Excluir",
+        cancelLabel: "Cancelar",
+        destructive: true,
+        icon: "trash",
+      });
+      if (confirmed) {
+        await handleDelete(evt.id);
+        toast({ title: "Evento excluído com sucesso" });
+      }
       return;
     }
-    const dateStr = occurrenceDateStr || evt.data;
     setDeleteChoice({ evt, dateStr });
   };
 
@@ -2781,42 +2794,106 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
       {/* Diálogo: escolha ao excluir evento recorrente */}
       <Dialog open={!!deleteChoice} onOpenChange={(o) => { if (!o) setDeleteChoice(null); }}>
-        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: 20, border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
+        <DialogContent
+          className="max-w-md p-0 overflow-hidden border border-slate-100 shadow-2xl rounded-3xl"
+          style={{ backgroundColor: "#ffffff" }}
+        >
           {deleteChoice && (
-            <div className="flex flex-col">
-              <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)", color: "#fff" }}>
-                <DialogTitle className="text-base font-bold m-0">Excluir evento recorrente</DialogTitle>
-                <p className="text-[11px] mt-1 opacity-90">
-                  {deleteChoice.evt.programa?.nome || "Evento"} • {format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy")}
-                </p>
+            <div className="flex flex-col font-sans">
+              {/* Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0 shadow-sm">
+                  <Trash2 size={20} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <DialogTitle className="text-base font-black text-[#002132] tracking-tight m-0">
+                    Excluir Evento Recorrente
+                  </DialogTitle>
+                  <p className="text-xs text-slate-500 font-medium mt-1 truncate">
+                    {deleteChoice.evt.youtube_titulo || deleteChoice.evt.programa?.nome || deleteChoice.evt.descricao || "Evento"}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                      <Clock size={10} />
+                      {format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy")}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">
+                      <Repeat size={10} />
+                      {recorrenciaLabels[deleteChoice.evt.recorrencia] || deleteChoice.evt.recorrencia}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="p-5 space-y-3">
-                <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  Este é um evento <strong>{recorrenciaLabels[deleteChoice.evt.recorrencia] || deleteChoice.evt.recorrencia}</strong>. O que deseja fazer?
+
+              {/* Opções de exclusão */}
+              <div className="p-6 space-y-3">
+                <p className="text-xs font-semibold text-slate-600 mb-2">
+                  Este evento possui recorrência em outros dias. Como deseja prosseguir com a exclusão?
                 </p>
-                <Button
-                  className="w-full justify-start h-11 rounded-xl"
-                  style={{ backgroundColor: NEXO_CYAN, color: "#fff" }}
+
+                {/* Opção 1: Somente este evento desse dia */}
+                <button
+                  type="button"
                   onClick={async () => {
                     const ok = await upsertExcecao(deleteChoice.evt, { data: deleteChoice.dateStr, acao: "skip" });
-                    if (ok) toast({ title: "Ocorrência removida", description: format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy") });
+                    if (ok) {
+                      toast({
+                        title: "Evento deste dia excluído",
+                        description: `A ocorrência de ${format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy")} foi removida da grade.`,
+                      });
+                    }
                     setDeleteChoice(null);
                   }}
+                  className="w-full text-left p-3.5 rounded-2xl border-2 border-slate-200/80 hover:border-blue-500 hover:bg-blue-50/40 transition-all group cursor-pointer flex items-start gap-3 active:scale-[0.99]"
                 >
-                  Excluir somente este dia
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-11 rounded-xl border-destructive text-destructive hover:bg-destructive/10"
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-[#0055ff] group-hover:text-white text-slate-700 flex items-center justify-center shrink-0 transition-colors shadow-xs">
+                    <CalendarDays size={17} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-black text-[#002132] group-hover:text-[#0055ff] transition-colors">
+                      Excluir somente este evento desse dia
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 font-medium leading-relaxed">
+                      Remove apenas este evento da data {format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy")}. As repetições dos demais dias permanecem ativas na grade.
+                    </div>
+                  </div>
+                </button>
+
+                {/* Opção 2: Todos os eventos */}
+                <button
+                  type="button"
                   onClick={async () => {
                     await handleDelete(deleteChoice.evt.id);
-                    toast({ title: "Recorrência excluída", description: "Todos os dias futuros foram removidos." });
+                    toast({
+                      title: "Todos os eventos excluídos",
+                      description: "A série de eventos recorrentes foi totalmente removida.",
+                    });
                     setDeleteChoice(null);
                   }}
+                  className="w-full text-left p-3.5 rounded-2xl border-2 border-rose-100 hover:border-rose-500 hover:bg-rose-50/50 transition-all group cursor-pointer flex items-start gap-3 active:scale-[0.99]"
                 >
-                  Excluir todos os próximos dias
-                </Button>
-                <Button variant="ghost" className="w-full h-9" onClick={() => setDeleteChoice(null)}>
+                  <div className="w-9 h-9 rounded-xl bg-rose-50 group-hover:bg-rose-600 group-hover:text-white text-rose-600 flex items-center justify-center shrink-0 transition-colors shadow-xs">
+                    <Trash2 size={17} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-black text-[#002132] group-hover:text-rose-700 transition-colors">
+                      Excluir todos os eventos
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 font-medium leading-relaxed">
+                      Exclui permanentemente toda a série recorrente deste evento em todas as datas.
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {/* Rodapé com Cancelar */}
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-9 px-5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
+                  onClick={() => setDeleteChoice(null)}
+                >
                   Cancelar
                 </Button>
               </div>
@@ -4155,16 +4232,33 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                             className="bg-white group-hover:bg-slate-50/90 rounded-2xl p-3 border border-slate-100 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.02)] group-hover:shadow-md space-y-2.5"
                             style={evtColor ? { borderLeft: `4px solid ${evtColor}` } : undefined}
                           >
-                            {/* Title & Time/Location */}
-                            <div>
-                              <h4 className="text-xs md:text-[13px] font-black text-[#002132] group-hover:text-blue-600 transition-colors leading-snug line-clamp-2">
-                                {evt.youtube_titulo || evt.programa?.nome || evt.descricao || "Evento sem título"}
-                              </h4>
-                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium mt-1">
-                                <span className="font-semibold text-slate-700">{timeDisplay}</span>
-                                <span>•</span>
-                                <span className="truncate max-w-[150px]">{studioOrLocal}</span>
+                            {/* Title & Time/Location + Excluir Icon */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-xs md:text-[13px] font-black text-[#002132] group-hover:text-blue-600 transition-colors leading-snug line-clamp-2">
+                                  {evt.youtube_titulo || evt.programa?.nome || evt.descricao || "Evento sem título"}
+                                </h4>
+                                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium mt-1">
+                                  <span className="font-semibold text-slate-700">{timeDisplay}</span>
+                                  <span>•</span>
+                                  <span className="truncate max-w-[150px]">{studioOrLocal}</span>
+                                </div>
                               </div>
+
+                              {/* Botão de Excluir */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  requestDelete(evt, eventDateStr);
+                                }}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-95 transition-all shrink-0 cursor-pointer"
+                                title="Excluir evento"
+                                aria-label="Excluir evento"
+                              >
+                                <Trash2 size={15} />
+                              </button>
                             </div>
 
                             {/* Círculo com a foto do apresentador do programa e círculos com a inicial do participante ao lado */}
