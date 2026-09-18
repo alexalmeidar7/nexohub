@@ -11,6 +11,7 @@ import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 
 const AgendarRoteiroPopup = lazyRetry(() => import("./AgendarRoteiroPopup"));
 
@@ -1654,11 +1655,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         : undefined;
 
       // Base roteiro payload (always registered in "roteiros cadastrados" with status: "feito" and agendado_para_envio: null)
+      const effectiveSubtitulo = xmlUrl
+        ? `express_xml::${xmlUrl}`
+        : (editingXmlPath ? `express_xml::${editingXmlPath}` : `express_xml::local_${roteiroId}`);
+
       const baseUpdatePayload: any = {
         programa_nome: programaNome,
         estudio,
         titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
-        subtitulo: xmlUrl ? `express_xml::${xmlUrl}` : "",
+        subtitulo: effectiveSubtitulo,
         tipo_programa: tipoProg,
         conteudo_html: html,
         participantes: blocosJson,
@@ -1705,7 +1710,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           programa_nome: programaNome,
           estudio,
           titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
-          subtitulo: xmlUrl ? `express_xml::${xmlUrl}` : "",
+          subtitulo: effectiveSubtitulo,
           tipo_programa: tipoProg,
           conteudo_html: html,
           participantes: blocosJson,
@@ -1744,6 +1749,28 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         localStorage.setItem(`nexohub_roteiros_${user.id}`, JSON.stringify(list));
       }
       window.dispatchEvent(new CustomEvent("nexohub:roteiros-updated", { detail: { roteiro: fullBaseRecord } }));
+
+      // Immediately sync to /api/sync-xml-roteiro so roteiro.xml updates in real-time
+      try {
+        const clientAcc = (ownerId && findClientAccountById(ownerId)) ||
+          (user?.id && findClientAccountById(user.id)) ||
+          (user?.email && findClientAccountByEmail(user.email));
+        const targetSlug = clientAcc?.slug || "positivafm";
+        await fetch("/api/sync-xml-roteiro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug: targetSlug,
+            userId: ownerId,
+            estudio,
+            programaNome,
+            xml: xmlContent,
+            roteiro: fullBaseRecord,
+          }),
+        });
+      } catch (eSync) {
+        console.warn("[ProgramaExpress] sync-xml-roteiro notice:", eSync);
+      }
 
       // If saving without schedule (button "Salvar"): automatically push to XML
       if (!schedule) {

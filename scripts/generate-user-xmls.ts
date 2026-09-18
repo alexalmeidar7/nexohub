@@ -507,7 +507,17 @@ export async function generateAllUserXmls() {
       ]);
 
     const tempoContent = tempoRemote || generateFallbackTempo(st);
-    const roteiroContent = roteiroRemote || generateFallbackRoteiro(st);
+    let roteiroContent = roteiroRemote || generateFallbackRoteiro(st);
+    try {
+      const rotSyncPath = resolve("src/data/xml_roteiros_sync.json");
+      if (existsSync(rotSyncPath)) {
+        const syncData = JSON.parse(readFileSync(rotSyncPath, "utf-8"));
+        const list = syncData[st.slug] || syncData[st.uid] || [];
+        if (list.length > 0 && list[0]?.xml) {
+          roteiroContent = list[0].xml;
+        }
+      }
+    } catch {}
     const broadcastContent = broadcastRemote || generateFallbackBroadcast(st);
     const logosContent = logosRemote || generateFallbackLogos(st);
     const musicaContent = generateMusicaXml(st, broadcastRemote);

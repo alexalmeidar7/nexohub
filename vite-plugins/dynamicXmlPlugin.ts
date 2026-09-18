@@ -195,11 +195,20 @@ function normalizeSlug(slug: string): string {
   return SLUG_MAP[clean] || clean;
 }
 
+const ALL_ALIASES: Record<string, string[]> = {
+  positivafm: ["positivafm", "positiva", "p"],
+  interativafm: ["interativafm", "interativa"],
+  culturafm973: ["culturafm973", "cultura"],
+  transmissao: ["transmissao", "jornal"],
+  alex: ["alex", "superadmin"],
+};
+
 export function dynamicXmlPlugin(): Plugin {
   const rootDir = process.cwd();
   const enquetesFile = path.join(rootDir, "src", "data", "xml_enquetes_sync.json");
   const quizzesFile = path.join(rootDir, "src", "data", "xml_quizzes_sync.json");
   const batalhasFile = path.join(rootDir, "src", "data", "xml_batalhas_sync.json");
+  const roteirosFile = path.join(rootDir, "src", "data", "xml_roteiros_sync.json");
 
   function readSyncData(filePath: string): Record<string, any[]> {
     try {
@@ -222,10 +231,21 @@ export function dynamicXmlPlugin(): Plugin {
 
   function writeStaticXml(slug: string, filename: string, content: string) {
     try {
-      const dir = path.join(rootDir, "public", "xml", slug);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, filename), content.trim() + "\n", "utf-8");
-    } catch {}
+      const norm = normalizeSlug(slug);
+      const targets = new Set([slug, norm, ...(ALL_ALIASES[norm] || [])]);
+      for (const t of targets) {
+        const dir = path.join(rootDir, "public", "xml", t);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, filename), content.trim() + "\n", "utf-8");
+      }
+      if (filename === "roteiro.xml" && (norm === "positivafm" || slug === "positivafm")) {
+        try {
+          fs.writeFileSync(path.join(rootDir, "public", "roteiro.xml"), content.trim() + "\n", "utf-8");
+        } catch {}
+      }
+    } catch (err) {
+      console.error("Error in writeStaticXml:", err);
+    }
   }
 
   return {
@@ -342,10 +362,27 @@ export function dynamicXmlPlugin(): Plugin {
           req.on("end", () => {
             try {
               const parsed = JSON.parse(body);
-              const slug = normalizeSlug(parsed.slug || "positivafm");
+              const rawSlug = parsed.slug || "positivafm";
+              const slug = normalizeSlug(rawSlug);
               const xml = parsed.xml;
               if (xml && typeof xml === "string") {
                 writeStaticXml(slug, "roteiro.xml", xml);
+
+                // Also persist in xml_roteiros_sync.json for persistent live memory
+                const rotStore = readSyncData(roteirosFile);
+                const item = {
+                  id: parsed.roteiro?.id || `rot_${Date.now()}`,
+                  programa_nome: parsed.programaNome || parsed.roteiro?.programa_nome || "Programa",
+                  estudio: parsed.estudio || parsed.roteiro?.estudio || "ESTÚDIO FM",
+                  data_programa: parsed.roteiro?.data_programa || new Date().toISOString().slice(0, 10),
+                  horario: parsed.roteiro?.horario || "",
+                  xml,
+                  updated_at: new Date().toISOString(),
+                };
+                rotStore[slug] = [item];
+                rotStore[rawSlug] = [item];
+                if (parsed.userId) rotStore[parsed.userId] = [item];
+                writeSyncData(roteirosFile, rotStore);
               }
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ ok: true, slug }));
@@ -360,10 +397,24 @@ export function dynamicXmlPlugin(): Plugin {
         // 5. Intercept GET requests for enquete.xml, quiz.xml, batalha.xml, roteiro.xml, and geral.xml
         if (req.method === "GET") {
           const cleanUrl = url.split("?")[0];
-          const matchRoteiro = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/roteiro\.xml$/i);
+          const matchRoteiro = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/roteiro\.xml$/i) ||
+            (cleanUrl === "/roteiro.xml" ? ["/roteiro.xml", "positivafm"] : null);
           if (matchRoteiro) {
             const rawSlug = matchRoteiro[1];
             const slug = normalizeSlug(rawSlug);
+
+            // 1. Check live sync store first
+            const rotStore = readSyncData(roteirosFile);
+            const rotList = rotStore[slug] || rotStore[rawSlug] || [];
+            if (rotList.length > 0 && rotList[0]?.xml) {
+              res.setHeader("Content-Type", "application/xml; charset=utf-8");
+              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(rotList[0].xml);
+              return;
+            }
+
+            // 2. Check public/xml/[slug]/roteiro.xml
             const rPath = path.join(rootDir, "public", "xml", slug, "roteiro.xml");
             if (fs.existsSync(rPath)) {
               const rXml = fs.readFileSync(rPath, "utf-8");
@@ -555,6 +606,20 @@ export function dynamicXmlPlugin(): Plugin {
                 : `<batalha ativa="0"></batalha>`;
 
               geralXml = geralXml.replace(/<batalha[\s\S]*?<\/batalha>/i, batalhaBlock);
+
+              // Inject active roteiro
+              const rotStore = readSyncData(roteirosFile);
+              const rotList = rotStore[slug] || rotStore[rawSlug] || [];
+              if (rotList.length > 0 && rotList[0]) {
+                const item = rotList[0];
+                const rotBlock = `<roteiro>
+    <programa>${escapeXml(item.programa_nome || "")}</programa>
+    <estudio>${escapeXml(item.estudio || "")}</estudio>
+    <data>${escapeXml(item.data_programa || today)}</data>
+    <horario>${escapeXml(item.horario || currentTime)}</horario>
+  </roteiro>`;
+                geralXml = geralXml.replace(/<roteiro[\s\S]*?<\/roteiro>/i, rotBlock);
+              }
 
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");

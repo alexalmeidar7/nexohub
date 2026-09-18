@@ -1,0 +1,30 @@
+{
+  "positivafm": [
+    {
+      "id": "rot_1789729269440",
+      "programa_nome": "Primeira Hora Positiva - Edicao Especial",
+      "estudio": "ESTÚDIO FM",
+      "data_programa": "2026-09-18",
+      "horario": "",
+      "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<programaExpress>\n  <programa>Primeira Hora Positiva - Edicao Especial</programa>\n  <estudio>ESTÚDIO FM</estudio>\n  <data>2026-09-18</data>\n  <horario>08:00</horario>\n  <hora>08:00</hora>\n  <participantes>\n    <item>\n      <nome>Locutor Teste Positiva</nome>\n      <cargo>Apresentador</cargo>\n      <instagram>@positivafm</instagram>\n    </item>\n  </participantes>\n  <bloco numero=\"1\">\n    <noticia ordem=\"1\">\n      <titulo>Roteiro Atualizado com Sucesso no XML</titulo>\n      <resumo>Informações sincronizadas em tempo real</resumo>\n      <escalada>false</escalada>\n    </noticia>\n  </bloco>\n</programaExpress>",
+      "updated_at": "2026-09-18T11:01:09.440Z"
+    }
+  ],
+  "d17e65af-e407-466f-9b60-b55c43399513": [
+    {
+      "id": "rot_1789729269440",
+      "programa_nome": "Primeira Hora Positiva - Edicao Especial",
+      "estudio": "ESTÚDIO FM",
+      "data_programa": "2026-09-18",
+      "horario": "",
+      "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<programaExpress>\n  <programa>Primeira Hora Positiva - Edicao Especial</programa>\n  <estudio>ESTÚDIO FM</estudio>\n  <data>2026-09-18</data>\n  <horario>08:00</horario>\n  <hora>08:00</hora>\n  <participantes>\n    <item>\n      <nome>Locutor Teste Positiva</nome>\n      <cargo>Apresentador</cargo>\n      <instagram>@positivafm</instagram>\n    </item>\n  </participantes>\n  <bloco numero=\"1\">\n    <noticia ordem=\"1\">\n      <titulo>Roteiro Atualizado com Sucesso no XML</titulo>\n      <resumo>Informações sincronizadas em tempo real</resumo>\n      <escalada>false</escalada>\n    </noticia>\n  </bloco>\n</programaExpress>",
+      "updated_at": "2026-09-18T11:01:09.440Z"
+    }
+  ],
+  "interativafm": [],
+  "b2f70324-d086-4a5d-a407-cbc4acf98dce": [],
+  "culturafm973": [],
+  "66337743-4e4f-4950-b58f-750b0c76861e": [],
+  "transmissao": [],
+  "48423cc6-f3b1-4bea-8729-dd0ae76a89c3": []
+}

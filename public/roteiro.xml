@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<programaExpress>
+  <programa>Primeira Hora Positiva - Edicao Especial</programa>
+  <estudio>ESTÚDIO FM</estudio>
+  <data>2026-09-18</data>
+  <horario>08:00</horario>
+  <hora>08:00</hora>
+  <participantes>
+    <item>
+      <nome>Locutor Teste Positiva</nome>
+      <cargo>Apresentador</cargo>
+      <instagram>@positivafm</instagram>
+    </item>
+  </participantes>
+  <bloco numero="1">
+    <noticia ordem="1">
+      <titulo>Roteiro Atualizado com Sucesso no XML</titulo>
+      <resumo>Informações sincronizadas em tempo real</resumo>
+      <escalada>false</escalada>
+    </noticia>
+  </bloco>
+</programaExpress>

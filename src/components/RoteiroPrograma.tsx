@@ -319,8 +319,8 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
     const { error } = await supabase.from("roteiros").update(updatePayload).eq("id", txtEditRoteiroId);
 
-    // ── Regenerate XML if roteiro has one ──
-    if (!error && roteiro?.subtitulo?.startsWith("express_xml::")) {
+    // ── Regenerate XML and sync immediately ──
+    if (!error) {
       try {
         const pList = updatedParticipantes.participantes || [];
         const blocosList = updatedParticipantes.blocos || [];
@@ -371,14 +371,28 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
         xml += `</programaExpress>`;
 
-        const xmlUrl = roteiro.subtitulo.replace("express_xml::", "");
-        const urlObj = new URL(xmlUrl);
-        const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
-        if (pathMatch) {
-          const filePath = decodeURIComponent(pathMatch[1]);
-          const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
-          await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-          await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", roteiro.id);
+        // Sync immediately to /api/sync-xml-roteiro
+        const owner = roteiro.user_id || propEffectiveUserId || resolvedUserId || user?.id || "d17e65af-e407-466f-9b60-b55c43399513";
+        const clientAcc = findClientAccountById(owner) || findClientAccountByEmail(user?.email);
+        const slug = clientAcc?.slug || "positivafm";
+        try {
+          await fetch("/api/sync-xml-roteiro", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug, userId: owner, estudio: roteiro.estudio, programaNome: roteiro.programa_nome, xml, roteiro }),
+          });
+        } catch {}
+
+        if (roteiro?.subtitulo?.startsWith("express_xml::")) {
+          const xmlUrl = roteiro.subtitulo.replace("express_xml::", "");
+          const urlObj = new URL(xmlUrl);
+          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+          if (pathMatch) {
+            const filePath = decodeURIComponent(pathMatch[1]);
+            const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
+            await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+            await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", roteiro.id);
+          }
         }
       } catch (e) {
         console.warn("[TxtEdit] XML regen error:", e);
