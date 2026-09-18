@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search, Copy } from "lucide-react";
+import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search, Copy, Sparkles } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { getProgramas } from "./ProgramaForm";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
+import { LogoTransformModal } from "./LogoTransformModal";
 
 interface Logo {
   id: string;
@@ -147,6 +148,11 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [restoreLogo, setRestoreLogo] = useState<Logo | null>(null);
   const [restoreProgramaIds, setRestoreProgramaIds] = useState<string[]>([]);
   const [restoring, setRestoring] = useState(false);
+
+  // AI Logo Transformation states
+  const [transformModalOpen, setTransformModalOpen] = useState(false);
+  const [clientSelectedFile, setClientSelectedFile] = useState<File | null>(null);
+  const clientLogoInputRef = useRef<HTMLInputElement>(null);
 
   const dragItem = useRef<Logo | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -432,6 +438,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     e.target.value = "";
   };
 
+  const handleClientLogoSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setClientSelectedFile(file);
+    setTransformModalOpen(true);
+    e.target.value = "";
+  };
+
   const updatePendingName = (idx: number, nome: string) => {
     setPendingFiles((prev) => prev.map((p, i) => (i === idx ? { ...p, nome } : p)));
   };
@@ -479,6 +493,87 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
     // 3. Resilient fallback: convert file to Base64 Data URL so logo registration NEVER fails
     return await fileToDataUrl(file);
+  };
+
+  const handleApproveAndSaveAiLogo = async (result: {
+    file: File;
+    nome: string;
+    programaIds: string[];
+    dataFinal: string;
+    version: string;
+  }) => {
+    const { file, nome, programaIds: targets, dataFinal: expDate } = result;
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
+
+    try {
+      const logo_url = await uploadLogo(file);
+      const toDbPid = (v: string) => (v === "__none__" ? null : v);
+      const currentLocal = activeUid ? getLocalLogos(activeUid) : [];
+      const newItems: Logo[] = [];
+
+      for (const pid of targets) {
+        const dbPid = toDbPid(pid);
+        const progName =
+          programas.find((p) => p.id === pid)?.nome || (pid === "__none__" ? "SEM PROGRAMA" : pid);
+        const newLogo: Logo = {
+          id: `logo_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+          user_id: activeUid,
+          programa_id: dbPid,
+          programa_nome: progName,
+          logo_url,
+          data_final: expDate,
+          nome: nome.toUpperCase(),
+          ativo: true,
+          created_at: new Date().toISOString(),
+          excluido: false,
+          excluido_at: null,
+        };
+
+        try {
+          const { data: insData, error } = await supabase
+            .from("logos_patrocinadores")
+            .insert({
+              user_id: activeUid,
+              programa_id: dbPid,
+              logo_url,
+              data_final: expDate,
+              nome: nome.toUpperCase(),
+            } as any)
+            .select()
+            .maybeSingle();
+
+          if (!error && insData?.id) {
+            newLogo.id = insData.id;
+          }
+        } catch (dbErr) {
+          console.warn("[handleApproveAndSaveAiLogo] Supabase notice:", dbErr);
+        }
+
+        newItems.push(newLogo);
+      }
+
+      if (activeUid) {
+        saveLocalLogos(activeUid, [...newItems, ...currentLocal]);
+      }
+
+      toast({
+        title: "Logo aprovada e salva com sucesso!",
+        description: `"${nome.toUpperCase()}" vinculada com sucesso.`,
+      });
+
+      await loadData();
+    } catch (err: any) {
+      toast({
+        title: "Erro ao salvar logo aprovada",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1264,12 +1359,40 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                     </div>
                   ))}
                   <label
-                    className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all bg-[#f8fafc] border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/40 group"
+                    className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all bg-[#f8fafc] border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/40 group shrink-0"
                   >
                     <Plus size={18} className="text-slate-400 group-hover:text-[#0055ff] transition-colors" />
                     <span className="text-[10px] font-bold text-slate-400 group-hover:text-[#0055ff] mt-1 transition-colors">Adicionar</span>
                     <input type="file" accept="image/png" multiple={!editingFullId} className="hidden" onChange={handleAddFile} />
                   </label>
+
+                  {/* CARREGAR LOGO CLIENTE - Na região indicada em vermelho */}
+                  <button
+                    type="button"
+                    onClick={() => clientLogoInputRef.current?.click()}
+                    className="w-28 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all bg-gradient-to-br from-blue-50/90 via-sky-50/30 to-indigo-50/70 border-2 border-dashed border-[#0055ff]/50 hover:border-[#0055ff] hover:from-blue-100/70 hover:to-indigo-100/60 group shadow-xs shrink-0 text-center p-1.5 relative select-none"
+                    title="Carregar logo do cliente (PNG, JPG, JPEG ou WEBP) para transformação com IA"
+                  >
+                    <div className="flex items-center gap-1 text-[#0055ff] mb-0.5">
+                      <Sparkles size={13} className="animate-pulse text-[#0055ff]" />
+                      <span className="text-[8px] font-black uppercase tracking-wider bg-[#0055ff]/10 text-[#0055ff] px-1.5 py-0.5 rounded-full">
+                        IA 1080p
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-black uppercase text-[#002132] group-hover:text-[#0055ff] transition-colors leading-tight">
+                      Carregar Logo Cliente
+                    </span>
+                    <span className="text-[7.5px] font-bold text-slate-400 mt-0.5 leading-tight">
+                      PNG, JPG, WEBP
+                    </span>
+                    <input
+                      ref={clientLogoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      className="hidden"
+                      onChange={handleClientLogoSelected}
+                    />
+                  </button>
                 </div>
                 {!editingFullId && pendingFiles.length > 0 && (
                   <p className="text-[11px] font-medium text-slate-400 mt-2">
@@ -1601,8 +1724,21 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             </div>
           </div>
         </div>,
-        document.body,
+        document.body
       )}
+
+      {/* Modal de Transformação Automática com IA */}
+      <LogoTransformModal
+        isOpen={transformModalOpen}
+        onClose={() => {
+          setTransformModalOpen(false);
+          setClientSelectedFile(null);
+        }}
+        initialFile={clientSelectedFile}
+        programas={programas}
+        defaultExpirationDate={dataFinal || defaultExpiration}
+        onApproveAndSave={handleApproveAndSaveAiLogo}
+      />
     </div>
   );
 }
