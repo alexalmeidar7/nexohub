@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { compressImage } from "@/lib/imageCompressor";
 import { toast } from "sonner";
 import { getStoredMetadata } from "./ClientesPage";
+import { prefetchPage } from "@/lib/prefetchPages";
 
 interface SuperAdminHeaderProps {
   currentPage: string;
@@ -1059,6 +1060,7 @@ export default function SuperAdminHeader({
 
             {/* Settings Gear Button */}
             <button
+              onMouseEnter={() => prefetchPage("configuracoes")}
               onClick={() => onNavigate("configuracoes")}
               className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-sm"
               title="Configurações da Empresa"

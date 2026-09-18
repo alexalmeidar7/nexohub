@@ -4,7 +4,7 @@ import { useParams, Navigate } from "react-router-dom";
 import { usePageTitle, applyPublicHead, usePublicHead } from "@/hooks/usePageTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
+import { getEmpresaConfig, type EmpresaConfig } from "@/lib/empresaConfigService";
 import { findCurrentProgram } from "@/components/OnAirWidget";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";

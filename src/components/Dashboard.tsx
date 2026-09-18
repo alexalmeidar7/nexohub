@@ -48,7 +48,7 @@ import AgendaPage from "./AgendaPage";
 const MusicWidget = lazyRetry(() => import("./MusicWidget"));
 const XmlLinkRow = lazyRetry(() => import("./XmlLinkRow"));
 const ConfiguracoesPage = lazyRetry(() => import("./ConfiguracoesPage"));
-import { getEmpresaConfig } from "./ConfiguracoesPage";
+import { getEmpresaConfig } from "@/lib/empresaConfigService";
 import { getMusicData } from "@/lib/musicData";
 const TestemunhaisPage = lazyRetry(() => import("./TestemunhaisPage"));
 const PromocoesPage = lazyRetry(() => import("./PromocoesPage"));
@@ -463,7 +463,22 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   }, [minimizedModules]);
 
   const [currentPage, setCurrentPageState] = useState<Page>(() => {
-    // If we have a minimized module, we should be on dashboard
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const queryPage = params.get("page") as Page | null;
+      if (queryPage) return queryPage;
+
+      const targetPage = sessionStorage.getItem("nexohub_target_page") as Page | null;
+      if (targetPage) {
+        sessionStorage.removeItem("nexohub_target_page");
+        return targetPage;
+      }
+
+      const activePage = sessionStorage.getItem("nexohub_current_page") as Page | null;
+      if (activePage && activePage !== "dashboard") {
+        return activePage;
+      }
+    } catch {}
     return "dashboard";
   });
 
@@ -501,6 +516,18 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       
       if (resolved !== prev) {
+        // Persiste a página atual no sessionStorage e URL search params para resiliência a reloads
+        try {
+          sessionStorage.setItem("nexohub_current_page", resolved);
+          const url = new URL(window.location.href);
+          if (resolved === "dashboard") {
+            url.searchParams.delete("page");
+          } else {
+            url.searchParams.set("page", resolved);
+          }
+          window.history.replaceState(null, "", url.toString());
+        } catch {}
+
         // Se estava em uma janela HouseMix e abriu outra janela HouseMix, minimiza a anterior
         if (HOUSEMIX_WINDOW_PAGES.includes(prev) && HOUSEMIX_WINDOW_PAGES.includes(resolved)) {
           setMinimizedModules((minPrev) => {
@@ -743,7 +770,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         if (!foto) {
           const aps = await getApresentadores(uid, user?.email);
           const resCurrent = resolvePresenterForProgram(current, aps, uid || user?.email);
-          foto = resCurrent.foto || null;
+          foto = resCurrent?.foto || null;
         }
         if (!cancelled) setOnAirLocutorFoto(foto);
       }
@@ -759,10 +786,10 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         if (!apFoto || !apNome) {
           const aps = await getApresentadores(uid, user?.email);
           const resNext = resolvePresenterForProgram(next, aps, uid || user?.email);
-          if (!apNome) apNome = resNext.nome || "";
-          if (!apFoto) apFoto = resNext.foto || null;
+          if (!apNome) apNome = resNext?.nome || "";
+          if (!apFoto) apFoto = resNext?.foto || null;
         }
-        if (!cancelled) setNextProgram({ foto: apFoto, apresentador: apNome, programa: next.nome, inicio: next.horario_inicio, fim: next.horario_fim });
+        if (!cancelled) setNextProgram({ foto: apFoto, apresentador: apNome, programa: next?.nome || "", inicio: next?.horario_inicio || "", fim: next?.horario_fim || "" });
       } else if (!cancelled) setNextProgram(null);
     };
     load();

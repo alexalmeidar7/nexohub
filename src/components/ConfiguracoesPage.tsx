@@ -21,206 +21,30 @@ import { toast } from "sonner";
 import { compressImage } from "@/lib/imageCompressor";
 import { confirmDialog } from "@/lib/confirmDialog";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
-import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
-import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
-import { getStoredMetadata, DEFAULT_AGENCY_CLIENTS } from "./ClientesPage";
-import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
-import logoNexo from "@/assets/logo-nexo.png";
+export {
+  type EmpresaConfig,
+  type EmpresaArquivo,
+  EMPRESA_ARQUIVOS_KEY,
+  EMPRESA_EXTRA_KEY,
+  DEFAULT_EMPRESA_ARQUIVOS,
+  formatCnpj,
+  formatCep,
+  formatPhone,
+  BRAZIL_TIMEZONES,
+  getEmpresaConfig,
+} from "@/lib/empresaConfigService";
 
-export interface EmpresaConfig {
-  nome: string;
-  nomeEmpresarial?: string;
-  cnpj?: string;
-  cep?: string;
-  endereco: string;
-  cidade?: string;
-  estado?: string;
-  telefoneComercial: string;
-  telefoneParticipacao: string;
-  nomeContato?: string;
-  emailCobranca?: string;
-  clienteDesde?: string;
-  chavePix?: string;
-  tipoChavePix?: string;
-  logo: string;
-  backgroundUrl: string;
-  site: string;
-  instagram: string;
-  facebook: string;
-  youtube: string;
-  instagramSubs?: string;
-  facebookSubs?: string;
-  youtubeSubs?: string;
-  videoStreamApiUrl?: string;
-  plano: string;
-  timezone?: string;
-}
-
-export interface EmpresaArquivo {
-  id: string;
-  nome: string;
-  tipo: string;
-  url: string;
-  tamanho?: string;
-  extensao?: string;
-  dataCadastro: string;
-}
-
-export const EMPRESA_ARQUIVOS_KEY = "nexohub_empresa_arquivos_v1";
-export const EMPRESA_EXTRA_KEY = "nexohub_empresa_extra_v1";
-
-export const DEFAULT_EMPRESA_ARQUIVOS: EmpresaArquivo[] = [];
-
-export const formatCnpj = (val: string) => {
-  const clean = val.replace(/\D/g, "").slice(0, 14);
-  if (clean.length <= 2) return clean;
-  if (clean.length <= 5) return `${clean.slice(0, 2)}.${clean.slice(2)}`;
-  if (clean.length <= 8) return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5)}`;
-  if (clean.length <= 12) return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5, 8)}/${clean.slice(8)}`;
-  return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5, 8)}/${clean.slice(8, 12)}-${clean.slice(12, 14)}`;
-};
-
-export const formatCep = (val: string) => {
-  const clean = val.replace(/\D/g, "").slice(0, 8);
-  if (clean.length <= 5) return clean;
-  return `${clean.slice(0, 5)}-${clean.slice(5, 8)}`;
-};
-
-export const formatPhone = (val: string) => {
-  const clean = val.replace(/\D/g, "").slice(0, 11);
-  if (clean.length <= 2) return clean ? `(${clean}` : "";
-  if (clean.length <= 6) return `(${clean.slice(0, 2)}) ${clean.slice(2)}`;
-  if (clean.length <= 10) return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
-  return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7, 11)}`;
-};
-
-export const BRAZIL_TIMEZONES: { value: string; label: string }[] = [
-  { value: "America/Noronha", label: "Fernando de Noronha (Brasília +1h / UTC-2)" },
-  { value: "America/Sao_Paulo", label: "Brasília — horário oficial (UTC-3)" },
-  { value: "America/Belem", label: "Belém / PA (UTC-3)" },
-  { value: "America/Fortaleza", label: "Fortaleza / CE (UTC-3)" },
-  { value: "America/Recife", label: "Recife / PE (UTC-3)" },
-  { value: "America/Araguaina", label: "Araguaína / TO (UTC-3)" },
-  { value: "America/Maceio", label: "Maceió / AL (UTC-3)" },
-  { value: "America/Bahia", label: "Salvador / BA (UTC-3)" },
-  { value: "America/Santarem", label: "Santarém / PA (UTC-3)" },
-  { value: "America/Campo_Grande", label: "Campo Grande / MS (Brasília -1h / UTC-4)" },
-  { value: "America/Cuiaba", label: "Cuiabá / MT (Brasília -1h / UTC-4)" },
-  { value: "America/Manaus", label: "Manaus / AM (Brasília -1h / UTC-4)" },
-  { value: "America/Porto_Velho", label: "Porto Velho / RO (Brasília -1h / UTC-4)" },
-  { value: "America/Boa_Vista", label: "Boa Vista / RR (Brasília -1h / UTC-4)" },
-  { value: "America/Rio_Branco", label: "Rio Branco / AC (Brasília -2h / UTC-5)" },
-  { value: "America/Eirunepe", label: "Eirunepé / AM (Brasília -2h / UTC-5)" },
-];
-
-export async function getEmpresaConfig(userId?: string, userEmail?: string | null): Promise<EmpresaConfig> {
-  const acc = findClientAccountById(userId) || findClientAccountByEmail(userEmail || userId);
-  const effectiveId = acc?.parentUserId || acc?.id || userId;
-  const targetSlug = acc?.slug || userId;
-
-  let data: any = null;
-  if (effectiveId) {
-    try {
-      const res = await supabase.from("empresa_config").select("*").eq("user_id", effectiveId).maybeSingle();
-      if (res.data) data = res.data;
-    } catch {}
-  }
-
-  if (!data && userId && userId !== effectiveId) {
-    try {
-      const res = await supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle();
-      if (res.data) data = res.data;
-    } catch {}
-  }
-
-  // If still not found, check station database service
-  if (!data && (effectiveId || targetSlug || userEmail)) {
-    const stationData = await fetchStationDatabaseData(effectiveId || targetSlug || userEmail);
-    if (stationData?.empresa) {
-      data = stationData.empresa;
-    }
-  }
-
-  // If still not found, check sync database cache
-  if (!data && (effectiveId || targetSlug || userEmail)) {
-    const syncDb = getStationDatabaseSync(effectiveId || targetSlug || userEmail);
-    if (syncDb?.empresa) {
-      data = syncDb.empresa;
-    }
-  }
-
-  let extra: any = {};
-  if (data?.audio_sources && typeof data.audio_sources === "object") {
-    extra = data.audio_sources;
-  }
-  try {
-    const localExtra = JSON.parse(localStorage.getItem(EMPRESA_EXTRA_KEY) || "{}");
-    const localUserExtra = effectiveId ? JSON.parse(localStorage.getItem(`${EMPRESA_EXTRA_KEY}_${effectiveId}`) || "{}") : {};
-    extra = { ...extra, ...localExtra, ...localUserExtra };
-  } catch {}
-
-  // Buscar metadados do cadastro de clientes
-  const storedMeta = getStoredMetadata();
-  const searchKey = (effectiveId || acc?.nome || userEmail || "").toUpperCase();
-  const isSuperAdmin = acc?.isAdmin || searchKey.includes("ALEX") || searchKey.includes("NEXO") || (userEmail || "").toLowerCase().includes("alex");
-  
-  let metaCandidate = storedMeta[effectiveId || ""] || storedMeta[acc?.nome || ""] || storedMeta[searchKey] || {};
-  if (isSuperAdmin && (!metaCandidate || Object.keys(metaCandidate).length === 0)) {
-    metaCandidate = storedMeta["NEXO BRASIL"] || DEFAULT_AGENCY_CLIENTS["NEXO BRASIL"] || {};
-  } else if (!metaCandidate || Object.keys(metaCandidate).length === 0) {
-    for (const [k, v] of Object.entries(storedMeta)) {
-      if (k.toUpperCase().includes(searchKey) || searchKey.includes(k.toUpperCase())) {
-        metaCandidate = v;
-        break;
-      }
-    }
-  }
-
-  const defaultTimezone = data?.timezone || acc?.timezone || "America/Sao_Paulo";
-  const defaultLogo = isSuperAdmin ? (logoNexoSolucoes || logoNexo) : (data?.logo || "");
-
-  const finalCnpj = data?.cnpj || extra.cnpj || metaCandidate.cnpj || "";
-  const finalRazao = (data?.nome || extra.nome || metaCandidate.razao_social || acc?.razaoSocial || acc?.nome || (isSuperAdmin ? "NEXO SOLUÇÕES VISUAIS" : "")).toUpperCase();
-  const finalFantasia = (extra.nomeEmpresarial || metaCandidate.nome_empresarial || acc?.nome || finalRazao).toUpperCase();
-  const finalCep = data?.cep || extra.cep || metaCandidate.cep || "";
-  const finalEndereco = (data?.endereco || extra.endereco || metaCandidate.endereco || "").toUpperCase();
-  const finalCidade = (extra.cidade || metaCandidate.cidade || acc?.cidade || (isSuperAdmin ? "GOIÂNIA" : "")).toUpperCase();
-  const finalEstado = (extra.estado || metaCandidate.estado || (isSuperAdmin ? "GO" : "")).toUpperCase();
-  const finalTelCom = data?.telefone_comercial || extra.telefoneComercial || metaCandidate.telefone || "";
-  const finalTelPart = data?.telefone_participacao || extra.telefoneParticipacao || metaCandidate.whatsapp_responsavel || "";
-  const finalContato = (extra.nomeContato || metaCandidate.nome_contato || (isSuperAdmin ? "ALEX ALMEIDA" : data?.executiva_venda || "")).toUpperCase();
-  const finalEmail = (extra.emailCobranca || metaCandidate.email_cobranca || acc?.email || (isSuperAdmin ? "ALEX@NEXOBRASIL.NET" : "")).toUpperCase();
-  const finalDesde = data?.cliente_desde || extra.clienteDesde || metaCandidate.cliente_desde || "";
-
-  return {
-    nome: finalRazao,
-    nomeEmpresarial: finalFantasia,
-    cnpj: finalCnpj,
-    cep: finalCep,
-    endereco: finalEndereco,
-    cidade: finalCidade,
-    estado: finalEstado,
-    telefoneComercial: finalTelCom,
-    telefoneParticipacao: finalTelPart,
-    nomeContato: finalContato,
-    emailCobranca: finalEmail,
-    clienteDesde: finalDesde,
-    chavePix: (extra.chavePix || finalCnpj || "").toUpperCase(),
-    tipoChavePix: extra.tipoChavePix || "CNPJ",
-    logo: data?.logo || extra.logo || defaultLogo,
-    backgroundUrl: data?.background_url || extra.backgroundUrl || "",
-    site: data?.site || extra.site || (isSuperAdmin ? "https://nexobrasil.net" : ""),
-    instagram: data?.instagram || extra.instagram || (isSuperAdmin ? "@nexosolucoes" : ""),
-    facebook: data?.facebook || extra.facebook || "",
-    youtube: data?.youtube || extra.youtube || "",
-    instagramSubs: data?.instagram_subs != null ? String(data.instagram_subs) : (extra.instagramSubs || ""),
-    facebookSubs: data?.facebook_subs != null ? String(data.facebook_subs) : (extra.facebookSubs || ""),
-    youtubeSubs: data?.youtube_subs != null ? String(data.youtube_subs) : (extra.youtubeSubs || ""),
-    videoStreamApiUrl: data?.video_stream_api_url || extra.videoStreamApiUrl || "",
-    plano: data?.plano || acc?.plano || (isSuperAdmin ? "Super Admin" : ""),
-    timezone: defaultTimezone,
-  };
-}
+import {
+  type EmpresaConfig,
+  type EmpresaArquivo,
+  EMPRESA_ARQUIVOS_KEY,
+  DEFAULT_EMPRESA_ARQUIVOS,
+  formatCnpj,
+  formatCep,
+  formatPhone,
+  BRAZIL_TIMEZONES,
+  getEmpresaConfig,
+} from "@/lib/empresaConfigService";
 
 interface Canal {
   id: string;
@@ -492,70 +316,80 @@ export default function ConfiguracoesPage({
   };
 
   const loadCanais = async () => {
-    if (!user) return;
+    const tid = targetUid || user?.id;
+    if (!tid && !user) return;
     setLoadingCanais(true);
-    const tid = targetUid || user.id;
     let channelsList: any[] = [];
     try {
-      const { data } = await supabase.from("streaming_channels").select("*").eq("user_id", tid).order("numero_canal", { ascending: true });
-      if (data && data.length > 0) {
-        channelsList = data;
+      try {
+        const { data } = await supabase.from("streaming_channels").select("*").eq("user_id", tid).order("numero_canal", { ascending: true });
+        if (data && data.length > 0) {
+          channelsList = data;
+        }
+      } catch (err) {
+        console.warn("Supabase fetch streaming_channels warning:", err);
       }
-    } catch (err) {
-      console.warn("Supabase fetch streaming_channels warning:", err);
+
+      if (!channelsList || channelsList.length === 0) {
+        const syncData = getStationDatabaseSync(tid || user?.email);
+        if (syncData?.channels && syncData.channels.length > 0) {
+          channelsList = syncData.channels;
+        }
+      }
+
+      if (!channelsList || channelsList.length === 0) {
+        const stationData = await fetchStationDatabaseData(tid || user?.email);
+        if (stationData?.channels && stationData.channels.length > 0) {
+          channelsList = stationData.channels;
+        }
+      }
+
+      const localList = tid ? getStoredStreamingChannels(tid) : [];
+      const map = new Map<string, Canal>();
+
+      if (channelsList && channelsList.length > 0) {
+        const seen = new Map<string, string>();
+        for (const c of channelsList) {
+          const num = String(c.numero_canal ?? "");
+          const key = c.url || c.name;
+          if (!seen.has(key)) {
+            seen.set(key, c.id);
+            map.set(c.id, {
+              id: c.id,
+              numero_canal: num,
+              name: c.name || "",
+              logo_url: c.logo_url || "",
+              cover_url: c.cover_url || "",
+              background_url: c.background_url || "",
+              url: c.url || "",
+              type: c.type || "audio_live",
+              active: c.active !== false,
+              catalog_name: c.catalog_name || "",
+              is_hd: !!c.is_hd,
+              is_stereo: !!c.is_stereo,
+              classificacao_etaria: c.classificacao_etaria || "L",
+              estudio: c.estudio || "",
+            });
+          }
+        }
+      }
+
+      for (const c of localList) {
+        if (!map.has(c.id)) {
+          map.set(c.id, c);
+        }
+      }
+
+      const merged = Array.from(map.values()).sort((a, b) =>
+        (a.numero_canal || "").localeCompare(b.numero_canal || "", undefined, { numeric: true })
+      );
+      setCanais(merged);
+      if (tid) saveStoredStreamingChannels(tid, merged);
+    } catch (e) {
+      console.warn("loadCanais error:", e);
+    } finally {
+      setLoadingCanais(false);
     }
-
-    if (!channelsList || channelsList.length === 0) {
-      const syncData = getStationDatabaseSync(tid || user.email);
-      if (syncData?.channels && syncData.channels.length > 0) {
-        channelsList = syncData.channels;
-      }
-    }
-
-    if (!channelsList || channelsList.length === 0) {
-      const stationData = await fetchStationDatabaseData(tid || user.email);
-      if (stationData?.channels && stationData.channels.length > 0) {
-        channelsList = stationData.channels;
-      }
-    }
-
-    const localList = getStoredStreamingChannels(tid);
-    const map = new Map<string, Canal>();
-
-    if (channelsList && channelsList.length > 0) {
-      const seen = new Map<string, string>();
-      const dupeIds: string[] = [];
-      for (const d of channelsList) {
-        const key = `${d.name}||${d.url || d.stream_url}`;
-        if (seen.has(key)) { dupeIds.push(d.id); } else { seen.set(key, d.id); }
-      }
-      if (dupeIds.length > 0) {
-        try {
-          await supabase.from("streaming_channels").delete().in("id", dupeIds);
-        } catch {}
-      }
-      const filtered = channelsList.filter(d => !dupeIds.includes(d.id));
-      filtered.forEach((d: any) => {
-        const c: Canal = {
-          id: d.id, numero_canal: d.numero_canal || "", name: d.name, logo_url: d.logo_url || "",
-          cover_url: d.cover_url || "", background_url: d.background_url || "", url: d.url || d.stream_url || "", type: d.type, active: d.active ?? true,
-          catalog_name: d.catalog_name || "",
-          is_hd: d.is_hd || false, is_stereo: d.is_stereo || false,
-          classificacao_etaria: d.classificacao_etaria || "L",
-          horario_inicio: d.horario_inicio || "",
-          horario_fim: d.horario_fim || "",
-          descricao: d.descricao || "",
-          estudio: d.estudio || "",
-        };
-        map.set(c.id, c);
-      });
-    }
-
-    localList.forEach(c => map.set(c.id, c));
-    const merged = Array.from(map.values());
-    setCanais(merged);
-    saveStoredStreamingChannels(tid, merged);
-    setLoadingCanais(false);
   };
 
   const saveConfig = (newConfig: EmpresaConfig) => {

@@ -49,6 +49,14 @@ export function recoverFromChunkFailure(force = false): boolean {
 
     const url = new URL(window.location.href);
     url.searchParams.set("_r", String(now));
+
+    // Preserva a página em navegação para que o usuário não seja redirecionado para a home
+    const activePage = sessionStorage.getItem("nexohub_current_page");
+    if (activePage && activePage !== "dashboard") {
+      sessionStorage.setItem("nexohub_target_page", activePage);
+      url.searchParams.set("page", activePage);
+    }
+
     window.location.replace(url.toString());
     return true;
   } catch {
