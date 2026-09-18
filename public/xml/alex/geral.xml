@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-18T14:27:21.792Z</gerado_em>
+  <gerado_em>2026-09-18T15:07:40.424Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -64,18 +64,28 @@
 
   <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->
   <interatividade>
-    <batalha ativa="1">
+    <batalha ativa="0">
       <titulo>Batalha Musical</titulo>
       <musica_a>
-        <nome>Música 1</nome>
-        <artista>Artista 1</artista>
-        <porcentagem>50%</porcentagem>
+        <nome></nome>
+        <artista></artista>
+        <porcentagem>0%</porcentagem>
       </musica_a>
       <musica_b>
-        <nome>Música 2</nome>
-        <artista>Artista 2</artista>
-        <porcentagem>50%</porcentagem>
+        <nome></nome>
+        <artista></artista>
+        <porcentagem>0%</porcentagem>
       </musica_b>
+      <artista1_nome></artista1_nome>
+      <artista1_musica></artista1_musica>
+      <artista1_porcentagem>0%</artista1_porcentagem>
+      <artista1_imagem></artista1_imagem>
+      <artista2_nome></artista2_nome>
+      <artista2_musica></artista2_musica>
+      <artista2_porcentagem>0%</artista2_porcentagem>
+      <artista2_imagem></artista2_imagem>
+      <horario_inicio></horario_inicio>
+      <horario_fim></horario_fim>
     </batalha>
 
     <enquete ativa="1">

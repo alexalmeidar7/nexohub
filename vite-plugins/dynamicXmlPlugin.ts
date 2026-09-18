@@ -140,11 +140,13 @@ function buildQuizXml(quiz?: any): string {
 `;
 }
 
-function buildBatalhaXml(batalha?: any): string {
+function buildBatalhaXml(batalha?: any, stationName?: string): string {
+  const emissora = stationName || batalha?.emissora || "";
   if (!batalha || (!batalha.artista1_nome && !batalha.artista2_nome)) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
+    <emissora>${escapeXml(emissora)}</emissora>
     <artista1_nome></artista1_nome>
     <artista1_musica></artista1_musica>
     <artista1_porcentagem>0%</artista1_porcentagem>
@@ -153,6 +155,8 @@ function buildBatalhaXml(batalha?: any): string {
     <artista2_musica></artista2_musica>
     <artista2_porcentagem>0%</artista2_porcentagem>
     <artista2_imagem></artista2_imagem>
+    <horario_inicio></horario_inicio>
+    <horario_fim></horario_fim>
   </batalha>
 </items>
 `;
@@ -161,13 +165,14 @@ function buildBatalhaXml(batalha?: any): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
+    <emissora>${escapeXml(emissora)}</emissora>
     <artista1_nome>${escapeXml(batalha.artista1_nome)}</artista1_nome>
     <artista1_musica>${escapeXml(batalha.artista1_musica)}</artista1_musica>
-    <artista1_porcentagem>${escapeXml(batalha.artista1_porcentagem ?? 50)}%</artista1_porcentagem>
+    <artista1_porcentagem>${escapeXml(batalha.artista1_porcentagem ?? 0)}%</artista1_porcentagem>
     <artista1_imagem>${escapeXml(batalha.artista1_imagem || "")}</artista1_imagem>
     <artista2_nome>${escapeXml(batalha.artista2_nome)}</artista2_nome>
     <artista2_musica>${escapeXml(batalha.artista2_musica)}</artista2_musica>
-    <artista2_porcentagem>${escapeXml(batalha.artista2_porcentagem ?? 50)}%</artista2_porcentagem>
+    <artista2_porcentagem>${escapeXml(batalha.artista2_porcentagem ?? 0)}%</artista2_porcentagem>
     <artista2_imagem>${escapeXml(batalha.artista2_imagem || "")}</artista2_imagem>
     <horario_inicio>${escapeXml(batalha.horario_inicio || "")}</horario_inicio>
     <horario_fim>${escapeXml(batalha.horario_fim || "")}</horario_fim>
@@ -188,6 +193,20 @@ const SLUG_MAP: Record<string, string> = {
   "66337743-4e4f-4950-b58f-750b0c76861e": "culturafm973",
   superadmin: "alex",
   "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5": "alex",
+};
+
+const SLUG_STATION_NAMES: Record<string, string> = {
+  positivafm: "Positiva FM 99.1",
+  positiva: "Positiva FM 99.1",
+  p: "Positiva FM 99.1",
+  interativafm: "Interativa FM",
+  interativa: "Interativa FM",
+  culturafm973: "Cultura FM 97.3",
+  cultura: "Cultura FM 97.3",
+  transmissao: "Transmissão FM",
+  jornal: "Transmissão FM",
+  alex: "Alex Estúdio",
+  superadmin: "Alex Estúdio",
 };
 
 const SLUG_TO_UID: Record<string, string> = {
@@ -355,8 +374,9 @@ export function dynamicXmlPlugin(): Plugin {
               const { today, currentTime } = getBrasiliaDateTime();
               const active = batalhas.find((b: any) =>
                 isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-              );
-              const xml = buildBatalhaXml(active);
+              ) || batalhas.find((b: any) => b.data_batalha === today) || batalhas[0];
+              const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[normalizeSlug(slug)] || "House Mix Emissora";
+              const xml = buildBatalhaXml(active, stName);
               writeStaticXml(slug, "batalha.xml", xml);
 
               res.setHeader("Content-Type", "application/json");
@@ -531,9 +551,10 @@ export function dynamicXmlPlugin(): Plugin {
             const list = store[slug] || store[rawSlug] || [];
             const active = list.find((b: any) =>
               isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-            );
+            ) || list.find((b: any) => b.data_batalha === today) || list[0];
 
-            const xml = buildBatalhaXml(active);
+            const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
+            const xml = buildBatalhaXml(active, stName);
             writeStaticXml(slug, "batalha.xml", xml);
 
             res.setHeader("Content-Type", "application/xml; charset=utf-8");
@@ -564,7 +585,7 @@ export function dynamicXmlPlugin(): Plugin {
             const batList = batStore[slug] || batStore[rawSlug] || [];
             const activeBat = batList.find((b: any) =>
               isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-            );
+            ) || batList.find((b: any) => b.data_batalha === today) || batList[0];
 
             // Read base geral.xml from disk if exists
             const geralPath = path.join(rootDir, "public", "xml", slug, "geral.xml");
@@ -632,23 +653,23 @@ export function dynamicXmlPlugin(): Plugin {
         <nome>${escapeXml(activeBat.artista1_musica || "")}</nome>
         <artista>${escapeXml(activeBat.artista1_nome || "")}</artista>
         <votos>0</votos>
-        <porcentagem>${escapeXml(activeBat.artista1_porcentagem ?? 50)}%</porcentagem>
+        <porcentagem>${escapeXml(activeBat.artista1_porcentagem ?? 0)}%</porcentagem>
         <capa_url>${escapeXml(activeBat.artista1_imagem || "")}</capa_url>
       </musica_a>
       <musica_b>
         <nome>${escapeXml(activeBat.artista2_musica || "")}</nome>
         <artista>${escapeXml(activeBat.artista2_nome || "")}</artista>
         <votos>0</votos>
-        <porcentagem>${escapeXml(activeBat.artista2_porcentagem ?? 50)}%</porcentagem>
+        <porcentagem>${escapeXml(activeBat.artista2_porcentagem ?? 0)}%</porcentagem>
         <capa_url>${escapeXml(activeBat.artista2_imagem || "")}</capa_url>
       </musica_b>
       <artista1_nome>${escapeXml(activeBat.artista1_nome || "")}</artista1_nome>
       <artista1_musica>${escapeXml(activeBat.artista1_musica || "")}</artista1_musica>
-      <artista1_porcentagem>${escapeXml(activeBat.artista1_porcentagem ?? 50)}%</artista1_porcentagem>
+      <artista1_porcentagem>${escapeXml(activeBat.artista1_porcentagem ?? 0)}%</artista1_porcentagem>
       <artista1_imagem>${escapeXml(activeBat.artista1_imagem || "")}</artista1_imagem>
       <artista2_nome>${escapeXml(activeBat.artista2_nome || "")}</artista2_nome>
       <artista2_musica>${escapeXml(activeBat.artista2_musica || "")}</artista2_musica>
-      <artista2_porcentagem>${escapeXml(activeBat.artista2_porcentagem ?? 50)}%</artista2_porcentagem>
+      <artista2_porcentagem>${escapeXml(activeBat.artista2_porcentagem ?? 0)}%</artista2_porcentagem>
       <artista2_imagem>${escapeXml(activeBat.artista2_imagem || "")}</artista2_imagem>
       <horario_inicio>${escapeXml(activeBat.horario_inicio || "")}</horario_inicio>
       <horario_fim>${escapeXml(activeBat.horario_fim || "")}</horario_fim>

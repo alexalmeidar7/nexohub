@@ -209,11 +209,13 @@ export function buildQuizXml(quiz?: QuizData | null): string {
 `;
 }
 
-export function buildBatalhaXml(batalha?: BatalhaData | null): string {
+export function buildBatalhaXml(batalha?: BatalhaData | null, stationName?: string): string {
+  const emissora = stationName || (batalha as any)?.emissora || "";
   if (!batalha || (!batalha.artista1_nome && !batalha.artista2_nome)) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
+    <emissora>${escapeXml(emissora)}</emissora>
     <artista1_nome></artista1_nome>
     <artista1_musica></artista1_musica>
     <artista1_porcentagem>0%</artista1_porcentagem>
@@ -222,6 +224,8 @@ export function buildBatalhaXml(batalha?: BatalhaData | null): string {
     <artista2_musica></artista2_musica>
     <artista2_porcentagem>0%</artista2_porcentagem>
     <artista2_imagem></artista2_imagem>
+    <horario_inicio></horario_inicio>
+    <horario_fim></horario_fim>
   </batalha>
 </items>
 `;
@@ -230,13 +234,14 @@ export function buildBatalhaXml(batalha?: BatalhaData | null): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
+    <emissora>${escapeXml(emissora)}</emissora>
     <artista1_nome>${escapeXml(batalha.artista1_nome)}</artista1_nome>
     <artista1_musica>${escapeXml(batalha.artista1_musica)}</artista1_musica>
-    <artista1_porcentagem>${escapeXml(batalha.artista1_porcentagem ?? 50)}%</artista1_porcentagem>
+    <artista1_porcentagem>${escapeXml(batalha.artista1_porcentagem ?? 0)}%</artista1_porcentagem>
     <artista1_imagem>${escapeXml(batalha.artista1_imagem || "")}</artista1_imagem>
     <artista2_nome>${escapeXml(batalha.artista2_nome)}</artista2_nome>
     <artista2_musica>${escapeXml(batalha.artista2_musica)}</artista2_musica>
-    <artista2_porcentagem>${escapeXml(batalha.artista2_porcentagem ?? 50)}%</artista2_porcentagem>
+    <artista2_porcentagem>${escapeXml(batalha.artista2_porcentagem ?? 0)}%</artista2_porcentagem>
     <artista2_imagem>${escapeXml(batalha.artista2_imagem || "")}</artista2_imagem>
     <horario_inicio>${escapeXml(batalha.horario_inicio || "")}</horario_inicio>
     <horario_fim>${escapeXml(batalha.horario_fim || "")}</horario_fim>

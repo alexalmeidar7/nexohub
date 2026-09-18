@@ -1,4 +1,74 @@
 {
-  "positivafm": [],
-  "d17e65af-e407-466f-9b60-b55c43399513": []
+  "positivafm": [
+    {
+      "id": "bat_positiva_active",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Leandro & Leonardo",
+      "artista1_musica": "Talismã",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/536fcefac8adf2469cd5f5dafc562936/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "João Paulo & Daniel",
+      "artista2_musica": "Estou Apaixonado",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/3c10f835468dd37b1220677b0536bb52/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-18",
+      "horario_inicio": "07:00",
+      "horario_fim": "12:00"
+    }
+  ],
+  "positiva": [
+    {
+      "id": "bat_positiva_active",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Leandro & Leonardo",
+      "artista1_musica": "Talismã",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/536fcefac8adf2469cd5f5dafc562936/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "João Paulo & Daniel",
+      "artista2_musica": "Estou Apaixonado",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/3c10f835468dd37b1220677b0536bb52/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-18",
+      "horario_inicio": "07:00",
+      "horario_fim": "12:00"
+    }
+  ],
+  "p": [
+    {
+      "id": "bat_positiva_active",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Leandro & Leonardo",
+      "artista1_musica": "Talismã",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/536fcefac8adf2469cd5f5dafc562936/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "João Paulo & Daniel",
+      "artista2_musica": "Estou Apaixonado",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/3c10f835468dd37b1220677b0536bb52/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-18",
+      "horario_inicio": "07:00",
+      "horario_fim": "12:00"
+    }
+  ],
+  "d17e65af-e407-466f-9b60-b55c43399513": [
+    {
+      "id": "bat_positiva_active",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Leandro & Leonardo",
+      "artista1_musica": "Talismã",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/536fcefac8adf2469cd5f5dafc562936/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "João Paulo & Daniel",
+      "artista2_musica": "Estou Apaixonado",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/3c10f835468dd37b1220677b0536bb52/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-18",
+      "horario_inicio": "07:00",
+      "horario_fim": "12:00"
+    }
+  ]
 }

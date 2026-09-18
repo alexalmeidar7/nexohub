@@ -37,6 +37,25 @@ const SLUG_TO_UID: Record<string, string> = {
   alex: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
 };
 
+const SLUG_TO_NAME: Record<string, string> = {
+  "d17e65af-e407-466f-9b60-b55c43399513": "Positiva FM 99.1",
+  positivafm: "Positiva FM 99.1",
+  positiva: "Positiva FM 99.1",
+  p: "Positiva FM 99.1",
+  sub_positiva_opec: "Positiva FM 99.1",
+  "b2f70324-d086-4a5d-a407-cbc4acf98dce": "Interativa FM",
+  interativafm: "Interativa FM",
+  interativa: "Interativa FM",
+  "48423cc6-f3b1-4bea-8729-dd0ae76a89c3": "Transmissão FM",
+  transmissao: "Transmissão FM",
+  jornal: "Transmissão FM",
+  "66337743-4e4f-4950-b58f-750b0c76861e": "Cultura FM 97.3",
+  culturafm973: "Cultura FM 97.3",
+  cultura: "Cultura FM 97.3",
+  "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5": "Alex Estúdio",
+  alex: "Alex Estúdio",
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -193,19 +212,22 @@ Deno.serve(async (req) => {
     if (scheduled) {
       nome1 = scheduled.artista1_nome ?? "";
       musica1 = scheduled.artista1_musica ?? "";
-      pct1 = scheduled.artista1_porcentagem !== undefined && scheduled.artista1_porcentagem !== null ? `${scheduled.artista1_porcentagem}%` : "50%";
+      pct1 = scheduled.artista1_porcentagem !== undefined && scheduled.artista1_porcentagem !== null ? `${scheduled.artista1_porcentagem}%` : "0%";
       img1 = scheduled.artista1_imagem ?? "";
       nome2 = scheduled.artista2_nome ?? "";
       musica2 = scheduled.artista2_musica ?? "";
-      pct2 = scheduled.artista2_porcentagem !== undefined && scheduled.artista2_porcentagem !== null ? `${scheduled.artista2_porcentagem}%` : "50%";
+      pct2 = scheduled.artista2_porcentagem !== undefined && scheduled.artista2_porcentagem !== null ? `${scheduled.artista2_porcentagem}%` : "0%";
       img2 = scheduled.artista2_imagem ?? "";
       ini = scheduled.horario_inicio ?? "";
       fim = scheduled.horario_fim ?? "";
     }
 
+    const emissoraName = SLUG_TO_NAME[cleanInput] || SLUG_TO_NAME[resolvedUid] || "House Mix Emissora";
+
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
+    <emissora>${esc(emissoraName)}</emissora>
     <artista1_nome>${esc(nome1)}</artista1_nome>
     <artista1_musica>${esc(musica1)}</artista1_musica>
     <artista1_porcentagem>${esc(pct1)}</artista1_porcentagem>

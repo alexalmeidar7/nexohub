@@ -70,6 +70,68 @@ const STATIONS: StationConfig[] = [
   },
 ];
 
+function normTime(time: string, fallback = "00:00"): string {
+  if (!time) return fallback;
+  const clean = time.trim();
+  const match = clean.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return fallback;
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
+function escapeXml(str: string | number | null | undefined): string {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function getBrasiliaDateTime(): { today: string; currentTime: string } {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(new Date());
+    const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "";
+    return {
+      today: `${getPart("year")}-${getPart("month")}-${getPart("day")}`,
+      currentTime: `${getPart("hour")}:${getPart("minute")}`,
+    };
+  } catch {
+    const now = new Date();
+    return {
+      today: now.toISOString().slice(0, 10),
+      currentTime: now.toTimeString().slice(0, 5),
+    };
+  }
+}
+
+function isScheduleActive(
+  itemDate: string,
+  startTime: string,
+  endTime: string,
+  today: string,
+  currentTime: string
+): boolean {
+  if (!itemDate) return true;
+  if (itemDate !== today) return false;
+  const start = normTime(startTime, "00:00");
+  const end = normTime(endTime, "23:59");
+  const curr = normTime(currentTime);
+  if (start <= end) {
+    return curr >= start && curr <= end;
+  }
+  return curr >= start || curr <= end;
+}
+
 async function fetchRemoteXml(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
@@ -264,14 +326,16 @@ function generateFallbackBatalha(st: StationConfig): string {
 <items>
   <batalha>
     <emissora>${st.name}</emissora>
-    <artista1_nome>Artista 1</artista1_nome>
-    <artista1_musica>Música 1</artista1_musica>
-    <artista1_porcentagem>50%</artista1_porcentagem>
-    <artista1_imagem>https://nexohub.lovable.app/default-sponsor-logo.png</artista1_imagem>
-    <artista2_nome>Artista 2</artista2_nome>
-    <artista2_musica>Música 2</artista2_musica>
-    <artista2_porcentagem>50%</artista2_porcentagem>
-    <artista2_imagem>https://nexohub.lovable.app/default-sponsor-logo.png</artista2_imagem>
+    <artista1_nome></artista1_nome>
+    <artista1_musica></artista1_musica>
+    <artista1_porcentagem>0%</artista1_porcentagem>
+    <artista1_imagem></artista1_imagem>
+    <artista2_nome></artista2_nome>
+    <artista2_musica></artista2_musica>
+    <artista2_porcentagem>0%</artista2_porcentagem>
+    <artista2_imagem></artista2_imagem>
+    <horario_inicio></horario_inicio>
+    <horario_fim></horario_fim>
   </batalha>
 </items>
 `;
@@ -425,18 +489,28 @@ function generateCombinedGeralXml(
 
   <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->
   <interatividade>
-    <batalha ativa="${batalhaXml.includes("<artista1_nome>") ? "1" : "0"}">
+    <batalha ativa="${extractTag(batalhaXml, "artista1_nome") ? "1" : "0"}">
       <titulo>${extractTag(batalhaXml, "titulo") || "Batalha Musical"}</titulo>
       <musica_a>
-        <nome>${extractTag(batalhaXml, "artista1_musica") || "Música 1"}</nome>
-        <artista>${extractTag(batalhaXml, "artista1_nome") || "Artista 1"}</artista>
-        <porcentagem>${extractTag(batalhaXml, "artista1_porcentagem") || "50%"}</porcentagem>
+        <nome>${extractTag(batalhaXml, "artista1_musica") || ""}</nome>
+        <artista>${extractTag(batalhaXml, "artista1_nome") || ""}</artista>
+        <porcentagem>${extractTag(batalhaXml, "artista1_porcentagem") || "0%"}</porcentagem>
       </musica_a>
       <musica_b>
-        <nome>${extractTag(batalhaXml, "artista2_musica") || "Música 2"}</nome>
-        <artista>${extractTag(batalhaXml, "artista2_nome") || "Artista 2"}</artista>
-        <porcentagem>${extractTag(batalhaXml, "artista2_porcentagem") || "50%"}</porcentagem>
+        <nome>${extractTag(batalhaXml, "artista2_musica") || ""}</nome>
+        <artista>${extractTag(batalhaXml, "artista2_nome") || ""}</artista>
+        <porcentagem>${extractTag(batalhaXml, "artista2_porcentagem") || "0%"}</porcentagem>
       </musica_b>
+      <artista1_nome>${extractTag(batalhaXml, "artista1_nome") || ""}</artista1_nome>
+      <artista1_musica>${extractTag(batalhaXml, "artista1_musica") || ""}</artista1_musica>
+      <artista1_porcentagem>${extractTag(batalhaXml, "artista1_porcentagem") || "0%"}</artista1_porcentagem>
+      <artista1_imagem>${extractTag(batalhaXml, "artista1_imagem") || ""}</artista1_imagem>
+      <artista2_nome>${extractTag(batalhaXml, "artista2_nome") || ""}</artista2_nome>
+      <artista2_musica>${extractTag(batalhaXml, "artista2_musica") || ""}</artista2_musica>
+      <artista2_porcentagem>${extractTag(batalhaXml, "artista2_porcentagem") || "0%"}</artista2_porcentagem>
+      <artista2_imagem>${extractTag(batalhaXml, "artista2_imagem") || ""}</artista2_imagem>
+      <horario_inicio>${extractTag(batalhaXml, "horario_inicio") || ""}</horario_inicio>
+      <horario_fim>${extractTag(batalhaXml, "horario_fim") || ""}</horario_fim>
     </batalha>
 
     <enquete ativa="${enqueteXml.includes("<pergunta>") && extractTag(enqueteXml, "pergunta") ? "1" : "0"}">
@@ -527,10 +601,13 @@ export async function generateAllUserXmls() {
     const logosContent = logosRemote || generateFallbackLogos(st);
     const musicaContent = generateMusicaXml(st, broadcastRemote);
 
-    // If batalha, enquete, quiz from Supabase have empty content tags, check local sync store
-    let batalhaContent = (batalhaRemote && extractTag(batalhaRemote, "artista1_nome").length > 0) ? batalhaRemote : "";
-    let enqueteContent = (enqueteRemote && extractTag(enqueteRemote, "pergunta").length > 0) ? enqueteRemote : "";
-    let quizContent = (quizRemote && extractTag(quizRemote, "pergunta").length > 0) ? quizRemote : "";
+    // If batalha, enquete, quiz from Supabase have empty content tags or dummy mocks, check local sync store
+    let batalhaContent = (batalhaRemote && extractTag(batalhaRemote, "artista1_nome").length > 0 && extractTag(batalhaRemote, "artista1_nome") !== "Artista 1") ? batalhaRemote : "";
+    if (batalhaContent && !batalhaContent.includes("<emissora>")) {
+      batalhaContent = batalhaContent.replace(/<batalha>/i, `<batalha>\n    <emissora>${st.name}</emissora>`);
+    }
+    let enqueteContent = (enqueteRemote && extractTag(enqueteRemote, "pergunta").length > 0 && !extractTag(enqueteRemote, "pergunta").includes("Qual música você quer ouvir")) ? enqueteRemote : "";
+    let quizContent = (quizRemote && extractTag(quizRemote, "pergunta").length > 0 && !extractTag(quizRemote, "pergunta").includes("Qual o maior sucesso")) ? quizRemote : "";
 
     try {
       if (!enqueteContent) {
@@ -538,19 +615,23 @@ export async function generateAllUserXmls() {
         if (existsSync(enqSyncPath)) {
           const syncData = JSON.parse(readFileSync(enqSyncPath, "utf-8"));
           const list = syncData[st.slug] || syncData[st.uid] || [];
-          if (list.length > 0 && list[0]?.pergunta) {
-            const eq = list[0];
+          const { today, currentTime } = getBrasiliaDateTime();
+          const active = list.find((e: any) =>
+            isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
+          ) || list[0];
+          if (active && active.pergunta) {
             enqueteContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <enquete>
-    <pergunta>${eq.pergunta}</pergunta>
-    <resposta1>${eq.resposta1 || ""}</resposta1>
-    <resposta2>${eq.resposta2 || ""}</resposta2>
-    <resposta3>${eq.resposta3 || ""}</resposta3>
-    <resposta4>${eq.resposta4 || ""}</resposta4>
-    <resposta_correta>${eq.resposta_correta || 1}</resposta_correta>
-    <horario_inicio>${eq.horario_inicio || "00:00"}</horario_inicio>
-    <horario_fim>${eq.horario_fim || "23:59"}</horario_fim>
+    <emissora>${st.name}</emissora>
+    <pergunta>${active.pergunta}</pergunta>
+    <resposta1>${active.resposta1 || ""}</resposta1>
+    <resposta2>${active.resposta2 || ""}</resposta2>
+    <resposta3>${active.resposta3 || ""}</resposta3>
+    <resposta4>${active.resposta4 || ""}</resposta4>
+    <resposta_correta>${active.resposta_correta || 1}</resposta_correta>
+    <horario_inicio>${active.horario_inicio || "00:00"}</horario_inicio>
+    <horario_fim>${active.horario_fim || "23:59"}</horario_fim>
   </enquete>
 </items>`;
           }
@@ -564,21 +645,25 @@ export async function generateAllUserXmls() {
         if (existsSync(qzSyncPath)) {
           const syncData = JSON.parse(readFileSync(qzSyncPath, "utf-8"));
           const list = syncData[st.slug] || syncData[st.uid] || [];
-          if (list.length > 0 && list[0]?.pergunta) {
-            const qz = list[0];
+          const { today, currentTime } = getBrasiliaDateTime();
+          const active = list.find((q: any) =>
+            isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
+          ) || list[0];
+          if (active && active.pergunta) {
             quizContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <pergunta>${qz.pergunta}</pergunta>
-    <resposta1>${qz.resposta1 || ""}</resposta1>
-    <resposta2>${qz.resposta2 || ""}</resposta2>
-    <resposta3>${qz.resposta3 || ""}</resposta3>
-    <resposta4>${qz.resposta4 || ""}</resposta4>
-    <resposta_correta>${qz.resposta_correta || 1}</resposta_correta>
-    <horario_inicio>${qz.horario_inicio || "00:00"}</horario_inicio>
-    <horario_fim>${qz.horario_fim || "23:59"}</horario_fim>
-    <explicacao>${qz.explicacao || ""}</explicacao>
-    <imagem_resposta>${qz.imagem_resposta || ""}</imagem_resposta>
+    <emissora>${st.name}</emissora>
+    <pergunta>${active.pergunta}</pergunta>
+    <resposta1>${active.resposta1 || ""}</resposta1>
+    <resposta2>${active.resposta2 || ""}</resposta2>
+    <resposta3>${active.resposta3 || ""}</resposta3>
+    <resposta4>${active.resposta4 || ""}</resposta4>
+    <resposta_correta>${active.resposta_correta || 1}</resposta_correta>
+    <horario_inicio>${active.horario_inicio || "00:00"}</horario_inicio>
+    <horario_fim>${active.horario_fim || "23:59"}</horario_fim>
+    <explicacao>${active.explicacao || ""}</explicacao>
+    <imagem_resposta>${active.imagem_resposta || ""}</imagem_resposta>
   </dados>
 </items>`;
           }
@@ -592,21 +677,25 @@ export async function generateAllUserXmls() {
         if (existsSync(batSyncPath)) {
           const syncData = JSON.parse(readFileSync(batSyncPath, "utf-8"));
           const list = syncData[st.slug] || syncData[st.uid] || [];
-          if (list.length > 0 && (list[0]?.artista1_nome || list[0]?.artista2_nome)) {
-            const bt = list[0];
+          const { today, currentTime } = getBrasiliaDateTime();
+          const active = list.find((b: any) =>
+            isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
+          ) || list[0];
+          if (active && (active.artista1_nome || active.artista2_nome)) {
             batalhaContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
-    <artista1_nome>${bt.artista1_nome || ""}</artista1_nome>
-    <artista1_musica>${bt.artista1_musica || ""}</artista1_musica>
-    <artista1_porcentagem>${bt.artista1_porcentagem ?? 50}%</artista1_porcentagem>
-    <artista1_imagem>${bt.artista1_imagem || ""}</artista1_imagem>
-    <artista2_nome>${bt.artista2_nome || ""}</artista2_nome>
-    <artista2_musica>${bt.artista2_musica || ""}</artista2_musica>
-    <artista2_porcentagem>${bt.artista2_porcentagem ?? 50}%</artista2_porcentagem>
-    <artista2_imagem>${bt.artista2_imagem || ""}</artista2_imagem>
-    <horario_inicio>${bt.horario_inicio || "00:00"}</horario_inicio>
-    <horario_fim>${bt.horario_fim || "23:59"}</horario_fim>
+    <emissora>${escapeXml(st.name)}</emissora>
+    <artista1_nome>${escapeXml(active.artista1_nome || "")}</artista1_nome>
+    <artista1_musica>${escapeXml(active.artista1_musica || "")}</artista1_musica>
+    <artista1_porcentagem>${escapeXml(active.artista1_porcentagem ?? 0)}%</artista1_porcentagem>
+    <artista1_imagem>${escapeXml(active.artista1_imagem || "")}</artista1_imagem>
+    <artista2_nome>${escapeXml(active.artista2_nome || "")}</artista2_nome>
+    <artista2_musica>${escapeXml(active.artista2_musica || "")}</artista2_musica>
+    <artista2_porcentagem>${escapeXml(active.artista2_porcentagem ?? 0)}%</artista2_porcentagem>
+    <artista2_imagem>${escapeXml(active.artista2_imagem || "")}</artista2_imagem>
+    <horario_inicio>${escapeXml(active.horario_inicio || "00:00")}</horario_inicio>
+    <horario_fim>${escapeXml(active.horario_fim || "23:59")}</horario_fim>
   </batalha>
 </items>`;
           }

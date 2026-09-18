@@ -193,10 +193,10 @@ export default function XmlPublicEndpoint() {
 
         const activeBat = localBatalhas.find((b: any) =>
           isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-        );
+        ) || localBatalhas.find((b: any) => b.data_batalha === today) || localBatalhas[0];
 
         if (activeBat) {
-          const generated = buildBatalhaXml(activeBat);
+          const generated = buildBatalhaXml(activeBat, stationName);
           if (isMounted) {
             setXmlContent(generated.trim());
             setLoading(false);
@@ -220,7 +220,7 @@ export default function XmlPublicEndpoint() {
 
         // 3. Fallback: clean empty XML
         if (isMounted) {
-          setXmlContent(buildBatalhaXml(null).trim());
+          setXmlContent(buildBatalhaXml(null, stationName).trim());
           setLoading(false);
         }
         return;
