@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-18T15:31:23.359Z</gerado_em>
+  <gerado_em>2026-09-18T16:01:16.056Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -48,7 +48,7 @@
       <descricao>Céu limpo</descricao>
       <minima>23ºC</minima>
       <maxima>34ºC</maxima>
-      <umidade>28%</umidade>
+      <umidade>27%</umidade>
       <vento>10 km/h</vento>
       <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
     </atual>
