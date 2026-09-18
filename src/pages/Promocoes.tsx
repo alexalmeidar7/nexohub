@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
 import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users, MessageSquareQuote } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
@@ -411,9 +412,50 @@ export default function PromocoesKiosk() {
         }
       }
 
-      const allPromos = promoData || [];
-      setPromocoes(allPromos);
+      let allPromos = promoData || [];
       let activeTestemunhais = testData || [];
+
+      let edgeProgs: any[] = [];
+      let edgeAprs: any[] = [];
+
+      // Se a consulta direta retornou vazia (RLS do Supabase), busca na edge function public-promo-data
+      try {
+        const targetSlugOrId = localUid || "positivafm";
+        const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
+          body: { slug: targetSlugOrId }
+        });
+        if (edgeData) {
+          if (allPromos.length === 0 && edgeData.promocoes?.length > 0) {
+            allPromos = edgeData.promocoes;
+          }
+          if (activeTestemunhais.length === 0 && edgeData.testemunhais?.length > 0) {
+            activeTestemunhais = edgeData.testemunhais;
+          }
+          if (edgeData.programas?.length > 0) {
+            edgeProgs = edgeData.programas;
+          }
+          if (edgeData.apresentadores?.length > 0) {
+            edgeAprs = edgeData.apresentadores;
+          }
+        }
+      } catch {}
+
+      // Fallback para snapshot estático local se ainda estiver vazio
+      if (allPromos.length === 0) {
+        const snapPromos = getSnapshotTable("promocoes");
+        const filtered = snapPromos.filter((p: any) =>
+          !localUid || p.user_id === localUid || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+        );
+        if (filtered.length > 0) allPromos = filtered;
+      }
+      if (activeTestemunhais.length === 0) {
+        const snapTests = getSnapshotTable("testemunhais");
+        const filtered = snapTests.filter((t: any) =>
+          !localUid || t.user_id === localUid || t.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+        );
+        if (filtered.length > 0) activeTestemunhais = filtered;
+      }
+
       if (localUid) {
         try {
           const rawLocal = localStorage.getItem(`nexohub_testemunhais_${localUid}`);
@@ -427,12 +469,25 @@ export default function PromocoesKiosk() {
             }
           }
         } catch {}
+        try {
+          localStorage.setItem(`nexohub_testemunhais_${localUid}`, JSON.stringify(activeTestemunhais));
+          localStorage.setItem(`nexohub_promocoes_${localUid}`, JSON.stringify(allPromos));
+        } catch {}
       }
+
+      setPromocoes(allPromos);
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
 
-      let rawProgs = progsData || [];
+      let rawProgs = progsData && progsData.length > 0 ? progsData : (edgeProgs.length > 0 ? edgeProgs : []);
+      if (rawProgs.length === 0) {
+        const snapProgs = getSnapshotTable("programas");
+        const filtered = snapProgs.filter((p: any) =>
+          !localUid || p.user_id === localUid || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+        );
+        if (filtered.length > 0) rawProgs = filtered;
+      }
       if (rawProgs.length === 0) {
         const stationData = getStationDatabaseSync(localUid || undefined);
         if (stationData?.programas && stationData.programas.length > 0) {
@@ -464,7 +519,7 @@ export default function PromocoesKiosk() {
       }));
       setProgramas(mapped);
 
-      const aprs = await getApresentadores();
+      const aprs = edgeAprs.length > 0 ? edgeAprs : await getApresentadores();
       setApresentadores(aprs);
     };
 
@@ -589,7 +644,27 @@ export default function PromocoesKiosk() {
 
   useEffect(() => {
     const update = () => {
-      const current = findCurrentProgram(programas as any);
+      let current = findCurrentProgram(programas as any);
+      // Se houver pequeno intervalo entre o fim cadastrado de um programa e o início do próximo,
+      // mantém o programa anterior no ar até o próximo começar
+      if (!current && programas.length > 0) {
+        const now = new Date();
+        const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const diaAtual = dias[now.getDay()];
+        const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const dayProgs = (programas as any[])
+          .filter(p => p.diasSemana?.includes(diaAtual))
+          .sort((a, b) => (a.horarioInicio || "").localeCompare(b.horarioInicio || ""));
+        for (let i = 0; i < dayProgs.length; i++) {
+          const p = dayProgs[i];
+          const next = dayProgs[i + 1];
+          const nextStart = next ? next.horarioInicio : "24:00";
+          if (horaAtual >= p.horarioInicio && horaAtual < nextStart) {
+            current = { programa: p, progress: 95 };
+            break;
+          }
+        }
+      }
       if (current) {
         setOnAirProgram({
           nome: current.programa.nome || "",
@@ -652,18 +727,54 @@ export default function PromocoesKiosk() {
   const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
     const baseIds = new Set(prog.mergedIds || [prog.id]);
+    const targetNameNorm = normalizeProgramName(prog.nome);
+
     // Inclui todos os IDs de programas com o mesmo nome normalizado (grade duplicada)
-    const key = normalizeProgramName(prog.nome);
     for (const p of programas) {
-      if (normalizeProgramName(p.nome) === key) baseIds.add(p.id);
+      if (normalizeProgramName(p.nome) === targetNameNorm) {
+        baseIds.add(p.id);
+        if (p.mergedIds) p.mergedIds.forEach(id => baseIds.add(id));
+      }
     }
+
+    // Mapa ID -> Nome de programas conhecidos (programas carregados + snapshot estático)
+    const progNameById = new Map<string, string>();
+    for (const p of programas) {
+      progNameById.set(p.id, normalizeProgramName(p.nome));
+      if (p.mergedIds) {
+        p.mergedIds.forEach(id => progNameById.set(id, normalizeProgramName(p.nome)));
+      }
+    }
+    try {
+      const snapProgs = getSnapshotTable("programas");
+      for (const p of snapProgs) {
+        if (p.id && p.nome) {
+          const sName = normalizeProgramName(p.nome);
+          progNameById.set(p.id, sName);
+          if (sName === targetNameNorm) {
+            baseIds.add(p.id);
+          }
+        }
+      }
+    } catch {}
 
     const matches = testemunhais.filter(t => {
       const tIds = getTestemunhalProgramIds(t);
       if (tIds.length === 0) return false;
-      const matchesId = tIds.some(id => baseIds.has(id));
       const isWithinDate = (!t.data_inicio || t.data_inicio <= today) && (!t.data_fim || t.data_fim >= today);
-      return matchesId && isWithinDate;
+      if (!isWithinDate) return false;
+
+      // 1. Casa por ID direto
+      if (tIds.some(id => baseIds.has(id))) return true;
+
+      // 2. Casa por Nome do programa referenciado pelo ID da citação
+      for (const tId of tIds) {
+        const refName = progNameById.get(tId);
+        if (refName && refName === targetNameNorm) return true;
+        if (refName && (refName.includes(targetNameNorm) || targetNameNorm.includes(refName))) return true;
+      }
+
+      return false;
     });
 
     const standardTests = matches
@@ -796,20 +907,33 @@ export default function PromocoesKiosk() {
   };
 
   const todayDateStr = new Date().toISOString().split("T")[0];
-  const programIdsWithTestemunhais = new Set(
-    testemunhais
-      .filter(t =>
-        (!t.data_inicio || t.data_inicio <= todayDateStr) && (!t.data_fim || t.data_fim >= todayDateStr)
-      )
-      .flatMap(t => getTestemunhalProgramIds(t))
-  );
+  const programNamesWithTestemunhais = useMemo(() => {
+    const set = new Set<string>();
+    const progNameById = new Map<string, string>();
+    try {
+      const snapProgs = getSnapshotTable("programas");
+      for (const p of snapProgs) {
+        if (p.id && p.nome) progNameById.set(p.id, normalizeProgramName(p.nome));
+      }
+    } catch {}
+    for (const p of programas) {
+      progNameById.set(p.id, normalizeProgramName(p.nome));
+      if (p.mergedIds) {
+        p.mergedIds.forEach(id => progNameById.set(id, normalizeProgramName(p.nome)));
+      }
+    }
 
-  // Nomes normalizados que possuem citação (para incluir grades duplicadas do mesmo programa)
-  const programNamesWithTestemunhais = new Set(
-    programas
-      .filter(p => programIdsWithTestemunhais.has(p.id))
-      .map(p => normalizeProgramName(p.nome))
-  );
+    for (const t of testemunhais) {
+      const isWithinDate = (!t.data_inicio || t.data_inicio <= todayDateStr) && (!t.data_fim || t.data_fim >= todayDateStr);
+      if (!isWithinDate) continue;
+      const tIds = getTestemunhalProgramIds(t);
+      for (const id of tIds) {
+        const name = progNameById.get(id);
+        if (name) set.add(name);
+      }
+    }
+    return set;
+  }, [testemunhais, programas, todayDateStr]);
 
   const filteredPrograms = mergeProgramList(
     programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
@@ -1382,13 +1506,14 @@ export default function PromocoesKiosk() {
 
         {/* Banner rotativo + capa do programa no ar */}
         {(() => {
-          // Programas ordenados pela grade (horário de início), deduplicados por nome
-          const scheduleList = mergeProgramList(programas);
+          // Prioriza os programas que possuem citações cadastradas
+          const scheduleList = filteredPrograms.length > 0 ? filteredPrograms : mergeProgramList(programas);
           const onAirIdx = onAirProgram
             ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
             : -1;
           const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
-          const currentProg = scheduleList[activeIdx]
+          const currentProg = (onAirIdx >= 0 && coverIndex === null ? scheduleList[onAirIdx] : null)
+            ?? scheduleList[activeIdx]
             ?? (onAirProgram ? programas.find(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome)) : null)
             ?? scheduleList[0]
             ?? (programas[0] as any)

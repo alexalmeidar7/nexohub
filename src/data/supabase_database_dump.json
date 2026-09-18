@@ -4600,7 +4600,176 @@
         ]
       }
     ],
-    "promocoes": [],
+    "promocoes": [
+      {
+        "id": "f008b7a1-129e-4fe6-bf50-8ef2b143e3ca",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1775573546505.webp",
+        "texto": "Na Positiva FM, além de ouvir, você também pode ver e ganhar! \nTá no ar a promoção Que Prêmio É Esse?\n\nTodos os dias, nos seus programas favoritos da Positiva, a gente vai mostrar presentes incríveis na transmissão em vídeo. Fez o cadastro, acompanhe a programação ao vivo e fique de olho na tela. Visualizou o prêmio? \nDescobriu qual é? \n\nMande um WhatsApp para 62 3942-9910 com a palavra-chave\nQue Prêmio É Esse e o nome do prêmio que você quer ganhar.\n\nViu, mandou, concorreu!&nbsp; Que Prêmio É Esse? \nTá na Positiva, tá bom demais!",
+        "oferecimento": "....",
+        "data_inicio": "2026-01-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-04-07T14:52:26.521915+00:00",
+        "botao_url": "Que prêmio é esse ?",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1778842644999.webp",
+        "nome": "QUE PRÊMIO É ESSE ?",
+        "programa_ids": []
+      },
+      {
+        "id": "cbe8f733-c8f9-4fba-acba-79bcaac64cfe",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1771711830753.png",
+        "texto": "Depois do expediente, todo mundo merece um rolê bom!\nE a Positiva FM vai deixar esse momento ainda melhor com a promoção Rolê Positiva.\n\nVocê concorre a um voucher de R$200 pra reunir os amigos, curtir petiscos deliciosos, cervejinha gelada, drink, música ao vivo e falar: hoje é por minha conta!\nPra concorrer, mande um WhatsApp com a palavra-chave \nRolê Positiva para 62 3942-9910. \n\nDepois é só ficar ligado na 99.1 e torcer.\nRolê Positiva.Tá na Positiva, tá bom demais!",
+        "oferecimento": "- Happy hour, open drinks, música ao vivo é no Petra Gastrobar Passeio das Águas!",
+        "data_inicio": "2026-02-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:26.453535+00:00",
+        "botao_url": "Rolê Positiva",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1778842759927.webp",
+        "nome": "ROLÊ POSITIVA",
+        "programa_ids": []
+      },
+      {
+        "id": "2ed2eb8e-977f-4b5a-b341-79c131abd24e",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1771711939658.png",
+        "texto": "Vamos sacudir sua cidade com muita música, alegria \ne prêmios.\n\nSintonize em 99.1 FM, baixe nosso app oficial ou acesse positivafm.com.br, \nacompanhe nossa programação e descubra onde a equipe de promoções vai estar.\n\nBora colocar o pé na estrada e espalhar muita alegria por aí!\n\nAh, para concorrer aos prêmios é muito fácil: se encontrar nossa equipe de promoção, basta se inscrever através do cupom e boa sorte!\n\nTá na Positiva FM, tá bom demais!",
+        "oferecimento": "-",
+        "data_inicio": "2026-02-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:26.453535+00:00",
+        "botao_url": "Pé na Estrada",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1778842658369.webp",
+        "nome": "PARADA POSITIVA",
+        "programa_ids": []
+      },
+      {
+        "id": "5cbf62d3-c63d-4646-a1eb-47d0bee8baa5",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1771711795331.png",
+        "texto": "Olha essa, hein!\nA Positiva FM tá sorteando a Super Burger Positiva: \npão, carne de costela, batatinha, bacon, mussarela, cerveja e refrigerante.\n\nÉ combo de respeito!\n\nPra concorrer, manda no WhatsApp da Positiva: Super Burger.\nNosso WhatsApp é 62 3942-9910.\nMandou Super Burger, já tá participando.\n\nFica ligado aqui na 99.1, porque esse combo pode ser seu.\nTá na Positiva, tá bom demais!",
+        "oferecimento": "Carnes Boi Verde\nKit hambúrguer artesanal a partir de 69 reais.\nPeça pelo app ou whatsapp Boi Verde: 62 98164 2246\n\nEisen (Aisen), premiada em todos os estilos. \nVocê merece uma Eisen (Aisen)!",
+        "data_inicio": "2026-02-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:26.453535+00:00",
+        "botao_url": "Super Burguer Positiva",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1778842803163.webp",
+        "nome": "SUPER BURGUER  POSITIVA",
+        "programa_ids": []
+      },
+      {
+        "id": "9b675318-5a8d-45bc-81e6-1783a71d7e95",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1771711957634.png",
+        "texto": "Ô, você que curte uma resenha boa, presta atenção nessa!\n\nA Positiva FM tá te colocando na disputa pra ganhar aquele kit churras completo: \ncarne da Manda Picanha, linguiça, mandioca, pão de alho, refrigerante e cerveja.\n\nPra participar é simples: manda agora Resenha Positiva \nno WhatsApp 62 3942-9910.\n\nO próximo churrasco do jeito que você gosta vai acontecer na sua casa.\n\nEntão bora!\n\nManda Resenha Positiva no WhatsApp da Positiva \ne fica ligado aqui na 99.1.\n\nTá na Positiva, tá bom demais!",
+        "oferecimento": "Eisen (Aisen), premiada em todos os estilos. Você merece uma Eisen (Aisen)\n\nSou do tipo que sabe quando uma carne é boa de verdade. \nE o Rodízio do Manda Picanha é bom de verdade. Por R$ 89, você come bem — em qualquer unidade da cidade. \nManda Picanha 10 anos. Amor tamanho família.",
+        "data_inicio": "2026-02-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:26.453535+00:00",
+        "botao_url": "Resenha Positiva",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1778842789809.webp",
+        "nome": "RESENHA",
+        "programa_ids": []
+      },
+      {
+        "id": "76a18f30-2834-40c2-8f30-6aff86e45048",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1775573618162.webp",
+        "texto": "Atenção porque a Positiva não fica só dentro do estúdio não! \nA qualquer momento a equipe da Rádio Positiva FM pode aparecer nos terminais, \ndentro dos ônibus ou em pontos movimentados da cidade com a nossa PARADA POSITIVA!\n\n\nÉ isso mesmo. A gente chega com música, desafio, brincadeira ao vivo, interação com a galera e muitos presentes.\n\nQuem participa concorre a kits especiais, ganha brinde na hora e ainda vive a experiência de fazer parte da rádio mais animada da cidade.\n\nEntão fica ligado na programação porque a qualquer momento a PARADA POSITIVA pode acontecer bem na sua frente. Tá na Positiva. Tá bom demais!",
+        "oferecimento": "*Sandella , sabor para família inteira.",
+        "data_inicio": "2026-03-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-04-07T14:53:37.706067+00:00",
+        "botao_url": "Parada Positiva",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1778842821311.webp",
+        "nome": "PARADA POSITIVA",
+        "programa_ids": []
+      },
+      {
+        "id": "3b1f4514-1263-43e5-aab8-3f30c15a1e2e",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1776465441479.webp",
+        "texto": "Já pensou você e sua família curtindo um\n fim de semana top em Caldas Novas?\n\nHotel, café da manhã, acesso aos parques \ne aquele descanso que todo mundo merece.\nA Positiva FM e a WAM Experience vão sortear\nseis fins de semana incríveis.\n\nPra concorrer, é fácil: \nmanda no WhatsApp da Positiva Partiu Caldas.\nO WhatsApp é o 62 3942-9910.\nMandou Partiu Caldas, já tá concorrendo.\nTá na Positiva, tá bom demais!",
+        "oferecimento": "W-A-M Experience. Especialista em hospitalidade e experiência. \nOs melhores hotéis e parks de Caldas Novas!",
+        "data_inicio": "2026-04-17",
+        "data_fim": "2026-09-25",
+        "created_at": "2026-04-17T22:37:22.666065+00:00",
+        "botao_url": "Partiu Caldas Novas",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1781011997313.webp",
+        "nome": "PARTIU CALDAS",
+        "programa_ids": []
+      },
+      {
+        "id": "7e199d68-5879-4105-835c-6235ea75d624",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1781091247018.webp",
+        "texto": "Ó, deixa eu dar uma dica pra você que tá dirigindo agora… \nSeja no carro, no aplicativo, no caminhão, na moto ou no trânsito voltando pra casa… \nDeixa a 99.1 Positiva FM ligada.\nPorque nossa equipe tá circulando pela cidade e procurando ouvintes da Positiva.;\n\nE se a gente encontrar você ouvindo a 99.1, pode ter uma surpresa boa chegando.\nSão R$ 200 em combustível na hora.\nÉ o Te Peguei na Positiva.&nbsp;A gente encontra você, confere a rádio ligada e pronto… combustível por nossa conta.\nEntão aumenta o volume da 99.1, porque o próximo motorista premiado pode ser você.\nTe Peguei na Positiva\nSó aqui na 99.1 Positiva FM\nTá na Positiva, tá bom demais!",
+        "oferecimento": "",
+        "data_inicio": "2026-06-09",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-06-09T13:19:14.567339+00:00",
+        "botao_url": "Te Peguei na Positiva FM",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1781091247599.webp",
+        "nome": "TE PEGUEI NA POSITIVA",
+        "programa_ids": []
+      },
+      {
+        "id": "758c93d5-31b4-404b-b30e-bef9bb7081e7",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1781091070771.webp",
+        "texto": "A qualquer momento tem R$100 no Pix aqui na Positiva.&nbsp;É uma força pra você pagar o gás, fazer uma compra, ajudar numa conta ou resolver aquele aperto do dia.&nbsp;Quer concorrer?&nbsp;Manda agora no WhatsApp da Positiva a palavra-chave:\nMEU PIX POSITIVA\nFaça seu cadastro certinho e fique ligado na programação.&nbsp;Porque a qualquer momento você pode ser sorteado.&nbsp;Ouviu seu nome no ar?&nbsp;Aí é simples: você tem até 60 minutos pra mandar WhatsApp, confirmar seus dados e falar a senha que o locutor passou.\nConfirmou tudo certinho?&nbsp;Recebe R$100 no Pix.\nMeu Pix Positiva.&nbsp;Ficou ligado, foi sorteado, confirmou, ganhou.&nbsp;Tá na Positiva, tá bom demais!",
+        "oferecimento": "",
+        "data_inicio": "2026-06-09",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-06-09T13:23:55.070536+00:00",
+        "botao_url": "Meu Pix Positiva",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/promocoes/1781012584771.webp",
+        "nome": "MEU PIX POSITIVA",
+        "programa_ids": []
+      },
+      {
+        "id": "bbf0760b-5a39-41be-ba4a-dfc3d2a7c9eb",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/d17e65af-e407-466f-9b60-b55c43399513/promos/1787352412677.png",
+        "texto": "<p>Marque&nbsp;o&nbsp;seu&nbsp;Encontro</p><p></p><p>Fred&nbsp;&amp;&nbsp;Fabrício&nbsp;já&nbsp;têm&nbsp;um&nbsp;Encontro&nbsp;Marcado&nbsp;com&nbsp;a&nbsp;Positiva.&nbsp;Agora&nbsp;falta&nbsp;você&nbsp;marcar&nbsp;o&nbsp;seu!</p><p></p><p>Quer&nbsp;participar?&nbsp;Então&nbsp;é&nbsp;fácil.</p><p></p><p>Manda&nbsp;a&nbsp;palavra&nbsp;ENCONTRO&nbsp;no&nbsp;WhatsApp&nbsp;da&nbsp;Positiva,&nbsp;(62)&nbsp;3942&nbsp;9910.</p><p></p><p>Quer&nbsp;contar&nbsp;por&nbsp;que&nbsp;você&nbsp;merece&nbsp;estar&nbsp;com&nbsp;a&nbsp;gente?&nbsp;Manda&nbsp;sua&nbsp;história&nbsp;por&nbsp;texto&nbsp;ou&nbsp;áudio.&nbsp;Vale&nbsp;caprichar,&nbsp;viu?</p><p></p><p>E&nbsp;fica&nbsp;esperto&nbsp;porque&nbsp;não&nbsp;vai&nbsp;ser&nbsp;só&nbsp;pelo&nbsp;WhatsApp.</p><p></p><p>A&nbsp;Positiva&nbsp;também&nbsp;vai&nbsp;estar&nbsp;pelas&nbsp;ruas&nbsp;com&nbsp;ações&nbsp;valendo&nbsp;lugar&nbsp;nesse&nbsp;encontro.</p><p></p><p>E&nbsp;claro,&nbsp;segue&nbsp;o&nbsp;@positivafmoficial&nbsp;no&nbsp;Instagram,&nbsp;porque&nbsp;por&nbsp;lá&nbsp;também&nbsp;vão&nbsp;rolar&nbsp;oportunidades&nbsp;pra&nbsp;você&nbsp;participar.</p><p></p><p>Então&nbsp;já&nbsp;sabe:&nbsp;manda&nbsp;ENCONTRO&nbsp;no&nbsp;WhatsApp,&nbsp;conta&nbsp;sua&nbsp;história,&nbsp;acompanha&nbsp;a&nbsp;Positiva&nbsp;pelas&nbsp;ruas&nbsp;e&nbsp;fica&nbsp;de&nbsp;olho&nbsp;no&nbsp;@positivafmoficial&nbsp;no&nbsp;Instagram.</p><p></p><p>São&nbsp;várias&nbsp;formas&nbsp;de&nbsp;participar.</p><p></p><p>Marque&nbsp;o&nbsp;seu&nbsp;Encontro&nbsp;com&nbsp;a&nbsp;Positiva&nbsp;e&nbsp;boa&nbsp;sorte!</p>",
+        "oferecimento": "<p>UNIALFA&nbsp;EaD&nbsp;e&nbsp;Semipresencial,&nbsp;você&nbsp;no&nbsp;controle&nbsp;do&nbsp;seu&nbsp;futuro,&nbsp;siga&nbsp;nosso&nbsp;Instagram&nbsp;@unialfaeadEsemi.</p><p></p><p>VENHA&nbsp;CONHECER&nbsp;PREZUNIC&nbsp;GOIÂNIA:&nbsp;o&nbsp;supermercado&nbsp;do&nbsp;seu&nbsp;jeito</p><p></p><p><span style=\"background-color: rgb(255, 255, 255); color: rgb(0, 0, 0);\">Calorão?&nbsp;No&nbsp;Fujioka&nbsp;você&nbsp;encontra&nbsp;a&nbsp;linha&nbsp;completa&nbsp;de&nbsp;ar-condicionado&nbsp;Aiwa&nbsp;High&nbsp;Inverter&nbsp;(AIVA&nbsp;RAI&nbsp;INVERTER)</span></p><p></p><p>Shopping&nbsp;Dos&nbsp;Cosméticos,&nbsp;sua&nbsp;loja&nbsp;queridinha&nbsp;de&nbsp;beleza.&nbsp;Siga&nbsp;@shoppingdoscosmeticosoficial</p><p></p><p>Eisen,&nbsp;premiada&nbsp;em&nbsp;todos&nbsp;os&nbsp;estilos.&nbsp;Você&nbsp;merece&nbsp;uma&nbsp;Eisen!</p><p></p><p>Apoio&nbsp;Record&nbsp;Goiás,&nbsp;tem&nbsp;a&nbsp;sua&nbsp;cara!</p>",
+        "data_inicio": "2026-08-21",
+        "data_fim": "2026-10-20",
+        "created_at": "2026-08-21T19:40:33.471413+00:00",
+        "botao_url": "",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/d17e65af-e407-466f-9b60-b55c43399513/promos_l/1787352418126.png",
+        "nome": "ENCONTRO MARCADO",
+        "programa_ids": []
+      },
+      {
+        "id": "74b18f6c-6c3b-4684-ad79-85d21f468b83",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/d17e65af-e407-466f-9b60-b55c43399513/promos/1788974658625.png",
+        "texto": "<p>Dia&nbsp;27&nbsp;de&nbsp;setembro&nbsp;tem&nbsp;LUAN&nbsp;REGISTRO&nbsp;HISTÓRICO!,&nbsp;Isso&nbsp;mesmo,&nbsp;Luan&nbsp;Santana!</p><p></p><p>Quer&nbsp;concorrer?&nbsp;Manda&nbsp;agora&nbsp;a&nbsp;palavra&nbsp;LUAN&nbsp;no&nbsp;WhatsApp&nbsp;da&nbsp;Positiva:&nbsp;(62)&nbsp;3942&nbsp;9910.</p><p></p><p>E&nbsp;quer&nbsp;aumentar&nbsp;ainda&nbsp;mais&nbsp;as&nbsp;suas&nbsp;chances?&nbsp;Sempre&nbsp;que&nbsp;ouvir&nbsp;Luan&nbsp;Santana&nbsp;tocando&nbsp;na&nbsp;Positiva,&nbsp;pega&nbsp;o&nbsp;celular&nbsp;e&nbsp;capricha!&nbsp;Grava&nbsp;um&nbsp;vídeo&nbsp;bem&nbsp;criativo&nbsp;mostrando&nbsp;que&nbsp;tá&nbsp;ligado&nbsp;na&nbsp;99,1,&nbsp;publica&nbsp;no&nbsp;seu&nbsp;Instagram&nbsp;e&nbsp;marca&nbsp;a&nbsp;Positiva&nbsp;e&nbsp;o&nbsp;Luan&nbsp;Santana!</p><p></p><p>Então&nbsp;participa,&nbsp;fica&nbsp;de&nbsp;ouvido&nbsp;na&nbsp;programação&nbsp;e&nbsp;prepara&nbsp;o&nbsp;celular.&nbsp;Porque&nbsp;LUAN&nbsp;REGISTRO&nbsp;HISTÓRICO!&nbsp;vai&nbsp;ficar&nbsp;marcado&nbsp;na&nbsp;memória&nbsp;de&nbsp;muita&nbsp;gente.&nbsp;E&nbsp;você&nbsp;pode&nbsp;viver&nbsp;tudo&nbsp;isso&nbsp;com&nbsp;a&nbsp;Positiva!</p><p></p><p>Tá&nbsp;na&nbsp;Positiva,&nbsp;tá&nbsp;bom&nbsp;demais!</p>",
+        "oferecimento": "<p>Shopping&nbsp;dos&nbsp;Cosméticos,&nbsp;sua&nbsp;loja&nbsp;queridinha&nbsp;de&nbsp;beleza.</p><p></p><p>Setembro&nbsp;Turbinado&nbsp;FIAT.&nbsp;Turbine&nbsp;a&nbsp;sua&nbsp;garagem&nbsp;com&nbsp;um&nbsp;FIAT&nbsp;zero&nbsp;quilômetro.</p>",
+        "data_inicio": "2026-09-08",
+        "data_fim": "2026-09-27",
+        "created_at": "2026-09-08T21:41:31.433762+00:00",
+        "botao_url": "",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/d17e65af-e407-466f-9b60-b55c43399513/promos_l/1788974661139.png",
+        "nome": "REGISTRO HISTORICO - LUAN SANTANA",
+        "programa_ids": []
+      },
+      {
+        "id": "fb4a7f06-7fd2-48d3-9d95-64da7a695e00",
+        "user_id": "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/48423cc6-f3b1-4bea-8729-dd0ae76a89c3/promocoes/1784064281090.webp",
+        "texto": "texto da promoção",
+        "oferecimento": "Supermercado Caçula 2",
+        "data_inicio": "2026-07-14",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-07-14T21:24:42.263438+00:00",
+        "botao_url": "Promoção Vale Compras",
+        "banner_l_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/48423cc6-f3b1-4bea-8729-dd0ae76a89c3/promocoes/1784064281788.webp",
+        "nome": null,
+        "programa_ids": []
+      }
+    ],
     "prompt_templates": [],
     "quiz_agendados": [],
     "roteiros": [],
@@ -4839,7 +5008,110 @@
     ],
     "sub_users": [],
     "teleprompters": [],
-    "testemunhais": [],
+    "testemunhais": [
+      {
+        "id": "5bae884c-e5a1-4c7a-93bc-a52b45ecec7b",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "programa_id": "1ea3c48c-02f2-4957-9efd-fa960c64504d",
+        "imagem_url": "",
+        "texto": "<p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">HOTEL&nbsp;LIGUORI&nbsp;2X</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">LIGUORI&nbsp;HOTEL&nbsp;OFERECE&nbsp;ACOMODAÇÕES&nbsp;COM&nbsp;WI-FI&nbsp;GRATUITO&nbsp;E&nbsp;ESTACIONAMENTO&nbsp;PRIVATIVO,&nbsp;CAFÉ&nbsp;DA&nbsp;MANHÃ,&nbsp;LANCHES,&nbsp;CHÁS.</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">*O&nbsp;RESTAURANTE&nbsp;COM&nbsp;FUNCIONAMENTO&nbsp;DE&nbsp;SEGUNDA&nbsp;A&nbsp;SEXTA-FEIRA&nbsp;PARA&nbsp;O&nbsp;ALMOÇO.</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">AGENDE&nbsp;UMA&nbsp;VISITA.&nbsp;&nbsp;&nbsp;HOTEL&nbsp;LIGUORI</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">62&nbsp;3506-9898</span></p><p></p><p></p><p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">RESIDENCIAL&nbsp;POMAR&nbsp;2X&nbsp;</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">SE&nbsp;VOCÊ&nbsp;ESTÁ&nbsp;PRODURANDO&nbsp;UMA&nbsp;CASA&nbsp;PARA&nbsp;MORAR,&nbsp;CONHEÇA&nbsp;O&nbsp;RESINDENCIAL&nbsp;POMAR.&nbsp;</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">SÃO&nbsp;CASAS&nbsp;COM&nbsp;2&nbsp;OU&nbsp;3&nbsp;QUARTOS,&nbsp;SUÍTE&nbsp;E&nbsp;QUINTAL&nbsp;PRIVATIVO.</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">O&nbsp;RESIDENCIAL&nbsp;POMAR,&nbsp;FICA&nbsp;NA&nbsp;GO&nbsp;070.</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">ENTÃO&nbsp;LIGUE&nbsp;AGORA&nbsp;62&nbsp;3605-0000&nbsp;&nbsp;</span></p>",
+        "data_inicio": "2026-08-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-08-12T21:50:43.745175+00:00",
+        "programa_ids": [
+          "1ea3c48c-02f2-4957-9efd-fa960c64504d"
+        ]
+      },
+      {
+        "id": "ae045a74-377e-4a8b-9d9d-67302c986210",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "programa_id": "5f58a3d1-5b00-4ab5-8252-69c347ac9a74",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/testemunhais/1772016726138.png",
+        "texto": "<p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">SUPER&nbsp;FRANGO&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">QUANDO&nbsp;O&nbsp;ASSUNTO&nbsp;É&nbsp;CARNE&nbsp;DE&nbsp;FRANGO&nbsp;DE&nbsp;QUALIDADE,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">OS&nbsp;CONSUMIDORES&nbsp;SÓ&nbsp;PENSAM&nbsp;EM&nbsp;UM&nbsp;NOME:&nbsp;SUPER&nbsp;FRANGO!</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">NESTA&nbsp;MARCA&nbsp;VOCÊ&nbsp;PODE&nbsp;CONFIAR.&nbsp;FRANGO&nbsp;É&nbsp;SUPER&nbsp;FRANGO.</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">MIX&nbsp;GERADORES&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">PENSOU&nbsp;EM&nbsp;LOCAÇÃO&nbsp;DE&nbsp;GERADORES?&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">PENSOU&nbsp;MIX&nbsp;GERADORES.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">NÃO&nbsp;TENHA&nbsp;MAIS&nbsp;PREJUÍZO&nbsp;COM&nbsp;A&nbsp;FALTA&nbsp;DE&nbsp;ENERGIA.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">FAÇA&nbsp;ORÇAMENTO&nbsp;(62)&nbsp;3292-5006</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">AXS&nbsp;ENERGIA&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">ECONOMIZE&nbsp;NA&nbsp;SUA&nbsp;CONTA&nbsp;DE&nbsp;LUZ&nbsp;COM&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">A&nbsp;AXS&nbsp;ENERGIA!&nbsp;0800&nbsp;700&nbsp;3434.&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">AXS&nbsp;ENERGIA,&nbsp;O&nbsp;SOL&nbsp;GERA,&nbsp;A&nbsp;AXS&nbsp;ENTREGA!</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">CASA&nbsp;&amp;&nbsp;PERFUME&nbsp;DA&nbsp;CASA&nbsp;KM&nbsp;2X</strong></p><p>CASA&nbsp;&amp;&nbsp;PERFUME,&nbsp;DA&nbsp;CASA&nbsp;KM,&nbsp;TRANSFORMA&nbsp;A&nbsp;LIMPEZA</p><p>EM&nbsp;UMA&nbsp;EXPERIÊNCIA&nbsp;DE&nbsp;PERFUMARIA&nbsp;FINA&nbsp;PARA&nbsp;O&nbsp;LAR.</p><p>DEIXE&nbsp;SEU&nbsp;AMBIENTE&nbsp;MAIS&nbsp;LIMPO,&nbsp;PERFUMADO&nbsp;E&nbsp;AGRADÁVEL.</p><p>ENCONTRE&nbsp;CASA&nbsp;&amp;&nbsp;PERFUME&nbsp;NA&nbsp;KLC&nbsp;DISTRIBUIÇÃO&nbsp;</p><p>E&nbsp;NOS&nbsp;MELHORES&nbsp;SUPERMERCADOS&nbsp;E&nbsp;ATACADISTAS.</p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">CAFÉ&nbsp;LA&nbsp;SANTE&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">CAFÉ&nbsp;LA&nbsp;SANTÉ.&nbsp;GRÃOS&nbsp;SELECIONADOS,&nbsp;AROMA&nbsp;MARCANTE</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">E&nbsp;O&nbsp;VERDADEIRO&nbsp;SABOR&nbsp;DO&nbsp;BRASIL.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">EXPERIMENTE!&nbsp;CAFÉ&nbsp;LA&nbsp;SANTÉ.&nbsp;QUEM&nbsp;PROVA,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">NÃO&nbsp;TROCA!</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">FURLAN&nbsp;PETS&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">TEXTO&nbsp;01:&nbsp;QUANDO&nbsp;O&nbsp;ASSUNTO&nbsp;É&nbsp;A&nbsp;SAÚDE&nbsp;DO&nbsp;SEU&nbsp;PET,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">VOCÊ&nbsp;PREFERE&nbsp;ESCOLHER&nbsp;OU&nbsp;FICAR&nbsp;LIMITADO?&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">NA&nbsp;FURLAN&nbsp;PETS&nbsp;SAÚDE,&nbsp;QUEM&nbsp;DECIDE&nbsp;É&nbsp;VOCÊ!&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">ACESSE:&nbsp;FURLANPETSSAUDE.COM.BR!&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">TEXTO&nbsp;02:&nbsp;NA&nbsp;HORA&nbsp;DE&nbsp;CUIDAR&nbsp;DO&nbsp;SEU&nbsp;PET,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">VOCÊ&nbsp;NÃO&nbsp;PRECISA&nbsp;ABRIR&nbsp;MÃO&nbsp;DA&nbsp;SUA&nbsp;CLÍNICA&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">DE&nbsp;CONFIANÇA.&nbsp;NA&nbsp;FURLAN&nbsp;PETS&nbsp;SAÚDE,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">QUEM&nbsp;DECIDE&nbsp;É&nbsp;VOCÊ!&nbsp;</span></p><p></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">ACESSE:&nbsp;FURLANPETSSAUDE.COM.BR!&nbsp;</span></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">MONTE&nbsp;CRISTO&nbsp;HOME&nbsp;CENTER&nbsp;2X</strong></p><p><span style=\"color: rgb(34, 34, 34); background-color: rgb(255, 255, 255);\">SETEMBRÃO&nbsp;MONTE&nbsp;CRISTO&nbsp;HOME&nbsp;CENTER!&nbsp;OFERTAS&nbsp;</span></p><p><span style=\"color: rgb(34, 34, 34); background-color: rgb(255, 255, 255);\">IMPERDÍVEIS&nbsp;EM&nbsp;PISOS,&nbsp;PORCELANATOS,&nbsp;MATERIAIS&nbsp;DE&nbsp;</span></p><p><span style=\"color: rgb(34, 34, 34); background-color: rgb(255, 255, 255);\">CONSTRUÇÃO&nbsp;E&nbsp;ILUMINAÇÃO.&nbsp;DUAS&nbsp;LOJAS&nbsp;PARA&nbsp;ATENDER</span></p><p><span style=\"color: rgb(34, 34, 34); background-color: rgb(255, 255, 255);\">VOCÊ&nbsp;EM&nbsp;TRINDADE:&nbsp;SETOR&nbsp;MONTE&nbsp;CRISTO</span></p><p><span style=\"color: rgb(34, 34, 34); background-color: rgb(255, 255, 255);\">E&nbsp;SETOR&nbsp;MAYSA.</span></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">APROVANA&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">TEXTO&nbsp;1:</span></p><p>IMPREVISTOS&nbsp;NÃO&nbsp;AVISAM.</p><p>PROTEJA&nbsp;SEU&nbsp;VEÍCULO&nbsp;COM&nbsp;A&nbsp;APROVANA&nbsp;PROTEÇÃO&nbsp;VEICULAR&nbsp;</p><p>E&nbsp;DIRIJA&nbsp;COM&nbsp;MAIS&nbsp;SEGURANÇA&nbsp;E&nbsp;TRANQUILIDADE.</p><p>FAÇA&nbsp;SEU&nbsp;ORÇAMENTO&nbsp;PELO&nbsp;TELEFONE&nbsp;62&nbsp;3622-7810.</p><p></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">TEXTO2:</span></p><p>QUER&nbsp;DIRIGIR&nbsp;COM&nbsp;MAIS&nbsp;SEGURANÇA&nbsp;E&nbsp;TRANQUILIDADE?</p><p>PROTEJA&nbsp;SEU&nbsp;VEÍCULO&nbsp;COM&nbsp;A&nbsp;APROVANA&nbsp;PROTEÇÃO&nbsp;VEICULAR.</p><p>FAÇA&nbsp;AGORA&nbsp;SEU&nbsp;ORÇAMENTO&nbsp;PELO&nbsp;TELEFONE&nbsp;62&nbsp;3622-7810.</p><p></p><p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">SUPERGASBRAS&nbsp;2X</strong></p><p><span style=\"background-color: white; color: black;\">SE&nbsp;TEM&nbsp;COMIDA&nbsp;BOA,&nbsp;TEM&nbsp;GÁS.</span></p><p><span style=\"background-color: white; color: black;\">&nbsp;E&nbsp;SE&nbsp;TEM&nbsp;GÁS,&nbsp;VAI&nbsp;DE&nbsp;SUPERGASBRAS.</span></p><p><span style=\"background-color: white; color: black;\">PEÇA&nbsp;SEU&nbsp;DOURADINHO&nbsp;PELO&nbsp;APP&nbsp;PEDIR&nbsp;GÁS,&nbsp;DA&nbsp;SUPERGASBRAS.</span></p><p></p>",
+        "data_inicio": "2026-01-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:58.12722+00:00",
+        "programa_ids": [
+          "5f58a3d1-5b00-4ab5-8252-69c347ac9a74"
+        ]
+      },
+      {
+        "id": "b4eab64f-a075-4400-af7a-90b0767eef4a",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "programa_id": "e6cea94b-4bc5-4f95-a8f2-d9f6e9fae44a",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/testemunhais/1772016793962.png",
+        "texto": "<p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">OPYT&nbsp;INTERNET&nbsp;2X</strong></p><p class=\"ql-align-justify\"><span style=\"color: black; background-color: white;\">COM&nbsp;A&nbsp;OPYT&nbsp;INTERNET,&nbsp;SUA&nbsp;CONEXÃO&nbsp;DEIXA&nbsp;DE&nbsp;SER&nbsp;UM&nbsp;PROBLEMA&nbsp;E&nbsp;PASSA&nbsp;A&nbsp;SER&nbsp;SOLUÇÃO.&nbsp;ASSINE&nbsp;AGORA,&nbsp;62&nbsp;4013.3030.&nbsp;&nbsp;A&nbsp;OPYT&nbsp;SEMPRE&nbsp;CONECTA.</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">EISEN&nbsp;(AISEN)&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">EISEN&nbsp;(AISEN),&nbsp;PREMIADA&nbsp;EM&nbsp;TODOS&nbsp;OS&nbsp;ESTILOS.&nbsp;VOCÊ&nbsp;MERECE&nbsp;UMA&nbsp;EISEN&nbsp;(AISEN)!</span></p>",
+        "data_inicio": "2026-01-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:58.12722+00:00",
+        "programa_ids": [
+          "e6cea94b-4bc5-4f95-a8f2-d9f6e9fae44a"
+        ]
+      },
+      {
+        "id": "dc1b243d-18dd-4b7c-859c-8026a238e2e3",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "programa_id": "c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/testemunhais/1775571304006.webp",
+        "texto": "<p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">FLASHMED&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">FLASHMED&nbsp;UTI&nbsp;MÓVEL&nbsp;–&nbsp;ATENDIMENTO&nbsp;24&nbsp;HORAS&nbsp;EM&nbsp;SERVIÇOS&nbsp;DE&nbsp;URGÊNCIA&nbsp;E&nbsp;EMERGÊNCIA</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">HONDA&nbsp;HAIKAR&nbsp;2X</strong></p><p><strong>GARANTA&nbsp;SEU&nbsp;HONDA&nbsp;0KM&nbsp;NA&nbsp;HAIKAR!</strong></p><p>A&nbsp;MELHOR&nbsp;NEGOCIAÇÃO&nbsp;DO&nbsp;BRASIL&nbsp;É&nbsp;NA&nbsp;HAIKAR.</p><p>PASSE&nbsp;NA&nbsp;HAIKAR&nbsp;DA&nbsp;AVENIDA&nbsp;85,&nbsp;OU&nbsp;NA&nbsp;LOJA&nbsp;DA&nbsp;AVENIDA&nbsp;RIO&nbsp;VERDE&nbsp;E&nbsp;AINDA&nbsp;TEM&nbsp;NO&nbsp;SETOR&nbsp;FAIÇALVILLE.</p><p>APROVEITE!</p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">SHOPPING&nbsp;DOS&nbsp;LEDS&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">MÊS&nbsp;DO&nbsp;CLIENTE&nbsp;SHOPPING&nbsp;DOS&nbsp;LEDS!&nbsp;DESCONTOS&nbsp;ESPECIAIS&nbsp;EM&nbsp;LUMINÁRIAS,&nbsp;ARANDELAS&nbsp;E&nbsp;PLAFONS,&nbsp;À&nbsp;PRONTA&nbsp;ENTREGA.&nbsp;LIGUE:&nbsp;(62)&nbsp;3922-8600.&nbsp;SHOPPING&nbsp;DOS&nbsp;LEDS,&nbsp;10&nbsp;ANOS!</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">NOBREAK&nbsp;E&nbsp;CIA&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">TEXTO&nbsp;1:</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">NOBREAKCIA&nbsp;-&nbsp;NOBREAK&#39;S&nbsp;PARA&nbsp;RESIDÊNCIA&nbsp;E&nbsp;COMÉRCIO,&nbsp;VENHA&nbsp;PARA&nbsp;NOBREAKCIA&nbsp;-&nbsp;WWW.NBCIA.COM.BR</span></p><p></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">TEXTO&nbsp;2:</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">NOBREAKCIA&nbsp;-&nbsp;COMÉRCIO&nbsp;E&nbsp;LOCAÇÃO&nbsp;DE&nbsp;NOBREAKS&nbsp;E&nbsp;ESTABILIZADORES,&nbsp;VENHA&nbsp;PARA&nbsp;NOBREAKCIA&nbsp;-&nbsp;WWW.NBCIA.COM.BR</span></p><p></p><p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">BRG&nbsp;BRASIL&nbsp;GERADORES&nbsp;(2X)</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">BRG&nbsp;BRASIL&nbsp;GERADORES</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">REFERÊNCIA&nbsp;NA&nbsp;FABRICAÇÃO&nbsp;DE&nbsp;GERADORES&nbsp;DE&nbsp;ALTO&nbsp;PADRÃO</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">BRGGERADORES.COM.BR</span></p><p></p><p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">TERMOFORTE&nbsp;2X</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">PRECISA&nbsp;DE&nbsp;CÂMARA&nbsp;FRIA?&nbsp;NÃO&nbsp;FECHE&nbsp;NEGÓCIO&nbsp;ANTES&nbsp;DA&nbsp;SUPERAGOS!&nbsp;DIAS&nbsp;22,&nbsp;23&nbsp;E&nbsp;24&nbsp;DE&nbsp;SETEMBRO,&nbsp;</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">A&nbsp;TERMOFORTE&nbsp;ESTARÁ&nbsp;NO&nbsp;CENTRO&nbsp;DE&nbsp;CONVENÇÕES&nbsp;DE&nbsp;GOIÂNIA,&nbsp;COM&nbsp;OFERTAS&nbsp;EM&nbsp;CÂMARAS&nbsp;FRIAS,&nbsp;</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">TELHAS&nbsp;TÉRMICAS&nbsp;E&nbsp;PAINÉIS&nbsp;TERMICOS&nbsp;E&nbsp;TUDO&nbsp;PARA&nbsp;CONSTRUÇÃO&nbsp;CIVIL.&nbsp;TERMOFORTE.</span></p>",
+        "data_inicio": "2026-08-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:58.12722+00:00",
+        "programa_ids": [
+          "c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2"
+        ]
+      },
+      {
+        "id": "b59da300-d764-4ac8-9862-e25778359532",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "programa_id": "fbd7e740-99f5-4d2d-bd86-4f7534de44a0",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/testemunhais/1776186315996.webp",
+        "texto": "<p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">BC&nbsp;ENERGIA&nbsp;1X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">COM&nbsp;A&nbsp;BC&nbsp;ENERGIA,&nbsp;VOCÊ&nbsp;ECONOMIZA&nbsp;ATÉ&nbsp;28%&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">NO&nbsp;PLANO&nbsp;RESIDENCIAL&nbsp;E&nbsp;ATÉ&nbsp;35%&nbsp;NO&nbsp;EMPRESARIAL,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">SEM&nbsp;INSTALAÇÃO.&nbsp;ACESSE</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">GRUPOBCENERGIA.COM.BR!</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">CASA&nbsp;DO&nbsp;PICA&nbsp;PAU&nbsp;1x&nbsp;</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">MIX&nbsp;DA&nbsp;CASA.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">APROVEITE&nbsp;EM&nbsp;TODAS&nbsp;AS&nbsp;LOJAS&nbsp;DA&nbsp;CASA&nbsp;DO&nbsp;PICA-PAU,&nbsp;PELO&nbsp;0800&nbsp;321&nbsp;4321&nbsp;OU</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">PELO&nbsp;SITE:&nbsp;CASADOPICA-PAU.COM.BR</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">TERMOFORTE&nbsp;1X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">PRECISA&nbsp;DE&nbsp;CÂMARA&nbsp;FRIA?&nbsp;NÃO&nbsp;FECHE&nbsp;NEGÓCIO&nbsp;ANTES&nbsp;DA&nbsp;SUPERAGOS!&nbsp;DIAS&nbsp;22,&nbsp;23&nbsp;E&nbsp;24&nbsp;DE&nbsp;SETEMBRO,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">A&nbsp;TERMOFORTE&nbsp;ESTARÁ&nbsp;NO&nbsp;CENTRO&nbsp;DE&nbsp;CONVENÇÕES&nbsp;DE&nbsp;GOIÂNIA,&nbsp;COM&nbsp;OFERTAS&nbsp;EM&nbsp;CÂMARAS&nbsp;FRIAS,&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">TELHAS&nbsp;TÉRMICAS&nbsp;E&nbsp;PAINÉIS&nbsp;TERMICOS&nbsp;E&nbsp;TUDO&nbsp;PARA&nbsp;CONSTRUÇÃO&nbsp;CIVIL.&nbsp;TERMOFORTE.</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">SICOOB&nbsp;1X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">SEU&nbsp;FUTURO&nbsp;COMEÇA&nbsp;AGORA.&nbsp;INVISTA&nbsp;NA&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">PREVIDÊNCIA&nbsp;DO&nbsp;SICOOB&nbsp;E&nbsp;TRANSFORME&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">PLANOS&nbsp;EM&nbsp;CONQUISTAS&nbsp;COM&nbsp;SEGURANÇA&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">E&nbsp;OS&nbsp;BENEFÍCIOS&nbsp;DO&nbsp;COOPERATIVISMO.</span></p>",
+        "data_inicio": "2026-01-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-04-14T17:05:16.026811+00:00",
+        "programa_ids": [
+          "fbd7e740-99f5-4d2d-bd86-4f7534de44a0"
+        ]
+      },
+      {
+        "id": "a148aa9c-5888-4197-948d-bcab87654e76",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "programa_id": "b75801f1-b88a-4a6f-abb6-c5ccfaf42d08",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/testemunhais/1776186965307.webp",
+        "texto": "<p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">TERMOFORTE&nbsp;1X</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">PRECISA&nbsp;DE&nbsp;CÂMARA&nbsp;FRIA?&nbsp;NÃO&nbsp;FECHE&nbsp;NEGÓCIO&nbsp;ANTES&nbsp;DA&nbsp;SUPERAGOS!&nbsp;DIAS&nbsp;22,&nbsp;23&nbsp;E&nbsp;24&nbsp;DE&nbsp;SETEMBRO,&nbsp;</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">A&nbsp;TERMOFORTE&nbsp;ESTARÁ&nbsp;NO&nbsp;CENTRO&nbsp;DE&nbsp;CONVENÇÕES&nbsp;DE&nbsp;GOIÂNIA,&nbsp;COM&nbsp;OFERTAS&nbsp;EM&nbsp;CÂMARAS&nbsp;FRIAS,&nbsp;</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">TELHAS&nbsp;TÉRMICAS&nbsp;E&nbsp;PAINÉIS&nbsp;TERMICOS&nbsp;E&nbsp;TUDO&nbsp;PARA&nbsp;CONSTRUÇÃO&nbsp;CIVIL.&nbsp;TERMOFORTE.</span></p><p></p><p></p><p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">CASA&nbsp;DO&nbsp;PICA&nbsp;PAU&nbsp;1x&nbsp;</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">MIX&nbsp;DA&nbsp;CASA.</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">APROVEITE&nbsp;EM&nbsp;TODAS&nbsp;AS&nbsp;LOJAS&nbsp;DA&nbsp;CASA&nbsp;DO&nbsp;PICA-PAU,&nbsp;PELO&nbsp;0800&nbsp;321&nbsp;4321&nbsp;OU</span></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">PELO&nbsp;SITE:&nbsp;CASADOPICA-PAU.COM.BR</span></p><p></p><p></p><p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">BC&nbsp;ENERGIA&nbsp;1X&nbsp;</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">COM&nbsp;A&nbsp;BC&nbsp;ENERGIA,&nbsp;VOCÊ&nbsp;ECONOMIZA&nbsp;ATÉ&nbsp;25%&nbsp;NA&nbsp;SUA&nbsp;CONTA&nbsp;DE&nbsp;LUZ,&nbsp;SEM&nbsp;INSTALAÇÃO.&nbsp;ACESSE&nbsp;</span><u style=\"background-color: transparent; color: rgb(17, 85, 204);\"><a href=\"http://grupobcenergia.com.br\" rel=\"noopener noreferrer\" target=\"_blank\">GRUPOBCENERGIA.COM.BR</a></u><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">!</span></p><p></p><p></p><p><strong style=\"background-color: transparent; color: rgb(0, 0, 0);\">&nbsp;ITAIQUARA&nbsp;ALIMENTOS&nbsp;1X</strong></p><p><span style=\"background-color: transparent; color: rgb(0, 0, 0);\">&nbsp;ITAIQUARA&nbsp;ALIMENTOS.&nbsp;MAIS&nbsp;QUALIDADE,&nbsp;MAIS&nbsp;EFICIÊNCIA&nbsp;E&nbsp;MAIS&nbsp;RESULTADO&nbsp;PARA&nbsp;A&nbsp;SUA&nbsp;PRODUÇÃO.</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">SUNRISE&nbsp;PARK&nbsp;RESIDENCE&nbsp;1X</strong></p><p>OPÇÃO&nbsp;1:&nbsp;&nbsp;O&nbsp;QUE&nbsp;VEM&nbsp;AÍ&nbsp;NO&nbsp;GOIÂNIA&nbsp;2&nbsp;VAI&nbsp;MUDAR&nbsp;SEU&nbsp;JEITO&nbsp;DE&nbsp;VIVER.&nbsp;ACESSE&nbsp;UMNOVOPADRAODEVIVER.COM.BR.&nbsp;</p><p></p><p>OPÇÃO&nbsp;2:&nbsp;&nbsp;O&nbsp;GOIÂNIA&nbsp;2&nbsp;ESTÁ&nbsp;PRESTES&nbsp;A&nbsp;GANHAR&nbsp;UM&nbsp;NOVO&nbsp;PADRÃO&nbsp;DE&nbsp;VIVER.&nbsp;DESCUBRA&nbsp;EM&nbsp;UMNOVOPADRAODEVIVER.COM.BR.&nbsp;</p><p></p><p>OPÇÃO&nbsp;3:&nbsp;&nbsp;UM&nbsp;NOVO&nbsp;JEITO&nbsp;DE&nbsp;VIVER&nbsp;ESTÁ&nbsp;CHEGANDO&nbsp;AO&nbsp;GOIÂNIA&nbsp;2.&nbsp;CONHEÇA&nbsp;ESSA&nbsp;NOVIDADE&nbsp;EM&nbsp;UMNOVOPADRAODEVIVER.COM.BR.</p><p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>",
+        "data_inicio": "2026-08-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-04-14T17:05:59.764319+00:00",
+        "programa_ids": [
+          "b75801f1-b88a-4a6f-abb6-c5ccfaf42d08"
+        ]
+      },
+      {
+        "id": "51251964-bc69-4785-acbd-0ba4df17eaf3",
+        "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+        "programa_id": "6ce84778-447b-4554-8384-bbdbd7a9ec3c",
+        "imagem_url": "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/testemunhais/1772016691506.png",
+        "texto": "<p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">HOTEL&nbsp;LIGUORI&nbsp;2X</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">LIGUORI&nbsp;HOTEL&nbsp;OFERECE&nbsp;ACOMODAÇÕES&nbsp;COM&nbsp;WI-FI&nbsp;GRATUITO&nbsp;E&nbsp;ESTACIONAMENTO&nbsp;PRIVATIVO,&nbsp;CAFÉ&nbsp;DA&nbsp;MANHÃ,&nbsp;LANCHES,&nbsp;CHÁS.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">*O&nbsp;RESTAURANTE&nbsp;COM&nbsp;FUNCIONAMENTO&nbsp;DE&nbsp;SEGUNDA&nbsp;A&nbsp;SEXTA-FEIRA&nbsp;PARA&nbsp;O&nbsp;ALMOÇO.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">AGENDE&nbsp;UMA&nbsp;VISITA.&nbsp;&nbsp;&nbsp;HOTEL&nbsp;LIGUORI</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">62&nbsp;3506-9898</span></p><p></p><p></p><p><strong style=\"color: rgb(0, 0, 0); background-color: transparent;\">RESIDENCIAL&nbsp;POMAR&nbsp;2X&nbsp;</strong></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">SE&nbsp;VOCÊ&nbsp;ESTÁ&nbsp;PRODURANDO&nbsp;UMA&nbsp;CASA&nbsp;PARA&nbsp;MORAR,&nbsp;CONHEÇA&nbsp;O&nbsp;RESINDENCIAL&nbsp;POMAR.&nbsp;</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">SÃO&nbsp;CASAS&nbsp;COM&nbsp;2&nbsp;OU&nbsp;3&nbsp;QUARTOS,&nbsp;SUÍTE&nbsp;E&nbsp;QUINTAL&nbsp;PRIVATIVO.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">O&nbsp;RESIDENCIAL&nbsp;POMAR,&nbsp;FICA&nbsp;NA&nbsp;GO&nbsp;070.</span></p><p><span style=\"color: rgb(0, 0, 0); background-color: transparent;\">ENTÃO&nbsp;LIGUE&nbsp;AGORA&nbsp;62&nbsp;3605-0000&nbsp;&nbsp;</span></p>",
+        "data_inicio": "2026-08-01",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-03-11T20:34:58.12722+00:00",
+        "programa_ids": [
+          "6ce84778-447b-4554-8384-bbdbd7a9ec3c"
+        ]
+      },
+      {
+        "id": "c193f155-84c6-4055-b081-b349878797e7",
+        "user_id": "66337743-4e4f-4950-b58f-750b0c76861e",
+        "programa_id": "c20d65e6-f087-42b4-add3-9cf29319618e",
+        "imagem_url": "",
+        "texto": "TEXTO",
+        "data_inicio": "2026-07-29",
+        "data_fim": "2026-12-31",
+        "created_at": "2026-07-29T15:45:26.841658+00:00",
+        "programa_ids": []
+      }
+    ],
     "transcricoes_streaming": [],
     "tv_pairing_codes": [],
     "tv_pairing_events": [],

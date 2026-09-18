@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
 import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check, Bold, Italic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -149,6 +150,42 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       }
     } catch (e) {
       console.warn("Error loading promocoes from Supabase:", e);
+    }
+
+    if (itemsList.length === 0) {
+      try {
+        const targetSlugOrId = ownerId || "positivafm";
+        const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
+          body: { slug: targetSlugOrId }
+        });
+        if (edgeData?.promocoes?.length > 0) {
+          itemsList = edgeData.promocoes.map((p: any) => ({
+            ...p,
+            nome: p.nome || "",
+            texto: p.texto || "",
+            oferecimento: p.oferecimento || "",
+            imagem_url: p.imagem_url || "",
+            banner_l_url: p.banner_l_url || "",
+          })) as Promocao[];
+        }
+      } catch {}
+    }
+
+    if (itemsList.length === 0) {
+      const snapPromos = getSnapshotTable("promocoes");
+      const filtered = snapPromos.filter((p: any) =>
+        !ownerId || p.user_id === ownerId || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+      );
+      if (filtered.length > 0) {
+        itemsList = filtered.map((p: any) => ({
+          ...p,
+          nome: p.nome || "",
+          texto: p.texto || "",
+          oferecimento: p.oferecimento || "",
+          imagem_url: p.imagem_url || "",
+          banner_l_url: p.banner_l_url || "",
+        })) as Promocao[];
+      }
     }
 
     const localList = getStoredPromos(ownerId);

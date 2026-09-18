@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
 import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar, Check, Bold, Italic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -168,6 +169,47 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       }
     } catch (e) {
       console.warn("Error loading testemunhais/programas:", e);
+    }
+
+    if (tList.length === 0 || pList.length === 0) {
+      try {
+        const targetSlugOrId = ownerId || "positivafm";
+        const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
+          body: { slug: targetSlugOrId }
+        });
+        if (tList.length === 0 && edgeData?.testemunhais?.length > 0) {
+          tList = edgeData.testemunhais.map((t: any) => ({
+            ...t,
+            texto: t.texto || "",
+          })) as Testemunhal[];
+        }
+        if (pList.length === 0 && edgeData?.programas?.length > 0) {
+          pList = edgeData.programas.map((p: any) => ({ id: p.id, nome: p.nome }));
+        }
+      } catch {}
+    }
+
+    if (tList.length === 0) {
+      const snapTests = getSnapshotTable("testemunhais");
+      const filtered = snapTests.filter((t: any) =>
+        !ownerId || t.user_id === ownerId || t.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+      );
+      if (filtered.length > 0) {
+        tList = filtered.map((t: any) => ({
+          ...t,
+          texto: t.texto || "",
+        })) as Testemunhal[];
+      }
+    }
+
+    if (pList.length === 0) {
+      const snapProgs = getSnapshotTable("programas");
+      const filtered = snapProgs.filter((p: any) =>
+        !ownerId || p.user_id === ownerId || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+      );
+      if (filtered.length > 0) {
+        pList = filtered.map((p: any) => ({ id: p.id, nome: p.nome }));
+      }
     }
 
     // Merge Supabase items with local storage items
@@ -512,7 +554,8 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                       <div className="flex flex-wrap gap-1">
                         {getLinkedProgramIds(item).length > 0 ? (
                           getLinkedProgramIds(item).map(pid => {
-                            const prog = programas.find(p => p.id === pid || String(p.id).toLowerCase() === String(pid).toLowerCase());
+                            const prog = programas.find(p => p.id === pid || String(p.id).toLowerCase() === String(pid).toLowerCase())
+                              || getSnapshotTable("programas").find((p: any) => p.id === pid || String(p.id).toLowerCase() === String(pid).toLowerCase());
                             return (
                               <span key={pid} className="bg-[#0055ff]/10 text-[#0055ff] border border-[#0055ff]/20 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
                                 {prog ? prog.nome : pid}
