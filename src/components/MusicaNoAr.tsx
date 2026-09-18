@@ -731,6 +731,40 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       return;
     }
 
+    const incomingIsBreak = !!(data && (
+      (data.titulo || "").toUpperCase().trim() === "BREAK" ||
+      (data.artista || "").toUpperCase().trim() === "BREAK" ||
+      (data.titulo || "").toLowerCase().trim() === "intervalo" ||
+      (data.artista || "").toLowerCase().trim() === "intervalo" ||
+      (data.titulo || "").toLowerCase().trim() === "ebs curtas" ||
+      (data.artista || "").toLowerCase().trim() === "ebs curtas" ||
+      (data.titulo || "").toLowerCase().trim() === "commercial break" ||
+      (data.artista || "").toLowerCase().trim() === "commercial break"
+    ));
+    const previousIsBreak = !!(prev && (
+      (prev.titulo || "").toUpperCase().trim() === "BREAK" ||
+      (prev.artista || "").toUpperCase().trim() === "BREAK" ||
+      (prev.titulo || "").toLowerCase().trim() === "intervalo" ||
+      (prev.artista || "").toLowerCase().trim() === "intervalo" ||
+      (prev.titulo || "").toLowerCase().trim() === "ebs curtas" ||
+      (prev.artista || "").toLowerCase().trim() === "ebs curtas" ||
+      (prev.titulo || "").toLowerCase().trim() === "commercial break" ||
+      (prev.artista || "").toLowerCase().trim() === "commercial break"
+    ));
+
+    const startStr = localStorage.getItem(MUSIC_START_KEY);
+    const prevStart = startStr ? parseInt(startStr, 10) : 0;
+    const prevAgeMs = prevStart > 0 ? Date.now() - prevStart : Infinity;
+
+    // Anti ping-pong: se temos uma faixa real recente (< 4 min ou duração da música),
+    // ignore BREAK/Intervalo transitório para que a música continue salva e visível.
+    if (incomingIsBreak && previousHasReal && !previousIsBreak) {
+      const maxTrackAge = Math.max(240_000, ((prev?.duracao || 180) * 1000));
+      if (prevAgeMs < maxTrackAge) {
+        return;
+      }
+    }
+
     if (!data.capa) {
       const cacheKey = `${data.artista}-${data.titulo}`;
       if (coverCacheRef.current[cacheKey]) {
@@ -986,6 +1020,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
     if (!isOnlineSelected) return;
+    // Se a fonte local estiver ativa, o arquivo local tem soberania absoluta
+    if ((isLocalSourceHealthy() || hasValidLocalSource) && (localMonitoring || isLocalSelected)) return;
     const trimmed = xmlUrl.trim();
     if (!trimmed) return;
     if (!isValidXmlUrl(trimmed)) return;
@@ -1014,7 +1050,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         // the on-air track so the UI doesn't stay stuck on the previous one.
         if (isStoppedXmlPayload(data.content as string)) {
           onlineStoppedRef.current = true;
-          if (!isLocalSourceHealthy()) {
+          if (!isLocalSourceHealthy() && !hasValidLocalSource) {
             await clearMusic("online");
           }
         }
@@ -1023,7 +1059,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       onlineStoppedRef.current = false;
       // Only defer to local source when online is NOT stopped
-      if (isLocalSourceHealthy()) return;
+      if (isLocalSourceHealthy() || hasValidLocalSource) return;
       await processMusic(parsed, "online", data.content);
     } catch (err: any) {
       onlineFailCountRef.current++;
@@ -1031,12 +1067,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
       }
     }
-  }, [isLocalSourceHealthy, isOnlineSelected, xmlUrl, processMusic, clearMusic]);
+  }, [isLocalSourceHealthy, hasValidLocalSource, localMonitoring, isLocalSelected, xmlUrl, processMusic, clearMusic]);
 
 
   // Sync component state from localStorage (useGlobalMusicSync may update it)
   useEffect(() => {
     const syncFromStorage = () => {
+      // Se este navegador estiver monitorando ativamente um arquivo local, NÃO permitir que mudanças externas de localStorage alterem a música
+      if ((isLocalSourceHealthy() || hasValidLocalSource) && localMonitoring) return;
       const raw = localStorage.getItem(MUSIC_DATA_KEY);
       const startStr = localStorage.getItem(MUSIC_START_KEY);
       if (!raw || !startStr) return;
@@ -1059,7 +1097,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
     const interval = setInterval(syncFromStorage, 2000);
     return () => clearInterval(interval);
-  }, [MUSIC_DATA_KEY, MUSIC_START_KEY]);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalSourceHealthy, hasValidLocalSource, localMonitoring]);
 
   useEffect(() => {
     if (!isOnlineSelected || !hasValidOnlineUrl) return;
@@ -1168,22 +1206,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setLocalError(null);
       setLocalActivating(false);
       setLocalLastReadAt(Date.now());
+      try {
+        localStorage.setItem("masterview_local_reader_active", Date.now().toString());
+      } catch {}
 
       const parsed = parseXmlString(text);
       if (text === localFileContentRef.current) {
-        if (parsed) {
-          try {
-            const currentRaw = localStorage.getItem(MUSIC_DATA_KEY);
-            const current = currentRaw ? JSON.parse(currentRaw) : null;
-            if (!current || current.titulo !== parsed.titulo || current.artista !== parsed.artista) {
-              processMusicRef.current(parsed, "pasta", text, file.lastModified);
-            }
-          } catch {
-            processMusicRef.current(parsed, "pasta", text, file.lastModified);
-          }
-
-        }
-        if (Date.now() - lastStorageSyncAttemptRef.current > 5_000) {
+        // O conteúdo do arquivo local NÃO mudou no disco!
+        // A última leitura permanece 100% salva e firme sem alternância de registros.
+        if (Date.now() - lastStorageSyncAttemptRef.current > 10_000) {
           syncToStorage(text);
         }
 
@@ -1468,7 +1499,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
     const syncFromDatabase = async () => {
       // Se este navegador estiver monitorando ativamente um arquivo local saudável, preservamos a fonte local
-      if (isLocalSourceHealthy() && localMonitoring) return;
+      if ((isLocalSourceHealthy() || hasValidLocalSource) && localMonitoring) return;
 
       const targetIds = candidateUserIds.length > 0 ? candidateUserIds : (dataUserId ? [dataUserId] : []);
 

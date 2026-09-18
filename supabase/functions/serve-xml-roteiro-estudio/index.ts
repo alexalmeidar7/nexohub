@@ -26,11 +26,16 @@ serve(async (req) => {
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Carrega candidatos: roteiros deste user
+    const userIds = [userId];
+    if (userId !== "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5") {
+      userIds.push("29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5");
+    }
+
+    // Carrega candidatos: roteiros deste user ou cadastrados pelo admin
     const { data: allUserRoteiros } = await sb
       .from("roteiros")
       .select("programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
-      .eq("user_id", userId)
+      .in("user_id", userIds)
       .order("updated_at", { ascending: false })
       .limit(50);
 

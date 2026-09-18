@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown } from "lucide-react";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Participante {
@@ -620,6 +621,31 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           status: "feito",
         });
         if (error) throw error;
+      }
+
+      // Sync immediately to /api/sync-xml-roteiro
+      try {
+        const clientAcc = findClientAccountById(user.id) || (user.email ? findClientAccountByEmail(user.email) : null);
+        const targetSlug = clientAcc?.slug || "positivafm";
+        await fetch("/api/sync-xml-roteiro", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug: targetSlug,
+            userId: user.id,
+            estudio,
+            programaNome,
+            xml: xmlString,
+            roteiro: {
+              id: editingId || `rot_${Date.now()}`,
+              programa_nome: programaNome,
+              estudio,
+              data_programa: new Date().toISOString().split("T")[0],
+            },
+          }),
+        });
+      } catch (syncErr) {
+        console.warn("[ProgramaExpressPopup] sync-xml-roteiro notice:", syncErr);
       }
 
       toast.success("Programa Express salvo com sucesso!");

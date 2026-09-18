@@ -190,6 +190,20 @@ const SLUG_MAP: Record<string, string> = {
   "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5": "alex",
 };
 
+const SLUG_TO_UID: Record<string, string> = {
+  positivafm: "d17e65af-e407-466f-9b60-b55c43399513",
+  positiva: "d17e65af-e407-466f-9b60-b55c43399513",
+  p: "d17e65af-e407-466f-9b60-b55c43399513",
+  interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+  interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+  transmissao: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+  jornal: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+  culturafm973: "66337743-4e4f-4950-b58f-750b0c76861e",
+  cultura: "66337743-4e4f-4950-b58f-750b0c76861e",
+  alex: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+  superadmin: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+};
+
 function normalizeSlug(slug: string): string {
   const clean = (slug || "").toLowerCase().trim();
   return SLUG_MAP[clean] || clean;
@@ -403,10 +417,14 @@ export function dynamicXmlPlugin(): Plugin {
             const rawSlug = matchRoteiro[1];
             const slug = normalizeSlug(rawSlug);
 
-            // 1. Check live sync store first
+            // 1. Check live sync store (ignore old mock data)
             const rotStore = readSyncData(roteirosFile);
             const rotList = rotStore[slug] || rotStore[rawSlug] || [];
-            if (rotList.length > 0 && rotList[0]?.xml) {
+            const isMockRoteiro = (xmlStr: string) =>
+              xmlStr.includes("Roteiro Atualizado com Sucesso no XML") ||
+              xmlStr.includes("rot_1789729269440");
+
+            if (rotList.length > 0 && rotList[0]?.xml && !isMockRoteiro(rotList[0].xml)) {
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
               res.setHeader("Access-Control-Allow-Origin", "*");
@@ -414,14 +432,46 @@ export function dynamicXmlPlugin(): Plugin {
               return;
             }
 
-            // 2. Check public/xml/[slug]/roteiro.xml
+            // 2. Try live fetch from Supabase edge function for the station
+            const stationUid = SLUG_TO_UID[slug] || SLUG_TO_UID[rawSlug] || (rawSlug.length > 20 ? rawSlug : "d17e65af-e407-466f-9b60-b55c43399513");
+            try {
+              const liveUrl = `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${stationUid}&estudio=Estudio%20FM`;
+              const remoteRes = await fetch(liveUrl, { signal: AbortSignal.timeout(3500) });
+              if (remoteRes.ok) {
+                const liveXml = await remoteRes.text();
+                if (liveXml.includes("<programaExpress>") && !liveXml.includes("<error>")) {
+                  writeStaticXml(slug, "roteiro.xml", liveXml);
+                  rotStore[slug] = [{ id: `live_${Date.now()}`, xml: liveXml, updated_at: new Date().toISOString() }];
+                  rotStore[rawSlug] = rotStore[slug];
+                  writeSyncData(roteirosFile, rotStore);
+
+                  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                  res.setHeader("Access-Control-Allow-Origin", "*");
+                  res.end(liveXml);
+                  return;
+                }
+              }
+            } catch {}
+
+            // 3. Check public/xml/[slug]/roteiro.xml
             const rPath = path.join(rootDir, "public", "xml", slug, "roteiro.xml");
             if (fs.existsSync(rPath)) {
               const rXml = fs.readFileSync(rPath, "utf-8");
+              if (!isMockRoteiro(rXml)) {
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(rXml);
+                return;
+              }
+            }
+
+            if (rotList.length > 0 && rotList[0]?.xml) {
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
               res.setHeader("Access-Control-Allow-Origin", "*");
-              res.end(rXml);
+              res.end(rotList[0].xml);
               return;
             }
           }

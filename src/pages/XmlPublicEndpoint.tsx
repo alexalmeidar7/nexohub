@@ -226,8 +226,44 @@ export default function XmlPublicEndpoint() {
         return;
       }
 
+      // Special dynamic handler for roteiro.xml
+      if (filename.includes("roteiro")) {
+        try {
+          const staticUrl = `/xml/${cleanSlug}/${filename}?t=${Date.now()}`;
+          const res = await fetch(staticUrl);
+          if (res.ok) {
+            const text = await res.text();
+            if (text.includes("<programaExpress>") && !text.includes("<error>")) {
+              if (isMounted) {
+                setXmlContent(text.trim());
+                setLoading(false);
+                return;
+              }
+            }
+          }
+        } catch {}
+
+        if (supabaseFallbackUrl) {
+          try {
+            const fbRes = await fetch(`${supabaseFallbackUrl}&t=${Date.now()}`);
+            if (fbRes.ok) {
+              const fbText = await fbRes.text();
+              if (fbText.includes("<programaExpress>") && !fbText.includes("<error>")) {
+                if (isMounted) {
+                  setXmlContent(fbText.trim());
+                  setLoading(false);
+                  return;
+                }
+              }
+            }
+          } catch {}
+          window.location.replace(supabaseFallbackUrl);
+          return;
+        }
+      }
+
       // 1. Try static file first
-      const staticUrl = `/xml/${cleanSlug}/${filename}`;
+      const staticUrl = `/xml/${cleanSlug}/${filename}?t=${Date.now()}`;
       const res = await fetch(staticUrl);
       if (res.ok) {
         const text = await res.text();
@@ -262,7 +298,7 @@ export default function XmlPublicEndpoint() {
 
     // Auto-refresh dynamic XML every 10 seconds to transition on schedule
     const interval = setInterval(() => {
-      if (isMounted && (filename.includes("enquete") || filename.includes("quiz") || filename.includes("geral"))) {
+      if (isMounted && (filename.includes("enquete") || filename.includes("quiz") || filename.includes("geral") || filename.includes("roteiro"))) {
         loadXml(isMounted);
       }
     }, 10000);

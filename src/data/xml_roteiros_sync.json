@@ -1,26 +1,12 @@
 {
   "positivafm": [
     {
-      "id": "rot_1789729269440",
-      "programa_nome": "Primeira Hora Positiva - Edicao Especial",
-      "estudio": "ESTÚDIO FM",
-      "data_programa": "2026-09-18",
-      "horario": "",
-      "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<programaExpress>\n  <programa>Primeira Hora Positiva - Edicao Especial</programa>\n  <estudio>ESTÚDIO FM</estudio>\n  <data>2026-09-18</data>\n  <horario>08:00</horario>\n  <hora>08:00</hora>\n  <participantes>\n    <item>\n      <nome>Locutor Teste Positiva</nome>\n      <cargo>Apresentador</cargo>\n      <instagram>@positivafm</instagram>\n    </item>\n  </participantes>\n  <bloco numero=\"1\">\n    <noticia ordem=\"1\">\n      <titulo>Roteiro Atualizado com Sucesso no XML</titulo>\n      <resumo>Informações sincronizadas em tempo real</resumo>\n      <escalada>false</escalada>\n    </noticia>\n  </bloco>\n</programaExpress>",
-      "updated_at": "2026-09-18T11:01:09.440Z"
+      "id": "live_1789735654913",
+      "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<programaExpress>\n  <programa>Primeira Hora Positiva</programa>\n  <estudio>Estudio FM</estudio>\n  <data>2026-04-16</data>\n  <participantes>\n    <item>\n      <nome>Alysson Lima</nome>\n      <cargo>Jornalista</cargo>\n      <instagram>@alyssonlima</instagram>\n    </item>\n    <item>\n      <nome>Jane Borges</nome>\n      <cargo>Jornalista</cargo>\n      <instagram>@janeborges</instagram>\n    </item>\n  </participantes>\n  <bloco numero=\"1\">\n    <noticia ordem=\"1\">\n      <titulo>Justiça marca audiência para adolescente bêbado que atropelou e matou casal em Goiânia</titulo>\n      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/foto-87-1789490047.webp</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"2\">\n      <titulo>Greve chega ao fim e administrativos da Educação voltam ao trabalho em Goiânia</titulo>\n      <imagem>https://ohoje.com/wp-content/uploads/2026/09/WhatsApp_Image_2020-12-18_at_11.51.24.webp</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"3\">\n      <titulo>Avanço de canal de umidade traz chuvas isoladas para Goiânia e outras regiões; confira previsão do tempo</titulo>\n      <imagem>https://cdn.diariodegoias.com.br/wp-content/uploads/1781145972/2024/12/Chuva-e-sol-em-Goias-scaled.jpg</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"4\">\n      <titulo>Goiânia cria cartão que pode bancar gás, luz, água e aluguel</titulo>\n      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/cartao-goiania-1789504266.webp</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"5\">\n      <titulo>Julgamento sobre futuro de Moraes pode ficar parado no STF até dezembro</titulo>\n      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/09/ministros-andre-mendonca-alexandre-de-moraes-dias-toffoli-plenario-stf.jpg?w=1200&amp;h=630&amp;crop=1</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"6\">\n      <titulo>CNT/MDA: Lula soma 47,3% contra 40% de Flávio Bolsonaro</titulo>\n      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/lula-e-flavio-1789502658.webp</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"7\">\n      <titulo>PRTB substitui Pablo Marçal e indica Leonardo Avalanche como candidato a presidente</titulo>\n      <imagem>https://uploads.maisgoias.com.br/2026/09/avalanche-1788982281.webp</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"8\">\n      <titulo>Sancionado, novo Move Brasil garante R$ 30 bilhões para motoristas e entregadores de app comprarem veículos próprios</titulo>\n      <imagem>https://cdn.diariodegoias.com.br/wp-content/uploads/2026/09/15115929/55529071195_c86e44e660_o-856x481.webp</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"9\">\n      <titulo>Fed e Copom decidem juros nesta quarta com apostas em rumos opostos</titulo>\n      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/06/ChatGPT-Image-16-de-jun.-de-2026-22_00_23.png?w=1200&amp;h=630&amp;crop=1</imagem>\n      <escalada>false</escalada>\n    </noticia>\n    <noticia ordem=\"10\">\n      <titulo>Saída temporária de presos em SP: 3ª &quot;saidinha&quot; de 2026 inicia</titulo>\n      <imagem>https://istoe.com.br/wp-content/uploads/2026/09/Saida-no-Complexo-Penitenciario-1-1200x630.png</imagem>\n      <escalada>false</escalada>\n    </noticia>\n  </bloco>\n</programaExpress>",
+      "updated_at": "2026-09-18T12:47:34.913Z"
     }
   ],
-  "d17e65af-e407-466f-9b60-b55c43399513": [
-    {
-      "id": "rot_1789729269440",
-      "programa_nome": "Primeira Hora Positiva - Edicao Especial",
-      "estudio": "ESTÚDIO FM",
-      "data_programa": "2026-09-18",
-      "horario": "",
-      "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<programaExpress>\n  <programa>Primeira Hora Positiva - Edicao Especial</programa>\n  <estudio>ESTÚDIO FM</estudio>\n  <data>2026-09-18</data>\n  <horario>08:00</horario>\n  <hora>08:00</hora>\n  <participantes>\n    <item>\n      <nome>Locutor Teste Positiva</nome>\n      <cargo>Apresentador</cargo>\n      <instagram>@positivafm</instagram>\n    </item>\n  </participantes>\n  <bloco numero=\"1\">\n    <noticia ordem=\"1\">\n      <titulo>Roteiro Atualizado com Sucesso no XML</titulo>\n      <resumo>Informações sincronizadas em tempo real</resumo>\n      <escalada>false</escalada>\n    </noticia>\n  </bloco>\n</programaExpress>",
-      "updated_at": "2026-09-18T11:01:09.440Z"
-    }
-  ],
+  "d17e65af-e407-466f-9b60-b55c43399513": [],
   "interativafm": [],
   "b2f70324-d086-4a5d-a407-cbc4acf98dce": [],
   "culturafm973": [],

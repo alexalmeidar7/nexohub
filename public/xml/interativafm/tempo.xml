@@ -3,13 +3,13 @@
   <cidade>Goiânia</cidade>
   <atual date="Agora">
     <cidade>Goiânia</cidade>
-    <temperatura>25ºC</temperatura>
-    <descricao>Céu limpo</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
+    <temperatura>32ºC</temperatura>
+    <descricao>Parcialmente limpo</descricao>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-1-d.png</icone_url>
     <minima>23ºC</minima>
     <maxima>34ºC</maxima>
-    <humidade>48%</humidade>
-    <precipitacao>8%</precipitacao>
+    <humidade>30%</humidade>
+    <precipitacao>15%</precipitacao>
   </atual>
   <amanha date="2026-09-19">
     <temperatura_minima>23ºC</temperatura_minima>
@@ -19,7 +19,7 @@
   </amanha>
   <dia date="2026-09-19">
     <cidade>Goiânia</cidade>
-    <temperatura>29ºC</temperatura>
+    <temperatura>28ºC</temperatura>
     <descricao>Céu limpo</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
     <minima>23ºC</minima>
@@ -32,19 +32,19 @@
     <temperatura>30ºC</temperatura>
     <descricao>Nublado</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
-    <minima>25ºC</minima>
+    <minima>24ºC</minima>
     <maxima>36ºC</maxima>
-    <humidade>42%</humidade>
-    <precipitacao>2%</precipitacao>
+    <humidade>43%</humidade>
+    <precipitacao>0%</precipitacao>
   </dia>
   <dia date="2026-09-21">
     <cidade>Goiânia</cidade>
     <temperatura>31ºC</temperatura>
     <descricao>Nublado</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
-    <minima>26ºC</minima>
+    <minima>25ºC</minima>
     <maxima>36ºC</maxima>
-    <humidade>41%</humidade>
+    <humidade>44%</humidade>
     <precipitacao>6%</precipitacao>
   </dia>
   <dia date="2026-09-22">
@@ -53,18 +53,18 @@
     <descricao>Nublado</descricao>
     <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
     <minima>25ºC</minima>
-    <maxima>38ºC</maxima>
-    <humidade>41%</humidade>
-    <precipitacao>13%</precipitacao>
+    <maxima>37ºC</maxima>
+    <humidade>46%</humidade>
+    <precipitacao>10%</precipitacao>
   </dia>
   <dia date="2026-09-23">
     <cidade>Goiânia</cidade>
-    <temperatura>29ºC</temperatura>
-    <descricao>Nublado</descricao>
-    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-3-d.png</icone_url>
-    <minima>26ºC</minima>
-    <maxima>32ºC</maxima>
-    <humidade>50%</humidade>
-    <precipitacao>51%</precipitacao>
+    <temperatura>28ºC</temperatura>
+    <descricao>Garoa leve</descricao>
+    <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-51-d.png</icone_url>
+    <minima>25ºC</minima>
+    <maxima>31ºC</maxima>
+    <humidade>54%</humidade>
+    <precipitacao>52%</precipitacao>
   </dia>
 </previsao>

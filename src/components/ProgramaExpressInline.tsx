@@ -1590,9 +1590,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
 
       if (!roteiroId) {
-        // Try insert with user.id (respecting RLS)
+        // Try insert with ownerId first (client station's ID) so public XML endpoints find it
         let insertRes = await supabase.from("roteiros").insert({
-          user_id: user.id,
+          user_id: ownerId,
           programa_nome: programaNome,
           estudio,
           titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
@@ -1610,7 +1610,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
         if (insertRes.error && ownerId !== user.id) {
           insertRes = await supabase.from("roteiros").insert({
-            user_id: ownerId,
+            user_id: user.id,
             programa_nome: programaNome,
             estudio,
             titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,

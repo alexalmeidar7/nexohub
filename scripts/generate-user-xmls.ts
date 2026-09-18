@@ -507,17 +507,22 @@ export async function generateAllUserXmls() {
       ]);
 
     const tempoContent = tempoRemote || generateFallbackTempo(st);
-    let roteiroContent = roteiroRemote || generateFallbackRoteiro(st);
-    try {
-      const rotSyncPath = resolve("src/data/xml_roteiros_sync.json");
-      if (existsSync(rotSyncPath)) {
-        const syncData = JSON.parse(readFileSync(rotSyncPath, "utf-8"));
-        const list = syncData[st.slug] || syncData[st.uid] || [];
-        if (list.length > 0 && list[0]?.xml) {
-          roteiroContent = list[0].xml;
+    let roteiroContent = roteiroRemote;
+    if (!roteiroContent) {
+      try {
+        const rotSyncPath = resolve("src/data/xml_roteiros_sync.json");
+        if (existsSync(rotSyncPath)) {
+          const syncData = JSON.parse(readFileSync(rotSyncPath, "utf-8"));
+          const list = syncData[st.slug] || syncData[st.uid] || [];
+          if (list.length > 0 && list[0]?.xml && !list[0].xml.includes("Roteiro Atualizado com Sucesso no XML")) {
+            roteiroContent = list[0].xml;
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
+    if (!roteiroContent) {
+      roteiroContent = generateFallbackRoteiro(st);
+    }
     const broadcastContent = broadcastRemote || generateFallbackBroadcast(st);
     const logosContent = logosRemote || generateFallbackLogos(st);
     const musicaContent = generateMusicaXml(st, broadcastRemote);

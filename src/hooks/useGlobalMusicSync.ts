@@ -271,7 +271,20 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       }
     };
 
+    const isLocalReaderActiveOnClient = () => {
+      try {
+        const ts = parseInt(localStorage.getItem("masterview_local_reader_active") || "0", 10);
+        return Date.now() - ts < 30_000;
+      } catch {
+        return false;
+      }
+    };
+
     const applyMusicData = (data: { titulo: string; artista: string; duracao: number; capa: string; horario?: string; fileModifiedAt?: number }) => {
+      if (isLocalReaderActiveOnClient()) {
+        // O leitor de arquivo local no disco está ativo nesta máquina — não interferir
+        return;
+      }
       const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
       const prev = prevRaw ? JSON.parse(prevRaw) : null;
       const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
@@ -467,6 +480,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         }));
 
         settingsFetchedRef.current = true;
+      }
+
+      // Se este navegador estiver monitorando ativamente um arquivo local (MusicaNoAr),
+      // o arquivo local é a autoridade absoluta. NÃO interferir com sync online, storage ou DB!
+      if (isLocalReaderActiveOnClient()) {
+        return;
       }
 
       const { url, mode, localFileName, localStoragePath } = cachedSettingsRef.current;
