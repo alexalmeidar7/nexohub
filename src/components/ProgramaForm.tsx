@@ -452,8 +452,8 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
               <X size={16} />
             </button>
             <div className="flex gap-5">
-              {detailProg.capa && (
-                <img src={detailProg.capa} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-2xl shrink-0" style={{ border: `2px solid ${CARD_BG}` }} />
+              {(detailProg.capa || detailProg.thumb) && (
+                <img src={detailProg.capa || detailProg.thumb} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-2xl shrink-0" style={{ border: `2px solid ${CARD_BG}` }} />
               )}
               <div className="space-y-2 flex-1 min-w-0">
                 <h2 className="text-xl font-extrabold pr-6" style={{ color: DARK }}>{detailProg.nome}</h2>
@@ -758,39 +758,70 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         console.warn("Error reading custom progs:", err);
       }
 
-      let combinedProgs = Array.isArray(pg) ? [...pg] : [];
-      if (combinedProgs.length === 0 && matchingCustomProgs.length === 0) {
-        if (isClient && stationKey && DEFAULT_STATION_DATA?.[stationKey]) {
-          const def = DEFAULT_STATION_DATA[stationKey];
-          (def.programas || []).forEach((p, idx) => {
-            combinedProgs.push({
-              id: `def_${stationKey.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
-              nome: p.nome || "Programa",
-              apresentadorId: "",
-              apresentadoresIds: [],
-              selo: "",
-              capa: "",
-              thumb: "",
-              diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
-              horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
-              horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
-              estudio: p.estudio || "Estúdio FM",
-              ativo: true,
-              variavel: false,
-              descricao: p.descricao || "",
-              dataVariavel: null,
-              classificacaoEtaria: "",
-              tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
-              cliente: acc?.nome || stationKey,
-            });
+      // Base da grade padrão da emissora (se for cliente)
+      const baseMap = new Map<string, Programa>();
+      if (isClient && stationKey && DEFAULT_STATION_DATA?.[stationKey]) {
+        const def = DEFAULT_STATION_DATA[stationKey];
+        (def.programas || []).forEach((p, idx) => {
+          const normName = (p.nome || "").trim().toUpperCase();
+          baseMap.set(normName, {
+            id: `def_${stationKey.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
+            nome: p.nome || "Programa",
+            apresentadorId: p.apresentador_id || "",
+            apresentadoresIds: p.apresentadores_ids || (p.apresentador_id ? [p.apresentador_id] : []),
+            selo: p.selo || "",
+            capa: p.capa || "",
+            thumb: p.thumb || "",
+            diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+            horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
+            horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
+            estudio: p.estudio || "Estúdio FM",
+            ativo: true,
+            variavel: false,
+            descricao: p.descricao || "",
+            dataVariavel: null,
+            classificacaoEtaria: "",
+            tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
+            cliente: acc?.nome || stationKey,
           });
-        }
-      } else {
-        const existingIds = new Set(combinedProgs.map(p => p.id));
-        matchingCustomProgs.forEach(p => {
-          if (!existingIds.has(p.id)) combinedProgs.push(p);
         });
       }
+
+      // Sobrepõe com programas customizados do localStorage
+      matchingCustomProgs.forEach(p => {
+        const normName = (p.nome || "").trim().toUpperCase();
+        if (normName && baseMap.has(normName)) {
+          const existing = baseMap.get(normName)!;
+          baseMap.set(normName, {
+            ...existing,
+            ...p,
+            capa: p.capa !== undefined && p.capa !== "" ? p.capa : existing.capa,
+            thumb: p.thumb !== undefined && p.thumb !== "" ? p.thumb : existing.thumb,
+            selo: p.selo || existing.selo,
+          });
+        } else {
+          baseMap.set(p.id, p);
+        }
+      });
+
+      // Sobrepõe com registros reais do banco Supabase
+      (Array.isArray(pg) ? pg : []).forEach(p => {
+        const normName = (p.nome || "").trim().toUpperCase();
+        if (normName && baseMap.has(normName)) {
+          const existing = baseMap.get(normName)!;
+          baseMap.set(normName, {
+            ...existing,
+            ...p,
+            capa: p.capa !== undefined && p.capa !== "" ? p.capa : existing.capa,
+            thumb: p.thumb !== undefined && p.thumb !== "" ? p.thumb : existing.thumb,
+            selo: p.selo || existing.selo,
+          });
+        } else {
+          baseMap.set(p.id, p);
+        }
+      });
+
+      let combinedProgs = Array.from(baseMap.values());
 
       // FILTRAGEM ESTRITA: garante que programas de outras emissoras NUNCA apareçam
       if (isClient && stationKey) {
@@ -989,18 +1020,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     setNome(""); setApresentadorId(""); setApresentadoresIds([]); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setAgendamentoVariavel("data"); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
   };
 
-  // Helper: upload images to storage and return URLs
-  const uploadImages = async (programId: string): Promise<{ thumb: string; capa: string }> => {
-    const [thumbUrl, capaUrl] = await Promise.all([
-      thumb ? uploadProgramImage(thumb, user!.id, programId, "thumb") : Promise.resolve(""),
-      capa ? uploadProgramImage(capa, user!.id, programId, "capa") : Promise.resolve(""),
-    ]);
-    // If any were converted from base64, update the DB record with the URL
-    if ((thumbUrl && thumbUrl !== thumb) || (capaUrl && capaUrl !== capa)) {
-      await supabase.from("programas").update({ thumb: thumbUrl, capa: capaUrl } as any).eq("id", programId);
-    }
-    return { thumb: thumbUrl, capa: capaUrl };
-  };
+  const isUuid = (val?: string | null) => Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
 
   const handleAdd = async () => {
     const nomeAtual = (nomeInputRef.current?.value ?? nomeDraftRef.current ?? nome).trim();
@@ -1022,36 +1042,67 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       const dataStr = agendamentoVariavel === "data" ? format(dataVariavel!, "yyyy-MM-dd") : null;
 
       setSaving(true);
-      let targetId = editingId;
+      const isExistingDbUuid = isUuid(editingId);
+      const targetId = isExistingDbUuid ? editingId! : (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `prog_${Date.now()}`);
+
+      // 1. Upload e resolução prévia e segura das imagens da Capa e Thumb
+      let resolvedThumb = thumb || "";
+      let resolvedCapa = capa || "";
       try {
-        if (editingId) {
-          await supabase.from("programas").update({
-            nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
-            horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-            variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-            apresentadores_ids: apresentadoresIds,
-          } as any).eq("id", editingId);
+        const [uThumb, uCapa] = await Promise.all([
+          thumb ? uploadProgramImage(thumb, effectiveOwnerId, targetId, "thumb") : Promise.resolve(""),
+          capa ? uploadProgramImage(capa, effectiveOwnerId, targetId, "capa") : Promise.resolve(""),
+        ]);
+        if (uThumb) resolvedThumb = uThumb;
+        if (uCapa) resolvedCapa = uCapa;
+      } catch (uploadErr) {
+        console.warn("Erro ao fazer upload das imagens do programa:", uploadErr);
+      }
+
+      const programPayload: any = {
+        nome: nomeAtual,
+        apresentador_id: apresentadoresIds[0] || apresentadorId || null,
+        apresentadores_ids: apresentadoresIds,
+        selo: selo || resolvedThumb || resolvedCapa || "",
+        capa: resolvedCapa,
+        thumb: resolvedThumb,
+        dias_semana: diasVariavel,
+        horario_inicio: horarioInicio,
+        horario_fim: horarioFim,
+        estudio: estudio.trim(),
+        ativo,
+        descricao: descricao.trim(),
+        variavel: true,
+        data_variavel: dataStr,
+        classificacao_etaria: classificacaoEtaria || null,
+        tipo_programa: tipoPrograma || null,
+      };
+
+      try {
+        if (isExistingDbUuid) {
+          const { error: updErr } = await supabase.from("programas").update(programPayload).eq("id", targetId);
+          if (updErr) {
+            console.warn("Supabase update programa notice:", updErr);
+            await supabase.from("programas").upsert({ id: targetId, user_id: effectiveOwnerId, ...programPayload });
+          }
         } else {
-          const { data: inserted, error: insertErr } = await supabase.from("programas").insert({
-            user_id: effectiveOwnerId, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasVariavel,
-            horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-            variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-            apresentadores_ids: apresentadoresIds,
-          } as any).select("id").single();
-          if (insertErr) console.warn("Supabase insert programa (variavel) notice:", insertErr);
-          targetId = inserted?.id || null;
+          const { error: insErr } = await supabase.from("programas").insert({
+            id: isUuid(targetId) ? targetId : undefined,
+            user_id: effectiveOwnerId,
+            ...programPayload,
+          });
+          if (insErr) {
+            console.warn("Supabase insert programa (variavel) notice:", insErr);
+          }
         }
       } catch (err) {
         console.warn("Supabase insert/update programa (variavel) error:", err);
-      }
-      if (targetId) {
-        try { await uploadImages(targetId); } catch {}
       }
 
       // Salva vinculação com o cliente selecionado
       const normCli = normalizeClientKey(selectedCliente) || selectedCliente;
       saveCustomProgram({
-        id: targetId || `prog_${Date.now()}`,
+        id: targetId,
         nome: nomeAtual,
         estudio: estudio.trim().toUpperCase(),
         horario_inicio: horarioInicio,
@@ -1062,8 +1113,14 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         apresentador_id: apresentadoresIds[0] || apresentadorId || null,
         apresentadores_ids: apresentadoresIds,
         descricao: descricao.trim() || null,
+        selo: selo || resolvedThumb || resolvedCapa || "",
+        capa: resolvedCapa,
+        thumb: resolvedThumb,
         cliente_nome: selectedCliente,
       }, normCli);
+      if (editingId && editingId !== targetId) {
+        removeCustomProgram(editingId, normCli);
+      }
       saveCustomStudio(estudio.trim().toUpperCase(), normCli);
 
       try {
@@ -1086,37 +1143,67 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     if (conflict) { setConflictMsg(`Conflito com "${conflict.nome}" no mesmo estúdio e horário.`); return; }
 
     setSaving(true);
-    let targetId = editingId;
+    const isExistingDbUuid = isUuid(editingId);
+    const targetId = isExistingDbUuid ? editingId! : (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `prog_${Date.now()}`);
+
+    // 1. Upload e resolução prévia e segura das imagens da Capa e Thumb
+    let resolvedThumb = thumb || "";
+    let resolvedCapa = capa || "";
+    try {
+      const [uThumb, uCapa] = await Promise.all([
+        thumb ? uploadProgramImage(thumb, effectiveOwnerId, targetId, "thumb") : Promise.resolve(""),
+        capa ? uploadProgramImage(capa, effectiveOwnerId, targetId, "capa") : Promise.resolve(""),
+      ]);
+      if (uThumb) resolvedThumb = uThumb;
+      if (uCapa) resolvedCapa = uCapa;
+    } catch (uploadErr) {
+      console.warn("Erro ao fazer upload das imagens do programa:", uploadErr);
+    }
+
+    const programPayload: any = {
+      nome: nomeAtual,
+      apresentador_id: apresentadoresIds[0] || apresentadorId || null,
+      apresentadores_ids: apresentadoresIds,
+      selo: selo || resolvedThumb || resolvedCapa || "",
+      capa: resolvedCapa,
+      thumb: resolvedThumb,
+      dias_semana: diasSemana,
+      horario_inicio: horarioInicio,
+      horario_fim: horarioFim,
+      estudio: estudio.trim(),
+      ativo,
+      descricao: descricao.trim(),
+      variavel: false,
+      data_variavel: null,
+      classificacao_etaria: classificacaoEtaria || null,
+      tipo_programa: tipoPrograma || null,
+    };
 
     try {
-      if (editingId) {
-        await supabase.from("programas").update({
-          nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
-          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-          variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-          apresentadores_ids: apresentadoresIds,
-        } as any).eq("id", editingId);
+      if (isExistingDbUuid) {
+        const { error: updErr } = await supabase.from("programas").update(programPayload).eq("id", targetId);
+        if (updErr) {
+          console.warn("Supabase update programa notice:", updErr);
+          await supabase.from("programas").upsert({ id: targetId, user_id: effectiveOwnerId, ...programPayload });
+        }
       } else {
-        const { data: inserted, error: insertErr } = await supabase.from("programas").insert({
-          user_id: effectiveOwnerId, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
-          horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
-          variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
-          apresentadores_ids: apresentadoresIds,
-        } as any).select("id").single();
-        if (insertErr) console.warn("Supabase insert programa notice:", insertErr);
-        targetId = inserted?.id || null;
+        const { error: insErr } = await supabase.from("programas").insert({
+          id: isUuid(targetId) ? targetId : undefined,
+          user_id: effectiveOwnerId,
+          ...programPayload,
+        });
+        if (insErr) {
+          console.warn("Supabase insert programa notice:", insErr);
+        }
       }
     } catch (err) {
       console.warn("Supabase insert/update programa error:", err);
-    }
-    if (targetId) {
-      try { await uploadImages(targetId); } catch {}
     }
 
     // Salva vinculação com o cliente selecionado
     const normCli = normalizeClientKey(selectedCliente) || selectedCliente;
     saveCustomProgram({
-      id: targetId || `prog_${Date.now()}`,
+      id: targetId,
       nome: nomeAtual,
       estudio: estudio.trim().toUpperCase(),
       horario_inicio: horarioInicio,
@@ -1127,8 +1214,14 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       apresentador_id: apresentadoresIds[0] || apresentadorId || null,
       apresentadores_ids: apresentadoresIds,
       descricao: descricao.trim() || null,
+      selo: selo || resolvedThumb || resolvedCapa || "",
+      capa: resolvedCapa,
+      thumb: resolvedThumb,
       cliente_nome: selectedCliente,
     }, normCli);
+    if (editingId && editingId !== targetId) {
+      removeCustomProgram(editingId, normCli);
+    }
     saveCustomStudio(estudio.trim().toUpperCase(), normCli);
 
     try {
@@ -2089,7 +2182,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
                     <td style={{ padding: "10px 14px", fontWeight: 700 }}>
                       <div className="flex items-center gap-2">
-                        {p.capa && <img src={p.capa} alt="" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover", border: `1px solid ${CARD_BG}` }} />}
+                        {(p.capa || p.thumb) && <img src={p.capa || p.thumb} alt="" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover", border: `1px solid ${CARD_BG}` }} />}
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span>{p.nome}</span>

@@ -493,7 +493,11 @@ export function saveCustomProgram(prog: HouseMixProgram, clientKeyOrId: string) 
     const all = getStoredCustomPrograms();
     const norm = normalizeClientKey(clientKeyOrId) || clientKeyOrId;
     const current = all[norm] || [];
-    const idx = current.findIndex((p) => p.id === prog.id);
+    const progNormName = (prog.nome || "").trim().toUpperCase();
+    const idx = current.findIndex((p) => 
+      p.id === prog.id || 
+      (progNormName && (p.nome || "").trim().toUpperCase() === progNormName)
+    );
     if (idx >= 0) {
       current[idx] = { ...current[idx], ...prog };
     } else {
