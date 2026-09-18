@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, Suspense, lazy } from "react";
+import { useState, useRef, useEffect, useMemo, Suspense, lazy, Fragment } from "react";
 import logoNxo from "@/assets/logo-nxo.png";
 import {
   Bell, Settings, Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight, Radio, Users,
@@ -351,7 +351,7 @@ export default function HouseMixHeader({
           </div>
 
           {/* Center: Navigation Links & Hover Dropdowns */}
-          <nav className={`hidden lg:flex items-center ${isIntercomEnabled ? "gap-1" : "gap-1 xl:gap-2"}`}>
+          <nav className={`hidden lg:flex items-center ${isIntercomEnabled ? "gap-1" : "gap-1 xl:gap-1.5"}`}>
             {/* Seta esquerda para itens anteriores quando intercom estiver habilitado */}
             {isIntercomEnabled && (
               <button
@@ -373,520 +373,557 @@ export default function HouseMixHeader({
               </button>
             )}
 
-            {/* Home - se esconde quando intercom estiver habilitado e usuário avançar */}
-            {(!isIntercomEnabled || menuShift === 0) && (
-              <button
-                onClick={() => handleNavigate("dashboard")}
-                onMouseEnter={() => { handleDirectItemHover(); prefetchPage("dashboard"); }}
-                className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                  currentPage === "dashboard" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                }`}
-              >
-                home
-              </button>
-            )}
-
-            {/* Cadastros Dropdown */}
-            {(!isIntercomEnabled || menuShift === 0) && (
-              <div
-                className="relative shrink-0"
-                onMouseEnter={() => handleMouseEnter("cadastros")}
-                onMouseLeave={handleMouseLeave}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => handleDropdownTriggerClick("cadastros", e)}
-                  className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                    openDropdown === "cadastros"
-                      ? "bg-black text-white shadow-sm"
-                      : ["apresentadores", "ouvintes", "programas", "clientes", "previsao"].includes(currentPage)
-                      ? "text-black font-bold bg-slate-100/80"
-                      : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                  }`}
-                >
-                  <span>cadastros</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "cadastros" ? "rotate-180 opacity-100" : "opacity-60"}`} />
-                </button>
-
-                {openDropdown === "cadastros" && (
-                  <div
-                    onMouseEnter={handleMenuContentMouseEnter}
-                    className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+            {[
+              {
+                id: "home",
+                visible: (!isIntercomEnabled || menuShift === 0),
+                node: (
+                  <button
+                    onClick={() => handleNavigate("dashboard")}
+                    onMouseEnter={() => { handleDirectItemHover(); prefetchPage("dashboard"); }}
+                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      currentPage === "dashboard" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                    }`}
                   >
-                    <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
-                      {isPageVisible("apresentadores") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("apresentadores")}
-                          onClick={() => handleNavigate("apresentadores")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "apresentadores" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Mic2 size={13} className="text-white/70" />
-                          <span>participantes</span>
-                        </button>
-                      )}
-                      {isPageVisible("ouvintes") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("ouvintes")}
-                          onClick={() => handleNavigate("ouvintes")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "ouvintes" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Users size={13} className="text-white/70" />
-                          <span>ouvintes</span>
-                        </button>
-                      )}
-                      {isPageVisible("programas") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("programas")}
-                          onClick={() => handleNavigate("programas")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "programas" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Radio size={13} className="text-white/70" />
-                          <span>programas</span>
-                        </button>
-                      )}
-                      {isPageVisible("clientes") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("clientes")}
-                          onClick={() => handleNavigate("clientes")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "clientes" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Building2 size={13} className="text-white/70" />
-                          <span>clientes</span>
-                        </button>
-                      )}
-                      {isPageVisible("previsao") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("previsao")}
-                          onClick={() => handleNavigate("previsao")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "previsao" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Globe size={13} className="text-white/70" />
-                          <span>cidade tempo</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Sorteios */}
-            {isPageVisible("sorteios") && (!isIntercomEnabled || menuShift === 0) && (
-              <button
-                onClick={() => handleNavigate("sorteios")}
-                onMouseEnter={() => { handleDirectItemHover(); prefetchPage("sorteios"); }}
-                className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                  currentPage === "sorteios" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                }`}
-              >
-                sorteios
-              </button>
-            )}
-
-            {/* Blitz */}
-            {isPageVisible("blitz") && (!isIntercomEnabled || menuShift === 0) && (
-              <button
-                onClick={() => handleNavigate("blitz")}
-                onMouseEnter={() => { handleDirectItemHover(); prefetchPage("blitz"); }}
-                className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                  currentPage === "blitz" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                }`}
-              >
-                blitz
-              </button>
-            )}
-
-            {/* Roteiro */}
-            {isPageVisible("noticias") && (!isIntercomEnabled || menuShift === 0) && (
-              <button
-                onClick={() => handleNavigate("noticias")}
-                onMouseEnter={() => { handleDirectItemHover(); prefetchPage("noticias"); }}
-                className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                  currentPage === "noticias" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                }`}
-              >
-                roteiro
-              </button>
-            )}
-
-            {/* Música no Ar */}
-            {isPageVisible("musica") && (
-              <button
-                onClick={() => handleNavigate("musica")}
-                onMouseEnter={() => { handleDirectItemHover(); prefetchPage("musica"); }}
-                className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                  currentPage === "musica" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                }`}
-              >
-                música no ar
-              </button>
-            )}
-
-            {/* Agenda */}
-            {isPageVisible("agenda") && (
-              <button
-                onClick={() => handleNavigate("agenda")}
-                onMouseEnter={() => { handleDirectItemHover(); prefetchPage("agenda"); }}
-                className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                  currentPage === "agenda" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                }`}
-              >
-                agenda
-              </button>
-            )}
-
-            {/* Site Dropdown */}
-            {(!isIntercomEnabled || menuShift > 0) && (
-              <div
-                className="relative shrink-0"
-                onMouseEnter={() => handleMouseEnter("site")}
-                onMouseLeave={handleMouseLeave}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => handleDropdownTriggerClick("site", e)}
-                  className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                    openDropdown === "site"
-                      ? "bg-black text-white shadow-sm"
-                      : ["site", "playerconfig"].includes(currentPage)
-                      ? "text-black font-bold bg-slate-100/80"
-                      : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                  }`}
-                >
-                  <span>site</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "site" ? "rotate-180 opacity-100" : "opacity-60"}`} />
-                </button>
-
-                {openDropdown === "site" && (
+                    home
+                  </button>
+                ),
+              },
+              {
+                id: "cadastros",
+                visible: (!isIntercomEnabled || menuShift === 0),
+                node: (
                   <div
-                    onMouseEnter={handleMenuContentMouseEnter}
-                    className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+                    className="relative shrink-0"
+                    onMouseEnter={() => handleMouseEnter("cadastros")}
+                    onMouseLeave={handleMouseLeave}
                   >
-                    <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
-                      {isPageVisible("site") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("site")}
-                          onClick={() => handleNavigate("site")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "site" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Globe size={13} className="text-white/70" />
-                          <span>gestor do site</span>
-                        </button>
-                      )}
-                      {isPageVisible("playerconfig") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("playerconfig")}
-                          onClick={() => handleNavigate("playerconfig")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "playerconfig" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Settings size={13} className="text-white/70" />
-                          <span>configurações do player</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleExternalAction("player")}
-                        className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
+                    <button
+                      type="button"
+                      onClick={(e) => handleDropdownTriggerClick("cadastros", e)}
+                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                        openDropdown === "cadastros"
+                          ? "bg-black text-white shadow-sm"
+                          : ["apresentadores", "ouvintes", "programas", "clientes", "previsao"].includes(currentPage)
+                          ? "text-black font-bold bg-slate-100/80"
+                          : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                      }`}
+                    >
+                      <span>cadastros</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "cadastros" ? "rotate-180 opacity-100" : "opacity-60"}`} />
+                    </button>
+
+                    {openDropdown === "cadastros" && (
+                      <div
+                        onMouseEnter={handleMenuContentMouseEnter}
+                        className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
                       >
-                        <div className="flex items-center gap-2">
-                          <MonitorPlay size={13} className="text-white/70" />
-                          <span>abrir player externo</span>
+                        <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
+                          {isPageVisible("apresentadores") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("apresentadores")}
+                              onClick={() => handleNavigate("apresentadores")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "apresentadores" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Mic2 size={13} className="text-white/70" />
+                              <span>participantes</span>
+                            </button>
+                          )}
+                          {isPageVisible("ouvintes") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("ouvintes")}
+                              onClick={() => handleNavigate("ouvintes")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "ouvintes" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Users size={13} className="text-white/70" />
+                              <span>ouvintes</span>
+                            </button>
+                          )}
+                          {isPageVisible("programas") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("programas")}
+                              onClick={() => handleNavigate("programas")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "programas" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Radio size={13} className="text-white/70" />
+                              <span>programas</span>
+                            </button>
+                          )}
+                          {isPageVisible("clientes") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("clientes")}
+                              onClick={() => handleNavigate("clientes")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "clientes" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Building2 size={13} className="text-white/70" />
+                              <span>clientes</span>
+                            </button>
+                          )}
+                          {isPageVisible("previsao") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("previsao")}
+                              onClick={() => handleNavigate("previsao")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "previsao" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Globe size={13} className="text-white/70" />
+                              <span>cidade tempo</span>
+                            </button>
+                          )}
                         </div>
-                        <ExternalLink size={11} className="text-white/50" />
-                      </button>
-                    </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Comercial Dropdown */}
-            {(!isIntercomEnabled || menuShift > 0) && (
-              <div
-                className="relative shrink-0"
-                onMouseEnter={() => handleMouseEnter("comercial")}
-                onMouseLeave={handleMouseLeave}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => handleDropdownTriggerClick("comercial", e)}
-                  className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                    openDropdown === "comercial"
-                      ? "bg-black text-white shadow-sm"
-                      : ["preroll", "testemunhais", "promocoes", "logos", "configtelapromo", "shopping"].includes(currentPage)
-                      ? "text-black font-bold bg-slate-100/80"
-                      : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                  }`}
-                >
-                  <span>comercial</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "comercial" ? "rotate-180 opacity-100" : "opacity-60"}`} />
-                </button>
-
-                {openDropdown === "comercial" && (
-                  <div
-                    onMouseEnter={handleMenuContentMouseEnter}
-                    className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+                ),
+              },
+              {
+                id: "sorteios",
+                visible: isPageVisible("sorteios") && (!isIntercomEnabled || menuShift === 0),
+                node: (
+                  <button
+                    onClick={() => handleNavigate("sorteios")}
+                    onMouseEnter={() => { handleDirectItemHover(); prefetchPage("sorteios"); }}
+                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      currentPage === "sorteios" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                    }`}
                   >
-                    <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[210px] space-y-0.5">
-                      {isPageVisible("preroll") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("preroll")}
-                          onClick={() => handleNavigate("preroll")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "preroll" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Film size={13} className="text-white/70" />
-                          <span>ADS / pre-roll</span>
-                        </button>
-                      )}
-                      {isPageVisible("testemunhais") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("testemunhais")}
-                          onClick={() => handleNavigate("testemunhais")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "testemunhais" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <MessageSquareQuote size={13} className="text-white/70" />
-                          <span>citações</span>
-                        </button>
-                      )}
-                      {isPageVisible("promocoes") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("promocoes")}
-                          onClick={() => handleNavigate("promocoes")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "promocoes" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Tag size={13} className="text-white/70" />
-                          <span>promoções</span>
-                        </button>
-                      )}
-                      {isPageVisible("logos") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("logos")}
-                          onClick={() => handleNavigate("logos")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "logos" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Layers size={13} className="text-white/70" />
-                          <span>logos</span>
-                        </button>
-                      )}
-                      {isPageVisible("configtelapromo") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("configtelapromo")}
-                          onClick={() => handleNavigate("configtelapromo")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "configtelapromo" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Settings size={13} className="text-white/70" />
-                          <span>config módulo locutor</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleExternalAction("locutor")}
-                        className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Mic2 size={13} className="text-white/70" />
-                          <span>abrir módulo locutor</span>
-                        </div>
-                        <ExternalLink size={11} className="text-white/50" />
-                      </button>
-                      {isPageVisible("shopping") && (
-                        <button
-                          type="button"
-                          disabled
-                          aria-disabled="true"
-                          className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-not-allowed select-none opacity-40 text-white/50"
-                        >
-                          <ShoppingCart size={13} className="text-white/40" />
-                          <span>shopping</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* vMix Dropdown */}
-            {(!isIntercomEnabled || menuShift > 0) && (
-              <div
-                className="relative shrink-0"
-                onMouseEnter={() => handleMouseEnter("vmix")}
-                onMouseLeave={handleMouseLeave}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => handleDropdownTriggerClick("vmix", e)}
-                  className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                    openDropdown === "vmix"
-                      ? "bg-black text-white shadow-sm"
-                      : ["broadcast", "cenario", "batalha", "enquete", "quiz"].includes(currentPage)
-                      ? "text-black font-bold bg-slate-100/80"
-                      : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                  }`}
-                >
-                  <span>vmix</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "vmix" ? "rotate-180 opacity-100" : "opacity-60"}`} />
-                </button>
-
-                {openDropdown === "vmix" && (
-                  <div
-                    onMouseEnter={handleMenuContentMouseEnter}
-                    className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+                    sorteios
+                  </button>
+                ),
+              },
+              {
+                id: "blitz",
+                visible: isPageVisible("blitz") && (!isIntercomEnabled || menuShift === 0),
+                node: (
+                  <button
+                    onClick={() => handleNavigate("blitz")}
+                    onMouseEnter={() => { handleDirectItemHover(); prefetchPage("blitz"); }}
+                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      currentPage === "blitz" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                    }`}
                   >
-                    <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
-                      <button
-                        onClick={() => handleExternalAction("vmix")}
-                        className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
-                      >
-                        <div className="flex items-center gap-2">
-                          <MonitorPlay size={13} className="text-white/70" />
-                          <span>vmix control</span>
-                        </div>
-                        <ExternalLink size={11} className="text-white/50" />
-                      </button>
-                      {isPageVisible("broadcast") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("broadcast")}
-                          onClick={() => handleNavigate("broadcast")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "broadcast" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Radio size={13} className="text-white/70" />
-                          <span>broadcast</span>
-                        </button>
-                      )}
-                      {isPageVisible("cenario") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("cenario")}
-                          onClick={() => handleNavigate("cenario")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "cenario" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <MonitorPlay size={13} className="text-white/70" />
-                          <span>cenários</span>
-                        </button>
-                      )}
-                      {isPageVisible("batalha") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("batalha")}
-                          onClick={() => handleNavigate("batalha")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "batalha" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Swords size={13} className="text-white/70" />
-                          <span>batalha musical</span>
-                        </button>
-                      )}
-                      {isPageVisible("enquete") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("enquete")}
-                          onClick={() => handleNavigate("enquete")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "enquete" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <HelpCircle size={13} className="text-white/70" />
-                          <span>enquete</span>
-                        </button>
-                      )}
-                      {isPageVisible("quiz") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("quiz")}
-                          onClick={() => handleNavigate("quiz")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "quiz" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <HelpCircle size={13} className="text-white/70" />
-                          <span>quiz</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Ferramentas Dropdown - se esconde quando intercom estiver habilitado e menuShift for 0 */}
-            {(!isIntercomEnabled || menuShift > 0) && (
-              <div
-                className="relative shrink-0"
-                onMouseEnter={() => handleMouseEnter("ferramentas")}
-                onMouseLeave={handleMouseLeave}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => handleDropdownTriggerClick("ferramentas", e)}
-                  className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
-                    openDropdown === "ferramentas"
-                      ? "bg-black text-white shadow-sm"
-                      : ["cortevideo", "tp"].includes(currentPage)
-                      ? "text-black font-bold bg-slate-100/80"
-                      : "text-slate-700 hover:text-black hover:bg-slate-100/70"
-                  }`}
-                >
-                  <span>ferramentas</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "ferramentas" ? "rotate-180 opacity-100" : "opacity-60"}`} />
-                </button>
-
-                {openDropdown === "ferramentas" && (
-                  <div
-                    onMouseEnter={handleMenuContentMouseEnter}
-                    className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+                    blitz
+                  </button>
+                ),
+              },
+              {
+                id: "roteiro",
+                visible: isPageVisible("noticias") && (!isIntercomEnabled || menuShift === 0),
+                node: (
+                  <button
+                    onClick={() => handleNavigate("noticias")}
+                    onMouseEnter={() => { handleDirectItemHover(); prefetchPage("noticias"); }}
+                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      currentPage === "noticias" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                    }`}
                   >
-                    <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
-                      {isPageVisible("cortevideo") && (
-                        <button
-                          onMouseEnter={() => prefetchPage("cortevideo")}
-                          onClick={() => handleNavigate("cortevideo")}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
-                            currentPage === "cortevideo" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
-                          }`}
-                        >
-                          <Scissors size={13} className="text-white/70" />
-                          <span>editor de vídeo</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleExternalAction("tp")}
-                        className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
+                    roteiro
+                  </button>
+                ),
+              },
+              {
+                id: "musica",
+                visible: isPageVisible("musica"),
+                node: (
+                  <button
+                    onClick={() => handleNavigate("musica")}
+                    onMouseEnter={() => { handleDirectItemHover(); prefetchPage("musica"); }}
+                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      currentPage === "musica" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                    }`}
+                  >
+                    música no ar
+                  </button>
+                ),
+              },
+              {
+                id: "agenda",
+                visible: isPageVisible("agenda"),
+                node: (
+                  <button
+                    onClick={() => handleNavigate("agenda")}
+                    onMouseEnter={() => { handleDirectItemHover(); prefetchPage("agenda"); }}
+                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      currentPage === "agenda" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                    }`}
+                  >
+                    agenda
+                  </button>
+                ),
+              },
+              {
+                id: "site",
+                visible: (!isIntercomEnabled || menuShift > 0),
+                node: (
+                  <div
+                    className="relative shrink-0"
+                    onMouseEnter={() => handleMouseEnter("site")}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => handleDropdownTriggerClick("site", e)}
+                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                        openDropdown === "site"
+                          ? "bg-black text-white shadow-sm"
+                          : ["site", "playerconfig"].includes(currentPage)
+                          ? "text-black font-bold bg-slate-100/80"
+                          : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                      }`}
+                    >
+                      <span>site</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "site" ? "rotate-180 opacity-100" : "opacity-60"}`} />
+                    </button>
+
+                    {openDropdown === "site" && (
+                      <div
+                        onMouseEnter={handleMenuContentMouseEnter}
+                        className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
                       >
-                        <div className="flex items-center gap-2">
-                          <FileText size={13} className="text-white/70" />
-                          <span>abrir TP externo</span>
+                        <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
+                          {isPageVisible("site") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("site")}
+                              onClick={() => handleNavigate("site")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "site" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Globe size={13} className="text-white/70" />
+                              <span>gestor do site</span>
+                            </button>
+                          )}
+                          {isPageVisible("playerconfig") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("playerconfig")}
+                              onClick={() => handleNavigate("playerconfig")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "playerconfig" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Settings size={13} className="text-white/70" />
+                              <span>configurações do player</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleExternalAction("player")}
+                            className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
+                          >
+                            <div className="flex items-center gap-2">
+                              <MonitorPlay size={13} className="text-white/70" />
+                              <span>abrir player externo</span>
+                            </div>
+                            <ExternalLink size={11} className="text-white/50" />
+                          </button>
                         </div>
-                        <ExternalLink size={11} className="text-white/50" />
-                      </button>
-                    </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                ),
+              },
+              {
+                id: "comercial",
+                visible: (!isIntercomEnabled || menuShift > 0),
+                node: (
+                  <div
+                    className="relative shrink-0"
+                    onMouseEnter={() => handleMouseEnter("comercial")}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => handleDropdownTriggerClick("comercial", e)}
+                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                        openDropdown === "comercial"
+                          ? "bg-black text-white shadow-sm"
+                          : ["preroll", "testemunhais", "promocoes", "logos", "configtelapromo", "shopping"].includes(currentPage)
+                          ? "text-black font-bold bg-slate-100/80"
+                          : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                      }`}
+                    >
+                      <span>comercial</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "comercial" ? "rotate-180 opacity-100" : "opacity-60"}`} />
+                    </button>
+
+                    {openDropdown === "comercial" && (
+                      <div
+                        onMouseEnter={handleMenuContentMouseEnter}
+                        className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+                      >
+                        <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[210px] space-y-0.5">
+                          {isPageVisible("preroll") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("preroll")}
+                              onClick={() => handleNavigate("preroll")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "preroll" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Film size={13} className="text-white/70" />
+                              <span>ADS / pre-roll</span>
+                            </button>
+                          )}
+                          {isPageVisible("testemunhais") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("testemunhais")}
+                              onClick={() => handleNavigate("testemunhais")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "testemunhais" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <MessageSquareQuote size={13} className="text-white/70" />
+                              <span>citações</span>
+                            </button>
+                          )}
+                          {isPageVisible("promocoes") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("promocoes")}
+                              onClick={() => handleNavigate("promocoes")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "promocoes" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Tag size={13} className="text-white/70" />
+                              <span>promoções</span>
+                            </button>
+                          )}
+                          {isPageVisible("logos") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("logos")}
+                              onClick={() => handleNavigate("logos")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "logos" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Layers size={13} className="text-white/70" />
+                              <span>logos</span>
+                            </button>
+                          )}
+                          {isPageVisible("configtelapromo") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("configtelapromo")}
+                              onClick={() => handleNavigate("configtelapromo")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "configtelapromo" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Settings size={13} className="text-white/70" />
+                              <span>config módulo locutor</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleExternalAction("locutor")}
+                            className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Mic2 size={13} className="text-white/70" />
+                              <span>abrir módulo locutor</span>
+                            </div>
+                            <ExternalLink size={11} className="text-white/50" />
+                          </button>
+                          {isPageVisible("shopping") && (
+                            <button
+                              type="button"
+                              disabled
+                              aria-disabled="true"
+                              className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-not-allowed select-none opacity-40 text-white/50"
+                            >
+                              <ShoppingCart size={13} className="text-white/40" />
+                              <span>shopping</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                id: "vmix",
+                visible: (!isIntercomEnabled || menuShift > 0),
+                node: (
+                  <div
+                    className="relative shrink-0"
+                    onMouseEnter={() => handleMouseEnter("vmix")}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => handleDropdownTriggerClick("vmix", e)}
+                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                        openDropdown === "vmix"
+                          ? "bg-black text-white shadow-sm"
+                          : ["broadcast", "cenario", "batalha", "enquete", "quiz"].includes(currentPage)
+                          ? "text-black font-bold bg-slate-100/80"
+                          : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                      }`}
+                    >
+                      <span>vmix</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "vmix" ? "rotate-180 opacity-100" : "opacity-60"}`} />
+                    </button>
+
+                    {openDropdown === "vmix" && (
+                      <div
+                        onMouseEnter={handleMenuContentMouseEnter}
+                        className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+                      >
+                        <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
+                          <button
+                            onClick={() => handleExternalAction("vmix")}
+                            className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
+                          >
+                            <div className="flex items-center gap-2">
+                              <MonitorPlay size={13} className="text-white/70" />
+                              <span>vmix control</span>
+                            </div>
+                            <ExternalLink size={11} className="text-white/50" />
+                          </button>
+                          {isPageVisible("broadcast") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("broadcast")}
+                              onClick={() => handleNavigate("broadcast")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "broadcast" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Radio size={13} className="text-white/70" />
+                              <span>broadcast</span>
+                            </button>
+                          )}
+                          {isPageVisible("cenario") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("cenario")}
+                              onClick={() => handleNavigate("cenario")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "cenario" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <MonitorPlay size={13} className="text-white/70" />
+                              <span>cenários</span>
+                            </button>
+                          )}
+                          {isPageVisible("batalha") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("batalha")}
+                              onClick={() => handleNavigate("batalha")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "batalha" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Swords size={13} className="text-white/70" />
+                              <span>batalha musical</span>
+                            </button>
+                          )}
+                          {isPageVisible("enquete") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("enquete")}
+                              onClick={() => handleNavigate("enquete")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "enquete" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <HelpCircle size={13} className="text-white/70" />
+                              <span>enquete</span>
+                            </button>
+                          )}
+                          {isPageVisible("quiz") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("quiz")}
+                              onClick={() => handleNavigate("quiz")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "quiz" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <HelpCircle size={13} className="text-white/70" />
+                              <span>quiz</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                id: "ferramentas",
+                visible: (!isIntercomEnabled || menuShift > 0),
+                node: (
+                  <div
+                    className="relative shrink-0"
+                    onMouseEnter={() => handleMouseEnter("ferramentas")}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => handleDropdownTriggerClick("ferramentas", e)}
+                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                        openDropdown === "ferramentas"
+                          ? "bg-black text-white shadow-sm"
+                          : ["cortevideo", "tp"].includes(currentPage)
+                          ? "text-black font-bold bg-slate-100/80"
+                          : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                      }`}
+                    >
+                      <span>ferramentas</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${openDropdown === "ferramentas" ? "rotate-180 opacity-100" : "opacity-60"}`} />
+                    </button>
+
+                    {openDropdown === "ferramentas" && (
+                      <div
+                        onMouseEnter={handleMenuContentMouseEnter}
+                        className="absolute top-full left-0 pt-1.5 z-[9999] animate-in fade-in slide-in-from-top-0.5 duration-75 ease-out transform-gpu will-change-transform"
+                      >
+                        <div className="bg-[#000000] border border-white/10 rounded-2xl p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] min-w-[190px] space-y-0.5">
+                          {isPageVisible("cortevideo") && (
+                            <button
+                              onMouseEnter={() => prefetchPage("cortevideo")}
+                              onClick={() => handleNavigate("cortevideo")}
+                              className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out ${
+                                currentPage === "cortevideo" ? "bg-[#0055ff] text-white font-bold" : "text-white/85 hover:bg-[#0055ff] hover:text-white"
+                              }`}
+                            >
+                              <Scissors size={13} className="text-white/70" />
+                              <span>editor de vídeo</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleExternalAction("tp")}
+                            className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
+                          >
+                            <div className="flex items-center gap-2">
+                              <FileText size={13} className="text-white/70" />
+                              <span>abrir TP externo</span>
+                            </div>
+                            <ExternalLink size={11} className="text-white/50" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
+            ]
+              .filter((item) => item.visible)
+              .map((item, index) => (
+                <Fragment key={item.id}>
+                  {index > 0 && (
+                    <span
+                      className="h-3 w-px bg-slate-300/80 rounded-full shrink-0 select-none pointer-events-none"
+                      aria-hidden="true"
+                    />
+                  )}
+                  {item.node}
+                </Fragment>
+              ))}
 
             {/* Seta direita para mais itens quando intercom estiver habilitado */}
             {isIntercomEnabled && (
