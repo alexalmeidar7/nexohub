@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { findClientAccountByEmail, findClientAccountById, ClientAccountInfo } from "./clientAuthAccounts";
-import { getClientHouseMixProgramsSync, HouseMixProgram } from "./houseMixProgramasService";
+import { getClientHouseMixProgramsSync, HouseMixProgram, normalizeClientKey } from "./houseMixProgramasService";
 import { CANONICAL_PRESENTERS, getPresentersForStation } from "./onAirPresenterResolver";
+import { DEFAULT_STATION_PARTICIPANTES } from "./stationParticipantesData";
 
 export interface StationDatabaseData {
   userId: string;
@@ -72,7 +73,7 @@ export function getStationDatabaseSync(userIdOrEmailOrSlug?: string | null): Sta
       slug: acc.slug,
       channels: [],
       programas: fallbackPrograms,
-      apresentadores: getPresentersForStation(acc.slug || acc.id),
+      apresentadores: DEFAULT_STATION_PARTICIPANTES[normalizeClientKey(acc.nome || acc.slug)] || getPresentersForStation(acc.slug || acc.id),
       prerolls: [],
       empresa: {
         nome_fantasia: acc.nome,
@@ -145,7 +146,7 @@ export async function fetchStationDatabaseData(
           : fallbackPrograms,
         apresentadores: Array.isArray(data.apresentadores) && data.apresentadores.length > 0
           ? data.apresentadores
-          : getPresentersForStation(targetSlug || acc?.id),
+          : (DEFAULT_STATION_PARTICIPANTES[normalizeClientKey(acc?.nome || targetSlug)] || getPresentersForStation(targetSlug || acc?.id)),
         prerolls: Array.isArray(data.prerolls) ? data.prerolls : [],
         empresa: data.empresa || (acc ? { nome_fantasia: acc.nome, razao_social: acc.razaoSocial, cidade: acc.cidade } : null),
         shopProducts: Array.isArray(data.shopProducts) ? data.shopProducts : [],

@@ -101,33 +101,67 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { normalizeClientKey } from "@/lib/houseMixProgramasService";
+import { DEFAULT_STATION_PARTICIPANTES } from "@/lib/stationParticipantesData";
 
 export async function getApresentadores(userId?: string, userEmail?: string | null): Promise<Apresentador[]> {
   const acc = findClientAccountById(userId) || findClientAccountByEmail(userEmail || userId);
   const effectiveId = acc?.parentUserId || acc?.id || userId;
   const targetSlug = acc?.slug || userId;
 
-  // 1. Fetch from Supabase
+  let resolvedStation = normalizeClientKey(acc?.nome || acc?.slug || userEmail || userId);
+  if (!resolvedStation && typeof window !== "undefined") {
+    try {
+      const backup = localStorage.getItem("nexohub_backup_session");
+      if (backup) {
+        const parsed = JSON.parse(backup);
+        const email = parsed?.user?.email;
+        const slug = parsed?.user?.user_metadata?.slug || parsed?.user?.user_metadata?.nome;
+        resolvedStation = normalizeClientKey(slug || email);
+      }
+    } catch {}
+  }
+  if (!resolvedStation) {
+    resolvedStation = "POSITIVA FM";
+  }
+
+  const defaultStationAps: Apresentador[] = (DEFAULT_STATION_PARTICIPANTES[resolvedStation] || []).map(a => ({
+    id: a.id,
+    nome: a.nome,
+    categoria: a.categoria,
+    cargo: a.cargo,
+    instagram: a.instagram,
+    whatsapp: a.whatsapp,
+    foto: a.foto,
+    ativo: a.ativo,
+  }));
+
+  const validStationIds = new Set(defaultStationAps.map(a => a.id));
+  const validStationNames = new Set(defaultStationAps.map(a => a.nome.trim().toLowerCase()));
+
+  // 1. Fetch from Supabase (if online and valid)
   let supabaseAps: Apresentador[] = [];
   try {
     let query = supabase.from("apresentadores").select("*");
     if (effectiveId) query = query.eq("user_id", effectiveId);
     const { data } = await query;
     if (data && data.length > 0) {
-      supabaseAps = data.map(a => {
-        const resolved = resolveParticipanteCategoria(a);
-        return {
-          id: a.id,
-          nome: a.nome,
-          categoria: (a as any).categoria || resolved.categoria,
-          cargo: a.cargo || (a as any).categoria || resolved.cargo,
-          instagram: a.instagram || "",
-          whatsapp: (a as any).whatsapp || "",
-          foto: a.foto || "",
-          background_url: (a as any).background_url || "",
-          ativo: a.ativo ?? true,
-        };
-      });
+      supabaseAps = data
+        .filter(a => validStationIds.has(a.id) || (a.nome && validStationNames.has(a.nome.trim().toLowerCase())))
+        .map(a => {
+          const resolved = resolveParticipanteCategoria(a);
+          return {
+            id: a.id,
+            nome: a.nome,
+            categoria: (a as any).categoria || resolved.categoria,
+            cargo: a.cargo || (a as any).categoria || resolved.cargo,
+            instagram: a.instagram || "",
+            whatsapp: (a as any).whatsapp || "",
+            foto: a.foto || "",
+            background_url: (a as any).background_url || "",
+            ativo: a.ativo ?? true,
+          };
+        });
     }
   } catch {}
 
@@ -139,71 +173,53 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          localList = parsed.map(a => {
-            const resolved = resolveParticipanteCategoria(a);
-            return {
-              ...a,
-              categoria: a.categoria || resolved.categoria,
-              cargo: a.cargo || resolved.cargo,
-            };
-          });
+          // STRICT FILTER: purge any leaked participant from other stations
+          localList = parsed
+            .filter(a => {
+              if ((a as any).stationKey && (a as any).stationKey !== resolvedStation) return false;
+              if (validStationIds.has(a.id)) return true;
+              if (a.nome && validStationNames.has(a.nome.trim().toLowerCase())) return true;
+              return (a as any).stationKey === resolvedStation;
+            })
+            .map(a => {
+              const resolved = resolveParticipanteCategoria(a);
+              return {
+                ...a,
+                categoria: a.categoria || resolved.categoria,
+                cargo: a.cargo || resolved.cargo,
+              };
+            });
         }
       }
     }
   } catch {}
 
-  if (supabaseAps.length > 0 || localList.length > 0) {
-    const mergedMap = new Map<string, Apresentador>();
-    supabaseAps.forEach(a => {
-      mergedMap.set(a.id, a);
-      if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), a);
-    });
-    localList.forEach(a => {
-      const existing = mergedMap.get(a.id) || (a.nome ? mergedMap.get(a.nome.trim().toLowerCase()) : undefined);
-      const merged = { ...(existing || {}), ...a };
-      mergedMap.set(a.id, merged);
-      if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), merged);
-    });
-    return Array.from(new Set(Array.from(mergedMap.values())));
-  }
+  // Merge default station data with local updates & supabase updates
+  const mergedMap = new Map<string, Apresentador>();
+  defaultStationAps.forEach(a => {
+    mergedMap.set(a.id, a);
+    if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), a);
+  });
+  supabaseAps.forEach(a => {
+    const existing = mergedMap.get(a.id) || (a.nome ? mergedMap.get(a.nome.trim().toLowerCase()) : undefined);
+    const merged = { ...(existing || {}), ...a };
+    mergedMap.set(a.id, merged);
+    if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), merged);
+  });
+  localList.forEach(a => {
+    const existing = mergedMap.get(a.id) || (a.nome ? mergedMap.get(a.nome.trim().toLowerCase()) : undefined);
+    const merged = { ...(existing || {}), ...a };
+    mergedMap.set(a.id, merged);
+    if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), merged);
+  });
 
-  const stationData = await fetchStationDatabaseData(effectiveId || targetSlug || userEmail);
-  if (stationData?.apresentadores && stationData.apresentadores.length > 0) {
-    return stationData.apresentadores.map(a => {
-      const resolved = resolveParticipanteCategoria(a);
-      return {
-        id: a.id,
-        nome: a.nome,
-        categoria: (a as any).categoria || resolved.categoria,
-        cargo: a.cargo || (a as any).categoria || resolved.cargo,
-        instagram: a.instagram || "",
-        whatsapp: (a as any).whatsapp || "",
-        foto: a.foto || "",
-        background_url: (a as any).background_url || "",
-        ativo: a.ativo ?? true,
-      };
-    });
-  }
-
-  const syncData = getStationDatabaseSync(effectiveId || targetSlug || userEmail);
-  if (syncData?.apresentadores && syncData.apresentadores.length > 0) {
-    return syncData.apresentadores.map(a => {
-      const resolved = resolveParticipanteCategoria(a);
-      return {
-        id: a.id,
-        nome: a.nome,
-        categoria: (a as any).categoria || resolved.categoria,
-        cargo: a.cargo || (a as any).categoria || resolved.cargo,
-        instagram: a.instagram || "",
-        whatsapp: (a as any).whatsapp || "",
-        foto: a.foto || "",
-        background_url: (a as any).background_url || "",
-        ativo: a.ativo ?? true,
-      };
-    });
-  }
-
-  return [];
+  const finalAps = Array.from(new Set(Array.from(mergedMap.values())));
+  // Final strict filter: ensure no item from another station can EVER slip in
+  return finalAps.filter(a => {
+    if (validStationIds.has(a.id)) return true;
+    if (a.nome && validStationNames.has(a.nome.trim().toLowerCase())) return true;
+    return (a as any).stationKey === resolvedStation;
+  });
 }
 
 export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {

@@ -83,6 +83,19 @@ export const CANONICAL_PRESENTERS: Record<string, ResolvedPresenter> = {
     id: "99824dc1-78da-44b8-9033-920922ead18b",
     nome: "Automático",
     foto: "/locutores/sem-loc.png",
+    stationKey: "POSITIVA FM",
+  },
+  "interativa-automatico": {
+    id: "interativa-automatico",
+    nome: "Automático",
+    foto: "/locutores/sem-loc.png",
+    stationKey: "INTERATIVA FM",
+  },
+  "cultura-automatico": {
+    id: "cultura-automatico",
+    nome: "Automático",
+    foto: "/locutores/sem-loc.png",
+    stationKey: "CULTURA FM",
   },
 
   // Interativa FM
@@ -256,10 +269,10 @@ export const CANONICAL_PRESENTERS: Record<string, ResolvedPresenter> = {
 export function getPresentersForStation(stationKeyOrUserId?: string | null): ResolvedPresenter[] {
   const normStation = normalizeClientKey(stationKeyOrUserId);
   if (!normStation) {
-    return Object.values(CANONICAL_PRESENTERS);
+    return [];
   }
   return Object.values(CANONICAL_PRESENTERS).filter(
-    (p) => !p.stationKey || p.stationKey === normStation
+    (p) => p.stationKey === normStation
   );
 }
 

@@ -604,6 +604,8 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
   const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
   const [parentEmail, setParentEmail] = useState<string | null>(null);
+  const currentClientAccount = findClientAccountByEmail(user?.email) || findClientAccountById(user?.id);
+  const targetStationUserId = effectiveUserId || currentClientAccount?.parentUserId || currentClientAccount?.id || user?.id;
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
@@ -1982,7 +1984,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             }}
           >
             <Suspense fallback={<ModulePageSkeleton variant="form" />}>
-              <ApresentadorForm effectiveUserId={effectiveUserId} />
+              <ApresentadorForm effectiveUserId={targetStationUserId} />
             </Suspense>
           </HouseMixWindow>
         )}
