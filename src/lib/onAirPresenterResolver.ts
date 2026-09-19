@@ -411,11 +411,37 @@ function getCanonicalPresenterByProgramName(progName: string, diasSemana?: strin
  * 6. NEVER returns a presenter from another radio station under any circumstance!
  */
 export function resolvePresenterForProgram(
-  program: any,
-  apresentadoresList: any[] = [],
-  stationKeyOrUserId?: string | null
+  programOrName: any,
+  apresentadoresListOrId?: any,
+  stationKeyOrApresentadores?: any,
+  maybeDiasSemana?: any
 ): ResolvedPresenter | null {
-  if (!program) return null;
+  if (!programOrName) return null;
+
+  let program: any;
+  let apresentadoresList: any[];
+  let stationKeyOrUserId: string | null = null;
+
+  if (typeof programOrName === "string") {
+    program = {
+      nome: programOrName,
+      apresentador_id: typeof apresentadoresListOrId === "string" ? apresentadoresListOrId : null,
+      dias_semana: Array.isArray(maybeDiasSemana) ? maybeDiasSemana : null,
+    };
+    apresentadoresList = Array.isArray(stationKeyOrApresentadores)
+      ? stationKeyOrApresentadores
+      : (Array.isArray(apresentadoresListOrId) ? apresentadoresListOrId : []);
+    stationKeyOrUserId = typeof stationKeyOrApresentadores === "string" ? stationKeyOrApresentadores : null;
+  } else {
+    program = programOrName;
+    if (Array.isArray(stationKeyOrApresentadores) && !Array.isArray(apresentadoresListOrId)) {
+      apresentadoresList = stationKeyOrApresentadores;
+      stationKeyOrUserId = typeof apresentadoresListOrId === "string" ? apresentadoresListOrId : null;
+    } else {
+      apresentadoresList = Array.isArray(apresentadoresListOrId) ? apresentadoresListOrId : [];
+      stationKeyOrUserId = typeof stationKeyOrApresentadores === "string" ? stationKeyOrApresentadores : null;
+    }
+  }
 
   const targetStation = normalizeClientKey(
     stationKeyOrUserId ||

@@ -25,9 +25,20 @@ const STORAGE_CUSTOM_PROGRAMS_KEY = "nexohub_housemix_programs_v2";
 const STORAGE_CUSTOM_ESTUDIOS_KEY = "nexohub_housemix_estudios_v2";
 
 // Normaliza nomes de emissoras/clientes para chaves canônicas (lidando com variações, slugs, IDs e typos)
-export function normalizeClientKey(rawName?: string | null): string {
+export function normalizeClientKey(rawName?: any): string {
   if (!rawName) return "";
-  let clean = rawName
+  let str = "";
+  if (typeof rawName === "string") {
+    str = rawName;
+  } else if (typeof rawName === "object") {
+    if (Array.isArray(rawName)) return "";
+    str = rawName.nome || rawName.slug || rawName.nomeFantasia || rawName.razaoSocial || rawName.cliente || rawName.cliente_nome || "";
+  } else {
+    str = String(rawName);
+  }
+  if (!str) return "";
+
+  let clean = str
     .toUpperCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")

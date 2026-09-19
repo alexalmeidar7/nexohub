@@ -20,6 +20,8 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
 import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { DEFAULT_STATION_PARTICIPANTES } from "@/lib/stationParticipantesData";
 
 export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
 
@@ -674,34 +676,55 @@ export default function PromocoesKiosk() {
         } catch {}
       }
 
-      const empresa = data?.empresa || (isPositivaStation ? DEFAULT_POSITIVA_CONFIG : null);
+      const syncDb = validSlug ? getStationDatabaseSync(validSlug) : null;
+
+      const empresa = data?.empresa || (isPositivaStation ? DEFAULT_POSITIVA_CONFIG : (syncDb?.empresa ? {
+        nome: syncDb.empresa.nome_fantasia || syncDb.empresa.razao_social || "",
+        logo: syncDb.empresa.logo || "",
+        backgroundUrl: "",
+        endereco: syncDb.empresa.cidade || "",
+        telefoneComercial: syncDb.empresa.telefone_comercial || "",
+        telefoneParticipacao: syncDb.empresa.telefone_participacao || "",
+        site: syncDb.empresa.site || "",
+        instagram: syncDb.empresa.instagram || "",
+        facebook: syncDb.empresa.facebook || "",
+        youtube: syncDb.empresa.youtube || "",
+        plano: syncDb.empresa.plano || "",
+      } : null));
+
       if (empresa) {
         setConfig({
-          nome: empresa.nome || "", logo: empresa.logo || "", backgroundUrl: empresa.background_url || "",
-          endereco: empresa.endereco || "", telefoneComercial: empresa.telefone_comercial || empresa.telefoneComercial || "",
-          telefoneParticipacao: empresa.telefone_participacao || empresa.telefoneParticipacao || "", site: empresa.site || "",
+          nome: empresa.nome || "", logo: empresa.logo || "", backgroundUrl: (empresa as any).background_url || empresa.backgroundUrl || "",
+          endereco: empresa.endereco || "", telefoneComercial: (empresa as any).telefone_comercial || empresa.telefoneComercial || "",
+          telefoneParticipacao: (empresa as any).telefone_participacao || empresa.telefoneParticipacao || "", site: empresa.site || "",
           instagram: empresa.instagram || "", facebook: empresa.facebook || "", youtube: empresa.youtube || "",
           plano: empresa.plano || "",
         });
         setStreamCfg({
-          audioUrl: empresa.audio_stream_api_url || empresa.audioUrl || "",
-          audioXpath: empresa.audio_stream_xpath || empresa.audioXpath || "",
-          videoUrl: empresa.video_stream_api_url || empresa.videoUrl || "",
-          videoXpath: empresa.video_stream_xpath || empresa.videoXpath || "",
+          audioUrl: (empresa as any).audio_stream_api_url || empresa.audioUrl || "",
+          audioXpath: (empresa as any).audio_stream_xpath || empresa.audioXpath || "",
+          videoUrl: (empresa as any).video_stream_api_url || empresa.videoUrl || "",
+          videoXpath: (empresa as any).video_stream_xpath || empresa.videoXpath || "",
         });
       }
-      if (data?.userId || isPositivaStation) setAudienceUserId(data?.userId || POSITIVA_USER_ID);
+      if (data?.userId || isPositivaStation || syncDb?.userId) {
+        setAudienceUserId(data?.userId || (isPositivaStation ? POSITIVA_USER_ID : syncDb?.userId || null));
+      }
       setWeatherInfo({
-        city: data?.weather_city || (isPositivaStation ? "Goiânia" : null),
+        city: data?.weather_city || (isPositivaStation ? "Goiânia" : (syncDb?.empresa?.cidade || null)),
         lat: data?.weather_lat != null ? Number(data.weather_lat) : (isPositivaStation ? -16.6869 : null),
         lon: data?.weather_lon != null ? Number(data.weather_lon) : (isPositivaStation ? -49.2648 : null),
       });
 
       let allPromos = data?.promocoes || [];
-      if (allPromos.length === 0 && isPositivaStation) {
+      if (allPromos.length === 0) {
         const snapPromos = getSnapshotTable("promocoes");
-        const filtered = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID || !p.user_id);
-        allPromos = filtered.length > 0 ? filtered : snapPromos;
+        if (isPositivaStation) {
+          const filtered = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID || !p.user_id);
+          allPromos = filtered.length > 0 ? filtered : snapPromos;
+        } else if (syncDb?.userId) {
+          allPromos = snapPromos.filter((p: any) => p.user_id === syncDb.userId);
+        }
       }
       allPromos = allPromos.map((p: any) => ({
         ...p,
@@ -713,10 +736,14 @@ export default function PromocoesKiosk() {
       setPromocoes(allPromos);
 
       let activeTestemunhais = data?.testemunhais || [];
-      if (activeTestemunhais.length === 0 && isPositivaStation) {
+      if (activeTestemunhais.length === 0) {
         const snapTests = getSnapshotTable("testemunhais");
-        const filtered = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID || !t.user_id);
-        activeTestemunhais = filtered.length > 0 ? filtered : snapTests;
+        if (isPositivaStation) {
+          const filtered = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID || !t.user_id);
+          activeTestemunhais = filtered.length > 0 ? filtered : snapTests;
+        } else if (syncDb?.userId) {
+          activeTestemunhais = snapTests.filter((t: any) => t.user_id === syncDb.userId);
+        }
       }
       setTestemunhais(activeTestemunhais);
 
@@ -725,8 +752,12 @@ export default function PromocoesKiosk() {
       }
 
       let rawProgs = data?.programas || [];
-      if (rawProgs.length === 0 && isPositivaStation) {
-        rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
+      if (rawProgs.length === 0) {
+        if (isPositivaStation) {
+          rawProgs = syncDb?.programas && syncDb.programas.length > 0 ? syncDb.programas : DEFAULT_POSITIVA_PROGRAMAS;
+        } else if (syncDb?.programas && syncDb.programas.length > 0) {
+          rawProgs = syncDb.programas;
+        }
       }
       const mapped = rawProgs.map((p: any) => ({
         id: p.id,
@@ -746,8 +777,12 @@ export default function PromocoesKiosk() {
       setProgramas(mapped);
 
       let aprs = data?.apresentadores || [];
-      if (aprs.length === 0 && isPositivaStation) {
-        aprs = DEFAULT_POSITIVA_APRESENTADORES;
+      if (aprs.length === 0) {
+        if (isPositivaStation) {
+          aprs = (DEFAULT_STATION_PARTICIPANTES["POSITIVA FM"] as any) || DEFAULT_POSITIVA_APRESENTADORES;
+        } else if (syncDb?.apresentadores && syncDb.apresentadores.length > 0) {
+          aprs = syncDb.apresentadores;
+        }
       }
       setApresentadores(aprs.map((a: any) => ({
         id: a.id,
@@ -1663,10 +1698,9 @@ export default function PromocoesKiosk() {
             {/* Presenter photo - ao lado do ícone de ao vivo */}
             {(() => {
               const presenter = resolvePresenterForProgram(
-                onAirProgram?.nome || "",
-                onAirProgram?.apresentadorId,
+                onAirProgram,
                 apresentadores,
-                onAirProgram?.diasSemana
+                validSlug || (isPositivaUser ? "POSITIVA FM" : undefined)
               ) || (onAirProgram?.apresentadorId ? apresentadores.find(a => a.id === onAirProgram.apresentadorId) : null);
 
               const photo = presenter?.foto ? resolveSafePresenterPhoto(presenter.nome, presenter.foto) : null;
@@ -1691,10 +1725,9 @@ export default function PromocoesKiosk() {
                 <span className="font-bold uppercase tracking-widest text-xs" style={{ color: telaPromoConfig.header_text_color }}>No Ar</span>
                 {(() => {
                   const p = resolvePresenterForProgram(
-                    onAirProgram?.nome || "",
-                    onAirProgram?.apresentadorId,
+                    onAirProgram,
                     apresentadores,
-                    onAirProgram?.diasSemana
+                    validSlug || (isPositivaUser ? "POSITIVA FM" : undefined)
                   );
                   return p?.nome ? (
                     <span className="text-[11px] font-semibold opacity-90" style={{ color: telaPromoConfig.btn_color_b }}>
@@ -2287,6 +2320,7 @@ export default function PromocoesKiosk() {
         }
       }}>
         <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl w-[95vw] sm:w-full h-[85vh] sm:h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
+          <DialogTitle className="sr-only">{selectedPromo?.nome || "Detalhes da Promoção"}</DialogTitle>
           {/* Banner fixo no topo com padding */}
           {selectedPromo?.imagem_url && (
             <div className="flex-shrink-0 pt-4 px-4">
