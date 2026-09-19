@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Radio, MapPin, Clock, Mic, Music, ChevronLeft, ChevronRight, Disc, Volume2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
+import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
+import { resolveSafePresenterPhoto } from "@/components/FloatingOnAirPresenter";
 import {
   normalizeClientKey,
   getClientHouseMixProgramsSync,
@@ -235,13 +237,20 @@ export default function AgoraNasRadiosWidget() {
           estudio = onAirResult.current.estudio ? onAirResult.current.estudio.toUpperCase() : estudio;
 
           // Localiza o apresentador real do programa
-          const apId = onAirResult.current.apresentador_id || (onAirResult.current.apresentadores_ids && onAirResult.current.apresentadores_ids[0]);
-          if (apId) {
-            const ap = dbApresentadores.find((a) => a.id === apId);
-            if (ap) {
-              locutorNome = ap.nome;
-              locutorFoto = ap.foto || undefined;
-              if (ap.instagram) locutorInstagram = `@${ap.instagram.replace(/^@/, "")}`;
+          const resolvedAp = resolvePresenterForProgram(onAirResult.current, dbApresentadores, cli.id);
+          if (resolvedAp) {
+            locutorNome = resolvedAp.nome;
+            locutorFoto = resolveSafePresenterPhoto(resolvedAp.foto, resolvedAp.nome);
+            if (resolvedAp.instagram) locutorInstagram = `@${resolvedAp.instagram.replace(/^@/, "")}`;
+          } else {
+            const apId = onAirResult.current.apresentador_id || (onAirResult.current.apresentadores_ids && onAirResult.current.apresentadores_ids[0]);
+            if (apId) {
+              const ap = dbApresentadores.find((a) => a.id === apId);
+              if (ap) {
+                locutorNome = ap.nome;
+                locutorFoto = resolveSafePresenterPhoto(ap.foto, ap.nome);
+                if (ap.instagram) locutorInstagram = `@${ap.instagram.replace(/^@/, "")}`;
+              }
             }
           }
         }
@@ -254,7 +263,7 @@ export default function AgoraNasRadiosWidget() {
           });
           if (matchingAp) {
             locutorNome = matchingAp.nome;
-            locutorFoto = matchingAp.foto || undefined;
+            locutorFoto = resolveSafePresenterPhoto(matchingAp.foto, matchingAp.nome);
             if (matchingAp.instagram) locutorInstagram = `@${matchingAp.instagram.replace(/^@/, "")}`;
           }
         }
@@ -501,13 +510,13 @@ export default function AgoraNasRadiosWidget() {
           {/* Card do Locutor / Apresentador */}
           <div className="flex items-center gap-3 p-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
             <div className="relative shrink-0">
-              {currentRadio.locutorFoto ? (
+              {resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome) ? (
                 <img
-                  src={currentRadio.locutorFoto}
+                  src={resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome)}
                   alt={currentRadio.locutorNome}
                   className="w-10 h-10 rounded-full object-cover ring-2 ring-[#00BFF0]/40 shadow-md"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                    (e.currentTarget as HTMLImageElement).src = "/locutores/jonathas.png";
                   }}
                 />
               ) : (

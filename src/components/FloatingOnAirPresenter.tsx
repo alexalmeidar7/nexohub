@@ -31,19 +31,52 @@ function formatHour(h: string): string {
 }
 
 export function resolveSafePresenterPhoto(foto?: string | null, nome?: string | null): string {
-  const norm = (nome || "").toLowerCase();
-  if (!foto || foto.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
-    if (norm.includes("márcio") || norm.includes("marcio")) return "/avatars/usr-1.png";
-    if (norm.includes("reginaldo")) return "/avatars/usr-4.png";
-    if (norm.includes("alysson")) return "/avatars/usr-6.png";
-    if (norm.includes("jonathas")) return "/avatars/usr-3.png";
-    if (norm.includes("vanessa")) return "/avatars/usr-2.png";
-    if (norm.includes("fernando")) return "/avatars/usr-7.png";
-    if (norm.includes("ani")) return "/avatars/usr-5.png";
-    if (norm.includes("johnny")) return "/avatars/usr-8.png";
-    return "/avatars/usr-1.png";
+  const norm = (nome || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+  // Positiva FM authentic photos
+  if (norm.includes("jonathas")) return "/locutores/jonathas.png";
+  if (norm.includes("marcio")) return "/locutores/marcio.png";
+  if (norm.includes("vanessa")) return "/locutores/vanessa-reis.png";
+  if (norm.includes("reginaldo")) return "/locutores/reginaldo.png";
+  if (norm.includes("alysson") && norm.includes("jane")) return "/locutores/alysson-e-jane.png";
+  if (norm.includes("alysson")) return "/locutores/alysson.png";
+  if (norm.includes("jane")) return "/locutores/alysson-e-jane.png";
+  if (norm.includes("fernando")) return "/locutores/fernando.png";
+  if (norm.includes("douglas")) return "/locutores/douglas.png";
+  if (norm.includes("cris")) return "/locutores/cris.png";
+  if (norm.includes("gizele") || norm.includes("gizelle")) return "/locutores/gizele.png";
+  if (norm.includes("automatico") || norm.includes("sem loc")) return "/locutores/sem-loc.png";
+
+  // Interativa FM authentic photos
+  if (norm.includes("ze") || norm.includes("jose luiz")) return "/locutores/ze.png";
+  if (norm.includes("ani")) return "/locutores/ani.png";
+  if (norm.includes("botelho") || norm.includes("johnny")) return "/locutores/botelho.png";
+  if (norm.includes("dj") || norm.includes("amaral")) return "/locutores/dj.png";
+  if (norm.includes("henrique") || norm.includes("augusto")) return "/locutores/henrique.png";
+  if (norm.includes("gabs")) return "/locutores/gabs.png";
+  if (norm.includes("morga") || norm.includes("everson") || norm.includes("morgantini")) return "/locutores/morga.png";
+  if (norm.includes("pablo") || norm.includes("kossa") || norm.includes("santhe")) return "/locutores/pablo.png";
+  if (norm.includes("andre")) return "/locutores/andre.png";
+
+  // Cultura FM authentic photos
+  if (norm.includes("azevedo")) return "/locutores/azevedo.png";
+  if (norm.includes("mauricio")) return "/locutores/mauricio.png";
+  if (norm.includes("nathy")) return "/locutores/nathy.png";
+  if (norm.includes("paulinho")) return "/locutores/paulinho.png";
+  if (norm.includes("rafaela")) return "/locutores/rafaela.png";
+  if (norm.includes("rayssa")) return "/locutores/rayssa.png";
+  if (norm.includes("junior")) return "/locutores/junior.png";
+
+  // If a valid custom photo URL is passed and is NOT dead Supabase or generic cartoon avatar
+  if (foto && !foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") && !foto.includes("/avatars/usr-")) {
+    return foto;
   }
-  return foto;
+
+  return "/locutores/jonathas.png";
 }
 
 export default function FloatingOnAirPresenter({
@@ -361,8 +394,8 @@ export default function FloatingOnAirPresenter({
                 alt={onAirInfo.locutorNome || "Locutor no ar"}
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.src.endsWith("/avatars/usr-1.png")) {
-                    target.src = "/avatars/usr-1.png";
+                  if (!target.src.includes("/locutores/jonathas.png")) {
+                    target.src = "/locutores/jonathas.png";
                   }
                 }}
                 style={{
@@ -592,10 +625,16 @@ export default function FloatingOnAirPresenter({
                 border: "1px solid rgba(255,255,255,0.15)",
               }}
             >
-              {nextProgInfo?.locutorFoto ? (
+              {resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome) ? (
                 <img
-                  src={nextProgInfo.locutorFoto}
-                  alt={nextProgInfo.locutorNome || "Próximo locutor"}
+                  src={resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome)}
+                  alt={nextProgInfo?.locutorNome || "Próximo locutor"}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.includes("/locutores/jonathas.png")) {
+                      target.src = "/locutores/jonathas.png";
+                    }
+                  }}
                   style={{
                     width: "100%",
                     height: "100%",

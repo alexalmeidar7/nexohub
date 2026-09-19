@@ -10,89 +10,169 @@ export interface ResolvedPresenter {
   instagram?: string;
 }
 
-// Canonical database of verified radio presenters with local fallback avatar assets
+// Canonical database of verified radio presenters with authentic official photos
 export const CANONICAL_PRESENTERS: Record<string, ResolvedPresenter> = {
   // Positiva FM
   "90ca4858-935e-4b87-a83a-224263fd269d": {
     id: "90ca4858-935e-4b87-a83a-224263fd269d",
     nome: "Reginaldo Lucena",
-    foto: "/avatars/usr-4.png",
+    foto: "/locutores/reginaldo.png",
     instagram: "@_reginaldolucena",
   },
   "04205a8e-cdca-409d-a879-ad21a61dcefa": {
     id: "04205a8e-cdca-409d-a879-ad21a61dcefa",
     nome: "Alysson Lima",
-    foto: "/avatars/usr-6.png",
+    foto: "/locutores/alysson.png",
+    instagram: "@alyssonlima",
+  },
+  "96b85e8c-6ba2-4352-9932-3b0db533aa20": {
+    id: "96b85e8c-6ba2-4352-9932-3b0db533aa20",
+    nome: "Jane Borges",
+    foto: "/locutores/alysson-e-jane.png",
+    instagram: "@janeborges",
   },
   "f3601b21-fd66-4795-9021-4d91992e3b6e": {
     id: "f3601b21-fd66-4795-9021-4d91992e3b6e",
     nome: "Márcio Rodrigues",
-    foto: "/avatars/usr-1.png",
+    foto: "/locutores/marcio.png",
     instagram: "@marciorodrigues.radio",
   },
   "5889d956-ed6a-4089-846e-159eb54bc474": {
     id: "5889d956-ed6a-4089-846e-159eb54bc474",
     nome: "Jonathas Mattos",
-    foto: "/avatars/usr-3.png",
+    foto: "/locutores/jonathas.png",
     instagram: "@jonathasmattoslocutor",
   },
   "9d64c3c7-d45c-4cf5-b941-333e7eed8c85": {
     id: "9d64c3c7-d45c-4cf5-b941-333e7eed8c85",
     nome: "Vanessa Reis",
-    foto: "/avatars/usr-2.png",
+    foto: "/locutores/vanessa-reis.png",
     instagram: "@vanessareis.oficial",
   },
   "21a0ba74-8724-4b58-b8be-09b055bdbfa6": {
     id: "21a0ba74-8724-4b58-b8be-09b055bdbfa6",
     nome: "Fernando",
-    foto: "/avatars/usr-7.png",
+    foto: "/locutores/fernando.png",
+  },
+  "7a8dbf72-88de-4bf9-a0ba-1a024a2297f7": {
+    id: "7a8dbf72-88de-4bf9-a0ba-1a024a2297f7",
+    nome: "Douglas Reis",
+    foto: "/locutores/douglas.png",
+    instagram: "@douglas.dos.reis",
+  },
+  "5945a2c7-5f5d-4765-99f2-b232d0a8cc1f": {
+    id: "5945a2c7-5f5d-4765-99f2-b232d0a8cc1f",
+    nome: "Gizelle Reis",
+    foto: "/locutores/gizele.png",
+    instagram: "@gizellesouza2",
   },
   "99824dc1-78da-44b8-9033-920922ead18b": {
     id: "99824dc1-78da-44b8-9033-920922ead18b",
     nome: "Automático",
-    foto: "/avatars/usr-default.png",
+    foto: "/locutores/sem-loc.png",
   },
 
   // Interativa FM
   "d79ea9a6-92a8-47af-b41a-2d2721b6ac03": {
     id: "d79ea9a6-92a8-47af-b41a-2d2721b6ac03",
     nome: "José Luiz",
-    foto: "/avatars/usr-1.png",
+    foto: "/locutores/ze.png",
   },
   "507bdf72-fcf2-4b17-bb78-22ce22256150": {
     id: "507bdf72-fcf2-4b17-bb78-22ce22256150",
     nome: "Ani Cristine",
-    foto: "/avatars/usr-5.png",
+    foto: "/locutores/ani.png",
+    instagram: "@anicristine",
   },
   "4d7dff62-9163-45db-8705-fc3389ba9997": {
     id: "4d7dff62-9163-45db-8705-fc3389ba9997",
     nome: "Johnny Botelho",
-    foto: "/avatars/usr-8.png",
+    foto: "/locutores/botelho.png",
   },
   "56eba9af-df33-4bec-bd35-b3681e0cc948": {
     id: "56eba9af-df33-4bec-bd35-b3681e0cc948",
     nome: "Dj Henrique Amaral",
-    foto: "/avatars/usr-6.png",
+    foto: "/locutores/dj.png",
+    instagram: "@djhenriqueamaral",
   },
   "98cf1ac0-fb75-46fd-a040-0b45fb652496": {
     id: "98cf1ac0-fb75-46fd-a040-0b45fb652496",
     nome: "Henrique Augusto",
-    foto: "/avatars/usr-4.png",
+    foto: "/locutores/henrique.png",
+    instagram: "@henriquelocuteiro",
   },
   "ef4d3dc6-2505-4468-8cce-4bdd3722a9a1": {
     id: "ef4d3dc6-2505-4468-8cce-4bdd3722a9a1",
     nome: "Gabs",
-    foto: "/avatars/usr-2.png",
+    foto: "/locutores/gabs.png",
+    instagram: "@frozengabs",
   },
   "2806b341-b17e-4496-87b7-17a98d0b8fc4": {
     id: "2806b341-b17e-4496-87b7-17a98d0b8fc4",
     nome: "Éverson Cândido",
-    foto: "/avatars/usr-7.png",
+    foto: "/locutores/morga.png",
   },
   "0a65fa6b-8326-4b3a-a4d8-5fb73655f6fc": {
     id: "0a65fa6b-8326-4b3a-a4d8-5fb73655f6fc",
     nome: "Thiago Santhê",
-    foto: "/avatars/usr-3.png",
+    foto: "/locutores/pablo.png",
+    instagram: "@thiagosante",
+  },
+  "3b991a26-9eaf-4cad-88e0-45382d2253a3": {
+    id: "3b991a26-9eaf-4cad-88e0-45382d2253a3",
+    nome: "Pablo Kossa",
+    foto: "/locutores/pablo.png",
+    instagram: "@pablokossa",
+  },
+  "43af147d-f4fc-4e9c-ad28-c8366b9d2970": {
+    id: "43af147d-f4fc-4e9c-ad28-c8366b9d2970",
+    nome: "Andre Rodrigues",
+    foto: "/locutores/andre.png",
+    instagram: "@andrerodrigues777",
+  },
+  "0c16f71a-ac60-4405-bb24-19f75494cb55": {
+    id: "0c16f71a-ac60-4405-bb24-19f75494cb55",
+    nome: "Henrique Morgantini",
+    foto: "/locutores/morga.png",
+    instagram: "@hmorgantini",
+  },
+
+  // Cultura FM
+  "cultura-azevedo": {
+    id: "cultura-azevedo",
+    nome: "Azevedo Júnior",
+    foto: "/locutores/azevedo.png",
+    instagram: "@azevedojuniorlocutoroficial",
+  },
+  "cultura-mauricio": {
+    id: "cultura-mauricio",
+    nome: "Maurício",
+    foto: "/locutores/mauricio.png",
+  },
+  "cultura-nathy": {
+    id: "cultura-nathy",
+    nome: "Nathy",
+    foto: "/locutores/nathy.png",
+  },
+  "cultura-paulinho": {
+    id: "cultura-paulinho",
+    nome: "Paulinho",
+    foto: "/locutores/paulinho.png",
+  },
+  "cultura-rafaela": {
+    id: "cultura-rafaela",
+    nome: "Rafaela",
+    foto: "/locutores/rafaela.png",
+  },
+  "cultura-rayssa": {
+    id: "cultura-rayssa",
+    nome: "Rayssa",
+    foto: "/locutores/rayssa.png",
+  },
+  "cultura-junior": {
+    id: "cultura-junior",
+    nome: "Junior",
+    foto: "/locutores/junior.png",
   },
 };
 
@@ -213,10 +293,11 @@ export function resolvePresenterForProgram(
     const found = (apresentadoresList || []).find((a) => a.id === apId);
     if (found) {
       const canonical = CANONICAL_PRESENTERS[apId];
+      const isDead = !found.foto || found.foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") || found.foto.includes("/avatars/usr-");
       return {
         id: found.id,
         nome: found.nome,
-        foto: found.foto || canonical?.foto || "",
+        foto: isDead ? (canonical?.foto || "") : found.foto,
         instagram: found.instagram || canonical?.instagram,
       };
     }
@@ -232,10 +313,11 @@ export function resolvePresenterForProgram(
   if (canonicalByProg) {
     // If user's list has custom presenter info with this ID, prefer it
     const userCustom = (apresentadoresList || []).find((a) => a.id === canonicalByProg.id);
+    const isDead = !userCustom?.foto || userCustom.foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") || userCustom.foto.includes("/avatars/usr-");
     return {
       id: canonicalByProg.id,
       nome: userCustom?.nome || canonicalByProg.nome,
-      foto: userCustom?.foto || canonicalByProg.foto,
+      foto: isDead ? canonicalByProg.foto : userCustom.foto,
       instagram: userCustom?.instagram || canonicalByProg.instagram,
     };
   }
@@ -248,10 +330,11 @@ export function resolvePresenterForProgram(
         const normA = normalizeName(a.nome);
         if (normA.length >= 3 && (normProg.includes(normA) || normA.includes(normProg))) {
           const canon = a.id ? CANONICAL_PRESENTERS[a.id] : null;
+          const isDead = !a.foto || a.foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") || a.foto.includes("/avatars/usr-");
           return {
             id: a.id || canon?.id || "",
             nome: a.nome,
-            foto: a.foto || canon?.foto || "",
+            foto: isDead ? (canon?.foto || "") : a.foto,
             instagram: a.instagram || canon?.instagram,
           };
         }
