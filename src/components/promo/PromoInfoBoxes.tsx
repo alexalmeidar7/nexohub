@@ -155,27 +155,54 @@ function weatherLabel(code: number) {
   return "—";
 }
 
-function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
+function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
+  const isPositiva = userId === "d17e65af-e407-466f-9b60-b55c43399513" || !weatherCity || weatherCity.toLowerCase().includes("goiânia");
+  const effectiveCity = weatherCity || (isPositiva ? "Goiânia" : null);
+  const effectiveLat = weatherLat ?? (isPositiva ? -16.6869 : null);
+  const effectiveLon = weatherLon ?? (isPositiva ? -49.2648 : null);
+
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [dayIdx, setDayIdx] = useState(0);
 
   useEffect(() => {
-    if (weatherLat == null || weatherLon == null) return;
+    if (effectiveLat == null || effectiveLon == null) return;
     let cancel = false;
 
     const fetchIt = async () => {
       setLoading(true);
+      let loaded = false;
       try {
-        const { data: resp } = await supabase.functions.invoke("fetch-weather", {
-          body: { action: "forecast", lat: weatherLat, lon: weatherLon, forecast_days: 6 },
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000));
+        const supaPromise = supabase.functions.invoke("fetch-weather", {
+          body: { action: "forecast", lat: effectiveLat, lon: effectiveLon, forecast_days: 6 },
         });
-        if (!cancel && resp?.ok) setData(resp.data);
+        const resp: any = await Promise.race([supaPromise, timeoutPromise]).catch(() => null);
+        if (!cancel && resp?.data?.ok && resp.data.data) {
+          setData(resp.data.data);
+          loaded = true;
+        }
       } catch {
         // ignore
-      } finally {
-        if (!cancel) setLoading(false);
       }
+
+      if (!loaded && !cancel) {
+        try {
+          const res = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${effectiveLat}&longitude=${effectiveLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=6`
+          );
+          if (res.ok) {
+            const json = await res.json();
+            if (!cancel && json?.current) {
+              setData(json);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!cancel) setLoading(false);
     };
 
     fetchIt();
@@ -184,7 +211,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
       cancel = true;
       clearInterval(iv);
     };
-  }, [weatherLat, weatherLon]);
+  }, [effectiveLat, effectiveLon]);
 
   const daily = data?.daily;
   const days = daily?.time || [];
@@ -211,7 +238,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
         <Cloud size={11} /> Previsão do Tempo
       </div>
 
-      {!weatherCity ? (
+      {!effectiveCity ? (
         <div style={{ fontSize: 11, color: PROMO_MUTED, marginTop: 8 }}>
           Configure a "cidade tempo" em Previsão do Tempo.
         </div>
@@ -242,7 +269,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
                 <div className="text-right">
                   <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10" style={{ fontSize: 8, fontWeight: 700, color: PROMO_TEXT }}>
                     <MapPin size={8} className="mr-1 opacity-70" />
-                    {weatherCity}
+                    {effectiveCity}
                   </div>
                   <div className="mt-1 flex flex-col items-end gap-1">
                     <div className="flex items-center gap-2" style={{ fontSize: 9, fontWeight: 700 }}>
@@ -924,7 +951,7 @@ export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon, us
       className="grid gap-3 mb-3"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
     >
-      <WeatherBox weatherCity={weatherCity} weatherLat={weatherLat} weatherLon={weatherLon} />
+      <WeatherBox weatherCity={weatherCity} weatherLat={weatherLat} weatherLon={weatherLon} userId={userId} />
       <DatasBox userId={userId} />
       <BlitzBox userId={userId} />
     </div>

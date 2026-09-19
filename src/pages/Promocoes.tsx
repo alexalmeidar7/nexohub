@@ -8,6 +8,7 @@ import { getEmpresaConfig, type EmpresaConfig } from "@/lib/empresaConfigService
 import { findCurrentProgram } from "@/components/OnAirWidget";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
+import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
 import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users, MessageSquareQuote } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
@@ -20,6 +21,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
 import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
 
+export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
+
 interface Promocao {
   id: string;
   imagem_url: string;
@@ -29,6 +32,7 @@ interface Promocao {
   data_inicio: string;
   data_fim: string;
   nome?: string;
+  botao_icone_url?: string;
 }
 
 interface ProgramaGrade {
@@ -70,6 +74,369 @@ const PROGRAMAS_VISIVEIS = [
 ];
 
 const REMOVED_PROGRAM_COVER_PATH = "/programas/d17e65af-e407-466f-9b60-b55c43399513/d40fca1b-5f5a-4588-8d4a-35323fe88b9f_capa.webp";
+
+export function resolveSafePromoBanner(p: any): string {
+  const norm = `${p?.nome || ""} ${p?.botao_url || ""} ${p?.imagem_url || ""}`.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (norm.includes("premio") || norm.includes("que premio")) return "/promocoes/que-premio-e-esse.png";
+  if (norm.includes("role")) return "/promocoes/role-positiva.png";
+  if (norm.includes("parada") || norm.includes("estrada")) return "/promocoes/parada-positiva.png";
+  if (norm.includes("burger") || norm.includes("burguer")) return "/promocoes/super-burguer.png";
+  if (norm.includes("resenha")) return "/promocoes/resenha.png";
+  if (norm.includes("caldas")) return "/promocoes/partiu-caldas.png";
+  if (norm.includes("peguei")) return "/promocoes/te-peguei-positiva.png";
+  if (norm.includes("pix")) return "/promocoes/meu-pix-positiva.png";
+  if (norm.includes("encontro")) return "/promocoes/encontro-marcado.png";
+  if (norm.includes("luan") || norm.includes("historico")) return "/promocoes/luan-santana.png";
+  if (norm.includes("cabare")) return "/promocoes/cabare.png";
+  if (norm.includes("movimento")) return "/promocoes/movimento.png";
+
+  if (p?.imagem_url && !p.imagem_url.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
+    return p.imagem_url;
+  }
+  return "/promocoes/que-premio-e-esse.png";
+}
+
+export function resolveSafePromoButton(p: any): string {
+  const norm = `${p?.nome || ""} ${p?.botao_url || ""}`.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (norm.includes("premio") || norm.includes("que premio")) return "/promocoes/bts/que-premio-e-esse.png";
+  if (norm.includes("role")) return "/promocoes/bts/role-positiva.png";
+  if (norm.includes("parada") || norm.includes("estrada")) return "/promocoes/bts/parada-positiva.png";
+  if (norm.includes("burger") || norm.includes("burguer")) return "/promocoes/bts/super-burguer.png";
+  if (norm.includes("resenha")) return "/promocoes/bts/resenha.png";
+  if (norm.includes("caldas")) return "/promocoes/partiu-caldas.png";
+  if (norm.includes("peguei")) return "/promocoes/te-peguei-positiva.png";
+  if (norm.includes("pix")) return "/promocoes/bts/meu-pix-positiva.png";
+  if (norm.includes("encontro")) return "/promocoes/bts/encontro-marcado.png";
+  if (norm.includes("luan") || norm.includes("historico")) return "/promocoes/bts/luan-santana.png";
+  return "";
+}
+
+export function resolveSafeProgramCover(nameOrCover?: string): string {
+  const norm = (nameOrCover || "").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (norm.includes("flashback")) return "/programas/flashback.png";
+  if (norm.includes("whatsapp")) return "/programas/whatsapp.png";
+  if (norm.includes("bom dia")) return "/programas/bom-dia.png";
+  if (norm.includes("primeira hora")) return "/programas/primeira-hora.png";
+  if (norm.includes("sertanejo") && (norm.includes("1") || norm.includes("primeira"))) return "/programas/sbd1.png";
+  if (norm.includes("sertanejo") && (norm.includes("2") || norm.includes("segunda"))) return "/programas/sbd2.png";
+  if (norm.includes("sertanejo")) return "/programas/sbd1.png";
+  if (norm.includes("vale night")) return "/programas/vale-night.png";
+  if (norm.includes("palco")) return "/programas/palco-positiva.png";
+  if (norm.includes("energia")) return "/programas/energia-positiva.png";
+  if (norm.includes("modao")) return "/programas/modao.png";
+  if (norm.includes("domingao")) return "/programas/domingao.png";
+  if (norm.includes("madruga")) return "/programas/madrugada.png";
+
+  if (nameOrCover && !nameOrCover.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
+    return nameOrCover;
+  }
+  return "/programas/flashback.png";
+}
+
+export function resolveSafeProgramSelo(nameOrSelo?: string): string {
+  const norm = (nameOrSelo || "").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (norm.includes("flashback")) return "/selos/flashback.png";
+  if (norm.includes("whatsapp")) return "/selos/whatsapp.png";
+  if (norm.includes("bom dia")) return "/selos/bom-dia.png";
+  if (norm.includes("primeira hora")) return "/selos/primeira-hora.png";
+  if (norm.includes("sertanejo") && (norm.includes("1") || norm.includes("primeira"))) return "/selos/sbd1.png";
+  if (norm.includes("sertanejo") && (norm.includes("2") || norm.includes("segunda"))) return "/selos/sbd2.png";
+  if (norm.includes("sertanejo")) return "/selos/sbd1.png";
+  if (norm.includes("vale night")) return "/selos/vale-night.png";
+  if (norm.includes("palco")) return "/selos/palco-positiva.png";
+  if (norm.includes("energia")) return "/selos/energia-positiva.png";
+  if (norm.includes("modao")) return "/selos/modao.png";
+  if (norm.includes("domingao")) return "/selos/domingao.png";
+  if (norm.includes("madruga")) return "/selos/madrugada.png";
+
+  if (nameOrSelo && !nameOrSelo.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
+    return nameOrSelo;
+  }
+  return "/selos/flashback.png";
+}
+
+export function resolveSafePresenterPhoto(nameOrId?: string, rawPhoto?: string): string {
+  const norm = `${nameOrId || ""} ${rawPhoto || ""}`.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (norm.includes("jonathas")) return "/locutores/jonathas.png";
+  if (norm.includes("vanessa")) return "/locutores/vanessa-reis.png";
+  if (norm.includes("reginaldo")) return "/locutores/reginaldo.png";
+  if (norm.includes("marcio")) return "/locutores/marcio.png";
+  if (norm.includes("alysson") && norm.includes("jane")) return "/locutores/alysson-e-jane.png";
+  if (norm.includes("alysson")) return "/locutores/alysson.png";
+  if (norm.includes("douglas")) return "/locutores/douglas.png";
+  if (norm.includes("fernando")) return "/locutores/fernando.png";
+  if (norm.includes("andre")) return "/locutores/andre.png";
+  if (norm.includes("rafaela")) return "/locutores/rafaela.png";
+  if (norm.includes("mauricio")) return "/locutores/mauricio.png";
+  if (norm.includes("paulinho")) return "/locutores/paulinho.png";
+  if (norm.includes("botelho")) return "/locutores/botelho.png";
+  if (norm.includes("henrique")) return "/locutores/henrique.png";
+  if (norm.includes("gizele")) return "/locutores/gizele.png";
+  if (norm.includes("rayssa")) return "/locutores/rayssa.png";
+  if (norm.includes("ani")) return "/locutores/ani.png";
+  if (norm.includes("cris")) return "/locutores/cris.png";
+  if (norm.includes("morga")) return "/locutores/morga.png";
+  if (norm.includes("nathy")) return "/locutores/nathy.png";
+  if (norm.includes("pablo")) return "/locutores/pablo.png";
+  if (norm.includes("ze")) return "/locutores/ze.png";
+  if (norm.includes("junior")) return "/locutores/junior.png";
+  if (norm.includes("elco")) return "/locutores/elco.png";
+  if (norm.includes("gabs")) return "/locutores/gabs.png";
+  if (norm.includes("augusto")) return "/locutores/augusto.png";
+  if (norm.includes("azevedo")) return "/locutores/azevedo.png";
+
+  if (rawPhoto && !rawPhoto.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
+    return rawPhoto;
+  }
+  return "/locutores/sem-loc.png";
+}
+
+const DEFAULT_POSITIVA_CONFIG: EmpresaConfig = {
+  nome: "Positiva FM 99.1",
+  logo: "/logos/positiva.png",
+  backgroundUrl: "",
+  endereco: "Goiânia - GO",
+  telefoneComercial: "62 3942-9900",
+  telefoneParticipacao: "62 3942-9910",
+  site: "positivafm.com.br",
+  instagram: "@positivafmoficial",
+  facebook: "positivafm",
+  youtube: "positivafm",
+  plano: "House Mix Nexo Max",
+};
+
+const DEFAULT_POSITIVA_APRESENTADORES = [
+  { id: "5889d956-ed6a-4089-846e-159eb54bc474", nome: "Jonathas Mattos", cargo: "Locutor", instagram: "@jonathasmattoslocutor", foto: "/locutores/jonathas.png", background_url: "", ativo: true },
+  { id: "9d64c3c7-d45c-4cf5-b941-333e7eed8c85", nome: "Vanessa Reis", cargo: "Locutora", instagram: "@vanessareis.oficial", foto: "/locutores/vanessa-reis.png", background_url: "", ativo: true },
+  { id: "90ca4858-935e-4b87-a83a-224263fd269d", nome: "Reginaldo Lucena", cargo: "Locutor", instagram: "@_reginaldolucena", foto: "/locutores/reginaldo.png", background_url: "", ativo: true },
+  { id: "f3601b21-fd66-4795-9021-4d91992e3b6e", nome: "Márcio Rodrigues", cargo: "Locutor", instagram: "@marciorodrigues", foto: "/locutores/marcio.png", background_url: "", ativo: true },
+  { id: "04205a8e-cdca-409d-a879-ad21a61dcefa", nome: "Alysson Lima", cargo: "Jornalista / Locutor", instagram: "@alyssonlima", foto: "/locutores/alysson.png", background_url: "", ativo: true },
+  { id: "7a8dbf72-88de-4bf9-a0ba-1a024a2297f7", nome: "Douglas Reis", cargo: "Locutor", instagram: "@douglas.dos.reis", foto: "/locutores/douglas.png", background_url: "", ativo: true },
+  { id: "21a0ba74-8724-4b58-b8be-09b055bdbfa6", nome: "Fernando", cargo: "Locutor", instagram: "", foto: "/locutores/fernando.png", background_url: "", ativo: true },
+];
+
+const DEFAULT_POSITIVA_PROGRAMAS: ProgramaGrade[] = [
+  {
+    id: "b75801f1-b88a-4a6f-abb6-c5ccfaf42d08",
+    mergedIds: ["b75801f1-b88a-4a6f-abb6-c5ccfaf42d08"],
+    nome: "Sertanejo bom demais - 1ª Edição",
+    apresentadorId: "90ca4858-935e-4b87-a83a-224263fd269d",
+    apresentadoresIds: ["90ca4858-935e-4b87-a83a-224263fd269d"],
+    horarioInicio: "04:00:00",
+    horarioFim: "07:24:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"],
+    descricao: "Domine o pico da manhã com a credibilidade de Reginaldo Lucena.",
+    capa: "/programas/sbd1.png",
+    selo: "/selos/sbd1.png",
+    thumb: "/programas/sbd1.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"], horarioInicio: "04:00:00", horarioFim: "07:24:00" }],
+  },
+  {
+    id: "b75801f1-b88a-4a6f-abb6-c5ccfaf42d08-sab",
+    mergedIds: ["b75801f1-b88a-4a6f-abb6-c5ccfaf42d08"],
+    nome: "Sertanejo bom demais - 1ª Edição - Sábado",
+    apresentadorId: "90ca4858-935e-4b87-a83a-224263fd269d",
+    apresentadoresIds: ["90ca4858-935e-4b87-a83a-224263fd269d"],
+    horarioInicio: "05:00:00",
+    horarioFim: "07:24:00",
+    diasSemana: ["Sábado"],
+    descricao: "Edição de sábado do Sertanejo Bom Demais com Reginaldo Lucena.",
+    capa: "/programas/sbd1.png",
+    selo: "/selos/sbd1.png",
+    thumb: "/programas/sbd1.png",
+    schedules: [{ dias: ["Sábado"], horarioInicio: "05:00:00", horarioFim: "07:24:00" }],
+  },
+  {
+    id: "fbd7e740-99f5-4d2d-bd86-4f7534de44a0",
+    mergedIds: ["fbd7e740-99f5-4d2d-bd86-4f7534de44a0"],
+    nome: "Primeira Hora Positiva",
+    apresentadorId: "04205a8e-cdca-409d-a879-ad21a61dcefa",
+    apresentadoresIds: ["04205a8e-cdca-409d-a879-ad21a61dcefa"],
+    horarioInicio: "07:24:00",
+    horarioFim: "08:30:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"],
+    descricao: "O primeiro jornal do dia com as principais notícias com Alysson Lima.",
+    capa: "/programas/primeira-hora.png",
+    selo: "/selos/primeira-hora.png",
+    thumb: "/programas/primeira-hora.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"], horarioInicio: "07:24:00", horarioFim: "08:30:00" }],
+  },
+  {
+    id: "5f58a3d1-5b00-4ab5-8252-69c347ac9a74",
+    mergedIds: ["5f58a3d1-5b00-4ab5-8252-69c347ac9a74"],
+    nome: "Bom dia Positiva",
+    apresentadorId: "f3601b21-fd66-4795-9021-4d91992e3b6e",
+    apresentadoresIds: ["f3601b21-fd66-4795-9021-4d91992e3b6e"],
+    horarioInicio: "08:30:00",
+    horarioFim: "12:00:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+    descricao: "A voz que domina um dos melhores horários comerciais do rádio com Márcio Rodrigues.",
+    capa: "/programas/bom-dia.png",
+    selo: "/selos/bom-dia.png",
+    thumb: "/programas/bom-dia.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"], horarioInicio: "08:30:00", horarioFim: "12:00:00" }],
+  },
+  {
+    id: "6ce84778-447b-4554-8384-bbdbd7a9ec3c",
+    mergedIds: ["6ce84778-447b-4554-8384-bbdbd7a9ec3c"],
+    nome: "Flashback Positiva",
+    apresentadorId: "5889d956-ed6a-4089-846e-159eb54bc474",
+    apresentadoresIds: ["5889d956-ed6a-4089-846e-159eb54bc474"],
+    horarioInicio: "12:00:00",
+    horarioFim: "13:00:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+    descricao: "Os grandes clássicos que marcaram época com Jonathas Mattos.",
+    capa: "/programas/flashback.png",
+    selo: "/selos/flashback.png",
+    thumb: "/programas/flashback.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"], horarioInicio: "12:00:00", horarioFim: "13:00:00" }],
+  },
+  {
+    id: "1ea3c48c-02f2-4957-9efd-fa960c64504d",
+    mergedIds: ["1ea3c48c-02f2-4957-9efd-fa960c64504d"],
+    nome: "Whatsapp Positiva",
+    apresentadorId: "5889d956-ed6a-4089-846e-159eb54bc474",
+    apresentadoresIds: ["5889d956-ed6a-4089-846e-159eb54bc474"],
+    horarioInicio: "13:00:00",
+    horarioFim: "16:00:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"],
+    descricao: "Participação dos ouvintes pelo WhatsApp com Jonathas Mattos.",
+    capa: "/programas/whatsapp.png",
+    selo: "/selos/whatsapp.png",
+    thumb: "/programas/whatsapp.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"], horarioInicio: "13:00:00", horarioFim: "16:00:00" }],
+  },
+  {
+    id: "1ea3c48c-02f2-4957-9efd-fa960c64504d-sab",
+    mergedIds: ["1ea3c48c-02f2-4957-9efd-fa960c64504d"],
+    nome: "Whatsapp Positiva - Sábado",
+    apresentadorId: "9d64c3c7-d45c-4cf5-b941-333e7eed8c85",
+    apresentadoresIds: ["9d64c3c7-d45c-4cf5-b941-333e7eed8c85"],
+    horarioInicio: "14:00:00",
+    horarioFim: "16:00:00",
+    diasSemana: ["Sábado"],
+    descricao: "Edição de sábado do WhatsApp Positiva com Vanessa Reis.",
+    capa: "/programas/whatsapp.png",
+    selo: "/selos/whatsapp.png",
+    thumb: "/programas/whatsapp.png",
+    schedules: [{ dias: ["Sábado"], horarioInicio: "14:00:00", horarioFim: "16:00:00" }],
+  },
+  {
+    id: "c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2",
+    mergedIds: ["c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2"],
+    nome: "Sertanejo bom demais - 2ª Edição",
+    apresentadorId: "9d64c3c7-d45c-4cf5-b941-333e7eed8c85",
+    apresentadoresIds: ["9d64c3c7-d45c-4cf5-b941-333e7eed8c85"],
+    horarioInicio: "16:00:00",
+    horarioFim: "19:00:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+    descricao: "Segunda edição do Sertanejo Bom Demais com Vanessa Reis.",
+    capa: "/programas/sbd2.png",
+    selo: "/selos/sbd2.png",
+    thumb: "/programas/sbd2.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"], horarioInicio: "16:00:00", horarioFim: "19:00:00" }],
+  },
+  {
+    id: "e6cea94b-4bc5-4f95-a8f2-d9f6e9fae44a",
+    mergedIds: ["e6cea94b-4bc5-4f95-a8f2-d9f6e9fae44a"],
+    nome: "Vale Night",
+    apresentadorId: "5889d956-ed6a-4089-846e-159eb54bc474",
+    apresentadoresIds: ["5889d956-ed6a-4089-846e-159eb54bc474"],
+    horarioInicio: "19:00:00",
+    horarioFim: "22:00:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"],
+    descricao: "A melhor seleção musical para a sua noite com Jonathas Mattos.",
+    capa: "/programas/vale-night.png",
+    selo: "/selos/vale-night.png",
+    thumb: "/programas/vale-night.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"], horarioInicio: "19:00:00", horarioFim: "22:00:00" }],
+  },
+  {
+    id: "b75801f1-b88a-4a6f-abb6-c5ccfaf42d08-palco",
+    mergedIds: ["b75801f1-b88a-4a6f-abb6-c5ccfaf42d08"],
+    nome: "Palco Positiva",
+    apresentadorId: "5889d956-ed6a-4089-846e-159eb54bc474",
+    apresentadoresIds: ["5889d956-ed6a-4089-846e-159eb54bc474"],
+    horarioInicio: "19:00:00",
+    horarioFim: "23:59:00",
+    diasSemana: ["Sábado", "Domingo"],
+    descricao: "Shows ao vivo e as melhores apresentações com Jonathas Mattos.",
+    capa: "/programas/palco-positiva.png",
+    selo: "/selos/palco-positiva.png",
+    thumb: "/programas/palco-positiva.png",
+    schedules: [{ dias: ["Sábado", "Domingo"], horarioInicio: "19:00:00", horarioFim: "23:59:00" }],
+  },
+  {
+    id: "energia-positiva-id",
+    mergedIds: ["energia-positiva-id"],
+    nome: "Energia Positiva",
+    apresentadorId: "04205a8e-cdca-409d-a879-ad21a61dcefa",
+    apresentadoresIds: ["04205a8e-cdca-409d-a879-ad21a61dcefa"],
+    horarioInicio: "22:00:00",
+    horarioFim: "23:59:59",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"],
+    descricao: "Muita música e energia para encerrar o seu dia.",
+    capa: "/programas/energia-positiva.png",
+    selo: "/selos/energia-positiva.png",
+    thumb: "/programas/energia-positiva.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"], horarioInicio: "22:00:00", horarioFim: "23:59:59" }],
+  },
+  {
+    id: "modao-positiva-id",
+    mergedIds: ["modao-positiva-id"],
+    nome: "Modão Positiva",
+    apresentadorId: "90ca4858-935e-4b87-a83a-224263fd269d",
+    apresentadoresIds: ["90ca4858-935e-4b87-a83a-224263fd269d"],
+    horarioInicio: "06:00:00",
+    horarioFim: "09:00:00",
+    diasSemana: ["Domingo"],
+    descricao: "O melhor da música sertaneja raiz com Reginaldo Lucena.",
+    capa: "/programas/modao.png",
+    selo: "/selos/modao.png",
+    thumb: "/programas/modao.png",
+    schedules: [{ dias: ["Domingo"], horarioInicio: "06:00:00", horarioFim: "09:00:00" }],
+  },
+  {
+    id: "domingao-positiva-id",
+    mergedIds: ["domingao-positiva-id"],
+    nome: "Domingão Positiva",
+    apresentadorId: "5889d956-ed6a-4089-846e-159eb54bc474",
+    apresentadoresIds: ["5889d956-ed6a-4089-846e-159eb54bc474"],
+    horarioInicio: "09:00:00",
+    horarioFim: "14:00:00",
+    diasSemana: ["Domingo"],
+    descricao: "A melhor trilha sonora para o seu almoço de domingo.",
+    capa: "/programas/domingao.png",
+    selo: "/selos/domingao.png",
+    thumb: "/programas/domingao.png",
+    schedules: [{ dias: ["Domingo"], horarioInicio: "09:00:00", horarioFim: "14:00:00" }],
+  },
+  {
+    id: "madrugada-positiva-id",
+    mergedIds: ["madrugada-positiva-id"],
+    nome: "Madrugada Positiva",
+    apresentadorId: "",
+    apresentadoresIds: [],
+    horarioInicio: "00:00:00",
+    horarioFim: "04:00:00",
+    diasSemana: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"],
+    descricao: "Música e companhia na madrugada da Positiva FM.",
+    capa: "/programas/madrugada.png",
+    selo: "/selos/madrugada.png",
+    thumb: "/programas/madrugada.png",
+    schedules: [{ dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"], horarioInicio: "00:00:00", horarioFim: "04:00:00" }],
+  },
+];
 
 function renderBoldMarkdown(text: string) {
   const parts = text.split(/\*([^*]+)\*/g);
@@ -127,7 +494,7 @@ export default function PromocoesKiosk() {
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
   const [testemunhais, setTestemunhais] = useState<Testemunhal[]>([]);
-  const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number; apresentadorId: string } | null>(null);
+  const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number; apresentadorId: string; diasSemana?: string[] } | null>(null);
   const [apresentadores, setApresentadores] = useState<any[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
@@ -294,75 +661,111 @@ export default function PromocoesKiosk() {
 
 
   useEffect(() => {
-    const loadPublic = async () => {
-      if (!validSlug) return;
-      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: validSlug } });
-      if (error || !data) return;
+    const isPositivaStation = !validSlug || validSlug === "positivafm" || validSlug === "positiva";
 
-      const empresa = data.empresa;
+    const loadPublic = async () => {
+      let data: any = null;
+      if (validSlug) {
+        try {
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000));
+          const supaPromise = supabase.functions.invoke("public-promo-data", { body: { slug: validSlug } });
+          const res: any = await Promise.race([supaPromise, timeoutPromise]).catch(() => null);
+          if (res?.data && !res.error) data = res.data;
+        } catch {}
+      }
+
+      const empresa = data?.empresa || (isPositivaStation ? DEFAULT_POSITIVA_CONFIG : null);
       if (empresa) {
         setConfig({
           nome: empresa.nome || "", logo: empresa.logo || "", backgroundUrl: empresa.background_url || "",
-          endereco: empresa.endereco || "", telefoneComercial: empresa.telefone_comercial || "",
-          telefoneParticipacao: empresa.telefone_participacao || "", site: empresa.site || "",
+          endereco: empresa.endereco || "", telefoneComercial: empresa.telefone_comercial || empresa.telefoneComercial || "",
+          telefoneParticipacao: empresa.telefone_participacao || empresa.telefoneParticipacao || "", site: empresa.site || "",
           instagram: empresa.instagram || "", facebook: empresa.facebook || "", youtube: empresa.youtube || "",
           plano: empresa.plano || "",
         });
         setStreamCfg({
-          audioUrl: empresa.audio_stream_api_url || "",
-          audioXpath: empresa.audio_stream_xpath || "",
-          videoUrl: empresa.video_stream_api_url || "",
-          videoXpath: empresa.video_stream_xpath || "",
+          audioUrl: empresa.audio_stream_api_url || empresa.audioUrl || "",
+          audioXpath: empresa.audio_stream_xpath || empresa.audioXpath || "",
+          videoUrl: empresa.video_stream_api_url || empresa.videoUrl || "",
+          videoXpath: empresa.video_stream_xpath || empresa.videoXpath || "",
         });
       }
-      if (data.userId) setAudienceUserId(data.userId);
+      if (data?.userId || isPositivaStation) setAudienceUserId(data?.userId || POSITIVA_USER_ID);
       setWeatherInfo({
-        city: data.weather_city || null,
-        lat: data.weather_lat != null ? Number(data.weather_lat) : null,
-        lon: data.weather_lon != null ? Number(data.weather_lon) : null,
+        city: data?.weather_city || (isPositivaStation ? "Goiânia" : null),
+        lat: data?.weather_lat != null ? Number(data.weather_lat) : (isPositivaStation ? -16.6869 : null),
+        lon: data?.weather_lon != null ? Number(data.weather_lon) : (isPositivaStation ? -49.2648 : null),
       });
 
-      const allPromos = data.promocoes || [];
-      // If we need to filter by date in the future, we can do it here, but user wants them to appear "automatically"
+      let allPromos = data?.promocoes || [];
+      if (allPromos.length === 0 && isPositivaStation) {
+        const snapPromos = getSnapshotTable("promocoes");
+        const filtered = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID || !p.user_id);
+        allPromos = filtered.length > 0 ? filtered : snapPromos;
+      }
+      allPromos = allPromos.map((p: any) => ({
+        ...p,
+        imagem_url: resolveSafePromoBanner(p),
+        banner_l_url: resolveSafePromoBanner(p),
+        botao_icone_url: resolveSafePromoButton(p),
+        nome: p.nome || p.botao_url || "Promoção",
+      }));
       setPromocoes(allPromos);
-      const activeTestemunhais = data.testemunhais || [];
+
+      let activeTestemunhais = data?.testemunhais || [];
+      if (activeTestemunhais.length === 0 && isPositivaStation) {
+        const snapTests = getSnapshotTable("testemunhais");
+        const filtered = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID || !t.user_id);
+        activeTestemunhais = filtered.length > 0 ? filtered : snapTests;
+      }
       setTestemunhais(activeTestemunhais);
 
-      // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
-
-
-      if (data.tela_promo_config) {
+      if (data?.tela_promo_config) {
         setTelaPromoConfig({ ...defaultTelaPromoConfig, ...data.tela_promo_config });
       }
 
-      const mapped = (data.programas || []).map((p: any) => ({
+      let rawProgs = data?.programas || [];
+      if (rawProgs.length === 0 && isPositivaStation) {
+        rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
+      }
+      const mapped = rawProgs.map((p: any) => ({
         id: p.id,
-        mergedIds: [p.id],
+        mergedIds: p.mergedIds || [p.id],
         nome: p.nome,
-        apresentadorId: p.apresentador_id || "",
-        apresentadoresIds: p.apresentadores_ids || [],
-        selo: p.selo || "",
-        capa: p.capa || p.thumb || p.selo || "",
-        thumb: p.thumb || "",
-        diasSemana: p.dias_semana || [],
-        horarioInicio: p.horario_inicio,
-        horarioFim: p.horario_fim,
+        apresentadorId: p.apresentador_id || p.apresentadorId || "",
+        apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || [],
+        selo: resolveSafeProgramSelo(p.selo || p.nome),
+        capa: resolveSafeProgramCover(p.capa || p.thumb || p.selo || p.nome),
+        thumb: resolveSafeProgramCover(p.thumb || p.capa || p.nome),
+        diasSemana: p.dias_semana || p.diasSemana || [],
+        horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
+        horarioFim: p.horario_fim || p.horarioFim || "23:59:59",
         descricao: p.descricao || "",
-        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
+        schedules: p.schedules || [{ dias: p.dias_semana || p.diasSemana || [], horarioInicio: p.horario_inicio || p.horarioInicio, horarioFim: p.horario_fim || p.horarioFim }],
       }));
       setProgramas(mapped);
 
-      const aprs = (data.apresentadores || []).map((a: any) => ({
-        id: a.id, nome: a.nome, cargo: a.cargo || "", instagram: a.instagram || "",
-        foto: a.foto || "", background_url: a.background_url || "", ativo: a.ativo,
-      }));
-      setApresentadores(aprs);
+      let aprs = data?.apresentadores || [];
+      if (aprs.length === 0 && isPositivaStation) {
+        aprs = DEFAULT_POSITIVA_APRESENTADORES;
+      }
+      setApresentadores(aprs.map((a: any) => ({
+        id: a.id,
+        nome: a.nome,
+        cargo: a.cargo || "",
+        instagram: a.instagram || "",
+        foto: resolveSafePresenterPhoto(a.nome, a.foto),
+        background_url: a.background_url || "",
+        ativo: a.ativo ?? true,
+      })));
     };
 
     const loadAuth = async () => {
       let localUid: string | null = null;
       try {
-        const { data: authData } = await supabase.auth.getUser();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000));
+        const authPromise = supabase.auth.getUser();
+        const { data: authData }: any = await Promise.race([authPromise, timeoutPromise]).catch(() => ({ data: null }));
         localUid = authData?.user?.id || null;
       } catch { /* ignore */ }
       if (!localUid && typeof window !== "undefined") {
@@ -371,29 +774,55 @@ export default function PromocoesKiosk() {
         } catch { /* ignore */ }
       }
 
-      const [empresaData, { data: promoData }, { data: progsData }, { data: testData }, { data: settingsData }] = await Promise.all([
-        getEmpresaConfig(),
-        supabase.from("promocoes").select("*").order("data_inicio"),
-        supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%"),
-        supabase.from("testemunhais").select("*"),
-        supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").maybeSingle(),
-      ]);
-      setConfig(empresaData);
+      const isPositiva = !localUid || localUid === POSITIVA_USER_ID;
+      const targetUid = localUid || POSITIVA_USER_ID;
+
+      let empresaData: any = null;
+      let promoData: any = null;
+      let progsData: any = null;
+      let testData: any = null;
+      let settingsData: any = null;
+
+      try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000));
+        const fetches = Promise.all([
+          getEmpresaConfig().catch(() => null),
+          supabase.from("promocoes").select("*").order("data_inicio").catch(() => ({ data: null })),
+          supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%").catch(() => ({ data: null })),
+          supabase.from("testemunhais").select("*").catch(() => ({ data: null })),
+          supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").maybeSingle().catch(() => ({ data: null })),
+        ]);
+        const results: any = await Promise.race([fetches, timeoutPromise]).catch(() => null);
+        if (results) {
+          [empresaData, { data: promoData } = {}, { data: progsData } = {}, { data: testData } = {}, { data: settingsData } = {}] = results;
+        }
+      } catch {}
+
+      if (!empresaData && isPositiva) {
+        empresaData = DEFAULT_POSITIVA_CONFIG;
+      }
+      setConfig(empresaData || DEFAULT_POSITIVA_CONFIG);
+
       if (settingsData) {
         setWeatherInfo({
-          city: (settingsData as any).weather_city || null,
-          lat: (settingsData as any).weather_lat != null ? Number((settingsData as any).weather_lat) : null,
-          lon: (settingsData as any).weather_lon != null ? Number((settingsData as any).weather_lon) : null,
+          city: (settingsData as any).weather_city || (isPositiva ? "Goiânia" : null),
+          lat: (settingsData as any).weather_lat != null ? Number((settingsData as any).weather_lat) : (isPositiva ? -16.6869 : null),
+          lon: (settingsData as any).weather_lon != null ? Number((settingsData as any).weather_lon) : (isPositiva ? -49.2648 : null),
         });
+      } else if (isPositiva) {
+        setWeatherInfo({ city: "Goiânia", lat: -16.6869, lon: -49.2648 });
       }
+
       if (localUid) {
         setAudienceUserId(localUid);
         try {
-          const { data: ec } = await supabase
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000));
+          const streamPromise = supabase
             .from("empresa_config")
             .select("audio_stream_api_url, audio_stream_xpath, video_stream_api_url, video_stream_xpath")
             .eq("user_id", localUid as any)
             .maybeSingle();
+          const { data: ec }: any = await Promise.race([streamPromise, timeoutPromise]).catch(() => ({ data: null }));
           if (ec) {
             setStreamCfg({
               audioUrl: (ec as any).audio_stream_api_url || "",
@@ -403,6 +832,8 @@ export default function PromocoesKiosk() {
             });
           }
         } catch { /* ignore */ }
+      } else {
+        setAudienceUserId(POSITIVA_USER_ID);
       }
 
       if (settingsData?.cenario_config) {
@@ -414,46 +845,23 @@ export default function PromocoesKiosk() {
 
       let allPromos = promoData || [];
       let activeTestemunhais = testData || [];
-
       let edgeProgs: any[] = [];
       let edgeAprs: any[] = [];
-
-      // Se a consulta direta retornou vazia (RLS do Supabase), busca na edge function public-promo-data
-      try {
-        const targetSlugOrId = localUid || "positivafm";
-        const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
-          body: { slug: targetSlugOrId }
-        });
-        if (edgeData) {
-          if (allPromos.length === 0 && edgeData.promocoes?.length > 0) {
-            allPromos = edgeData.promocoes;
-          }
-          if (activeTestemunhais.length === 0 && edgeData.testemunhais?.length > 0) {
-            activeTestemunhais = edgeData.testemunhais;
-          }
-          if (edgeData.programas?.length > 0) {
-            edgeProgs = edgeData.programas;
-          }
-          if (edgeData.apresentadores?.length > 0) {
-            edgeAprs = edgeData.apresentadores;
-          }
-        }
-      } catch {}
 
       // Fallback para snapshot estático local se ainda estiver vazio
       if (allPromos.length === 0) {
         const snapPromos = getSnapshotTable("promocoes");
         const filtered = snapPromos.filter((p: any) =>
-          !localUid || p.user_id === localUid || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+          !localUid || p.user_id === localUid || p.user_id === POSITIVA_USER_ID || !p.user_id
         );
-        if (filtered.length > 0) allPromos = filtered;
+        allPromos = filtered.length > 0 ? filtered : snapPromos;
       }
       if (activeTestemunhais.length === 0) {
         const snapTests = getSnapshotTable("testemunhais");
         const filtered = snapTests.filter((t: any) =>
-          !localUid || t.user_id === localUid || t.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+          !localUid || t.user_id === localUid || t.user_id === POSITIVA_USER_ID || !t.user_id
         );
-        if (filtered.length > 0) activeTestemunhais = filtered;
+        activeTestemunhais = filtered.length > 0 ? filtered : snapTests;
       }
 
       if (localUid) {
@@ -475,16 +883,25 @@ export default function PromocoesKiosk() {
         } catch {}
       }
 
+      allPromos = allPromos.map((p: any) => ({
+        ...p,
+        imagem_url: resolveSafePromoBanner(p),
+        banner_l_url: resolveSafePromoBanner(p),
+        botao_icone_url: resolveSafePromoButton(p),
+        nome: p.nome || p.botao_url || "Promoção",
+      }));
+
       setPromocoes(allPromos);
       setTestemunhais(activeTestemunhais);
 
-      // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
-
       let rawProgs = progsData && progsData.length > 0 ? progsData : (edgeProgs.length > 0 ? edgeProgs : []);
+      if (rawProgs.length === 0 && isPositiva) {
+        rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
+      }
       if (rawProgs.length === 0) {
         const snapProgs = getSnapshotTable("programas");
         const filtered = snapProgs.filter((p: any) =>
-          !localUid || p.user_id === localUid || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
+          !localUid || p.user_id === localUid || p.user_id === POSITIVA_USER_ID
         );
         if (filtered.length > 0) rawProgs = filtered;
       }
@@ -501,26 +918,43 @@ export default function PromocoesKiosk() {
           } catch { /* ignore */ }
         }
       }
+      if (rawProgs.length === 0 && isPositiva) {
+        rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
+      }
 
       const mapped = rawProgs.map((p: any) => ({
         id: p.id,
-        mergedIds: [p.id],
+        mergedIds: p.mergedIds || [p.id],
         nome: p.nome,
-        apresentadorId: p.apresentador_id || "",
-        apresentadoresIds: p.apresentadores_ids || [],
-        selo: p.selo || "",
-        capa: p.capa || p.thumb || p.selo || "",
-        thumb: p.thumb || "",
-        diasSemana: p.dias_semana || [],
-        horarioInicio: p.horario_inicio,
-        horarioFim: p.horario_fim,
+        apresentadorId: p.apresentador_id || p.apresentadorId || "",
+        apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || [],
+        selo: resolveSafeProgramSelo(p.selo || p.nome),
+        capa: resolveSafeProgramCover(p.capa || p.thumb || p.selo || p.nome),
+        thumb: resolveSafeProgramCover(p.thumb || p.capa || p.nome),
+        diasSemana: p.dias_semana || p.diasSemana || [],
+        horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
+        horarioFim: p.horario_fim || p.horarioFim || "23:59:59",
         descricao: p.descricao || "",
-        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
+        schedules: p.schedules || [{ dias: p.dias_semana || p.diasSemana || [], horarioInicio: p.horario_inicio || p.horarioInicio, horarioFim: p.horario_fim || p.horarioFim }],
       }));
       setProgramas(mapped);
 
-      const aprs = edgeAprs.length > 0 ? edgeAprs : await getApresentadores();
-      setApresentadores(aprs);
+      let aprs: any[] = [];
+      try {
+        aprs = edgeAprs.length > 0 ? edgeAprs : await getApresentadores();
+      } catch {}
+      if (!aprs || aprs.length === 0 || isPositiva) {
+        aprs = DEFAULT_POSITIVA_APRESENTADORES;
+      }
+      setApresentadores(aprs.map((a: any) => ({
+        id: a.id,
+        nome: a.nome,
+        cargo: a.cargo || "",
+        instagram: a.instagram || "",
+        foto: resolveSafePresenterPhoto(a.nome, a.foto),
+        background_url: a.background_url || "",
+        ativo: a.ativo ?? true,
+      })));
     };
 
     const load = isPublicMode ? loadPublic : loadAuth;
@@ -671,7 +1105,8 @@ export default function PromocoesKiosk() {
           horarioInicio: (current.programa as any).horarioInicio,
           horarioFim: (current.programa as any).horarioFim,
           progress: Math.min(100, Math.max(0, current.progress)),
-          apresentadorId: (current.programa as any).apresentadorId || "",
+          apresentadorId: (current.programa as any).apresentadorId || (current.programa as any).apresentador_id || "",
+          diasSemana: (current.programa as any).diasSemana || (current.programa as any).dias_semana || [],
         });
       } else {
         setOnAirProgram(null);
@@ -1227,26 +1662,47 @@ export default function PromocoesKiosk() {
 
             {/* Presenter photo - ao lado do ícone de ao vivo */}
             {(() => {
-              const presenter = onAirProgram?.apresentadorId
-                ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
-                : null;
-              return presenter?.foto ? (
-                <div className="relative group/presenter">
+              const presenter = resolvePresenterForProgram(
+                onAirProgram?.nome || "",
+                onAirProgram?.apresentadorId,
+                apresentadores,
+                onAirProgram?.diasSemana
+              ) || (onAirProgram?.apresentadorId ? apresentadores.find(a => a.id === onAirProgram.apresentadorId) : null);
+
+              const photo = presenter?.foto ? resolveSafePresenterPhoto(presenter.nome, presenter.foto) : null;
+
+              return photo ? (
+                <div className="relative group/presenter flex-shrink-0">
                   <div
-                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
+                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center border-2 border-white/20 shadow-lg"
                     style={{ background: promoAccentGradient, boxShadow: `0 0 0 2px ${colorMix(telaPromoConfig.card_border_color, 35, "#ffffff")}` }}
                   >
-                    <img src={presenter.foto} alt={presenter.nome} className="w-full h-full object-cover" />
+                    <img src={photo} alt={presenter?.nome || "Locutor no Ar"} className="w-full h-full object-cover" />
                   </div>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity z-10" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
-                    {presenter.nome}
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity z-10 font-bold" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
+                    {presenter?.nome}
                   </div>
                 </div>
               ) : null;
             })()}
 
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: telaPromoConfig.header_text_color }}>No Ar</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold uppercase tracking-widest text-xs" style={{ color: telaPromoConfig.header_text_color }}>No Ar</span>
+                {(() => {
+                  const p = resolvePresenterForProgram(
+                    onAirProgram?.nome || "",
+                    onAirProgram?.apresentadorId,
+                    apresentadores,
+                    onAirProgram?.diasSemana
+                  );
+                  return p?.nome ? (
+                    <span className="text-[11px] font-semibold opacity-90" style={{ color: telaPromoConfig.btn_color_b }}>
+                      • {p.nome}
+                    </span>
+                  ) : null;
+                })()}
+              </div>
               <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: telaPromoConfig.header_text_color }}>
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
@@ -1705,6 +2161,7 @@ export default function PromocoesKiosk() {
                   Sparkles;
 
                 const cardRadius = telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "16px";
+                const buttonIcon = (promo as any).botao_icone_url || resolveSafePromoButton(promo);
 
                 return (
                   <div
@@ -1720,7 +2177,11 @@ export default function PromocoesKiosk() {
                     onClick={() => setSelectedPromo(promo)}
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
-                      <PromoIcon size={18} />
+                      {buttonIcon ? (
+                        <img src={buttonIcon} alt={promo.botao_url || promo.nome} className="w-7 h-7 object-contain" />
+                      ) : (
+                        <PromoIcon size={18} />
+                      )}
                     </div>
                     <span className="truncate">{promo.botao_url || promo.nome}</span>
                   </div>
