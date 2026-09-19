@@ -3,7 +3,7 @@ import {
   Scissors, Play, Pause, RotateCcw, RotateCw, Download, Upload,
   Type, Video, Image as ImageIcon, Sliders, Settings, Search,
   ChevronDown, ZoomIn, ZoomOut, Maximize2, Trash2, Plus, Volume2,
-  Home, Sparkles, Check, X, AlertCircle, Loader2
+  Sparkles, Check, X, AlertCircle, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -100,11 +100,9 @@ export default function CortesVideoPage() {
   const [isAspectMenuOpen, setIsAspectMenuOpen] = useState(false);
   const [aspectSearch, setAspectSearch] = useState("");
   const [bgColor, setBgColor] = useState("#000000");
-  const [showBgPicker, setShowBgPicker] = useState(false);
 
   // Navigation / Sidebar
   const [activeTab, setActiveTab] = useState<"video" | "texto" | "ajustes">("video");
-  const [activeMode, setActiveMode] = useState<"editar" | "home">("editar");
 
   // Media Library
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
@@ -715,25 +713,10 @@ export default function CortesVideoPage() {
           </button>
         </div>
 
-        {/* Center: Home / Editar pill toggle */}
+        {/* Center: Editar badge */}
         <div className="flex items-center">
-          <div className="inline-flex items-center bg-slate-100 p-1 rounded-full border border-slate-200">
-            <button
-              type="button"
-              onClick={() => setActiveMode("home")}
-              className={`p-1.5 rounded-full transition-all ${activeMode === "home" ? "bg-white shadow-sm text-blue-600" : "text-slate-500 hover:text-slate-800"}`}
-              title="Home"
-            >
-              <Home className="w-4 h-4" />
-            </button>
-            <div className="h-3 w-[1px] bg-slate-300 mx-1" />
-            <button
-              type="button"
-              onClick={() => setActiveMode("editar")}
-              className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${activeMode === "editar" ? "bg-white shadow-sm text-slate-900 font-bold" : "text-slate-500 hover:text-slate-800"}`}
-            >
-              Editar
-            </button>
+          <div className="px-4 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-800 border border-slate-200 shadow-xs">
+            Editar
           </div>
         </div>
 
@@ -802,7 +785,7 @@ export default function CortesVideoPage() {
             <div className="p-4 flex flex-col gap-4 flex-1">
               <h3 className="text-base font-bold text-slate-800">Vídeo</h3>
 
-              {/* Lime Green "+ Carregar" button matching reference image */}
+              {/* Carregar Mídia - Paleta Nexo azul/branca */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -814,9 +797,9 @@ export default function CortesVideoPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 px-4 rounded-xl bg-[#bef264] hover:bg-[#a3e635] text-slate-900 font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
+                className="w-full py-3 px-4 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:brightness-110 active:scale-98 cursor-pointer"
               >
-                <Upload className="w-4 h-4 text-slate-900 stroke-[2.5]" />
+                <Upload className="w-4 h-4 text-white stroke-[2.5]" />
                 <span>Carregar</span>
               </button>
 
@@ -1086,43 +1069,6 @@ export default function CortesVideoPage() {
                 <div className="w-3.5 h-3.5 border-2 border-current rounded-xs" />
                 <span>{selectedAspect.name}</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-              </button>
-
-              <div className="h-3.5 w-[1px] bg-slate-200 mx-1" />
-
-              {/* Antecedentes (Background) */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowBgPicker(!showBgPicker)}
-                  className="inline-flex items-center gap-2 hover:text-blue-600 px-2 py-1 rounded-md transition-colors"
-                >
-                  <span className="w-3.5 h-3.5 rounded-full border border-slate-300" style={{ backgroundColor: bgColor }} />
-                  <span>Antecedentes</span>
-                </button>
-                {showBgPicker && (
-                  <div className="absolute bottom-full mb-2 left-0 bg-white p-3 rounded-xl shadow-xl border border-slate-200 flex flex-col gap-2 z-50">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Cor do Fundo</span>
-                    <input
-                      type="color"
-                      value={bgColor}
-                      onChange={(e) => setBgColor(e.target.value)}
-                      className="w-28 h-8 rounded cursor-pointer"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="h-3.5 w-[1px] bg-slate-200 mx-1" />
-
-              {/* Definições (Settings) */}
-              <button
-                type="button"
-                onClick={() => setActiveTab("ajustes")}
-                className="inline-flex items-center gap-1.5 hover:text-blue-600 px-2 py-1 rounded-md transition-colors"
-              >
-                <Settings className="w-3.5 h-3.5 opacity-70" />
-                <span>Definições</span>
               </button>
 
               {/* Aspect Ratio Menu Popover (Matching screenshot popup) */}

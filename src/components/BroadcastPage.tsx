@@ -1257,13 +1257,13 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
 
         {/* ── Tab panels ── */}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-10">
+        <div className={`flex-1 min-h-0 ${activeTab === "preview" ? "overflow-hidden flex items-center justify-center py-2" : "overflow-y-auto pr-1 pb-10"}`}>
 
         {activeTab === "preview" && (
         <div 
-          className="w-full mx-auto flex flex-col items-center gap-6 min-h-0 pb-10"
+          className="w-full mx-auto flex flex-col items-center justify-center gap-3 min-h-0 py-1"
           style={{ 
-            maxWidth: "min(780px, calc((100vh - 360px) * 16 / 9))",
+            maxWidth: "min(600px, calc((100vh - 410px) * 16 / 9))",
             width: "100%"
           }}
         >

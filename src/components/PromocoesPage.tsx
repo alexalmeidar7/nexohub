@@ -89,6 +89,28 @@ const ghostBtn: React.CSSProperties = {
   boxShadow: "none",
 };
 
+function getFirstFiveWords(htmlOrText?: string | null): string {
+  if (!htmlOrText) return "";
+  const plain = htmlOrText
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!plain) return "";
+  const words = plain.split(/\s+/).filter(Boolean);
+  if (words.length <= 5) return words.join(" ");
+  return words.slice(0, 5).join(" ") + "...";
+}
+
+function getPlainText(htmlOrText?: string | null): string {
+  if (!htmlOrText) return "";
+  return htmlOrText
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -600,8 +622,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
               <thead>
                 <tr style={{ background: CYAN }}>
                   <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Nome da Promoção</th>
-                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Texto</th>
-                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Patrocínio</th>
+                  <th style={{ padding: "16px 14px", width: "150px", maxWidth: "160px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Texto</th>
+                  <th style={{ padding: "16px 14px", width: "150px", maxWidth: "160px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Patrocínio</th>
                   <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Validade</th>
                   <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "center" }}>Banner</th>
                   <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "center" }}>Banner L</th>
@@ -621,17 +643,21 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                     <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 700, color: DARK }}>
                       {item.nome || "Sem Nome"}
                     </td>
-                    <td style={{ padding: "14px 20px", fontSize: 13, color: DARK }}>
-                      <div 
-                        className="max-w-xs truncate line-clamp-2" 
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.texto) }}
-                      />
+                    <td 
+                      style={{ padding: "14px 14px", width: "150px", maxWidth: "160px", fontSize: 13, color: DARK }}
+                      title={getPlainText(item.texto)}
+                    >
+                      <div className="truncate font-normal">
+                        {getFirstFiveWords(item.texto) || "—"}
+                      </div>
                     </td>
-                    <td style={{ padding: "14px 20px", fontSize: 13, color: DARK, fontStyle: "italic" }}>
-                      <div 
-                        className="max-w-xs truncate line-clamp-1" 
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.oferecimento) }}
-                      />
+                    <td 
+                      style={{ padding: "14px 14px", width: "150px", maxWidth: "160px", fontSize: 13, color: DARK, fontStyle: "italic" }}
+                      title={getPlainText(item.oferecimento)}
+                    >
+                      <div className="truncate font-normal">
+                        {getFirstFiveWords(item.oferecimento) || "—"}
+                      </div>
                     </td>
                     <td style={{ padding: "14px 20px", fontSize: 12, color: DARK, whiteSpace: "nowrap", fontWeight: 600 }}>
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}

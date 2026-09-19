@@ -1,4 +1,78 @@
 {
-  "positivafm": [],
-  "d17e65af-e407-466f-9b60-b55c43399513": []
+  "positivafm": [
+    {
+      "id": "enq_1789644377056_vhdo",
+      "pergunta": "Qual dessas coisas você mais demora para decidir?",
+      "resposta1": "🍽️ O que pedir para comer",
+      "resposta2": "👕 Que roupa usar",
+      "resposta3": "🎁 O que comprar de presente",
+      "resposta4": "📺 O que assistir",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-17",
+      "horario_inicio": "08:00",
+      "horario_fim": "12:59"
+    },
+    {
+      "id": "enq_1789768301231_nfq7",
+      "pergunta": "Você acha que casal deve comemorar aniversário de namoro depois de casar?",
+      "resposta1": "👉 Sim, a história começou no namoro",
+      "resposta2": "👉 Não, depois de casar vale a data do casamento",
+      "resposta3": "👉 Comemora as duas, quanto mais motivo melhor ",
+      "resposta4": "👉 Data não importa, o importante é celebrar quando der",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-18",
+      "horario_inicio": "18:00",
+      "horario_fim": "23:59"
+    },
+    {
+      "id": "enq_1789821323728_zj6v",
+      "pergunta": "Você acha que casal deve comemorar aniversário de namoro depois de casar?",
+      "resposta1": "👉 Sim, a história começou no namoro",
+      "resposta2": "👉 Não, depois de casar vale a data do casamento",
+      "resposta3": "👉 Comemora as duas, quanto mais motivo melhor 👉 Data não importa, o importante é celebrar quando der",
+      "resposta4": "👉 Data não importa, o importante é celebrar quando der",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-19",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    }
+  ],
+  "d17e65af-e407-466f-9b60-b55c43399513": [
+    {
+      "id": "enq_1789644377056_vhdo",
+      "pergunta": "Qual dessas coisas você mais demora para decidir?",
+      "resposta1": "🍽️ O que pedir para comer",
+      "resposta2": "👕 Que roupa usar",
+      "resposta3": "🎁 O que comprar de presente",
+      "resposta4": "📺 O que assistir",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-17",
+      "horario_inicio": "08:00",
+      "horario_fim": "12:59"
+    },
+    {
+      "id": "enq_1789768301231_nfq7",
+      "pergunta": "Você acha que casal deve comemorar aniversário de namoro depois de casar?",
+      "resposta1": "👉 Sim, a história começou no namoro",
+      "resposta2": "👉 Não, depois de casar vale a data do casamento",
+      "resposta3": "👉 Comemora as duas, quanto mais motivo melhor ",
+      "resposta4": "👉 Data não importa, o importante é celebrar quando der",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-18",
+      "horario_inicio": "18:00",
+      "horario_fim": "23:59"
+    },
+    {
+      "id": "enq_1789821323728_zj6v",
+      "pergunta": "Você acha que casal deve comemorar aniversário de namoro depois de casar?",
+      "resposta1": "👉 Sim, a história começou no namoro",
+      "resposta2": "👉 Não, depois de casar vale a data do casamento",
+      "resposta3": "👉 Comemora as duas, quanto mais motivo melhor 👉 Data não importa, o importante é celebrar quando der",
+      "resposta4": "👉 Data não importa, o importante é celebrar quando der",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-19",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    }
+  ]
 }

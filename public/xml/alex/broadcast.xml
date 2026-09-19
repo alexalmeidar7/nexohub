@@ -1,47 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <empresa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5/empresa-logo.png?v=8656178258</empresa_logo>
-    <programa_nome></programa_nome>
-    <programa_logo></programa_logo>
+    <empresa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</empresa_logo>
+    <programa_nome>Programação Nexo Brasil Super Admin</programa_nome>
+    <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
     <programa_thumb></programa_thumb>
-    <locutor_nome></locutor_nome>
-    <locutor_foto></locutor_foto>
-    <locutor_social></locutor_social>
-    <rede_social_atual></rede_social_atual>
-    <rede_social_icone></rede_social_icone>
-    <logo_patrocinador>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png</logo_patrocinador>
-    <titulo></titulo>
+    <locutor_nome>Locutor no Ar</locutor_nome>
+    <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
+    <locutor_social>@alex</locutor_social>
+    <rede_social_atual>Instagram</rede_social_atual>
+    <rede_social_icone>instagram</rede_social_icone>
+    <logo_patrocinador>https://nexohub.lovable.app/default-sponsor-logo.png</logo_patrocinador>
+    <titulo>No Ar na Nexo Brasil Super Admin</titulo>
     <fundo_assunto></fundo_assunto>
-    <qrcode_link></qrcode_link>
-    <ticker></ticker>
-    <insert_live>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</insert_live>
-    <curiosidade></curiosidade>
-    <musica_atual></musica_atual>
-    <musica_capa></musica_capa>
+    <qrcode_link>https://housemix.nexobrasil.net</qrcode_link>
+    <ticker>Acompanhe a melhor programação em Rede Nexo</ticker>
+    <insert_live></insert_live>
+    <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
+    <musica_atual>Música em Reprodução</musica_atual>
+    <musica_capa>https://nexohub.lovable.app/default-sponsor-logo.png</musica_capa>
     <deezer_artist_img></deezer_artist_img>
     <banner_l></banner_l>
-    <temperatura></temperatura>
-    <ico_temperatura></ico_temperatura>
+    <temperatura>26ºC</temperatura>
+    <ico_temperatura>sun</ico_temperatura>
     <infos_canto>
-      <titulo>cotação</titulo>
-      <descricao>Dólar R$ 5,14
-Euro R$ 5,90</descricao>
-      <ico_categoria>https://img.icons8.com/ios-filled/200/ffffff/us-dollar-circled.png</ico_categoria>
-      <temp_atual></temp_atual>
-      <ico_temp_atual>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</ico_temp_atual>
+      <titulo>Nexo Brasil Super Admin</titulo>
+      <descricao>Goiânia - GO</descricao>
+      <ico_categoria>radio</ico_categoria>
+      <temp_atual>26ºC</temp_atual>
+      <ico_temp_atual>sun</ico_temp_atual>
     </infos_canto>
     <a_seguir>
-      <ativo>0</ativo>
-      <programa_nome></programa_nome>
-      <nome_programa></nome_programa>
-      <programa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</programa_logo>
-      <locutor_nome></locutor_nome>
-      <locutor_foto>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png</locutor_foto>
-      <horario></horario>
-      <texto></texto>
+      <ativo>1</ativo>
+      <programa_nome>Próximo Programa</programa_nome>
+      <nome_programa>Próximo Programa</nome_programa>
+      <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
+      <locutor_nome>Equipe da Rádio</locutor_nome>
+      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
+      <horario>12:00</horario>
+      <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-18T16:50:16.431Z</atualizado_em>
+      <atualizado_em>2026-09-19T12:42:22.869Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

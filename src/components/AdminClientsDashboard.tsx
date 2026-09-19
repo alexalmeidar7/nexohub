@@ -90,21 +90,33 @@ interface AdminClientsDashboardProps {
 }
 
 async function fetchSuporteMessagesCount(): Promise<number> {
+  // 1. Consulta chamados de suporte abertos
   try {
-    // 1. Consulta mensagens no Supabase com hashtag #suporte
+    const rawTickets = localStorage.getItem("nexohub_suporte_tickets_v1");
+    if (rawTickets) {
+      const tickets = JSON.parse(rawTickets);
+      if (Array.isArray(tickets)) {
+        const open = tickets.filter((t: any) => t.status !== "solucionado").length;
+        if (open > 0) return open;
+      }
+    }
+  } catch {}
+
+  try {
+    // 2. Consulta mensagens no Supabase com hashtag #suporte
     const { data: msgs, error } = await supabase
       .from("wa_messages")
       .select("id, body")
       .ilike("body", "%#suporte%");
 
-    if (!error && msgs) {
+    if (!error && msgs && msgs.length > 0) {
       return msgs.length;
     }
   } catch (err) {
     console.error("Erro ao buscar mensagens #suporte do Supabase:", err);
   }
 
-  // 2. Consulta mensagens locais/demo do chatbot
+  // 3. Consulta mensagens locais/demo do chatbot
   try {
     const rawDemo = localStorage.getItem("nexohub_chatbot_messages_v1");
     if (rawDemo) {
@@ -123,7 +135,7 @@ async function fetchSuporteMessagesCount(): Promise<number> {
     }
   } catch {}
 
-  // 3. Se não houver mensagens com #suporte, retorna 0
+  // 4. Se não houver mensagens ou chamados, retorna 0
   return 0;
 }
 

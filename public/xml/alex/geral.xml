@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-18T16:50:20.051Z</gerado_em>
+  <gerado_em>2026-09-19T12:42:22.888Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -14,29 +14,29 @@
   <!-- NO AR (Música, Programa e Apresentador) -->
   <no_ar>
     <musica_atual>
-      <titulo>Programação Musical</titulo>
-      <capa_url></capa_url>
-      <curiosidade></curiosidade>
-      <texto_completo>Programação Musical</texto_completo>
+      <titulo>Música em Reprodução</titulo>
+      <capa_url>https://nexohub.lovable.app/default-sponsor-logo.png</capa_url>
+      <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
+      <texto_completo>Música em Reprodução</texto_completo>
     </musica_atual>
 
     <programa_atual>
       <nome>Programação Nexo Brasil Super Admin</nome>
-      <estudio>Estudio FM</estudio>
+      <estudio>Estúdio Principal</estudio>
     </programa_atual>
 
     <apresentador_atual>
       <nome>Locutor no Ar</nome>
-      <foto_url></foto_url>
+      <foto_url>https://nexohub.lovable.app/default-sponsor-logo.png</foto_url>
       <social>@alex</social>
     </apresentador_atual>
 
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Próxima Atração</programa_nome>
-      <horario></horario>
-      <locutor_nome></locutor_nome>
-      <locutor_foto></locutor_foto>
+      <programa_nome>Programação Nexo Brasil Super Admin</programa_nome>
+      <horario>12:00</horario>
+      <locutor_nome>Locutor no Ar</locutor_nome>
+      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
     </a_seguir>
   </no_ar>
 
@@ -56,10 +56,10 @@
 
   <!-- ROTEIRO E ALINHAMENTO DO ESTÚDIO -->
   <roteiro>
-    <programa>Programação Nexo Brasil Super Admin</programa>
-    <estudio>Estudio FM</estudio>
-    <data>2026-09-18</data>
-    <horario>00:00</horario>
+    <programa>Programação ao Vivo</programa>
+    <estudio>Estúdio Principal</estudio>
+    <data>2026-09-19</data>
+    <horario>10:00</horario>
   </roteiro>
 
   <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->

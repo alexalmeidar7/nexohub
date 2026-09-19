@@ -2,16 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import {
   MessageCircle, Send, Loader2, Users, Zap, Megaphone, Settings, Search,
   Check, CheckCheck, AlertCircle, UserCheck, Phone, X, Plus, Trash2, PlayCircle,
+  Headphones,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { toast } from "@/hooks/use-toast";
 import { confirmDialog } from "@/lib/confirmDialog";
+import SupportTab from "./SupportTab";
 
 const isUuid = (str?: string | null): boolean => !!str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
-type Tab = "inbox" | "flows" | "broadcast" | "settings";
+type Tab = "support" | "inbox" | "flows" | "broadcast" | "settings";
 
 interface Contact {
   id: string; phone: string; name: string | null; profile_name: string | null;
@@ -31,9 +33,13 @@ export default function ChatbotHome() {
   const effectiveUserId = isUuid(rawUid) ? rawUid : "";
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="max-w-[1400px] mx-auto w-full space-y-3.5 pb-4 font-sans animate-fade-in">
+      <div id="module-header-title" style={{ display: "none" }}>
+        Chatbot & Atendimento WhatsApp
+      </div>
+
       {/* Header + tabs (Card Branco Moderno) */}
-      <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
+      <section className="bg-white rounded-3xl p-5 lg:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
             Chatbot & Atendimento WhatsApp
@@ -44,6 +50,7 @@ export default function ChatbotHome() {
         </div>
         <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[#f8fafc] border border-slate-200/80 flex-wrap">
           {([
+            ["support", "Suporte", Headphones],
             ["inbox", "Caixa de Entrada", MessageCircle],
             ["flows", "Automações", Zap],
             ["broadcast", "Disparo em Massa", Megaphone],
@@ -58,7 +65,7 @@ export default function ChatbotHome() {
                   : "text-slate-600 hover:text-black"
               }`}
             >
-              <Icon size={14} className={tab === id ? "text-black" : "text-slate-400"} /> {label}
+              <Icon size={14} className={tab === id ? "text-white" : "text-slate-400"} /> {label}
             </button>
           ))}
         </div>
@@ -69,12 +76,13 @@ export default function ChatbotHome() {
         background: "linear-gradient(135deg,#ffffff 0%,#eafaff 100%)",
         border: "1px solid rgba(0,191,240,0.25)",
         boxShadow: "0 20px 60px rgba(0,33,50,0.08)",
-        minHeight: "calc(100vh - 220px)",
+        minHeight: "560px",
       }}>
         {!user ? (
           <div className="p-10 text-center text-sm" style={{ color: "#002132" }}>Faça login para usar o Chatbot.</div>
         ) : (
           <>
+            {tab === "support"   && <SupportTab userId={effectiveUserId} clientAcc={acc} />}
             {tab === "inbox"     && <InboxTab userId={effectiveUserId} />}
             {tab === "flows"     && <FlowsTab userId={effectiveUserId} />}
             {tab === "broadcast" && <BroadcastTab userId={effectiveUserId} />}

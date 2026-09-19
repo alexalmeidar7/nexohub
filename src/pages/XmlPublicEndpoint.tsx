@@ -5,13 +5,18 @@ import { findClientAccountById, findClientAccountByEmail, CLIENT_ACCOUNTS } from
 import {
   getBrasiliaDateTime,
   isScheduleActive,
+  getActiveEnquete,
+  getActiveQuiz,
+  getActiveBatalha,
   buildEnqueteXml,
   buildQuizXml,
   buildBatalhaXml,
   escapeXml,
 } from "@/lib/scheduledItemUtils";
 
-const SUPABASE_BASE = "https://zzjfzxxvxbspbdkodoix.supabase.co";
+const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
+const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
+const SUPABASE_BASE = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
 
 export default function XmlPublicEndpoint() {
   const { slug, file } = useParams<{ slug?: string; file?: string }>();
@@ -77,9 +82,7 @@ export default function XmlPublicEndpoint() {
           } catch {}
         }
 
-        const activeEnquete = localEnquetes.find((e: any) =>
-          isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
-        );
+        const activeEnquete = getActiveEnquete(localEnquetes);
 
         if (activeEnquete) {
           const generated = buildEnqueteXml(activeEnquete);
@@ -90,18 +93,27 @@ export default function XmlPublicEndpoint() {
           return;
         }
 
-        // 2. Try fetching from endpoint
-        const staticUrl = `/xml/${cleanSlug}/${filename}`;
-        const res = await fetch(staticUrl);
-        if (res.ok) {
-          const text = await res.text();
-          if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
-            if (isMounted) {
-              setXmlContent(text.trim());
-              setLoading(false);
-              return;
+        // 2. Try fetching from dynamic endpoints
+        const candidateUrls = [
+          `/xml/${cleanSlug}/${filename}`,
+          `/enquete.xml`,
+          `/xml/enquete.xml`,
+          `/functions/v1/serve-xml-enquete?slug=${cleanSlug}&user_id=${stationUid}`,
+        ];
+        for (const url of candidateUrls) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const text = await res.text();
+              if (text.includes("<enquete>") || (text.includes("<?xml") && !text.includes("<!DOCTYPE html>"))) {
+                if (isMounted) {
+                  setXmlContent(text.trim());
+                  setLoading(false);
+                }
+                return;
+              }
             }
-          }
+          } catch {}
         }
 
         // 3. Fallback: clean empty XML
@@ -134,9 +146,7 @@ export default function XmlPublicEndpoint() {
           } catch {}
         }
 
-        const activeQuiz = localQuizzes.find((q: any) =>
-          isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
-        );
+        const activeQuiz = getActiveQuiz(localQuizzes);
 
         if (activeQuiz) {
           const generated = buildQuizXml(activeQuiz);
@@ -147,18 +157,27 @@ export default function XmlPublicEndpoint() {
           return;
         }
 
-        // 2. Try fetching from endpoint
-        const staticUrl = `/xml/${cleanSlug}/${filename}`;
-        const res = await fetch(staticUrl);
-        if (res.ok) {
-          const text = await res.text();
-          if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
-            if (isMounted) {
-              setXmlContent(text.trim());
-              setLoading(false);
-              return;
+        // 2. Try fetching from dynamic endpoints
+        const candidateUrls = [
+          `/xml/${cleanSlug}/${filename}`,
+          `/quiz.xml`,
+          `/xml/quiz.xml`,
+          `/functions/v1/serve-xml-quiz?slug=${cleanSlug}&user_id=${stationUid}`,
+        ];
+        for (const url of candidateUrls) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const text = await res.text();
+              if (text.includes("<quiz>") || (text.includes("<?xml") && !text.includes("<!DOCTYPE html>"))) {
+                if (isMounted) {
+                  setXmlContent(text.trim());
+                  setLoading(false);
+                }
+                return;
+              }
             }
-          }
+          } catch {}
         }
 
         // 3. Fallback: clean empty XML
@@ -191,9 +210,7 @@ export default function XmlPublicEndpoint() {
           } catch {}
         }
 
-        const activeBat = localBatalhas.find((b: any) =>
-          isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-        ) || localBatalhas.find((b: any) => b.data_batalha === today) || localBatalhas[0];
+        const activeBat = getActiveBatalha(localBatalhas);
 
         if (activeBat) {
           const generated = buildBatalhaXml(activeBat, stationName);
@@ -204,18 +221,27 @@ export default function XmlPublicEndpoint() {
           return;
         }
 
-        // 2. Try fetching from endpoint
-        const staticUrl = `/xml/${cleanSlug}/${filename}`;
-        const res = await fetch(staticUrl);
-        if (res.ok) {
-          const text = await res.text();
-          if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
-            if (isMounted) {
-              setXmlContent(text.trim());
-              setLoading(false);
-              return;
+        // 2. Try fetching from dynamic endpoints
+        const candidateUrls = [
+          `/xml/${cleanSlug}/${filename}`,
+          `/batalha.xml`,
+          `/xml/batalha.xml`,
+          `/functions/v1/serve-xml-batalha?slug=${cleanSlug}&user_id=${stationUid}`,
+        ];
+        for (const url of candidateUrls) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const text = await res.text();
+              if (text.includes("<batalha>") || (text.includes("<?xml") && !text.includes("<!DOCTYPE html>"))) {
+                if (isMounted) {
+                  setXmlContent(text.trim());
+                  setLoading(false);
+                }
+                return;
+              }
             }
-          }
+          } catch {}
         }
 
         // 3. Fallback: clean empty XML
@@ -257,8 +283,6 @@ export default function XmlPublicEndpoint() {
               }
             }
           } catch {}
-          window.location.replace(supabaseFallbackUrl);
-          return;
         }
       }
 
@@ -276,10 +300,21 @@ export default function XmlPublicEndpoint() {
         }
       }
 
-      // 2. If static file not found on host, immediately redirect to working Supabase XML
+      // 2. If static file not found on host, try fetching from the XML endpoint
       if (supabaseFallbackUrl) {
-        window.location.replace(supabaseFallbackUrl);
-        return;
+        try {
+          const fbRes = await fetch(supabaseFallbackUrl);
+          if (fbRes.ok) {
+            const fbText = await fbRes.text();
+            if (fbText.includes("<") && !fbText.includes("<!DOCTYPE html>")) {
+              if (isMounted) {
+                setXmlContent(fbText.trim());
+                setLoading(false);
+                return;
+              }
+            }
+          }
+        } catch {}
       }
     } catch (err: any) {
       if (isMounted) {

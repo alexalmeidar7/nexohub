@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <programaExpress>
-  <estudio>Estudio FM</estudio>
+  <emissora>Nexo Brasil Super Admin</emissora>
+  <id>rot_atual</id>
+  <programa>Programação ao Vivo</programa>
+  <estudio>Estúdio Principal</estudio>
+  <data>2026-09-19</data>
+  <horario>10:00</horario>
+  <apresentadores>
+    <apresentador>
+      <nome>Locutor de Plantão</nome>
+      <instagram>@locutor</instagram>
+    </apresentador>
+  </apresentadores>
+  <blocos>
+    <bloco numero="1">
+      <noticia titulo="Abertura do Programa" descricao="Boas-vindas aos ouvintes, alinhamento de pauta e destaques do dia."/>
+    </bloco>
+    <bloco numero="2">
+      <noticia titulo="Giro de Notícias e Música" descricao="Principais notícias da cidade e sucessos musicais da programação."/>
+    </bloco>
+  </blocos>
 </programaExpress>

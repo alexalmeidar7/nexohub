@@ -154,6 +154,12 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [clientSelectedFile, setClientSelectedFile] = useState<File | null>(null);
   const clientLogoInputRef = useRef<HTMLInputElement>(null);
 
+  const isProgramSelected = Boolean(
+    editingFullId
+      ? (programaId && programaId !== "__none__")
+      : programaIds.some((id) => id && id !== "__none__")
+  );
+
   const dragItem = useRef<Logo | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -1366,24 +1372,27 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                     <input type="file" accept="image/png" multiple={!editingFullId} className="hidden" onChange={handleAddFile} />
                   </label>
 
-                  {/* CARREGAR LOGO CLIENTE - Na região indicada em vermelho */}
+                  {/* AJUSTAR LOGO - Habilitado apenas quando o usuário selecionar um programa */}
                   <button
                     type="button"
-                    onClick={() => clientLogoInputRef.current?.click()}
-                    className="w-28 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all bg-gradient-to-br from-blue-50/90 via-sky-50/30 to-indigo-50/70 border-2 border-dashed border-[#0055ff]/50 hover:border-[#0055ff] hover:from-blue-100/70 hover:to-indigo-100/60 group shadow-xs shrink-0 text-center p-1.5 relative select-none"
-                    title="Carregar logo do cliente (PNG, JPG, JPEG ou WEBP) para transformação com IA"
+                    disabled={!isProgramSelected}
+                    onClick={() => {
+                      if (!isProgramSelected) return;
+                      clientLogoInputRef.current?.click();
+                    }}
+                    className={`w-28 h-20 rounded-2xl flex items-center justify-center p-2 text-center transition-all select-none shrink-0 ${
+                      isProgramSelected
+                        ? "bg-white border-2 border-dashed border-[#0055ff]/60 hover:border-[#0055ff] hover:bg-blue-50/50 text-[#0055ff] cursor-pointer shadow-xs active:scale-95"
+                        : "bg-slate-100/70 border-2 border-dashed border-slate-200 text-slate-400 cursor-not-allowed opacity-50 shadow-none"
+                    }`}
+                    title={
+                      isProgramSelected
+                        ? "Ajustar Logo"
+                        : "Selecione um programa para habilitar o ajuste da logo"
+                    }
                   >
-                    <div className="flex items-center gap-1 text-[#0055ff] mb-0.5">
-                      <Sparkles size={13} className="animate-pulse text-[#0055ff]" />
-                      <span className="text-[8px] font-black uppercase tracking-wider bg-[#0055ff]/10 text-[#0055ff] px-1.5 py-0.5 rounded-full">
-                        IA 1080p
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-black uppercase text-[#002132] group-hover:text-[#0055ff] transition-colors leading-tight">
-                      Carregar Logo Cliente
-                    </span>
-                    <span className="text-[7.5px] font-bold text-slate-400 mt-0.5 leading-tight">
-                      PNG, JPG, WEBP
+                    <span className="text-[11px] font-black uppercase tracking-wider leading-tight">
+                      Ajustar Logo
                     </span>
                     <input
                       ref={clientLogoInputRef}

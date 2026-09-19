@@ -30,6 +30,22 @@ function formatHour(h: string): string {
   return clean.length >= 5 ? clean.slice(0, 5) : clean;
 }
 
+export function resolveSafePresenterPhoto(foto?: string | null, nome?: string | null): string {
+  const norm = (nome || "").toLowerCase();
+  if (!foto || foto.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
+    if (norm.includes("márcio") || norm.includes("marcio")) return "/avatars/usr-1.png";
+    if (norm.includes("reginaldo")) return "/avatars/usr-4.png";
+    if (norm.includes("alysson")) return "/avatars/usr-6.png";
+    if (norm.includes("jonathas")) return "/avatars/usr-3.png";
+    if (norm.includes("vanessa")) return "/avatars/usr-2.png";
+    if (norm.includes("fernando")) return "/avatars/usr-7.png";
+    if (norm.includes("ani")) return "/avatars/usr-5.png";
+    if (norm.includes("johnny")) return "/avatars/usr-8.png";
+    return "/avatars/usr-1.png";
+  }
+  return foto;
+}
+
 export default function FloatingOnAirPresenter({
   isBehindPages = false,
   effectiveUserId,
@@ -51,7 +67,7 @@ export default function FloatingOnAirPresenter({
 
     const ap = resolvePresenterForProgram(active, syncDb?.apresentadores || [], targetUid || user?.email);
     const apNome = ap?.nome || "—";
-    const apFoto = ap?.foto || "";
+    const apFoto = resolveSafePresenterPhoto(ap?.foto, apNome);
 
     return {
       programaNome: progNome,
@@ -81,7 +97,7 @@ export default function FloatingOnAirPresenter({
           horarioInicio: next.horario_inicio || next.horarioInicio || "00:00",
           horarioFim: next.horario_fim || next.horarioFim || "23:59",
           locutorNome: nextAp?.nome || "—",
-          locutorFoto: nextAp?.foto || "",
+          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome),
         };
       }
     }
@@ -149,19 +165,20 @@ export default function FloatingOnAirPresenter({
           horarioInicio: nextProg.horario_inicio || nextProg.horarioInicio || "00:00",
           horarioFim: nextProg.horario_fim || nextProg.horarioFim || "23:59",
           locutorNome: nextAp?.nome || "—",
-          locutorFoto: nextAp?.foto || "",
+          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome),
         });
       }
 
       if (activeProg) {
         const ap = resolvePresenterForProgram(activeProg, apresentadoresData, uid || targetEmail);
+        const apNome = ap?.nome || "—";
 
         const nextState: OnAirDisplayState = {
           programaNome: activeProg.nome || "Programação Normal",
           horarioInicio: activeProg.horario_inicio || activeProg.horarioInicio || "00:00",
           horarioFim: activeProg.horario_fim || activeProg.horarioFim || "23:59",
-          locutorNome: ap?.nome || "—",
-          locutorFoto: ap?.foto || "",
+          locutorNome: apNome,
+          locutorFoto: resolveSafePresenterPhoto(ap?.foto, apNome),
         };
 
         const key = `${nextState.programaNome}:::${nextState.locutorNome}:::${nextState.horarioInicio}`;
@@ -337,11 +354,17 @@ export default function FloatingOnAirPresenter({
               border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            {onAirInfo.locutorFoto ? (
+            {resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome) ? (
               <img
-                key={onAirInfo.locutorFoto}
-                src={onAirInfo.locutorFoto}
+                key={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome)}
+                src={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome)}
                 alt={onAirInfo.locutorNome || "Locutor no ar"}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.endsWith("/avatars/usr-1.png")) {
+                    target.src = "/avatars/usr-1.png";
+                  }
+                }}
                 style={{
                   width: "100%",
                   height: "100%",

@@ -523,6 +523,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     );
   }, [hasValidLocalSource, isLocalSelected]);
 
+  // Um computador é o leitor físico se, e somente se, possui o FileHandle ou File em memória
+  // selecionado ativamente neste navegador. Computadores secundários não possuem o arquivo local
+  // em memória e DEVEM sempre sincronizar do banco de dados (Supabase user_settings / musicas_tocadas).
+  const isPhysicalLocalReader = useCallback(() => {
+    return Boolean(fileHandleRef.current || localFileRef.current);
+  }, []);
+
+  const isLocalReaderActive = useCallback(() => {
+    return isPhysicalLocalReader() && localMonitoring && isLocalSourceHealthy();
+  }, [isPhysicalLocalReader, localMonitoring, isLocalSourceHealthy]);
+
   const setSourceMode = async (mode: SourceMode) => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
@@ -535,10 +546,101 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     }
   };
 
+  const notifySyncServer = useCallback((payload: {
+    titulo: string;
+    artista: string;
+    duracao?: number;
+    capa?: string;
+    horario?: string;
+    startTime?: number;
+    source?: string;
+    deviceName?: string;
+  }) => {
+    try {
+      const targetSlug = clientAcc?.slug || "positivafm";
+      const uid = dataUserIdRef.current || dataUserId || targetSlug;
+      fetch("/api/sync-music", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: targetSlug,
+          userId: uid,
+          titulo: payload.titulo,
+          artista: payload.artista,
+          duracao: payload.duracao || 180,
+          capa: payload.capa || "",
+          horario: payload.horario || "",
+          startTime: payload.startTime || Date.now(),
+          source: payload.source || "pasta",
+          deviceName: payload.deviceName || currentDeviceName || "",
+        }),
+      }).catch(() => {});
+    } catch {}
+  }, [clientAcc?.slug, dataUserId, currentDeviceName]);
+
   // Load URL, source mode, and history from DB
   useEffect(() => {
     if (!dataUserId) return;
     const loadData = async () => {
+      // Tentar carregar faixa ativa do servidor local de sincronização direta (/api/sync-music)
+      try {
+        const targetSlug = clientAcc?.slug || "positivafm";
+        const syncResp = await fetch(`/api/sync-music?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(dataUserId)}`, { cache: "no-store" });
+        if (syncResp.ok) {
+          const syncJson = await syncResp.json();
+          const liveMusic = syncJson?.music;
+          if (liveMusic?.titulo && liveMusic.titulo.toLowerCase() !== "sem título" && liveMusic.titulo !== "Aguardando leitura...") {
+            const liveDur = Number(liveMusic.duracao) || 180;
+            const liveStart = Number(liveMusic.startTime) || Date.now();
+            const now = Date.now();
+            const el = Math.max(0, (now - liveStart) / 1000);
+            const initialMusic: MusicData = {
+              titulo: liveMusic.titulo,
+              artista: liveMusic.artista || "Desconhecido",
+              duracao: liveDur,
+              capa: liveMusic.capa || "",
+            };
+            if (!isPhysicalLocalReader()) {
+              setMusic(initialMusic);
+              setStartTime(liveStart);
+              setElapsed(Math.min(liveDur, el));
+              setLastSource("pasta");
+              lastSourceRef.current = "pasta";
+              setLocalMonitoring(true);
+              setLocalLastReadAt(Date.now());
+              setLocalDelay(false);
+              setLocalError(null);
+              if (!localFileName && liveMusic.deviceName) {
+                setLocalFileName(`Sincronizado: ${liveMusic.deviceName}`);
+              }
+              if (!initialMusic.capa) {
+                fetchCoverFromiTunes(initialMusic.titulo, initialMusic.artista).then((cov) => {
+                  if (cov) {
+                    setMusic(m => m && m.titulo === initialMusic.titulo ? { ...m, capa: cov } : m);
+                    notifySyncServer({
+                      titulo: initialMusic.titulo,
+                      artista: initialMusic.artista,
+                      duracao: liveDur,
+                      capa: cov,
+                      startTime: liveStart,
+                      source: "pasta",
+                    });
+                  }
+                }).catch(() => {});
+              }
+            } else {
+              setMusic(prev => prev || initialMusic);
+              setStartTime(prev => prev || liveStart);
+              setElapsed(prev => (prev > 0 ? prev : Math.min(liveDur, el)));
+            }
+            try {
+              localStorage.setItem(MUSIC_START_KEY, liveStart.toString());
+              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(initialMusic));
+            } catch {}
+          }
+        }
+      } catch {}
+
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
@@ -574,28 +676,45 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
       // Restaurar faixa e tempo real tocando do banco se ainda ativa (evita começar contagem do zero ao entrar na página)
       if (di?.music_current_title && di.music_current_title !== "Sem título" && di.music_current_title !== "Aguardando leitura...") {
-        const dbStart = typeof di.music_start_time === "number" ? di.music_start_time : null;
+        const dbStart = typeof di.music_start_time === "number" && di.music_start_time > 0 ? di.music_start_time : Date.now();
         const dur = typeof di.music_current_duration === "number" && di.music_current_duration > 0
           ? di.music_current_duration
           : (typeof di.music_current_duracao === "number" && di.music_current_duracao > 0 ? di.music_current_duracao : 180);
-        if (dbStart && dbStart > 0) {
-          const now = Date.now();
-          const el = Math.max(0, (now - dbStart) / 1000);
-          if (el < dur + 600) {
-            const initialMusic: MusicData = {
-              titulo: di.music_current_title,
-              artista: di.music_current_artist || "Desconhecido",
-              duracao: dur,
-              capa: di.music_current_cover || "",
-            };
+        const now = Date.now();
+        const el = Math.max(0, (now - dbStart) / 1000);
+        if (el < dur + 600) {
+          const initialMusic: MusicData = {
+            titulo: di.music_current_title,
+            artista: di.music_current_artist || "Desconhecido",
+            duracao: dur,
+            capa: di.music_current_cover || "",
+          };
+          if (!isPhysicalLocalReader()) {
+            // Em computadores secundários sem o arquivo local em disco, o banco é a verdade absoluta
+            setMusic(initialMusic);
+            setStartTime(dbStart);
+            setElapsed(Math.min(dur, el));
+            setLastSource("pasta");
+            lastSourceRef.current = "pasta";
+            if (!initialMusic.capa) {
+              fetchCoverFromiTunes(initialMusic.titulo, initialMusic.artista).then((cov) => {
+                if (cov) {
+                  setMusic(m => m && m.titulo === initialMusic.titulo ? { ...m, capa: cov } : m);
+                  candidateUserIds.forEach(uid => {
+                    mergeUserDashboardItems(uid, { music_current_cover: cov }).catch(() => {});
+                  });
+                }
+              }).catch(() => {});
+            }
+          } else {
             setMusic(prev => prev || initialMusic);
             setStartTime(prev => prev || dbStart);
             setElapsed(prev => (prev > 0 ? prev : Math.min(dur, el)));
-            try {
-              localStorage.setItem(MUSIC_START_KEY, dbStart.toString());
-              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(initialMusic));
-            } catch {}
           }
+          try {
+            localStorage.setItem(MUSIC_START_KEY, dbStart.toString());
+            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(initialMusic));
+          } catch {}
         }
       }
       // Restore saved source mode
@@ -607,7 +726,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setSourceModeLoaded(true);
     };
     loadData();
-  }, [dataUserId]);
+  }, [dataUserId, clientAcc?.slug, notifySyncServer]);
 
   useEffect(() => {
     if (!sourceModeLoaded) return;
@@ -776,6 +895,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         if (cover) {
           data.capa = cover;
           coverCacheRef.current[cacheKey] = cover;
+          notifySyncServer({
+            titulo: data.titulo,
+            artista: data.artista,
+            duracao: data.duracao,
+            capa: cover,
+            horario: data.horario,
+            startTime: startTimeRef.current || Date.now(),
+            source: source || "pasta",
+          });
         }
       }
     }
@@ -829,12 +957,35 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       const el = Math.max(0, (Date.now() - existingStart) / 1000);
       setStartTime(existingStart);
       setElapsed(dur > 0 ? Math.min(dur, el) : el);
-      if (data.capa && (!prev?.capa || prev.capa !== data.capa)) {
+      
+      const activeCover = data.capa || prev?.capa || "";
+      if (activeCover && (!prev?.capa || prev.capa !== activeCover)) {
         try {
-          localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...data, capa: data.capa }));
+          localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...data, capa: activeCover }));
+          candidateUserIds.forEach(uid => {
+            try {
+              localStorage.setItem(`masterview_music_data::${uid}`, JSON.stringify({ ...data, capa: activeCover }));
+            } catch {}
+          });
         } catch {}
+        candidateUserIds.forEach(uid => {
+          mergeUserDashboardItems(uid, {
+            music_current_cover: activeCover,
+            music_current_title: data.titulo,
+            music_current_artist: data.artista,
+            music_start_time: existingStart,
+          }).catch(() => {});
+        });
+        notifySyncServer({
+          titulo: data.titulo,
+          artista: data.artista,
+          duracao: dur,
+          capa: activeCover,
+          startTime: existingStart,
+          source: source || "pasta",
+        });
       }
-      setMusic(prev?.capa && !data.capa ? { ...data, capa: prev.capa } : data);
+      setMusic(prev?.capa && !data.capa ? { ...data, capa: prev.capa } : (activeCover ? { ...data, capa: activeCover } : data));
       return;
     }
 
@@ -884,6 +1035,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     setMusic(data);
     setStartTime(songStartTime);
     setElapsed(dur > 0 ? Math.min(dur, currentElapsed) : currentElapsed);
+    notifySyncServer({
+      titulo: data.titulo,
+      artista: data.artista,
+      duracao: dur,
+      capa: data.capa || "",
+      horario: data.horario,
+      startTime: songStartTime,
+      source: source || "pasta",
+    });
       
       // Log to history with real artist/music (never null — use fallback text so column is always populated)
       if (dataUserId && source) {
@@ -985,8 +1145,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               music_current_cover: data.capa || "",
               music_current_duration: Math.round(data.duracao || 180),
               music_current_curiosity: "",
+              music_source_type: source || "pasta",
+              music_source_device: deviceNameRef.current,
             };
-            await mergeUserDashboardItems(dataUserId, basePatch);
+            await Promise.allSettled(
+              candidateUserIds.map(uid => mergeUserDashboardItems(uid, basePatch))
+            );
 
             // Fetch curiosity in background; guard against stale writes if the song changed again
             const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
@@ -1001,7 +1165,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             if (curData?.curiosidade) {
               const stillCurrent = localStorage.getItem(MUSIC_START_KEY) === String(songStartTime);
               if (stillCurrent) {
-                await mergeUserDashboardItems(dataUserId, { music_current_curiosity: curData.curiosidade });
+                await Promise.allSettled(
+                  candidateUserIds.map(uid => mergeUserDashboardItems(uid, { music_current_curiosity: curData.curiosidade }))
+                );
               }
             }
           } catch (e) {
@@ -1020,8 +1186,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Online fetch — always active when URL exists (unified mode)
   const fetchXml = useCallback(async () => {
     if (!isOnlineSelected) return;
-    // Se a fonte local estiver ativa, o arquivo local tem soberania absoluta
-    if ((isLocalSourceHealthy() || hasValidLocalSource) && (localMonitoring || isLocalSelected)) return;
+    // Se a fonte local estiver ativa no leitor físico, o arquivo local tem soberania absoluta
+    if (isLocalReaderActive() && (localMonitoring || isLocalSelected)) return;
     const trimmed = xmlUrl.trim();
     if (!trimmed) return;
     if (!isValidXmlUrl(trimmed)) return;
@@ -1050,7 +1216,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         // the on-air track so the UI doesn't stay stuck on the previous one.
         if (isStoppedXmlPayload(data.content as string)) {
           onlineStoppedRef.current = true;
-          if (!isLocalSourceHealthy() && !hasValidLocalSource) {
+          if (!isLocalReaderActive()) {
             await clearMusic("online");
           }
         }
@@ -1059,7 +1225,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       onlineStoppedRef.current = false;
       // Only defer to local source when online is NOT stopped
-      if (isLocalSourceHealthy() || hasValidLocalSource) return;
+      if (isLocalReaderActive()) return;
       await processMusic(parsed, "online", data.content);
     } catch (err: any) {
       onlineFailCountRef.current++;
@@ -1067,14 +1233,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
       }
     }
-  }, [isLocalSourceHealthy, hasValidLocalSource, localMonitoring, isLocalSelected, xmlUrl, processMusic, clearMusic]);
+  }, [isLocalReaderActive, localMonitoring, isLocalSelected, xmlUrl, processMusic, clearMusic]);
 
 
   // Sync component state from localStorage (useGlobalMusicSync may update it)
   useEffect(() => {
     const syncFromStorage = () => {
-      // Se este navegador estiver monitorando ativamente um arquivo local, NÃO permitir que mudanças externas de localStorage alterem a música
-      if ((isLocalSourceHealthy() || hasValidLocalSource) && localMonitoring) return;
+      // Se este navegador for o leitor físico monitorando ativamente um arquivo local, NÃO permitir que mudanças externas de localStorage alterem a música
+      if (isLocalReaderActive()) return;
       const raw = localStorage.getItem(MUSIC_DATA_KEY);
       const startStr = localStorage.getItem(MUSIC_START_KEY);
       if (!raw || !startStr) return;
@@ -1097,7 +1263,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
     const interval = setInterval(syncFromStorage, 2000);
     return () => clearInterval(interval);
-  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalSourceHealthy, hasValidLocalSource, localMonitoring]);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalReaderActive]);
 
   useEffect(() => {
     if (!isOnlineSelected || !hasValidOnlineUrl) return;
@@ -1274,11 +1440,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     setLocalFileName(file.name);
 
     // Persist local filename to DB so it survives across computers/sessions
-    if (dataUserId) {
-      await mergeUserDashboardItems(dataUserId, {
+    candidateUserIds.forEach(uid => {
+      mergeUserDashboardItems(uid, {
         local_xml_filename: file.name,
-      });
-    }
+      }).catch(() => {});
+    });
 
     const rawText = await readFileWithEncoding(file);
     const text = isJornalFmTxt(dataUserId, rawText)
@@ -1343,15 +1509,37 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
   }, [isLocalSelected, localMonitoring, readLocalFile]);
 
-  // Remote storage polling via Worker
+  // Remote storage polling via Worker (para máquinas secundárias sem arquivo físico)
   useEffect(() => {
     const worker = workerRef.current;
-    if (!worker || !dataUserId || !isLocalSelected || !localFileName) return;
+    if (!worker || !dataUserId) return;
     if (fileHandleRef.current || localFileRef.current) return;
 
     const pollStorage = async () => {
       try {
-        // Try new path (auth.uid()/local-xml-<dataUserId>.xml) then fall back to legacy flat path
+        const targetSlug = clientAcc?.slug || "positivafm";
+        // 1. Tentar ler do servidor de sincronização direta (/xml/slug/local.xml)
+        const localXmlRes = await fetch(`/xml/${encodeURIComponent(targetSlug)}/local.xml?t=${Date.now()}`);
+        if (localXmlRes.ok) {
+          const text = await localXmlRes.text();
+          if (text && text.includes("<musica>")) {
+            if (text !== localFileContentRef.current) {
+              localFileContentRef.current = text;
+              setLocalFileContent(text);
+              lastLocalSuccessRef.current = Date.now();
+              setLocalLastReadAt(Date.now());
+              setLocalDelay(false);
+              setLocalError(null);
+              setLocalActivating(false);
+              setLocalMonitoring(true);
+              const parsed = parseXmlString(text);
+              if (parsed) processMusicRef.current(parsed, "pasta", text);
+            }
+            return;
+          }
+        }
+
+        // 2. Try new path (auth.uid()/local-xml-<dataUserId>.xml) then fall back to legacy flat path
         const { data: authData } = await supabase.auth.getUser();
         const authUid = authData?.user?.id || dataUserId;
         const candidates = [
@@ -1392,7 +1580,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "storagePoll" });
     };
-  }, [dataUserId, isLocalSelected, localFileName]);
+  }, [dataUserId, clientAcc?.slug]);
 
   // Staleness check via Worker
   useEffect(() => {
@@ -1498,8 +1686,98 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
 
     const syncFromDatabase = async () => {
-      // Se este navegador estiver monitorando ativamente um arquivo local saudável, preservamos a fonte local
-      if ((isLocalSourceHealthy() || hasValidLocalSource) && localMonitoring) return;
+      // Apenas o computador que estiver com arquivo físico em disco aberto ignora o banco enquanto lê o arquivo físico.
+      // Computadores secundários (sem arquivo físico em disco aberto) DEVEM sempre sincronizar do banco!
+      if (isLocalReaderActive()) return;
+
+      // 0. Sincronização direta em rede / servidor local (/api/sync-music)
+      try {
+        const targetSlug = clientAcc?.slug || "positivafm";
+        const syncResp = await fetch(`/api/sync-music?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(dataUserId || "")}`, {
+          cache: "no-store",
+        });
+        if (syncResp.ok) {
+          const syncJson = await syncResp.json();
+          const liveMusic = syncJson?.music;
+          if (liveMusic && liveMusic.titulo && liveMusic.titulo.trim() !== "" && liveMusic.titulo.toLowerCase() !== "sem título") {
+            const { titulo: cleanT, artista: cleanA } = sanitizeTrackInfo(liveMusic.titulo, liveMusic.artista);
+            const liveCapa = liveMusic.capa || "";
+            const liveDur = Number(liveMusic.duracao) || 180;
+            const liveStart = Number(liveMusic.startTime) || Date.now();
+            const now = Date.now();
+            const el = Math.max(0, (now - liveStart) / 1000);
+
+            setLastSource("pasta");
+            lastSourceRef.current = "pasta";
+            setLocalMonitoring(true);
+            setLocalLastReadAt(Date.now());
+            setLocalDelay(false);
+            setLocalError(null);
+            if (!localFileName && liveMusic.deviceName) {
+              setLocalFileName(`Sincronizado: ${liveMusic.deviceName}`);
+            }
+
+            const isSameTrack = (musicRef.current &&
+              musicRef.current.titulo?.trim().toLowerCase() === cleanT.toLowerCase() &&
+              musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
+
+            setMusic((prev) => {
+              const activeCapa = liveCapa || (prev?.titulo === cleanT && prev?.capa ? prev.capa : "");
+              if (!activeCapa) {
+                fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
+                  if (cov) {
+                    setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
+                    notifySyncServer({
+                      titulo: cleanT,
+                      artista: cleanA,
+                      duracao: liveDur,
+                      capa: cov,
+                      startTime: liveStart,
+                      source: "pasta",
+                      deviceName: liveMusic.deviceName,
+                    });
+                  }
+                }).catch(() => {});
+              }
+
+              if (prev?.titulo === cleanT && prev?.artista === cleanA) {
+                if (liveCapa && prev.capa !== liveCapa) {
+                  return { ...prev, capa: liveCapa };
+                }
+                return prev;
+              }
+
+              return {
+                titulo: cleanT,
+                artista: cleanA,
+                duracao: liveDur,
+                capa: activeCapa,
+              };
+            });
+
+            if (!isSameTrack || !startTimeRef.current) {
+              setStartTime(liveStart);
+              setElapsed(Math.min(liveDur, el));
+            } else {
+              setElapsed(Math.min(liveDur, el));
+            }
+
+            try {
+              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({
+                titulo: cleanT,
+                artista: cleanA,
+                duracao: liveDur,
+                capa: liveCapa,
+              }));
+              localStorage.setItem(MUSIC_START_KEY, liveStart.toString());
+            } catch {}
+
+            return; // Sincronizado com sucesso com o leitor ativo
+          }
+        }
+      } catch (e) {
+        // Fallback para as próximas etapas
+      }
 
       const targetIds = candidateUserIds.length > 0 ? candidateUserIds : (dataUserId ? [dataUserId] : []);
 
@@ -1547,28 +1825,52 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const now = Date.now();
             const el = Math.max(0, (now - resolvedStart) / 1000);
 
+            setLastSource("pasta");
+            lastSourceRef.current = "pasta";
+
             setMusic((prev) => {
-              if (prev?.titulo === cleanT && prev?.artista === cleanA && (prev?.capa === dbCover || !dbCover)) {
-                return prev;
-              }
-              if (!dbCover) {
+              const activeCapa = dbCover || (prev?.titulo === cleanT && prev?.capa ? prev.capa : "");
+
+              if (!activeCapa) {
                 fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
                   if (cov) {
                     setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
+                    candidateUserIds.forEach((cuid) => {
+                      mergeUserDashboardItems(cuid, { music_current_cover: cov }).catch(() => {});
+                    });
+                    try {
+                      const currRaw = localStorage.getItem(MUSIC_DATA_KEY);
+                      if (currRaw) {
+                        const parsed = JSON.parse(currRaw);
+                        if (parsed.titulo === cleanT) {
+                          localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...parsed, capa: cov }));
+                        }
+                      }
+                    } catch {}
                   }
                 }).catch(() => {});
               }
+
+              if (prev?.titulo === cleanT && prev?.artista === cleanA) {
+                if (dbCover && prev.capa !== dbCover) {
+                  return { ...prev, capa: dbCover };
+                }
+                return prev;
+              }
+
               return {
                 titulo: cleanT,
                 artista: cleanA,
                 duracao: dbDuracao,
-                capa: dbCover || (prev?.titulo === cleanT ? (prev?.capa || "") : ""),
+                capa: activeCapa,
               };
             });
 
-            // NÃO reiniciar contagem se a faixa já estiver tocando
+            // NÃO reiniciar contagem se a faixa já estiver tocando, mas manter elapsed sincronizado
             if (!isSameTrack || !startTimeRef.current) {
               setStartTime(resolvedStart);
+              setElapsed(Math.min(dbDuracao, el));
+            } else {
               setElapsed(Math.min(dbDuracao, el));
             }
 
@@ -1641,16 +1943,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const now = Date.now();
             const el = Math.max(0, (now - trackStartTime) / 1000);
 
+            setLastSource("pasta");
+            lastSourceRef.current = "pasta";
+
             setMusic((prev) => {
-              if (prev?.titulo === cleanT && prev?.artista === cleanA && prev?.capa) {
-                return prev;
-              }
               const currentCapa = (prev?.titulo === cleanT && prev?.capa) ? prev.capa : "";
               // Buscar capa do Deezer / iTunes em background se ainda não existir
               if (!currentCapa) {
                 fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
                   if (cov) {
                     setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
+                    candidateUserIds.forEach((cuid) => {
+                      mergeUserDashboardItems(cuid, { music_current_cover: cov }).catch(() => {});
+                    });
                     try {
                       const currRaw = localStorage.getItem(MUSIC_DATA_KEY);
                       if (currRaw) {
@@ -1664,6 +1969,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 }).catch(() => {});
               }
 
+              if (prev?.titulo === cleanT && prev?.artista === cleanA) {
+                return prev;
+              }
+
               return {
                 titulo: cleanT,
                 artista: cleanA,
@@ -1674,6 +1983,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
             if (!isSameTrack || !startTimeRef.current) {
               setStartTime(trackStartTime);
+              setElapsed(Math.min(180, el));
+            } else {
               setElapsed(Math.min(180, el));
             }
 
@@ -1744,7 +2055,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       clearInterval(pollInterval);
       channels.forEach((ch) => supabase.removeChannel(ch));
     };
-  }, [dataUserId, JSON.stringify(candidateUserIds), MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalSourceHealthy, localMonitoring]);
+  }, [dataUserId, JSON.stringify(candidateUserIds), MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalReaderActive]);
 
   const rawProgress = music && music.duracao > 0 ? Math.min(100, (elapsed / music.duracao) * 100) : 0;
 
@@ -1970,6 +2281,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   return (
     <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
+      <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
 
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
@@ -2496,7 +2808,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
               <div className="space-y-6">
-                <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
 
 
                 {/* Status indicators */}

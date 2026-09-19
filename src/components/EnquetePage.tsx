@@ -78,13 +78,17 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
         body: JSON.stringify({ slug: targetSlug, userId: uId, enquetes: list }),
       }).catch(() => {});
 
-      // Sincroniza imediatamente com a Supabase Edge Function para vMix remoto
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      fetch(`${supabaseUrl}/functions/v1/serve-xml-enquete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, enquetes: list }),
-      }).catch(() => {});
+      // Sincroniza imediatamente com a função de XML para vMix
+      const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
+      const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
+      const effectiveSupabaseUrl = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
+      if (effectiveSupabaseUrl) {
+        fetch(`${effectiveSupabaseUrl}/functions/v1/serve-xml-enquete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, enquetes: list }),
+        }).catch(() => {});
+      }
     } catch {}
   };
 
@@ -160,19 +164,23 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
         console.warn("Supabase enquete insert warning:", error.message);
       }
 
-      // Envia diretamente para a Edge Function via POST (com service role) para garantir atualização no vMix
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      await fetch(`${supabaseUrl}/functions/v1/serve-xml-enquete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "save",
-          slug: targetSlug,
-          user_id: targetUserId,
-          enquete: newEnquete,
-          enquetes: updated,
-        }),
-      }).catch((e) => console.warn("Erro ao sincronizar enquete com Edge Function:", e));
+      // Envia diretamente para a Edge Function via POST para garantir atualização no vMix
+      const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
+      const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
+      const effectiveSupabaseUrl = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
+      if (effectiveSupabaseUrl) {
+        await fetch(`${effectiveSupabaseUrl}/functions/v1/serve-xml-enquete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save",
+            slug: targetSlug,
+            user_id: targetUserId,
+            enquete: newEnquete,
+            enquetes: updated,
+          }),
+        }).catch((e) => console.warn("Erro ao sincronizar enquete com Edge Function:", e));
+      }
     } catch (err) {
       console.warn("Supabase enquete save network error:", err);
     } finally {
@@ -192,6 +200,40 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       horario_inicio: "00:00",
       horario_fim: "23:59"
     });
+  };
+
+  const handlePutOnAir = async (item: EnqueteAgendada) => {
+    if (!targetUserId) return;
+    const { today } = getBrasiliaDateTime();
+    const updatedItem: EnqueteAgendada = {
+      ...item,
+      data_enquete: today,
+      horario_inicio: "00:00",
+      horario_fim: "23:59",
+    };
+
+    const currentList = getStoredEnquetes(targetUserId);
+    const updated = [updatedItem, ...currentList.filter(e => e.id !== item.id)];
+    setEnquetes(updated);
+    saveStoredEnquetes(targetUserId, updated);
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id);
+      if (isUuid) {
+        await supabase
+          .from("enquetes_agendadas")
+          .update({
+            data_enquete: today,
+            horario_inicio: "00:00",
+            horario_fim: "23:59",
+          })
+          .eq("id", item.id);
+      }
+    } catch (err) {
+      console.warn("Erro ao colocar enquete no ar:", err);
+    }
+
+    toast.success("Enquete colocada no ar agora! XML atualizado.");
   };
 
   const handleDelete = async (id: string) => {
@@ -218,17 +260,21 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
           .delete()
           .eq("id", id);
       }
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      await fetch(`${supabaseUrl}/functions/v1/serve-xml-enquete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "delete",
-          slug: targetSlug,
-          user_id: targetUserId,
-          id,
-        }),
-      }).catch(() => {});
+      const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
+      const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
+      const effectiveSupabaseUrl = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
+      if (effectiveSupabaseUrl) {
+        await fetch(`${effectiveSupabaseUrl}/functions/v1/serve-xml-enquete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete",
+            slug: targetSlug,
+            user_id: targetUserId,
+            id,
+          }),
+        }).catch(() => {});
+      }
     } catch (err) {
       console.warn("Erro ao excluir enquete no Supabase:", err);
     }
@@ -484,19 +530,31 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
                       )}
                     </td>
                     <td style={{ padding: "14px 20px", textAlign: "right" }}>
-                      <button
-                        onClick={() => handleDelete(e.id)}
-                        style={{
-                          width: 32, height: 32, borderRadius: 12,
-                          background: "#FEE2E2", border: "none", cursor: "pointer",
-                          display: "inline-flex", alignItems: "center", justifyContent: "center",
-                          color: "#DC2626", transition: "all 0.2s"
-                        }}
-                        className="hover:scale-110 active:scale-95"
-                        title="Excluir"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {status !== "active" && (
+                          <button
+                            onClick={() => handlePutOnAir(e)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
+                            title="Colocar esta enquete no ar agora no XML"
+                          >
+                            <Radio size={13} />
+                            NO AR
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(e.id)}
+                          style={{
+                            width: 32, height: 32, borderRadius: 12,
+                            background: "#FEE2E2", border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: "#DC2626", transition: "all 0.2s"
+                          }}
+                          className="hover:scale-110 active:scale-95"
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

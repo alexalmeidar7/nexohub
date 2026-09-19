@@ -52,13 +52,57 @@ function isScheduleActive(
   targetTime: string
 ): boolean {
   if (!itemDate || !startTime || !endTime) return false;
-  if (itemDate !== targetDate) return false;
+  const normalizedItemDate = String(itemDate).slice(0, 10);
+  const normalizedTarget = String(targetDate).slice(0, 10);
+  if (normalizedItemDate !== normalizedTarget) return false;
   const start = normTime(startTime, "00:00");
   const end = normTime(endTime, "23:59");
   if (start <= end) {
     return targetTime >= start && targetTime <= end;
   }
   return targetTime >= start || targetTime <= end;
+}
+
+function getActiveEnquete(list: any[], today: string, currentTime: string): any {
+  if (!Array.isArray(list) || list.length === 0) return undefined;
+  const targetDate = String(today).slice(0, 10);
+  const strictlyActive = list.find((e: any) =>
+    isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, targetDate, currentTime)
+  );
+  if (strictlyActive) return strictlyActive;
+
+  const todayItem = list.find((e: any) => String(e.data_enquete || "").slice(0, 10) === targetDate);
+  if (todayItem) return todayItem;
+
+  return list[0];
+}
+
+function getActiveQuiz(list: any[], today: string, currentTime: string): any {
+  if (!Array.isArray(list) || list.length === 0) return undefined;
+  const targetDate = String(today).slice(0, 10);
+  const strictlyActive = list.find((q: any) =>
+    isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, targetDate, currentTime)
+  );
+  if (strictlyActive) return strictlyActive;
+
+  const todayItem = list.find((q: any) => String(q.data_quiz || "").slice(0, 10) === targetDate);
+  if (todayItem) return todayItem;
+
+  return list[0];
+}
+
+function getActiveBatalha(list: any[], today: string, currentTime: string): any {
+  if (!Array.isArray(list) || list.length === 0) return undefined;
+  const targetDate = String(today).slice(0, 10);
+  const strictlyActive = list.find((b: any) =>
+    isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, targetDate, currentTime)
+  );
+  if (strictlyActive) return strictlyActive;
+
+  const todayItem = list.find((b: any) => String(b.data_batalha || "").slice(0, 10) === targetDate);
+  if (todayItem) return todayItem;
+
+  return list[0];
 }
 
 function buildEnqueteXml(enquete?: any): string {
@@ -242,6 +286,8 @@ export function dynamicXmlPlugin(): Plugin {
   const quizzesFile = path.join(rootDir, "src", "data", "xml_quizzes_sync.json");
   const batalhasFile = path.join(rootDir, "src", "data", "xml_batalhas_sync.json");
   const roteirosFile = path.join(rootDir, "src", "data", "xml_roteiros_sync.json");
+  const musicFile = path.join(rootDir, "src", "data", "xml_music_sync.json");
+  const suporteTicketsFile = path.join(rootDir, "src", "data", "suporte_tickets_sync.json");
 
   function readSyncData(filePath: string): Record<string, any[]> {
     try {
@@ -250,6 +296,25 @@ export function dynamicXmlPlugin(): Plugin {
       }
     } catch {}
     return {};
+  }
+
+  function readMusicSyncData(): Record<string, any> {
+    try {
+      if (fs.existsSync(musicFile)) {
+        return JSON.parse(fs.readFileSync(musicFile, "utf-8"));
+      }
+    } catch {}
+    return {};
+  }
+
+  function writeMusicSyncData(data: Record<string, any>) {
+    try {
+      const dir = path.dirname(musicFile);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(musicFile, JSON.stringify(data, null, 2), "utf-8");
+    } catch (err) {
+      console.error("Error writing music sync file:", err);
+    }
   }
 
   function writeSyncData(filePath: string, data: Record<string, any[]>) {
@@ -267,13 +332,17 @@ export function dynamicXmlPlugin(): Plugin {
       const norm = normalizeSlug(slug);
       const targets = new Set([slug, norm, ...(ALL_ALIASES[norm] || [])]);
       for (const t of targets) {
+        if (!t || t.toLowerCase() === "xml") continue;
         const dir = path.join(rootDir, "public", "xml", t);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         fs.writeFileSync(path.join(dir, filename), content.trim() + "\n", "utf-8");
       }
-      if (filename === "roteiro.xml" && (norm === "positivafm" || slug === "positivafm")) {
+      if (norm === "positivafm" || slug === "positivafm" || norm === "default") {
         try {
-          fs.writeFileSync(path.join(rootDir, "public", "roteiro.xml"), content.trim() + "\n", "utf-8");
+          fs.writeFileSync(path.join(rootDir, "public", filename), content.trim() + "\n", "utf-8");
+          const publicXmlDir = path.join(rootDir, "public", "xml");
+          if (!fs.existsSync(publicXmlDir)) fs.mkdirSync(publicXmlDir, { recursive: true });
+          fs.writeFileSync(path.join(publicXmlDir, filename), content.trim() + "\n", "utf-8");
         } catch {}
       }
     } catch (err) {
@@ -284,105 +353,135 @@ export function dynamicXmlPlugin(): Plugin {
   return {
     name: "vite-plugin-dynamic-xml",
     configureServer(server) {
-      // 1. POST /api/sync-xml-enquete
+      // 1. POST /api/sync-xml-enquete & /functions/v1/serve-xml-enquete
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
-        if (req.method === "POST" && url.startsWith("/api/sync-xml-enquete")) {
+        if (req.method === "POST" && (url.startsWith("/api/sync-xml-enquete") || url.startsWith("/functions/v1/serve-xml-enquete"))) {
           let body = "";
           req.on("data", (chunk) => (body += chunk));
           req.on("end", () => {
             try {
               const parsed = JSON.parse(body);
               const slug = normalizeSlug(parsed.slug || "positivafm");
-              const userId = parsed.userId || slug;
-              const enquetes = Array.isArray(parsed.enquetes) ? parsed.enquetes : [];
-
+              const userId = parsed.userId || parsed.user_id || slug;
               const store = readSyncData(enquetesFile);
+              let enquetes: any[] = store[slug] || store[userId] || [];
+
+              if (Array.isArray(parsed.enquetes)) {
+                enquetes = parsed.enquetes;
+              } else if (parsed.action === "delete") {
+                const idToDelete = parsed.id || parsed.enqueteId;
+                enquetes = enquetes.filter((e: any) => e.id !== idToDelete && e.pergunta !== parsed.pergunta);
+              } else if (parsed.enquete || (parsed.pergunta && parsed.resposta1)) {
+                const eq = parsed.enquete || parsed;
+                enquetes = [eq, ...enquetes.filter((e: any) => e.id !== eq.id)];
+              }
+
               store[slug] = enquetes;
               if (userId) store[userId] = enquetes;
               writeSyncData(enquetesFile, store);
 
-              // Update static file on disk immediately
+              // Update static file on disk immediately using getActiveEnquete
               const { today, currentTime } = getBrasiliaDateTime();
-              const active = enquetes.find((e: any) =>
-                isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
-              );
+              const active = getActiveEnquete(enquetes, today, currentTime);
               const xml = buildEnqueteXml(active);
               writeStaticXml(slug, "enquete.xml", xml);
 
               res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ ok: true, count: enquetes.length, active: !!active }));
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: true, count: enquetes.length, active: !!active, enquete: active }));
             } catch (err: any) {
               res.statusCode = 500;
+              res.setHeader("Access-Control-Allow-Origin", "*");
               res.end(JSON.stringify({ ok: false, error: err.message }));
             }
           });
           return;
         }
 
-        // 2. POST /api/sync-xml-quiz
-        if (req.method === "POST" && url.startsWith("/api/sync-xml-quiz")) {
+        // 2. POST /api/sync-xml-quiz & /functions/v1/serve-xml-quiz
+        if (req.method === "POST" && (url.startsWith("/api/sync-xml-quiz") || url.startsWith("/functions/v1/serve-xml-quiz"))) {
           let body = "";
           req.on("data", (chunk) => (body += chunk));
           req.on("end", () => {
             try {
               const parsed = JSON.parse(body);
               const slug = normalizeSlug(parsed.slug || "positivafm");
-              const userId = parsed.userId || slug;
-              const quizzes = Array.isArray(parsed.quizzes) ? parsed.quizzes : [];
-
+              const userId = parsed.userId || parsed.user_id || slug;
               const store = readSyncData(quizzesFile);
+              let quizzes: any[] = store[slug] || store[userId] || [];
+
+              if (Array.isArray(parsed.quizzes)) {
+                quizzes = parsed.quizzes;
+              } else if (parsed.action === "delete") {
+                const idToDelete = parsed.id || parsed.quizId;
+                quizzes = quizzes.filter((q: any) => q.id !== idToDelete && q.pergunta !== parsed.pergunta);
+              } else if (parsed.quiz || (parsed.pergunta && parsed.resposta1)) {
+                const qz = parsed.quiz || parsed;
+                quizzes = [qz, ...quizzes.filter((q: any) => q.id !== qz.id)];
+              }
+
               store[slug] = quizzes;
               if (userId) store[userId] = quizzes;
               writeSyncData(quizzesFile, store);
 
-              // Update static file on disk immediately
+              // Update static file on disk immediately using getActiveQuiz
               const { today, currentTime } = getBrasiliaDateTime();
-              const active = quizzes.find((q: any) =>
-                isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
-              );
+              const active = getActiveQuiz(quizzes, today, currentTime);
               const xml = buildQuizXml(active);
               writeStaticXml(slug, "quiz.xml", xml);
 
               res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ ok: true, count: quizzes.length, active: !!active }));
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: true, count: quizzes.length, active: !!active, quiz: active }));
             } catch (err: any) {
               res.statusCode = 500;
+              res.setHeader("Access-Control-Allow-Origin", "*");
               res.end(JSON.stringify({ ok: false, error: err.message }));
             }
           });
           return;
         }
 
-        // 3. POST /api/sync-xml-batalha
-        if (req.method === "POST" && url.startsWith("/api/sync-xml-batalha")) {
+        // 3. POST /api/sync-xml-batalha & /functions/v1/serve-xml-batalha
+        if (req.method === "POST" && (url.startsWith("/api/sync-xml-batalha") || url.startsWith("/functions/v1/serve-xml-batalha"))) {
           let body = "";
           req.on("data", (chunk) => (body += chunk));
           req.on("end", () => {
             try {
               const parsed = JSON.parse(body);
               const slug = normalizeSlug(parsed.slug || "positivafm");
-              const userId = parsed.userId || slug;
-              const batalhas = Array.isArray(parsed.batalhas) ? parsed.batalhas : [];
-
+              const userId = parsed.userId || parsed.user_id || slug;
               const store = readSyncData(batalhasFile);
+              let batalhas: any[] = store[slug] || store[userId] || [];
+
+              if (Array.isArray(parsed.batalhas)) {
+                batalhas = parsed.batalhas;
+              } else if (parsed.action === "delete") {
+                const idToDelete = parsed.id || parsed.batalhaId;
+                batalhas = batalhas.filter((b: any) => b.id !== idToDelete);
+              } else if (parsed.batalha) {
+                const bt = parsed.batalha;
+                batalhas = [bt, ...batalhas.filter((b: any) => b.id !== bt.id)];
+              }
+
               store[slug] = batalhas;
               if (userId) store[userId] = batalhas;
               writeSyncData(batalhasFile, store);
 
-              // Update static file on disk immediately
+              // Update static file on disk immediately using getActiveBatalha
               const { today, currentTime } = getBrasiliaDateTime();
-              const active = batalhas.find((b: any) =>
-                isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-              ) || batalhas.find((b: any) => b.data_batalha === today) || batalhas[0];
+              const active = getActiveBatalha(batalhas, today, currentTime);
               const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[normalizeSlug(slug)] || "House Mix Emissora";
               const xml = buildBatalhaXml(active, stName);
               writeStaticXml(slug, "batalha.xml", xml);
 
               res.setHeader("Content-Type", "application/json");
+              res.setHeader("Access-Control-Allow-Origin", "*");
               res.end(JSON.stringify({ ok: true, count: batalhas.length, active: !!active }));
             } catch (err: any) {
               res.statusCode = 500;
+              res.setHeader("Access-Control-Allow-Origin", "*");
               res.end(JSON.stringify({ ok: false, error: err.message }));
             }
           });
@@ -467,176 +566,286 @@ export function dynamicXmlPlugin(): Plugin {
           return;
         }
 
-        // 5. Intercept GET requests for enquete.xml, quiz.xml, batalha.xml, roteiro.xml, and geral.xml
+        // 4b. POST /api/sync-music (Sincronização entre computadores do leitor local de música)
+        if (req.method === "POST" && url.startsWith("/api/sync-music")) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => {
+            try {
+              const parsed = JSON.parse(body);
+              const rawSlug = parsed.slug || "positivafm";
+              const slug = normalizeSlug(rawSlug);
+              const userId = parsed.userId || slug;
+              const musicInfo = {
+                titulo: parsed.titulo || "",
+                artista: parsed.artista || "",
+                duracao: Number(parsed.duracao) || 180,
+                capa: parsed.capa || "",
+                horario: parsed.horario || "",
+                startTime: Number(parsed.startTime) || Date.now(),
+                source: parsed.source || "pasta",
+                deviceName: parsed.deviceName || "",
+                updated_at: new Date().toISOString(),
+              };
+
+              const store = readMusicSyncData();
+              store[slug] = musicInfo;
+              store[rawSlug] = musicInfo;
+              if (userId) store[userId] = musicInfo;
+              const norm = normalizeSlug(slug);
+              for (const a of ALL_ALIASES[norm] || []) {
+                store[a] = musicInfo;
+              }
+              writeMusicSyncData(store);
+
+              // Also generate synthetic music.xml and local.xml
+              const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<musica>
+  <interprete>${escapeXml(musicInfo.artista)}</interprete>
+  <nome_musica>${escapeXml(musicInfo.titulo)}</nome_musica>
+  <titulo>${escapeXml(musicInfo.titulo)}</titulo>
+  <artista>${escapeXml(musicInfo.artista)}</artista>
+  <duracao>${musicInfo.duracao}</duracao>
+  <capa>${escapeXml(musicInfo.capa)}</capa>
+  <horario>${escapeXml(musicInfo.horario)}</horario>
+  <start_time>${musicInfo.startTime}</start_time>
+  <origem>${escapeXml(musicInfo.source)}</origem>
+  <dispositivo>${escapeXml(musicInfo.deviceName)}</dispositivo>
+</musica>
+`;
+              writeStaticXml(slug, "music.xml", xmlContent);
+              writeStaticXml(slug, "local.xml", xmlContent);
+
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, slug, music: musicInfo }));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ ok: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // 4c. GET /api/sync-music
+        if (req.method === "GET" && url.startsWith("/api/sync-music")) {
+          const parsedUrl = new URL(url, "http://localhost");
+          const rawSlug = parsedUrl.searchParams.get("slug") || "positivafm";
+          const slug = normalizeSlug(rawSlug);
+          const userId = parsedUrl.searchParams.get("userId") || slug;
+          const store = readMusicSyncData();
+          const music = store[slug] || store[userId] || store[rawSlug] || null;
+          res.setHeader("Content-Type", "application/json");
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          res.end(JSON.stringify({ ok: true, music }));
+          return;
+        }
+
+        // 4d. GET /api/suporte-tickets
+        if (req.method === "GET" && url.startsWith("/api/suporte-tickets")) {
+          try {
+            if (fs.existsSync(suporteTicketsFile)) {
+              const data = JSON.parse(fs.readFileSync(suporteTicketsFile, "utf-8"));
+              res.setHeader("Content-Type", "application/json");
+              res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+              res.end(JSON.stringify(data));
+              return;
+            }
+          } catch {}
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify([]));
+          return;
+        }
+
+        // 4e. POST /api/suporte-tickets
+        if (req.method === "POST" && url.startsWith("/api/suporte-tickets")) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => {
+            try {
+              const parsed = JSON.parse(body);
+              const tickets = Array.isArray(parsed) ? parsed : parsed.tickets || [];
+              const dir = path.dirname(suporteTicketsFile);
+              if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+              fs.writeFileSync(suporteTicketsFile, JSON.stringify(tickets, null, 2), "utf-8");
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, count: tickets.length }));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ ok: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // 5. Intercept GET requests for all XML feeds (enquete, quiz, batalha, roteiro, geral, broadcast, musica, tempo, logos)
+        function parseXmlRequest(reqUrl: string): { file: string; slug: string; rawSlug: string } | null {
+          const [pathname, search] = reqUrl.split("?");
+          const searchParams = new URLSearchParams(search || "");
+          const querySlug = searchParams.get("slug") || searchParams.get("user_id") || searchParams.get("userId") || "";
+
+          // 1. /functions/v1/serve-xml-<feed>
+          const funcMatch = pathname.match(/^\/functions\/v1\/serve-xml-([a-z0-9-]+)/i);
+          if (funcMatch) {
+            const rawFeed = funcMatch[1].toLowerCase();
+            let file = `${rawFeed}.xml`;
+            if (rawFeed === "roteiro-estudio") file = "roteiro.xml";
+            if (rawFeed === "tempo") file = "tempo.xml";
+            const rawSlug = querySlug || "positivafm";
+            return { file, rawSlug, slug: normalizeSlug(rawSlug) };
+          }
+
+          // 2. /storage/v1/object/public/xml-files/xml-tempo-<uid>.xml
+          const tempoMatch = pathname.match(/^\/storage\/v1\/object\/public\/xml-files\/xml-tempo-([^.]+)\.xml$/i);
+          if (tempoMatch) {
+            const rawSlug = querySlug || tempoMatch[1] || "positivafm";
+            return { file: "tempo.xml", rawSlug, slug: normalizeSlug(rawSlug) };
+          }
+
+          // 3. /xml/:slug/:file.xml or /:slug/:file.xml
+          const slugFileMatch = pathname.match(/^(?:\/xml)?\/([^/]+)\/([a-z0-9_-]+\.xml)$/i);
+          if (slugFileMatch) {
+            const pathSlug = slugFileMatch[1];
+            const file = slugFileMatch[2].toLowerCase();
+            if (pathSlug.toLowerCase() !== "xml") {
+              return { file, rawSlug: pathSlug, slug: normalizeSlug(pathSlug) };
+            }
+          }
+
+          // 4. /xml/:file.xml or /:file.xml
+          const directMatch = pathname.match(/^(?:\/xml)?\/([a-z0-9_-]+\.xml)$/i);
+          if (directMatch) {
+            const file = directMatch[1].toLowerCase();
+            const rawSlug = querySlug || "positivafm";
+            return { file, rawSlug, slug: normalizeSlug(rawSlug) };
+          }
+
+          return null;
+        }
+
         if (req.method === "GET") {
-          const cleanUrl = url.split("?")[0];
-          const matchRoteiro = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/roteiro\.xml$/i) ||
-            (cleanUrl === "/roteiro.xml" ? ["/roteiro.xml", "positivafm"] : null);
-          if (matchRoteiro) {
-            const rawSlug = matchRoteiro[1];
-            const slug = normalizeSlug(rawSlug);
+          const parsedXml = parseXmlRequest(url);
+          if (parsedXml) {
+            const { file, slug, rawSlug } = parsedXml;
+            const { today, currentTime } = getBrasiliaDateTime();
 
-            // 1. Check live sync store (ignore old mock data)
-            const rotStore = readSyncData(roteirosFile);
-            const rotList = rotStore[slug] || rotStore[rawSlug] || [];
-            const isMockRoteiro = (xmlStr: string) =>
-              xmlStr.includes("Roteiro Atualizado com Sucesso no XML") ||
-              xmlStr.includes("rot_1789729269440");
+            // 1. enquete.xml
+            if (file === "enquete.xml") {
+              const store = readSyncData(enquetesFile);
+              const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
+              const active = getActiveEnquete(list, today, currentTime);
+              const xml = buildEnqueteXml(active);
+              writeStaticXml(slug, "enquete.xml", xml);
 
-            if (rotList.length > 0 && rotList[0]?.xml && !isMockRoteiro(rotList[0].xml)) {
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
               res.setHeader("Access-Control-Allow-Origin", "*");
-              res.end(rotList[0].xml);
+              res.end(xml);
               return;
             }
 
-            // 2. Try live fetch from Supabase edge function for the station
-            const stationUid = SLUG_TO_UID[slug] || SLUG_TO_UID[rawSlug] || (rawSlug.length > 20 ? rawSlug : "d17e65af-e407-466f-9b60-b55c43399513");
-            try {
-              const liveUrl = `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${stationUid}&estudio=Estudio%20FM`;
-              const remoteRes = await fetch(liveUrl, { signal: AbortSignal.timeout(3500) });
-              if (remoteRes.ok) {
-                const liveXml = await remoteRes.text();
-                if (liveXml.includes("<programaExpress>") && !liveXml.includes("<error>")) {
-                  writeStaticXml(slug, "roteiro.xml", liveXml);
-                  rotStore[slug] = [{ id: `live_${Date.now()}`, xml: liveXml, updated_at: new Date().toISOString() }];
-                  rotStore[rawSlug] = rotStore[slug];
-                  writeSyncData(roteirosFile, rotStore);
+            // 2. quiz.xml
+            if (file === "quiz.xml") {
+              const store = readSyncData(quizzesFile);
+              const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
+              const active = getActiveQuiz(list, today, currentTime);
+              const xml = buildQuizXml(active);
+              writeStaticXml(slug, "quiz.xml", xml);
 
-                  res.setHeader("Content-Type", "application/xml; charset=utf-8");
-                  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-                  res.setHeader("Access-Control-Allow-Origin", "*");
-                  res.end(liveXml);
-                  return;
-                }
-              }
-            } catch {}
+              res.setHeader("Content-Type", "application/xml; charset=utf-8");
+              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(xml);
+              return;
+            }
 
-            // 3. Check public/xml/[slug]/roteiro.xml
-            const rPath = path.join(rootDir, "public", "xml", slug, "roteiro.xml");
-            if (fs.existsSync(rPath)) {
-              const rXml = fs.readFileSync(rPath, "utf-8");
-              if (!isMockRoteiro(rXml)) {
+            // 3. batalha.xml
+            if (file === "batalha.xml") {
+              const store = readSyncData(batalhasFile);
+              const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
+              const active = getActiveBatalha(list, today, currentTime);
+              const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
+              const xml = buildBatalhaXml(active, stName);
+              writeStaticXml(slug, "batalha.xml", xml);
+
+              res.setHeader("Content-Type", "application/xml; charset=utf-8");
+              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(xml);
+              return;
+            }
+
+            // 4. roteiro.xml
+            if (file === "roteiro.xml") {
+              const rotStore = readSyncData(roteirosFile);
+              const rotList = rotStore[slug] || rotStore[rawSlug] || [];
+              const isMockRoteiro = (xmlStr: string) =>
+                xmlStr.includes("Roteiro Atualizado com Sucesso no XML") ||
+                xmlStr.includes("rot_1789729269440");
+
+              if (rotList.length > 0 && rotList[0]?.xml && !isMockRoteiro(rotList[0].xml)) {
                 res.setHeader("Content-Type", "application/xml; charset=utf-8");
                 res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
                 res.setHeader("Access-Control-Allow-Origin", "*");
-                res.end(rXml);
+                res.end(rotList[0].xml);
+                return;
+              }
+
+              const rPath = path.join(rootDir, "public", "xml", slug, "roteiro.xml");
+              if (fs.existsSync(rPath)) {
+                const rXml = fs.readFileSync(rPath, "utf-8");
+                if (!isMockRoteiro(rXml)) {
+                  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                  res.setHeader("Access-Control-Allow-Origin", "*");
+                  res.end(rXml);
+                  return;
+                }
+              }
+
+              const rootRPath = path.join(rootDir, "public", "roteiro.xml");
+              if (fs.existsSync(rootRPath)) {
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(fs.readFileSync(rootRPath, "utf-8"));
+                return;
+              }
+
+              if (rotList.length > 0 && rotList[0]?.xml) {
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(rotList[0].xml);
                 return;
               }
             }
 
-            if (rotList.length > 0 && rotList[0]?.xml) {
-              res.setHeader("Content-Type", "application/xml; charset=utf-8");
-              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              res.end(rotList[0].xml);
-              return;
-            }
-          }
-          const matchEnquete = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/enquete\.xml$/i);
-          const matchQuiz = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/quiz\.xml$/i);
-          const matchBatalha = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/batalha\.xml$/i);
-          const matchGeral = cleanUrl.match(/^(?:\/xml)?\/([^/]+)\/geral\.xml$/i);
+            // 5. geral.xml
+            if (file === "geral.xml") {
+              const enqStore = readSyncData(enquetesFile);
+              const enqList = enqStore[slug] || enqStore[rawSlug] || [];
+              const activeEnq = getActiveEnquete(enqList, today, currentTime);
 
-          if (matchEnquete) {
-            const rawSlug = matchEnquete[1];
-            const slug = normalizeSlug(rawSlug);
-            const { today, currentTime } = getBrasiliaDateTime();
+              const quizStore = readSyncData(quizzesFile);
+              const quizList = quizStore[slug] || quizStore[rawSlug] || [];
+              const activeQuiz = getActiveQuiz(quizList, today, currentTime);
 
-            const store = readSyncData(enquetesFile);
-            const list = store[slug] || store[rawSlug] || [];
-            const active = list.find((e: any) =>
-              isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
-            );
+              const batStore = readSyncData(batalhasFile);
+              const batList = batStore[slug] || batStore[rawSlug] || [];
+              const activeBat = getActiveBatalha(batList, today, currentTime);
 
-            const xml = buildEnqueteXml(active);
-            writeStaticXml(slug, "enquete.xml", xml);
+              const geralPath = path.join(rootDir, "public", "xml", slug, "geral.xml");
+              let geralXml = "";
+              if (fs.existsSync(geralPath)) {
+                geralXml = fs.readFileSync(geralPath, "utf-8");
+              } else {
+                const rootGeral = path.join(rootDir, "public", "geral.xml");
+                if (fs.existsSync(rootGeral)) geralXml = fs.readFileSync(rootGeral, "utf-8");
+              }
 
-            res.setHeader("Content-Type", "application/xml; charset=utf-8");
-            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            res.end(xml);
-            return;
-          }
-
-          if (matchQuiz) {
-            const rawSlug = matchQuiz[1];
-            const slug = normalizeSlug(rawSlug);
-            const { today, currentTime } = getBrasiliaDateTime();
-
-            const store = readSyncData(quizzesFile);
-            const list = store[slug] || store[rawSlug] || [];
-            const active = list.find((q: any) =>
-              isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
-            );
-
-            const xml = buildQuizXml(active);
-            writeStaticXml(slug, "quiz.xml", xml);
-
-            res.setHeader("Content-Type", "application/xml; charset=utf-8");
-            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            res.end(xml);
-            return;
-          }
-
-          if (matchBatalha) {
-            const rawSlug = matchBatalha[1];
-            const slug = normalizeSlug(rawSlug);
-            const { today, currentTime } = getBrasiliaDateTime();
-
-            const store = readSyncData(batalhasFile);
-            const list = store[slug] || store[rawSlug] || [];
-            const active = list.find((b: any) =>
-              isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-            ) || list.find((b: any) => b.data_batalha === today) || list[0];
-
-            const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
-            const xml = buildBatalhaXml(active, stName);
-            writeStaticXml(slug, "batalha.xml", xml);
-
-            res.setHeader("Content-Type", "application/xml; charset=utf-8");
-            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            res.end(xml);
-            return;
-          }
-
-          if (matchGeral) {
-            const rawSlug = matchGeral[1];
-            const slug = normalizeSlug(rawSlug);
-            const { today, currentTime } = getBrasiliaDateTime();
-
-            const enqStore = readSyncData(enquetesFile);
-            const enqList = enqStore[slug] || enqStore[rawSlug] || [];
-            const activeEnq = enqList.find((e: any) =>
-              isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
-            );
-
-            const quizStore = readSyncData(quizzesFile);
-            const quizList = quizStore[slug] || quizStore[rawSlug] || [];
-            const activeQuiz = quizList.find((q: any) =>
-              isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
-            );
-
-            const batStore = readSyncData(batalhasFile);
-            const batList = batStore[slug] || batStore[rawSlug] || [];
-            const activeBat = batList.find((b: any) =>
-              isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-            ) || batList.find((b: any) => b.data_batalha === today) || batList[0];
-
-            // Read base geral.xml from disk if exists
-            const geralPath = path.join(rootDir, "public", "xml", slug, "geral.xml");
-            let geralXml = "";
-            if (fs.existsSync(geralPath)) {
-              geralXml = fs.readFileSync(geralPath, "utf-8");
-            }
-
-            if (geralXml) {
-              // Inject active enquete
-              const enqueteBlock = activeEnq
-                ? `<enquete ativa="1">
+              if (geralXml) {
+                const enqueteBlock = activeEnq
+                  ? `<enquete ativa="1">
       <pergunta>${escapeXml(activeEnq.pergunta)}</pergunta>
       <opcao_a>${escapeXml(activeEnq.resposta1)}</opcao_a>
       <votos_a>0</votos_a>
@@ -647,23 +856,21 @@ export function dynamicXmlPlugin(): Plugin {
       <resposta3>${escapeXml(activeEnq.resposta3 || "")}</resposta3>
       <resposta4>${escapeXml(activeEnq.resposta4 || "")}</resposta4>
     </enquete>`
-                : `<enquete ativa="0"></enquete>`;
+                  : `<enquete ativa="0"></enquete>`;
+                geralXml = geralXml.replace(/<enquete[\s\S]*?<\/enquete>/i, enqueteBlock);
 
-              geralXml = geralXml.replace(/<enquete[\s\S]*?<\/enquete>/i, enqueteBlock);
+                const corretaNum = Number(activeQuiz?.resposta_correta) || 1;
+                const corretaTexto =
+                  corretaNum === 1
+                    ? activeQuiz?.resposta1
+                    : corretaNum === 2
+                    ? activeQuiz?.resposta2
+                    : corretaNum === 3
+                    ? activeQuiz?.resposta3
+                    : activeQuiz?.resposta4;
 
-              // Inject active quiz
-              const corretaNum = Number(activeQuiz?.resposta_correta) || 1;
-              const corretaTexto =
-                corretaNum === 1
-                  ? activeQuiz?.resposta1
-                  : corretaNum === 2
-                  ? activeQuiz?.resposta2
-                  : corretaNum === 3
-                  ? activeQuiz?.resposta3
-                  : activeQuiz?.resposta4;
-
-              const quizBlock = activeQuiz
-                ? `<quiz ativo="1">
+                const quizBlock = activeQuiz
+                  ? `<quiz ativo="1">
       <pergunta>${escapeXml(activeQuiz.pergunta)}</pergunta>
       <alternativa_a>${escapeXml(activeQuiz.resposta1)}</alternativa_a>
       <alternativa_b>${escapeXml(activeQuiz.resposta2)}</alternativa_b>
@@ -680,13 +887,11 @@ export function dynamicXmlPlugin(): Plugin {
       <explicacao>${escapeXml(activeQuiz.explicacao || "")}</explicacao>
       <imagem_resposta>${escapeXml(activeQuiz.imagem_resposta || "")}</imagem_resposta>
     </quiz>`
-                : `<quiz ativo="0"></quiz>`;
+                  : `<quiz ativo="0"></quiz>`;
+                geralXml = geralXml.replace(/<quiz[\s\S]*?<\/quiz>/i, quizBlock);
 
-              geralXml = geralXml.replace(/<quiz[\s\S]*?<\/quiz>/i, quizBlock);
-
-              // Inject active batalha
-              const batalhaBlock = activeBat
-                ? `<batalha ativa="1">
+                const batalhaBlock = activeBat
+                  ? `<batalha ativa="1">
       <titulo>Batalha Musical</titulo>
       <musica_a>
         <nome>${escapeXml(activeBat.artista1_musica || "")}</nome>
@@ -713,29 +918,80 @@ export function dynamicXmlPlugin(): Plugin {
       <horario_inicio>${escapeXml(activeBat.horario_inicio || "")}</horario_inicio>
       <horario_fim>${escapeXml(activeBat.horario_fim || "")}</horario_fim>
     </batalha>`
-                : `<batalha ativa="0"></batalha>`;
+                  : `<batalha ativa="0"></batalha>`;
+                geralXml = geralXml.replace(/<batalha[\s\S]*?<\/batalha>/i, batalhaBlock);
 
-              geralXml = geralXml.replace(/<batalha[\s\S]*?<\/batalha>/i, batalhaBlock);
+                const rotStore = readSyncData(roteirosFile);
+                const rotList = rotStore[slug] || rotStore[rawSlug] || [];
+                if (rotList.length > 0 && rotList[0]) {
+                  const item = rotList[0];
+                  const rotBlock = `<roteiro>
+      <programa>${escapeXml(item.programa_nome || "")}</programa>
+      <estudio>${escapeXml(item.estudio || "")}</estudio>
+      <data>${escapeXml(item.data_programa || today)}</data>
+      <horario>${escapeXml(item.horario || currentTime)}</horario>
+    </roteiro>`;
+                  geralXml = geralXml.replace(/<roteiro[\s\S]*?<\/roteiro>/i, rotBlock);
+                }
 
-              // Inject active roteiro
-              const rotStore = readSyncData(roteirosFile);
-              const rotList = rotStore[slug] || rotStore[rawSlug] || [];
-              if (rotList.length > 0 && rotList[0]) {
-                const item = rotList[0];
-                const rotBlock = `<roteiro>
-    <programa>${escapeXml(item.programa_nome || "")}</programa>
-    <estudio>${escapeXml(item.estudio || "")}</estudio>
-    <data>${escapeXml(item.data_programa || today)}</data>
-    <horario>${escapeXml(item.horario || currentTime)}</horario>
-  </roteiro>`;
-                geralXml = geralXml.replace(/<roteiro[\s\S]*?<\/roteiro>/i, rotBlock);
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(geralXml);
+                return;
               }
+            }
 
-              res.setHeader("Content-Type", "application/xml; charset=utf-8");
-              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              res.end(geralXml);
-              return;
+            // 6. musica.xml / music.xml / local.xml
+            if (file === "musica.xml" || file === "music.xml" || file === "local.xml") {
+              const store = readMusicSyncData();
+              const music = store[slug] || store[rawSlug] || null;
+              if (music && music.titulo) {
+                const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<musica>
+  <interprete>${escapeXml(music.artista)}</interprete>
+  <nome_musica>${escapeXml(music.titulo)}</nome_musica>
+  <titulo>${escapeXml(music.titulo)}</titulo>
+  <artista>${escapeXml(music.artista)}</artista>
+  <duracao>${music.duracao || 180}</duracao>
+  <capa>${escapeXml(music.capa || "")}</capa>
+  <horario>${escapeXml(music.horario || "")}</horario>
+  <start_time>${music.startTime || Date.now()}</start_time>
+  <origem>${escapeXml(music.source || "pasta")}</origem>
+  <dispositivo>${escapeXml(music.deviceName || "")}</dispositivo>
+</musica>
+`;
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(xml);
+                return;
+              }
+              const mPath = path.join(rootDir, "public", "xml", slug, "musica.xml");
+              if (fs.existsSync(mPath)) {
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(fs.readFileSync(mPath, "utf-8"));
+                return;
+              }
+            }
+
+            // 7. Any other requested XML (broadcast.xml, tempo.xml, logos.xml, etc.)
+            const candidates = [
+              path.join(rootDir, "public", "xml", slug, file),
+              path.join(rootDir, "public", "xml", rawSlug, file),
+              path.join(rootDir, "public", "xml", "positivafm", file),
+              path.join(rootDir, "public", "xml", file),
+              path.join(rootDir, "public", file),
+            ];
+            for (const cand of candidates) {
+              if (fs.existsSync(cand)) {
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(fs.readFileSync(cand, "utf-8"));
+                return;
+              }
             }
           }
         }

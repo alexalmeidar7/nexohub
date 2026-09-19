@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <logos_patrocinadores>
-
+  <programa id="programa 1">
+    <nome>Geral</nome>
+    <logo>
+      <nome>Patrocinador Oficial</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
 </logos_patrocinadores>

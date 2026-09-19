@@ -121,10 +121,11 @@ function getCurrentProgram(
   return "";
 }
 
-export function useGlobalMusicSync(enabled: boolean = true) {
+export function useGlobalMusicSync(overrideUserId?: string | null, enabled: boolean = true) {
   const { user } = useAuth();
-  const acc = (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user?.email));
-  const stationUserId = acc?.parentUserId || acc?.id || user?.id;
+  const acc = (overrideUserId && findClientAccountById(overrideUserId)) || (user?.id && findClientAccountById(user.id)) || (user?.email && findClientAccountByEmail(user?.email));
+  const stationUserId = overrideUserId || acc?.parentUserId || acc?.id || user?.id;
+  const userSlug = acc?.slug || (user as any)?.user_metadata?.slug || (acc?.email ? acc.email.split("@")[0].toLowerCase() : "");
 
   const coverCacheRef = useRef<Record<string, string>>({});
   const cachedSettingsRef = useRef<{ url: string | null; mode: string; localFileName: string | null; localStoragePath: string | null }>({
@@ -577,13 +578,80 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const localSynced = localResult === true;
       const localStopped = localResult === "stopped";
 
-      // 3. Fallback do banco de dados (se o cliente da rádio estiver salvando pelo navegador local direto em musicas_tocadas)
+      // 3. Fallback do banco de dados (se o cliente da rádio estiver salvando pelo navegador local direto em user_settings ou musicas_tocadas)
       if (!localSynced && onlineResult !== "ok") {
         try {
-          const targetUids = [
-            targetId,
-            "d17e65af-e407-466f-9b60-b55c43399513", // Positiva FM 99.1
-          ];
+          const targetUids = [targetId].filter(Boolean);
+
+          // 3a-0. Verificar servidor local de sincronização direta (/api/sync-music)
+          try {
+            if (userSlug) {
+              const syncResp = await fetch(`/api/sync-music?slug=${encodeURIComponent(userSlug)}&userId=${encodeURIComponent(targetId)}`, { cache: "no-store" });
+              if (syncResp.ok) {
+                const syncJson = await syncResp.json();
+                const liveMusic = syncJson?.music;
+                const musicAge = liveMusic?.startTime
+                  ? (Date.now() - Number(liveMusic.startTime))
+                  : (liveMusic?.updated_at ? (Date.now() - new Date(liveMusic.updated_at).getTime()) : 0);
+                const isFresh = musicAge >= 0 && musicAge < 30 * 60 * 1000;
+                if (isFresh && liveMusic?.titulo && liveMusic.titulo.toLowerCase() !== "sem título" && liveMusic.titulo !== "Aguardando leitura...") {
+                  const cur = readMusicData(targetId);
+                  const isSameTrack = cur && cur.titulo === liveMusic.titulo && cur.artista === liveMusic.artista;
+                  if (!isSameTrack || (liveMusic.capa && cur?.capa !== liveMusic.capa)) {
+                    void processTrackData({
+                      titulo: liveMusic.titulo,
+                      artista: liveMusic.artista || "Desconhecido",
+                      duracao: Number(liveMusic.duracao) || 180,
+                      capa: liveMusic.capa || getTrackCoverSync(liveMusic.titulo, liveMusic.artista) || "",
+                    });
+                  }
+                  return;
+                }
+              }
+            }
+          } catch {}
+
+          // 3a. Verificar primeiro user_settings (dashboard_items) que armazena a faixa ativa em tempo real com capa
+          for (const targetUid of targetUids) {
+            const { data: settings } = await supabase
+              .from("user_settings")
+              .select("dashboard_items")
+              .eq("user_id", targetUid)
+              .maybeSingle();
+
+            const di = (settings?.dashboard_items || {}) as Record<string, any>;
+            const curTitle = (di.music_current_title || "").toString().trim();
+            const curArtist = (di.music_current_artist || "").toString().trim();
+            const curCover = (di.music_current_cover || "").toString().trim();
+            const curDur = typeof di.music_current_duration === "number" && di.music_current_duration > 0
+              ? di.music_current_duration
+              : 180;
+
+            if (curTitle && curTitle.toLowerCase() !== "sem título" && curTitle.toLowerCase() !== "sem titulo" && curTitle.toLowerCase() !== "aguardando leitura...") {
+              let t = curTitle;
+              let a = curArtist;
+              if (t.toUpperCase().startsWith("!SB - ")) {
+                t = t.replace(/^!SB\s*-\s*/i, "").trim();
+              }
+              if ((a.toUpperCase().includes("STANDBY") || !a) && t.includes(" - ")) {
+                const parts = t.split(" - ");
+                a = parts[0].trim();
+                t = parts.slice(1).join(" - ").trim();
+              }
+
+              const cur = readMusicData(targetId);
+              const isSameTrack = cur && cur.titulo === t && cur.artista === a;
+              if (!isSameTrack || (curCover && cur?.capa !== curCover)) {
+                void processTrackData({
+                  titulo: t,
+                  artista: a || "Desconhecido",
+                  duracao: curDur,
+                  capa: curCover || getTrackCoverSync(t, a) || "",
+                });
+              }
+              return;
+            }
+          }
 
           let foundTrack: { titulo: string; artista: string; created_at?: string } | null = null;
 

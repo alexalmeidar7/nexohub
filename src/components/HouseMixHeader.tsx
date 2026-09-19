@@ -28,7 +28,6 @@ import ServerClock from "@/components/ServerClock";
 import BotsStatusBox from "@/components/BotsStatusBox";
 import { prefetchPage, prefetchGroup, startIdlePrefetch } from "@/lib/prefetchPages";
 
-const MessageNotification = lazy(() => import("@/components/MessageNotification"));
 
 interface HouseMixHeaderProps {
   currentPage: string;
@@ -1066,10 +1065,7 @@ export default function HouseMixHeader({
               <TooltipContent side="bottom"><p className="text-xs">Atendimento & Mensagens</p></TooltipContent>
             </Tooltip>
 
-            {/* Message Notification (Legacy) */}
-            <Suspense fallback={null}>
-              <MessageNotification />
-            </Suspense>
+
 
             {/* Settings */}
             <Tooltip>

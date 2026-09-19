@@ -40,10 +40,11 @@ export function isScheduleActive(
 ): boolean {
   if (!itemDate || !startTime || !endTime) return false;
   const { today, currentTime } = getBrasiliaDateTime();
-  const targetDate = refDate || today;
+  const targetDate = String(refDate || today).slice(0, 10);
   const targetTime = normTime(refTime || currentTime);
+  const normalizedItemDate = String(itemDate).slice(0, 10);
 
-  if (itemDate !== targetDate) return false;
+  if (normalizedItemDate !== targetDate) return false;
 
   const start = normTime(startTime, "00:00");
   const end = normTime(endTime, "23:59");
@@ -53,6 +54,72 @@ export function isScheduleActive(
   }
   // Crosses midnight (e.g. 23:00 to 02:00)
   return targetTime >= start || targetTime <= end;
+}
+
+export function getActiveEnquete<T extends { data_enquete?: string; horario_inicio?: string; horario_fim?: string }>(
+  list: T[],
+  refDate?: string,
+  refTime?: string
+): T | null {
+  if (!Array.isArray(list) || list.length === 0) return null;
+
+  const { today, currentTime } = getBrasiliaDateTime();
+  const targetDate = String(refDate || today).slice(0, 10);
+  const targetTime = refTime || currentTime;
+
+  const strictlyActive = list.find((e) =>
+    isScheduleActive(e.data_enquete || "", e.horario_inicio || "", e.horario_fim || "", targetDate, targetTime)
+  );
+  if (strictlyActive) return strictlyActive;
+
+  const todayItems = list.filter((e) => String(e.data_enquete || "").slice(0, 10) === targetDate);
+  if (todayItems.length > 0) return todayItems[0];
+
+  return list[0] || null;
+}
+
+export function getActiveQuiz<T extends { data_quiz?: string; horario_inicio?: string; horario_fim?: string }>(
+  list: T[],
+  refDate?: string,
+  refTime?: string
+): T | null {
+  if (!Array.isArray(list) || list.length === 0) return null;
+
+  const { today, currentTime } = getBrasiliaDateTime();
+  const targetDate = String(refDate || today).slice(0, 10);
+  const targetTime = refTime || currentTime;
+
+  const strictlyActive = list.find((q) =>
+    isScheduleActive(q.data_quiz || "", q.horario_inicio || "", q.horario_fim || "", targetDate, targetTime)
+  );
+  if (strictlyActive) return strictlyActive;
+
+  const todayItems = list.filter((q) => String(q.data_quiz || "").slice(0, 10) === targetDate);
+  if (todayItems.length > 0) return todayItems[0];
+
+  return list[0] || null;
+}
+
+export function getActiveBatalha<T extends { data_batalha?: string; horario_inicio?: string; horario_fim?: string }>(
+  list: T[],
+  refDate?: string,
+  refTime?: string
+): T | null {
+  if (!Array.isArray(list) || list.length === 0) return null;
+
+  const { today, currentTime } = getBrasiliaDateTime();
+  const targetDate = String(refDate || today).slice(0, 10);
+  const targetTime = refTime || currentTime;
+
+  const strictlyActive = list.find((b) =>
+    isScheduleActive(b.data_batalha || "", b.horario_inicio || "", b.horario_fim || "", targetDate, targetTime)
+  );
+  if (strictlyActive) return strictlyActive;
+
+  const todayItems = list.filter((b) => String(b.data_batalha || "").slice(0, 10) === targetDate);
+  if (todayItems.length > 0) return todayItems[0];
+
+  return list[0] || null;
 }
 
 export function getScheduleStatus(

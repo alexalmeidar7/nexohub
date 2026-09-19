@@ -1,0 +1,113 @@
+[
+  {
+    "id": "ticket_1789826409963_i4t52",
+    "ticket_number": "#SUP-2609-282",
+    "client_id": "d17e65af-e407-466f-9b60-b55c43399513",
+    "client_name": "Positiva FM 99.1",
+    "client_email": "positivafm@positivafm.com.br",
+    "tipo": "ajuda",
+    "titulo": "Teste de Dúvida Operacional vMix",
+    "descricao": "Estamos testando o envio de mensagens e acompanhamento direto pelo House Mix.",
+    "prioridade": "media",
+    "status": "aberto",
+    "created_at": "2026-09-19T14:00:09.963Z",
+    "updated_at": "2026-09-19T14:00:12.415Z",
+    "finalizado_em": null,
+    "finalizado_por": null,
+    "messages": [
+      {
+        "id": "msg_1789826409963_init",
+        "sender_type": "client",
+        "sender_name": "Positiva FM 99.1",
+        "message": "Estamos testando o envio de mensagens e acompanhamento direto pelo House Mix.",
+        "created_at": "2026-09-19T14:00:09.963Z"
+      },
+      {
+        "id": "msg_1789826412415_wdm8",
+        "sender_type": "client",
+        "sender_name": "Positiva FM 99.1",
+        "message": "Complementando o teste: mensagem enviada com sucesso!",
+        "created_at": "2026-09-19T14:00:12.415Z"
+      }
+    ]
+  },
+  {
+    "id": "ticket-demo-1",
+    "ticket_number": "#SUP-2609-012",
+    "client_id": "d17e65af-e407-466f-9b60-b55c43399513",
+    "client_name": "Positiva FM 99.1",
+    "client_email": "positivafm@positivafm.com.br",
+    "tipo": "falha",
+    "titulo": "Sincronização de Capas de Música no Ar",
+    "descricao": "Algumas músicas tocadas na madrugada não estavam carregando as capas em alta resolução no estúdio.",
+    "prioridade": "alta",
+    "status": "solucionado",
+    "created_at": "2026-09-18T11:41:05.465Z",
+    "updated_at": "2026-09-19T11:41:05.466Z",
+    "finalizado_em": "2026-09-19T11:41:05.466Z",
+    "finalizado_por": "Super Admin Nexo",
+    "solucao_resumo": "Ajustada a rota de fallback para iTunes e Deezer API. Sincronização restabelecida com sucesso.",
+    "messages": [
+      {
+        "id": "msg-1-1",
+        "sender_type": "client",
+        "sender_name": "Positiva FM",
+        "message": "Olá equipe Nexo! Notamos que na madrugada algumas músicas internacionais ficaram sem a capa no monitor do estúdio.",
+        "created_at": "2026-09-18T11:41:05.466Z"
+      },
+      {
+        "id": "msg-1-2",
+        "sender_type": "superadmin",
+        "sender_name": "Super Admin Nexo",
+        "message": "Olá Positiva FM! Já identificamos a causa: era uma oscilação na rota de busca de capas. Aplicamos uma atualização de sincronização imediata em segundo plano.",
+        "created_at": "2026-09-19T05:41:05.466Z"
+      },
+      {
+        "id": "msg-1-3",
+        "sender_type": "client",
+        "sender_name": "Positiva FM",
+        "message": "Perfeito, acabamos de testar e as capas voltaram a carregar instantaneamente! Muito obrigado.",
+        "created_at": "2026-09-19T10:41:05.466Z"
+      },
+      {
+        "id": "msg-1-4",
+        "sender_type": "superadmin",
+        "sender_name": "Super Admin Nexo",
+        "message": "Excelente! Estamos finalizando este suporte com solução confirmada. Qualquer nova dúvida, estamos à disposição.",
+        "created_at": "2026-09-19T11:41:05.466Z"
+      }
+    ]
+  },
+  {
+    "id": "ticket-demo-2",
+    "ticket_number": "#SUP-2609-028",
+    "client_id": "d17e65af-e407-466f-9b60-b55c43399513",
+    "client_name": "Positiva FM 99.1",
+    "client_email": "positivafm@positivafm.com.br",
+    "tipo": "ajuda",
+    "titulo": "Dúvida sobre integração do XML da Enquete no vMix",
+    "descricao": "Gostaríamos de orientações sobre como atualizar a enquete ativa sem precisar recarregar o input no vMix.",
+    "prioridade": "media",
+    "status": "aberto",
+    "created_at": "2026-09-19T12:56:05.466Z",
+    "updated_at": "2026-09-19T13:31:05.466Z",
+    "finalizado_em": null,
+    "finalizado_por": null,
+    "messages": [
+      {
+        "id": "msg-2-1",
+        "sender_type": "client",
+        "sender_name": "Positiva FM",
+        "message": "Olá! Como funciona a atualização automática da enquete no vMix? Quando colocamos uma enquete no ar, ela atualiza direto ou precisamos forçar o recarregamento no vMix?",
+        "created_at": "2026-09-19T12:56:05.466Z"
+      },
+      {
+        "id": "msg-2-2",
+        "sender_type": "superadmin",
+        "sender_name": "Super Admin Nexo",
+        "message": "Olá! O XML em /enquete.xml atualiza em tempo real. No vMix, certifique-se de configurar o Data Source com atualização automática a cada 5 segundos. Acabamos de disponibilizar também o botão 'NO AR' na tabela de enquetes!",
+        "created_at": "2026-09-19T13:31:05.466Z"
+      }
+    ]
+  }
+]

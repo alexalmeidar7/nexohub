@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<musica>
+  <interprete>Coldplay</interprete>
+  <nome_musica>Viva La Vida</nome_musica>
+  <titulo>Viva La Vida</titulo>
+  <artista>Coldplay</artista>
+  <duracao>242</duracao>
+  <capa>https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/aa/85/52aa851f-15b7-6322-f91f-df84b15b7b19/190295978044.jpg/600x600bb.jpg</capa>
+  <horario>15:45</horario>
+  <start_time>1789822332773</start_time>
+  <origem>pasta</origem>
+  <dispositivo>Windows - Chrome (b0925e0e)</dispositivo>
+</musica>

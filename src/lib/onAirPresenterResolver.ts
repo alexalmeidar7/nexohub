@@ -10,89 +10,89 @@ export interface ResolvedPresenter {
   instagram?: string;
 }
 
-// Canonical database of verified radio presenters with their official Supabase asset URLs
+// Canonical database of verified radio presenters with local fallback avatar assets
 export const CANONICAL_PRESENTERS: Record<string, ResolvedPresenter> = {
   // Positiva FM
   "90ca4858-935e-4b87-a83a-224263fd269d": {
     id: "90ca4858-935e-4b87-a83a-224263fd269d",
     nome: "Reginaldo Lucena",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/d17e65af-e407-466f-9b60-b55c43399513/90ca4858-935e-4b87-a83a-224263fd269d.png",
+    foto: "/avatars/usr-4.png",
     instagram: "@_reginaldolucena",
   },
   "04205a8e-cdca-409d-a879-ad21a61dcefa": {
     id: "04205a8e-cdca-409d-a879-ad21a61dcefa",
     nome: "Alysson Lima",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/d17e65af-e407-466f-9b60-b55c43399513/04205a8e-cdca-409d-a879-ad21a61dcefa.png",
+    foto: "/avatars/usr-6.png",
   },
   "f3601b21-fd66-4795-9021-4d91992e3b6e": {
     id: "f3601b21-fd66-4795-9021-4d91992e3b6e",
     nome: "Márcio Rodrigues",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/d17e65af-e407-466f-9b60-b55c43399513/f3601b21-fd66-4795-9021-4d91992e3b6e.webp?t=1775824699416",
+    foto: "/avatars/usr-1.png",
     instagram: "@marciorodrigues.radio",
   },
   "5889d956-ed6a-4089-846e-159eb54bc474": {
     id: "5889d956-ed6a-4089-846e-159eb54bc474",
     nome: "Jonathas Mattos",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/d17e65af-e407-466f-9b60-b55c43399513/5889d956-ed6a-4089-846e-159eb54bc474.png",
+    foto: "/avatars/usr-3.png",
     instagram: "@jonathasmattoslocutor",
   },
   "9d64c3c7-d45c-4cf5-b941-333e7eed8c85": {
     id: "9d64c3c7-d45c-4cf5-b941-333e7eed8c85",
     nome: "Vanessa Reis",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/d17e65af-e407-466f-9b60-b55c43399513/9d64c3c7-d45c-4cf5-b941-333e7eed8c85.png",
+    foto: "/avatars/usr-2.png",
     instagram: "@vanessareis.oficial",
   },
   "21a0ba74-8724-4b58-b8be-09b055bdbfa6": {
     id: "21a0ba74-8724-4b58-b8be-09b055bdbfa6",
     nome: "Fernando",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/d17e65af-e407-466f-9b60-b55c43399513/21a0ba74-8724-4b58-b8be-09b055bdbfa6.png",
+    foto: "/avatars/usr-7.png",
   },
   "99824dc1-78da-44b8-9033-920922ead18b": {
     id: "99824dc1-78da-44b8-9033-920922ead18b",
     nome: "Automático",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/d17e65af-e407-466f-9b60-b55c43399513/99824dc1-78da-44b8-9033-920922ead18b.png",
+    foto: "/avatars/usr-default.png",
   },
 
   // Interativa FM
   "d79ea9a6-92a8-47af-b41a-2d2721b6ac03": {
     id: "d79ea9a6-92a8-47af-b41a-2d2721b6ac03",
     nome: "José Luiz",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/d79ea9a6-92a8-47af-b41a-2d2721b6ac03.png",
+    foto: "/avatars/usr-1.png",
   },
   "507bdf72-fcf2-4b17-bb78-22ce22256150": {
     id: "507bdf72-fcf2-4b17-bb78-22ce22256150",
     nome: "Ani Cristine",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/507bdf72-fcf2-4b17-bb78-22ce22256150.png",
+    foto: "/avatars/usr-5.png",
   },
   "4d7dff62-9163-45db-8705-fc3389ba9997": {
     id: "4d7dff62-9163-45db-8705-fc3389ba9997",
     nome: "Johnny Botelho",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/4d7dff62-9163-45db-8705-fc3389ba9997.png",
+    foto: "/avatars/usr-8.png",
   },
   "56eba9af-df33-4bec-bd35-b3681e0cc948": {
     id: "56eba9af-df33-4bec-bd35-b3681e0cc948",
     nome: "Dj Henrique Amaral",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/56eba9af-df33-4bec-bd35-b3681e0cc948.png",
+    foto: "/avatars/usr-6.png",
   },
   "98cf1ac0-fb75-46fd-a040-0b45fb652496": {
     id: "98cf1ac0-fb75-46fd-a040-0b45fb652496",
     nome: "Henrique Augusto",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/98cf1ac0-fb75-46fd-a040-0b45fb652496.png",
+    foto: "/avatars/usr-4.png",
   },
   "ef4d3dc6-2505-4468-8cce-4bdd3722a9a1": {
     id: "ef4d3dc6-2505-4468-8cce-4bdd3722a9a1",
     nome: "Gabs",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/ef4d3dc6-2505-4468-8cce-4bdd3722a9a1.png",
+    foto: "/avatars/usr-2.png",
   },
   "2806b341-b17e-4496-87b7-17a98d0b8fc4": {
     id: "2806b341-b17e-4496-87b7-17a98d0b8fc4",
     nome: "Éverson Cândido",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/2806b341-b17e-4496-87b7-17a98d0b8fc4.png",
+    foto: "/avatars/usr-7.png",
   },
   "0a65fa6b-8326-4b3a-a4d8-5fb73655f6fc": {
     id: "0a65fa6b-8326-4b3a-a4d8-5fb73655f6fc",
     nome: "Thiago Santhê",
-    foto: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/apresentadores/b2f70324-d086-4a5d-a407-cbc4acf98dce/0a65fa6b-8326-4b3a-a4d8-5fb73655f6fc.png",
+    foto: "/avatars/usr-3.png",
   },
 };
 

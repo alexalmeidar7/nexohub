@@ -386,6 +386,7 @@ const HOUSEMIX_MODULE_DISPLAY_NAMES: Partial<Record<Page, string>> = {
   programas: "Cadastro de Programas",
   previsao: "Cidade Tempo",
   configuracoes: "Configurações",
+  chatbot: "Chatbot & Atendimento",
 };
 
 interface DashboardProps {
@@ -427,7 +428,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     "apresentadores", "ouvintes", "programas", "clientes", "previsao", "sorteios",
     "blitz", "noticias", "musica", "agenda", "site", "playerconfig", "preroll",
     "testemunhais", "promocoes", "logos", "broadcast", "cenario", "batalha",
-    "enquete", "quiz", "cortevideo", "configtelapromo", "configuracoes"
+    "enquete", "quiz", "cortevideo", "configtelapromo", "configuracoes", "chatbot"
   ];
 
   // State for minimized modules (array to allow multiple)
@@ -482,7 +483,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     return "dashboard";
   });
 
-  // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda, Gestor de Site, Player, Comercial, vMix, Ferramentas, Configurações)
+  // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda, Gestor de Site, Player, Comercial, vMix, Ferramentas, Configurações, Chatbot)
   const HOUSEMIX_WINDOW_PAGES: Page[] = [
     "clientes",
     "apresentadores",
@@ -508,6 +509,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     "quiz",
     "cortevideo",
     "configuracoes",
+    "chatbot",
   ];
   const isWindowMode = !isAdmin && HOUSEMIX_WINDOW_PAGES.includes(currentPage);
 
@@ -1360,7 +1362,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
  
   return (
     <div data-app-shell className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "transparent" }}>
-      <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} />
+      <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} effectiveUserId={effectiveUserId} />
 
       {/* Dynamic ambient gradient background reacting to the playing album art (persists across all pages behind header) */}
       {!isAdmin && (
@@ -1652,7 +1654,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
 
               {!isAdmin && currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "financeiro" && <FinanceiroSuperAdminPage />}
-              {currentPage === "chatbot" && <ChatbotHome />}
+              {isAdmin && currentPage === "chatbot" && <ChatbotHome />}
               {isAdmin && (currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
                   <ApresentadorForm effectiveUserId={effectiveUserId} />
@@ -2516,7 +2518,31 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           </HouseMixWindow>
         )}
 
-        {/* Minimized Modules Bar */}
+        {/* House Mix Window Mode - Chatbot & Atendimento WhatsApp */}
+        {!isAdmin && (currentPage === "chatbot" || (minimizedModules.includes("chatbot") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CHATBOT & ATENDIMENTO WHATSAPP"
+            isOpen={currentPage === "chatbot"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "chatbot"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("chatbot")) return prev;
+                return [...prev, "chatbot"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+              <ChatbotHome />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* Dock com Pills Flutuantes para Módulos Minimizados */}
         {minimizedModules.length > 0 && (currentPage === "dashboard" || isWindowMode) && (
           <div 
             className={`fixed bottom-5 ${!isAdmin ? "left-1/2 -translate-x-1/2" : "left-[88px]"} z-[70] flex flex-wrap items-center justify-center gap-2.5 pointer-events-none p-1`}
@@ -2542,6 +2568,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                   {/* Clean Icon */}
                   <div className="flex-shrink-0 text-white flex items-center justify-center">
                     {(() => {
+                      if (mod === "chatbot") return <MessageCircle size={15} />;
                       if (mod === "sorteios") return <Gift size={15} />;
                       if (mod === "previsao") return <CloudRain size={15} />;
                       if (mod === "agenda") return <CalendarDays size={15} />;
@@ -2623,9 +2650,9 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   );
 }
 
-function DashboardRuntimeEffects({ pauseMusicSync = false }: { pauseMusicSync?: boolean }) {
+function DashboardRuntimeEffects({ pauseMusicSync = false, effectiveUserId }: { pauseMusicSync?: boolean; effectiveUserId?: string | null }) {
   useGlobalMusicXmlUpload();
-  useGlobalMusicSync(!pauseMusicSync);
+  useGlobalMusicSync(effectiveUserId, !pauseMusicSync);
   return null;
 }
 
