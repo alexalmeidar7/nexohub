@@ -1,23 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <programaExpress>
-  <emissora>House Mix Broadcast</emissora>
-  <id>rot_atual</id>
-  <programa>Programação ao Vivo</programa>
-  <estudio>Estúdio Principal</estudio>
-  <data>2026-09-19</data>
-  <horario>10:00</horario>
-  <apresentadores>
-    <apresentador>
-      <nome>Locutor de Plantão</nome>
-      <instagram>@locutor</instagram>
-    </apresentador>
-  </apresentadores>
-  <blocos>
-    <bloco numero="1">
-      <noticia titulo="Abertura do Programa" descricao="Boas-vindas aos ouvintes, alinhamento de pauta e destaques do dia."/>
-    </bloco>
-    <bloco numero="2">
-      <noticia titulo="Giro de Notícias e Música" descricao="Principais notícias da cidade e sucessos musicais da programação."/>
-    </bloco>
-  </blocos>
+  <programa>Papo Cabeça</programa>
+  <estudio>Estudio FM</estudio>
+  <data>2026-04-09</data>
+  <participantes>
+    <item>
+      <nome>Henrique Augusto</nome>
+      <cargo>âncora</cargo>
+      <instagram>@henriquelocuteiro</instagram>
+    </item>
+    <item>
+      <nome>Henrique Morgantini</nome>
+      <cargo>Jornalista e escritor</cargo>
+      <instagram>@hmorgantini</instagram>
+    </item>
+    <item>
+      <nome>Marcos MArinho</nome>
+      <cargo>professor</cargo>
+      <instagram>@prof.ricardomp</instagram>
+    </item>
+    <item>
+      <nome>Rimene Amaral</nome>
+      <cargo>jornalista</cargo>
+      <instagram>@rimene</instagram>
+    </item>
+  </participantes>
+  <bloco numero="1">
+    <noticia ordem="1">
+      <titulo>Moraes diz que Mendonça excluiu documentos ao liberar sigilo e cobra julgamento conjunto na terça</titulo>
+      <imagem></imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="2">
+      <titulo>Toffoli puxou Caso Master ao STF um dia após PF descartar pessoas com foro</titulo>
+      <imagem></imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="3">
+      <titulo>Moraes pede julgamento conjunto com Mendonça no plenário do STF</titulo>
+      <imagem>https://images.metroimg.com/2026/09/andre-mendonca-e-alexandre-de-moraes-do-stf.jpg</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="4">
+      <titulo>Moraes pede julgamento conjunto com Mendonça no plenário do STF</titulo>
+      <imagem>https://images.metroimg.com/2026/09/andre-mendonca-e-alexandre-de-moraes-do-stf.jpg</imagem>
+      <escalada>false</escalada>
+    </noticia>
+  </bloco>
+  <bloco numero="2">
+  </bloco>
+  <bloco numero="3">
+  </bloco>
 </programaExpress>

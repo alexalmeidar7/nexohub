@@ -580,8 +580,23 @@ export async function generateAllUserXmls() {
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-geral?user_id=${st.uid}&slug=${st.slug}`),
       ]);
 
-    const tempoContent = tempoRemote || generateFallbackTempo(st);
-    let roteiroContent = roteiroRemote;
+    // Read existing local file if valid to never overwrite user tables with empty stubs
+    const localStationDir = join(baseXmlDir, st.slug);
+    const readExistingIfValid = (filename: string): string | null => {
+      const p = join(localStationDir, filename);
+      if (existsSync(p)) {
+        try {
+          const c = readFileSync(p, "utf-8").trim();
+          if (c.length > 150 && !c.includes("Patrocinador Oficial") && !c.includes("Locutor de Plantão")) {
+            return c;
+          }
+        } catch {}
+      }
+      return null;
+    };
+
+    const tempoContent = tempoRemote || readExistingIfValid("tempo.xml") || generateFallbackTempo(st);
+    let roteiroContent = roteiroRemote || readExistingIfValid("roteiro.xml");
     if (!roteiroContent) {
       try {
         const rotSyncPath = resolve("src/data/xml_roteiros_sync.json");
@@ -597,8 +612,8 @@ export async function generateAllUserXmls() {
     if (!roteiroContent) {
       roteiroContent = generateFallbackRoteiro(st);
     }
-    const broadcastContent = broadcastRemote || generateFallbackBroadcast(st);
-    const logosContent = logosRemote || generateFallbackLogos(st);
+    const broadcastContent = broadcastRemote || readExistingIfValid("broadcast.xml") || generateFallbackBroadcast(st);
+    const logosContent = logosRemote || readExistingIfValid("logos.xml") || generateFallbackLogos(st);
     const musicaContent = generateMusicaXml(st, broadcastRemote);
 
     // If batalha, enquete, quiz from Supabase have empty content tags or dummy mocks, check local sync store
@@ -743,7 +758,23 @@ export async function generateAllUserXmls() {
       }
 
       for (const [filename, content] of Object.entries(files)) {
-        writeFileSync(join(userDir, filename), content.trim() + "\n", "utf-8");
+        const targetPath = join(userDir, filename);
+        if (existsSync(targetPath)) {
+          try {
+            const existing = readFileSync(targetPath, "utf-8");
+            const isExistingSubstantial = existing.trim().length > 200;
+            const isNewFallback =
+              content.includes("Patrocinador Oficial") ||
+              content.includes("Locutor de Plantão") ||
+              (filename === "logos.xml" && !content.includes('id="programa 2"') && existing.includes('id="programa 2"'));
+
+            if (isExistingSubstantial && isNewFallback) {
+              console.log(`[PROTECTED] Preserved existing user data for ${slug}/${filename}, skipping fallback overwrite.`);
+              continue;
+            }
+          } catch {}
+        }
+        writeFileSync(targetPath, content.trim() + "\n", "utf-8");
         totalFiles++;
       }
     }

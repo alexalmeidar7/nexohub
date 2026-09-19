@@ -1,9 +1,344 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <logos_patrocinadores>
   <programa id="programa 1">
-    <nome>Geral</nome>
+    <nome>Insônia</nome>
     <logo>
-      <nome>Patrocinador Oficial</nome>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 2">
+    <nome>Inesquecíveis</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 3">
+    <nome>Falando Sério</nome>
+    <logo>
+      <nome>MAPCLOUD</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039336914-sz6tf4967d.png</url>
+    </logo>
+    <logo>
+      <nome>PREVEST</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039337598-rzh8ih69jzh.png</url>
+    </logo>
+    <logo>
+      <nome>SICOOB CREDIADAG</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777405658416-1ydej2lboig.png</url>
+    </logo>
+    <logo>
+      <nome>PRIME MEDICAL CENTER</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1779117476557-hty5r327f0a.png</url>
+    </logo>
+    <logo>
+      <nome>FUJIOKA DISTRIBUIDOR + PRA VOCÊ - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784752999008-11go1twqbtz.png</url>
+    </logo>
+    <logo>
+      <nome>IPOG - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784755543347-ux7szx5d8uo.png</url>
+    </logo>
+    <logo>
+      <nome>HOCORD - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1785268526536-ibp655kv4p.png</url>
+    </logo>
+    <logo>
+      <nome>SOMMA FILMS - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784755632470-flxwvmp79hl.png</url>
+    </logo>
+    <logo>
+      <nome>VIEIRA PISOS - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1787149091858-5sdmz9i8ixc.png</url>
+    </logo>
+    <logo>
+      <nome>TECAR AUDI</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1788475607221-laj43bwqo0k.png</url>
+    </logo>
+    <logo>
+      <nome>SOMMA FILMS - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784755673529-oikbdus5zpq.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 4">
+    <nome>Hora do Cafézin</nome>
+    <logo>
+      <nome>DELA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039372338-x32hx7r9vx.png</url>
+    </logo>
+    <logo>
+      <nome>BYD</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039370471-0omgoilyxcui.png</url>
+    </logo>
+    <logo>
+      <nome>SHOWNEWS</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1779117444773-q5r9waygqjh.png</url>
+    </logo>
+    <logo>
+      <nome>PANOBIANCO - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1783002367859-ztc4feu24bd.png</url>
+    </logo>
+    <logo>
+      <nome>BIO EXTRATUS - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1787583592568-ujqg8zj26zt.png</url>
+    </logo>
+    <logo>
+      <nome>PEQUENO PRINCIPE - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1788178401123-7auxepb6voj.png</url>
+    </logo>
+    <logo>
+      <nome>FIAT</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1779117194568-771q2627fq.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 5">
+    <nome>Bônus 1</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 6">
+    <nome>Papo Cabeça</nome>
+    <logo>
+      <nome>SICOOB</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039420188-4w5oo56c9j5.png</url>
+    </logo>
+    <logo>
+      <nome>PRIME MEDICAL CENTER</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1779117207485-fu6cgmkbtns.png</url>
+    </logo>
+    <logo>
+      <nome>TECAR JEEP - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784753540457-e83c7i43lnr.png</url>
+    </logo>
+    <logo>
+      <nome>SOMMA FILMS - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784755632470-flxwvmp79hl.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 7">
+    <nome>Classic Hits - 1ª Edição</nome>
+    <logo>
+      <nome>ORSEGUPS</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039398480-etexxtjtzz.png</url>
+    </logo>
+    <logo>
+      <nome>FUJIOKA DISTRIBUIDOR + PRA VOCÊ - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784753106684-52rzbt8bo0o.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 8">
+    <nome>Top 10 - 1ª Edição</nome>
+    <logo>
+      <nome>ORSEGUPS</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039445655-s5hsu0nv0p.png</url>
+    </logo>
+    <logo>
+      <nome>FUJIOKA DISTRIBUIDOR + PRA VOCÊ - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/cec89227-31b7-4937-8bd2-8c83b50538c0/logos/1784753158850-khjzhamzjon.png</url>
+    </logo>
+    <logo>
+      <nome>ALMA DE FLORES</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1779117520621-j70p0jnp9z.png</url>
+    </logo>
+    <logo>
+      <nome>SENADOR</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039446414-w2b8xxbhxyo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 9">
+    <nome>Super Play</nome>
+    <logo>
+      <nome>CINEMAIS</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039552439-exyi0kxxpl.png</url>
+    </logo>
+    <logo>
+      <nome>HONDA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039552993-wa4ekrz11l9.png</url>
+    </logo>
+    <logo>
+      <nome>COLÉGIO ANGLO - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1782252242648-0etgt7z56iba.png</url>
+    </logo>
+    <logo>
+      <nome>VIKINGS - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1782841864349-4b9o75z3ij5.png</url>
+    </logo>
+    <logo>
+      <nome>SICOOB BRANCO</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/b2f70324-d086-4a5d-a407-cbc4acf98dce/logos/1785177532977-g2pjmjy87m8.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 10">
+    <nome>Inbox</nome>
+    <logo>
+      <nome>KOMIETO</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039569721-18v8bf0dofz.png</url>
+    </logo>
+    <logo>
+      <nome>VIEIRA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039572619-623bn28u425.png</url>
+    </logo>
+    <logo>
+      <nome>SICOOB CREDIADAG</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777405658416-1ydej2lboig.png</url>
+    </logo>
+    <logo>
+      <nome>ALMA DE FLORES</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1779117520621-j70p0jnp9z.png</url>
+    </logo>
+    <logo>
+      <nome>FRACTAL - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1782226204964-bha6v0nqa5b.png</url>
+    </logo>
+    <logo>
+      <nome>FRACTAL KIDS - BRANCA</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1782226223286-so71q5gcjb.png</url>
+    </logo>
+    <logo>
+      <nome>SENADOR</nome>
+      <url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/comercial/logos/1777039446414-w2b8xxbhxyo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 11">
+    <nome>Bônus 2</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 12">
+    <nome>Classic Hits - 2ª Edição</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 13">
+    <nome>Bonus (internet)</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 14">
+    <nome>Top 10 - 2ª Edição</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 15">
+    <nome>Pra cima!</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 16">
+    <nome>Maratona</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 17">
+    <nome>TOP 20</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 18">
+    <nome>Programação Músical</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 19">
+    <nome>Bônus 3</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 20">
+    <nome>Mega Bônus</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 21">
+    <nome>Indepêndência</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 22">
+    <nome>Interativa Indie</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 23">
+    <nome>Mega Bônus 2</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 24">
+    <nome>Programação músical (2)</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 25">
+    <nome>Pra Cima (Sábado Edition)</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 26">
+    <nome>Programação musical</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 27">
+    <nome>Maratona (2)</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 28">
+    <nome>Maratona (3)</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 29">
+    <nome>Sunset Retrô</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 30">
+    <nome>Propaganda Eleitoral</nome>
+    <logo>
+      <nome>Default</nome>
       <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
     </logo>
   </programa>

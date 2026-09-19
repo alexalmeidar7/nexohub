@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geral versao="1.0">
-  <gerado_em>2026-09-19T12:42:22.840Z</gerado_em>
+  <gerado_em>2026-09-18T16:50:18.607Z</gerado_em>
 
   <!-- DADOS DA EMISSORA -->
   <estacao>
@@ -22,7 +22,7 @@
 
     <programa_atual>
       <nome>Programação Cultura FM 97.3</nome>
-      <estudio>Estúdio Principal</estudio>
+      <estudio>Estudio FM</estudio>
     </programa_atual>
 
     <apresentador_atual>
@@ -44,22 +44,22 @@
   <previsao_tempo>
     <cidade>Santos - SP</cidade>
     <atual>
-      <temperatura>24ºC</temperatura>
-      <descricao>Tempo Firme e Ensolarado</descricao>
-      <minima>21°</minima>
-      <maxima>32°</maxima>
-      <umidade>52%</umidade>
-      <vento>11 km/h</vento>
-      <icone_url></icone_url>
+      <temperatura>34ºC</temperatura>
+      <descricao>Céu limpo</descricao>
+      <minima>20ºC</minima>
+      <maxima>34ºC</maxima>
+      <umidade>29%</umidade>
+      <vento>10 km/h</vento>
+      <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
     </atual>
   </previsao_tempo>
 
   <!-- ROTEIRO E ALINHAMENTO DO ESTÚDIO -->
   <roteiro>
-    <programa>Programação ao Vivo</programa>
-    <estudio>Estúdio Principal</estudio>
-    <data>2026-09-19</data>
-    <horario>10:00</horario>
+    <programa>Jornal da Cultura</programa>
+    <estudio>Estudio FM</estudio>
+    <data>2026-07-22</data>
+    <horario>00:00</horario>
   </roteiro>
 
   <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->

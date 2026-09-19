@@ -329,20 +329,56 @@ export function dynamicXmlPlugin(): Plugin {
 
   function writeStaticXml(slug: string, filename: string, content: string) {
     try {
+      if (!content || content.trim().length < 50) return;
       const norm = normalizeSlug(slug);
       const targets = new Set([slug, norm, ...(ALL_ALIASES[norm] || [])]);
       for (const t of targets) {
         if (!t || t.toLowerCase() === "xml") continue;
         const dir = path.join(rootDir, "public", "xml", t);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(path.join(dir, filename), content.trim() + "\n", "utf-8");
+        const targetPath = path.join(dir, filename);
+
+        // Safety check: Never overwrite existing real user data with stubs or smaller mock content
+        if (fs.existsSync(targetPath)) {
+          try {
+            const existing = fs.readFileSync(targetPath, "utf-8");
+            const isExistingSubstantial = existing.trim().length > 200;
+            const isNewFallback =
+              content.includes("Patrocinador Oficial") ||
+              content.includes("Locutor de Plantão") ||
+              (filename === "logos.xml" && !content.includes('id="programa 2"') && existing.includes('id="programa 2"'));
+
+            if (isExistingSubstantial && isNewFallback) {
+              continue;
+            }
+          } catch {}
+        }
+
+        fs.writeFileSync(targetPath, content.trim() + "\n", "utf-8");
       }
       if (norm === "positivafm" || slug === "positivafm" || norm === "default") {
         try {
-          fs.writeFileSync(path.join(rootDir, "public", filename), content.trim() + "\n", "utf-8");
-          const publicXmlDir = path.join(rootDir, "public", "xml");
-          if (!fs.existsSync(publicXmlDir)) fs.mkdirSync(publicXmlDir, { recursive: true });
-          fs.writeFileSync(path.join(publicXmlDir, filename), content.trim() + "\n", "utf-8");
+          const rootTarget = path.join(rootDir, "public", filename);
+          if (fs.existsSync(rootTarget)) {
+            const existing = fs.readFileSync(rootTarget, "utf-8");
+            const isExistingSubstantial = existing.trim().length > 200;
+            const isNewFallback =
+              content.includes("Patrocinador Oficial") ||
+              content.includes("Locutor de Plantão") ||
+              (filename === "logos.xml" && !content.includes('id="programa 2"') && existing.includes('id="programa 2"'));
+
+            if (!isExistingSubstantial || !isNewFallback) {
+              fs.writeFileSync(rootTarget, content.trim() + "\n", "utf-8");
+              const publicXmlDir = path.join(rootDir, "public", "xml");
+              if (!fs.existsSync(publicXmlDir)) fs.mkdirSync(publicXmlDir, { recursive: true });
+              fs.writeFileSync(path.join(publicXmlDir, filename), content.trim() + "\n", "utf-8");
+            }
+          } else {
+            fs.writeFileSync(rootTarget, content.trim() + "\n", "utf-8");
+            const publicXmlDir = path.join(rootDir, "public", "xml");
+            if (!fs.existsSync(publicXmlDir)) fs.mkdirSync(publicXmlDir, { recursive: true });
+            fs.writeFileSync(path.join(publicXmlDir, filename), content.trim() + "\n", "utf-8");
+          }
         } catch {}
       }
     } catch (err) {
@@ -734,7 +770,6 @@ export function dynamicXmlPlugin(): Plugin {
               const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
               const active = getActiveEnquete(list, today, currentTime);
               const xml = buildEnqueteXml(active);
-              writeStaticXml(slug, "enquete.xml", xml);
 
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -749,7 +784,6 @@ export function dynamicXmlPlugin(): Plugin {
               const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
               const active = getActiveQuiz(list, today, currentTime);
               const xml = buildQuizXml(active);
-              writeStaticXml(slug, "quiz.xml", xml);
 
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -765,7 +799,6 @@ export function dynamicXmlPlugin(): Plugin {
               const active = getActiveBatalha(list, today, currentTime);
               const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
               const xml = buildBatalhaXml(active, stName);
-              writeStaticXml(slug, "batalha.xml", xml);
 
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");

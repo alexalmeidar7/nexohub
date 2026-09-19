@@ -1,9 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <logos_patrocinadores>
   <programa id="programa 1">
-    <nome>Geral</nome>
+    <nome>Madrugada 96</nome>
     <logo>
-      <nome>Patrocinador Oficial</nome>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 2">
+    <nome>Sertanejando 1ª Edição</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 3">
+    <nome>Alerta Geral</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 4">
+    <nome>Show da Jornal</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 5">
+    <nome>Mix da Jornal</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 6">
+    <nome>Sertanejando 2ª Edição</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 7">
+    <nome>Toca Tudo</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 8">
+    <nome>Replay</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 9">
+    <nome>Voz do Brasil</nome>
+    <logo>
+      <nome>Default</nome>
+      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+    </logo>
+  </programa>
+  <programa id="programa 10">
+    <nome>Jornal Esportes</nome>
+    <logo>
+      <nome>Default</nome>
       <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
     </logo>
   </programa>
