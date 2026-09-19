@@ -24,6 +24,77 @@ interface Programa {
   horario_inicio?: string;
   horario_fim?: string;
   estudio?: string;
+  capa?: string;
+  thumb?: string;
+}
+
+export function getDefaultCenariosEstudioGrupos(ownerId: string, progs: Programa[]): Grupo[] {
+  const result: Grupo[] = [];
+
+  // 1. Templates vinculados a cada programa (TVS ÂNCORA 1x2 e TVS CONVIDADOS 2x2)
+  progs.forEach((p) => {
+    const artUrl = p.capa || p.thumb;
+    if (artUrl) {
+      result.push({
+        id: `grupo_${ownerId}_ancora_${p.id}`,
+        user_id: ownerId,
+        nome: `${p.nome} - TVS ÂNCORA`,
+        rows: 1,
+        cols: 2,
+        programa_ids: [p.id],
+        tvs: [{ posicao: 0, imagem_url: artUrl }],
+      });
+
+      const convidadosUrl = p.thumb || p.capa || artUrl;
+      result.push({
+        id: `grupo_${ownerId}_convidados_${p.id}`,
+        user_id: ownerId,
+        nome: `${p.nome} - TVS CONVIDADOS`,
+        rows: 2,
+        cols: 2,
+        programa_ids: [p.id],
+        tvs: [{ posicao: 0, imagem_url: convidadosUrl }],
+      });
+    }
+  });
+
+  // Artes base para templates mestres gerais
+  const generalArt = progs[0]?.capa || progs[0]?.thumb || "/images/CAPA_PH2.png";
+  const generalArt2 = progs[1]?.capa || progs[0]?.capa || generalArt;
+  const generalArt3 = progs[2]?.capa || progs[0]?.thumb || generalArt;
+
+  // 2. Templates mestres de layout (disponíveis para transmissão geral)
+  result.push({
+    id: `master_ancora_${ownerId}`,
+    user_id: ownerId,
+    nome: "TVS ATRÁS ÂNCORA - 2 TVs",
+    rows: 1,
+    cols: 2,
+    programa_ids: [],
+    tvs: [{ posicao: 0, imagem_url: generalArt }],
+  });
+
+  result.push({
+    id: `master_convidados_${ownerId}`,
+    user_id: ownerId,
+    nome: "TVS ATRÁS CONVIDADOS - 4 TVs",
+    rows: 2,
+    cols: 2,
+    programa_ids: [],
+    tvs: [{ posicao: 0, imagem_url: generalArt2 }],
+  });
+
+  result.push({
+    id: `master_videowall_${ownerId}`,
+    user_id: ownerId,
+    nome: "VÍDEO WALL PRINCIPAL - 3 TVs",
+    rows: 1,
+    cols: 3,
+    programa_ids: [],
+    tvs: [{ posicao: 0, imagem_url: generalArt3 }],
+  });
+
+  return result;
 }
 
 interface Grupo {
@@ -94,7 +165,7 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
     const [gruposRes, tvsRes, progsRes] = await Promise.all([
       supabase.from("cenario_estudio_grupos" as any).select("*").eq("user_id", ownerId).order("created_at"),
       supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", ownerId).order("posicao"),
-      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
+      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio, capa, thumb").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
     ]);
     const tvsByGrupo: Record<string, TV[]> = {};
     ((tvsRes.data as any[]) || []).forEach((t) => {
@@ -120,36 +191,45 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       } catch {}
     }
 
-    let progs = (progsRes.data as Programa[]) || [];
+    const fallbackProgs = await getProgramas(ownerId, user?.email);
+    let progs: Programa[] = ((progsRes.data as any[]) || []).map((p: any) => ({
+      id: p.id,
+      nome: p.nome,
+      ativo: p.ativo ?? true,
+      dias_semana: p.dias_semana || p.diasSemana || [],
+      horario_inicio: p.horario_inicio || p.horarioInicio || "00:00:00",
+      horario_fim: p.horario_fim || p.horarioFim || "00:00:00",
+      estudio: p.estudio || "ESTÚDIO FM",
+      capa: p.capa || "",
+      thumb: p.thumb || "",
+    }));
+
     if (!progs.length) {
-      const fallbackProgs = await getProgramas(ownerId, user?.email);
-      progs = fallbackProgs.map(p => ({
+      progs = fallbackProgs.map((p: any) => ({
         id: p.id,
         nome: p.nome,
-        ativo: p.ativo,
-        dias_semana: p.dias_semana,
-        horario_inicio: p.horario_inicio,
-        horario_fim: p.horario_fim,
-        estudio: p.estudio,
+        ativo: p.ativo ?? true,
+        dias_semana: p.dias_semana || p.diasSemana || [],
+        horario_inicio: p.horario_inicio || p.horarioInicio || "00:00:00",
+        horario_fim: p.horario_fim || p.horarioFim || "00:00:00",
+        estudio: p.estudio || "ESTÚDIO FM",
+        capa: p.capa || "",
+        thumb: p.thumb || "",
       }));
+    } else {
+      progs = progs.map(p => {
+        const match = fallbackProgs.find(fb => fb.id === p.id || fb.nome.trim().toUpperCase() === p.nome.trim().toUpperCase());
+        return {
+          ...p,
+          capa: p.capa || match?.capa || "",
+          thumb: p.thumb || match?.thumb || "",
+        };
+      });
     }
 
-    if (gs.length === 0) {
-      gs = [
-        {
-          id: `grupo_estudio_${ownerId}_1`,
-          user_id: ownerId,
-          nome: "Estúdio Principal (Vídeo Wall)",
-          rows: 1,
-          cols: 3,
-          programa_ids: progs.length > 0 ? [progs[0].id] : [],
-          tvs: [
-            { posicao: 1, imagem_url: "" },
-            { posicao: 2, imagem_url: "" },
-            { posicao: 3, imagem_url: "" },
-          ],
-        }
-      ];
+    const hasValidTemplates = gs.some(g => g.tvs.some(tv => tv.posicao === 0 && !!tv.imagem_url));
+    if (!hasValidTemplates) {
+      gs = getDefaultCenariosEstudioGrupos(ownerId, progs);
       try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(gs)); } catch {}
     }
 
@@ -214,33 +294,60 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
   }, [loadAll]);
 
   const addGrupo = async () => {
-    if (!user?.id) return;
-    const { data, error } = await (supabase as any)
-      .from("cenario_estudio_grupos")
-      .insert({ user_id: user.id, nome: "Novo template", rows: 1, cols: 2, programa_ids: [] })
-      .select()
-      .single();
-    if (error) {
-      toast.error("Erro ao criar grupo");
-      return;
-    }
-    setGrupos((prev) => [...prev, { ...(data as any), tvs: [], programa_ids: [] }]);
-    setEditingIds((prev) => new Set(prev).add((data as any).id));
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) return;
+    const newId = `grupo_${ownerId}_${Date.now()}`;
+    const newGrupo: Grupo = {
+      id: newId,
+      user_id: ownerId,
+      nome: "Novo template",
+      rows: 1,
+      cols: 2,
+      programa_ids: [],
+      tvs: [{ posicao: 0, imagem_url: "" }],
+    };
+    try {
+      const { data } = await (supabase as any)
+        .from("cenario_estudio_grupos")
+        .insert({ user_id: ownerId, nome: "Novo template", rows: 1, cols: 2, programa_ids: [] })
+        .select()
+        .single();
+      if (data?.id) newGrupo.id = data.id;
+    } catch {}
+
+    setGrupos((prev) => {
+      const next = [...prev, newGrupo];
+      try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setEditingIds((prev) => new Set(prev).add(newGrupo.id));
     toast.success("Template criado");
   };
 
   const updateGrupo = (id: string, patch: Partial<Grupo>) => {
-    setGrupos((prev) => prev.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+    setGrupos((prev) => {
+      const next = prev.map((g) => (g.id === id ? { ...g, ...patch } : g));
+      const ownerId = targetUserId || user?.id;
+      if (ownerId) {
+        try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next)); } catch {}
+      }
+      return next;
+    });
   };
 
   const removeGrupo = async (id: string) => {
     if (!(await confirmDialog("Excluir este template e todas as suas TVs?"))) return;
-    const { error } = await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
-    if (error) {
-      toast.error("Erro ao excluir");
-      return;
-    }
-    setGrupos((prev) => prev.filter((g) => g.id !== id));
+    const ownerId = targetUserId || user?.id;
+    try {
+      await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
+    } catch {}
+    setGrupos((prev) => {
+      const next = prev.filter((g) => g.id !== id);
+      if (ownerId) {
+        try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next)); } catch {}
+      }
+      return next;
+    });
     setEditingIds((prev) => {
       const n = new Set(prev);
       n.delete(id);
@@ -279,27 +386,33 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
   };
 
   const saveGrupo = async (grupo: Grupo) => {
-    if (!user?.id) return;
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) return;
     setSavingId(grupo.id);
     try {
-      // 1) update grupo
-      const { error: gErr } = await (supabase as any)
-        .from("cenario_estudio_grupos")
-        .update({
-          nome: grupo.nome,
-          rows: grupo.rows,
-          cols: grupo.cols,
-          programa_ids: grupo.programa_ids,
-        })
-        .eq("id", grupo.id);
-      if (gErr) throw gErr;
+      // 1) update grupo in supabase
+      try {
+        await (supabase as any)
+          .from("cenario_estudio_grupos")
+          .upsert({
+            id: grupo.id,
+            user_id: ownerId,
+            nome: grupo.nome,
+            rows: grupo.rows,
+            cols: grupo.cols,
+            programa_ids: grupo.programa_ids,
+            updated_at: new Date().toISOString()
+          });
+      } catch (err) {
+        console.warn("Error upserting grupo in supabase:", err);
+      }
 
       // 2) upload single artwork (posicao=0) if pending
       const arte = grupo.tvs.find((t) => t.posicao === 0);
       let arteUrl = arte?.imagem_url || "";
       if (arte?._file) {
         // Upload as PNG directly (vMix compatibility - URL must end in .png)
-        const pngPath = `${user.id}/${grupo.id}/arte-${Date.now()}.png`;
+        const pngPath = `${ownerId}/${grupo.id}/arte-${Date.now()}.png`;
         const { error: upErr } = await (supabase as any).storage
           .from("cenario-estudio")
           .upload(pngPath, arte._file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
@@ -308,26 +421,37 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
         arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
-      // 3) Upsert TVs (single record holding the artwork) to avoid empty state during delete/insert
+      // 3) Upsert TVs (single record holding the artwork)
       if (arteUrl) {
-        const { error: tErr } = await (supabase as any).from("cenario_estudio_tvs").upsert(
-          { 
-            grupo_id: grupo.id, 
-            user_id: user.id, 
-            posicao: 0, 
-            imagem_url: arteUrl,
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: 'grupo_id,posicao' }
-        );
-        if (tErr) throw tErr;
+        try {
+          await (supabase as any).from("cenario_estudio_tvs").upsert(
+            { 
+              grupo_id: grupo.id, 
+              user_id: ownerId, 
+              posicao: 0, 
+              imagem_url: arteUrl,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'grupo_id,posicao' }
+          );
+        } catch (err) {
+          console.warn("Error upserting tvs in supabase:", err);
+        }
       }
 
-      // Bump grupo updated_at so XML cache-buster reflects the change immediately
-      await (supabase as any)
-        .from("cenario_estudio_grupos")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", grupo.id);
+      // 4) Update state & localStorage
+      setGrupos((prev) => {
+        const next = prev.map((g) => {
+          if (g.id !== grupo.id) return g;
+          const others = g.tvs.filter((t) => t.posicao !== 0);
+          return {
+            ...grupo,
+            tvs: [{ posicao: 0, imagem_url: arteUrl || arte?.imagem_url || "" }, ...others],
+          };
+        });
+        try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next)); } catch {}
+        return next;
+      });
 
       toast.success("Template salvo");
       setEditingIds((prev) => {
@@ -335,7 +459,6 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
         n.delete(grupo.id);
         return n;
       });
-      await loadAll();
     } catch (e) {
       console.error(e);
       toast.error("Erro ao salvar grupo");
@@ -547,33 +670,33 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
               }}
             >
               <div
-                className="w-full relative overflow-hidden bg-black"
+                className="w-full relative overflow-hidden bg-slate-900"
                 style={{ aspectRatio: "16/9" }}
               >
+                <img
+                  src={url}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = "/images/CAPA_PH2.png";
+                  }}
+                  alt={t.nome}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+
                 {/* Sub-grid Preview Overlay */}
                 <div 
-                  className="absolute inset-0 grid gap-[1px] opacity-30"
+                  className="absolute inset-0 grid gap-[1px] opacity-40 pointer-events-none"
                   style={{
                     gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
                     gridTemplateRows: `repeat(${t.rows}, 1fr)`,
                   }}
                 >
                   {Array.from({ length: t.rows * t.cols }).map((_, i) => (
-                    <div key={i} className="border-[0.5px] border-white/20" />
+                    <div key={i} className="border-[0.5px] border-white/40" />
                   ))}
                 </div>
-
-                <div
-                  className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
-                  style={{
-                    backgroundImage: `url(${url})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                />
                 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity pointer-events-none" />
 
                 {/* Floating Actions */}
                 <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">

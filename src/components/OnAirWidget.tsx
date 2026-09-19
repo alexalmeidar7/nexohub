@@ -551,7 +551,7 @@ export default function OnAirWidget({ compact = false, nextProgram, effectiveUse
             )}
           </div>
           <Suspense fallback={null}>
-            <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+            <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} effectiveUserId={targetUserId} />
           </Suspense>
         </>
       );
@@ -697,7 +697,7 @@ export default function OnAirWidget({ compact = false, nextProgram, effectiveUse
           )}
         </div>
         <Suspense fallback={null}>
-          <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+          <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} effectiveUserId={targetUserId} />
         </Suspense>
       </>
     );
@@ -896,7 +896,7 @@ export default function OnAirWidget({ compact = false, nextProgram, effectiveUse
         </div>
       </div>
       <Suspense fallback={null}>
-        <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+        <DashboardGradeDialog open={gradeOpen} onOpenChange={setGradeOpen} effectiveUserId={targetUserId} />
       </Suspense>
     </div>
   );

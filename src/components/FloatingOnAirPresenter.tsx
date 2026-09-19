@@ -8,6 +8,7 @@ import { getApresentadores } from "@/components/ApresentadorForm";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
+import { normalizeClientKey } from "@/lib/houseMixProgramasService";
 
 export interface FloatingOnAirPresenterProps {
   isBehindPages?: boolean;
@@ -30,7 +31,11 @@ function formatHour(h: string): string {
   return clean.length >= 5 ? clean.slice(0, 5) : clean;
 }
 
-export function resolveSafePresenterPhoto(foto?: string | null, nome?: string | null): string {
+export function resolveSafePresenterPhoto(
+  foto?: string | null,
+  nome?: string | null,
+  stationKeyOrUserId?: string | null
+): string {
   const norm = (nome || "")
     .toLowerCase()
     .normalize("NFD")
@@ -76,7 +81,18 @@ export function resolveSafePresenterPhoto(foto?: string | null, nome?: string | 
     return foto;
   }
 
-  return "/locutores/jonathas.png";
+  const normStation = normalizeClientKey(stationKeyOrUserId);
+  if (normStation === "INTERATIVA FM") {
+    return "/locutores/ani.png";
+  }
+  if (normStation === "CULTURA FM") {
+    return "/locutores/azevedo.png";
+  }
+  if (normStation === "POSITIVA FM") {
+    return "/locutores/jonathas.png";
+  }
+
+  return "/locutores/sem-loc.png";
 }
 
 export default function FloatingOnAirPresenter({
@@ -100,7 +116,7 @@ export default function FloatingOnAirPresenter({
 
     const ap = resolvePresenterForProgram(active, syncDb?.apresentadores || [], targetUid || user?.email);
     const apNome = ap?.nome || "—";
-    const apFoto = resolveSafePresenterPhoto(ap?.foto, apNome);
+    const apFoto = resolveSafePresenterPhoto(ap?.foto, apNome, targetUid || user?.email);
 
     return {
       programaNome: progNome,
@@ -130,7 +146,7 @@ export default function FloatingOnAirPresenter({
           horarioInicio: next.horario_inicio || next.horarioInicio || "00:00",
           horarioFim: next.horario_fim || next.horarioFim || "23:59",
           locutorNome: nextAp?.nome || "—",
-          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome),
+          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome, targetUid || user?.email),
         };
       }
     }
@@ -198,7 +214,7 @@ export default function FloatingOnAirPresenter({
           horarioInicio: nextProg.horario_inicio || nextProg.horarioInicio || "00:00",
           horarioFim: nextProg.horario_fim || nextProg.horarioFim || "23:59",
           locutorNome: nextAp?.nome || "—",
-          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome),
+          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome, uid || targetEmail),
         });
       }
 
@@ -211,7 +227,7 @@ export default function FloatingOnAirPresenter({
           horarioInicio: activeProg.horario_inicio || activeProg.horarioInicio || "00:00",
           horarioFim: activeProg.horario_fim || activeProg.horarioFim || "23:59",
           locutorNome: apNome,
-          locutorFoto: resolveSafePresenterPhoto(ap?.foto, apNome),
+          locutorFoto: resolveSafePresenterPhoto(ap?.foto, apNome, uid || targetEmail),
         };
 
         const key = `${nextState.programaNome}:::${nextState.locutorNome}:::${nextState.horarioInicio}`;
@@ -387,15 +403,16 @@ export default function FloatingOnAirPresenter({
               border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            {resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome) ? (
+            {resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome, targetUid || user?.email) ? (
               <img
-                key={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome)}
-                src={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome)}
+                key={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome, targetUid || user?.email)}
+                src={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome, targetUid || user?.email)}
                 alt={onAirInfo.locutorNome || "Locutor no ar"}
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.src.includes("/locutores/jonathas.png")) {
-                    target.src = "/locutores/jonathas.png";
+                  const fallback = resolveSafePresenterPhoto("", onAirInfo.locutorNome, targetUid || user?.email);
+                  if (target.src !== fallback) {
+                    target.src = fallback;
                   }
                 }}
                 style={{
@@ -625,14 +642,15 @@ export default function FloatingOnAirPresenter({
                 border: "1px solid rgba(255,255,255,0.15)",
               }}
             >
-              {resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome) ? (
+              {resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome, targetUid || user?.email) ? (
                 <img
-                  src={resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome)}
+                  src={resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome, targetUid || user?.email)}
                   alt={nextProgInfo?.locutorNome || "Próximo locutor"}
                   onError={(e) => {
                     const target = e.currentTarget;
-                    if (!target.src.includes("/locutores/jonathas.png")) {
-                      target.src = "/locutores/jonathas.png";
+                    const fallback = resolveSafePresenterPhoto("", nextProgInfo?.locutorNome, targetUid || user?.email);
+                    if (target.src !== fallback) {
+                      target.src = fallback;
                     }
                   }}
                   style={{

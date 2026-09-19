@@ -763,9 +763,10 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       if (isClient && stationKey && DEFAULT_STATION_DATA?.[stationKey]) {
         const def = DEFAULT_STATION_DATA[stationKey];
         (def.programas || []).forEach((p, idx) => {
-          const normName = (p.nome || "").trim().toUpperCase();
-          baseMap.set(normName, {
-            id: `def_${stationKey.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
+          const daysKey = Array.isArray(p.dias_semana) ? p.dias_semana.join("_") : "";
+          const key = (p as any).id || `${(p.nome || "").trim().toUpperCase()}_${p.horario_inicio}_${daysKey}`;
+          baseMap.set(key, {
+            id: (p as any).id || `def_${stationKey.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
             nome: p.nome || "Programa",
             apresentadorId: p.apresentador_id || "",
             apresentadoresIds: p.apresentadores_ids || (p.apresentador_id ? [p.apresentador_id] : []),
@@ -785,14 +786,42 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             cliente: acc?.nome || stationKey,
           });
         });
+      } else if (!isClient && DEFAULT_STATION_DATA) {
+        Object.entries(DEFAULT_STATION_DATA).forEach(([stKey, def]) => {
+          (def.programas || []).forEach((p, idx) => {
+            const daysKey = Array.isArray(p.dias_semana) ? p.dias_semana.join("_") : "";
+            const key = (p as any).id || `${stKey}_${(p.nome || "").trim().toUpperCase()}_${p.horario_inicio}_${daysKey}`;
+            baseMap.set(key, {
+              id: (p as any).id || `def_${stKey.replace(/\s+/g, '_').toLowerCase()}_${idx + 1}`,
+              nome: p.nome || "Programa",
+              apresentadorId: p.apresentador_id || "",
+              apresentadoresIds: p.apresentadores_ids || (p.apresentador_id ? [p.apresentador_id] : []),
+              selo: p.selo || "",
+              capa: p.capa || "",
+              thumb: p.thumb || "",
+              diasSemana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray((p as any).diasSemana) ? (p as any).diasSemana : (typeof p.dias_semana === 'string' ? p.dias_semana.split(',').map((s: string) => s.trim()).filter(Boolean) : [])),
+              horarioInicio: p.horario_inicio || (p as any).horarioInicio || "00:00:00",
+              horarioFim: p.horario_fim || (p as any).horarioFim || "00:00:00",
+              estudio: p.estudio || "Estúdio FM",
+              ativo: true,
+              variavel: false,
+              descricao: p.descricao || "",
+              dataVariavel: null,
+              classificacaoEtaria: "",
+              tipoPrograma: p.tipo_programa || (p as any).tipoPrograma || "",
+              cliente: stKey,
+            });
+          });
+        });
       }
 
       // Sobrepõe com programas customizados do localStorage
       matchingCustomProgs.forEach(p => {
-        const normName = (p.nome || "").trim().toUpperCase();
-        if (normName && baseMap.has(normName)) {
-          const existing = baseMap.get(normName)!;
-          baseMap.set(normName, {
+        const daysKey = Array.isArray(p.diasSemana) ? p.diasSemana.join("_") : "";
+        const key = p.id || `${(p.nome || "").trim().toUpperCase()}_${p.horarioInicio}_${daysKey}`;
+        if (baseMap.has(key)) {
+          const existing = baseMap.get(key)!;
+          baseMap.set(key, {
             ...existing,
             ...p,
             capa: p.capa !== undefined && p.capa !== "" ? p.capa : existing.capa,
@@ -806,10 +835,11 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
       // Sobrepõe com registros reais do banco Supabase
       (Array.isArray(pg) ? pg : []).forEach(p => {
-        const normName = (p.nome || "").trim().toUpperCase();
-        if (normName && baseMap.has(normName)) {
-          const existing = baseMap.get(normName)!;
-          baseMap.set(normName, {
+        const daysKey = Array.isArray(p.diasSemana) ? p.diasSemana.join("_") : "";
+        const key = p.id || `${(p.nome || "").trim().toUpperCase()}_${p.horarioInicio}_${daysKey}`;
+        if (baseMap.has(key)) {
+          const existing = baseMap.get(key)!;
+          baseMap.set(key, {
             ...existing,
             ...p,
             capa: p.capa !== undefined && p.capa !== "" ? p.capa : existing.capa,

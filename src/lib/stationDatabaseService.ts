@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { findClientAccountByEmail, findClientAccountById, ClientAccountInfo } from "./clientAuthAccounts";
-import { getClientHouseMixProgramsSync, HouseMixProgramInfo } from "./houseMixProgramasService";
-import { CANONICAL_PRESENTERS } from "./onAirPresenterResolver";
+import { getClientHouseMixProgramsSync, HouseMixProgram } from "./houseMixProgramasService";
+import { CANONICAL_PRESENTERS, getPresentersForStation } from "./onAirPresenterResolver";
 
 export interface StationDatabaseData {
   userId: string;
@@ -72,7 +72,7 @@ export function getStationDatabaseSync(userIdOrEmailOrSlug?: string | null): Sta
       slug: acc.slug,
       channels: [],
       programas: fallbackPrograms,
-      apresentadores: Object.values(CANONICAL_PRESENTERS),
+      apresentadores: getPresentersForStation(acc.slug || acc.id),
       prerolls: [],
       empresa: {
         nome_fantasia: acc.nome,
@@ -145,7 +145,7 @@ export async function fetchStationDatabaseData(
           : fallbackPrograms,
         apresentadores: Array.isArray(data.apresentadores) && data.apresentadores.length > 0
           ? data.apresentadores
-          : Object.values(CANONICAL_PRESENTERS),
+          : getPresentersForStation(targetSlug || acc?.id),
         prerolls: Array.isArray(data.prerolls) ? data.prerolls : [],
         empresa: data.empresa || (acc ? { nome_fantasia: acc.nome, razao_social: acc.razaoSocial, cidade: acc.cidade } : null),
         shopProducts: Array.isArray(data.shopProducts) ? data.shopProducts : [],

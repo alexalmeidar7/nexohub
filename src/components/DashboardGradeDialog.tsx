@@ -3,8 +3,10 @@ import { X, Clock, Calendar, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { format, addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
+import { getProgramas } from "./ProgramaForm";
 
 interface Programa {
   id: string;
@@ -42,9 +44,12 @@ function generateGradeSlots(): string[] {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  effectiveUserId?: string | null;
 }
 
-function DashboardGradeDialog({ open, onOpenChange }: Props) {
+function DashboardGradeDialog({ open, onOpenChange, effectiveUserId }: Props) {
+  const { user } = useAuth();
+  const targetId = effectiveUserId || user?.id;
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,23 +60,33 @@ function DashboardGradeDialog({ open, onOpenChange }: Props) {
     if (!open) return;
     setLoading(true);
     Promise.all([
-      supabase.from("programas").select("*").ilike("estudio", "%fm%"),
-      getApresentadores(),
-    ]).then(([{ data }, aps]) => {
-      if (data) {
-        setProgramas(data.map(p => ({
-          id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "",
-          selo: p.selo || "", capa: (p as any).capa || "",
-          diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
-          horarioFim: p.horario_fim, estudio: p.estudio || "",
-          ativo: (p as any).ativo ?? true, variavel: (p as any).variavel ?? false,
-          descricao: (p as any).descricao || "", dataVariavel: (p as any).data_variavel || null,
+      getProgramas(targetId, user?.email),
+      getApresentadores(targetId, user?.email),
+    ]).then(([progs, aps]) => {
+      if (progs) {
+        setProgramas(progs.map((p: any) => ({
+          id: p.id,
+          nome: p.nome,
+          apresentadorId: p.apresentadorId || p.apresentador_id || (p.apresentadoresIds && p.apresentadoresIds[0]) || "",
+          selo: p.selo || "",
+          capa: p.capa || "",
+          diasSemana: Array.isArray(p.diasSemana) ? p.diasSemana : (p.dias_semana || []),
+          horarioInicio: p.horarioInicio || p.horario_inicio || "00:00:00",
+          horarioFim: p.horarioFim || p.horario_fim || "00:00:00",
+          estudio: p.estudio || "",
+          ativo: p.ativo ?? true,
+          variavel: p.variavel ?? false,
+          descricao: p.descricao || "",
+          dataVariavel: p.dataVariavel || p.data_variavel || null,
         })));
       }
-      setApresentadores(aps);
+      setApresentadores(aps || []);
+      setLoading(false);
+    }).catch(err => {
+      console.error("DashboardGradeDialog load error:", err);
       setLoading(false);
     });
-  }, [open]);
+  }, [open, targetId, user?.email]);
 
   useEffect(() => {
     if (!loading && needleRowRef.current) {

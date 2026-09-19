@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
+import { getApresentadores } from "./ApresentadorForm";
 
 interface CurrentProgramInfo {
   id: string;
@@ -123,7 +124,15 @@ export default function CenarioOnAirBadge({ effectiveUserId }: { effectiveUserId
         let apresentadorFoto = "";
         const apIds = onAir.apresentadores_ids?.length ? onAir.apresentadores_ids : onAir.apresentador_id ? [onAir.apresentador_id] : [];
         if (apIds.length) {
-          const { data: aps } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
+          let aps: any[] | null = null;
+          try {
+            const { data } = await supabase.from("apresentadores").select("nome, foto").in("id", apIds);
+            aps = data;
+          } catch {}
+          if (!aps || aps.length === 0) {
+            const fallbackAps = await getApresentadores(stationUid || ownerId, user?.email);
+            aps = fallbackAps.filter(a => apIds.includes(a.id));
+          }
           apresentadorNome = aps?.map(a => a.nome).join(", ") || "";
           apresentadorFoto = aps?.[0]?.foto || "";
         }
