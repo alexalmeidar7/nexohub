@@ -11,7 +11,7 @@ const HLS_KEY = "vmix_livelan_url";
 let hlsModule: typeof import("hls.js") | null = null;
 const getHls = async () => {
   if (!hlsModule) hlsModule = await import("hls.js");
-  return hlsModule.default;
+  return (hlsModule as any)?.default || hlsModule;
 };
 
 /** Aceita "10.1.1.62", "10.1.1.62:8088/livelan" ou a URL completa do LiveLAN. */

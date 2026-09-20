@@ -13,6 +13,7 @@ import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import { matchesMusicException, getMusicExceptions, MusicException } from "@/lib/musicExceptions";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { fetchTrackCover } from "@/lib/musicCoverResolver";
+import { getMusicData } from "@/lib/musicData";
 
 interface MusicData {
   titulo: string;
@@ -351,9 +352,6 @@ async function addUploadLogToDb(
   } catch {}
   return loadUploadHistoryFromDb(userId);
 }
-
-import { getMusicData } from "@/lib/musicData";
-export { getMusicData } from "@/lib/musicData";
 
 export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();

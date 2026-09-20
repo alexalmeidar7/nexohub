@@ -7,7 +7,7 @@ import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import { invalidateMusicExceptionsCache } from "@/lib/musicExceptions";
 
 interface InfoMusicRow {
   id: string;
@@ -344,7 +344,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       if (error) throw error;
       if (kind === "capa") setDefaultCapaUrl(url); else setDefaultArtistaUrl(url);
       try {
-        const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
         invalidateMusicExceptionsCache(user.id);
       } catch {}
       toast.success(kind === "capa" ? "Capa geral das exceções salva!" : "Foto geral do artista salva!");
@@ -363,7 +362,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     if (error) { toast.error("Erro ao remover imagem"); return; }
     if (kind === "capa") setDefaultCapaUrl(null); else setDefaultArtistaUrl(null);
     try {
-      const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
       invalidateMusicExceptionsCache(user.id);
     } catch {}
     toast.success("Imagem geral removida");
@@ -478,7 +476,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     }
   };
 
-  const exportSemCuriosidadesExcel = () => {
+  const exportSemCuriosidadesExcel = async () => {
     try {
       setExportingXlsx(true);
       const semCuriosidade = rows.filter(r => !r.curiosidade || !r.curiosidade.trim());
@@ -489,6 +487,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         "CURIOSIDADE": ""
       }));
 
+      const XLSX = await import("xlsx");
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Sem Curiosidades");
@@ -511,6 +510,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       reader.onload = async (evt) => {
         try {
           const bstr = evt.target?.result;
+          const XLSX = await import("xlsx");
           const wb = XLSX.read(bstr, { type: "binary" });
           const wsname = wb.SheetNames[0];
           const ws = wb.Sheets[wsname];
@@ -687,9 +687,8 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                   
                   if (error) throw error;
                   
-                  // Import e chamada para invalidar cache global se existir
+                  // Invalidação de cache global
                   try {
-                    const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
                     invalidateMusicExceptionsCache(user.id);
                   } catch (e) {
                     console.warn("Could not invalidate music exceptions cache", e);
@@ -786,7 +785,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                                 if (error) throw error;
 
                                 try {
-                                  const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
                                   invalidateMusicExceptionsCache(user.id);
                                 } catch (e) {
                                   console.warn("Could not invalidate music exceptions cache", e);
@@ -935,7 +933,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                               .update({ [column]: url } as any)
                               .eq("id", exc.id);
                             if (error) throw error;
-                            const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
                             invalidateMusicExceptionsCache(user?.id);
                             loadExcecoes();
                             toast.success(kind === "capa" ? "Capa específica atualizada!" : "Foto específica do artista atualizada!");
@@ -950,7 +947,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                             .update({ [column]: null } as any)
                             .eq("id", exc.id);
                           if (error) { toast.error("Erro ao remover"); return; }
-                          const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
                           invalidateMusicExceptionsCache(user?.id);
                           loadExcecoes();
                           toast.success("Voltou a usar a imagem geral da lista");

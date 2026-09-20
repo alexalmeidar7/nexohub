@@ -265,7 +265,8 @@ export default function BackupPage({ effectiveUserId }: { effectiveUserId?: stri
   /* ---------- Logos (ZIP) ---------- */
 
   const exportLogos = async () => {
-    const JSZip = (await import("jszip")).default;
+    const jszipMod = await import("jszip");
+    const JSZip = (jszipMod as any)?.default || jszipMod;
     const { data, error } = await supabase.from("logos_patrocinadores")
       .select("programa_id,logo_url,nome,data_final,ativo")
       .eq("user_id", ownerId).eq("excluido", false);
@@ -293,7 +294,8 @@ export default function BackupPage({ effectiveUserId }: { effectiveUserId?: stri
   };
 
   const importLogos = async (file: File) => {
-    const JSZip = (await import("jszip")).default;
+    const jszipMod = await import("jszip");
+    const JSZip = (jszipMod as any)?.default || jszipMod;
     const { data: authData } = await supabase.auth.getUser();
     const uid = authData?.user?.id;
     if (!uid) throw new Error("Sessão expirada. Entre novamente.");

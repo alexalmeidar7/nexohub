@@ -905,9 +905,10 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
     const startStream = async () => {
       try {
         if (channel.url!.includes(".m3u8")) {
-          const Hls = (await import("hls.js")).default;
+          const hlsMod = await import("hls.js");
+          const Hls = (hlsMod as any)?.default || hlsMod;
           if (cancelled) return;
-          if (Hls.isSupported()) {
+          if (Hls && Hls.isSupported && Hls.isSupported()) {
             const hls = new Hls({ maxBufferLength: 5, lowLatencyMode: true });
             hlsRef.current = hls;
             hls.loadSource(channel.url!);

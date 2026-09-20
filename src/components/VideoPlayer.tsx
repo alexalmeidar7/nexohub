@@ -8,7 +8,7 @@ const STREAM_URL = "https://video04.logicahost.com.br/radiopositivafm/radioposit
 let hlsModule: typeof import("hls.js") | null = null;
 const getHls = async () => {
   if (!hlsModule) hlsModule = await import("hls.js");
-  return hlsModule.default;
+  return (hlsModule as any)?.default || hlsModule;
 };
 
 export default function VideoPlayer() {

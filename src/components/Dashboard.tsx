@@ -1700,7 +1700,9 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               {/* MusicaNoAr mounted only when active or minimized on dashboard */}
               {isAdmin && (currentPage === "musica" || (minimizedModules.includes("musica") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
-                  <MusicaNoAr effectiveUserId={effectiveUserId} />
+                  <Suspense fallback={<ModulePageSkeleton variant="musica" />}>
+                    <MusicaNoAr effectiveUserId={effectiveUserId} />
+                  </Suspense>
                 </div>
               )}
               {isAdmin && (currentPage === "agenda" || (minimizedModules.includes("agenda") && currentPage === "dashboard")) && (
@@ -2151,7 +2153,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
             }}
           >
-            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+            <Suspense fallback={<ModulePageSkeleton variant="musica" />}>
               <MusicaNoAr effectiveUserId={effectiveUserId} />
             </Suspense>
           </HouseMixWindow>

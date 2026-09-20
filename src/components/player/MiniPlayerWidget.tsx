@@ -8,7 +8,7 @@ const MINI_PLAYER_KEY = "mini_player_data";
 let hlsModule: typeof import("hls.js") | null = null;
 const getHls = async () => {
   if (!hlsModule) hlsModule = await import("hls.js");
-  return hlsModule.default;
+  return (hlsModule as any)?.default || hlsModule;
 };
 
 // Global audio element — unlocked once during user gesture, reused across mounts

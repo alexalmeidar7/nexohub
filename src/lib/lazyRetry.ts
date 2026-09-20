@@ -20,7 +20,13 @@ export const isChunkErrorMessage = (message?: string) => {
     normalized.includes("loading chunk") ||
     normalized.includes("loading css chunk") ||
     normalized.includes("chunkloaderror") ||
-    normalized.includes("failed to load module script")
+    normalized.includes("failed to load module script") ||
+    normalized.includes("reading 'default'") ||
+    normalized.includes("reading \"default\"") ||
+    normalized.includes("e._result.default") ||
+    normalized.includes("undefined is not an object") ||
+    normalized.includes("e._result is undefined") ||
+    normalized.includes("chunk mismatch")
   );
 };
 
@@ -51,7 +57,8 @@ export function recoverFromChunkFailure(force = false): boolean {
     url.searchParams.set("_r", String(now));
 
     // Preserva a página em navegação para que o usuário não seja redirecionado para a home
-    const activePage = sessionStorage.getItem("nexohub_current_page");
+    const pageInUrl = url.searchParams.get("page");
+    const activePage = pageInUrl || sessionStorage.getItem("nexohub_current_page");
     if (activePage && activePage !== "dashboard") {
       sessionStorage.setItem("nexohub_target_page", activePage);
       url.searchParams.set("page", activePage);
@@ -78,7 +85,11 @@ export function lazyRetry<T extends ComponentType<any>>(
 
     for (let attempt = 0; attempt <= IMPORT_RETRY_DELAYS_MS.length; attempt += 1) {
       try {
-        return await factory();
+        const mod = await factory();
+        if (!mod || !mod.default) {
+          throw new Error("Cannot read properties of undefined (reading 'default') - chunk mismatch or module export failed");
+        }
+        return mod;
       } catch (error) {
         lastError = error;
         const message = String((error as Error)?.message || error);
@@ -90,7 +101,7 @@ export function lazyRetry<T extends ComponentType<any>>(
       }
     }
 
-    if (recoverFromChunkFailure()) {
+    if (recoverFromChunkFailure(true)) {
       return await new Promise<{ default: T }>(() => {});
     }
 

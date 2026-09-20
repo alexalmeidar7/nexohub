@@ -2229,7 +2229,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 let hlsModule: typeof import("hls.js") | null = null;
 const getHls = async () => {
   if (!hlsModule) hlsModule = await import("hls.js");
-  return hlsModule.default;
+  return (hlsModule as any)?.default || hlsModule;
 };
 
 function VideoLivePreview({ streamUrl, reloadKey }: { streamUrl: string; reloadKey?: number }) {

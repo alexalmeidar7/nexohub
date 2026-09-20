@@ -78,7 +78,7 @@ const getHls = async () => {
   if (!hlsModule) {
     hlsModule = await import("hls.js");
   }
-  return hlsModule.default;
+  return (hlsModule as any)?.default || hlsModule;
 };
 
 interface YoutubeVideo {

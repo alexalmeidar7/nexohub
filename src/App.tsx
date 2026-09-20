@@ -128,7 +128,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
 
     // A rejected React.lazy import is cached by React, so remounting it cannot
     // recover on its own — reload once (cache-busted) when allowed.
-    if (isChunkError && recoverFromChunkFailure()) return;
+    if (isChunkError && recoverFromChunkFailure(true)) return;
 
     const delay = AUTO_HEAL_DELAYS_MS[this.state.retryCount];
     if (delay === undefined) {
@@ -169,6 +169,11 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
   }
 
   handleRetry = () => {
+    if (this.state.errorMessage && isChunkErrorMessage(this.state.errorMessage)) {
+      if (recoverFromChunkFailure(true)) return;
+      window.location.reload();
+      return;
+    }
     this.setState((prev) => ({ hasError: false, retryCount: 0, remountKey: prev.remountKey + 1, errorMessage: undefined }));
   };
 
