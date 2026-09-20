@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { resolveProgramSelo, resolveProgramCover, resolveProgramThumb } from "./programImageResolver";
 
 export interface HouseMixProgram {
   id: string;
@@ -1796,6 +1797,9 @@ export function getClientHouseMixProgramsSync(
     const matchClientName = p.cliente_nome && normalizeClientKey(p.cliente_nome) === normKey;
 
     if (matchUser || matchClientName) {
+      const safeSelo = resolveProgramSelo(p);
+      const safeCapa = resolveProgramCover(p) || safeSelo;
+      const safeThumb = resolveProgramThumb(p) || safeCapa || safeSelo;
       matchedSupabase.push({
         id: p.id,
         user_id: p.user_id,
@@ -1809,9 +1813,9 @@ export function getClientHouseMixProgramsSync(
         apresentadores_ids: p.apresentadores_ids || [],
         tipo_programa: p.tipo_programa,
         descricao: p.descricao,
-        selo: p.selo,
-        capa: p.capa,
-        thumb: p.thumb,
+        selo: safeSelo || null,
+        capa: safeCapa || null,
+        thumb: safeThumb || null,
         cliente_id: clientObj.id,
         cliente_nome: clientObj.nome_empresarial || clientObj.nome,
       });
@@ -1820,28 +1824,44 @@ export function getClientHouseMixProgramsSync(
 
   // 2. Programas customizados no localStorage para este cliente
   const storedCustom = getStoredCustomPrograms();
-  const customList = storedCustom[normKey] || (clientObj.id ? storedCustom[clientObj.id] : []) || [];
+  const rawCustomList = storedCustom[normKey] || (clientObj.id ? storedCustom[clientObj.id] : []) || [];
+  const customList: HouseMixProgram[] = rawCustomList.map((p: any) => {
+    const safeSelo = resolveProgramSelo(p);
+    const safeCapa = resolveProgramCover(p) || safeSelo;
+    const safeThumb = resolveProgramThumb(p) || safeCapa || safeSelo;
+    return {
+      ...p,
+      selo: safeSelo || null,
+      capa: safeCapa || null,
+      thumb: safeThumb || null,
+    };
+  });
 
   // 3. Grade padrão da emissora (apenas se existir perfil específico para este cliente)
   const defaultProfile = DEFAULT_STATION_DATA[normKey];
-  const defaultList: HouseMixProgram[] = (defaultProfile?.programas || []).map((def, idx) => ({
-    id: (def as any).id || `housemix_${normKey.replace(/\s+/g, "_").toLowerCase()}_${idx + 1}`,
-    nome: def.nome,
-    estudio: def.estudio.toUpperCase(),
-    horario_inicio: def.horario_inicio,
-    horario_fim: def.horario_fim,
-    dias_semana: def.dias_semana,
-    ativo: true,
-    apresentador_id: (def as any).apresentador_id || null,
-    apresentadores_ids: (def as any).apresentadores_ids || ((def as any).apresentador_id ? [(def as any).apresentador_id] : []),
-    tipo_programa: def.tipo_programa,
-    descricao: def.descricao,
-    capa: (def as any).capa || null,
-    thumb: (def as any).thumb || null,
-    selo: (def as any).selo || null,
-    cliente_id: clientObj.id,
-    cliente_nome: clientObj.nome_empresarial || clientObj.nome,
-  }));
+  const defaultList: HouseMixProgram[] = (defaultProfile?.programas || []).map((def, idx) => {
+    const safeSelo = resolveProgramSelo(def);
+    const safeCapa = resolveProgramCover(def) || safeSelo;
+    const safeThumb = resolveProgramThumb(def) || safeCapa || safeSelo;
+    return {
+      id: (def as any).id || `housemix_${normKey.replace(/\s+/g, "_").toLowerCase()}_${idx + 1}`,
+      nome: def.nome,
+      estudio: def.estudio.toUpperCase(),
+      horario_inicio: def.horario_inicio,
+      horario_fim: def.horario_fim,
+      dias_semana: def.dias_semana,
+      ativo: true,
+      apresentador_id: (def as any).apresentador_id || null,
+      apresentadores_ids: (def as any).apresentadores_ids || ((def as any).apresentador_id ? [(def as any).apresentador_id] : []),
+      tipo_programa: def.tipo_programa,
+      descricao: def.descricao,
+      capa: safeCapa || null,
+      thumb: safeThumb || null,
+      selo: safeSelo || null,
+      cliente_id: clientObj.id,
+      cliente_nome: clientObj.nome_empresarial || clientObj.nome,
+    };
+  });
 
   // Mescla: padrão -> supabase -> customizados
   const getProgKey = (p: any) =>

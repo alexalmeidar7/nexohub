@@ -56,6 +56,14 @@ import {
   DEFAULT_STATION_DATA,
   type HouseMixProgram
 } from "@/lib/houseMixProgramasService";
+import {
+  resolveProgramBadge,
+  resolveProgramSelo,
+  resolveProgramCover,
+  resolveProgramThumb,
+  isSafeImageUrl,
+  sanitizeProgramImages,
+} from "@/lib/programImageResolver";
 
 const DEFAULT_ESTUDIOS = ["ESTÚDIO FM", "PODCAST"];
 const ESTUDIOS_STORAGE_KEY = "nexohub_estudios_cadastrados";
@@ -101,6 +109,69 @@ function ClassificacaoBadge({ value, size = 20 }: { value: string; size?: number
     >
       {item.value}
     </span>
+  );
+}
+
+export function ProgramBadge({
+  program,
+  size = 36,
+  className
+}: {
+  program?: {
+    nome?: string | null;
+    selo?: string | null;
+    capa?: string | null;
+    thumb?: string | null;
+  } | null;
+  size?: number;
+  className?: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const resolved = useMemo(
+    () => resolveProgramBadge(program),
+    [program?.selo, program?.capa, program?.thumb, program?.nome]
+  );
+
+  useEffect(() => {
+    setHasError(false);
+  }, [resolved]);
+
+  if (resolved && !hasError) {
+    return (
+      <img
+        src={resolved}
+        alt={program?.nome || "Programa"}
+        onError={() => setHasError(true)}
+        className={cn("object-cover shrink-0 select-none", className)}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: Math.round(size * 0.28),
+          backgroundColor: "#0A2540",
+          border: "1.5px solid rgba(0, 194, 203, 0.35)",
+          boxShadow: "0 2px 6px rgba(10,37,64,0.12)",
+        }}
+      />
+    );
+  }
+
+  const initial = (program?.nome || "P").trim().charAt(0).toUpperCase();
+  return (
+    <div
+      className={cn("shrink-0 flex items-center justify-center font-black select-none text-white", className)}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size * 0.28),
+        background: "linear-gradient(135deg, #00C2CB 0%, #0055FF 100%)",
+        fontSize: Math.max(11, Math.round(size * 0.4)),
+        border: "1px solid #E8F4F8",
+        boxShadow: "0 2px 6px rgba(10,37,64,0.06)",
+      }}
+      title={program?.nome || "Programa"}
+    >
+      {initial}
+    </div>
   );
 }
 
@@ -163,7 +234,7 @@ export async function getProgramas(targetUserId?: string | null, userEmail?: str
     }
     const { data } = await query;
     if (data && data.length > 0) {
-      return data.map(p => ({
+      return data.map(p => sanitizeProgramImages({
         id: p.id || `prog_${Math.random()}`,
         nome: p.nome || "Programa Sem Nome",
         apresentadorId: p.apresentador_id || "",
@@ -191,7 +262,7 @@ export async function getProgramas(targetUserId?: string | null, userEmail?: str
   try {
     const stationData = await fetchStationDatabaseData(effectiveId || targetSlug || userEmail);
     if (stationData?.programas && stationData.programas.length > 0) {
-      return stationData.programas.map(p => ({
+      return stationData.programas.map(p => sanitizeProgramImages({
         id: p.id || `prog_${Math.random()}`,
         nome: p.nome || "Programa Sem Nome",
         apresentadorId: p.apresentador_id || p.apresentadorId || "",
@@ -218,7 +289,7 @@ export async function getProgramas(targetUserId?: string | null, userEmail?: str
 
   const fallback = getClientHouseMixProgramsSync(acc?.id || targetUserId, acc?.email || userEmail);
   const fallbackList: any[] = Array.isArray(fallback) ? fallback : (fallback?.programas || []);
-  return fallbackList.map(p => ({
+  return fallbackList.map(p => sanitizeProgramImages({
     id: p.id || `prog_${Math.random()}`,
     nome: p.nome || "Programa Sem Nome",
     apresentadorId: p.apresentador_id || p.apresentadorId || "",
@@ -452,9 +523,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
               <X size={16} />
             </button>
             <div className="flex gap-5">
-              {(detailProg.capa || detailProg.thumb) && (
-                <img src={detailProg.capa || detailProg.thumb} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-2xl shrink-0" style={{ border: `2px solid ${CARD_BG}` }} />
-              )}
+              <ProgramBadge program={detailProg} size={160} className="w-40 h-40 rounded-2xl shrink-0" />
               <div className="space-y-2 flex-1 min-w-0">
                 <h2 className="text-xl font-extrabold pr-6" style={{ color: DARK }}>{detailProg.nome}</h2>
                 <p className="text-xs flex items-center gap-1.5 font-semibold" style={{ color: "rgba(10,37,64,0.6)" }}>
@@ -869,6 +938,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         }));
       }
 
+      combinedProgs = combinedProgs.map(p => sanitizeProgramImages(p));
       combinedProgs.sort((a, b) => (a.horarioInicio || "").localeCompare(b.horarioInicio || ""));
       setProgramas(combinedProgs);
 
@@ -1271,7 +1341,10 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     if (nomeInputRef.current) nomeInputRef.current.value = p.nome;
     setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId);
     setApresentadoresIds(p.apresentadoresIds?.length > 0 ? p.apresentadoresIds : (p.apresentadorId ? [p.apresentadorId] : []));
-    setSelo(p.selo); setCapa(p.capa); setThumb(p.thumb);
+    const safeSelo = resolveProgramSelo(p);
+    const safeCapa = resolveProgramCover(p) || safeSelo;
+    const safeThumb = resolveProgramThumb(p) || safeCapa || safeSelo;
+    setSelo(safeSelo); setCapa(safeCapa); setThumb(safeThumb);
     setDiasSemana(p.diasSemana); setHorarioInicio(p.horarioInicio); setHorarioFim(p.horarioFim);
     setEstudio(p.estudio); setAtivo(p.ativo); setVariavel(p.variavel); setAgendamentoVariavel(p.dataVariavel ? "data" : "dias"); setDescricao(p.descricao);
     setDataVariavel(p.dataVariavel ? new Date(p.dataVariavel + "T12:00:00") : undefined);
@@ -1569,33 +1642,43 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     boxShadow: "0 2px 8px rgba(0, 85, 255, 0.25)",
   };
 
-  const uploadBox = (img: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, w: number, h: number, labelName = "Upload") => (
-    <label
-      className="group relative flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/20 bg-slate-50/80 shadow-xs"
-      style={{
-        width: w,
-        height: h,
-      }}
-    >
-      {img ? (
-        <div className="relative w-full h-full group">
-          <img src={img} alt="" className="w-full h-full object-cover rounded-2xl" />
-          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-2xl">
-            <Upload size={14} />
-            <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5">Trocar</span>
+  const uploadBox = (img: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, w: number, h: number, labelName = "Upload") => {
+    const isSafe = isSafeImageUrl(img);
+    return (
+      <label
+        className="group relative flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#0055ff] hover:bg-blue-50/20 bg-slate-50/80 shadow-xs"
+        style={{
+          width: w,
+          height: h,
+        }}
+      >
+        {isSafe ? (
+          <div className="relative w-full h-full group">
+            <img
+              src={img}
+              alt=""
+              className="w-full h-full object-cover rounded-2xl"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = "none";
+              }}
+            />
+            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-2xl">
+              <Upload size={14} />
+              <span className="text-[9px] font-bold uppercase tracking-wider mt-0.5">Trocar</span>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center gap-1 p-1 text-slate-400 group-hover:text-[#0055ff] transition-colors">
-          <Upload size={15} className="text-slate-400 group-hover:text-[#0055ff] transition-colors" />
-          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500 group-hover:text-[#0055ff] transition-colors">
-            {labelName}
-          </span>
-        </div>
-      )}
-      <input type="file" accept="image/*" onChange={onChange} style={{ display: "none" }} />
-    </label>
-  );
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-1 p-1 text-slate-400 group-hover:text-[#0055ff] transition-colors">
+            <Upload size={15} className="text-slate-400 group-hover:text-[#0055ff] transition-colors" />
+            <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500 group-hover:text-[#0055ff] transition-colors">
+              {labelName}
+            </span>
+          </div>
+        )}
+        <input type="file" accept="image/*" onChange={onChange} style={{ display: "none" }} />
+      </label>
+    );
+  };
 
   return (
     <div className="animate-fade-in space-y-8 max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
@@ -2211,8 +2294,8 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                 {sortedProgramas.map((p, i) => (
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
                     <td style={{ padding: "10px 14px", fontWeight: 700 }}>
-                      <div className="flex items-center gap-2">
-                        {(p.capa || p.thumb) && <img src={p.capa || p.thumb} alt="" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover", border: `1px solid ${CARD_BG}` }} />}
+                      <div className="flex items-center gap-3">
+                        <ProgramBadge program={p} size={36} />
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span>{p.nome}</span>
