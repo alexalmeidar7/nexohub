@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
+import { getSnapshotTable, getSnapshotProgramas, getSnapshotTestemunhais } from "@/lib/supabaseDatabaseSnapshot";
+import { findClientAccountById, findClientAccountByEmail, POSITIVA_USER_ID, POSITIVA_TESTEMUNHAIS_IDS, isPositivaStationAccount } from "@/lib/clientAuthAccounts";
 import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar, Check, Bold, Italic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -119,7 +120,12 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     programa_ids: [] as string[],
   });
 
-  const ownerId = effectiveUserId || user?.id;
+  const clientAcc = (effectiveUserId && findClientAccountById(effectiveUserId)) ||
+                    (user?.id && findClientAccountById(user.id)) ||
+                    (user?.email && findClientAccountByEmail(user.email));
+  const ownerId = effectiveUserId || clientAcc?.parentUserId || clientAcc?.id || user?.id;
+  const ownerSlug = clientAcc?.slug || (user as any)?.user_metadata?.slug || "";
+  const isPositivaStation = isPositivaStationAccount(ownerId) || isPositivaStationAccount(ownerSlug);
 
   const getLocalStorageKey = (uId: string) => `nexohub_testemunhais_${uId}`;
 
@@ -128,7 +134,18 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       const raw = localStorage.getItem(getLocalStorageKey(uId));
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          if (!isPositivaStation) {
+            const cleaned = parsed.filter((t: any) =>
+              t.user_id !== POSITIVA_USER_ID && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id)
+            );
+            if (cleaned.length !== parsed.length) {
+              localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(cleaned));
+            }
+            return cleaned;
+          }
+          return parsed;
+        }
       }
     } catch {}
     return [];
@@ -136,7 +153,10 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const saveStoredTestemunhais = (uId: string, list: Testemunhal[]) => {
     try {
-      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+      const toSave = isPositivaStation
+        ? list
+        : list.filter((t: any) => t.user_id !== POSITIVA_USER_ID && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id));
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(toSave));
     } catch {}
   };
 
@@ -164,7 +184,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       if (progsFromHelper && progsFromHelper.length > 0) {
         pList = progsFromHelper.map(p => ({ id: p.id, nome: p.nome }));
       } else {
-        const { data: pData } = await supabase.from("programas").select("id, nome").order("nome");
+        const { data: pData } = await supabase.from("programas").select("id, nome").eq("user_id", ownerId).order("nome");
         if (pData) pList = pData;
       }
     } catch (e) {
@@ -173,29 +193,38 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
     if (tList.length === 0 || pList.length === 0) {
       try {
-        const targetSlugOrId = ownerId || "positivafm";
-        const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
-          body: { slug: targetSlugOrId }
-        });
-        if (tList.length === 0 && edgeData?.testemunhais?.length > 0) {
-          tList = edgeData.testemunhais.map((t: any) => ({
-            ...t,
-            texto: t.texto || "",
-          })) as Testemunhal[];
-        }
-        if (pList.length === 0 && edgeData?.programas?.length > 0) {
-          pList = edgeData.programas.map((p: any) => ({ id: p.id, nome: p.nome }));
+        const targetSlugOrId = ownerSlug || ownerId;
+        if (targetSlugOrId) {
+          const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
+            body: { slug: targetSlugOrId }
+          });
+          if (tList.length === 0 && edgeData?.testemunhais?.length > 0) {
+            const validTests = edgeData.testemunhais.filter((t: any) =>
+              t.user_id === ownerId || (isPositivaStation && t.user_id === POSITIVA_USER_ID)
+            );
+            if (validTests.length > 0) {
+              tList = validTests.map((t: any) => ({
+                ...t,
+                texto: t.texto || "",
+              })) as Testemunhal[];
+            }
+          }
+          if (pList.length === 0 && edgeData?.programas?.length > 0) {
+            const validProgs = edgeData.programas.filter((p: any) =>
+              p.user_id === ownerId || (isPositivaStation && p.user_id === POSITIVA_USER_ID)
+            );
+            if (validProgs.length > 0) {
+              pList = validProgs.map((p: any) => ({ id: p.id, nome: p.nome }));
+            }
+          }
         }
       } catch {}
     }
 
     if (tList.length === 0) {
-      const snapTests = getSnapshotTable("testemunhais");
-      const filtered = snapTests.filter((t: any) =>
-        !ownerId || t.user_id === ownerId || t.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
-      );
-      if (filtered.length > 0) {
-        tList = filtered.map((t: any) => ({
+      const snapTests = getSnapshotTestemunhais(ownerSlug || ownerId);
+      if (snapTests && snapTests.length > 0) {
+        tList = snapTests.map((t: any) => ({
           ...t,
           texto: t.texto || "",
         })) as Testemunhal[];
@@ -203,12 +232,9 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     }
 
     if (pList.length === 0) {
-      const snapProgs = getSnapshotTable("programas");
-      const filtered = snapProgs.filter((p: any) =>
-        !ownerId || p.user_id === ownerId || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
-      );
-      if (filtered.length > 0) {
-        pList = filtered.map((p: any) => ({ id: p.id, nome: p.nome }));
+      const snapProgs = getSnapshotProgramas(ownerSlug || ownerId);
+      if (snapProgs && snapProgs.length > 0) {
+        pList = snapProgs.map((p: any) => ({ id: p.id, nome: p.nome }));
       }
     }
 
@@ -217,19 +243,20 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     const map = new Map<string, Testemunhal>();
     tList.forEach(t => map.set(t.id, t));
     localList.forEach(t => map.set(t.id, t));
-    const merged = Array.from(map.values());
+    let merged = Array.from(map.values());
+    if (!isPositivaStation) {
+      merged = merged.filter((t: any) => t.user_id !== POSITIVA_USER_ID && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id));
+    }
 
     setProgramas(pList);
     setItems(merged);
-    if (merged.length > 0) {
-      saveStoredTestemunhais(ownerId, merged);
-    }
+    saveStoredTestemunhais(ownerId, merged);
     setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-  }, [ownerId, user?.email]);
+  }, [ownerId, ownerSlug, user?.email]);
 
   const reset = () => {
     setForm({
@@ -555,7 +582,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                         {getLinkedProgramIds(item).length > 0 ? (
                           getLinkedProgramIds(item).map(pid => {
                             const prog = programas.find(p => p.id === pid || String(p.id).toLowerCase() === String(pid).toLowerCase())
-                              || getSnapshotTable("programas").find((p: any) => p.id === pid || String(p.id).toLowerCase() === String(pid).toLowerCase());
+                              || getSnapshotProgramas(ownerSlug || ownerId).find((p: any) => p.id === pid || String(p.id).toLowerCase() === String(pid).toLowerCase());
                             return (
                               <span key={pid} className="bg-[#0055ff]/10 text-[#0055ff] border border-[#0055ff]/20 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
                                 {prog ? prog.nome : pid}

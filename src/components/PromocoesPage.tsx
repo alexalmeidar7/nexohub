@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
+import { getSnapshotTable, getSnapshotPromocoes } from "@/lib/supabaseDatabaseSnapshot";
+import { findClientAccountById, findClientAccountByEmail, POSITIVA_USER_ID, isPositivaStationAccount } from "@/lib/clientAuthAccounts";
 import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check, Bold, Italic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -133,7 +134,12 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const [uploading1, setUploading1] = useState(false);
   const [uploading2, setUploading2] = useState(false);
 
-  const ownerId = effectiveUserId || user?.id;
+  const clientAcc = (effectiveUserId && findClientAccountById(effectiveUserId)) ||
+                    (user?.id && findClientAccountById(user.id)) ||
+                    (user?.email && findClientAccountByEmail(user.email));
+  const ownerId = effectiveUserId || clientAcc?.parentUserId || clientAcc?.id || user?.id;
+  const ownerSlug = clientAcc?.slug || (user as any)?.user_metadata?.slug || "";
+  const isPositivaStation = isPositivaStationAccount(ownerId) || isPositivaStationAccount(ownerSlug);
 
   const getLocalStorageKey = (uId: string) => `nexohub_promocoes_${uId}`;
 
@@ -142,7 +148,16 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       const raw = localStorage.getItem(getLocalStorageKey(uId));
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          if (!isPositivaStation) {
+            const cleaned = parsed.filter((p: any) => p.user_id !== POSITIVA_USER_ID);
+            if (cleaned.length !== parsed.length) {
+              localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(cleaned));
+            }
+            return cleaned;
+          }
+          return parsed;
+        }
       }
     } catch {}
     return [];
@@ -150,7 +165,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const saveStoredPromos = (uId: string, list: Promocao[]) => {
     try {
-      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(list));
+      const toSave = isPositivaStation ? list : list.filter((p: any) => (p as any).user_id !== POSITIVA_USER_ID);
+      localStorage.setItem(getLocalStorageKey(uId), JSON.stringify(toSave));
     } catch {}
   };
 
@@ -176,30 +192,34 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
     if (itemsList.length === 0) {
       try {
-        const targetSlugOrId = ownerId || "positivafm";
-        const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
-          body: { slug: targetSlugOrId }
-        });
-        if (edgeData?.promocoes?.length > 0) {
-          itemsList = edgeData.promocoes.map((p: any) => ({
-            ...p,
-            nome: p.nome || "",
-            texto: p.texto || "",
-            oferecimento: p.oferecimento || "",
-            imagem_url: p.imagem_url || "",
-            banner_l_url: p.banner_l_url || "",
-          })) as Promocao[];
+        const targetSlugOrId = ownerSlug || ownerId;
+        if (targetSlugOrId) {
+          const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
+            body: { slug: targetSlugOrId }
+          });
+          if (edgeData?.promocoes?.length > 0) {
+            const validPromos = edgeData.promocoes.filter((p: any) =>
+              p.user_id === ownerId || (isPositivaStation && p.user_id === POSITIVA_USER_ID)
+            );
+            if (validPromos.length > 0) {
+              itemsList = validPromos.map((p: any) => ({
+                ...p,
+                nome: p.nome || "",
+                texto: p.texto || "",
+                oferecimento: p.oferecimento || "",
+                imagem_url: p.imagem_url || "",
+                banner_l_url: p.banner_l_url || "",
+              })) as Promocao[];
+            }
+          }
         }
       } catch {}
     }
 
     if (itemsList.length === 0) {
-      const snapPromos = getSnapshotTable("promocoes");
-      const filtered = snapPromos.filter((p: any) =>
-        !ownerId || p.user_id === ownerId || p.user_id === "d17e65af-e407-466f-9b60-b55c43399513"
-      );
-      if (filtered.length > 0) {
-        itemsList = filtered.map((p: any) => ({
+      const snapPromos = getSnapshotPromocoes(ownerSlug || ownerId);
+      if (snapPromos && snapPromos.length > 0) {
+        itemsList = snapPromos.map((p: any) => ({
           ...p,
           nome: p.nome || "",
           texto: p.texto || "",
@@ -214,18 +234,19 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     const map = new Map<string, Promocao>();
     itemsList.forEach(p => map.set(p.id, p));
     localList.forEach(p => map.set(p.id, p));
-    const merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    let merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    if (!isPositivaStation) {
+      merged = merged.filter((p: any) => p.user_id !== POSITIVA_USER_ID);
+    }
 
     setItems(merged);
-    if (merged.length > 0) {
-      saveStoredPromos(ownerId, merged);
-    }
+    saveStoredPromos(ownerId, merged);
     setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-  }, [ownerId]);
+  }, [ownerId, ownerSlug, user?.email]);
 
   const reset = () => {
     setForm({

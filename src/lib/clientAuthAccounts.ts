@@ -236,3 +236,22 @@ export function verifyClientCredentials(email: string, pass: string): ClientAcco
 
   return (isDirectMatch || isCommonMatch || isFlexMatch) ? account : null;
 }
+
+export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
+
+export const POSITIVA_TESTEMUNHAIS_IDS = new Set([
+  "5bae884c-e5a1-4c7a-93bc-a52b45ecec7b",
+  "ae045a74-377e-4a8b-9d9d-67302c986210",
+  "b4eab64f-a075-4400-af7a-90b0767eef4a",
+  "dc1b243d-18dd-4b7c-859c-8026a238e2e3",
+  "b59da300-d764-4ac8-9862-e25778359532",
+  "a148aa9c-5888-4197-948d-bcab87654e76",
+  "51251964-bc69-4785-acbd-0ba4df17eaf3",
+]);
+
+export function isPositivaStationAccount(userIdOrSlug?: string | null): boolean {
+  if (!userIdOrSlug) return false;
+  const clean = userIdOrSlug.trim().toLowerCase();
+  return clean === POSITIVA_USER_ID || clean === "positivafm" || clean === "positiva";
+}
+

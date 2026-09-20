@@ -1719,12 +1719,12 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               )}
               {isAdmin && (currentPage === "testemunhais" || (minimizedModules.includes("testemunhais") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "testemunhais" ? "block" : "none" }}>
-                  <TestemunhaisPage effectiveUserId={effectiveUserId} />
+                  <TestemunhaisPage effectiveUserId={effectiveUserId || targetStationUserId} />
                 </div>
               )}
               {isAdmin && (currentPage === "promocoes" || (minimizedModules.includes("promocoes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "promocoes" ? "block" : "none" }}>
-                  <PromocoesPage effectiveUserId={effectiveUserId} />
+                  <PromocoesPage effectiveUserId={effectiveUserId || targetStationUserId} />
                 </div>
               )}
               {isAdmin && (currentPage === "configtelapromo" || (minimizedModules.includes("configtelapromo") && currentPage === "dashboard")) && (
@@ -2276,7 +2276,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             }}
           >
             <Suspense fallback={<ModulePageSkeleton variant="form" />}>
-              <TestemunhaisPage effectiveUserId={effectiveUserId} />
+              <TestemunhaisPage effectiveUserId={effectiveUserId || targetStationUserId} />
             </Suspense>
           </HouseMixWindow>
         )}
@@ -2300,7 +2300,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             }}
           >
             <Suspense fallback={<ModulePageSkeleton variant="form" />}>
-              <PromocoesPage effectiveUserId={effectiveUserId} />
+              <PromocoesPage effectiveUserId={effectiveUserId || targetStationUserId} />
             </Suspense>
           </HouseMixWindow>
         )}

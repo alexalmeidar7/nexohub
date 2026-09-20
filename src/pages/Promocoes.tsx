@@ -20,10 +20,11 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
 import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
-import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { findClientAccountByEmail, findClientAccountById, POSITIVA_TESTEMUNHAIS_IDS, isPositivaStationAccount } from "@/lib/clientAuthAccounts";
 import { DEFAULT_STATION_PARTICIPANTES } from "@/lib/stationParticipantesData";
 
 export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
+
 
 interface Promocao {
   id: string;
@@ -886,17 +887,21 @@ export default function PromocoesKiosk() {
       // Fallback para snapshot estático local se ainda estiver vazio
       if (allPromos.length === 0) {
         const snapPromos = getSnapshotTable("promocoes");
-        const filtered = snapPromos.filter((p: any) =>
-          !localUid || p.user_id === localUid || p.user_id === POSITIVA_USER_ID || !p.user_id
-        );
-        allPromos = filtered.length > 0 ? filtered : snapPromos;
+        const filtered = snapPromos.filter((p: any) => {
+          if (localUid && p.user_id === localUid) return true;
+          if (isPositivaStation && (p.user_id === POSITIVA_USER_ID || !p.user_id)) return true;
+          return false;
+        });
+        allPromos = isPositivaStation ? (filtered.length > 0 ? filtered : snapPromos) : filtered;
       }
       if (activeTestemunhais.length === 0) {
         const snapTests = getSnapshotTable("testemunhais");
-        const filtered = snapTests.filter((t: any) =>
-          !localUid || t.user_id === localUid || t.user_id === POSITIVA_USER_ID || !t.user_id
-        );
-        activeTestemunhais = filtered.length > 0 ? filtered : snapTests;
+        const filtered = snapTests.filter((t: any) => {
+          if (localUid && t.user_id === localUid) return true;
+          if (isPositivaStation && (t.user_id === POSITIVA_USER_ID || !t.user_id)) return true;
+          return false;
+        });
+        activeTestemunhais = isPositivaStation ? (filtered.length > 0 ? filtered : snapTests) : filtered;
       }
 
       if (localUid) {
@@ -912,6 +917,10 @@ export default function PromocoesKiosk() {
             }
           }
         } catch {}
+        if (!isPositivaStation) {
+          activeTestemunhais = activeTestemunhais.filter((t: any) => t.user_id !== POSITIVA_USER_ID && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id));
+          allPromos = allPromos.filter((p: any) => p.user_id !== POSITIVA_USER_ID);
+        }
         try {
           localStorage.setItem(`nexohub_testemunhais_${localUid}`, JSON.stringify(activeTestemunhais));
           localStorage.setItem(`nexohub_promocoes_${localUid}`, JSON.stringify(allPromos));

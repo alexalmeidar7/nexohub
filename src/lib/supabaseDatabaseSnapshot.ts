@@ -250,3 +250,56 @@ export function getSnapshotStorageObjects(bucketName?: string): any[] {
   }
   return db.storage[bucketName] || [];
 }
+
+export function getSnapshotTestemunhais(userIdOrSlug?: string): any[] {
+  const allTests = getSnapshotTable('testemunhais');
+  if (!userIdOrSlug) return [];
+
+  const normKey = normalizeClientKey(userIdOrSlug);
+  if (normKey === "INTERATIVA FM") {
+    return allTests.filter((t: any) => t.user_id === "b2f70324-d086-4a5d-a407-cbc4acf98dce");
+  }
+  if (normKey === "POSITIVA FM") {
+    return allTests.filter((t: any) => t.user_id === "d17e65af-e407-466f-9b60-b55c43399513");
+  }
+
+  const empresa = getSnapshotEmpresa(userIdOrSlug);
+  const targetUserId = empresa?.user_id;
+  if (targetUserId) {
+    const matched = allTests.filter((t: any) => t.user_id === targetUserId);
+    if (matched.length > 0) return matched;
+  }
+
+  const norm = normalizeMatch(userIdOrSlug);
+  return allTests.filter((t: any) => {
+    const tUser = normalizeMatch(t.user_id);
+    return tUser && (tUser === norm || norm.includes(tUser) || tUser.includes(norm));
+  });
+}
+
+export function getSnapshotPromocoes(userIdOrSlug?: string): any[] {
+  const allPromos = getSnapshotTable('promocoes');
+  if (!userIdOrSlug) return [];
+
+  const normKey = normalizeClientKey(userIdOrSlug);
+  if (normKey === "INTERATIVA FM") {
+    return allPromos.filter((p: any) => p.user_id === "b2f70324-d086-4a5d-a407-cbc4acf98dce");
+  }
+  if (normKey === "POSITIVA FM") {
+    return allPromos.filter((p: any) => p.user_id === "d17e65af-e407-466f-9b60-b55c43399513");
+  }
+
+  const empresa = getSnapshotEmpresa(userIdOrSlug);
+  const targetUserId = empresa?.user_id;
+  if (targetUserId) {
+    const matched = allPromos.filter((p: any) => p.user_id === targetUserId);
+    if (matched.length > 0) return matched;
+  }
+
+  const norm = normalizeMatch(userIdOrSlug);
+  return allPromos.filter((p: any) => {
+    const pUser = normalizeMatch(p.user_id);
+    return pUser && (pUser === norm || norm.includes(pUser) || pUser.includes(norm));
+  });
+}
+
