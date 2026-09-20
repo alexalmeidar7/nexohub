@@ -123,6 +123,23 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const isValidUuid = (val: any): boolean => {
+  if (typeof val !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+};
+
+const safeUuid = (): string => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+
 /* ─── Layout-token styles (respect user theme) ─── */
 const layoutCardStyle: React.CSSProperties = {
   background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff))",
@@ -296,7 +313,7 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
   const addGrupo = async () => {
     const ownerId = targetUserId || user?.id;
     if (!ownerId) return;
-    const newId = `grupo_${ownerId}_${Date.now()}`;
+    const newId = safeUuid();
     const newGrupo: Grupo = {
       id: newId,
       user_id: ownerId,
@@ -307,13 +324,16 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       tvs: [{ posicao: 0, imagem_url: "" }],
     };
     try {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("cenario_estudio_grupos")
-        .insert({ user_id: ownerId, nome: "Novo template", rows: 1, cols: 2, programa_ids: [] })
+        .insert({ id: newId, user_id: ownerId, nome: "Novo template", rows: 1, cols: 2, programa_ids: [] })
         .select()
         .single();
       if (data?.id) newGrupo.id = data.id;
-    } catch {}
+      if (error) console.warn("Notice inserting grupo:", error);
+    } catch (e) {
+      console.warn("Error inserting grupo:", e);
+    }
 
     setGrupos((prev) => {
       const next = [...prev, newGrupo];
@@ -338,9 +358,13 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
   const removeGrupo = async (id: string) => {
     if (!(await confirmDialog("Excluir este template e todas as suas TVs?"))) return;
     const ownerId = targetUserId || user?.id;
-    try {
-      await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
-    } catch {}
+    if (isValidUuid(id)) {
+      try {
+        await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
+      } catch (e) {
+        console.warn("Notice deleting grupo in supabase:", e);
+      }
+    }
     setGrupos((prev) => {
       const next = prev.filter((g) => g.id !== id);
       if (ownerId) {
@@ -385,78 +409,154 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
     );
   };
 
-  const saveGrupo = async (grupo: Grupo) => {
+  const saveGrupo = async (grupoToSave: Grupo) => {
     const ownerId = targetUserId || user?.id;
     if (!ownerId) return;
-    setSavingId(grupo.id);
+
+    // Fresh group reference from state if available
+    const grupo = grupos.find((g) => g.id === grupoToSave.id) || grupoToSave;
+    const oldGroupId = grupo.id;
+    setSavingId(oldGroupId);
+
     try {
-      // 1) update grupo in supabase
+      // 1) Ensure grupo.id is a valid UUID for PostgreSQL
+      let currentGroupId = isValidUuid(oldGroupId) ? oldGroupId : safeUuid();
+      const validProgramaIds = (grupo.programa_ids || []).filter(isValidUuid);
+
       try {
-        await (supabase as any)
+        const { data: savedGrp, error: grpErr } = await (supabase as any)
           .from("cenario_estudio_grupos")
           .upsert({
-            id: grupo.id,
+            id: currentGroupId,
             user_id: ownerId,
-            nome: grupo.nome,
-            rows: grupo.rows,
-            cols: grupo.cols,
-            programa_ids: grupo.programa_ids,
-            updated_at: new Date().toISOString()
-          });
+            nome: grupo.nome || "Template Cenário",
+            rows: Number(grupo.rows) || 1,
+            cols: Number(grupo.cols) || 1,
+            programa_ids: validProgramaIds,
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .maybeSingle();
+
+        if (grpErr) {
+          console.warn("Notice upserting grupo in supabase:", grpErr);
+        } else if (savedGrp?.id) {
+          currentGroupId = savedGrp.id;
+        }
       } catch (err) {
         console.warn("Error upserting grupo in supabase:", err);
       }
 
-      // 2) upload single artwork (posicao=0) if pending
+      // 2) Upload single artwork (posicao=0) if pending
       const arte = grupo.tvs.find((t) => t.posicao === 0);
       let arteUrl = arte?.imagem_url || "";
+
       if (arte?._file) {
-        // Upload as PNG directly (vMix compatibility - URL must end in .png)
-        const pngPath = `${ownerId}/${grupo.id}/arte-${Date.now()}.png`;
-        const { error: upErr } = await (supabase as any).storage
-          .from("cenario-estudio")
-          .upload(pngPath, arte._file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
-        if (upErr) throw upErr;
-        const { data: urlData } = (supabase as any).storage.from("cenario-estudio").getPublicUrl(pngPath);
-        arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+        const ext = arte._file.type?.includes("webp") ? "webp" : arte._file.type?.includes("jpeg") ? "jpg" : "png";
+        const storagePath = `${ownerId}/cenario-estudio/${currentGroupId}/arte-${Date.now()}.${ext}`;
+        const fileContentType = arte._file.type || "image/png";
+        let uploadSuccess = false;
+
+        // Try primary bucket: empresa-assets
+        try {
+          const { error: upErr } = await (supabase as any).storage
+            .from("empresa-assets")
+            .upload(storagePath, arte._file, {
+              upsert: true,
+              contentType: fileContentType,
+              cacheControl: "3600",
+            });
+          if (!upErr) {
+            const { data: urlData } = (supabase as any).storage
+              .from("empresa-assets")
+              .getPublicUrl(storagePath);
+            if (urlData?.publicUrl) {
+              arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+              uploadSuccess = true;
+            }
+          } else {
+            console.warn("empresa-assets upload notice:", upErr);
+          }
+        } catch (e) {
+          console.warn("empresa-assets upload error:", e);
+        }
+
+        // Try fallback bucket: comercial
+        if (!uploadSuccess) {
+          try {
+            const comPath = `${ownerId}/cenarios/${currentGroupId}/arte-${Date.now()}.${ext}`;
+            const { error: comErr } = await (supabase as any).storage
+              .from("comercial")
+              .upload(comPath, arte._file, {
+                upsert: true,
+                contentType: fileContentType,
+                cacheControl: "3600",
+              });
+            if (!comErr) {
+              const { data: urlData } = (supabase as any).storage
+                .from("comercial")
+                .getPublicUrl(comPath);
+              if (urlData?.publicUrl) {
+                arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+                uploadSuccess = true;
+              }
+            } else {
+              console.warn("comercial upload notice:", comErr);
+            }
+          } catch (e) {
+            console.warn("comercial upload error:", e);
+          }
+        }
+
+        // Final fallback: use localPreview (base64) so user artwork is NEVER lost
+        if (!uploadSuccess && arte._localPreview) {
+          arteUrl = arte._localPreview;
+        }
+      } else if (!arteUrl && arte?._localPreview) {
+        arteUrl = arte._localPreview;
       }
 
-      // 3) Upsert TVs (single record holding the artwork)
-      if (arteUrl) {
-        try {
-          await (supabase as any).from("cenario_estudio_tvs").upsert(
-            { 
-              grupo_id: grupo.id, 
-              user_id: ownerId, 
-              posicao: 0, 
-              imagem_url: arteUrl,
-              updated_at: new Date().toISOString()
-            },
-            { onConflict: 'grupo_id,posicao' }
-          );
-        } catch (err) {
-          console.warn("Error upserting tvs in supabase:", err);
+      // 3) Upsert TVs (single record holding the artwork at posicao=0)
+      try {
+        const { error: tvErr } = await (supabase as any).from("cenario_estudio_tvs").upsert(
+          {
+            grupo_id: currentGroupId,
+            user_id: ownerId,
+            posicao: 0,
+            imagem_url: arteUrl || "",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "grupo_id,posicao" }
+        );
+        if (tvErr) {
+          console.warn("Notice upserting tvs in supabase:", tvErr);
         }
+      } catch (err) {
+        console.warn("Error upserting tvs in supabase:", err);
       }
 
       // 4) Update state & localStorage
       setGrupos((prev) => {
         const next = prev.map((g) => {
-          if (g.id !== grupo.id) return g;
+          if (g.id !== oldGroupId) return g;
           const others = g.tvs.filter((t) => t.posicao !== 0);
           return {
             ...grupo,
-            tvs: [{ posicao: 0, imagem_url: arteUrl || arte?.imagem_url || "" }, ...others],
+            id: currentGroupId,
+            tvs: [{ posicao: 0, imagem_url: arteUrl || arte?.imagem_url || "", _file: undefined, _localPreview: undefined }, ...others],
           };
         });
-        try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next)); } catch {}
+        try {
+          localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next));
+        } catch {}
         return next;
       });
 
       toast.success("Template salvo");
       setEditingIds((prev) => {
         const n = new Set(prev);
-        n.delete(grupo.id);
+        n.delete(oldGroupId);
+        n.delete(currentGroupId);
         return n;
       });
     } catch (e) {
