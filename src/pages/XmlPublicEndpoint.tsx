@@ -82,10 +82,10 @@ export default function XmlPublicEndpoint() {
           } catch {}
         }
 
-        const activeEnquete = getActiveEnquete(localEnquetes);
+        const activeEnquete = getActiveEnquete(localEnquetes, today, currentTime);
 
         if (activeEnquete) {
-          const generated = buildEnqueteXml(activeEnquete);
+          const generated = buildEnqueteXml(activeEnquete, stationName);
           if (isMounted) {
             setXmlContent(generated.trim());
             setLoading(false);

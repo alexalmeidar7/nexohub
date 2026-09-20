@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tag, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle, ExternalLink, Radio } from "lucide-react";
+import { Tag, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle, ExternalLink, Radio, StopCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,8 +95,6 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
   const fetchEnquetes = async () => {
     if (!targetUserId) return;
     
-    const { today, currentTime } = getBrasiliaDateTime();
-
     let rows: any[] = [];
     try {
       const { data } = await supabase
@@ -112,19 +110,34 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       console.warn("Supabase fetch enquetes warning:", err);
     }
 
+    // Tenta carregar do servidor local caso o browser tenha sido limpo
+    let serverEnquetes: EnqueteAgendada[] = [];
+    try {
+      const resp = await fetch(`/api/sync-xml-enquete?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
+      if (resp.ok) {
+        const json = await resp.json();
+        if (Array.isArray(json?.enquetes)) {
+          serverEnquetes = json.enquetes;
+        }
+      }
+    } catch {}
+
     const localList = getStoredEnquetes(targetUserId);
     const map = new Map<string, EnqueteAgendada>();
-    rows.forEach(r => map.set(r.id, r));
-    localList.forEach(r => map.set(r.id, r));
+    serverEnquetes.forEach(e => e?.id && map.set(e.id, e));
+    rows.forEach(r => r?.id && map.set(r.id, r));
+    localList.forEach(l => l?.id && map.set(l.id, { ...(map.get(l.id) || {}), ...l }));
+
     const merged = Array.from(map.values()).sort((a, b) => {
-      if (a.data_enquete !== b.data_enquete) {
-        return a.data_enquete.localeCompare(b.data_enquete);
-      }
-      return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
+      const dateCmp = (b.data_enquete || "").localeCompare(a.data_enquete || "");
+      if (dateCmp !== 0) return dateCmp;
+      return (b.horario_inicio || "").localeCompare(a.horario_inicio || "");
     });
 
     setEnquetes(merged as EnqueteAgendada[]);
-    saveStoredEnquetes(targetUserId, merged as EnqueteAgendada[]);
+    if (merged.length > 0) {
+      saveStoredEnquetes(targetUserId, merged as EnqueteAgendada[]);
+    }
     setLoading(false);
   };
 
@@ -204,16 +217,38 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
 
   const handlePutOnAir = async (item: EnqueteAgendada) => {
     if (!targetUserId) return;
-    const { today } = getBrasiliaDateTime();
-    const updatedItem: EnqueteAgendada = {
-      ...item,
-      data_enquete: today,
-      horario_inicio: "00:00",
-      horario_fim: "23:59",
-    };
-
+    const { today, currentTime } = getBrasiliaDateTime();
+    
+    // Encerra qualquer outra enquete que esteja ativa hoje para garantir exclusividade no ar
     const currentList = getStoredEnquetes(targetUserId);
-    const updated = [updatedItem, ...currentList.filter(e => e.id !== item.id)];
+    const updated = currentList.map(e => {
+      if (e.id === item.id) {
+        return {
+          ...e,
+          data_enquete: today,
+          horario_inicio: "00:00",
+          horario_fim: "23:59",
+        };
+      }
+      const st = getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime);
+      if (st === "active") {
+        return {
+          ...e,
+          horario_fim: currentTime,
+        };
+      }
+      return e;
+    });
+
+    if (!updated.some(e => e.id === item.id)) {
+      updated.unshift({
+        ...item,
+        data_enquete: today,
+        horario_inicio: "00:00",
+        horario_fim: "23:59",
+      });
+    }
+
     setEnquetes(updated);
     saveStoredEnquetes(targetUserId, updated);
 
@@ -233,7 +268,56 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       console.warn("Erro ao colocar enquete no ar:", err);
     }
 
-    toast.success("Enquete colocada no ar agora! XML atualizado.");
+    toast.success("Enquete colocada no ar agora! XML atualizado no vMix.");
+  };
+
+  const handleTakeOffAir = async (item: EnqueteAgendada) => {
+    if (!targetUserId) return;
+    const { today, currentTime } = getBrasiliaDateTime();
+    
+    // Calcula 1 minuto antes do horário atual para encerrar imediatamente a janela ativa
+    const [h, m] = currentTime.split(":").map(Number);
+    let totalMin = (h || 0) * 60 + (m || 0) - 1;
+    let newEnd = "00:00";
+    let newDate = today;
+    if (totalMin <= 0) {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      newDate = d.toISOString().slice(0, 10);
+      newEnd = "23:59";
+    } else {
+      const endH = String(Math.floor(totalMin / 60)).padStart(2, "0");
+      const endM = String(totalMin % 60).padStart(2, "0");
+      newEnd = `${endH}:${endM}`;
+    }
+
+    const updatedItem: EnqueteAgendada = {
+      ...item,
+      data_enquete: newDate,
+      horario_fim: newEnd,
+    };
+
+    const currentList = getStoredEnquetes(targetUserId);
+    const updated = currentList.map(e => e.id === item.id ? updatedItem : e);
+    setEnquetes(updated);
+    saveStoredEnquetes(targetUserId, updated);
+
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id);
+      if (isUuid) {
+        await supabase
+          .from("enquetes_agendadas")
+          .update({
+            data_enquete: newDate,
+            horario_fim: newEnd,
+          })
+          .eq("id", item.id);
+      }
+    } catch (err) {
+      console.warn("Erro ao tirar enquete do ar:", err);
+    }
+
+    toast.success("Enquete tirada do ar! XML desativado no vMix.");
   };
 
   const handleDelete = async (id: string) => {
@@ -531,7 +615,16 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
                     </td>
                     <td style={{ padding: "14px 20px", textAlign: "right" }}>
                       <div className="flex items-center justify-end gap-2">
-                        {status !== "active" && (
+                        {status === "active" ? (
+                          <button
+                            onClick={() => handleTakeOffAir(e)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-300 hover:bg-amber-600 hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
+                            title="Tirar esta enquete do ar e limpar o XML no vMix"
+                          >
+                            <StopCircle size={13} />
+                            TIRAR DO AR
+                          </button>
+                        ) : (
                           <button
                             onClick={() => handlePutOnAir(e)}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"

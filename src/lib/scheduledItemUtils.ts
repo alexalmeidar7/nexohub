@@ -56,10 +56,20 @@ export function isScheduleActive(
   return targetTime >= start || targetTime <= end;
 }
 
+function getDurationMinutes(start: string, end: string): number {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  let s = (sh || 0) * 60 + (sm || 0);
+  let e = (eh || 0) * 60 + (em || 0);
+  if (e < s) e += 24 * 60; // crosses midnight
+  return e - s;
+}
+
 export function getActiveEnquete<T extends { data_enquete?: string; horario_inicio?: string; horario_fim?: string }>(
   list: T[],
   refDate?: string,
-  refTime?: string
+  refTime?: string,
+  allowFallback = false
 ): T | null {
   if (!Array.isArray(list) || list.length === 0) return null;
 
@@ -67,21 +77,42 @@ export function getActiveEnquete<T extends { data_enquete?: string; horario_inic
   const targetDate = String(refDate || today).slice(0, 10);
   const targetTime = refTime || currentTime;
 
-  const strictlyActive = list.find((e) =>
+  const activeList = list.filter((e) =>
     isScheduleActive(e.data_enquete || "", e.horario_inicio || "", e.horario_fim || "", targetDate, targetTime)
   );
-  if (strictlyActive) return strictlyActive;
 
-  const todayItems = list.filter((e) => String(e.data_enquete || "").slice(0, 10) === targetDate);
-  if (todayItems.length > 0) return todayItems[0];
+  if (activeList.length === 1) return activeList[0];
+  if (activeList.length > 1) {
+    // Se múltiplas enquetes estiverem ativas, prioriza a janela mais específica (menor duração) ou início mais recente
+    activeList.sort((a, b) => {
+      const aStart = normTime(a.horario_inicio, "00:00");
+      const bStart = normTime(b.horario_inicio, "00:00");
+      const aEnd = normTime(a.horario_fim, "23:59");
+      const bEnd = normTime(b.horario_fim, "23:59");
+      const aDur = getDurationMinutes(aStart, aEnd);
+      const bDur = getDurationMinutes(bStart, bEnd);
+      if (aDur !== bDur) return aDur - bDur;
+      if (aStart !== bStart) return bStart.localeCompare(aStart);
+      return 0;
+    });
+    return activeList[0];
+  }
 
-  return list[0] || null;
+  // Sem enquete ativa no momento: só usa fallback se explicitamente autorizado (preview)
+  if (allowFallback) {
+    const todayItems = list.filter((e) => String(e.data_enquete || "").slice(0, 10) === targetDate);
+    if (todayItems.length > 0) return todayItems[0];
+    return list[0] || null;
+  }
+
+  return null;
 }
 
 export function getActiveQuiz<T extends { data_quiz?: string; horario_inicio?: string; horario_fim?: string }>(
   list: T[],
   refDate?: string,
-  refTime?: string
+  refTime?: string,
+  allowFallback = false
 ): T | null {
   if (!Array.isArray(list) || list.length === 0) return null;
 
@@ -89,21 +120,40 @@ export function getActiveQuiz<T extends { data_quiz?: string; horario_inicio?: s
   const targetDate = String(refDate || today).slice(0, 10);
   const targetTime = refTime || currentTime;
 
-  const strictlyActive = list.find((q) =>
+  const activeList = list.filter((q) =>
     isScheduleActive(q.data_quiz || "", q.horario_inicio || "", q.horario_fim || "", targetDate, targetTime)
   );
-  if (strictlyActive) return strictlyActive;
 
-  const todayItems = list.filter((q) => String(q.data_quiz || "").slice(0, 10) === targetDate);
-  if (todayItems.length > 0) return todayItems[0];
+  if (activeList.length === 1) return activeList[0];
+  if (activeList.length > 1) {
+    activeList.sort((a, b) => {
+      const aStart = normTime(a.horario_inicio, "00:00");
+      const bStart = normTime(b.horario_inicio, "00:00");
+      const aEnd = normTime(a.horario_fim, "23:59");
+      const bEnd = normTime(b.horario_fim, "23:59");
+      const aDur = getDurationMinutes(aStart, aEnd);
+      const bDur = getDurationMinutes(bStart, bEnd);
+      if (aDur !== bDur) return aDur - bDur;
+      if (aStart !== bStart) return bStart.localeCompare(aStart);
+      return 0;
+    });
+    return activeList[0];
+  }
 
-  return list[0] || null;
+  if (allowFallback) {
+    const todayItems = list.filter((q) => String(q.data_quiz || "").slice(0, 10) === targetDate);
+    if (todayItems.length > 0) return todayItems[0];
+    return list[0] || null;
+  }
+
+  return null;
 }
 
 export function getActiveBatalha<T extends { data_batalha?: string; horario_inicio?: string; horario_fim?: string }>(
   list: T[],
   refDate?: string,
-  refTime?: string
+  refTime?: string,
+  allowFallback = false
 ): T | null {
   if (!Array.isArray(list) || list.length === 0) return null;
 
@@ -111,15 +161,33 @@ export function getActiveBatalha<T extends { data_batalha?: string; horario_inic
   const targetDate = String(refDate || today).slice(0, 10);
   const targetTime = refTime || currentTime;
 
-  const strictlyActive = list.find((b) =>
+  const activeList = list.filter((b) =>
     isScheduleActive(b.data_batalha || "", b.horario_inicio || "", b.horario_fim || "", targetDate, targetTime)
   );
-  if (strictlyActive) return strictlyActive;
 
-  const todayItems = list.filter((b) => String(b.data_batalha || "").slice(0, 10) === targetDate);
-  if (todayItems.length > 0) return todayItems[0];
+  if (activeList.length === 1) return activeList[0];
+  if (activeList.length > 1) {
+    activeList.sort((a, b) => {
+      const aStart = normTime(a.horario_inicio, "00:00");
+      const bStart = normTime(b.horario_inicio, "00:00");
+      const aEnd = normTime(b.horario_fim, "23:59");
+      const bEnd = normTime(b.horario_fim, "23:59");
+      const aDur = getDurationMinutes(aStart, aEnd);
+      const bDur = getDurationMinutes(bStart, bEnd);
+      if (aDur !== bDur) return aDur - bDur;
+      if (aStart !== bStart) return bStart.localeCompare(aStart);
+      return 0;
+    });
+    return activeList[0];
+  }
 
-  return list[0] || null;
+  if (allowFallback) {
+    const todayItems = list.filter((b) => String(b.data_batalha || "").slice(0, 10) === targetDate);
+    if (todayItems.length > 0) return todayItems[0];
+    return list[0] || null;
+  }
+
+  return null;
 }
 
 export function getScheduleStatus(
@@ -195,16 +263,28 @@ export interface BatalhaData {
   horario_fim: string;
 }
 
-export function buildEnqueteXml(enquete?: EnqueteData | null): string {
+export function buildEnqueteXml(enquete?: EnqueteData | null, emissora = "House Mix Emissora"): string {
   if (!enquete || !enquete.pergunta) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
-  <enquete>
+  <enquete ativa="0">
+    <emissora>${escapeXml(emissora)}</emissora>
     <pergunta></pergunta>
+    <opcao_a></opcao_a>
+    <opcao_b></opcao_b>
+    <opcao_c></opcao_c>
+    <opcao_d></opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
     <resposta1></resposta1>
     <resposta2></resposta2>
     <resposta3></resposta3>
     <resposta4></resposta4>
+    <resposta_correta></resposta_correta>
+    <horario_inicio></horario_inicio>
+    <horario_fim></horario_fim>
   </enquete>
 </items>
 `;
@@ -212,8 +292,17 @@ export function buildEnqueteXml(enquete?: EnqueteData | null): string {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
-  <enquete>
+  <enquete ativa="1">
+    <emissora>${escapeXml(emissora)}</emissora>
     <pergunta>${escapeXml(enquete.pergunta)}</pergunta>
+    <opcao_a>${escapeXml(enquete.resposta1)}</opcao_a>
+    <opcao_b>${escapeXml(enquete.resposta2)}</opcao_b>
+    <opcao_c>${escapeXml(enquete.resposta3 || "")}</opcao_c>
+    <opcao_d>${escapeXml(enquete.resposta4 || "")}</opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
     <resposta1>${escapeXml(enquete.resposta1)}</resposta1>
     <resposta2>${escapeXml(enquete.resposta2)}</resposta2>
     <resposta3>${escapeXml(enquete.resposta3 || "")}</resposta3>

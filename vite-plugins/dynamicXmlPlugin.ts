@@ -63,66 +63,150 @@ function isScheduleActive(
   return targetTime >= start || targetTime <= end;
 }
 
-function getActiveEnquete(list: any[], today: string, currentTime: string): any {
+function getDurationMinutes(start: string, end: string): number {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  let s = (sh || 0) * 60 + (sm || 0);
+  let e = (eh || 0) * 60 + (em || 0);
+  if (e < s) e += 24 * 60;
+  return e - s;
+}
+
+function getActiveEnquete(list: any[], today: string, currentTime: string, allowFallback = false): any {
   if (!Array.isArray(list) || list.length === 0) return undefined;
   const targetDate = String(today).slice(0, 10);
-  const strictlyActive = list.find((e: any) =>
+  const activeList = list.filter((e: any) =>
     isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, targetDate, currentTime)
   );
-  if (strictlyActive) return strictlyActive;
 
-  const todayItem = list.find((e: any) => String(e.data_enquete || "").slice(0, 10) === targetDate);
-  if (todayItem) return todayItem;
+  if (activeList.length === 1) return activeList[0];
+  if (activeList.length > 1) {
+    activeList.sort((a: any, b: any) => {
+      const aStart = normTime(a.horario_inicio, "00:00");
+      const bStart = normTime(b.horario_inicio, "00:00");
+      const aEnd = normTime(a.horario_fim, "23:59");
+      const bEnd = normTime(b.horario_fim, "23:59");
+      const aDur = getDurationMinutes(aStart, aEnd);
+      const bDur = getDurationMinutes(bStart, bEnd);
+      if (aDur !== bDur) return aDur - bDur;
+      if (aStart !== bStart) return bStart.localeCompare(aStart);
+      return 0;
+    });
+    return activeList[0];
+  }
 
-  return list[0];
+  if (allowFallback) {
+    const todayItem = list.find((e: any) => String(e.data_enquete || "").slice(0, 10) === targetDate);
+    if (todayItem) return todayItem;
+    return list[0];
+  }
+
+  return undefined;
 }
 
-function getActiveQuiz(list: any[], today: string, currentTime: string): any {
+function getActiveQuiz(list: any[], today: string, currentTime: string, allowFallback = false): any {
   if (!Array.isArray(list) || list.length === 0) return undefined;
   const targetDate = String(today).slice(0, 10);
-  const strictlyActive = list.find((q: any) =>
+  const activeList = list.filter((q: any) =>
     isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, targetDate, currentTime)
   );
-  if (strictlyActive) return strictlyActive;
 
-  const todayItem = list.find((q: any) => String(q.data_quiz || "").slice(0, 10) === targetDate);
-  if (todayItem) return todayItem;
+  if (activeList.length === 1) return activeList[0];
+  if (activeList.length > 1) {
+    activeList.sort((a: any, b: any) => {
+      const aStart = normTime(a.horario_inicio, "00:00");
+      const bStart = normTime(b.horario_inicio, "00:00");
+      const aEnd = normTime(a.horario_fim, "23:59");
+      const bEnd = normTime(b.horario_fim, "23:59");
+      const aDur = getDurationMinutes(aStart, aEnd);
+      const bDur = getDurationMinutes(bStart, bEnd);
+      if (aDur !== bDur) return aDur - bDur;
+      if (aStart !== bStart) return bStart.localeCompare(aStart);
+      return 0;
+    });
+    return activeList[0];
+  }
 
-  return list[0];
+  if (allowFallback) {
+    const todayItem = list.find((q: any) => String(q.data_quiz || "").slice(0, 10) === targetDate);
+    if (todayItem) return todayItem;
+    return list[0];
+  }
+
+  return undefined;
 }
 
-function getActiveBatalha(list: any[], today: string, currentTime: string): any {
+function getActiveBatalha(list: any[], today: string, currentTime: string, allowFallback = false): any {
   if (!Array.isArray(list) || list.length === 0) return undefined;
   const targetDate = String(today).slice(0, 10);
-  const strictlyActive = list.find((b: any) =>
+  const activeList = list.filter((b: any) =>
     isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, targetDate, currentTime)
   );
-  if (strictlyActive) return strictlyActive;
 
-  const todayItem = list.find((b: any) => String(b.data_batalha || "").slice(0, 10) === targetDate);
-  if (todayItem) return todayItem;
+  if (activeList.length === 1) return activeList[0];
+  if (activeList.length > 1) {
+    activeList.sort((a: any, b: any) => {
+      const aStart = normTime(a.horario_inicio, "00:00");
+      const bStart = normTime(b.horario_inicio, "00:00");
+      const aEnd = normTime(b.horario_fim, "23:59");
+      const bEnd = normTime(b.horario_fim, "23:59");
+      const aDur = getDurationMinutes(aStart, aEnd);
+      const bDur = getDurationMinutes(bStart, bEnd);
+      if (aDur !== bDur) return aDur - bDur;
+      if (aStart !== bStart) return bStart.localeCompare(aStart);
+      return 0;
+    });
+    return activeList[0];
+  }
 
-  return list[0];
+  if (allowFallback) {
+    const todayItem = list.find((b: any) => String(b.data_batalha || "").slice(0, 10) === targetDate);
+    if (todayItem) return todayItem;
+    return list[0];
+  }
+
+  return undefined;
 }
 
-function buildEnqueteXml(enquete?: any): string {
+function buildEnqueteXml(enquete?: any, emissora = "House Mix Emissora"): string {
   if (!enquete || !enquete.pergunta) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
-  <enquete>
+  <enquete ativa="0">
+    <emissora>${escapeXml(emissora)}</emissora>
     <pergunta></pergunta>
+    <opcao_a></opcao_a>
+    <opcao_b></opcao_b>
+    <opcao_c></opcao_c>
+    <opcao_d></opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
     <resposta1></resposta1>
     <resposta2></resposta2>
     <resposta3></resposta3>
     <resposta4></resposta4>
+    <resposta_correta></resposta_correta>
+    <horario_inicio></horario_inicio>
+    <horario_fim></horario_fim>
   </enquete>
 </items>
 `;
   }
   return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
-  <enquete>
+  <enquete ativa="1">
+    <emissora>${escapeXml(emissora)}</emissora>
     <pergunta>${escapeXml(enquete.pergunta)}</pergunta>
+    <opcao_a>${escapeXml(enquete.resposta1)}</opcao_a>
+    <opcao_b>${escapeXml(enquete.resposta2)}</opcao_b>
+    <opcao_c>${escapeXml(enquete.resposta3 || "")}</opcao_c>
+    <opcao_d>${escapeXml(enquete.resposta4 || "")}</opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
     <resposta1>${escapeXml(enquete.resposta1)}</resposta1>
     <resposta2>${escapeXml(enquete.resposta2)}</resposta2>
     <resposta3>${escapeXml(enquete.resposta3 || "")}</resposta3>
@@ -355,6 +439,13 @@ export function dynamicXmlPlugin(): Plugin {
         }
 
         fs.writeFileSync(targetPath, content.trim() + "\n", "utf-8");
+
+        // Atualiza também na pasta dist (se existir) para garantir sincronia no vite preview
+        const distDir = path.join(rootDir, "dist", "xml", t);
+        if (fs.existsSync(path.join(rootDir, "dist"))) {
+          if (!fs.existsSync(distDir)) fs.mkdirSync(distDir, { recursive: true });
+          fs.writeFileSync(path.join(distDir, filename), content.trim() + "\n", "utf-8");
+        }
       }
       if (norm === "positivafm" || slug === "positivafm" || norm === "default") {
         try {
@@ -378,6 +469,14 @@ export function dynamicXmlPlugin(): Plugin {
             const publicXmlDir = path.join(rootDir, "public", "xml");
             if (!fs.existsSync(publicXmlDir)) fs.mkdirSync(publicXmlDir, { recursive: true });
             fs.writeFileSync(path.join(publicXmlDir, filename), content.trim() + "\n", "utf-8");
+          }
+
+          if (fs.existsSync(path.join(rootDir, "dist"))) {
+            const rootDistTarget = path.join(rootDir, "dist", filename);
+            fs.writeFileSync(rootDistTarget, content.trim() + "\n", "utf-8");
+            const distXmlDir = path.join(rootDir, "dist", "xml");
+            if (!fs.existsSync(distXmlDir)) fs.mkdirSync(distXmlDir, { recursive: true });
+            fs.writeFileSync(path.join(distXmlDir, filename), content.trim() + "\n", "utf-8");
           }
         } catch {}
       }
@@ -420,8 +519,37 @@ export function dynamicXmlPlugin(): Plugin {
               // Update static file on disk immediately using getActiveEnquete
               const { today, currentTime } = getBrasiliaDateTime();
               const active = getActiveEnquete(enquetes, today, currentTime);
-              const xml = buildEnqueteXml(active);
+              const stName = SLUG_STATION_NAMES[slug] || "House Mix Emissora";
+              const xml = buildEnqueteXml(active, stName);
               writeStaticXml(slug, "enquete.xml", xml);
+
+              // Sincroniza também o bloco <enquete> dentro de geral.xml
+              const enqueteBlock = active
+                ? `<enquete ativa="1">
+    <pergunta>${escapeXml(active.pergunta)}</pergunta>
+    <opcao_a>${escapeXml(active.resposta1)}</opcao_a>
+    <votos_a>0</votos_a>
+    <opcao_b>${escapeXml(active.resposta2)}</opcao_b>
+    <votos_b>0</votos_b>
+    <opcao_c>${escapeXml(active.resposta3 || "")}</opcao_c>
+    <votos_c>0</votos_c>
+    <opcao_d>${escapeXml(active.resposta4 || "")}</opcao_d>
+    <votos_d>0</votos_d>
+    <resposta1>${escapeXml(active.resposta1)}</resposta1>
+    <resposta2>${escapeXml(active.resposta2)}</resposta2>
+    <resposta3>${escapeXml(active.resposta3 || "")}</resposta3>
+    <resposta4>${escapeXml(active.resposta4 || "")}</resposta4>
+  </enquete>`
+                : `<enquete ativa="0"></enquete>`;
+
+              const geralPath = path.join(rootDir, "public", "xml", slug, "geral.xml");
+              if (fs.existsSync(geralPath)) {
+                try {
+                  let gXml = fs.readFileSync(geralPath, "utf-8");
+                  gXml = gXml.replace(/<enquete[\s\S]*?<\/enquete>/i, enqueteBlock);
+                  writeStaticXml(slug, "geral.xml", gXml);
+                } catch {}
+              }
 
               res.setHeader("Content-Type", "application/json");
               res.setHeader("Access-Control-Allow-Origin", "*");
@@ -769,7 +897,8 @@ export function dynamicXmlPlugin(): Plugin {
               const store = readSyncData(enquetesFile);
               const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
               const active = getActiveEnquete(list, today, currentTime);
-              const xml = buildEnqueteXml(active);
+              const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
+              const xml = buildEnqueteXml(active, stName);
 
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
               res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");

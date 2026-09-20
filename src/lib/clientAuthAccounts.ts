@@ -213,12 +213,14 @@ export function findClientAccountByEmail(email?: string | null): ClientAccountIn
 
 export function findClientAccountById(id?: string | null): ClientAccountInfo | null {
   if (!id) return null;
+  const clean = id.trim().toLowerCase();
   return (
     CLIENT_ACCOUNTS.find(
       (c) =>
-        c.id === id ||
-        c.parentUserId === id ||
-        (c.aliases && c.aliases.includes(id))
+        c.id.toLowerCase() === clean ||
+        c.slug.toLowerCase() === clean ||
+        (c.parentUserId && c.parentUserId.toLowerCase() === clean) ||
+        (c.aliases && c.aliases.some((a) => a.toLowerCase() === clean))
     ) || null
   );
 }

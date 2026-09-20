@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { getProgramas } from "./ProgramaForm";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
+import { getSnapshotLogos, getSnapshotProgramas } from "@/lib/supabaseDatabaseSnapshot";
 import { LogoTransformModal } from "./LogoTransformModal";
 
 interface Logo {
@@ -68,12 +69,41 @@ function resolveStationUid(targetUserId?: string | null, effectiveUserId?: strin
               (effectiveUserId && findClientAccountById(effectiveUserId)) ||
               (effectiveUserId && findClientAccountByEmail(effectiveUserId)) ||
               (userObj?.id && findClientAccountById(userObj.id)) || 
-              (userObj?.email && findClientAccountByEmail(userObj.email));
+              (userObj?.email && findClientAccountByEmail(userObj.email)) ||
+              (userObj?.user_metadata?.slug && findClientAccountById(userObj.user_metadata.slug));
 
   if (acc?.isSubUser && acc.parentUserId) {
     return acc.parentUserId;
   }
   return acc?.id || targetUserId || effectiveUserId || userObj?.id || "";
+}
+
+function resolveStationSlug(targetUserId?: string | null, effectiveUserId?: string | null, userObj?: any): string {
+  const acc = (targetUserId && findClientAccountById(targetUserId)) || 
+              (targetUserId && findClientAccountByEmail(targetUserId)) || 
+              (effectiveUserId && findClientAccountById(effectiveUserId)) ||
+              (effectiveUserId && findClientAccountByEmail(effectiveUserId)) ||
+              (userObj?.id && findClientAccountById(userObj.id)) || 
+              (userObj?.email && findClientAccountByEmail(userObj.email)) ||
+              (userObj?.user_metadata?.slug && findClientAccountById(userObj.user_metadata.slug));
+
+  if (acc?.slug) return acc.slug;
+  if (userObj?.user_metadata?.slug) return userObj.user_metadata.slug;
+  const raw = `${targetUserId || ""} ${effectiveUserId || ""} ${userObj?.id || ""} ${userObj?.email || ""}`.toLowerCase();
+  if (raw.includes("interativa")) return "interativafm";
+  if (raw.includes("positiva")) return "positivafm";
+  if (raw.includes("cultura")) return "culturafm";
+  return "interativafm";
+}
+
+export function normalizeProgName(s?: string | null): string {
+  if (!s) return "";
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
 }
 
 function getLocalLogos(uId: string): Logo[] {
@@ -208,6 +238,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       } catch {}
 
       const stationUid = resolveStationUid(targetUserId, effectiveUserId, user) || targetUserId || effectiveUserId || user?.id || "";
+      const stationSlug = resolveStationSlug(targetUserId, effectiveUserId, user);
 
       // 1. Check database table first
       const dbTargetId = stationUid || targetUserId;
@@ -231,75 +262,102 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         }
       }
 
-      // 1.1 Fetch real database logos from serve-xml-logos Edge Function for the active station
-      const uidsToQuery = Array.from(
-        new Set(
-          [
-            stationUid,
-            targetUserId,
-            effectiveUserId,
-            user?.id,
-          ].filter(Boolean) as string[]
-        )
-      );
+      // 1.1 Fetch real logos from candidate XML feeds or local endpoints
+      if (lData.length === 0) {
+        const candidateUrls = [
+          `/xml/${stationSlug}/logos.xml`,
+          `/xml/${stationSlug.replace(/fm$/i, "")}/logos.xml`,
+          `/functions/v1/serve-xml-logos?user_id=${stationUid}&slug=${stationSlug}`,
+          `/xml/logos.xml`,
+          `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-logos?user_id=${stationUid}`,
+        ];
 
-      for (const uid of uidsToQuery) {
-        if (lData.length === 0) {
+        for (const url of candidateUrls) {
+          if (lData.length > 0) break;
           try {
-            const resXml = await fetch(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-logos?user_id=${uid}`, {
-              signal: AbortSignal.timeout ? AbortSignal.timeout(1500) : undefined,
+            const resXml = await fetch(url, {
+              signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined,
             });
             if (resXml.ok) {
               const xmlText = await resXml.text();
-              const progMatches = [...xmlText.matchAll(/<programa id="([^"]+)">([\s\S]*?)<\/programa>/g)];
-              for (const m of progMatches) {
-                const content = m[2];
-                const nomeMatch = content.match(/<nome>([\s\S]*?)<\/nome>/);
-                const progNome = (nomeMatch ? nomeMatch[1] : "").trim();
-                let matchedProg = pData.find(
-                  (p) => p.nome.trim().toLowerCase() === progNome.toLowerCase() || p.id === m[1]
-                );
-                if (!matchedProg && progNome) {
-                  matchedProg = {
-                    id: m[1] || progNome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
-                    nome: progNome,
-                    estudio: "ESTÚDIO FM",
-                    horario_inicio: "08:00:00",
-                  };
-                  pData.push(matchedProg);
-                }
-                const progId = matchedProg?.id || progNome;
+              if (xmlText.includes("<programa") && xmlText.includes("<logo")) {
+                const progMatches = [...xmlText.matchAll(/<programa id="([^"]+)">([\s\S]*?)<\/programa>/g)];
+                for (const m of progMatches) {
+                  const content = m[2];
+                  const nomeMatch = content.match(/<nome>([\s\S]*?)<\/nome>/);
+                  const progNome = (nomeMatch ? nomeMatch[1] : "").trim();
+                  let matchedProg = pData.find(
+                    (p) => normalizeProgName(p.nome) === normalizeProgName(progNome) || p.id === m[1]
+                  );
+                  if (!matchedProg && progNome) {
+                    matchedProg = {
+                      id: m[1] || progNome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+                      nome: progNome,
+                      estudio: "ESTÚDIO FM",
+                      horario_inicio: "08:00:00",
+                    };
+                    pData.push(matchedProg);
+                  }
+                  const progId = matchedProg?.id || progNome;
 
-                const logoMatches = [...content.matchAll(/<logo>([\s\S]*?)<\/logo>/g)];
-                for (const lm of logoMatches) {
-                  const lName = (lm[1].match(/<nome>([\s\S]*?)<\/nome>/)?.[1] || "").trim();
-                  const lUrl = (lm[1].match(/<url>([\s\S]*?)<\/url>/)?.[1] || "").trim();
-                  if (lUrl && !lUrl.includes("default-sponsor-logo.png")) {
-                    lData.push({
-                      id: `db_xml_${uid}_${progId}_${lName.replace(/\s+/g, "_")}`,
-                      user_id: uid,
-                      programa_id: progId,
-                      programa_nome: progNome,
-                      logo_url: lUrl,
-                      data_final: `${new Date().getFullYear() + 2}-12-31`,
-                      ativo: true,
-                      created_at: new Date().toISOString(),
-                      nome: lName.toUpperCase(),
-                      excluido: false,
-                      excluido_at: null,
-                    });
+                  const logoMatches = [...content.matchAll(/<logo>([\s\S]*?)<\/logo>/g)];
+                  for (const lm of logoMatches) {
+                    const lName = (lm[1].match(/<nome>([\s\S]*?)<\/nome>/)?.[1] || "").trim();
+                    const lUrl = (lm[1].match(/<url>([\s\S]*?)<\/url>/)?.[1] || "").trim();
+                    if (lUrl && !lUrl.includes("default-sponsor-logo.png")) {
+                      lData.push({
+                        id: `db_xml_${stationUid}_${progId}_${lName.replace(/\s+/g, "_")}`,
+                        user_id: stationUid,
+                        programa_id: progId,
+                        programa_nome: progNome,
+                        logo_url: lUrl,
+                        data_final: `${new Date().getFullYear() + 2}-12-31`,
+                        ativo: true,
+                        created_at: new Date().toISOString(),
+                        nome: lName.toUpperCase(),
+                        excluido: false,
+                        excluido_at: null,
+                      });
+                    }
                   }
                 }
               }
             }
           } catch (err) {
-            console.warn("Erro ao buscar serve-xml-logos:", err);
+            // Silently continue to next candidate
           }
         }
       }
 
+      // 1.2 Fallback to local database snapshot if still empty
+      if (lData.length === 0) {
+        const snapLogos = getSnapshotLogos(stationUid).concat(getSnapshotLogos(stationSlug));
+        if (snapLogos.length > 0) {
+          const seen = new Set<string>();
+          snapLogos.forEach((sl: any) => {
+            const dedupeKey = `${sl.programa_id || sl.programa_nome}_${sl.nome}_${sl.logo_url}`;
+            if (!seen.has(dedupeKey)) {
+              seen.add(dedupeKey);
+              lData.push({
+                id: sl.id || `snap_${stationUid}_${Math.random().toString(36).slice(2)}`,
+                user_id: sl.user_id || stationUid,
+                programa_id: sl.programa_id || null,
+                programa_nome: sl.programa_nome || sl.programa_id || undefined,
+                logo_url: sl.logo_url,
+                data_final: sl.data_final || `${new Date().getFullYear() + 2}-12-31`,
+                ativo: sl.ativo !== false,
+                created_at: sl.created_at || new Date().toISOString(),
+                nome: (sl.nome || "").toUpperCase(),
+                excluido: Boolean(sl.excluido),
+                excluido_at: sl.excluido_at || null,
+              });
+            }
+          });
+        }
+      }
+
       // Merge locally stored logos for this station
-      const localUids = Array.from(new Set([stationUid, targetUserId, effectiveUserId, user?.id].filter(Boolean) as string[]));
+      const localUids = Array.from(new Set([stationUid, stationSlug, targetUserId, effectiveUserId, user?.id].filter(Boolean) as string[]));
       for (const uId of localUids) {
         const localLogos = getLocalLogos(uId);
         if (localLogos.length > 0) {
@@ -316,12 +374,18 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         }
       }
 
+      // Cache loaded logos to localStorage for resilient offline/network loads
+      if (lData.length > 0) {
+        if (stationUid) saveLocalLogos(stationUid, lData);
+        if (stationSlug) saveLocalLogos(stationSlug, lData);
+      }
+
       // Fetch programs fallback
       try {
         const fallbackProgs = await getProgramas(targetUserId || undefined, user?.email);
         if (fallbackProgs && fallbackProgs.length > 0) {
           fallbackProgs.forEach((fp: any) => {
-            if (!pData.some((p) => (p.id && p.id === fp.id) || p.nome.trim().toLowerCase() === fp.nome.trim().toLowerCase())) {
+            if (!pData.some((p) => (p.id && p.id === fp.id) || normalizeProgName(p.nome) === normalizeProgName(fp.nome))) {
               pData.push({
                 id: fp.id || fp.nome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
                 nome: fp.nome,
@@ -335,12 +399,12 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
       // Always merge official programming grid / House Mix programs for this station
       try {
-        const clientAcc = findClientAccountById(stationUid) || findClientAccountByEmail(user?.email);
-        const hmProgs = getClientHouseMixProgramsSync(clientAcc || stationUid || targetUserId || effectiveUserId || user?.id || user?.email, pData);
+        const clientAcc = findClientAccountById(stationUid) || findClientAccountById(stationSlug) || findClientAccountByEmail(user?.email);
+        const hmProgs = getClientHouseMixProgramsSync(clientAcc || stationUid || stationSlug || targetUserId || effectiveUserId || user?.id || user?.email, pData);
         if (Array.isArray(hmProgs) && hmProgs.length > 0) {
           hmProgs.forEach((hp: any) => {
             if (isExcludedStudio(hp.estudio)) return;
-            if (!pData.some((p) => (p.id && p.id === hp.id) || p.nome.trim().toLowerCase() === hp.nome.trim().toLowerCase())) {
+            if (!pData.some((p) => (p.id && p.id === hp.id) || normalizeProgName(p.nome) === normalizeProgName(hp.nome))) {
               pData.push({
                 id: hp.id || hp.nome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
                 nome: hp.nome,
@@ -354,10 +418,28 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         console.warn("Erro ao mesclar programas da grade House Mix:", err);
       }
 
+      // Merge snapshot programs if needed
+      try {
+        const snapProgs = getSnapshotProgramas(stationUid).concat(getSnapshotProgramas(stationSlug));
+        snapProgs.forEach((sp: any) => {
+          if (isExcludedStudio(sp.estudio)) return;
+          if (!pData.some((p) => (p.id && p.id === sp.id) || normalizeProgName(p.nome) === normalizeProgName(sp.nome))) {
+            pData.push({
+              id: sp.id || sp.nome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+              nome: sp.nome,
+              estudio: sp.estudio || "ESTÚDIO FM",
+              horario_inicio: sp.horario_inicio || "08:00:00",
+            });
+          }
+        });
+      } catch (err) {
+        console.warn("Erro ao mesclar programas do snapshot:", err);
+      }
+
       // Ensure all logos have their associated program represented in pData
       lData.forEach((l: any) => {
         const pIdentifier = l.programa_nome || l.programa_id;
-        if (pIdentifier && !pData.some((p) => p.id === l.programa_id || p.nome.toLowerCase() === String(pIdentifier).toLowerCase())) {
+        if (pIdentifier && !pData.some((p) => p.id === l.programa_id || normalizeProgName(p.nome) === normalizeProgName(pIdentifier) || normalizeProgName(p.id) === normalizeProgName(pIdentifier))) {
           pData.push({
             id: l.programa_id || pIdentifier,
             nome: pIdentifier,
@@ -1032,8 +1114,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         (l) =>
           (l.programa_id === p.id ||
             l.programa_id === p.nome ||
-            l.programa_id?.toLowerCase() === p.nome.toLowerCase() ||
-            (l as any).programa_nome?.toLowerCase() === p.nome.toLowerCase()) &&
+            normalizeProgName(l.programa_id) === normalizeProgName(p.nome) ||
+            normalizeProgName(l.programa_id) === normalizeProgName(p.id) ||
+            normalizeProgName((l as any).programa_nome) === normalizeProgName(p.nome) ||
+            normalizeProgName((l as any).programa_nome) === normalizeProgName(p.id)) &&
           l.ativo
       );
       // Exclui seções onde o número de logos cadastradas for = 0
@@ -1050,8 +1134,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           !programas.some(
             (p) =>
               p.id === l.programa_id ||
-              p.nome.toLowerCase() === l.programa_id?.toLowerCase() ||
-              p.nome.toLowerCase() === (l as any).programa_nome?.toLowerCase()
+              normalizeProgName(p.nome) === normalizeProgName(l.programa_id) ||
+              normalizeProgName(p.id) === normalizeProgName(l.programa_id) ||
+              normalizeProgName(p.nome) === normalizeProgName((l as any).programa_nome) ||
+              normalizeProgName(p.id) === normalizeProgName((l as any).programa_nome)
           )) &&
         l.ativo
     );
@@ -1079,8 +1165,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         (l) =>
           l.programa_id === p.id ||
           l.programa_id === p.nome ||
-          l.programa_id?.toLowerCase() === p.nome.toLowerCase() ||
-          (l as any).programa_nome?.toLowerCase() === p.nome.toLowerCase()
+          normalizeProgName(l.programa_id) === normalizeProgName(p.nome) ||
+          normalizeProgName(l.programa_id) === normalizeProgName(p.id) ||
+          normalizeProgName((l as any).programa_nome) === normalizeProgName(p.nome) ||
+          normalizeProgName((l as any).programa_nome) === normalizeProgName(p.id)
       ),
     }))
     .filter((g) => g.logos.length > 0);
@@ -1539,7 +1627,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             </div>
             <div className="space-y-3">
               {section.items.map(({ programa, logos: gLogos }) => (
-                <Collapsible key={programa.id} defaultOpen={false}>
+                <Collapsible key={programa.id} defaultOpen={gLogos.length > 0}>
                   <div className="rounded-2xl overflow-hidden border border-slate-200/80 bg-white shadow-sm transition-all"
                     onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, programa.id)}
                     onContextMenu={(e) => handleProgramaContextMenu(e, programa)}

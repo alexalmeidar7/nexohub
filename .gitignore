@@ -25,4 +25,5 @@ dist-ssr
 supabase/.temp
 scratch/
 tmp/
-
+test-results/
+playwright-report/

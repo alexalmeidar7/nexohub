@@ -344,13 +344,24 @@ function generateFallbackBatalha(st: StationConfig): string {
 function generateFallbackEnquete(st: StationConfig): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
-  <enquete>
-    <emissora>${st.name}</emissora>
-    <pergunta>Qual música você quer ouvir no próximo bloco?</pergunta>
-    <resposta1>Opção 1</resposta1>
-    <resposta2>Opção 2</resposta2>
-    <resposta3>Opção 3</resposta3>
-    <resposta4>Opção 4</resposta4>
+  <enquete ativa="0">
+    <emissora>${escapeXml(st.name)}</emissora>
+    <pergunta></pergunta>
+    <opcao_a></opcao_a>
+    <opcao_b></opcao_b>
+    <opcao_c></opcao_c>
+    <opcao_d></opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
+    <resposta1></resposta1>
+    <resposta2></resposta2>
+    <resposta3></resposta3>
+    <resposta4></resposta4>
+    <resposta_correta></resposta_correta>
+    <horario_inicio></horario_inicio>
+    <horario_fim></horario_fim>
   </enquete>
 </items>
 `;
@@ -633,20 +644,28 @@ export async function generateAllUserXmls() {
           const { today, currentTime } = getBrasiliaDateTime();
           const active = list.find((e: any) =>
             isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
-          ) || list[0];
+          );
           if (active && active.pergunta) {
             enqueteContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
-  <enquete>
-    <emissora>${st.name}</emissora>
-    <pergunta>${active.pergunta}</pergunta>
-    <resposta1>${active.resposta1 || ""}</resposta1>
-    <resposta2>${active.resposta2 || ""}</resposta2>
-    <resposta3>${active.resposta3 || ""}</resposta3>
-    <resposta4>${active.resposta4 || ""}</resposta4>
-    <resposta_correta>${active.resposta_correta || 1}</resposta_correta>
-    <horario_inicio>${active.horario_inicio || "00:00"}</horario_inicio>
-    <horario_fim>${active.horario_fim || "23:59"}</horario_fim>
+  <enquete ativa="1">
+    <emissora>${escapeXml(st.name)}</emissora>
+    <pergunta>${escapeXml(active.pergunta)}</pergunta>
+    <opcao_a>${escapeXml(active.resposta1 || "")}</opcao_a>
+    <opcao_b>${escapeXml(active.resposta2 || "")}</opcao_b>
+    <opcao_c>${escapeXml(active.resposta3 || "")}</opcao_c>
+    <opcao_d>${escapeXml(active.resposta4 || "")}</opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
+    <resposta1>${escapeXml(active.resposta1 || "")}</resposta1>
+    <resposta2>${escapeXml(active.resposta2 || "")}</resposta2>
+    <resposta3>${escapeXml(active.resposta3 || "")}</resposta3>
+    <resposta4>${escapeXml(active.resposta4 || "")}</resposta4>
+    <resposta_correta>${escapeXml(active.resposta_correta || 1)}</resposta_correta>
+    <horario_inicio>${escapeXml(active.horario_inicio || "00:00")}</horario_inicio>
+    <horario_fim>${escapeXml(active.horario_fim || "23:59")}</horario_fim>
   </enquete>
 </items>`;
           }
@@ -663,7 +682,7 @@ export async function generateAllUserXmls() {
           const { today, currentTime } = getBrasiliaDateTime();
           const active = list.find((q: any) =>
             isScheduleActive(q.data_quiz, q.horario_inicio, q.horario_fim, today, currentTime)
-          ) || list[0];
+          );
           if (active && active.pergunta) {
             quizContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
@@ -695,7 +714,7 @@ export async function generateAllUserXmls() {
           const { today, currentTime } = getBrasiliaDateTime();
           const active = list.find((b: any) =>
             isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-          ) || list[0];
+          );
           if (active && (active.artista1_nome || active.artista2_nome)) {
             batalhaContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
