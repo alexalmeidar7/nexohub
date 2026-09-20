@@ -72,24 +72,20 @@ function normalizeBattleState(value: unknown): BattleState {
 }
 
 
+import { fetchArtistImageCached } from "@/lib/artistImageCache";
+
 async function fetchArtistImage(artistName: string, skip = 0): Promise<string> {
   const artist = artistName.trim().replace(/\s+/g, ' ');
   if (!artist) return "";
 
   try {
-    const { data, error } = await supabase.functions.invoke("fetch-artist-image", {
-      body: { artist, skip },
-    });
-
-    if (error || !data?.ok || !data?.url) {
-      return "";
-    }
-
-    return data.url;
+    const url = await fetchArtistImageCached(artist, skip);
+    return url || "";
   } catch {
     return "";
   }
 }
+
 
 export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
@@ -213,7 +209,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
       if (cachedUrl) {
         setArtista1(prev => {
-          if (prev.nome.trim() !== artistName) return prev;
+          if (prev.nome.trim().toLowerCase() !== artistName.toLowerCase()) return prev;
           return { ...prev, imagemUrl: cachedUrl };
         });
         return;
@@ -227,7 +223,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       }
       let persistedUrl: string | null = null;
       setArtista1(prev => {
-        if (prev.nome.trim() !== artistName) return prev;
+        if (prev.nome.trim().toLowerCase() !== artistName.toLowerCase()) return prev;
         const nextUrl = url || "";
         persistedUrl = nextUrl;
         return { ...prev, imagemUrl: nextUrl };
@@ -263,7 +259,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
       if (cachedUrl) {
         setArtista2(prev => {
-          if (prev.nome.trim() !== artistName) return prev;
+          if (prev.nome.trim().toLowerCase() !== artistName.toLowerCase()) return prev;
           return { ...prev, imagemUrl: cachedUrl };
         });
         return;
@@ -277,7 +273,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       }
       let persistedUrl: string | null = null;
       setArtista2(prev => {
-        if (prev.nome.trim() !== artistName) return prev;
+        if (prev.nome.trim().toLowerCase() !== artistName.toLowerCase()) return prev;
         const nextUrl = url || "";
         persistedUrl = nextUrl;
         return { ...prev, imagemUrl: nextUrl };
@@ -289,6 +285,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     }, 500);
     return () => clearTimeout(debounce2.current);
   }, [artista2.nome]);
+
 
   const updateArtista1 = (field: keyof Artista, value: string | number) => {
     if (field === "porcentagem") {
