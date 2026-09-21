@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
-import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff, ExternalLink } from "lucide-react";
+import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff, ExternalLink, Copy, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
-import { getBrasiliaDateTime } from "@/lib/scheduledItemUtils";
+import { getBrasiliaDateTime, getActiveBatalha, buildBatalhaXml } from "@/lib/scheduledItemUtils";
+import initialBatalhasSync from "@/data/xml_batalhas_sync.json";
 
 interface Artista {
   nome: string;
@@ -417,9 +418,18 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     } catch {}
 
     const localList = getStoredBatalhas(targetUserId);
+    const staticList = (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
+      (initialBatalhasSync as Record<string, any[]>)[targetUserId] || [];
+
     const map = new Map<string, BatalhaAgendada>();
 
     // Mescla todas as fontes preservando o ID
+    staticList.forEach((r: any) => {
+      if (r && (r.artista1_nome || r.artista2_nome)) {
+        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
+        map.set(key, r);
+      }
+    });
     rows.forEach((r: any) => {
       if (r && (r.artista1_nome || r.artista2_nome)) {
         const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
@@ -449,6 +459,32 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     // Mantém todas as batalhas (ativas, agendadas e encerradas) na tabela
     setBatalhas(merged);
     saveStoredBatalhas(targetUserId, merged);
+  };
+
+  const handleCopyXml = () => {
+    const { today, currentTime } = getBrasiliaDateTime();
+    const active = getActiveBatalha(batalhas, today, currentTime, true);
+    const stationName = clientAcc?.nome || "Positiva FM 99.1";
+    const xml = buildBatalhaXml(active, stationName);
+    navigator.clipboard.writeText(xml.trim());
+    toast.success("XML da Batalha Musical copiado com sucesso!");
+  };
+
+  const handleDownloadXml = () => {
+    const { today, currentTime } = getBrasiliaDateTime();
+    const active = getActiveBatalha(batalhas, today, currentTime, true);
+    const stationName = clientAcc?.nome || "Positiva FM 99.1";
+    const xml = buildBatalhaXml(active, stationName);
+    const blob = new Blob([xml], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "batalha.xml";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Download do arquivo batalha.xml iniciado!");
   };
 
   useEffect(() => {
@@ -657,8 +693,26 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
               title="Abrir feed XML da Batalha Musical no navegador ou vMix"
             >
               <ExternalLink size={15} style={{ color: accentColor }} />
-              <span>XML BATALHA</span>
+              <span>VER XML</span>
             </a>
+            <button
+              onClick={handleCopyXml}
+              className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-slate-200/40 transition shadow-sm cursor-pointer"
+              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+              title="Copiar conteúdo XML da Batalha ativa para a área de transferência"
+            >
+              <Copy size={15} style={{ color: accentColor }} />
+              <span className="hidden md:inline">COPIAR XML</span>
+            </button>
+            <button
+              onClick={handleDownloadXml}
+              className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-slate-200/40 transition shadow-sm cursor-pointer"
+              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
+              title="Baixar arquivo batalha.xml atualizado para o computador"
+            >
+              <Download size={15} style={{ color: accentColor }} />
+              <span className="hidden md:inline">BAIXAR XML</span>
+            </button>
           </div>
         </div>
 

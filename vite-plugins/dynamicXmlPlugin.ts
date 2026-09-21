@@ -1328,7 +1328,7 @@ export function dynamicXmlPlugin(): Plugin {
 
               // Update static file on disk immediately using getActiveBatalha
               const { today, currentTime } = getBrasiliaDateTime();
-              const active = getActiveBatalha(batalhas, today, currentTime);
+              const active = getActiveBatalha(batalhas, today, currentTime, true);
               const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[normalizeSlug(slug)] || "House Mix Emissora";
               const xml = buildBatalhaXml(active, stName);
               writeStaticXml(slug, "batalha.xml", xml);
@@ -1853,7 +1853,7 @@ export function dynamicXmlPlugin(): Plugin {
             if (file === "quiz.xml") {
               const store = readSyncData(quizzesFile);
               const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
-              const active = getActiveQuiz(list, today, currentTime);
+              const active = getActiveQuiz(list, today, currentTime, true);
               const xml = buildQuizXml(active);
 
               res.setHeader("Content-Type", "application/xml; charset=utf-8");
@@ -1867,7 +1867,7 @@ export function dynamicXmlPlugin(): Plugin {
             if (file === "batalha.xml") {
               const store = readSyncData(batalhasFile);
               const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
-              const active = getActiveBatalha(list, today, currentTime);
+              const active = getActiveBatalha(list, today, currentTime, true);
               const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
               const xml = buildBatalhaXml(active, stName);
 
@@ -1927,16 +1927,16 @@ export function dynamicXmlPlugin(): Plugin {
             // 5. geral.xml
             if (file === "geral.xml") {
               const enqStore = readSyncData(enquetesFile);
-              const enqList = enqStore[slug] || enqStore[rawSlug] || [];
-              const activeEnq = getActiveEnquete(enqList, today, currentTime);
+              const enqList = enqStore[slug] || enqStore[rawSlug] || enqStore[SLUG_TO_UID[slug]] || [];
+              const activeEnq = getActiveEnquete(enqList, today, currentTime, true);
 
               const quizStore = readSyncData(quizzesFile);
-              const quizList = quizStore[slug] || quizStore[rawSlug] || [];
-              const activeQuiz = getActiveQuiz(quizList, today, currentTime);
+              const quizList = quizStore[slug] || quizStore[rawSlug] || quizStore[SLUG_TO_UID[slug]] || [];
+              const activeQuiz = getActiveQuiz(quizList, today, currentTime, true);
 
               const batStore = readSyncData(batalhasFile);
-              const batList = batStore[slug] || batStore[rawSlug] || [];
-              const activeBat = getActiveBatalha(batList, today, currentTime);
+              const batList = batStore[slug] || batStore[rawSlug] || batStore[SLUG_TO_UID[slug]] || [];
+              const activeBat = getActiveBatalha(batList, today, currentTime, true);
 
               const geralPath = path.join(rootDir, "public", "xml", slug, "geral.xml");
               let geralXml = "";

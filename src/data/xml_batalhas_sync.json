@@ -1,6 +1,22 @@
 {
   "positivafm": [
     {
+      "id": "bat_positiva_20260921",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Rionegro & Solimões",
+      "artista1_musica": "Na Sola da Bota",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/a3a6b97ac5cfb1d572a84cba92ddce77/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "César Menotti & Fabiano",
+      "artista2_musica": "Leilão",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/775fc9314f5ce7a09329f33bcc802a90/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    },
+    {
       "id": "bat_positiva_active",
       "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
       "emissora": "Positiva FM 99.1",
@@ -18,6 +34,22 @@
     }
   ],
   "positiva": [
+    {
+      "id": "bat_positiva_20260921",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Rionegro & Solimões",
+      "artista1_musica": "Na Sola da Bota",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/a3a6b97ac5cfb1d572a84cba92ddce77/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "César Menotti & Fabiano",
+      "artista2_musica": "Leilão",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/775fc9314f5ce7a09329f33bcc802a90/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    },
     {
       "id": "bat_positiva_active",
       "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
@@ -37,6 +69,22 @@
   ],
   "p": [
     {
+      "id": "bat_positiva_20260921",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Rionegro & Solimões",
+      "artista1_musica": "Na Sola da Bota",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/a3a6b97ac5cfb1d572a84cba92ddce77/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "César Menotti & Fabiano",
+      "artista2_musica": "Leilão",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/775fc9314f5ce7a09329f33bcc802a90/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    },
+    {
       "id": "bat_positiva_active",
       "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
       "emissora": "Positiva FM 99.1",
@@ -54,6 +102,22 @@
     }
   ],
   "d17e65af-e407-466f-9b60-b55c43399513": [
+    {
+      "id": "bat_positiva_20260921",
+      "user_id": "d17e65af-e407-466f-9b60-b55c43399513",
+      "emissora": "Positiva FM 99.1",
+      "artista1_nome": "Rionegro & Solimões",
+      "artista1_musica": "Na Sola da Bota",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/a3a6b97ac5cfb1d572a84cba92ddce77/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "César Menotti & Fabiano",
+      "artista2_musica": "Leilão",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/775fc9314f5ce7a09329f33bcc802a90/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    },
     {
       "id": "bat_positiva_active",
       "user_id": "d17e65af-e407-466f-9b60-b55c43399513",

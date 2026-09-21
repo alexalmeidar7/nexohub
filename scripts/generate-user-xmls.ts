@@ -946,9 +946,15 @@ export async function generateAllUserXmls() {
           const syncData = JSON.parse(readFileSync(batSyncPath, "utf-8"));
           const list = syncData[st.slug] || syncData[st.uid] || [];
           const { today, currentTime } = getBrasiliaDateTime();
-          const active = list.find((b: any) =>
+          let active = list.find((b: any) =>
             isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
           );
+          if (!active) {
+            active = list.find((b: any) => String(b.data_batalha || "").slice(0, 10) === today && b.horario_fim !== "00:00");
+          }
+          if (!active && list.length > 0) {
+            active = list[0];
+          }
           if (active && (active.artista1_nome || active.artista2_nome)) {
             batalhaContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
@@ -1022,17 +1028,62 @@ export async function generateAllUserXmls() {
               (filename === "logos.xml" && !content.includes('id="programa 2"') && existing.includes('id="programa 2"'));
 
             if (isExistingSubstantial && isNewFallback) {
-              if (filename === "geral.xml" && enqueteContent && enqueteContent.includes('ativa="1"')) {
-                try {
+              if (filename === "geral.xml") {
+                let mergedGeral = existing;
+                let changed = false;
+                if (enqueteContent && enqueteContent.includes('ativa="1"')) {
                   const enqMatch = enqueteContent.match(/<enquete[\s\S]*?<\/enquete>/i);
                   if (enqMatch && existing.includes("<enquete")) {
-                    const mergedGeral = existing.replace(/<enquete[\s\S]*?<\/enquete>/i, enqMatch[0]);
-                    writeFileSync(targetPath, mergedGeral.trim() + "\n", "utf-8");
-                    totalFiles++;
-                    console.log(`[SYNC] Updated active <enquete> block inside preserved ${slug}/geral.xml`);
-                    continue;
+                    mergedGeral = mergedGeral.replace(/<enquete[\s\S]*?<\/enquete>/i, enqMatch[0]);
+                    changed = true;
                   }
-                } catch {}
+                }
+                if (batalhaContent && (batalhaContent.includes("<artista1_nome>") && !batalhaContent.includes("<artista1_nome></artista1_nome>") && !batalhaContent.includes("<artista1_nome/>"))) {
+                  const a1Nome = batalhaContent.match(/<artista1_nome>(.*?)<\/artista1_nome>/)?.[1] || "";
+                  const a1Musica = batalhaContent.match(/<artista1_musica>(.*?)<\/artista1_musica>/)?.[1] || "";
+                  const a1Porc = batalhaContent.match(/<artista1_porcentagem>(.*?)<\/artista1_porcentagem>/)?.[1] || "0%";
+                  const a1Img = batalhaContent.match(/<artista1_imagem>(.*?)<\/artista1_imagem>/)?.[1] || "";
+                  const a2Nome = batalhaContent.match(/<artista2_nome>(.*?)<\/artista2_nome>/)?.[1] || "";
+                  const a2Musica = batalhaContent.match(/<artista2_musica>(.*?)<\/artista2_musica>/)?.[1] || "";
+                  const a2Porc = batalhaContent.match(/<artista2_porcentagem>(.*?)<\/artista2_porcentagem>/)?.[1] || "0%";
+                  const a2Img = batalhaContent.match(/<artista2_imagem>(.*?)<\/artista2_imagem>/)?.[1] || "";
+                  const hIni = batalhaContent.match(/<horario_inicio>(.*?)<\/horario_inicio>/)?.[1] || "00:00";
+                  const hFim = batalhaContent.match(/<horario_fim>(.*?)<\/horario_fim>/)?.[1] || "23:59";
+
+                  const batalhaBlock = `<batalha ativa="1">
+      <titulo>Batalha Musical</titulo>
+      <musica_a>
+        <nome>${a1Musica}</nome>
+        <artista>${a1Nome}</artista>
+        <porcentagem>${a1Porc}</porcentagem>
+      </musica_a>
+      <musica_b>
+        <nome>${a2Musica}</nome>
+        <artista>${a2Nome}</artista>
+        <porcentagem>${a2Porc}</porcentagem>
+      </musica_b>
+      <artista1_nome>${a1Nome}</artista1_nome>
+      <artista1_musica>${a1Musica}</artista1_musica>
+      <artista1_porcentagem>${a1Porc}</artista1_porcentagem>
+      <artista1_imagem>${a1Img}</artista1_imagem>
+      <artista2_nome>${a2Nome}</artista2_nome>
+      <artista2_musica>${a2Musica}</artista2_musica>
+      <artista2_porcentagem>${a2Porc}</artista2_porcentagem>
+      <artista2_imagem>${a2Img}</artista2_imagem>
+      <horario_inicio>${hIni}</horario_inicio>
+      <horario_fim>${hFim}</horario_fim>
+    </batalha>`;
+                  if (existing.includes("<batalha")) {
+                    mergedGeral = mergedGeral.replace(/<batalha[\s\S]*?<\/batalha>/i, batalhaBlock);
+                    changed = true;
+                  }
+                }
+                if (changed) {
+                  writeFileSync(targetPath, mergedGeral.trim() + "\n", "utf-8");
+                  totalFiles++;
+                  console.log(`[SYNC] Updated active <enquete>/<batalha> block inside preserved ${slug}/geral.xml`);
+                  continue;
+                }
               }
               console.log(`[PROTECTED] Preserved existing user data for ${slug}/${filename}, skipping fallback overwrite.`);
               continue;
