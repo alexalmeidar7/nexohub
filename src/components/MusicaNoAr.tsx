@@ -1214,6 +1214,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               programa,
               artista,
               musica: titulo,
+              created_at: new Date().toISOString(),
             }, { onConflict: "user_id,musica,artista,dia" });
 
             // Also ensure the track exists in infomusic so it surfaces under "Músicas sem curiosidades"
@@ -1314,6 +1315,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setOnlineError(null);
       setOnlineActivating(false);
       setOnlineLastReadAt(Date.now());
+      try {
+        localStorage.setItem("masterview_online_reader_active", Date.now().toString());
+      } catch {}
 
       const parsed = parseXmlString(data.content);
       if (!parsed) {
@@ -1344,14 +1348,21 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Sync component state from localStorage (useGlobalMusicSync may update it)
   useEffect(() => {
     const syncFromStorage = () => {
-      // Se este navegador for o leitor físico monitorando ativamente um arquivo local, NÃO permitir que mudanças externas de localStorage alterem a música
-      if (isLocalReaderActive()) return;
+      // Se este navegador for o leitor físico ou leitor online ativo, NÃO permitir que mudanças externas de localStorage alterem a música
+      const isOnlineActiveOnClient = isOnlineSelected && hasValidOnlineUrl && !onlineError && lastOnlineSuccessRef.current > 0 && (Date.now() - lastOnlineSuccessRef.current < 20000);
+      if (isLocalReaderActive() || (fileHandleRef.current && isLocalSelected) || isOnlineActiveOnClient) return;
+
       const raw = localStorage.getItem(MUSIC_DATA_KEY);
       const startStr = localStorage.getItem(MUSIC_START_KEY);
       if (!raw || !startStr) return;
       try {
         const stored: MusicData = JSON.parse(raw);
         const storedStart = parseInt(startStr, 10);
+        // Se a faixa no localStorage for mais antiga do que a faixa que já começou a tocar aqui, não retroceder
+        if (startTimeRef.current && storedStart > 0 && storedStart < (startTimeRef.current - 5000)) {
+          return;
+        }
+
         setMusic(prev => {
           if (!prev || prev.titulo !== stored.titulo || prev.artista !== stored.artista) {
             setStartTime(storedStart);
@@ -1368,7 +1379,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
     const interval = setInterval(syncFromStorage, 2000);
     return () => clearInterval(interval);
-  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalReaderActive]);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, isLocalReaderActive, isOnlineSelected, hasValidOnlineUrl, onlineError, isLocalSelected]);
 
   useEffect(() => {
     if (!isOnlineSelected || !hasValidOnlineUrl) return;
@@ -1879,9 +1890,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     };
 
     const syncFromDatabase = async () => {
-      // Apenas o computador que estiver com arquivo físico em disco aberto ignora o banco enquanto lê o arquivo físico.
-      // Computadores secundários (sem arquivo físico em disco aberto) DEVEM sempre sincronizar do banco!
-      if (isLocalReaderActive() || (fileHandleRef.current && isLocalSelected)) return;
+      // Apenas computadores secundários sincronizam do banco.
+      // Computador com leitor local físico em disco OU leitor online ativo nunca deve sobrescrever a própria leitura.
+      const isOnlineActiveOnClient = isOnlineSelected && hasValidOnlineUrl && !onlineError && lastOnlineSuccessRef.current > 0 && (Date.now() - lastOnlineSuccessRef.current < 20000);
+      if (isLocalReaderActive() || (fileHandleRef.current && isLocalSelected) || isOnlineActiveOnClient) return;
 
       // 0. Sincronização direta em rede / servidor local (/api/sync-music)
       try {
@@ -1897,14 +1909,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const now = Date.now();
             const el = Math.max(0, (now - liveStart) / 1000);
 
+            // Se já temos uma música tocando e o dado do servidor for mais antigo, ignorar para não alternar
+            if (startTimeRef.current && liveStart < (startTimeRef.current - 5000)) {
+              return;
+            }
+
             // Se o dado tiver mais de 4 horas, não considerar como música ao vivo
             if (now - liveStart <= 4 * 3600 * 1000) {
               const { titulo: cleanT, artista: cleanA } = sanitizeTrackInfo(liveMusic.titulo, liveMusic.artista);
               const liveCapa = liveMusic.capa || "";
               const liveDur = Number(liveMusic.duracao) || 180;
 
-              setLastSource("pasta");
-              lastSourceRef.current = "pasta";
+              const activeSrc = liveMusic.source || (isOnlineSelected ? "online" : "pasta");
+              setLastSource(activeSrc);
+              lastSourceRef.current = activeSrc;
               setLocalMonitoring(true);
               setLocalLastReadAt(Date.now());
               setLocalDelay(false);
@@ -1929,7 +1947,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                         duracao: liveDur,
                         capa: cov,
                         startTime: liveStart,
-                        source: "pasta",
+                        source: activeSrc,
                         deviceName: liveMusic.deviceName,
                       });
                     }
@@ -2005,6 +2023,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               musicRef.current.titulo?.trim().toLowerCase() === cleanT.toLowerCase() &&
               musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
 
+            // Se for uma música diferente, verificar se o registro do banco não é mais antigo que a música já tocando localmente
+            if (!isSameTrack && startTimeRef.current && dbStart && dbStart < (startTimeRef.current - 10000)) {
+              // O banco está defasado em relação à faixa já ativa — não alternar para trás
+              return;
+            }
+
             let resolvedStart = dbStart;
             if (isSameTrack && startTimeRef.current && startTimeRef.current > 0) {
               resolvedStart = startTimeRef.current;
@@ -2020,8 +2044,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const now = Date.now();
             const el = Math.max(0, (now - resolvedStart) / 1000);
 
-            setLastSource("pasta");
-            lastSourceRef.current = "pasta";
+            const activeSrc = (di.music_source as string) || (isOnlineSelected ? "online" : "pasta");
+            setLastSource(activeSrc);
+            lastSourceRef.current = activeSrc;
 
             setMusic((prev) => {
               const activeCapa = dbCover || (prev?.titulo === cleanT && prev?.capa ? prev.capa : "");
@@ -2081,7 +2106,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             return;
           }
 
-          // 2. Se dashboard_items não tiver a música, buscar de musicas_tocadas
+          // 2. Se dashboard_items não tiver a música, buscar de musicas_tocadas SOMENTE se não houver faixa ativa tocando
+          const hasActiveTrackAlready = Boolean(
+            musicRef.current &&
+            musicRef.current.titulo &&
+            musicRef.current.titulo.toLowerCase() !== "sem título" &&
+            startTimeRef.current &&
+            (Date.now() - startTimeRef.current < ((musicRef.current.duracao || 180) + 60) * 1000)
+          );
+
+          // Se já estamos tocando uma faixa válida e em tempo real, NUNCA consultar histórico de musicas_tocadas
+          if (hasActiveTrackAlready) return;
+
           const { data: lastPlayed } = await supabase
             .from("musicas_tocadas")
             .select("musica, artista, horario, dia, created_at")
@@ -2135,11 +2171,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               trackStartTime = Date.now();
             }
 
+            // Se o histórico for mais antigo que o início do que já está na tela, não retroceder
+            if (startTimeRef.current && trackStartTime < (startTimeRef.current - 10000)) {
+              return;
+            }
+
             const now = Date.now();
             const el = Math.max(0, (now - trackStartTime) / 1000);
 
-            setLastSource("pasta");
-            lastSourceRef.current = "pasta";
+            const activeSrc = isOnlineSelected ? "online" : "pasta";
+            setLastSource(activeSrc);
+            lastSourceRef.current = activeSrc;
 
             setMusic((prev) => {
               const currentCapa = (prev?.titulo === cleanT && prev?.capa) ? prev.capa : "";

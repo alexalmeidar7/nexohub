@@ -2,7 +2,7 @@
 <items>
   <dados>
     <empresa_logo>/logos/positiva.png</empresa_logo>
-    <programa_nome>Flashback Positiva</programa_nome>
+    <programa_nome>Whatsapp Positiva</programa_nome>
     <programa_logo>/selos/domingao.png</programa_logo>
     <programa_thumb></programa_thumb>
     <locutor_nome>Jonathas Mattos</locutor_nome>
@@ -32,15 +32,15 @@
     </infos_canto>
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Whatsapp Positiva</programa_nome>
-      <nome_programa>Whatsapp Positiva</nome_programa>
+      <programa_nome>Sertanejo bom demais - 2ª Edição</programa_nome>
+      <nome_programa>Sertanejo bom demais - 2ª Edição</nome_programa>
       <programa_logo>/selos/madrugada.png</programa_logo>
-      <locutor_nome>Jonathas Mattos</locutor_nome>
-      <locutor_foto>/locutores/jonathas.png</locutor_foto>
-      <horario>13:00</horario>
+      <locutor_nome>Vanessa Reis</locutor_nome>
+      <locutor_foto>/locutores/vanessa-reis.png</locutor_foto>
+      <horario>16:00</horario>
       <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-21T15:13:22.373Z</atualizado_em>
+      <atualizado_em>2026-09-21T16:55:59.422Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

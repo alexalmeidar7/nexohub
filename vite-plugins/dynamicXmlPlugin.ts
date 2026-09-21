@@ -1512,6 +1512,20 @@ export function dynamicXmlPlugin(): Plugin {
 `;
               writeStaticXml(slug, "music.xml", xmlContent);
               writeStaticXml(slug, "local.xml", xmlContent);
+              writeStaticXml(slug, "musica.xml", xmlContent);
+              writeStaticXml(slug, "musica-agora.xml", xmlContent);
+              if (rawSlug && rawSlug !== slug) {
+                writeStaticXml(rawSlug, "music.xml", xmlContent);
+                writeStaticXml(rawSlug, "local.xml", xmlContent);
+                writeStaticXml(rawSlug, "musica.xml", xmlContent);
+                writeStaticXml(rawSlug, "musica-agora.xml", xmlContent);
+              }
+              for (const a of ALL_ALIASES[norm] || []) {
+                writeStaticXml(a, "music.xml", xmlContent);
+                writeStaticXml(a, "local.xml", xmlContent);
+                writeStaticXml(a, "musica.xml", xmlContent);
+                writeStaticXml(a, "musica-agora.xml", xmlContent);
+              }
 
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ ok: true, slug, music: musicInfo }));

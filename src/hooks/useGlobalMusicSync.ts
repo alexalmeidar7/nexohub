@@ -262,7 +262,8 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           programa,
           artista,
           musica: titulo,
-        }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
+          created_at: now.toISOString(),
+        }, { onConflict: "user_id,musica,artista,dia" });
 
         if (!error) {
           lastRecordedRef.current = key;
@@ -272,18 +273,19 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       }
     };
 
-    const isLocalReaderActiveOnClient = () => {
+    const isReaderActiveOnClient = () => {
       try {
-        const ts = parseInt(localStorage.getItem("masterview_local_reader_active") || "0", 10);
-        return Date.now() - ts < 30_000;
-      } catch {
-        return false;
-      }
+        const localTs = parseInt(localStorage.getItem("masterview_local_reader_active") || "0", 10);
+        if (Date.now() - localTs < 30_000) return true;
+        const onlineTs = parseInt(localStorage.getItem("masterview_online_reader_active") || "0", 10);
+        if (Date.now() - onlineTs < 30_000) return true;
+      } catch {}
+      return false;
     };
 
     const applyMusicData = (data: { titulo: string; artista: string; duracao: number; capa: string; horario?: string; fileModifiedAt?: number }) => {
-      if (isLocalReaderActiveOnClient()) {
-        // O leitor de arquivo local no disco está ativo nesta máquina — não interferir
+      if (isReaderActiveOnClient()) {
+        // O leitor físico em disco ou online está ativo nesta máquina — não interferir no localStorage
         return;
       }
       const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -702,6 +704,16 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
           if (foundTrack) {
             const cur = readMusicData(targetId);
+            const curStartStr = localStorage.getItem(musicStartKey(targetId));
+            const curStart = curStartStr ? parseInt(curStartStr, 10) : 0;
+            const curAgeMs = curStart > 0 ? Date.now() - curStart : Infinity;
+            const curHasActiveSong = cur && !isPlaceholderTrack(cur) && !isBreakTrack(cur) && curAgeMs < ((cur.duracao || 180) + 60) * 1000;
+
+            // Se já existe uma música tocando e ativa, NUNCA sobrescrever com o histórico de musicas_tocadas
+            if (curHasActiveSong) {
+              return;
+            }
+
             const isSameTrack = cur && cur.titulo === foundTrack.titulo && cur.artista === foundTrack.artista;
             if (!isSameTrack) {
               const initialCover = getTrackCoverSync(foundTrack.titulo, foundTrack.artista) || "";

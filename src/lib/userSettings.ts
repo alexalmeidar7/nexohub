@@ -93,14 +93,21 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
       continue;
     }
 
-    const { data: updatedRows, error: updateError } = await supabase
+    let updateQuery = supabase
       .from("user_settings")
       .update({
         dashboard_items: mergedDashboardItems as any,
         updated_at: nowIso,
       })
-      .eq("user_id", userId)
-      .eq("updated_at", existing.updated_at)
+      .eq("user_id", userId);
+
+    if (existing.updated_at) {
+      updateQuery = updateQuery.eq("updated_at", existing.updated_at);
+    } else {
+      updateQuery = updateQuery.is("updated_at", null);
+    }
+
+    const { data: updatedRows, error: updateError } = await updateQuery
       .select("user_id")
       .limit(1);
 
@@ -110,6 +117,22 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
     }
 
     if ((updatedRows?.length ?? 0) > 0) return;
+
+    // Se falhou pelo optimistic lock e já tentamos várias vezes, fazer update direto por user_id para garantir persistência
+    if (attempt >= 2) {
+      const { data: directRows, error: directError } = await supabase
+        .from("user_settings")
+        .update({
+          dashboard_items: mergedDashboardItems as any,
+          updated_at: nowIso,
+        })
+        .eq("user_id", userId)
+        .select("user_id")
+        .limit(1);
+
+      if (!directError && (directRows?.length ?? 0) > 0) return;
+      if (directError) lastError = directError;
+    }
   }
 
   throw lastError ?? new Error("Falha ao salvar dashboard_items com merge seguro.");
