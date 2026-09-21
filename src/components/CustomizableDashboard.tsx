@@ -18,6 +18,7 @@ import AudioSpectrum from "@/components/AudioSpectrum";
 import AutoScrollText from "@/components/player/AutoScrollText";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { getSnapshotStreamingChannels } from "@/lib/supabaseDatabaseSnapshot";
 import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
 
 
@@ -127,7 +128,9 @@ interface Props {
 
 export default function CustomizableDashboard({ onNavigate, effectiveUserId, isActive = true }: Props) {
   const { user } = useAuth();
-  const [items, setItems] = useState<DashboardItem[]>([]);
+  const [items, setItems] = useState<DashboardItem[]>([
+    { id: "default-player", type: "widget", widgetType: "player" },
+  ]);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
   const [playerCompactMap, setPlayerCompactMap] = useState<Record<string, boolean>>({});
   // Using effectiveUserId from props if provided, otherwise using internal logic as fallback
@@ -255,6 +258,14 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
     const stripDeprecated = (arr: DashboardItem[]) =>
       arr.filter(i => i.type !== "link" && !(i.type === "widget" && i.widgetType && DEPRECATED_WIDGETS.has(i.widgetType)));
 
+    const ensurePlayerWidget = (arr: DashboardItem[]) => {
+      const cleaned = stripDeprecated(arr);
+      if (!cleaned.some(i => i.type === "widget" && i.widgetType === "player")) {
+        return [{ id: "default-player", type: "widget", widgetType: "player" } as DashboardItem, ...cleaned];
+      }
+      return cleaned;
+    };
+
     const loadItems = async () => {
       // Try DB first
       const { data, error } = await supabase
@@ -270,7 +281,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
       const normalized = normalizeDashboardSettings(data?.dashboard_items);
 
       if (Array.isArray(normalized.items) && normalized.items.length > 0) {
-        const cleaned = stripDeprecated(normalized.items);
+        const cleaned = ensurePlayerWidget(normalized.items);
         setItems(cleaned);
         return;
       }
@@ -281,7 +292,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const cleaned = stripDeprecated(parsed as DashboardItem[]);
+            const cleaned = ensurePlayerWidget(parsed as DashboardItem[]);
             setItems(cleaned);
             return;
           }
@@ -314,34 +325,12 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
     return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
   }, [items]);
 
-  // Find player item for headless engine
-  const playerItem = items.find(i => i.type === "widget" && i.widgetType === "player");
-
   return (
     <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1">
-      {/* DashboardPlayerWidget mounted headlessly — provides audio engine + emits player:music events */}
-      {playerItem && (
-        <div style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none", opacity: 0, zIndex: -999 }}>
-          <Suspense fallback={null}>
-            <DashboardPlayerWidget
-              dataUserId={dataUserId || undefined}
-              isActive={isActive}
-              onVideoChange={(active) => setPlayerVideoActive(active ? playerItem.id : null)}
-              onCompactChange={(c) => setPlayerCompactMap(m => ({ ...m, [playerItem.id]: c }))}
-            />
-          </Suspense>
-        </div>
-      )}
-
-
-
-
-
-
       {/* Spacer to push widgets to bottom */}
       <div className="flex-1" />
 
-      {items.filter(i => i.type === "widget" && i.widgetType !== "player").length > 0 && (
+      {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-2">
           <div className="flex items-center gap-2 mb-3 animate-fade-in">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "#002132" }}>Widgets</p>
@@ -349,13 +338,11 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
 
-            {items.filter(i => i.type === "widget" && i.widgetType !== "player").map(item => {
+            {items.filter(i => i.type === "widget").map(item => {
               const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
 
                 return (
                 <Fragment key={item.id}>
-                {/* Player widget: hidden from grid UI — runs as headless audio engine */}
-                {/* The FloatingMiniPlayer consumes player:music events emitted by DashboardPlayerWidget */}
                 <div
                   className={
                     (item.widgetType === "player"
@@ -364,7 +351,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
                     "relative"
                   }
                   style={item.widgetType === "player"
-                    ? { display: "none" }
+                    ? { height: playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px` }
                     : undefined}
                 >
                 <div
@@ -1420,6 +1407,14 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange, isA
         return;
       }
 
+      // 2.5. Snapshot channels fallback
+      const snapChannels = getSnapshotStreamingChannels(uid || user?.email);
+      const activeSnap = snapChannels?.filter((c: any) => c.active && c.type !== "catalog");
+      if (activeSnap && activeSnap.length > 0) {
+        setChannels(activeSnap);
+        return;
+      }
+
       // 3. Remote station database edge function
       const stationData = await fetchStationDatabaseData(uid || user?.email);
       if (stationData?.channels && stationData.channels.length > 0) {
@@ -2138,6 +2133,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange, isA
           <img
             src={fadingArt}
             alt=""
+            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
             className="absolute inset-0 w-full h-full object-cover object-center"
             style={{
               transition: reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease-out, transform 0.7s cubic-bezier(0.22,0.61,0.36,1)",
@@ -2151,6 +2147,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange, isA
             key={visibleArt}
             src={visibleArt}
             alt=""
+            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
             className="absolute inset-0 w-full h-full object-cover object-center"
             style={{
               transition: reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease-out, transform 0.7s cubic-bezier(0.22,0.61,0.36,1)",

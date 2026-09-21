@@ -3,6 +3,7 @@ import { findClientAccountByEmail, findClientAccountById, ClientAccountInfo } fr
 import { getClientHouseMixProgramsSync, HouseMixProgram, normalizeClientKey } from "./houseMixProgramasService";
 import { CANONICAL_PRESENTERS, getPresentersForStation } from "./onAirPresenterResolver";
 import { DEFAULT_STATION_PARTICIPANTES } from "./stationParticipantesData";
+import { getSnapshotStreamingChannels } from "./supabaseDatabaseSnapshot";
 
 export interface StationDatabaseData {
   userId: string;
@@ -71,7 +72,7 @@ export function getStationDatabaseSync(userIdOrEmailOrSlug?: string | null): Sta
     const synth: StationDatabaseData = {
       userId: acc.id,
       slug: acc.slug,
-      channels: [],
+      channels: getSnapshotStreamingChannels(acc.id).filter((c: any) => c.type !== 'catalog'),
       programas: fallbackPrograms,
       apresentadores: DEFAULT_STATION_PARTICIPANTES[normalizeClientKey(acc.nome || acc.slug)] || getPresentersForStation(acc.slug || acc.id),
       prerolls: [],

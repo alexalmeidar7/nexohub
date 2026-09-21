@@ -200,6 +200,19 @@ export function getSnapshotStreamingChannels(userIdOrSlug?: string): any[] {
   const channels = getSnapshotTable('streaming_channels');
   if (!userIdOrSlug) return channels;
 
+  // 1. Direct match by user_id
+  const direct = channels.filter((c: any) => c.user_id === userIdOrSlug);
+  if (direct.length > 0) return direct;
+
+  // 2. Match by client account
+  const acc = findClientAccountByEmail(userIdOrSlug) || findClientAccountById(userIdOrSlug);
+  const targetId = acc?.parentUserId || acc?.id;
+  if (targetId) {
+    const matched = channels.filter((c: any) => c.user_id === targetId);
+    if (matched.length > 0) return matched;
+  }
+
+  // 3. Match by empresa
   const empresa = getSnapshotEmpresa(userIdOrSlug);
   const targetUserId = empresa?.user_id;
 
