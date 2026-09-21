@@ -128,11 +128,7 @@ interface Props {
 
 export default function CustomizableDashboard({ onNavigate, effectiveUserId, isActive = true }: Props) {
   const { user } = useAuth();
-  const [items, setItems] = useState<DashboardItem[]>([
-    { id: "default-player", type: "widget", widgetType: "player" },
-  ]);
-  const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
-  const [playerCompactMap, setPlayerCompactMap] = useState<Record<string, boolean>>({});
+  const [items, setItems] = useState<DashboardItem[]>([]);
   // Using effectiveUserId from props if provided, otherwise using internal logic as fallback
   const [internalEffectiveUserId, setInternalEffectiveUserId] = useState<string | null>(null);
   const resolvedUserId = effectiveUserId || internalEffectiveUserId || user?.id;
@@ -252,19 +248,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
     if (!user) return;
-    const DEFAULT_ITEMS: DashboardItem[] = [
-      { id: "default-player", type: "widget", widgetType: "player" },
-    ];
+    const DEFAULT_ITEMS: DashboardItem[] = [];
     const stripDeprecated = (arr: DashboardItem[]) =>
-      arr.filter(i => i.type !== "link" && !(i.type === "widget" && i.widgetType && DEPRECATED_WIDGETS.has(i.widgetType)));
-
-    const ensurePlayerWidget = (arr: DashboardItem[]) => {
-      const cleaned = stripDeprecated(arr);
-      if (!cleaned.some(i => i.type === "widget" && i.widgetType === "player")) {
-        return [{ id: "default-player", type: "widget", widgetType: "player" } as DashboardItem, ...cleaned];
-      }
-      return cleaned;
-    };
+      arr.filter(i => i.type !== "link" && !(i.type === "widget" && i.widgetType && (DEPRECATED_WIDGETS.has(i.widgetType) || i.widgetType === "player")));
 
     const loadItems = async () => {
       // Try DB first
@@ -281,7 +267,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
       const normalized = normalizeDashboardSettings(data?.dashboard_items);
 
       if (Array.isArray(normalized.items) && normalized.items.length > 0) {
-        const cleaned = ensurePlayerWidget(normalized.items);
+        const cleaned = stripDeprecated(normalized.items);
         setItems(cleaned);
         return;
       }
@@ -292,7 +278,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const cleaned = ensurePlayerWidget(parsed as DashboardItem[]);
+            const cleaned = stripDeprecated(parsed as DashboardItem[]);
             setItems(cleaned);
             return;
           }
@@ -327,81 +313,66 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, isA
 
   return (
     <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1">
+      {/* DashboardPlayerWidget mounted headlessly — provides audio engine + emits player:music events */}
+      <div style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none", opacity: 0, zIndex: -999 }}>
+        <Suspense fallback={null}>
+          <DashboardPlayerWidget
+            dataUserId={dataUserId || undefined}
+            isActive={isActive}
+            onVideoChange={() => {}}
+            onCompactChange={() => {}}
+          />
+        </Suspense>
+      </div>
+
       {/* Spacer to push widgets to bottom */}
       <div className="flex-1" />
 
-      {items.filter(i => i.type === "widget").length > 0 && (
+      {items.filter(i => i.type === "widget" && i.widgetType !== "player").length > 0 && (
         <div className="mb-2">
           <div className="flex items-center gap-2 mb-3 animate-fade-in">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "#002132" }}>Widgets</p>
-            {/* Botão de adicionar widget removido */}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
-
-            {items.filter(i => i.type === "widget").map(item => {
-              const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
-
-                return (
+            {items.filter(i => i.type === "widget" && i.widgetType !== "player").map(item => {
+              return (
                 <Fragment key={item.id}>
-                <div
-                  className={
-                    (item.widgetType === "player"
-                      ? `col-span-full flex ${playerVideoActive === item.id ? "flex-row-reverse" : "flex-row"} items-stretch gap-2 `
-                      : "") +
-                    "relative"
-                  }
-                  style={item.widgetType === "player"
-                    ? { height: playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px` }
-                    : undefined}
-                >
-                <div
-                  className="relative group rounded-3xl animate-fade-in flex flex-col"
-                  style={{
-                    background: "var(--layout-widget-bg, #1a1a1a)",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
-                    borderRadius: "24px",
-                    aspectRatio: item.widgetType === "player" ? (playerVideoActive === item.id ? "16 / 9" : "1 / 1") : undefined,
-                    height: item.widgetType === "player" ? "100%" : "280px",
-                    maxHeight: item.widgetType === "player" ? "100%" : "280px",
-                    flexShrink: item.widgetType === "player" ? 0 : undefined,
-                    overflow: item.widgetType === "player" ? "hidden" : "hidden",
-                    transition: item.widgetType === "player" ? "aspect-ratio 0.4s cubic-bezier(0.4,0,0.2,1), min-height 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.35s cubic-bezier(0.4,0,0.2,1)" : undefined,
-                  }}
-                >
-                  {item.widgetType !== "player" && (
+                  <div className="relative">
                     <div
-                      className="flex items-center gap-2 px-5 py-3 flex-shrink-0"
-                      style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
+                      className="relative group rounded-3xl animate-fade-in flex flex-col"
+                      style={{
+                        background: "var(--layout-widget-bg, #1a1a1a)",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
+                        borderRadius: "24px",
+                        height: "280px",
+                        maxHeight: "280px",
+                        overflow: "hidden",
+                      }}
                     >
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #0055ff) 15%, transparent)" }}>
-                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
-                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
-                        {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
-                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                      <div
+                        className="flex items-center gap-2 px-5 py-3 flex-shrink-0"
+                        style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
+                      >
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #0055ff) 15%, transparent)" }}>
+                          {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                          {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                          {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                          {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #0055ff)" }} />}
+                        </div>
+                        <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
+                          {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
-                        {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
-                      </span>
+                      <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden widget-scroll">
+                        <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
+                          {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
+                          {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
+                          {item.widgetType === "stats" && <StatsWidget dataUserId={dataUserId || undefined} />}
+                          {item.widgetType === "weather" && <DashboardWeatherWidget />}
+                        </Suspense>
+                      </div>
                     </div>
-                  )}
-                  <div className={`${item.widgetType === "player" ? "p-0" : "p-4"} flex-1 ${item.widgetType === "player" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
-                    <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
-                      {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
-                      {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
-                      {item.widgetType === "stats" && <StatsWidget dataUserId={dataUserId || undefined} />}
-                      {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                      {item.widgetType === "player" && <DashboardPlayerWidget dataUserId={dataUserId || undefined} isActive={isActive} onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} onCompactChange={(c) => setPlayerCompactMap(m => ({ ...m, [item.id]: c }))} />}
-                    </Suspense>
                   </div>
-                </div>
-                {item.widgetType === "player" && (
-                  <div className="flex-1 min-w-0 h-full">
-                    <Suspense fallback={<div style={{ height: "100%", borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
-                      <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
-                    </Suspense>
-                  </div>
-                )}
-                </div>
                 </Fragment>
               );
             })}

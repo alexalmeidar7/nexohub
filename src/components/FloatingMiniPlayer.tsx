@@ -320,11 +320,26 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
             title={isPlaying ? "Clique para pausar" : "Clique para reproduzir"}
           >
             {/* Displayed album art with smooth scale & blur enter/exit animations */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                ...coverAnimStyle,
+              }}
+            >
+              <Radio size={28} style={{ color: "rgba(255,255,255,0.22)" }} />
+            </div>
             {displayedInfo.art ? (
               <img
                 key={displayedInfo.art}
                 src={displayedInfo.art}
                 alt={displayedInfo.titulo || ""}
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                }}
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -334,20 +349,7 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
                   ...coverAnimStyle,
                 }}
               />
-            ) : (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  ...coverAnimStyle,
-                }}
-              >
-                <Radio size={28} style={{ color: "rgba(255,255,255,0.18)" }} />
-              </div>
-            )}
+            ) : null}
 
             {/* Vignette overlay */}
             <div style={{

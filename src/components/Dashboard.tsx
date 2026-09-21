@@ -1373,11 +1373,11 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         </Suspense>
       )}
 
-      {/* Floating player dock: disabled on dashboard since real player widget is restored in grid */}
+      {/* Floating player dock: sits at root level; when currentPage !== 'dashboard', sits behind pages (z-[2]); on dashboard sits at z-30 */}
       {!isAdmin && (
         <Suspense fallback={null}>
           <FloatingMiniPlayer
-            isBehindPages={true}
+            isBehindPages={currentPage !== "dashboard" && !isWindowMode}
             effectiveUserId={effectiveUserId}
           />
         </Suspense>
