@@ -155,7 +155,7 @@ export function useLayoutColors() {
           return;
         }
 
-        const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(targetId);
+        const clientAcc = findClientAccountByEmail(user?.email) || findClientAccountById(effectiveUserId);
         if (clientAcc?.layoutColors) {
           setColors({
             ...defaultLayoutColors,

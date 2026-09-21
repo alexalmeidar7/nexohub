@@ -7,6 +7,7 @@ import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, New
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
 
 

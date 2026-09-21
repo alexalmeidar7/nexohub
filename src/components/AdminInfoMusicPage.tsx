@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Music, RefreshCw, Search, Sparkles, HelpCircle } from "lucide-react";
+import { Music, RefreshCw, Search, Sparkles, HelpCircle, Download } from "lucide-react";
 
 import { DEFAULT_AGENCY_CLIENTS } from "@/components/ClientesPage";
 
