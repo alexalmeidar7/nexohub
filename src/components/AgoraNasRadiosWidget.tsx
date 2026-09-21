@@ -240,7 +240,7 @@ export default function AgoraNasRadiosWidget() {
           const resolvedAp = resolvePresenterForProgram(onAirResult.current, dbApresentadores, cli.id);
           if (resolvedAp) {
             locutorNome = resolvedAp.nome;
-            locutorFoto = resolveSafePresenterPhoto(resolvedAp.foto, resolvedAp.nome);
+            locutorFoto = resolveSafePresenterPhoto(resolvedAp.foto, resolvedAp.nome, cli.id || cli.nome);
             if (resolvedAp.instagram) locutorInstagram = `@${resolvedAp.instagram.replace(/^@/, "")}`;
           } else {
             const apId = onAirResult.current.apresentador_id || (onAirResult.current.apresentadores_ids && onAirResult.current.apresentadores_ids[0]);
@@ -248,7 +248,7 @@ export default function AgoraNasRadiosWidget() {
               const ap = dbApresentadores.find((a) => a.id === apId);
               if (ap) {
                 locutorNome = ap.nome;
-                locutorFoto = resolveSafePresenterPhoto(ap.foto, ap.nome);
+                locutorFoto = resolveSafePresenterPhoto(ap.foto, ap.nome, cli.id || cli.nome);
                 if (ap.instagram) locutorInstagram = `@${ap.instagram.replace(/^@/, "")}`;
               }
             }
@@ -263,7 +263,7 @@ export default function AgoraNasRadiosWidget() {
           });
           if (matchingAp) {
             locutorNome = matchingAp.nome;
-            locutorFoto = resolveSafePresenterPhoto(matchingAp.foto, matchingAp.nome);
+            locutorFoto = resolveSafePresenterPhoto(matchingAp.foto, matchingAp.nome, cli.id || cli.nome);
             if (matchingAp.instagram) locutorInstagram = `@${matchingAp.instagram.replace(/^@/, "")}`;
           }
         }
@@ -510,13 +510,14 @@ export default function AgoraNasRadiosWidget() {
           {/* Card do Locutor / Apresentador */}
           <div className="flex items-center gap-3 p-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
             <div className="relative shrink-0">
-              {resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome) ? (
+              {resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome, currentRadio.id || currentRadio.name) ? (
                 <img
-                  src={resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome)}
+                  src={resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome, currentRadio.id || currentRadio.name)}
                   alt={currentRadio.locutorNome}
                   className="w-10 h-10 rounded-full object-cover ring-2 ring-[#00BFF0]/40 shadow-md"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "/locutores/jonathas.png";
+                    const fallback = resolveSafePresenterPhoto("", currentRadio.locutorNome, currentRadio.id || currentRadio.name) || "/locutores/sem-loc.png";
+                    (e.currentTarget as HTMLImageElement).src = fallback;
                   }}
                 />
               ) : (

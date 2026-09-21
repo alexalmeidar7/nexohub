@@ -550,3 +550,194 @@ export function resolvePresenterForProgram(
   // Strict guarantee: DO NOT return another host's photo/name!
   return null;
 }
+
+// Authentic official photos per station to enforce strict zero-leakage cross-tenant isolation
+export const POSITIVA_LOCUTOR_PHOTOS = new Set([
+  "/locutores/jonathas.png",
+  "/locutores/marcio.png",
+  "/locutores/vanessa-reis.png",
+  "/locutores/vanessareis.png",
+  "/locutores/reginaldo.png",
+  "/locutores/alysson.png",
+  "/locutores/alysson-e-jane.png",
+  "/locutores/alyssonejane.png",
+  "/locutores/fernando.png",
+  "/locutores/douglas.png",
+  "/locutores/gizele.png",
+  "/locutores/cris.png",
+]);
+
+export const INTERATIVA_LOCUTOR_PHOTOS = new Set([
+  "/locutores/ani.png",
+  "/locutores/ze.png",
+  "/locutores/botelho.png",
+  "/locutores/dj.png",
+  "/locutores/henrique.png",
+  "/locutores/augusto.png",
+  "/locutores/gabs.png",
+  "/locutores/morga.png",
+  "/locutores/pablo.png",
+  "/locutores/andre.png",
+]);
+
+export const CULTURA_LOCUTOR_PHOTOS = new Set([
+  "/locutores/azevedo.png",
+  "/locutores/mauricio.png",
+  "/locutores/nathy.png",
+  "/locutores/paulinho.png",
+  "/locutores/rafaela.png",
+  "/locutores/rayssa.png",
+  "/locutores/junior.png",
+  "/locutores/elco.png",
+]);
+
+/**
+ * Resolves safe, authentic presenter photo with strict multi-tenant station isolation.
+ * Guarantees that:
+ * 1. Ani Cristine ALWAYS gets "/locutores/ani.png" and NEVER Positiva's Cristiano "/locutores/cris.png".
+ * 2. Positiva FM photos NEVER leak into Interativa FM or Cultura FM and vice-versa.
+ * 3. Flexible argument order supported: (foto, nome, station) OR (nome, foto, station).
+ */
+export function resolveSafePresenterPhoto(
+  fotoOrNome?: string | null,
+  nomeOrFoto?: string | null,
+  stationKeyOrUserId?: string | null
+): string {
+  let foto: string | null = null;
+  let nome: string | null = null;
+
+  const arg1 = (fotoOrNome || "").trim();
+  const arg2 = (nomeOrFoto || "").trim();
+
+  const isImgPath = (s: string) =>
+    s.startsWith("/") ||
+    s.startsWith("http://") ||
+    s.startsWith("https://") ||
+    /\.(png|jpg|jpeg|webp|svg|gif)(\?.*)?$/i.test(s);
+
+  if (isImgPath(arg1)) {
+    foto = arg1;
+    nome = arg2;
+  } else if (isImgPath(arg2)) {
+    foto = arg2;
+    nome = arg1;
+  } else {
+    nome = arg1 || arg2;
+  }
+
+  const norm = (nome || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+  const station = normalizeClientKey(stationKeyOrUserId);
+
+  const isForeignPhoto = (url: string, targetStation: string): boolean => {
+    if (targetStation === "INTERATIVA FM") {
+      return POSITIVA_LOCUTOR_PHOTOS.has(url) || CULTURA_LOCUTOR_PHOTOS.has(url);
+    }
+    if (targetStation === "POSITIVA FM") {
+      return INTERATIVA_LOCUTOR_PHOTOS.has(url) || CULTURA_LOCUTOR_PHOTOS.has(url);
+    }
+    if (targetStation === "CULTURA FM") {
+      return POSITIVA_LOCUTOR_PHOTOS.has(url) || INTERATIVA_LOCUTOR_PHOTOS.has(url);
+    }
+    return false;
+  };
+
+  const isValidPhoto =
+    Boolean(foto) &&
+    !foto!.includes("zzjfzxxvxbspbdkodoix.supabase.co") &&
+    !foto!.includes("/avatars/usr-") &&
+    !isForeignPhoto(foto!, station);
+
+  // 1. Interativa FM - Strict isolation
+  if (station === "INTERATIVA FM") {
+    if (norm.includes("ani") || norm.includes("cristine")) return "/locutores/ani.png";
+    if (norm.includes("ze") || norm.includes("jose luiz") || norm.includes("luiz")) return "/locutores/ze.png";
+    if (norm.includes("botelho") || norm.includes("johnny")) return "/locutores/botelho.png";
+    if (norm.includes("dj") || norm.includes("amaral")) return "/locutores/dj.png";
+    if (norm.includes("henrique") || norm.includes("augusto")) return "/locutores/henrique.png";
+    if (norm.includes("gabs")) return "/locutores/gabs.png";
+    if (norm.includes("morga") || norm.includes("everson") || norm.includes("morgantini")) return "/locutores/morga.png";
+    if (norm.includes("pablo") || norm.includes("kossa") || norm.includes("santhe")) return "/locutores/pablo.png";
+    if (norm.includes("andre")) return "/locutores/andre.png";
+    if (norm.includes("sem loc") || norm.includes("automatico")) return "/locutores/sem-loc.png";
+    if (isValidPhoto) return foto!;
+    return "/locutores/ani.png";
+  }
+
+  // 2. Positiva FM - Strict isolation
+  if (station === "POSITIVA FM") {
+    if (norm.includes("jonathas")) return "/locutores/jonathas.png";
+    if (norm.includes("marcio")) return "/locutores/marcio.png";
+    if (norm.includes("vanessa")) return "/locutores/vanessa-reis.png";
+    if (norm.includes("reginaldo")) return "/locutores/reginaldo.png";
+    if (norm.includes("alysson") && norm.includes("jane")) return "/locutores/alysson-e-jane.png";
+    if (norm.includes("alysson")) return "/locutores/alysson.png";
+    if (norm.includes("jane")) return "/locutores/alysson-e-jane.png";
+    if (norm.includes("fernando")) return "/locutores/fernando.png";
+    if (norm.includes("douglas")) return "/locutores/douglas.png";
+    if (norm.includes("gizele") || norm.includes("gizelle")) return "/locutores/gizele.png";
+    // Cristiano: exact match on 'cris' or 'cristiano', never 'cristine' or 'ani'
+    if ((norm.includes("cristiano") || norm === "cris" || norm.startsWith("cris ")) && !norm.includes("cristine") && !norm.includes("ani")) {
+      return "/locutores/cris.png";
+    }
+    if (norm.includes("sem loc") || norm.includes("automatico")) return "/locutores/sem-loc.png";
+    if (isValidPhoto) return foto!;
+    return "/locutores/jonathas.png";
+  }
+
+  // 3. Cultura FM - Strict isolation
+  if (station === "CULTURA FM") {
+    if (norm.includes("azevedo")) return "/locutores/azevedo.png";
+    if (norm.includes("mauricio")) return "/locutores/mauricio.png";
+    if (norm.includes("nathy")) return "/locutores/nathy.png";
+    if (norm.includes("paulinho")) return "/locutores/paulinho.png";
+    if (norm.includes("rafaela")) return "/locutores/rafaela.png";
+    if (norm.includes("rayssa") || norm.includes("raissa")) return "/locutores/rayssa.png";
+    if (norm.includes("junior")) return "/locutores/junior.png";
+    if (norm.includes("elco")) return "/locutores/elco.png";
+    if (norm.includes("sem loc") || norm.includes("automatico")) return "/locutores/sem-loc.png";
+    if (isValidPhoto) return foto!;
+    return "/locutores/azevedo.png";
+  }
+
+  // 4. Station unknown / fallback: MUST still protect against false 'cris' match on Ani Cristine!
+  if (norm.includes("ani") || norm.includes("cristine")) return "/locutores/ani.png";
+  if ((norm.includes("cristiano") || norm === "cris" || norm.startsWith("cris ")) && !norm.includes("cristine")) {
+    return "/locutores/cris.png";
+  }
+  if (norm.includes("jonathas")) return "/locutores/jonathas.png";
+  if (norm.includes("marcio")) return "/locutores/marcio.png";
+  if (norm.includes("vanessa")) return "/locutores/vanessa-reis.png";
+  if (norm.includes("reginaldo")) return "/locutores/reginaldo.png";
+  if (norm.includes("alysson") && norm.includes("jane")) return "/locutores/alysson-e-jane.png";
+  if (norm.includes("alysson")) return "/locutores/alysson.png";
+  if (norm.includes("jane")) return "/locutores/alysson-e-jane.png";
+  if (norm.includes("fernando")) return "/locutores/fernando.png";
+  if (norm.includes("douglas")) return "/locutores/douglas.png";
+  if (norm.includes("gizele") || norm.includes("gizelle")) return "/locutores/gizele.png";
+
+  if (norm.includes("ze") || norm.includes("jose luiz") || norm.includes("luiz")) return "/locutores/ze.png";
+  if (norm.includes("botelho") || norm.includes("johnny")) return "/locutores/botelho.png";
+  if (norm.includes("dj") || norm.includes("amaral")) return "/locutores/dj.png";
+  if (norm.includes("henrique") || norm.includes("augusto")) return "/locutores/henrique.png";
+  if (norm.includes("gabs")) return "/locutores/gabs.png";
+  if (norm.includes("morga") || norm.includes("everson") || norm.includes("morgantini")) return "/locutores/morga.png";
+  if (norm.includes("pablo") || norm.includes("kossa") || norm.includes("santhe")) return "/locutores/pablo.png";
+  if (norm.includes("andre")) return "/locutores/andre.png";
+
+  if (norm.includes("azevedo")) return "/locutores/azevedo.png";
+  if (norm.includes("mauricio")) return "/locutores/mauricio.png";
+  if (norm.includes("nathy")) return "/locutores/nathy.png";
+  if (norm.includes("paulinho")) return "/locutores/paulinho.png";
+  if (norm.includes("rafaela")) return "/locutores/rafaela.png";
+  if (norm.includes("rayssa") || norm.includes("raissa")) return "/locutores/rayssa.png";
+  if (norm.includes("junior")) return "/locutores/junior.png";
+  if (norm.includes("elco")) return "/locutores/elco.png";
+
+  if (isValidPhoto) return foto!;
+  return "/locutores/sem-loc.png";
+}

@@ -8,7 +8,7 @@ import { getEmpresaConfig, type EmpresaConfig } from "@/lib/empresaConfigService
 import { findCurrentProgram } from "@/components/OnAirWidget";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
-import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
+import { resolvePresenterForProgram, resolveSafePresenterPhoto } from "@/lib/onAirPresenterResolver";
 import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users, MessageSquareQuote } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
@@ -166,43 +166,7 @@ export function resolveSafeProgramSelo(nameOrSelo?: string): string {
   return "/selos/flashback.png";
 }
 
-export function resolveSafePresenterPhoto(nameOrId?: string, rawPhoto?: string): string {
-  const norm = `${nameOrId || ""} ${rawPhoto || ""}`.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("jonathas")) return "/locutores/jonathas.png";
-  if (norm.includes("vanessa")) return "/locutores/vanessa-reis.png";
-  if (norm.includes("reginaldo")) return "/locutores/reginaldo.png";
-  if (norm.includes("marcio")) return "/locutores/marcio.png";
-  if (norm.includes("alysson") && norm.includes("jane")) return "/locutores/alysson-e-jane.png";
-  if (norm.includes("alysson")) return "/locutores/alysson.png";
-  if (norm.includes("douglas")) return "/locutores/douglas.png";
-  if (norm.includes("fernando")) return "/locutores/fernando.png";
-  if (norm.includes("andre")) return "/locutores/andre.png";
-  if (norm.includes("rafaela")) return "/locutores/rafaela.png";
-  if (norm.includes("mauricio")) return "/locutores/mauricio.png";
-  if (norm.includes("paulinho")) return "/locutores/paulinho.png";
-  if (norm.includes("botelho")) return "/locutores/botelho.png";
-  if (norm.includes("henrique")) return "/locutores/henrique.png";
-  if (norm.includes("gizele")) return "/locutores/gizele.png";
-  if (norm.includes("rayssa")) return "/locutores/rayssa.png";
-  if (norm.includes("ani")) return "/locutores/ani.png";
-  if (norm.includes("cris")) return "/locutores/cris.png";
-  if (norm.includes("morga")) return "/locutores/morga.png";
-  if (norm.includes("nathy")) return "/locutores/nathy.png";
-  if (norm.includes("pablo")) return "/locutores/pablo.png";
-  if (norm.includes("ze")) return "/locutores/ze.png";
-  if (norm.includes("junior")) return "/locutores/junior.png";
-  if (norm.includes("elco")) return "/locutores/elco.png";
-  if (norm.includes("gabs")) return "/locutores/gabs.png";
-  if (norm.includes("augusto")) return "/locutores/augusto.png";
-  if (norm.includes("azevedo")) return "/locutores/azevedo.png";
-
-  if (rawPhoto && !rawPhoto.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
-    return rawPhoto;
-  }
-  return "/locutores/sem-loc.png";
-}
+export { resolveSafePresenterPhoto };
 
 const DEFAULT_POSITIVA_CONFIG: EmpresaConfig = {
   nome: "Positiva FM 99.1",
@@ -790,7 +754,7 @@ export default function PromocoesKiosk() {
         nome: a.nome,
         cargo: a.cargo || "",
         instagram: a.instagram || "",
-        foto: resolveSafePresenterPhoto(a.nome, a.foto),
+        foto: resolveSafePresenterPhoto(a.nome, a.foto, isPositivaStation ? "POSITIVA FM" : (validSlug || userSlug || syncDb?.userId)),
         background_url: a.background_url || "",
         ativo: a.ativo ?? true,
       })));
@@ -995,7 +959,7 @@ export default function PromocoesKiosk() {
         nome: a.nome,
         cargo: a.cargo || "",
         instagram: a.instagram || "",
-        foto: resolveSafePresenterPhoto(a.nome, a.foto),
+        foto: resolveSafePresenterPhoto(a.nome, a.foto, isPositiva ? "POSITIVA FM" : (userSlug || localUid)),
         background_url: a.background_url || "",
         ativo: a.ativo ?? true,
       })));
@@ -1712,7 +1676,7 @@ export default function PromocoesKiosk() {
                 validSlug || (isPositivaUser ? "POSITIVA FM" : undefined)
               ) || (onAirProgram?.apresentadorId ? apresentadores.find(a => a.id === onAirProgram.apresentadorId) : null);
 
-              const photo = presenter?.foto ? resolveSafePresenterPhoto(presenter.nome, presenter.foto) : null;
+              const photo = presenter?.foto ? resolveSafePresenterPhoto(presenter.nome, presenter.foto, validSlug || (isPositivaUser ? "POSITIVA FM" : "INTERATIVA FM")) : null;
 
               return photo ? (
                 <div className="relative group/presenter flex-shrink-0">

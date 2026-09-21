@@ -7,8 +7,10 @@ import { getProgramas, getProgramasSync, findCurrentProgram } from "@/components
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
-import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
+import { resolvePresenterForProgram, resolveSafePresenterPhoto } from "@/lib/onAirPresenterResolver";
 import { normalizeClientKey } from "@/lib/houseMixProgramasService";
+
+export { resolveSafePresenterPhoto };
 
 export interface FloatingOnAirPresenterProps {
   isBehindPages?: boolean;
@@ -29,70 +31,6 @@ function formatHour(h: string): string {
   if (!h) return "";
   const clean = String(h).trim();
   return clean.length >= 5 ? clean.slice(0, 5) : clean;
-}
-
-export function resolveSafePresenterPhoto(
-  foto?: string | null,
-  nome?: string | null,
-  stationKeyOrUserId?: string | null
-): string {
-  const norm = (nome || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-
-  // Positiva FM authentic photos
-  if (norm.includes("jonathas")) return "/locutores/jonathas.png";
-  if (norm.includes("marcio")) return "/locutores/marcio.png";
-  if (norm.includes("vanessa")) return "/locutores/vanessa-reis.png";
-  if (norm.includes("reginaldo")) return "/locutores/reginaldo.png";
-  if (norm.includes("alysson") && norm.includes("jane")) return "/locutores/alysson-e-jane.png";
-  if (norm.includes("alysson")) return "/locutores/alysson.png";
-  if (norm.includes("jane")) return "/locutores/alysson-e-jane.png";
-  if (norm.includes("fernando")) return "/locutores/fernando.png";
-  if (norm.includes("douglas")) return "/locutores/douglas.png";
-  if (norm.includes("cris")) return "/locutores/cris.png";
-  if (norm.includes("gizele") || norm.includes("gizelle")) return "/locutores/gizele.png";
-  if (norm.includes("automatico") || norm.includes("sem loc")) return "/locutores/sem-loc.png";
-
-  // Interativa FM authentic photos
-  if (norm.includes("ze") || norm.includes("jose luiz")) return "/locutores/ze.png";
-  if (norm.includes("ani")) return "/locutores/ani.png";
-  if (norm.includes("botelho") || norm.includes("johnny")) return "/locutores/botelho.png";
-  if (norm.includes("dj") || norm.includes("amaral")) return "/locutores/dj.png";
-  if (norm.includes("henrique") || norm.includes("augusto")) return "/locutores/henrique.png";
-  if (norm.includes("gabs")) return "/locutores/gabs.png";
-  if (norm.includes("morga") || norm.includes("everson") || norm.includes("morgantini")) return "/locutores/morga.png";
-  if (norm.includes("pablo") || norm.includes("kossa") || norm.includes("santhe")) return "/locutores/pablo.png";
-  if (norm.includes("andre")) return "/locutores/andre.png";
-
-  // Cultura FM authentic photos
-  if (norm.includes("azevedo")) return "/locutores/azevedo.png";
-  if (norm.includes("mauricio")) return "/locutores/mauricio.png";
-  if (norm.includes("nathy")) return "/locutores/nathy.png";
-  if (norm.includes("paulinho")) return "/locutores/paulinho.png";
-  if (norm.includes("rafaela")) return "/locutores/rafaela.png";
-  if (norm.includes("rayssa")) return "/locutores/rayssa.png";
-  if (norm.includes("junior")) return "/locutores/junior.png";
-
-  // If a valid custom photo URL is passed and is NOT dead Supabase or generic cartoon avatar
-  if (foto && !foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") && !foto.includes("/avatars/usr-")) {
-    return foto;
-  }
-
-  const normStation = normalizeClientKey(stationKeyOrUserId);
-  if (normStation === "INTERATIVA FM") {
-    return "/locutores/ani.png";
-  }
-  if (normStation === "CULTURA FM") {
-    return "/locutores/azevedo.png";
-  }
-  if (normStation === "POSITIVA FM") {
-    return "/locutores/jonathas.png";
-  }
-
-  return "/locutores/sem-loc.png";
 }
 
 export default function FloatingOnAirPresenter({
