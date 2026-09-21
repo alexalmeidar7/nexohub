@@ -2,30 +2,57 @@ import type { Plugin } from "vite";
 import fs from "fs";
 import path from "path";
 
-// Helper to get Brasilia date and time
-function getBrasiliaDateTime(): { today: string; currentTime: string } {
+// Helper to get Brasilia date, time, weekday and seconds
+function getBrasiliaDateTime(): { today: string; currentTime: string; dayName: string; nowSeconds: number } {
+  const dayMap: Record<string, string> = {
+    domingo: "Domingo",
+    "segunda-feira": "Segunda",
+    "terça-feira": "Terça",
+    "quarta-feira": "Quarta",
+    "quinta-feira": "Quinta",
+    "sexta-feira": "Sexta",
+    sábado: "Sábado",
+  };
   try {
-    const formatter = new Intl.DateTimeFormat("en-GB", {
+    const formatter = new Intl.DateTimeFormat("pt-BR", {
       timeZone: "America/Sao_Paulo",
+      weekday: "long",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
       hour12: false,
     });
     const parts = formatter.formatToParts(new Date());
     const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "";
     const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
-    const currentTime = `${getPart("hour")}:${getPart("minute")}`;
-    return { today, currentTime };
+    const hh = Number(getPart("hour") || 0);
+    const mm = Number(getPart("minute") || 0);
+    const ss = Number(getPart("second") || 0);
+    const currentTime = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    const dayRaw = (getPart("weekday") || "").toLowerCase();
+    const dayName = dayMap[dayRaw] || "Domingo";
+    const nowSeconds = hh * 3600 + mm * 60 + ss;
+    return { today, currentTime, dayName, nowSeconds };
   } catch {
     const now = new Date(Date.now() - 3 * 3600 * 1000);
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     return {
       today: now.toISOString().slice(0, 10),
       currentTime: now.toISOString().slice(11, 16),
+      dayName: dayNames[now.getDay()],
+      nowSeconds: now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds(),
     };
   }
+}
+
+function timeToSeconds(value: string | null | undefined): number {
+  if (!value) return -1;
+  const [h = "0", m = "0", s = "0"] = String(value).split(":");
+  const total = Number(h) * 3600 + Number(m) * 60 + Number(s);
+  return Number.isFinite(total) ? total : -1;
 }
 
 function escapeXml(str: any): string {
@@ -309,6 +336,240 @@ function buildBatalhaXml(batalha?: any, stationName?: string): string {
 `;
 }
 
+const CANONICAL_PRESENTER_BY_PROG: Record<string, { nome: string; foto: string; instagram: string }> = {
+  // Positiva
+  modao: { nome: "Fernando", foto: "/locutores/fernando.png", instagram: "@positivafm" },
+  "energia positiva": { nome: "Fernando", foto: "/locutores/fernando.png", instagram: "@positivafm" },
+  "sertanejo bom demais - 1": { nome: "Reginaldo Lucena", foto: "/locutores/reginaldo.png", instagram: "@_reginaldolucena" },
+  "sertanejo bom demais - 2": { nome: "Vanessa Reis", foto: "/locutores/vanessa-reis.png", instagram: "@vanessareis.oficial" },
+  "primeira hora": { nome: "Alysson Lima", foto: "/locutores/alysson.png", instagram: "@alyssonlima" },
+  "bom dia positiva": { nome: "Márcio Rodrigues", foto: "/locutores/marcio.png", instagram: "@marciorodrigues.radio" },
+  flashback: { nome: "Jonathas Mattos", foto: "/locutores/jonathas.png", instagram: "@jonathasmattoslocutor" },
+  whatsapp: { nome: "Jonathas Mattos", foto: "/locutores/jonathas.png", instagram: "@jonathasmattoslocutor" },
+  domingao: { nome: "Jonathas Mattos", foto: "/locutores/jonathas.png", instagram: "@jonathasmattoslocutor" },
+  "vale night": { nome: "Jonathas Mattos", foto: "/locutores/jonathas.png", instagram: "@jonathasmattoslocutor" },
+  madruga: { nome: "Automático", foto: "/locutores/sem-loc.png", instagram: "@positivafm" },
+
+  // Interativa
+  "falando serio": { nome: "José Luiz", foto: "/locutores/ze.png", instagram: "@interativafm" },
+  "maratona (2)": { nome: "Johnny Botelho", foto: "/locutores/botelho.png", instagram: "@interativafm" },
+  maratona: { nome: "Ani Cristine", foto: "/locutores/ani.png", instagram: "@anicristine" },
+  cafezin: { nome: "Andre Rodrigues", foto: "/locutores/andre.png", instagram: "@andrerodrigues777" },
+  "bonus 1": { nome: "Dj Henrique Amaral", foto: "/locutores/dj.png", instagram: "@djhenriqueamaral" },
+  "papo cabeca": { nome: "Henrique Augusto", foto: "/locutores/henrique.png", instagram: "@henriquelocuteiro" },
+  "super play": { nome: "Gabs", foto: "/locutores/gabs.png", instagram: "@frozengabs" },
+  "mega bonus": { nome: "Ani Cristine", foto: "/locutores/ani.png", instagram: "@anicristine" },
+  "sunset retro": { nome: "Éverson Cândido", foto: "/locutores/morga.png", instagram: "@interativafm" },
+  inson: { nome: "Automático", foto: "/locutores/sem-loc.png", instagram: "@interativafm" },
+
+  // Cultura
+  "show da manha": { nome: "Azevedo Júnior", foto: "/locutores/azevedo.png", instagram: "@azevedojuniorlocutoroficial" },
+  "bom dia cultura": { nome: "Paulinho Paré", foto: "/locutores/paulinho.png", instagram: "@culturafm973" },
+  "tarde cultura": { nome: "Nathy Alice", foto: "/locutores/nathy.png", instagram: "@culturafm973" },
+  "cultura mix": { nome: "Rafaela Rockenbach", foto: "/locutores/rafaela.png", instagram: "@culturafm973" },
+  "noite cultura": { nome: "Raíssa Alves", foto: "/locutores/rayssa.png", instagram: "@culturafm973" },
+};
+
+function resolveSafePresenter(progName: string | undefined, stationKey: string): { nome: string; foto: string; instagram: string } {
+  const norm = (progName || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  for (const [key, val] of Object.entries(CANONICAL_PRESENTER_BY_PROG)) {
+    if (norm.includes(key)) {
+      return val;
+    }
+  }
+  if (stationKey === "INTERATIVA FM") {
+    return { nome: "Ani Cristine", foto: "/locutores/ani.png", instagram: "@anicristine" };
+  }
+  if (stationKey === "POSITIVA FM") {
+    return { nome: "Fernando", foto: "/locutores/fernando.png", instagram: "@positivafm" };
+  }
+  return { nome: "Locutor no Ar", foto: "/locutores/sem-loc.png", instagram: "@radio" };
+}
+
+const BROADCAST_STATIONS: Record<
+  string,
+  {
+    stationKey: string;
+    name: string;
+    freq: string;
+    city: string;
+    logo: string;
+    social: string;
+    whatsapp: string;
+  }
+> = {
+  interativafm: {
+    stationKey: "INTERATIVA FM",
+    name: "Interativa FM 94.9",
+    freq: "94.9 FM",
+    city: "Goiânia - GO",
+    logo: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/b2f70324-d086-4a5d-a407-cbc4acf98dce/logo-1787846659202.webp",
+    social: "@interativafm",
+    whatsapp: "https://wa.me/5562999719490",
+  },
+  positivafm: {
+    stationKey: "POSITIVA FM",
+    name: "Positiva FM 99.1",
+    freq: "99.1 FM",
+    city: "Goiânia - GO",
+    logo: "/logos/positiva.png",
+    social: "@positivafm",
+    whatsapp: "https://wa.me/556299999991",
+  },
+  culturafm973: {
+    stationKey: "CULTURA FM",
+    name: "Cultura FM 97.3",
+    freq: "97.3 FM",
+    city: "Santos - SP",
+    logo: "https://nexohub.lovable.app/default-sponsor-logo.png",
+    social: "@culturafm973",
+    whatsapp: "https://wa.me/5513997009730",
+  },
+  transmissao: {
+    stationKey: "JORNAL FM",
+    name: "Jornal FM 96.5",
+    freq: "96.5 FM",
+    city: "Inhumas - GO",
+    logo: "https://nexohub.lovable.app/default-sponsor-logo.png",
+    social: "@jornalfm",
+    whatsapp: "https://wa.me/556299999999",
+  },
+  alex: {
+    stationKey: "POSITIVA FM",
+    name: "Nexo Brasil Admin",
+    freq: "Rede Nexo",
+    city: "Goiânia - GO",
+    logo: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5/empresa-logo.png?v=8656178258",
+    social: "@nexobrasil",
+    whatsapp: "https://housemix.nexobrasil.net",
+  },
+};
+
+function buildBroadcastXml(
+  slug: string,
+  broadcastOverride: any = {},
+  music: any = {},
+  programsDb: Record<string, any[]> = {}
+): string {
+  const normSlug = normalizeSlug(slug);
+  const st = BROADCAST_STATIONS[normSlug] || BROADCAST_STATIONS.positivafm;
+  const { today, currentTime, dayName, nowSeconds } = getBrasiliaDateTime();
+
+  const progs = programsDb[st.stationKey] || [];
+  let curProg: any = null;
+  let nextProg: any = null;
+
+  // 1. Current program
+  const active: { p: any; dur: number; s: number }[] = [];
+  for (const p of progs) {
+    if (!(p.dias_semana || []).includes(dayName)) continue;
+    const s = timeToSeconds(p.horario_inicio);
+    const e = timeToSeconds(p.horario_fim);
+    if (s < 0 || e < 0) continue;
+    const crosses = e <= s;
+    const isMatch = !crosses ? nowSeconds >= s && nowSeconds < e : nowSeconds >= s || nowSeconds < e;
+    if (isMatch) {
+      let dur = e - s;
+      if (dur < 0) dur += 24 * 3600;
+      active.push({ p, dur, s });
+    }
+  }
+  if (active.length > 0) {
+    active.sort((a, b) => a.dur - b.dur || b.s - a.s);
+    curProg = active[0].p;
+  }
+
+  // 2. Next program
+  const nextCands: { p: any; diff: number }[] = [];
+  for (const p of progs) {
+    if (!(p.dias_semana || []).includes(dayName)) continue;
+    if (curProg && p.id === curProg.id) continue;
+    const s = timeToSeconds(p.horario_inicio);
+    if (s < 0) continue;
+    const diff = s > nowSeconds ? s - nowSeconds : s + 24 * 3600 - nowSeconds;
+    nextCands.push({ p, diff });
+  }
+  if (nextCands.length > 0) {
+    nextCands.sort((a, b) => a.diff - b.diff);
+    nextProg = nextCands[0].p;
+  }
+
+  // Presenters
+  const curPres = resolveSafePresenter(curProg?.nome, st.stationKey);
+  const nextPres = resolveSafePresenter(nextProg?.nome, st.stationKey);
+
+  const locutorNome = broadcastOverride?.locutor_override || curPres.nome;
+  const locutorFoto = curPres.foto;
+  const locutorSocial = curPres.instagram;
+
+  const progNome = curProg?.nome || `Programação ${st.name}`;
+  const progLogo =
+    st.stationKey === "POSITIVA FM" && curProg
+      ? `/selos/${curProg.nome?.toLowerCase().includes("modao") ? "modao.png" : "domingao.png"}`
+      : "";
+
+  const musicaTexto =
+    music?.artista && music?.titulo ? `${music.artista} - ${music.titulo}` : "Música em Reprodução";
+  const musicaCapa = music?.capa || "";
+
+  const ticker = broadcastOverride?.ticker || `Acompanhe a melhor programação em ${st.freq}`;
+  const titulo = broadcastOverride?.assunto || `No Ar na ${st.name}`;
+
+  const aSeguirNome = nextProg?.nome || "Próximo Programa";
+  const aSeguirHorario = nextProg ? normTime(nextProg.horario_inicio) : "00:00";
+  const aSeguirLocutor = nextPres.nome;
+  const aSeguirFoto = nextPres.foto;
+  const aSeguirLogo = st.stationKey === "POSITIVA FM" ? "/selos/madrugada.png" : "";
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <dados>
+    <empresa_logo>${escapeXml(st.logo)}</empresa_logo>
+    <programa_nome>${escapeXml(progNome)}</programa_nome>
+    <programa_logo>${escapeXml(progLogo)}</programa_logo>
+    <programa_thumb></programa_thumb>
+    <locutor_nome>${escapeXml(locutorNome)}</locutor_nome>
+    <locutor_foto>${escapeXml(locutorFoto)}</locutor_foto>
+    <locutor_social>${escapeXml(locutorSocial)}</locutor_social>
+    <rede_social_atual>Instagram</rede_social_atual>
+    <rede_social_icone>instagram</rede_social_icone>
+    <logo_patrocinador></logo_patrocinador>
+    <titulo>${escapeXml(titulo)}</titulo>
+    <fundo_assunto>${escapeXml(broadcastOverride?.assuntoBgUrl || "")}</fundo_assunto>
+    <qrcode_link>${escapeXml(st.whatsapp)}</qrcode_link>
+    <ticker>${escapeXml(ticker)}</ticker>
+    <insert_live></insert_live>
+    <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
+    <musica_atual>${escapeXml(musicaTexto)}</musica_atual>
+    <musica_capa>${escapeXml(musicaCapa)}</musica_capa>
+    <deezer_artist_img></deezer_artist_img>
+    <banner_l></banner_l>
+    <temperatura>26ºC</temperatura>
+    <ico_temperatura>sun</ico_temperatura>
+    <infos_canto>
+      <titulo>${escapeXml(st.name)}</titulo>
+      <descricao>${escapeXml(st.city)}</descricao>
+      <ico_categoria>radio</ico_categoria>
+      <temp_atual>26ºC</temp_atual>
+      <ico_temp_atual>sun</ico_temp_atual>
+    </infos_canto>
+    <a_seguir>
+      <ativo>1</ativo>
+      <programa_nome>${escapeXml(aSeguirNome)}</programa_nome>
+      <nome_programa>${escapeXml(aSeguirNome)}</nome_programa>
+      <programa_logo>${escapeXml(aSeguirLogo)}</programa_logo>
+      <locutor_nome>${escapeXml(aSeguirLocutor)}</locutor_nome>
+      <locutor_foto>${escapeXml(aSeguirFoto)}</locutor_foto>
+      <horario>${escapeXml(aSeguirHorario)}</horario>
+      <texto>Fique conectado!</texto>
+      <intervalo_atualizacao>60</intervalo_atualizacao>
+      <atualizado_em>${new Date().toISOString()}</atualizado_em>
+    </a_seguir>
+  </dados>
+</items>
+`;
+}
+
 const SLUG_MAP: Record<string, string> = {
   positiva: "positivafm",
   p: "positivafm",
@@ -371,12 +632,42 @@ export function dynamicXmlPlugin(): Plugin {
   const batalhasFile = path.join(rootDir, "src", "data", "xml_batalhas_sync.json");
   const roteirosFile = path.join(rootDir, "src", "data", "xml_roteiros_sync.json");
   const musicFile = path.join(rootDir, "src", "data", "xml_music_sync.json");
+  const broadcastFile = path.join(rootDir, "src", "data", "xml_broadcast_sync.json");
+  const programsDbFile = path.join(rootDir, "src", "data", "station_programs_db.json");
   const suporteTicketsFile = path.join(rootDir, "src", "data", "suporte_tickets_sync.json");
 
   function readSyncData(filePath: string): Record<string, any[]> {
     try {
       if (fs.existsSync(filePath)) {
         return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      }
+    } catch {}
+    return {};
+  }
+
+  function readBroadcastSyncData(): Record<string, any> {
+    try {
+      if (fs.existsSync(broadcastFile)) {
+        return JSON.parse(fs.readFileSync(broadcastFile, "utf-8"));
+      }
+    } catch {}
+    return {};
+  }
+
+  function writeBroadcastSyncData(data: Record<string, any>) {
+    try {
+      const dir = path.dirname(broadcastFile);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(broadcastFile, JSON.stringify(data, null, 2), "utf-8");
+    } catch (err) {
+      console.error("Error writing broadcast sync file:", err);
+    }
+  }
+
+  function readProgramsDb(): Record<string, any[]> {
+    try {
+      if (fs.existsSync(programsDbFile)) {
+        return JSON.parse(fs.readFileSync(programsDbFile, "utf-8"));
       }
     } catch {}
     return {};
@@ -841,6 +1132,55 @@ export function dynamicXmlPlugin(): Plugin {
           return;
         }
 
+        // 4f. POST /api/sync-broadcast & /functions/v1/serve-xml-broadcast
+        if (req.method === "POST" && (url.startsWith("/api/sync-broadcast") || url.startsWith("/functions/v1/serve-xml-broadcast"))) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => {
+            try {
+              const parsed = JSON.parse(body);
+              const slug = normalizeSlug(parsed.slug || "positivafm");
+              const stationUid = parsed.stationUid || parsed.userId || parsed.user_id || slug;
+              const store = readBroadcastSyncData();
+              const broadcastData = parsed.data || parsed;
+              store[slug] = broadcastData;
+              if (stationUid) store[stationUid] = broadcastData;
+              writeBroadcastSyncData(store);
+
+              // Immediately regenerate and persist broadcast.xml
+              const musicStore = readMusicSyncData();
+              const music = musicStore[slug] || musicStore[stationUid] || {};
+              const programsDb = readProgramsDb();
+              const xml = buildBroadcastXml(slug, broadcastData, music, programsDb);
+              writeStaticXml(slug, "broadcast.xml", xml);
+
+              res.setHeader("Content-Type", "application/json");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: true, slug }));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // 4g. GET /api/sync-broadcast
+        if (req.method === "GET" && url.startsWith("/api/sync-broadcast")) {
+          const parsedUrl = new URL(url, "http://localhost");
+          const rawSlug = parsedUrl.searchParams.get("slug") || "positivafm";
+          const slug = normalizeSlug(rawSlug);
+          const userId = parsedUrl.searchParams.get("userId") || parsedUrl.searchParams.get("stationUid") || slug;
+          const store = readBroadcastSyncData();
+          const broadcast = store[slug] || store[userId] || store[rawSlug] || null;
+          res.setHeader("Content-Type", "application/json");
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.end(JSON.stringify({ ok: true, data: broadcast }));
+          return;
+        }
+
         // 5. Intercept GET requests for all XML feeds (enquete, quiz, batalha, roteiro, geral, broadcast, musica, tempo, logos)
         function parseXmlRequest(reqUrl: string): { file: string; slug: string; rawSlug: string } | null {
           const [pathname, search] = reqUrl.split("?");
@@ -1138,7 +1478,26 @@ export function dynamicXmlPlugin(): Plugin {
               }
             }
 
-            // 7. Any other requested XML (broadcast.xml, tempo.xml, logos.xml, etc.)
+            // 6b. broadcast.xml / apenas-xml.xml
+            if (file === "broadcast.xml" || file === "apenas-xml.xml") {
+              const broadcastStore = readBroadcastSyncData();
+              const broadcastOverride =
+                broadcastStore[slug] || broadcastStore[rawSlug] || broadcastStore[SLUG_TO_UID[slug]] || {};
+              const musicStore = readMusicSyncData();
+              const music = musicStore[slug] || musicStore[rawSlug] || musicStore[SLUG_TO_UID[slug]] || {};
+              const programsDb = readProgramsDb();
+              const xml = buildBroadcastXml(slug, broadcastOverride, music, programsDb);
+
+              writeStaticXml(slug, "broadcast.xml", xml);
+
+              res.setHeader("Content-Type", "application/xml; charset=utf-8");
+              res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(xml);
+              return;
+            }
+
+            // 7. Any other requested XML (tempo.xml, logos.xml, etc.)
             const candidates = [
               path.join(rootDir, "public", "xml", slug, file),
               path.join(rootDir, "public", "xml", rawSlug, file),

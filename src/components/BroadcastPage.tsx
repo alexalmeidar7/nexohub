@@ -672,13 +672,42 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       }
 
       // Load saved broadcast data
-      const { data: us } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
-      if (us?.cenario_config && typeof us.cenario_config === "object") {
-        const bc = (us.cenario_config as any).broadcast;
-        if (bc) setData({ ...defaultBroadcast, ...bc });
+      let loadedConfig: any = null;
+      try {
+        const { data: us } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
+        if (us?.cenario_config && typeof us.cenario_config === "object") {
+          loadedConfig = (us.cenario_config as any).broadcast;
+        }
+      } catch {}
+
+      if (!loadedConfig) {
+        try {
+          const localSaved =
+            localStorage.getItem(`nexohub_broadcast_config_${stationUid}`) ||
+            (userSlug ? localStorage.getItem(`nexohub_broadcast_config_${userSlug}`) : null);
+          if (localSaved) {
+            loadedConfig = JSON.parse(localSaved);
+          }
+        } catch {}
+      }
+
+      if (!loadedConfig) {
+        try {
+          const resp = await fetch(`/api/sync-broadcast?slug=${encodeURIComponent(userSlug || stationUid)}`);
+          if (resp.ok) {
+            const json = await resp.json();
+            if (json?.data) {
+              loadedConfig = json.data;
+            }
+          }
+        } catch {}
+      }
+
+      if (loadedConfig) {
+        setData((prev) => ({ ...defaultBroadcast, ...prev, ...loadedConfig }));
       }
     })();
-  }, [stationUid]);
+  }, [stationUid, userSlug]);
 
   // Detect program change every 60s — refresh locutor + reset override on switch
   useEffect(() => {
@@ -935,20 +964,45 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     setSaving(true);
     const toastId = toast("Atualizando XML...", { icon: <RefreshCw size={14} className="animate-spin" /> });
     try {
-      const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
-      const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
       const nextData = payload || latestDataRef.current;
-      
-      await supabase.from("user_settings").update({
-        cenario_config: { ...existing, broadcast: nextData } as any,
-      }).eq("user_id", stationUid);
+
+      // 1. Save locally for instant persistence
+      try {
+        localStorage.setItem(`nexohub_broadcast_config_${stationUid}`, JSON.stringify(nextData));
+        if (userSlug) {
+          localStorage.setItem(`nexohub_broadcast_config_${userSlug}`, JSON.stringify(nextData));
+        }
+      } catch {}
+
+      // 2. Synchronize with Vite server for real-time XML regeneration
+      try {
+        await fetch("/api/sync-broadcast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug: userSlug || stationUid,
+            stationUid,
+            data: nextData,
+          }),
+        });
+      } catch {}
+
+      // 3. Persist to Supabase if reachable
+      try {
+        const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
+        const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
+        
+        await supabase.from("user_settings").update({
+          cenario_config: { ...existing, broadcast: nextData } as any,
+        }).eq("user_id", stationUid);
+      } catch {}
 
       toast.success("XML atualizado!", { id: toastId });
     } catch {
       toast.error("Erro ao salvar", { id: toastId });
     }
     setSaving(false);
-  }, [stationUid]);
+  }, [stationUid, userSlug]);
 
   const onFieldBlur = useCallback(() => {
     handleSave();

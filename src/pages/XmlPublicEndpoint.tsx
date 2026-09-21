@@ -286,18 +286,29 @@ export default function XmlPublicEndpoint() {
         }
       }
 
-      // 1. Try static file first
-      const staticUrl = `/xml/${cleanSlug}/${filename}?t=${Date.now()}`;
-      const res = await fetch(staticUrl);
-      if (res.ok) {
-        const text = await res.text();
-        if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
-          if (isMounted) {
-            setXmlContent(text.trim());
-            setLoading(false);
-            return;
+      // 1. Try static / dynamic endpoints
+      const candidateUrls = [
+        `/xml/${cleanSlug}/${filename}?t=${Date.now()}`,
+        `/${cleanSlug}/${filename}?t=${Date.now()}`,
+        ...(filename.includes("broadcast")
+          ? [`/functions/v1/serve-xml-broadcast?user_id=${stationUid}&t=${Date.now()}`]
+          : []),
+      ];
+
+      for (const staticUrl of candidateUrls) {
+        try {
+          const res = await fetch(staticUrl);
+          if (res.ok) {
+            const text = await res.text();
+            if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
+              if (isMounted) {
+                setXmlContent(text.trim());
+                setLoading(false);
+                return;
+              }
+            }
           }
-        }
+        } catch {}
       }
 
       // 2. If static file not found on host, try fetching from the XML endpoint
@@ -333,7 +344,14 @@ export default function XmlPublicEndpoint() {
 
     // Auto-refresh dynamic XML every 10 seconds to transition on schedule
     const interval = setInterval(() => {
-      if (isMounted && (filename.includes("enquete") || filename.includes("quiz") || filename.includes("geral") || filename.includes("roteiro"))) {
+      if (
+        isMounted &&
+        (filename.includes("enquete") ||
+          filename.includes("quiz") ||
+          filename.includes("geral") ||
+          filename.includes("roteiro") ||
+          filename.includes("broadcast"))
+      ) {
         loadXml(isMounted);
       }
     }, 10000);

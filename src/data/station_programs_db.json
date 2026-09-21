@@ -1,0 +1,1785 @@
+{
+  "INTERATIVA FM": [
+    {
+      "id": "6a605b85-7de7-4e35-9108-474571c547df",
+      "nome": "Insônia",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00",
+      "horario_fim": "04:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado",
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "f07b7ca8-8cec-472b-a04d-d34c6abab4f7",
+      "nome": "Inesquecíveis",
+      "estudio": "Estudio FM",
+      "horario_inicio": "05:00:00",
+      "horario_fim": "05:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d88d8166-8115-4ce9-836d-9ee81d7446fd",
+      "nome": "Programação musical",
+      "estudio": "Estudio FM",
+      "horario_inicio": "05:00:00",
+      "horario_fim": "06:39:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "29b46285-28b4-45c4-8c09-97b7de225d46",
+      "nome": "Falando Sério",
+      "estudio": "Estudio FM",
+      "horario_inicio": "05:55",
+      "horario_fim": "08:14:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "83274a17-e244-4374-86d0-9edbcff32359",
+      "nome": "Maratona",
+      "estudio": "Estudio FM",
+      "horario_inicio": "06:40:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "9ffd4a05-7cfe-4e33-a757-fd08993057a4",
+      "nome": "Hora do Cafézin",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:15",
+      "horario_fim": "10:00:00",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "78d71665-f2bf-4b75-bf5a-c0a6467c35a6",
+      "nome": "Bônus 1",
+      "estudio": "Estudio FM",
+      "horario_inicio": "10:01",
+      "horario_fim": "10:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d802d06b-d3c7-4e93-943e-3e5b914450d5",
+      "nome": "Classic Hits - 1ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "11:01",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "457f275a-0a0b-41bc-ba81-f13e654499e8",
+      "nome": "Maratona (2)",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "16:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "85547d4f-5751-4d94-a462-f9d8230a4d88",
+      "nome": "TOP 20",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "13:39:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "e2d4f398-996e-45dd-93ef-2bc4a4f96813",
+      "nome": "Propaganda Eleitoral",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:01",
+      "horario_fim": "12:24:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "a8020373-07cf-4e47-87c5-5c07e6737190",
+      "nome": "Papo Cabeça",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:23",
+      "horario_fim": "13:19:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "4da722ba-42fe-4e79-89cd-582f06119401",
+      "nome": "Top 10 - 1ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "13:21",
+      "horario_fim": "14:00:00",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "5431084d-4d34-44ae-a058-524384a52f91",
+      "nome": "Programação Músical",
+      "estudio": "Estudio FM",
+      "horario_inicio": "13:40:00",
+      "horario_fim": "14:00:00",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "01a1699a-530e-4939-a79e-4957c9e23681",
+      "nome": "Indepêndência",
+      "estudio": "Estudio FM",
+      "horario_inicio": "14:00:01",
+      "horario_fim": "14:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "956543fd-d335-4f35-9c2b-b52c232df738",
+      "nome": "Super Play",
+      "estudio": "Estudio FM",
+      "horario_inicio": "14:01",
+      "horario_fim": "16:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "10ccf897-0bb7-4e82-b7d9-fac11092e3fa",
+      "nome": "Mega Bônus",
+      "estudio": "Estudio FM",
+      "horario_inicio": "15:00:00",
+      "horario_fim": "16:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "c99a5b7e-cbe1-4844-9782-1750c2f9fa77",
+      "nome": "Inbox",
+      "estudio": "Estudio FM",
+      "horario_inicio": "16:59",
+      "horario_fim": "18:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "7ef88300-ea4b-4618-892c-70c838f12f32",
+      "nome": "Sunset Retrô",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:00:00",
+      "horario_fim": "18:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "681e410b-2e77-471a-a3d0-1bde07b596bd",
+      "nome": "Interativa Indie",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:00:00",
+      "horario_fim": "17:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "8ec20380-704f-4027-9c31-bf49c12e1126",
+      "nome": "Mega Bônus 2",
+      "estudio": "Estudio FM",
+      "horario_inicio": "18:00:00",
+      "horario_fim": "19:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "3a8e59a9-7bdc-4036-9050-9b84021130f5",
+      "nome": "Bônus 2",
+      "estudio": "Estudio FM",
+      "horario_inicio": "18:59",
+      "horario_fim": "19:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "269204af-3e22-4b85-a433-756f33c4ffc0",
+      "nome": "Maratona (3)",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "4d57afa3-1ce0-4d13-b085-44c6a6dfdce3",
+      "nome": "Classic Hits - 2ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:59",
+      "horario_fim": "20:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "e72e1223-ad49-4735-bcfa-6513ad528b33",
+      "nome": "Programação músical (2)",
+      "estudio": "Estudio FM",
+      "horario_inicio": "20:00:00",
+      "horario_fim": "20:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "5d50f391-3b31-48da-b723-e7a892ec57cf",
+      "nome": "Bonus (internet)",
+      "estudio": "Estudio FM",
+      "horario_inicio": "20:59",
+      "horario_fim": "21:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "1a8174f5-ed79-4ed0-a5fe-256e04b006df",
+      "nome": "Top 10 - 2ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "21:59",
+      "horario_fim": "22:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d2d0206e-cc8f-4683-9378-38e8391eeae4",
+      "nome": "Pra Cima (Sábado Edition)",
+      "estudio": "Estudio FM",
+      "horario_inicio": "22:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "ec9c1915-9336-40cf-b176-fa73133781df",
+      "nome": "Pra cima!",
+      "estudio": "Estudio FM",
+      "horario_inicio": "22:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "0bd25297-4fe0-4c39-9c86-c34221b0101a",
+      "nome": "Bônus 3",
+      "estudio": "Estudio FM",
+      "horario_inicio": "23:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "3e97f9ce-8339-4d76-922d-20ad1438ae4a",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "06:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "8d6954ba-73e6-4f95-ad08-0a075249a810",
+      "nome": "Central da madrugada",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:01",
+      "horario_fim": "03:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "82dd13a3-c5ad-4ba8-b8e7-23d165a550a6",
+      "nome": "Comitiva Sertaneja",
+      "estudio": "Estudio FM",
+      "horario_inicio": "04:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b716f36f-be88-4dae-a49d-931d80aed1a9",
+      "nome": "Comitiva Sertaneja",
+      "estudio": "Estudio FM",
+      "horario_inicio": "04:00:00",
+      "horario_fim": "05:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "52b6811e-d243-49ba-949a-808d4b4fcbd5",
+      "nome": "Cultura Agro",
+      "estudio": "Estudio FM",
+      "horario_inicio": "06:00:00",
+      "horario_fim": "06:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Sexta",
+        "Quinta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "df42e385-5159-4d8c-88ff-6653671bc2ec",
+      "nome": "Manhã da Cultura",
+      "estudio": "Estudio FM",
+      "horario_inicio": "07:00:00",
+      "horario_fim": "10:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "4f21df2c-10f5-4df4-abfb-9531577cf9b1",
+      "nome": "Momento de Fé",
+      "estudio": "Estudio FM",
+      "horario_inicio": "07:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d7cebd8d-eeae-4ca3-b5cd-968978181eaf",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:00:00",
+      "horario_fim": "09:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "1ef4c46d-d792-4158-9910-8e511653e6fa",
+      "nome": "Sabadão da Cultura",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:00:00",
+      "horario_fim": "10:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "33e0b961-a280-4b22-9b23-ac8b149ccd59",
+      "nome": "Encontro da Gauchada",
+      "estudio": "Estudio FM",
+      "horario_inicio": "10:00:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b47b4332-d9c6-4f1a-82aa-bc2f673d6dbd",
+      "nome": "Jornal da Cultura",
+      "estudio": "Estudio FM",
+      "horario_inicio": "11:00:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "49abff16-eb8d-4593-bd29-cbafabe96d88",
+      "nome": "Clube do Axé",
+      "estudio": "Estudio FM",
+      "horario_inicio": "11:00:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b4b82d2f-3d5e-4abb-81e8-ab9ff92f6494",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "132dda4b-4497-48f6-81ce-09ea95684f81",
+      "nome": "De bem com a Vida",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "12:39:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "a23191fe-3753-4e59-b56f-5c1f9007c861",
+      "nome": "Programação Automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "14:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "791a54ad-decb-4d17-83e8-96b00cb3bd52",
+      "nome": "Top 7",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:40:00",
+      "horario_fim": "12:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "270ccc44-0fd1-44fa-b147-111233c8d749",
+      "nome": "Agito 97",
+      "estudio": "Estudio FM",
+      "horario_inicio": "13:00:00",
+      "horario_fim": "14:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "c20d65e6-f087-42b4-add3-9cf29319618e",
+      "nome": "Arena 97",
+      "estudio": "Estudio FM",
+      "horario_inicio": "15:00:00",
+      "horario_fim": "17:29:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "29e00ef0-2763-4d93-b39d-803d8baa56ab",
+      "nome": "Músicas da Terra",
+      "estudio": "Estudio FM",
+      "horario_inicio": "15:00:00",
+      "horario_fim": "16:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "f888d122-0c98-415d-a0cd-99a131e01b75",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:00:00",
+      "horario_fim": "18:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b74c98dc-c83d-4ed0-ab64-aff042d45e54",
+      "nome": "Resenha Esportiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:30:00",
+      "horario_fim": "17:49:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "c68fb00a-547b-47e2-8457-6dbdf2d8c6c5",
+      "nome": "De bem com a Vida",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:50:00",
+      "horario_fim": "18:10:00",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "f5266371-1bb2-40f3-b696-12e687922217",
+      "nome": "Central Mix",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d4dcdc49-d175-4444-8108-3be290ca8a4d",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    }
+  ],
+  "POSITIVA FM": [
+    {
+      "id": "bb793a28-fb73-43f2-ad07-3885862e642e",
+      "nome": "Madrugada Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "03:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d40fca1b-5f5a-4588-8d4a-35323fe88b9f",
+      "nome": "Madruga Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "e8268431-09b1-4cb3-8e57-4e31f8a0a04f",
+      "nome": "Madruga Positiva - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "04:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b75801f1-b88a-4a6f-abb6-c5ccfaf42d08",
+      "nome": "Sertanejo bom demais - 1ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "04:00:00",
+      "horario_fim": "06:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "7ccad858-30a9-49c8-996a-34fef441c5d4",
+      "nome": "Sertanejo bom demais - 1ª Edição - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "05:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "fbd7e740-99f5-4d2d-bd86-4f7534de44a0",
+      "nome": "Primeira Hora Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "07:24:00",
+      "horario_fim": "08:29:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "58dfe597-18e3-41de-bb52-92134dd32747",
+      "nome": "Modão Sertanejo",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:00:00",
+      "horario_fim": "09:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "5f58a3d1-5b00-4ab5-8252-69c347ac9a74",
+      "nome": "Bom dia Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:30:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "1b4bac5f-032b-42ba-98b3-5b8034afe7f6",
+      "nome": "Domingão da Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "10:00:00",
+      "horario_fim": "17:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "2543c10b-bf5c-4f34-bc9b-17e4b71fd0c9",
+      "nome": "FlashBack Positiva - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "13:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "6ce84778-447b-4554-8384-bbdbd7a9ec3c",
+      "nome": "Flashback Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "12:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "1ea3c48c-02f2-4957-9efd-fa960c64504d",
+      "nome": "Whatsapp Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "13:00:00",
+      "horario_fim": "15:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b3b77c7f-6ab9-4373-b414-addfc9f04b5e",
+      "nome": "Whatsapp Positiva - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "14:00:00",
+      "horario_fim": "15:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2",
+      "nome": "Sertanejo bom demais - 2ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "16:00:00",
+      "horario_fim": "18:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "28f995da-6904-460a-9e04-2eb1cbc0a401",
+      "nome": "Sertanejo bom demais - 2ª Edição - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "16:00:00",
+      "horario_fim": "19:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "def9d838-3f48-4ddd-8fcd-c07ae1a70c71",
+      "nome": "Modão Sertanejo",
+      "estudio": "Estudio FM",
+      "horario_inicio": "18:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "e6cea94b-4bc5-4f95-a8f2-d9f6e9fae44a",
+      "nome": "Vale Night",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "9836a7f9-8212-4a7b-9112-260e7757afd4",
+      "nome": "Palco Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "20:00:00",
+      "dias_semana": [
+        "Quarta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "76299c0e-ef24-46bd-9711-55a0c23c048e",
+      "nome": "Energia Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "20:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d0761eb5-5d9c-40e9-8ff1-bcadda4b40a2",
+      "nome": "Voz do Brasil",
+      "estudio": "Estudio FM",
+      "horario_inicio": "21:00:00",
+      "horario_fim": "21:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    }
+  ],
+  "CULTURA FM": [
+    {
+      "id": "3e97f9ce-8339-4d76-922d-20ad1438ae4a",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "06:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "8d6954ba-73e6-4f95-ad08-0a075249a810",
+      "nome": "Central da madrugada",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:01",
+      "horario_fim": "03:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "82dd13a3-c5ad-4ba8-b8e7-23d165a550a6",
+      "nome": "Comitiva Sertaneja",
+      "estudio": "Estudio FM",
+      "horario_inicio": "04:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b716f36f-be88-4dae-a49d-931d80aed1a9",
+      "nome": "Comitiva Sertaneja",
+      "estudio": "Estudio FM",
+      "horario_inicio": "04:00:00",
+      "horario_fim": "05:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "52b6811e-d243-49ba-949a-808d4b4fcbd5",
+      "nome": "Cultura Agro",
+      "estudio": "Estudio FM",
+      "horario_inicio": "06:00:00",
+      "horario_fim": "06:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Sexta",
+        "Quinta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "df42e385-5159-4d8c-88ff-6653671bc2ec",
+      "nome": "Manhã da Cultura",
+      "estudio": "Estudio FM",
+      "horario_inicio": "07:00:00",
+      "horario_fim": "10:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "4f21df2c-10f5-4df4-abfb-9531577cf9b1",
+      "nome": "Momento de Fé",
+      "estudio": "Estudio FM",
+      "horario_inicio": "07:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d7cebd8d-eeae-4ca3-b5cd-968978181eaf",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:00:00",
+      "horario_fim": "09:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "1ef4c46d-d792-4158-9910-8e511653e6fa",
+      "nome": "Sabadão da Cultura",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:00:00",
+      "horario_fim": "10:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "33e0b961-a280-4b22-9b23-ac8b149ccd59",
+      "nome": "Encontro da Gauchada",
+      "estudio": "Estudio FM",
+      "horario_inicio": "10:00:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b47b4332-d9c6-4f1a-82aa-bc2f673d6dbd",
+      "nome": "Jornal da Cultura",
+      "estudio": "Estudio FM",
+      "horario_inicio": "11:00:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "49abff16-eb8d-4593-bd29-cbafabe96d88",
+      "nome": "Clube do Axé",
+      "estudio": "Estudio FM",
+      "horario_inicio": "11:00:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b4b82d2f-3d5e-4abb-81e8-ab9ff92f6494",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "132dda4b-4497-48f6-81ce-09ea95684f81",
+      "nome": "De bem com a Vida",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "12:39:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "a23191fe-3753-4e59-b56f-5c1f9007c861",
+      "nome": "Programação Automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "14:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "791a54ad-decb-4d17-83e8-96b00cb3bd52",
+      "nome": "Top 7",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:40:00",
+      "horario_fim": "12:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "270ccc44-0fd1-44fa-b147-111233c8d749",
+      "nome": "Agito 97",
+      "estudio": "Estudio FM",
+      "horario_inicio": "13:00:00",
+      "horario_fim": "14:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "c20d65e6-f087-42b4-add3-9cf29319618e",
+      "nome": "Arena 97",
+      "estudio": "Estudio FM",
+      "horario_inicio": "15:00:00",
+      "horario_fim": "17:29:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "29e00ef0-2763-4d93-b39d-803d8baa56ab",
+      "nome": "Músicas da Terra",
+      "estudio": "Estudio FM",
+      "horario_inicio": "15:00:00",
+      "horario_fim": "16:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "f888d122-0c98-415d-a0cd-99a131e01b75",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:00:00",
+      "horario_fim": "18:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b74c98dc-c83d-4ed0-ab64-aff042d45e54",
+      "nome": "Resenha Esportiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:30:00",
+      "horario_fim": "17:49:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "c68fb00a-547b-47e2-8457-6dbdf2d8c6c5",
+      "nome": "De bem com a Vida",
+      "estudio": "Estudio FM",
+      "horario_inicio": "17:50:00",
+      "horario_fim": "18:10:00",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "f5266371-1bb2-40f3-b696-12e687922217",
+      "nome": "Central Mix",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d4dcdc49-d175-4444-8108-3be290ca8a4d",
+      "nome": "Programação automática",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    }
+  ],
+  "JORNAL FM": [
+    {
+      "id": "bb793a28-fb73-43f2-ad07-3885862e642e",
+      "nome": "Madrugada Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "03:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d40fca1b-5f5a-4588-8d4a-35323fe88b9f",
+      "nome": "Madruga Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "e8268431-09b1-4cb3-8e57-4e31f8a0a04f",
+      "nome": "Madruga Positiva - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "00:00:00",
+      "horario_fim": "04:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b75801f1-b88a-4a6f-abb6-c5ccfaf42d08",
+      "nome": "Sertanejo bom demais - 1ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "04:00:00",
+      "horario_fim": "06:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "7ccad858-30a9-49c8-996a-34fef441c5d4",
+      "nome": "Sertanejo bom demais - 1ª Edição - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "05:00:00",
+      "horario_fim": "07:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "fbd7e740-99f5-4d2d-bd86-4f7534de44a0",
+      "nome": "Primeira Hora Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "07:24:00",
+      "horario_fim": "08:29:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "58dfe597-18e3-41de-bb52-92134dd32747",
+      "nome": "Modão Sertanejo",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:00:00",
+      "horario_fim": "09:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "5f58a3d1-5b00-4ab5-8252-69c347ac9a74",
+      "nome": "Bom dia Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "08:30:00",
+      "horario_fim": "11:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "1b4bac5f-032b-42ba-98b3-5b8034afe7f6",
+      "nome": "Domingão da Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "10:00:00",
+      "horario_fim": "17:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "2543c10b-bf5c-4f34-bc9b-17e4b71fd0c9",
+      "nome": "FlashBack Positiva - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "13:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "6ce84778-447b-4554-8384-bbdbd7a9ec3c",
+      "nome": "Flashback Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "12:00:00",
+      "horario_fim": "12:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "1ea3c48c-02f2-4957-9efd-fa960c64504d",
+      "nome": "Whatsapp Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "13:00:00",
+      "horario_fim": "15:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "b3b77c7f-6ab9-4373-b414-addfc9f04b5e",
+      "nome": "Whatsapp Positiva - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "14:00:00",
+      "horario_fim": "15:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "c7e6d5fe-76c7-415f-9d42-6ad8b70af0c2",
+      "nome": "Sertanejo bom demais - 2ª Edição",
+      "estudio": "Estudio FM",
+      "horario_inicio": "16:00:00",
+      "horario_fim": "18:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "28f995da-6904-460a-9e04-2eb1cbc0a401",
+      "nome": "Sertanejo bom demais - 2ª Edição - Sábado",
+      "estudio": "Estudio FM",
+      "horario_inicio": "16:00:00",
+      "horario_fim": "19:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "def9d838-3f48-4ddd-8fcd-c07ae1a70c71",
+      "nome": "Modão Sertanejo",
+      "estudio": "Estudio FM",
+      "horario_inicio": "18:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Domingo"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "e6cea94b-4bc5-4f95-a8f2-d9f6e9fae44a",
+      "nome": "Vale Night",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "9836a7f9-8212-4a7b-9112-260e7757afd4",
+      "nome": "Palco Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "19:00:00",
+      "horario_fim": "20:00:00",
+      "dias_semana": [
+        "Quarta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "76299c0e-ef24-46bd-9711-55a0c23c048e",
+      "nome": "Energia Positiva",
+      "estudio": "Estudio FM",
+      "horario_inicio": "20:00:00",
+      "horario_fim": "23:59:59",
+      "dias_semana": [
+        "Sábado"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    },
+    {
+      "id": "d0761eb5-5d9c-40e9-8ff1-bcadda4b40a2",
+      "nome": "Voz do Brasil",
+      "estudio": "Estudio FM",
+      "horario_inicio": "21:00:00",
+      "horario_fim": "21:59:59",
+      "dias_semana": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta"
+      ],
+      "tipo_programa": "Musical",
+      "descricao": "",
+      "apresentador_id": null
+    }
+  ]
+}

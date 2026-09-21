@@ -2,15 +2,15 @@
 <items>
   <batalha>
     <emissora>Positiva FM 99.1</emissora>
-    <artista1_nome>Leandro &amp; Leonardo</artista1_nome>
-    <artista1_musica>Talismã</artista1_musica>
+    <artista1_nome></artista1_nome>
+    <artista1_musica></artista1_musica>
     <artista1_porcentagem>0%</artista1_porcentagem>
-    <artista1_imagem>https://cdn-images.dzcdn.net/images/artist/536fcefac8adf2469cd5f5dafc562936/1000x1000-000000-80-0-0.jpg</artista1_imagem>
-    <artista2_nome>João Paulo &amp; Daniel</artista2_nome>
-    <artista2_musica>Estou Apaixonado</artista2_musica>
+    <artista1_imagem></artista1_imagem>
+    <artista2_nome></artista2_nome>
+    <artista2_musica></artista2_musica>
     <artista2_porcentagem>0%</artista2_porcentagem>
-    <artista2_imagem>https://cdn-images.dzcdn.net/images/artist/3c10f835468dd37b1220677b0536bb52/1000x1000-000000-80-0-0.jpg</artista2_imagem>
-    <horario_inicio>07:00</horario_inicio>
-    <horario_fim>12:00</horario_fim>
+    <artista2_imagem></artista2_imagem>
+    <horario_inicio></horario_inicio>
+    <horario_fim></horario_fim>
   </batalha>
 </items>

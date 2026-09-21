@@ -2,45 +2,45 @@
 <items>
   <dados>
     <empresa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</empresa_logo>
-    <programa_nome>Programação Jornal FM 96.5</programa_nome>
-    <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
+    <programa_nome>Modão Sertanejo</programa_nome>
+    <programa_logo></programa_logo>
     <programa_thumb></programa_thumb>
-    <locutor_nome>Locutor no Ar</locutor_nome>
-    <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
-    <locutor_social>@transmissao</locutor_social>
+    <locutor_nome>Fernando</locutor_nome>
+    <locutor_foto>/locutores/fernando.png</locutor_foto>
+    <locutor_social>@positivafm</locutor_social>
     <rede_social_atual>Instagram</rede_social_atual>
     <rede_social_icone>instagram</rede_social_icone>
-    <logo_patrocinador>https://nexohub.lovable.app/default-sponsor-logo.png</logo_patrocinador>
+    <logo_patrocinador></logo_patrocinador>
     <titulo>No Ar na Jornal FM 96.5</titulo>
     <fundo_assunto></fundo_assunto>
-    <qrcode_link>https://housemix.nexobrasil.net</qrcode_link>
+    <qrcode_link>https://wa.me/556299999999</qrcode_link>
     <ticker>Acompanhe a melhor programação em 96.5 FM</ticker>
     <insert_live></insert_live>
     <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
     <musica_atual>Música em Reprodução</musica_atual>
-    <musica_capa>https://nexohub.lovable.app/default-sponsor-logo.png</musica_capa>
+    <musica_capa></musica_capa>
     <deezer_artist_img></deezer_artist_img>
     <banner_l></banner_l>
     <temperatura>25ºC</temperatura>
     <ico_temperatura>sun</ico_temperatura>
     <infos_canto>
       <titulo>Jornal FM 96.5</titulo>
-      <descricao>Goiânia - GO</descricao>
+      <descricao>Inhumas - GO</descricao>
       <ico_categoria>radio</ico_categoria>
       <temp_atual>25ºC</temp_atual>
       <ico_temp_atual>sun</ico_temp_atual>
     </infos_canto>
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Próximo Programa</programa_nome>
-      <nome_programa>Próximo Programa</nome_programa>
-      <programa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</programa_logo>
-      <locutor_nome>Equipe da Rádio</locutor_nome>
-      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
-      <horario>12:00</horario>
+      <programa_nome>Madruga Positiva</programa_nome>
+      <nome_programa>Madruga Positiva</nome_programa>
+      <programa_logo></programa_logo>
+      <locutor_nome>Automático</locutor_nome>
+      <locutor_foto>/locutores/sem-loc.png</locutor_foto>
+      <horario>00:00</horario>
       <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-18T16:50:12.589Z</atualizado_em>
+      <atualizado_em>2026-09-21T01:14:41.162Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>
