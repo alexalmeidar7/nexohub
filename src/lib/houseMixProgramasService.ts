@@ -46,15 +46,13 @@ export function normalizeClientKey(rawName?: any): string {
     .trim();
 
   // 1. Interativa FM 94.9 (Goiânia - GO)
-  // Observação crítica: a razão social da Interativa FM em Goiânia é "CULTURA FM STEREO SOM LTDA".
-  // Portanto, "CULTURA FM STEREO SOM" pertence estritamente à Interativa FM, NUNCA à Cultura FM 97.3!
   if (
     clean === "B2F70324-D086-4A5D-A407-CBC4ACF98DCE" ||
     clean === "SUB_INTERATIVA_OPEC" ||
     clean.includes("INTERATIVAFM") ||
     clean.includes("INTERATIVA") ||
     clean.includes("INETRATIVA") ||
-    clean.includes("CULTURA FM STEREO SOM")
+    clean.includes("RADIO INTERATIVA")
   ) {
     return "INTERATIVA FM";
   }

@@ -635,6 +635,26 @@ export function dynamicXmlPlugin(): Plugin {
   const broadcastFile = path.join(rootDir, "src", "data", "xml_broadcast_sync.json");
   const programsDbFile = path.join(rootDir, "src", "data", "station_programs_db.json");
   const suporteTicketsFile = path.join(rootDir, "src", "data", "suporte_tickets_sync.json");
+  const empresaConfigFile = path.join(rootDir, "src", "data", "empresa_config_sync.json");
+
+  function readEmpresaSyncData(): Record<string, any> {
+    try {
+      if (fs.existsSync(empresaConfigFile)) {
+        return JSON.parse(fs.readFileSync(empresaConfigFile, "utf-8"));
+      }
+    } catch {}
+    return {};
+  }
+
+  function writeEmpresaSyncData(data: Record<string, any>) {
+    try {
+      const dir = path.dirname(empresaConfigFile);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(empresaConfigFile, JSON.stringify(data, null, 2), "utf-8");
+    } catch (err) {
+      console.error("Error writing empresa sync file:", err);
+    }
+  }
 
   function readSyncData(filePath: string): Record<string, any[]> {
     try {
@@ -1178,6 +1198,55 @@ export function dynamicXmlPlugin(): Plugin {
           res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
           res.setHeader("Access-Control-Allow-Origin", "*");
           res.end(JSON.stringify({ ok: true, data: broadcast }));
+          return;
+        }
+
+        // 4h. POST /api/sync-empresa-config
+        if (req.method === "POST" && url.startsWith("/api/sync-empresa-config")) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", () => {
+            try {
+              const parsed = JSON.parse(body);
+              const store = readEmpresaSyncData();
+              const stationUid = parsed.stationUid || parsed.user_id || parsed.userId;
+              const slug = parsed.slug ? normalizeSlug(parsed.slug) : null;
+              const configData = parsed.config || parsed.data || parsed;
+
+              if (stationUid) {
+                store[stationUid] = { ...(store[stationUid] || {}), ...configData };
+              }
+              if (slug) {
+                store[slug] = { ...(store[slug] || {}), ...configData };
+              }
+              writeEmpresaSyncData(store);
+
+              res.setHeader("Content-Type", "application/json");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: true, stationUid, slug }));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // 4i. GET /api/sync-empresa-config
+        if (req.method === "GET" && url.startsWith("/api/sync-empresa-config")) {
+          const parsedUrl = new URL(url, "http://localhost");
+          const stationUid = parsedUrl.searchParams.get("stationUid") || parsedUrl.searchParams.get("userId");
+          const rawSlug = parsedUrl.searchParams.get("slug");
+          const slug = rawSlug ? normalizeSlug(rawSlug) : null;
+          const store = readEmpresaSyncData();
+
+          const result = (stationUid && store[stationUid]) || (slug && store[slug]) || (rawSlug && store[rawSlug]) || null;
+
+          res.setHeader("Content-Type", "application/json");
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.end(JSON.stringify({ ok: true, data: result }));
           return;
         }
 

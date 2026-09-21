@@ -3,7 +3,7 @@ import { findClientAccountByEmail, findClientAccountById, ClientAccountInfo } fr
 import { getClientHouseMixProgramsSync, HouseMixProgram, normalizeClientKey } from "./houseMixProgramasService";
 import { CANONICAL_PRESENTERS, getPresentersForStation } from "./onAirPresenterResolver";
 import { DEFAULT_STATION_PARTICIPANTES } from "./stationParticipantesData";
-import { getSnapshotStreamingChannels } from "./supabaseDatabaseSnapshot";
+import { getSnapshotStreamingChannels, getSnapshotEmpresa } from "./supabaseDatabaseSnapshot";
 
 export interface StationDatabaseData {
   userId: string;
@@ -76,7 +76,8 @@ export function getStationDatabaseSync(userIdOrEmailOrSlug?: string | null): Sta
       programas: fallbackPrograms,
       apresentadores: DEFAULT_STATION_PARTICIPANTES[normalizeClientKey(acc.nome || acc.slug)] || getPresentersForStation(acc.slug || acc.id),
       prerolls: [],
-      empresa: {
+      empresa: getSnapshotEmpresa(acc.id || acc.slug) || {
+        nome: acc.nome,
         nome_fantasia: acc.nome,
         razao_social: acc.razaoSocial,
         cidade: acc.cidade,

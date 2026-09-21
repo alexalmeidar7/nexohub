@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" width="500" height="200">
+  <defs>
+    <linearGradient id="jornalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0055ff" />
+      <stop offset="100%" stop-color="#002288" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(15, 25)">
+    <rect x="0" y="0" width="150" height="150" rx="36" fill="#002132" stroke="#0055ff" stroke-width="4" />
+    <path d="M 50 45 L 100 45 L 100 105 L 75 110 L 50 105 Z" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 60 65 L 90 65 M 60 80 L 90 80 M 60 95 L 80 95" stroke="url(#jornalGrad)" stroke-width="6" stroke-linecap="round" />
+  </g>
+  <text x="185" y="95" font-family="'Montserrat', 'Impact', sans-serif" font-weight="900" font-size="48" letter-spacing="2" fill="#002132">
+    JORNAL
+  </text>
+  <g transform="translate(185, 115)">
+    <rect x="0" y="0" width="180" height="42" rx="21" fill="url(#jornalGrad)" />
+    <text x="90" y="28" font-family="'Montserrat', sans-serif" font-weight="900" font-size="22" letter-spacing="3" fill="#ffffff" text-anchor="middle">
+      96.5 FM
+    </text>
+  </g>
+</svg>

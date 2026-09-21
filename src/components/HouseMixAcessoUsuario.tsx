@@ -88,7 +88,7 @@ const INITIAL_SEED_ACESSOS: HouseMixClientAccess[] = [
     id: "hm_interativa_fm",
     clienteId: "cli_interativa_fm",
     clienteNome: "INTERATIVA FM",
-    clienteRazaoSocial: "CULTURA FM STEREO SOM LTDA",
+    clienteRazaoSocial: "RADIO INTERATIVA FM LTDA",
     clienteLogo: null,
     emailAcesso: "interativafmgynaovivo@gmail.com",
     senhaAcesso: "interativa2026",

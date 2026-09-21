@@ -1,7 +1,10 @@
-﻿import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { getStoredMetadata, DEFAULT_AGENCY_CLIENTS } from "@/components/ClientesPage";
+import { getSnapshotEmpresa } from "@/lib/supabaseDatabaseSnapshot";
+import { normalizeClientKey } from "@/lib/houseMixProgramasService";
+import empresaSyncJson from "@/data/empresa_config_sync.json";
 import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
 import logoNexo from "@/assets/logo-nexo.png";
 
@@ -99,19 +102,42 @@ export async function getEmpresaConfig(userId?: string, userEmail?: string | nul
   let data: any = null;
   if (effectiveId) {
     try {
-      const res = await supabase.from("empresa_config").select("*").eq("user_id", effectiveId).maybeSingle();
-      if (res.data) data = res.data;
+      const res = await Promise.race([
+        supabase.from("empresa_config").select("*").eq("user_id", effectiveId).maybeSingle(),
+        new Promise((_, reject) => setTimeout(() => reject("timeout"), 1200))
+      ]) as any;
+      if (res?.data) data = res.data;
     } catch {}
   }
 
   if (!data && userId && userId !== effectiveId) {
     try {
-      const res = await supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle();
-      if (res.data) data = res.data;
+      const res = await Promise.race([
+        supabase.from("empresa_config").select("*").eq("user_id", userId).maybeSingle(),
+        new Promise((_, reject) => setTimeout(() => reject("timeout"), 1200))
+      ]) as any;
+      if (res?.data) data = res.data;
     } catch {}
   }
 
-  // If still not found, check station database service
+  // 1. Check sync database JSON file
+  if (!data && (effectiveId || targetSlug)) {
+    const syncRow = (effectiveId && (empresaSyncJson as any)[effectiveId]) ||
+      (targetSlug && (empresaSyncJson as any)[targetSlug]);
+    if (syncRow) {
+      data = syncRow;
+    }
+  }
+
+  // 2. If still not found, check snapshot database
+  if (!data && (effectiveId || targetSlug || userEmail)) {
+    const snap = getSnapshotEmpresa(effectiveId || targetSlug || userEmail);
+    if (snap) {
+      data = snap;
+    }
+  }
+
+  // 3. If still not found, check station database service
   if (!data && (effectiveId || targetSlug || userEmail)) {
     const stationData = await fetchStationDatabaseData(effectiveId || targetSlug || userEmail);
     if (stationData?.empresa) {
@@ -119,7 +145,7 @@ export async function getEmpresaConfig(userId?: string, userEmail?: string | nul
     }
   }
 
-  // If still not found, check sync database cache
+  // 4. If still not found, check sync database cache
   if (!data && (effectiveId || targetSlug || userEmail)) {
     const syncDb = getStationDatabaseSync(effectiveId || targetSlug || userEmail);
     if (syncDb?.empresa) {
@@ -132,17 +158,23 @@ export async function getEmpresaConfig(userId?: string, userEmail?: string | nul
     extra = data.audio_sources;
   }
   try {
-    const localExtra = JSON.parse(localStorage.getItem(EMPRESA_EXTRA_KEY) || "{}");
+    // Isolamento estrito por tenant para evitar contaminação entre rádios
     const localUserExtra = effectiveId ? JSON.parse(localStorage.getItem(`${EMPRESA_EXTRA_KEY}_${effectiveId}`) || "{}") : {};
-    extra = { ...extra, ...localExtra, ...localUserExtra };
+    extra = { ...extra, ...localUserExtra };
   } catch {}
 
   // Buscar metadados do cadastro de clientes
   const storedMeta = getStoredMetadata();
   const searchKey = (effectiveId || acc?.nome || userEmail || "").toUpperCase();
   const isSuperAdmin = acc?.isAdmin || searchKey.includes("ALEX") || searchKey.includes("NEXO") || (userEmail || "").toLowerCase().includes("alex");
-  
-  let metaCandidate = storedMeta[effectiveId || ""] || storedMeta[acc?.nome || ""] || storedMeta[searchKey] || {};
+
+  const clientKey = normalizeClientKey(effectiveId || acc?.nome || targetSlug || userEmail || "");
+  let metaCandidate: any = (effectiveId && storedMeta[effectiveId]) ||
+    (clientKey && DEFAULT_AGENCY_CLIENTS[clientKey]) ||
+    (clientKey && storedMeta[clientKey]) ||
+    storedMeta[acc?.nome || ""] ||
+    {};
+
   if (isSuperAdmin && (!metaCandidate || Object.keys(metaCandidate).length === 0)) {
     metaCandidate = storedMeta["NEXO BRASIL"] || DEFAULT_AGENCY_CLIENTS["NEXO BRASIL"] || {};
   } else if (!metaCandidate || Object.keys(metaCandidate).length === 0) {
@@ -157,21 +189,38 @@ export async function getEmpresaConfig(userId?: string, userEmail?: string | nul
   const defaultTimezone = data?.timezone || acc?.timezone || "America/Sao_Paulo";
   const defaultLogo = isSuperAdmin ? (logoNexoSolucoes || logoNexo) : (data?.logo || "");
 
+  // Interativa FM protection: garantir que a razão social NUNCA seja Cultura FM
+  let rawRazao = extra.razaoSocial || data?.razao_social || data?.razaoSocial || metaCandidate.razao_social || acc?.razaoSocial || "";
+  if (clientKey === "INTERATIVA FM" || searchKey.includes("INTERATIVA")) {
+    if (rawRazao.toUpperCase().includes("CULTURA")) {
+      rawRazao = "RADIO INTERATIVA FM LTDA";
+    }
+  }
+
+  // Nome oficial da emissora
+  let defaultStationName = isSuperAdmin ? "NEXO SOLUÇÕES VISUAIS" : (acc?.nome || metaCandidate.nome_empresarial || "");
+  if (clientKey === "INTERATIVA FM") defaultStationName = "Interativa FM 94.9";
+  if (clientKey === "POSITIVA FM") defaultStationName = "Positiva FM 99.1";
+  if (clientKey === "CULTURA FM") defaultStationName = "Cultura FM 97.3 FM";
+  if (clientKey === "JORNAL FM") defaultStationName = "Jornal FM 96.5";
+
+  const finalNome = (extra.nome || data?.nome || defaultStationName).trim();
+  const finalFantasia = (extra.nomeEmpresarial || data?.nome_empresarial || metaCandidate.nome_empresarial || defaultStationName).trim();
+  const finalRazao = (rawRazao || finalNome).toUpperCase();
+
   const finalCnpj = data?.cnpj || extra.cnpj || metaCandidate.cnpj || "";
-  const finalRazao = (data?.nome || extra.nome || metaCandidate.razao_social || acc?.razaoSocial || acc?.nome || (isSuperAdmin ? "NEXO SOLUÇÕES VISUAIS" : "")).toUpperCase();
-  const finalFantasia = (extra.nomeEmpresarial || metaCandidate.nome_empresarial || acc?.nome || finalRazao).toUpperCase();
   const finalCep = data?.cep || extra.cep || metaCandidate.cep || "";
-  const finalEndereco = (data?.endereco || extra.endereco || metaCandidate.endereco || "").toUpperCase();
-  const finalCidade = (extra.cidade || metaCandidate.cidade || acc?.cidade || (isSuperAdmin ? "GOIÂNIA" : "")).toUpperCase();
-  const finalEstado = (extra.estado || metaCandidate.estado || (isSuperAdmin ? "GO" : "")).toUpperCase();
-  const finalTelCom = data?.telefone_comercial || extra.telefoneComercial || metaCandidate.telefone || "";
-  const finalTelPart = data?.telefone_participacao || extra.telefoneParticipacao || metaCandidate.whatsapp_responsavel || "";
-  const finalContato = (extra.nomeContato || metaCandidate.nome_contato || (isSuperAdmin ? "ALEX ALMEIDA" : data?.executiva_venda || "")).toUpperCase();
-  const finalEmail = (extra.emailCobranca || metaCandidate.email_cobranca || acc?.email || (isSuperAdmin ? "ALEX@NEXOBRASIL.NET" : "")).toUpperCase();
-  const finalDesde = data?.cliente_desde || extra.clienteDesde || metaCandidate.cliente_desde || "";
+  const finalEndereco = (extra.endereco || data?.endereco || metaCandidate.endereco || "").toUpperCase();
+  const finalCidade = (extra.cidade || data?.cidade || metaCandidate.cidade || acc?.cidade || (isSuperAdmin ? "GOIÂNIA" : "")).toUpperCase();
+  const finalEstado = (extra.estado || data?.estado || metaCandidate.estado || (isSuperAdmin ? "GO" : "")).toUpperCase();
+  const finalTelCom = extra.telefoneComercial || data?.telefone_comercial || data?.telefoneComercial || metaCandidate.telefone || "";
+  const finalTelPart = extra.telefoneParticipacao || data?.telefone_participacao || data?.telefoneParticipacao || metaCandidate.whatsapp_responsavel || "";
+  const finalContato = (extra.nomeContato || data?.executiva_venda || metaCandidate.nome_contato || (isSuperAdmin ? "ALEX ALMEIDA" : "")).toUpperCase();
+  const finalEmail = (extra.emailCobranca || data?.email_cobranca || metaCandidate.email_cobranca || acc?.email || (isSuperAdmin ? "ALEX@NEXOBRASIL.NET" : "")).toUpperCase();
+  const finalDesde = extra.clienteDesde || data?.cliente_desde || metaCandidate.cliente_desde || "";
 
   return {
-    nome: finalRazao,
+    nome: finalNome,
     nomeEmpresarial: finalFantasia,
     cnpj: finalCnpj,
     cep: finalCep,
@@ -185,17 +234,17 @@ export async function getEmpresaConfig(userId?: string, userEmail?: string | nul
     clienteDesde: finalDesde,
     chavePix: (extra.chavePix || finalCnpj || "").toUpperCase(),
     tipoChavePix: extra.tipoChavePix || "CNPJ",
-    logo: data?.logo || extra.logo || defaultLogo,
-    backgroundUrl: data?.background_url || extra.backgroundUrl || "",
-    site: data?.site || extra.site || (isSuperAdmin ? "https://nexobrasil.net" : ""),
-    instagram: data?.instagram || extra.instagram || (isSuperAdmin ? "@nexosolucoes" : ""),
-    facebook: data?.facebook || extra.facebook || "",
-    youtube: data?.youtube || extra.youtube || "",
-    instagramSubs: data?.instagram_subs != null ? String(data.instagram_subs) : (extra.instagramSubs || ""),
-    facebookSubs: data?.facebook_subs != null ? String(data.facebook_subs) : (extra.facebookSubs || ""),
-    youtubeSubs: data?.youtube_subs != null ? String(data.youtube_subs) : (extra.youtubeSubs || ""),
-    videoStreamApiUrl: data?.video_stream_api_url || extra.videoStreamApiUrl || "",
-    plano: data?.plano || acc?.plano || (isSuperAdmin ? "Super Admin" : ""),
-    timezone: defaultTimezone,
+    logo: extra.logo || data?.logo || defaultLogo,
+    backgroundUrl: extra.backgroundUrl || data?.background_url || data?.backgroundUrl || "",
+    site: extra.site || data?.site || (isSuperAdmin ? "https://nexobrasil.net" : ""),
+    instagram: extra.instagram || data?.instagram || (isSuperAdmin ? "@nexosolucoes" : ""),
+    facebook: extra.facebook || data?.facebook || "",
+    youtube: extra.youtube || data?.youtube || "",
+    instagramSubs: extra.instagramSubs || (data?.instagram_subs != null ? String(data.instagram_subs) : ""),
+    facebookSubs: extra.facebookSubs || (data?.facebook_subs != null ? String(data.facebook_subs) : ""),
+    youtubeSubs: extra.youtubeSubs || (data?.youtube_subs != null ? String(data.youtube_subs) : ""),
+    videoStreamApiUrl: extra.videoStreamApiUrl || data?.video_stream_api_url || data?.videoStreamApiUrl || "",
+    plano: extra.plano || data?.plano || acc?.plano || (isSuperAdmin ? "Super Admin" : ""),
+    timezone: extra.timezone || data?.timezone || defaultTimezone,
   };
 }

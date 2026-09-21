@@ -111,6 +111,15 @@ const adminLabelStyle: React.CSSProperties = {
   display: "block",
 };
 
+function resolveStationFallbackLogo(stationName?: string, userEmail?: string): string {
+  const norm = `${stationName || ""} ${userEmail || ""}`.toLowerCase();
+  if (norm.includes("interativa")) return "/logos/interativa.svg";
+  if (norm.includes("positiva")) return "/logos/positiva.png";
+  if (norm.includes("cultura")) return "/logos/cultura.svg";
+  if (norm.includes("jornal")) return "/logos/jornal.svg";
+  return "/favicon.png";
+}
+
 function StyledInput({ value, onChange, placeholder, type = "text", readOnly = false, className = "" }: {
   value: string; onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void; placeholder?: string; type?: string; readOnly?: boolean; className?: string;
 }) {
@@ -269,7 +278,7 @@ export default function ConfiguracoesPage({
   useEffect(() => {
     const tid = targetUid || user?.id;
     if (tid || user) {
-      getEmpresaConfig(tid, user?.email).then(c => { setConfig(c); setLoading(false); }).catch(() => setLoading(false));
+      getEmpresaConfig(tid, user?.email).then(c => { setConfig(c); configRef.current = c; setLoading(false); }).catch(() => setLoading(false));
       if (tid) {
         supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria, estudio").eq("user_id", tid).eq("ativo", true).order("nome").then(({ data }) => {
           if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L", estudio: (p as any).estudio || "" })));
@@ -394,34 +403,63 @@ export default function ConfiguracoesPage({
 
   const saveConfig = (newConfig: EmpresaConfig) => {
     setConfig(newConfig);
+    configRef.current = newConfig;
     const tid = targetUid || user?.id;
     const extraToSave = {
-      nome: (newConfig.nome || "").toUpperCase(),
-      nomeEmpresarial: (newConfig.nomeEmpresarial || "").toUpperCase(),
+      nome: (newConfig.nome || "").trim(),
+      nomeEmpresarial: (newConfig.nomeEmpresarial || "").trim(),
       cnpj: newConfig.cnpj || "",
       cep: newConfig.cep || "",
-      endereco: (newConfig.endereco || "").toUpperCase(),
-      cidade: (newConfig.cidade || "").toUpperCase(),
-      estado: (newConfig.estado || "").toUpperCase(),
+      endereco: (newConfig.endereco || "").trim(),
+      cidade: (newConfig.cidade || "").trim(),
+      estado: (newConfig.estado || "").trim(),
       telefoneComercial: newConfig.telefoneComercial || "",
       telefoneParticipacao: newConfig.telefoneParticipacao || "",
-      nomeContato: (newConfig.nomeContato || "").toUpperCase(),
-      emailCobranca: (newConfig.emailCobranca || "").toUpperCase(),
+      nomeContato: (newConfig.nomeContato || "").trim(),
+      emailCobranca: (newConfig.emailCobranca || "").trim(),
       clienteDesde: newConfig.clienteDesde || "",
-      chavePix: (newConfig.chavePix || "").toUpperCase(),
+      chavePix: (newConfig.chavePix || "").trim(),
       tipoChavePix: newConfig.tipoChavePix || "CNPJ",
       logo: newConfig.logo || "",
       backgroundUrl: newConfig.backgroundUrl || "",
+      site: newConfig.site || "",
+      instagram: newConfig.instagram || "",
+      facebook: newConfig.facebook || "",
+      youtube: newConfig.youtube || "",
+      videoStreamApiUrl: newConfig.videoStreamApiUrl || "",
+      timezone: newConfig.timezone || "America/Sao_Paulo",
     };
     try {
-      localStorage.setItem(EMPRESA_EXTRA_KEY, JSON.stringify(extraToSave));
-      if (tid) localStorage.setItem(`${EMPRESA_EXTRA_KEY}_${tid}`, JSON.stringify(extraToSave));
+      if (tid) {
+        localStorage.setItem(`${EMPRESA_EXTRA_KEY}_${tid}`, JSON.stringify(extraToSave));
+        localStorage.setItem(`nexohub_empresa_config_${tid}`, JSON.stringify(newConfig));
+      }
     } catch {}
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (!user) return;
       const saveId = tid || user.id;
+
+      // Sync local em disco
+      try {
+        await fetch("/api/sync-empresa-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stationUid: saveId,
+            config: {
+              ...extraToSave,
+              user_id: saveId,
+              telefone_comercial: newConfig.telefoneComercial || "",
+              telefone_participacao: newConfig.telefoneParticipacao || "",
+              video_stream_api_url: newConfig.videoStreamApiUrl || "",
+              background_url: newConfig.backgroundUrl || "",
+            },
+          }),
+        });
+      } catch {}
+
       const toBigInt = (v?: string) => {
         if (!v) return null;
         const n = parseInt(String(v).replace(/\D/g, ""), 10);
@@ -430,15 +468,15 @@ export default function ConfiguracoesPage({
       try {
         await supabase.from("empresa_config").upsert({
           user_id: saveId,
-          nome: (newConfig.nome || "").toUpperCase(),
+          nome: (newConfig.nome || "").trim(),
           cnpj: newConfig.cnpj || "",
           logo: newConfig.logo,
           background_url: newConfig.backgroundUrl,
-          endereco: (newConfig.endereco || "").toUpperCase(),
+          endereco: (newConfig.endereco || "").trim(),
           telefone_comercial: newConfig.telefoneComercial || "",
           telefone_participacao: newConfig.telefoneParticipacao || "",
           cliente_desde: newConfig.clienteDesde || "",
-          executiva_venda: (newConfig.nomeContato || "").toUpperCase(),
+          executiva_venda: (newConfig.nomeContato || "").trim(),
           site: newConfig.site,
           instagram: newConfig.instagram,
           facebook: newConfig.facebook,
@@ -1047,6 +1085,13 @@ export default function ConfiguracoesPage({
                     src={config.logo}
                     alt="Logo da Empresa"
                     className="w-full h-full object-contain rounded-xl"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      const fallback = resolveStationFallbackLogo(config.nome, user?.email);
+                      if (e.currentTarget.src !== fallback) {
+                        e.currentTarget.src = fallback;
+                      }
+                    }}
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-slate-400">
@@ -1777,14 +1822,28 @@ export default function ConfiguracoesPage({
 
 
       {/* Box 1: Configurações da Empresa */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} style={{ opacity: 0.8 }} />}>
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" defaultOpen={true} icon={<Settings size={16} style={{ opacity: 0.8 }} />}>
         <div className="space-y-4">
           {field("Nome da Empresa", "nome", "Nome da empresa")}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Logo da Empresa</label>
               <div className="flex items-center gap-4">
-                {config.logo && <img src={config.logo} alt="Logo" className="w-16 h-16 rounded-lg object-contain" style={{ border: "1px solid var(--layout-border-color, #333333)" }} />}
+                {config.logo && (
+                  <img
+                    src={config.logo}
+                    alt="Logo"
+                    className="w-16 h-16 rounded-lg object-contain"
+                    style={{ border: "1px solid var(--layout-border-color, #333333)" }}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      const fallback = resolveStationFallbackLogo(config.nome, user?.email);
+                      if (e.currentTarget.src !== fallback) {
+                        e.currentTarget.src = fallback;
+                      }
+                    }}
+                  />
+                )}
                 <button onClick={handleLogoUpload}
                   className="px-4 py-1.5 font-bold transition-all text-xs flex items-center gap-1"
                   style={btnSecondary}

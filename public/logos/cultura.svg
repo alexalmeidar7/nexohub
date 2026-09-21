@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" width="500" height="200">
+  <defs>
+    <linearGradient id="culturaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7700" />
+      <stop offset="100%" stop-color="#e65100" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(15, 25)">
+    <rect x="0" y="0" width="150" height="150" rx="36" fill="#002132" stroke="#ff7700" stroke-width="4" />
+    <circle cx="75" cy="75" r="45" fill="none" stroke="url(#culturaGrad)" stroke-width="14" />
+    <text x="75" y="88" font-family="'Montserrat', sans-serif" font-weight="900" font-size="38" fill="#ffffff" text-anchor="middle">C</text>
+  </g>
+  <text x="185" y="95" font-family="'Montserrat', 'Impact', sans-serif" font-weight="900" font-size="48" letter-spacing="2" fill="#002132">
+    CULTURA
+  </text>
+  <g transform="translate(185, 115)">
+    <rect x="0" y="0" width="180" height="42" rx="21" fill="url(#culturaGrad)" />
+    <text x="90" y="28" font-family="'Montserrat', sans-serif" font-weight="900" font-size="22" letter-spacing="3" fill="#ffffff" text-anchor="middle">
+      97.3 FM
+    </text>
+  </g>
+</svg>
