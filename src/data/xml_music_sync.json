@@ -3,7 +3,7 @@
     "titulo": "BOOM BOOM POW!",
     "artista": "BLACK EYED PEAS",
     "duracao": 252,
-    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/16/8c/bf168c92-3c1d-6e8a-e9fa-54d90956b63d/00602527052950.rgb.jpg/600x600bb.jpg",
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/79/5f/e3/795fe3be-f1b7-8fa5-2698-f92f7f194599/10UMGIM29127.rgb.jpg/600x600bb.jpg",
     "horario": "23:30",
     "startTime": 1789961909101,
     "source": "pasta",
@@ -14,7 +14,7 @@
     "titulo": "BOOM BOOM POW!",
     "artista": "BLACK EYED PEAS",
     "duracao": 252,
-    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/16/8c/bf168c92-3c1d-6e8a-e9fa-54d90956b63d/00602527052950.rgb.jpg/600x600bb.jpg",
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/79/5f/e3/795fe3be-f1b7-8fa5-2698-f92f7f194599/10UMGIM29127.rgb.jpg/600x600bb.jpg",
     "horario": "23:30",
     "startTime": 1789961909101,
     "source": "pasta",
@@ -25,11 +25,44 @@
     "titulo": "BOOM BOOM POW!",
     "artista": "BLACK EYED PEAS",
     "duracao": 252,
-    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/16/8c/bf168c92-3c1d-6e8a-e9fa-54d90956b63d/00602527052950.rgb.jpg/600x600bb.jpg",
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/79/5f/e3/795fe3be-f1b7-8fa5-2698-f92f7f194599/10UMGIM29127.rgb.jpg/600x600bb.jpg",
     "horario": "23:30",
     "startTime": 1789961909101,
     "source": "pasta",
     "deviceName": "IN - LIVE 2",
+    "updated_at": "2026-09-21T03:38:59.127Z"
+  },
+  "positivafm": {
+    "titulo": "Viva La Vida",
+    "artista": "Coldplay",
+    "duracao": 242,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/aa/85/52aa851f-15b7-6322-f91f-df84b15b7b19/190295978044.jpg/600x600bb.jpg",
+    "horario": "15:45",
+    "startTime": 1789822332773,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (b0925e0e)",
+    "updated_at": "2026-09-21T03:38:59.127Z"
+  },
+  "d17e65af-e407-466f-9b60-b55c43399513": {
+    "titulo": "Viva La Vida",
+    "artista": "Coldplay",
+    "duracao": 242,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/aa/85/52aa851f-15b7-6322-f91f-df84b15b7b19/190295978044.jpg/600x600bb.jpg",
+    "horario": "15:45",
+    "startTime": 1789822332773,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (b0925e0e)",
+    "updated_at": "2026-09-21T03:38:59.127Z"
+  },
+  "positiva": {
+    "titulo": "Viva La Vida",
+    "artista": "Coldplay",
+    "duracao": 242,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/aa/85/52aa851f-15b7-6322-f91f-df84b15b7b19/190295978044.jpg/600x600bb.jpg",
+    "horario": "15:45",
+    "startTime": 1789822332773,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (b0925e0e)",
     "updated_at": "2026-09-21T03:38:59.127Z"
   }
 }

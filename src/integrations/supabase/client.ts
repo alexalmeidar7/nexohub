@@ -16,3 +16,38 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Intercept edge functions to provide resilient local and direct operations
+import { invokeWeatherFunction } from '@/lib/weatherService';
+import { invokeFetchRss, invokeFetchRssTitles } from '@/lib/rssService';
+
+const originalInvoke = supabase.functions.invoke.bind(supabase.functions);
+supabase.functions.invoke = (async (functionName: string, options?: any) => {
+  if (functionName === "fetch-weather") {
+    return invokeWeatherFunction(options?.body);
+  }
+  if (functionName === "fetch-rss") {
+    return invokeFetchRss(options?.body);
+  }
+  if (functionName === "fetch-rss-titles") {
+    return invokeFetchRssTitles(options?.body);
+  }
+  return originalInvoke(functionName, options);
+}) as any;
+
+// Also intercept direct fetch calls aimed at supabase functions
+if (typeof window !== "undefined") {
+  const origFetch = window.fetch.bind(window);
+  window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    try {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as any)?.url || "";
+      if (url.includes("/functions/v1/fetch-rss-titles")) {
+        return origFetch("/api/fetch-rss-titles", init);
+      }
+      if (url.includes("/functions/v1/fetch-rss")) {
+        return origFetch("/api/fetch-rss", init);
+      }
+    } catch {}
+    return origFetch(input, init);
+  }) as typeof window.fetch;
+}

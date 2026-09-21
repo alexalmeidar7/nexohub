@@ -7,7 +7,7 @@ import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, New
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
-import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
 
 
 
@@ -948,7 +948,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     sponsorLogos.forEach(l => {
       lines.push("    <logo>");
       lines.push(`      <nome>${escXml(l.nome)}</nome>`);
-      lines.push(`      <url>${escXml(l.logo_url)}</url>`);
+      lines.push(`      <url>${escXml(resolveSponsorLogoUrl(l.logo_url, l.nome))}</url>`);
       lines.push("    </logo>");
     });
     lines.push("  </logos_patrocinadores>");
@@ -2536,8 +2536,13 @@ function MockupPreview({
                   title={currentSponsor.nome}
                 >
                   <img
-                    src={currentSponsor.logo_url}
+                    src={resolveSponsorLogoUrl(currentSponsor.logo_url, currentSponsor.nome)}
                     alt={currentSponsor.nome}
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = "/default-sponsor-logo.png";
+                    }}
                     className="h-10 max-w-[140px] object-contain"
                     style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }}
                   />

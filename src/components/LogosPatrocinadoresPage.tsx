@@ -14,6 +14,7 @@ import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAut
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import { getSnapshotLogos, getSnapshotProgramas } from "@/lib/supabaseDatabaseSnapshot";
 import { LogoTransformModal } from "./LogoTransformModal";
+import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
 
 interface Logo {
   id: string;
@@ -111,7 +112,14 @@ function getLocalLogos(uId: string): Logo[] {
     const raw = localStorage.getItem(getLocalStorageKey(uId));
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.map((l: any) => ({
+          ...l,
+          logo_url: (l.logo_url && typeof l.logo_url === "string" && l.logo_url.startsWith("data:image/svg+xml"))
+            ? resolveSponsorLogoUrl(null, l.nome)
+            : l.logo_url
+        }));
+      }
     }
   } catch {}
   return [];
@@ -373,6 +381,12 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           lData = Array.from(map.values());
         }
       }
+
+      // Ensure all sponsor logo URLs are safe, active, and have zero broken images
+      lData = (lData || []).map((l: any) => ({
+        ...l,
+        logo_url: resolveSponsorLogoUrl(l.logo_url, l.nome),
+      }));
 
       // Cache loaded logos to localStorage for resilient offline/network loads
       if (lData.length > 0) {
@@ -1427,7 +1441,16 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                 <div className="flex flex-wrap gap-3">
                   {existingLogoUrl && pendingFiles.length === 0 && (
                     <div className="relative group">
-                      <img src={existingLogoUrl} alt="" className="w-20 h-20 rounded-2xl object-contain p-2 bg-black border border-slate-800" />
+                      <img
+                        src={resolveSponsorLogoUrl(existingLogoUrl, editingFullId ? logos.find(l => l.id === editingFullId)?.nome : "")}
+                        alt=""
+                        className="w-20 h-20 rounded-2xl object-contain p-2 bg-black border border-slate-800"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "/default-sponsor-logo.png";
+                        }}
+                      />
                       <span className="text-[9px] font-bold text-slate-400 text-center block mt-1 uppercase">Atual</span>
                     </div>
                   )}
@@ -1560,7 +1583,16 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           onDragStart={() => handleDragStart(logo)}
                         >
                           <div className="relative group">
-                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-2xl object-contain p-2.5 bg-black border border-slate-800 shadow-sm" />
+                            <img
+                              src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
+                              alt={logo.nome}
+                              className="w-full aspect-square rounded-2xl object-contain p-2.5 bg-black border border-slate-800 shadow-sm"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = "/default-sponsor-logo.png";
+                              }}
+                            />
                             <div className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 backdrop-blur-[2px]">
                               <button onClick={() => handleRestore(logo)} className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-transform hover:scale-110" title="Restaurar">
                                 <RotateCcw size={13} />
@@ -1693,9 +1725,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                 >
                                   <div className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-black hover:border-[#0055ff]/50 transition-all shadow-sm">
                                     <img
-                                      src={logo.logo_url}
+                                      src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
                                       alt={logo.nome}
                                       className="w-full aspect-square object-contain p-2.5 bg-black transition-transform group-hover:scale-105"
+                                      onError={(e) => {
+                                        const target = e.currentTarget as HTMLImageElement;
+                                        target.onerror = null;
+                                        target.src = "/default-sponsor-logo.png";
+                                      }}
                                     />
                                     <button
                                       onClick={(e) => {
@@ -1767,7 +1804,16 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             <div style={{ padding: 24, background: "#f8fafc" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
                 <div style={{ width: 84, height: 84, borderRadius: 18, background: "#0f172a", border: "1px solid #1e293b", boxShadow: "0 8px 20px rgba(0, 0, 0, 0.12)", padding: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <img src={restoreLogo.logo_url} alt={restoreLogo.nome || "Logo"} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                  <img
+                    src={resolveSponsorLogoUrl(restoreLogo.logo_url, restoreLogo.nome)}
+                    alt={restoreLogo.nome || "Logo"}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = "/default-sponsor-logo.png";
+                    }}
+                  />
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ color: "#64748b", fontSize: 10, fontWeight: 900, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Logo selecionada</p>

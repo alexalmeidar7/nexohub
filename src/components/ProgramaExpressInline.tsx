@@ -226,8 +226,8 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
   blocos: Bloco[];
   inputStyle: React.CSSProperties;
   onUpdateBloco: (bi: number, items: NewsItem[]) => void;
-  fetchFromLink: (bi: number, ni: number, url: string) => Promise<void> | void;
-  onUpdateComplete: () => Promise<boolean>;
+  fetchFromLink: (bi: number, ni: number, url: string, forceReprocess?: boolean) => Promise<NewsItem | null> | NewsItem | null | void;
+  onUpdateComplete: (schedule?: { data: string; horario: string }, overrideBlocos?: Bloco[]) => Promise<boolean>;
 }) {
   const [linksText, setLinksText] = useState<string[]>(() => blocos.map(() => ""));
   const [updating, setUpdating] = useState(false);
@@ -266,23 +266,52 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
 
     try {
       let processedLinks = 0;
-      for (const { bi, links } of linksByBlock) {
-        const newItems: NewsItem[] = links.map(link => ({ titulo: "", imagemUrl: "", escalada: false, link }));
-        onUpdateBloco(bi, newItems);
+      const updatedBlocos: Bloco[] = blocos.map(b => ({
+        ...b,
+        noticias: [...(b.noticias || [])]
+      }));
 
+      for (const { bi, links } of linksByBlock) {
+        const blockItems: NewsItem[] = [];
         for (let ni = 0; ni < links.length; ni++) {
           setCurrentLink(processedLinks + 1);
-          await fetchFromLink(bi, ni, links[ni]);
+          const link = links[ni];
+          const fetched = await fetchFromLink(bi, ni, link);
+          if (fetched && fetched.titulo) {
+            blockItems.push(fetched);
+          } else {
+            let fallbackTitle = "Notícia";
+            try {
+              const pathname = new URL(link).pathname;
+              const slug = pathname.split("/").filter(Boolean).pop() || "";
+              const formatted = slug.replace(/[-_]+/g, " ").replace(/\.(html|php|asp)$/i, "").trim();
+              if (formatted) fallbackTitle = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+            } catch {}
+            blockItems.push({
+              titulo: fallbackTitle,
+              imagemUrl: "",
+              resumo: "",
+              texto_materia: "",
+              link,
+              escalada: false,
+            });
+          }
           processedLinks += 1;
         }
+
+        updatedBlocos[bi] = {
+          ...updatedBlocos[bi],
+          noticias: blockItems,
+        };
+        onUpdateBloco(bi, blockItems);
       }
 
       setUpdateStage("completed");
-      await new Promise(resolve => window.setTimeout(resolve, 700));
+      await new Promise(resolve => window.setTimeout(resolve, 600));
       setUpdateStage("saving");
-      await new Promise(resolve => window.setTimeout(resolve, 0));
+      await new Promise(resolve => window.setTimeout(resolve, 100));
 
-      const saved = await onUpdateCompleteRef.current();
+      const saved = await onUpdateCompleteRef.current(undefined, updatedBlocos);
       if (!saved) {
         setUpdateStage(null);
         setUpdating(false);
@@ -1216,8 +1245,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }));
   };
 
-  const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false) => {
-    if (!url || !url.startsWith("http")) return;
+  const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false): Promise<NewsItem | null> => {
+    if (!url || !url.startsWith("http")) return null;
     setFetchingLink(`${bi}-${ni}`);
     
     // Clear field to show progress if we're going to generate journalistic text
@@ -1233,8 +1262,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           custom_prompt: configuracoes.prompt_ai
         } 
       });
-      if (!error && data?.ok && data.content) {
-        const html = data.content as string;
+      if (!error && data?.ok && (data.content || data.title)) {
+        const html = (data.content as string) || "";
         const getMetaContent = (property: string): string => {
           const patterns = [
             new RegExp(`<meta[^>]+property=["']${property}["'][^>]+content=["']([^"']+)["']`, "i"),
@@ -1245,14 +1274,22 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           for (const p of patterns) { const m = html.match(p); if (m?.[1]) return m[1]; }
           return "";
         };
-        const rawTitle = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+        const rawTitle = data.title || getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
         let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
         if (title.includes(" - ")) title = title.split(" - ")[0].trim();
-        const image = getMetaContent("og:image") || getMetaContent("twitter:image");
+        if (!title && url) {
+          try {
+            const pathname = new URL(url).pathname;
+            const slug = pathname.split("/").filter(Boolean).pop() || "";
+            const formatted = slug.replace(/[-_]+/g, " ").replace(/\.(html|php|asp)$/i, "").trim();
+            if (formatted) title = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+          } catch {}
+        }
+        const image = data.image || getMetaContent("og:image") || getMetaContent("twitter:image") || "";
         
         // Extract summary/description
-        let summary = getMetaContent("og:description") || getMetaContent("twitter:description") || getMetaContent("description");
-        if (!summary) {
+        let summary = data.summary || data.description || getMetaContent("og:description") || getMetaContent("twitter:description") || getMetaContent("description") || "";
+        if (!summary && html) {
           const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
           if (pMatches) {
             summary = pMatches[0].replace(/<[^>]+>/g, "").trim().slice(0, 300);
@@ -1261,23 +1298,37 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
         const decodeFull = (v: string) => { let s = v; for (let i = 0; i < 3; i++) { const d = decodeHtmlEntities(s); if (d === s) break; s = d; } return s; };
         
+        const extractedTitle = decodeFull(title || "Notícia");
+        const extractedImage = decodeFull(image);
+        const extractedSummary = decodeFull(summary);
+        const extractedJournalisticText = data.journalisticText || "";
+
+        const resultItem: NewsItem = {
+          titulo: extractedTitle,
+          imagemUrl: extractedImage,
+          resumo: extractedSummary,
+          texto_materia: extractedJournalisticText,
+          link: url,
+          escalada: false,
+        };
+
         // We need to use a functional update for setBlocos to ensure we don't rely on stale state
         setBlocos(prev => prev.map((b, i) => i === bi ? {
           ...b,
-          noticias: b.noticias.map((n, j) => {
+          noticias: (b.noticias || []).map((n, j) => {
             if (j !== ni) return n;
             const updated = { ...n };
             const hasSubstantialText = (n.texto_materia && n.texto_materia.length > 200) || 
                                       (n.resumo && n.resumo.length > 200);
 
             if (title && (forceReprocess || !n.titulo || n.titulo.length < 5)) {
-              updated.titulo = decodeFull(title);
+              updated.titulo = extractedTitle;
             }
             if (image && (forceReprocess || !n.imagemUrl)) {
-              updated.imagemUrl = decodeFull(image);
+              updated.imagemUrl = extractedImage;
             }
             if (summary && (forceReprocess || !hasSubstantialText)) {
-              updated.resumo = decodeFull(summary);
+              updated.resumo = extractedSummary;
             }
             if (data.journalisticText) {
               updated.texto_materia = data.journalisticText;
@@ -1296,14 +1347,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         
         if (title) toast.success(forceReprocess ? "Matéria reprocessada com sucesso!" : "Dados extraídos do link!"); 
         else toast.warning("Link carregado, mas não foi possível extrair o título");
-      } else { toast.error("Não foi possível acessar o link"); }
-    } catch { toast.error("Não foi possível extrair dados do link"); }
-    setFetchingLink(null);
+        return resultItem;
+      } else { 
+        toast.error("Não foi possível acessar o link"); 
+        return null;
+      }
+    } catch { 
+      toast.error("Não foi possível extrair dados do link"); 
+      return null;
+    } finally {
+      setFetchingLink(null);
+    }
   };
 
   const escXml = (value: string | null | undefined) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-  const generateXml = (): string => {
+  const generateXml = (overrideBlocos?: Bloco[]): string => {
+    const activeBlocos = overrideBlocos || blocos;
     const now = new Date();
     const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -1339,7 +1399,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       xml += `  </roteiro>\n`;
     } else {
       if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
-      blocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+      activeBlocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
     }
     xml += `</programaExpress>`;
     return xml;
@@ -1519,19 +1579,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     else setAddingFinance(false);
   };
 
-  const handleSave = async (schedule?: { data: string; horario: string }): Promise<boolean> => {
+  const handleSave = async (schedule?: { data: string; horario: string }, overrideBlocos?: Bloco[]): Promise<boolean> => {
     if (!user || !programaId) return false;
+    const activeBlocos = overrideBlocos || blocos;
+    if (overrideBlocos) {
+      setBlocos(overrideBlocos);
+    }
     if (isPodcast) {
       if (!podcastData.tituloTarja.trim() && podcastData.perguntas.every(p => !p.trim())) {
         toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return false;
       }
     } else {
-      const totalNews = (blocos || []).reduce((s, b) => s + ((b?.noticias || []).filter(n => n?.titulo?.trim() || n?.texto_materia?.trim()).length), 0);
+      const totalNews = (activeBlocos || []).reduce((s, b) => s + ((b?.noticias || []).filter(n => n?.titulo?.trim() || n?.texto_materia?.trim()).length), 0);
       if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
     }
     setSaving(true);
     try {
-      const xmlContent = generateXml();
+      const xmlContent = generateXml(activeBlocos);
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
       if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
       if (isPodcast) {
@@ -1543,15 +1607,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (podcastData.concluindo) html += `<p><strong>Concluindo:</strong> ${podcastData.concluindo}</p>`;
       } else {
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
-        blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<div data-news-item="true" style="margin-bottom:12px;"><p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.resumo) html += `<p style="margin-top:4px;font-size:0.9em;opacity:0.9;">${n.resumo}</p>`; if (n.texto_materia) html += `<div style="margin-top:8px;padding:8px;background:#f8fafc;border-left:4px solid #3b82f6;font-size:0.95em;line-height:1.6;">${n.texto_materia.replace(/\n/g, "<br/>")}</div>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p></div>`; }); });
+        activeBlocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<div data-news-item="true" style="margin-bottom:12px;"><p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.resumo) html += `<p style="margin-top:4px;font-size:0.9em;opacity:0.9;">${n.resumo}</p>`; if (n.texto_materia) html += `<div style="margin-top:8px;padding:8px;background:#f8fafc;border-left:4px solid #3b82f6;font-size:0.95em;line-height:1.6;">${n.texto_materia.replace(/\n/g, "<br/>")}</div>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p></div>`; }); });
       }
 
       const blocosJson = isPodcast
-        ? JSON.stringify({ blocos, participantes, escaladaList, podcastData })
-        : JSON.stringify({ blocos, participantes, escaladaList });
+        ? JSON.stringify({ blocos: activeBlocos, participantes, escaladaList, podcastData })
+        : JSON.stringify({ blocos: activeBlocos, participantes, escaladaList });
 
       // Generate ticker titles from all news titles
-      const allTitles = (blocos || []).flatMap(b => (b?.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()));
+      const allTitles = (activeBlocos || []).flatMap(b => (b?.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()));
       const tickertitulos = allTitles.join("  •  ");
 
       const now = new Date();

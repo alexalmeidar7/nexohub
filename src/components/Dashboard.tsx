@@ -1378,7 +1378,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         <Suspense fallback={null}>
           <FloatingMiniPlayer
             isBehindPages={currentPage !== "dashboard" && !isWindowMode}
-            effectiveUserId={effectiveUserId}
+            effectiveUserId={targetStationUserId}
           />
         </Suspense>
       )}
@@ -1388,7 +1388,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         <Suspense fallback={null}>
           <FloatingOnAirPresenter
             isBehindPages={currentPage !== "dashboard" && !isWindowMode}
-            effectiveUserId={effectiveUserId}
+            effectiveUserId={targetStationUserId}
           />
         </Suspense>
       )}

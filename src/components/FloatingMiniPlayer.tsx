@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight, Loader2, Radio } from "lucide-react";
 import { useAlbumColors } from "@/hooks/useAlbumColors";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { readMusicData, writeMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
+import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
 
 interface MusicState {
   displayArt: string | null;
@@ -45,25 +47,43 @@ export interface FloatingMiniPlayerProps {
 
 export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUserId }: FloatingMiniPlayerProps) {
   const { user } = useAuth();
-  const targetUid = effectiveUserId || user?.id;
+
+  // Multi-tenant station resolution
+  const clientAcc = (effectiveUserId && findClientAccountById(effectiveUserId)) ||
+                    (user?.id && findClientAccountById(user.id)) ||
+                    (user?.email && findClientAccountByEmail(user.email));
+  const stationUid = effectiveUserId || clientAcc?.parentUserId || clientAcc?.id || user?.id;
+  const stationSlug = clientAcc?.slug || (user as any)?.user_metadata?.slug || (clientAcc?.email ? clientAcc.email.split("@")[0].toLowerCase() : "") || "positivafm";
+
+  const candidateUids = useMemo(() => {
+    return Array.from(new Set([
+      stationUid,
+      stationSlug,
+      clientAcc?.id,
+      clientAcc?.parentUserId,
+      clientAcc?.slug,
+      effectiveUserId,
+      user?.id,
+    ].filter(Boolean))) as string[];
+  }, [stationUid, stationSlug, clientAcc?.id, clientAcc?.parentUserId, clientAcc?.slug, effectiveUserId, user?.id]);
 
   const [state, setState] = useState<MusicState>(() => {
     const last = (window as any)?.__lastPlayerMusicState;
     if (last?.currentMusic?.titulo) return last;
-    const uid = effectiveUserId || user?.id;
-    if (uid) {
+    for (const uid of candidateUids) {
       try {
         const d = readMusicData(uid) as any;
         if (d && (d.titulo || d.excecao)) {
+          const capa = d.capa || getTrackCoverSync(d.titulo, d.artista) || "";
           return {
             ...INITIAL,
             currentMusic: {
               titulo: d.titulo || "",
               artista: d.artista || "",
-              capa: d.capa || "",
+              capa: capa,
               excecao: d.excecao || null,
             },
-            displayArt: d.capa || null,
+            displayArt: capa || null,
           };
         }
       } catch {}
@@ -85,21 +105,22 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
     window.addEventListener("player:music", onMusic as EventListener);
 
     const onStorage = () => {
-      const uid = targetUid;
-      if (uid) {
+      for (const uid of candidateUids) {
         try {
           const d = readMusicData(uid) as any;
           if (d && (d.titulo || d.excecao)) {
+            const capa = d.capa || getTrackCoverSync(d.titulo, d.artista) || "";
             setState(prev => ({
               ...prev,
               currentMusic: {
                 titulo: d.titulo || "",
                 artista: d.artista || "",
-                capa: d.capa || "",
+                capa: capa,
                 excecao: d.excecao || null,
               },
-              displayArt: d.capa || prev.displayArt,
+              displayArt: capa || prev.displayArt,
             }));
+            break;
           }
         } catch {}
       }
@@ -110,23 +131,27 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
     window.addEventListener(MUSIC_DATA_EVENT, onStorage as EventListener);
 
     // Realtime broadcast listener for instant cross-computer synchronization
-    let channel: any = null;
-    if (targetUid) {
-      channel = supabase
-        .channel(`music-live-sync:${targetUid}`)
+    const activeChannels: any[] = [];
+    for (const uid of candidateUids) {
+      const ch = supabase
+        .channel(`music-live-sync:${uid}`)
         .on("broadcast", { event: "track_change" }, (payload: any) => {
           const d = payload.payload || payload;
           if (d && (d.titulo || d.excecao)) {
-            writeMusicData(targetUid, d);
+            const capa = d.capa || getTrackCoverSync(d.titulo, d.artista) || "";
+            const track = { ...d, capa };
+            for (const target of candidateUids) {
+              writeMusicData(target, track);
+            }
             setState(prev => ({
               ...prev,
               currentMusic: {
                 titulo: d.titulo || "",
                 artista: d.artista || "",
-                capa: d.capa || "",
+                capa: capa,
                 excecao: d.excecao || null,
               },
-              displayArt: d.capa || prev.displayArt,
+              displayArt: capa || prev.displayArt,
             }));
           } else if (d && d.titulo === "" && d.artista === "") {
             setState(prev => ({
@@ -137,63 +162,85 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
           }
         })
         .subscribe();
+      activeChannels.push(ch);
     }
 
     // Active track fetch from server / database so other computers get the playing track immediately on load
     const fetchActiveTrackFromRemote = async () => {
-      const uid = targetUid;
-      if (!uid) return;
+      // 1. Tentar carregar faixa do endpoint local de sincronização direta (/api/sync-music)
       try {
-        try {
-          const syncRes = await fetch(`/api/sync-music?userId=${encodeURIComponent(uid)}`, { cache: "no-store" });
-          if (syncRes.ok) {
-            const syncJson = await syncRes.json();
-            const live = syncJson?.music;
-            if (live?.titulo && live.titulo.toLowerCase() !== "sem título" && live.titulo !== "Aguardando leitura...") {
-              const liveDur = Number(live.duracao) || 180;
-              const liveTrack = {
-                titulo: live.titulo,
-                artista: live.artista || "Desconhecido",
-                capa: live.capa || "",
-                duracao: liveDur,
-              };
-              writeMusicData(uid, liveTrack);
-              setState(prev => ({
-                ...prev,
-                currentMusic: liveTrack,
-                displayArt: live.capa || prev.displayArt,
-              }));
-              return;
+        const syncRes = await fetch(`/api/sync-music?slug=${encodeURIComponent(stationSlug)}&userId=${encodeURIComponent(stationUid || "")}`, { cache: "no-store" });
+        if (syncRes.ok) {
+          const syncJson = await syncRes.json();
+          const live = syncJson?.music;
+          if (live?.titulo && live.titulo.toLowerCase() !== "sem título" && live.titulo !== "Aguardando leitura...") {
+            const liveDur = Number(live.duracao) || 180;
+            let liveCapa = live.capa || getTrackCoverSync(live.titulo, live.artista) || "";
+            if (!liveCapa) {
+              try {
+                liveCapa = await fetchTrackCover(live.titulo, live.artista);
+              } catch {}
             }
+            const liveTrack = {
+              titulo: live.titulo,
+              artista: live.artista || "Desconhecido",
+              capa: liveCapa || "",
+              duracao: liveDur,
+            };
+            for (const target of candidateUids) {
+              writeMusicData(target, liveTrack);
+            }
+            setState(prev => ({
+              ...prev,
+              currentMusic: liveTrack,
+              displayArt: liveCapa || prev.displayArt,
+            }));
+            return;
           }
-        } catch {}
-
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("dashboard_items")
-          .eq("user_id", uid)
-          .maybeSingle();
-
-        const di = (settings?.dashboard_items || {}) as Record<string, any>;
-        const curTitle = (di.music_current_title || "").toString().trim();
-        const curArtist = (di.music_current_artist || "").toString().trim();
-        const curCover = (di.music_current_cover || "").toString().trim();
-        const curExcecao = di.music_current_excecao || null;
-        if (curTitle && curTitle.toLowerCase() !== "sem título" && curTitle.toLowerCase() !== "sem titulo" && curTitle.toLowerCase() !== "aguardando leitura...") {
-          const trackData = {
-            titulo: curTitle,
-            artista: curArtist || "Desconhecido",
-            capa: curCover || "",
-            excecao: curExcecao,
-          };
-          writeMusicData(uid, trackData);
-          setState(prev => ({
-            ...prev,
-            currentMusic: trackData,
-            displayArt: curCover || prev.displayArt,
-          }));
         }
       } catch {}
+
+      // 2. Verificar banco de dados em user_settings para todos os candidateUids
+      for (const uid of candidateUids) {
+        try {
+          const { data: settings } = await supabase
+            .from("user_settings")
+            .select("dashboard_items")
+            .eq("user_id", uid)
+            .maybeSingle();
+
+          const di = (settings?.dashboard_items || {}) as Record<string, any>;
+          const curTitle = (di.music_current_title || "").toString().trim();
+          const curArtist = (di.music_current_artist || "").toString().trim();
+          let curCover = (di.music_current_cover || "").toString().trim();
+          const curExcecao = di.music_current_excecao || null;
+          if (curTitle && curTitle.toLowerCase() !== "sem título" && curTitle.toLowerCase() !== "sem titulo" && curTitle.toLowerCase() !== "aguardando leitura...") {
+            if (!curCover) {
+              curCover = getTrackCoverSync(curTitle, curArtist) || "";
+              if (!curCover) {
+                try {
+                  curCover = await fetchTrackCover(curTitle, curArtist);
+                } catch {}
+              }
+            }
+            const trackData = {
+              titulo: curTitle,
+              artista: curArtist || "Desconhecido",
+              capa: curCover || "",
+              excecao: curExcecao,
+            };
+            for (const target of candidateUids) {
+              writeMusicData(target, trackData);
+            }
+            setState(prev => ({
+              ...prev,
+              currentMusic: trackData,
+              displayArt: curCover || prev.displayArt,
+            }));
+            return;
+          }
+        } catch {}
+      }
     };
 
     fetchActiveTrackFromRemote();
@@ -201,17 +248,41 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
 
     return () => {
       clearInterval(pollRemote);
-      if (channel) supabase.removeChannel(channel);
+      for (const ch of activeChannels) {
+        supabase.removeChannel(ch);
+      }
       window.removeEventListener("player:music", onMusic as EventListener);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_DATA_EVENT, onStorage as EventListener);
     };
-  }, [targetUid]);
+  }, [candidateUids, stationSlug, stationUid]);
+
+  // Auto-resolve real cover when title exists but cover is missing
+  useEffect(() => {
+    const t = state.currentMusic?.titulo;
+    const a = state.currentMusic?.artista;
+    if (t && t.toLowerCase() !== "sem título" && t !== "Aguardando leitura..." && !state.displayArt && !state.currentMusic?.capa) {
+      let active = true;
+      fetchTrackCover(t, a || "").then((coverUrl) => {
+        if (active && coverUrl) {
+          setState(prev => ({
+            ...prev,
+            displayArt: coverUrl,
+            currentMusic: prev.currentMusic ? { ...prev.currentMusic, capa: coverUrl } : null,
+          }));
+          for (const target of candidateUids) {
+            writeMusicData(target, { ...state.currentMusic, capa: coverUrl });
+          }
+        }
+      }).catch(() => {});
+      return () => { active = false; };
+    }
+  }, [state.currentMusic?.titulo, state.currentMusic?.artista, state.displayArt, state.currentMusic?.capa, candidateUids]);
 
   // Track info resolution for smooth entrance / exit animation
   const targetTitulo = (state.currentMusic?.titulo || state.activeChannel?.nome || "").trim();
   const targetArtista = (state.currentMusic?.artista || (state.activeChannel?.nome ? "Ao vivo" : "")).trim();
-  const targetArt = state.displayArt || state.currentMusic?.capa || null;
+  const targetArt = state.displayArt || state.currentMusic?.capa || (targetTitulo ? getTrackCoverSync(targetTitulo, targetArtista) : null) || null;
   const currentKey = `${targetTitulo}:::${targetArtista}:::${targetArt}`;
 
   const [displayedInfo, setDisplayedInfo] = useState<DisplayedMusicInfo>(() => ({
@@ -457,8 +528,28 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
                 key={displayedInfo.art}
                 src={displayedInfo.art}
                 alt={displayedInfo.titulo || ""}
-                onError={(e) => {
-                  (e.currentTarget as HTMLElement).style.display = "none";
+                onError={async (e) => {
+                  const currentImg = e.currentTarget as HTMLImageElement;
+                  const t = displayedInfo.titulo;
+                  const a = displayedInfo.artista;
+                  if (t && t !== "Aguardando leitura..." && t.toLowerCase() !== "sem título") {
+                    try {
+                      const freshCover = await fetchTrackCover(t, a);
+                      if (freshCover && freshCover !== displayedInfo.art) {
+                        setDisplayedInfo(prev => ({ ...prev, art: freshCover }));
+                        setState(prev => ({
+                          ...prev,
+                          displayArt: freshCover,
+                          currentMusic: prev.currentMusic ? { ...prev.currentMusic, capa: freshCover } : null,
+                        }));
+                        for (const target of candidateUids) {
+                          writeMusicData(target, { ...state.currentMusic, capa: freshCover });
+                        }
+                        return;
+                      }
+                    } catch {}
+                  }
+                  currentImg.style.display = "none";
                 }}
                 style={{
                   position: "absolute",

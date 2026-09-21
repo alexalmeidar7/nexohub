@@ -593,7 +593,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
                 const musicAge = liveMusic?.startTime
                   ? (Date.now() - Number(liveMusic.startTime))
                   : (liveMusic?.updated_at ? (Date.now() - new Date(liveMusic.updated_at).getTime()) : 0);
-                const isFresh = musicAge >= 0 && musicAge < 30 * 60 * 1000;
+                const isFresh = musicAge >= 0 && musicAge < 24 * 60 * 60 * 1000;
                 if (isFresh && liveMusic?.titulo && liveMusic.titulo.toLowerCase() !== "sem título" && liveMusic.titulo !== "Aguardando leitura...") {
                   const cur = readMusicData(targetId);
                   const isSameTrack = cur && cur.titulo === liveMusic.titulo && cur.artista === liveMusic.artista;

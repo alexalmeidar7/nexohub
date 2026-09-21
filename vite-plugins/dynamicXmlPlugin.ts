@@ -65,6 +65,60 @@ function escapeXml(str: any): string {
     .replace(/'/g, "&apos;");
 }
 
+function decodeHtmlEntities(text: string): string {
+  if (!text) return "";
+  let decoded = text;
+  let prev = "";
+  let count = 0;
+  while (decoded !== prev && count < 3) {
+    prev = decoded;
+    count++;
+    decoded = decoded
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&apos;|&#39;|&#039;/g, "'")
+      .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  }
+  const map: Record<string, string> = {
+    "&atilde;": "ã", "&otilde;": "õ", "&aacute;": "á", "&eacute;": "é", "&iacute;": "í",
+    "&oacute;": "ó", "&uacute;": "ú", "&acirc;": "â", "&ecirc;": "ê", "&ocirc;": "ô",
+    "&ccedil;": "ç", "&agrave;": "à", "&egrave;": "è", "&igrave;": "ì", "&ograve;": "ò",
+    "&ugrave;": "ù", "&uuml;": "ü",
+    "&Atilde;": "Ã", "&Otilde;": "Õ", "&Aacute;": "Á", "&Eacute;": "É", "&Iacute;": "Í",
+    "&Oacute;": "Ó", "&Uacute;": "Ú", "&Acirc;": "Â", "&Ecirc;": "Ê", "&Ocirc;": "Ô",
+    "&Ccedil;": "Ç", "&Agrave;": "À",
+  };
+  return decoded.replace(/&[a-zA-Z0-9#]+;/g, (m) => map[m] || m);
+}
+
+function decodeBufferText(buffer: ArrayBuffer | Buffer, contentType = ""): string {
+  const buf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  const utf8Text = buf.toString("utf-8");
+
+  const charsetMatch = contentType.match(/charset=([^\s;]+)/i);
+  const declaredCharset = charsetMatch ? charsetMatch[1].toLowerCase() : "";
+  if (declaredCharset.includes("iso-8859") || declaredCharset.includes("1252") || declaredCharset.includes("latin1")) {
+    try {
+      const decoder = new TextDecoder("windows-1252");
+      return decoder.decode(buf);
+    } catch {}
+  }
+
+  if (utf8Text.includes("\uFFFD") || /Ã[¡-¿]/.test(utf8Text)) {
+    try {
+      const decoder = new TextDecoder("windows-1252");
+      const altText = decoder.decode(buf);
+      if (!altText.includes("\uFFFD")) return altText;
+    } catch {}
+  }
+
+  return utf8Text.replace(/^\uFEFF/, "");
+}
+
 function normTime(t: any, def = "00:00"): string {
   const str = String(t ?? def).trim();
   const [h, m] = str.split(":");
@@ -809,9 +863,327 @@ export function dynamicXmlPlugin(): Plugin {
   return {
     name: "vite-plugin-dynamic-xml",
     configureServer(server) {
+      // 0. Intercept sponsor badge & legacy storage sponsor logo requests
+      server.middlewares.use(async (req, res, next) => {
+        const [pathname, search] = (req.url || "").split("?");
+        if (
+          pathname === "/api/sponsor-badge" ||
+          pathname.startsWith("/api/sponsor-badge/") ||
+          pathname.startsWith("/storage/v1/object/public/comercial/") ||
+          pathname.startsWith("/storage/v1/object/public/empresa-assets/logos/")
+        ) {
+          const params = new URLSearchParams(search || "");
+          let brandName = params.get("name") || "";
+          if (!brandName) {
+            const filename = pathname.split("/").pop() || "";
+            brandName = filename.replace(/\.(png|webp|svg|jpg|jpeg)$/i, "");
+            if (/^\d+-/.test(brandName)) {
+              brandName = "PATROCINADOR";
+            }
+          }
+          const svg = createSponsorBadgeSvg(brandName);
+          res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+          res.setHeader("Cache-Control", "public, max-age=86400");
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.end(svg);
+          return;
+        }
+        next();
+      });
+
+      // 0b. POST /api/fetch-rss & /functions/v1/fetch-rss
+      server.middlewares.use(async (req, res, next) => {
+        const [pathname] = (req.url || "").split("?");
+        if (req.method === "POST" && (pathname === "/api/fetch-rss" || pathname.endsWith("/functions/v1/fetch-rss"))) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", async () => {
+            try {
+              const parsed = body ? JSON.parse(body) : {};
+              const { url, generate_journalistic_text, custom_prompt, input_text, skip_fetch } = parsed;
+
+              if (!url && !input_text) {
+                res.statusCode = 400;
+                res.setHeader("Content-Type", "application/json; charset=utf-8");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(JSON.stringify({ ok: false, error: "URL ou texto de entrada é obrigatório" }));
+                return;
+              }
+
+              let html = input_text || "";
+              if (!skip_fetch && url) {
+                let fetchSuccess = false;
+                let fetchErr: any = null;
+
+                // 1. Try direct fetch with browser headers
+                try {
+                  const targetUrl = new URL(url);
+                  targetUrl.searchParams.set("_nc", Date.now().toString());
+                  const directRes = await fetch(targetUrl.toString(), {
+                    headers: {
+                      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                      "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+                      "Cache-Control": "no-cache",
+                    },
+                    signal: AbortSignal.timeout(12000),
+                  });
+                  if (directRes.ok) {
+                    const arrayBuf = await directRes.arrayBuffer();
+                    html = decodeBufferText(arrayBuf, directRes.headers.get("content-type") || "");
+                    fetchSuccess = true;
+                  } else {
+                    fetchErr = new Error(`HTTP ${directRes.status}`);
+                  }
+                } catch (e: any) {
+                  fetchErr = e;
+                }
+
+                // 2. If direct fetch failed, try fallback public reader proxy
+                if (!fetchSuccess) {
+                  try {
+                    const fallbackUrl = `https://r.jina.ai/${url}`;
+                    const proxyRes = await fetch(fallbackUrl, {
+                      headers: { "Accept": "text/plain" },
+                      signal: AbortSignal.timeout(12000),
+                    });
+                    if (proxyRes.ok) {
+                      html = await proxyRes.text();
+                      fetchSuccess = true;
+                    }
+                  } catch {}
+                }
+
+                if (!fetchSuccess && !input_text) {
+                  res.setHeader("Content-Type", "application/json; charset=utf-8");
+                  res.setHeader("Access-Control-Allow-Origin", "*");
+                  res.end(JSON.stringify({
+                    ok: false,
+                    content: "",
+                    error: `Não foi possível acessar o link (${fetchErr?.message || "erro de rede"})`,
+                  }));
+                  return;
+                }
+              }
+
+              // Extract metadata
+              const getMeta = (prop: string) => {
+                const patterns = [
+                  new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, "i"),
+                  new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`, "i"),
+                  new RegExp(`<meta[^>]+name=["']${prop}["'][^>]+content=["']([^"']+)["']`, "i"),
+                  new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${prop}["']`, "i"),
+                ];
+                for (const p of patterns) {
+                  const m = html.match(p);
+                  if (m?.[1]) return decodeHtmlEntities(m[1].trim());
+                }
+                return "";
+              };
+
+              const rawTitle = getMeta("og:title") || getMeta("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+              let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+              if (title.includes(" - ")) title = title.split(" - ")[0].trim();
+              title = decodeHtmlEntities(title);
+
+              // If title is empty, derive from url path slug
+              if (!title && url) {
+                try {
+                  const pathname = new URL(url).pathname;
+                  const slug = pathname.split("/").filter(Boolean).pop() || "";
+                  const formatted = slug.replace(/[-_]+/g, " ").replace(/\.(html|php|asp)$/i, "").trim();
+                  if (formatted) title = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+                } catch {}
+              }
+
+              const image = getMeta("og:image") || getMeta("twitter:image");
+              let description = getMeta("og:description") || getMeta("twitter:description") || getMeta("description");
+
+              // Extract clean paragraphs
+              const cleanHtml = html
+                .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
+                .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
+                .replace(/<nav[^>]*>([\s\S]*?)<\/nav>/gi, "")
+                .replace(/<footer[^>]*>([\s\S]*?)<\/footer>/gi, "")
+                .replace(/<header[^>]*>([\s\S]*?)<\/header>/gi, "")
+                .replace(/<aside[^>]*>([\s\S]*?)<\/aside>/gi, "");
+
+              const pMatches = cleanHtml.match(/<p[^>]*>([\s\S]*?)<\/p>/gi) || [];
+              const paragraphs: string[] = [];
+              for (const pTag of pMatches) {
+                let pText = decodeHtmlEntities(pTag.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+                pText = pText.replace(/^(\s*Compartilhar matéria\s*|\s*Compartilhar notícia\s*|\s*Leia mais\s*)+/i, "").trim();
+                if (pText.length >= 40 && !/^(veja mais|siga-nos|publicidade|foto:|crédito:|inscreva-se)/i.test(pText)) {
+                  paragraphs.push(pText);
+                }
+              }
+
+              if (!description && paragraphs.length > 0) {
+                description = paragraphs[0].slice(0, 300);
+              }
+
+              let summary = description;
+              let journalisticText = paragraphs.slice(0, 8).join("\n\n");
+
+              // AI generation if OPENAI_API_KEY is present
+              const openAIKey = process.env.OPENAI_API_KEY;
+              if (openAIKey && (generate_journalistic_text || custom_prompt) && paragraphs.length > 0) {
+                try {
+                  const systemPrompt = custom_prompt || "Você é um redator sênior de telejornalismo para rádio. Crie uma matéria fluida e narrativa em parágrafos curtos para leitura no teleprompter.";
+                  const contentForAi = paragraphs.slice(0, 10).join("\n\n");
+                  const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                      "Authorization": `Bearer ${openAIKey}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      model: "gpt-4o-mini",
+                      messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: `Escreva a matéria jornalística baseada neste fato: ${contentForAi}` }
+                      ],
+                      temperature: 0.7,
+                    }),
+                    signal: AbortSignal.timeout(15000),
+                  });
+                  if (aiRes.ok) {
+                    const aiData = await aiRes.json();
+                    const aiText = aiData.choices?.[0]?.message?.content?.trim();
+                    if (aiText && aiText.length > 50) {
+                      journalisticText = aiText;
+                    }
+                  }
+                } catch (aiErr) {
+                  console.warn("[dynamicXmlPlugin] OpenAI call failed, using extracted paragraphs:", aiErr);
+                }
+              }
+
+              res.setHeader("Content-Type", "application/json; charset=utf-8");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({
+                ok: true,
+                content: html,
+                title,
+                image,
+                description,
+                summary,
+                journalisticText: journalisticText || summary || title,
+              }));
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.setHeader("Content-Type", "application/json; charset=utf-8");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: false, error: err?.message || "Erro ao buscar RSS" }));
+            }
+          });
+          return;
+        }
+
+        // 0c. POST /api/fetch-rss-titles & /functions/v1/fetch-rss-titles
+        if (req.method === "POST" && (pathname === "/api/fetch-rss-titles" || pathname.endsWith("/functions/v1/fetch-rss-titles"))) {
+          let body = "";
+          req.on("data", (chunk) => (body += chunk));
+          req.on("end", async () => {
+            try {
+              const parsed = body ? JSON.parse(body) : {};
+              const { url } = parsed;
+              if (!url) {
+                res.setHeader("Content-Type", "application/json; charset=utf-8");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(JSON.stringify({ ok: false, error: "URL obrigatória" }));
+                return;
+              }
+
+              const rssRes = await fetch(url, {
+                headers: {
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                  "Accept": "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8",
+                },
+                signal: AbortSignal.timeout(12000),
+              });
+              if (!rssRes.ok) {
+                res.setHeader("Content-Type", "application/json; charset=utf-8");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(JSON.stringify({ ok: false, error: `HTTP ${rssRes.status}` }));
+                return;
+              }
+              const xmlText = await rssRes.text();
+              const titles: string[] = [];
+              const blocks = xmlText.match(/<(item|entry)[\s>][\s\S]*?<\/(item|entry)>/gi) || [];
+              for (const b of blocks) {
+                const m = b.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+                if (!m) continue;
+                let t = decodeHtmlEntities(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").trim());
+                if (t.includes("|")) t = t.split("|")[0].trim();
+                if (t && t.length > 3) titles.push(t);
+                if (titles.length >= 15) break;
+              }
+
+              res.setHeader("Content-Type", "application/json; charset=utf-8");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: true, titles, via: "direct" }));
+            } catch (err: any) {
+              res.setHeader("Content-Type", "application/json; charset=utf-8");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.end(JSON.stringify({ ok: false, error: err?.message || "Erro ao obter títulos RSS" }));
+            }
+          });
+          return;
+        }
+
+        next();
+      });
+
       // 1. POST /api/sync-xml-enquete & /functions/v1/serve-xml-enquete
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
+
+        // 0. Intercept authentic commercial/sponsor logo storage requests
+        if (
+          url.startsWith("/storage/v1/object/public/comercial/") ||
+          url.startsWith("/storage/comercial/")
+        ) {
+          const pathname = url.split("?")[0];
+          const filename = path.basename(pathname);
+          const logosDir = path.join(rootDir, "public", "storage", "comercial", "logos");
+          let targetFile = path.join(logosDir, filename);
+
+          if (!fs.existsSync(targetFile)) {
+            try {
+              const assetMapPath = path.join(rootDir, "src", "data", "sponsor_logo_assets.json");
+              if (fs.existsSync(assetMapPath)) {
+                const assetMap = JSON.parse(fs.readFileSync(assetMapPath, "utf-8"));
+                const mappedUrl =
+                  assetMap.urlMapping?.[filename] ||
+                  assetMap.urlMapping?.[url] ||
+                  assetMap.urlMapping?.[pathname];
+                if (mappedUrl) {
+                  const mappedName = path.basename(mappedUrl);
+                  const candidate = path.join(logosDir, mappedName);
+                  if (fs.existsSync(candidate)) targetFile = candidate;
+                }
+              }
+            } catch {}
+          }
+
+          if (fs.existsSync(targetFile)) {
+            const ext = path.extname(targetFile).toLowerCase();
+            const mimeType =
+              ext === ".png"
+                ? "image/png"
+                : ext === ".webp"
+                ? "image/webp"
+                : ext === ".svg"
+                ? "image/svg+xml"
+                : "image/jpeg";
+            res.setHeader("Content-Type", mimeType);
+            res.setHeader("Cache-Control", "public, max-age=86400");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.end(fs.readFileSync(targetFile));
+            return;
+          }
+        }
         if (req.method === "POST" && (url.startsWith("/api/sync-xml-enquete") || url.startsWith("/functions/v1/serve-xml-enquete"))) {
           let body = "";
           req.on("data", (chunk) => (body += chunk));
@@ -1114,11 +1486,80 @@ export function dynamicXmlPlugin(): Plugin {
         // 4c. GET /api/sync-music
         if (req.method === "GET" && url.startsWith("/api/sync-music")) {
           const parsedUrl = new URL(url, "http://localhost");
-          const rawSlug = parsedUrl.searchParams.get("slug") || "positivafm";
-          const slug = normalizeSlug(rawSlug);
-          const userId = parsedUrl.searchParams.get("userId") || slug;
+          const rawSlug = parsedUrl.searchParams.get("slug") || "";
+          const rawUserId = parsedUrl.searchParams.get("userId") || "";
+          const slug = rawSlug ? normalizeSlug(rawSlug) : "";
+          const userId = rawUserId ? normalizeSlug(rawUserId) : "";
           const store = readMusicSyncData();
-          const music = store[slug] || store[userId] || store[rawSlug] || null;
+
+          // Check store with various key candidates
+          const candidates = [slug, rawSlug, rawUserId, userId].filter(Boolean);
+          let music: any = null;
+          for (const k of candidates) {
+            if (store[k] && store[k].titulo) {
+              music = store[k];
+              break;
+            }
+          }
+
+          // If still not found and no specific station matched, try aliases or fallback slugs
+          if (!music && slug) {
+            const aliases = ALL_ALIASES[slug] || [];
+            for (const a of aliases) {
+              if (store[a] && store[a].titulo) {
+                music = store[a];
+                break;
+              }
+            }
+          }
+
+          // Fallback to static XML files on disk if store has no entry for this station
+          if (!music) {
+            const searchSlugs = [slug, rawSlug, rawUserId, userId].filter(Boolean);
+            for (const s of searchSlugs) {
+              const xmlFiles = ["music.xml", "musica.xml", "local.xml", "musica-agora.xml"];
+              for (const xf of xmlFiles) {
+                const xmlPath = path.join(rootDir, "public", "xml", s, xf);
+                if (fs.existsSync(xmlPath)) {
+                  try {
+                    const content = fs.readFileSync(xmlPath, "utf-8");
+                    const titleMatch = content.match(/<(?:nome_musica|titulo)>(.*?)<\/(?:nome_musica|titulo)>/i);
+                    const artistMatch = content.match(/<(?:interprete|artista)>(.*?)<\/(?:interprete|artista)>/i);
+                    const durMatch = content.match(/<duracao>(.*?)<\/duracao>/i);
+                    const capaMatch = content.match(/<capa>(.*?)<\/capa>/i);
+                    const horarioMatch = content.match(/<horario>(.*?)<\/horario>/i);
+                    const startMatch = content.match(/<start_time>(.*?)<\/start_time>/i);
+                    const origemMatch = content.match(/<origem>(.*?)<\/origem>/i);
+                    const dispMatch = content.match(/<dispositivo>(.*?)<\/dispositivo>/i);
+
+                    const titulo = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : "";
+                    const artista = artistMatch ? decodeHtmlEntities(artistMatch[1].trim()) : "";
+                    if (titulo && titulo.toLowerCase() !== "sem título") {
+                      music = {
+                        titulo,
+                        artista: artista || "Desconhecido",
+                        duracao: durMatch ? Number(durMatch[1]) || 180 : 180,
+                        capa: capaMatch ? capaMatch[1].trim() : "",
+                        horario: horarioMatch ? horarioMatch[1].trim() : "",
+                        startTime: startMatch ? Number(startMatch[1]) || Date.now() : Date.now(),
+                        source: origemMatch ? origemMatch[1].trim() : "pasta",
+                        deviceName: dispMatch ? dispMatch[1].trim() : "",
+                        updated_at: new Date().toISOString(),
+                      };
+                      // Seed store
+                      store[s] = music;
+                      if (rawSlug) store[rawSlug] = music;
+                      if (rawUserId) store[rawUserId] = music;
+                      writeMusicSyncData(store);
+                      break;
+                    }
+                  } catch {}
+                }
+              }
+              if (music) break;
+            }
+          }
+
           res.setHeader("Content-Type", "application/json");
           res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
           res.end(JSON.stringify({ ok: true, music }));
@@ -1259,6 +1700,84 @@ export function dynamicXmlPlugin(): Plugin {
           res.end(JSON.stringify({ ok: true, data: result }));
           return;
         }
+
+        // 4j. /functions/v1/fetch-weather (Dev server mock & proxy for edge function)
+        if (url.startsWith("/functions/v1/fetch-weather")) {
+          if (req.method === "OPTIONS") {
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            res.setHeader("Access-Control-Allow-Headers", "*");
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
+          if (req.method === "POST") {
+            let body = "";
+            req.on("data", (chunk) => (body += chunk));
+            req.on("end", async () => {
+              try {
+                const parsed = JSON.parse(body || "{}");
+                const { action } = parsed;
+                if (action === "geocode") {
+                  const q = (parsed.query || "").trim();
+                  const count = parsed.count || 5;
+                  const resApi = await fetch(
+                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=${count}&language=pt&format=json`
+                  );
+                  let data: any = await resApi.json();
+                  let results = (data?.results || []).map((item: any) => ({
+                    name: item.name,
+                    admin1: item.admin1 || item.admin2 || "",
+                    country: item.country || "",
+                    latitude: Number(item.latitude),
+                    longitude: Number(item.longitude),
+                  }));
+
+                  if (results.length === 0 && q.includes(",")) {
+                    const firstPart = q.split(",")[0].trim();
+                    const resApi2 = await fetch(
+                      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(firstPart)}&count=${count}&language=pt&format=json`
+                    );
+                    const data2: any = await resApi2.json();
+                    results = (data2?.results || []).map((item: any) => ({
+                      name: item.name,
+                      admin1: item.admin1 || item.admin2 || "",
+                      country: item.country || "",
+                      latitude: Number(item.latitude),
+                      longitude: Number(item.longitude),
+                    }));
+                  }
+                  res.setHeader("Content-Type", "application/json");
+                  res.setHeader("Access-Control-Allow-Origin", "*");
+                  res.end(JSON.stringify({ results }));
+                  return;
+                }
+                if (action === "forecast") {
+                  let lat = parsed.lat ?? -16.67861;
+                  let lon = parsed.lon ?? -49.25389;
+                  const days = parsed.forecast_days || 6;
+                  const resApi = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,weather_code,relative_humidity_2m_max,wind_speed_10m_max&timezone=auto&forecast_days=${days}`
+                  );
+                  const data = await resApi.json();
+                  res.setHeader("Content-Type", "application/json");
+                  res.setHeader("Access-Control-Allow-Origin", "*");
+                  res.end(JSON.stringify({ ok: true, data }));
+                  return;
+                }
+                res.setHeader("Content-Type", "application/json");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(JSON.stringify({ ok: false, error: "Unknown action" }));
+              } catch (err: any) {
+                res.setHeader("Content-Type", "application/json");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(JSON.stringify({ ok: false, error: err.message }));
+              }
+            });
+            return;
+          }
+        }
+
 
         // 5. Intercept GET requests for all XML feeds (enquete, quiz, batalha, roteiro, geral, broadcast, musica, tempo, logos)
         function parseXmlRequest(reqUrl: string): { file: string; slug: string; rawSlug: string } | null {

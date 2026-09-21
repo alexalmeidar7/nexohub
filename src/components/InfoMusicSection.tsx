@@ -239,12 +239,16 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       });
 
       if (missingToInsert.length > 0) {
-        const { data: insertedRows, error: insertErr } = await supabase
-          .from("infomusic")
-          .insert(missingToInsert)
-          .select("*");
-        if (!insertErr && insertedRows) {
-          currentRows = [...insertedRows, ...currentRows];
+        try {
+          const { data: insertedRows, error: insertErr } = await supabase
+            .from("infomusic")
+            .insert(missingToInsert)
+            .select("*");
+          if (!insertErr && insertedRows) {
+            currentRows = [...insertedRows, ...currentRows];
+          }
+        } catch (insertErr) {
+          console.warn("[InfoMusic] Non-critical insert error:", insertErr);
         }
       }
 
@@ -263,7 +267,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
 
       setHistoryRows(historyWithCuriosities);
     } catch (e) {
-      toast.error("Erro ao carregar dados");
+      console.warn("[InfoMusic] Failed to load rows from Supabase:", e);
     } finally {
       setLoading(false);
       setLoadingMore(false);

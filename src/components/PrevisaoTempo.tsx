@@ -9,6 +9,7 @@ import { confirmDialog } from "@/lib/confirmDialog";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { toast } from "sonner";
+import { searchGeocode, fetchWeatherForecast, type GeoResult } from "@/lib/weatherService";
 
 interface WeatherData {
   city: string;
@@ -29,13 +30,6 @@ interface DayWeather {
   weatherCode: number;
 }
 
-interface GeoResult {
-  name: string;
-  admin1?: string;
-  country: string;
-  latitude: number;
-  longitude: number;
-}
 
 interface FavoriteCity {
   name: string;
@@ -274,15 +268,15 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const fetchSuggestions = useCallback(async (query: string) => {
-    if (query.trim().length < 2) { setSuggestions([]); return; }
+    const clean = query.trim();
+    if (clean.length < 2) { setSuggestions([]); return; }
     try {
-      const { data, error } = await supabase.functions.invoke("fetch-weather", {
-        body: { action: "geocode", query, count: 5 },
-      });
-      if (error) throw error;
-      setSuggestions(data?.results || []);
-      setShowSuggestions(true);
-    } catch { setSuggestions([]); }
+      const results = await searchGeocode(clean, 5);
+      setSuggestions(results || []);
+      setShowSuggestions((results || []).length > 0);
+    } catch {
+      setSuggestions([]);
+    }
   }, []);
 
   const handleCityChange = (value: string) => {
@@ -292,10 +286,11 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
   };
 
   const selectSuggestion = (geo: GeoResult) => {
-    setCity(geo.name);
+    const displayName = geo.name;
+    setCity(displayName);
     setShowSuggestions(false);
     setSuggestions([]);
-    fetchWeatherByCoords(geo.latitude, geo.longitude, geo.name);
+    fetchWeatherByCoords(geo.latitude, geo.longitude, displayName);
   };
 
   useEffect(() => {
@@ -309,21 +304,27 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
   const fetchWeatherByCoords = useCallback(async (lat: number, lon: number, name: string, silent = false) => {
     if (!silent) { setLoading(true); setError(""); }
     try {
-      const { data: resp, error: fnErr } = await supabase.functions.invoke("fetch-weather", {
-        body: { action: "forecast", lat, lon, forecast_days: 6 },
-      });
-      if (fnErr) throw fnErr;
-      const wxData = resp?.data;
+      const resp = await fetchWeatherForecast(lat, lon, 6);
+      if (!resp.ok || !resp.data) {
+        throw new Error(resp.error || "Erro ao obter previsão");
+      }
+      const wxData = resp.data;
       const current: DayWeather = {
-        date: "Agora", temp: Math.round(wxData.current.temperature_2m),
-        tempMin: Math.round(wxData.daily.temperature_2m_min[0]), tempMax: Math.round(wxData.daily.temperature_2m_max[0]),
-        humidity: wxData.current.relative_humidity_2m, rainChance: wxData.daily.precipitation_probability_max[0] ?? 0,
+        date: "Agora",
+        temp: Math.round(wxData.current.temperature_2m),
+        tempMin: Math.round(wxData.daily.temperature_2m_min[0]),
+        tempMax: Math.round(wxData.daily.temperature_2m_max[0]),
+        humidity: wxData.current.relative_humidity_2m,
+        rainChance: wxData.daily.precipitation_probability_max[0] ?? 0,
         weatherCode: wxData.current.weather_code,
       };
       const forecast: DayWeather[] = wxData.daily.time.slice(1, 6).map((date: string, i: number) => ({
-        date, temp: Math.round((wxData.daily.temperature_2m_max[i + 1] + wxData.daily.temperature_2m_min[i + 1]) / 2),
-        tempMin: Math.round(wxData.daily.temperature_2m_min[i + 1]), tempMax: Math.round(wxData.daily.temperature_2m_max[i + 1]),
-        humidity: wxData.daily.relative_humidity_2m_max[i + 1] ?? 0, rainChance: wxData.daily.precipitation_probability_max[i + 1] ?? 0,
+        date,
+        temp: Math.round((wxData.daily.temperature_2m_max[i + 1] + wxData.daily.temperature_2m_min[i + 1]) / 2),
+        tempMin: Math.round(wxData.daily.temperature_2m_min[i + 1]),
+        tempMax: Math.round(wxData.daily.temperature_2m_max[i + 1]),
+        humidity: wxData.daily.relative_humidity_2m_max[i + 1] ?? 0,
+        rainChance: wxData.daily.precipitation_probability_max[i + 1] ?? 0,
         weatherCode: wxData.daily.weather_code[i + 1],
       }));
       const isNight = wxData.current?.is_day === 0;
@@ -332,23 +333,35 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
       });
       try { localStorage.setItem("masterview_last_city", name); } catch {}
       setWeather({ city: name, lat, lon, current, forecast, isNight });
-      // AI disabled – skip weather description
-    } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
-    finally { setLoading(false); }
+      setError("");
+    } catch {
+      if (!silent) setError("Erro ao buscar dados meteorológicos.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const fetchWeather = useCallback(async (searchCity: string, silent = false) => {
-    if (!searchCity.trim()) return;
+    const query = searchCity.trim();
+    if (!query) return;
     if (!silent) { setLoading(true); setError(""); setWeather(null); }
     try {
-      const { data: geoData, error: geoErr } = await supabase.functions.invoke("fetch-weather", {
-        body: { action: "geocode", query: searchCity, count: 1 },
-      });
-      if (geoErr) throw geoErr;
-      if (!geoData?.results?.length) { setError("Cidade não encontrada."); setLoading(false); return; }
-      const { latitude, longitude, name } = geoData.results[0];
-      await fetchWeatherByCoords(latitude, longitude, name, silent);
-    } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); setLoading(false); }
+      const results = await searchGeocode(query, 5);
+      if (!results || results.length === 0) {
+        if (!silent) {
+          setError(`Cidade "${query}" não encontrada.`);
+          setLoading(false);
+        }
+        return;
+      }
+      const top = results[0];
+      await fetchWeatherByCoords(top.latitude, top.longitude, top.name, silent);
+    } catch {
+      if (!silent) {
+        setError("Erro ao buscar dados meteorológicos.");
+        setLoading(false);
+      }
+    }
   }, [fetchWeatherByCoords]);
 
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
@@ -418,7 +431,7 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
 
       // 3) Check public weather XML for this station
       try {
-        const xmlRes = await fetch(`https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-${ownerId}.xml`);
+        const xmlRes = await fetch(`/storage/v1/object/public/xml-files/weather-${ownerId}.xml`);
         if (xmlRes.ok) {
           const xmlText = await xmlRes.text();
           const match = xmlText.match(/<cidade>(.*?)<\/cidade>/);

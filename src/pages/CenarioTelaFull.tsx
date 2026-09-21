@@ -8,7 +8,7 @@ import TrafficMap from "@/components/TrafficMap";
 import SatelliteMap from "@/components/SatelliteMap";
 import CenarioQuotesPanel from "@/components/cenario/CenarioQuotesPanel";
 import { musicDataKey, musicStartKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
-import { extractDominantPair } from "@/lib/dominantColors";
+import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
 
 /* ─── types (mirrored from CenarioInterativoPage) ─── */
 interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3Days: boolean; showSatellite: boolean; city: string; bgImage: string; }
@@ -1815,8 +1815,13 @@ export default function CenarioTelaFull() {
                           {sponsorLogos.map((l: any, i: number) => l.logo_url && (
                             <img
                               key={l.id}
-                              src={l.logo_url}
+                              src={resolveSponsorLogoUrl(l.logo_url, l.nome)}
                               alt={l.nome}
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = "/default-sponsor-logo.png";
+                              }}
                               style={{
                                 position: "absolute",
                                 maxWidth: `${vhToPx(39)}${vu}`, maxHeight: `${vhToPx(21.5)}${vu}`,

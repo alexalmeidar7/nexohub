@@ -70,5 +70,39 @@
       "horario_inicio": "07:00",
       "horario_fim": "12:00"
     }
+  ],
+  "interativafm": [
+    {
+      "id": "17bdb81d-da14-4415-9e89-c706a1f88b62",
+      "user_id": "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+      "artista1_nome": "bruno mars",
+      "artista1_musica": "res",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/90f0b5b11df4f87ee878f38569b5995b/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "lady gaga",
+      "artista2_musica": "sdsd",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/7565262f7661b0d762621a8d69ba6f49/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "12:00"
+    }
+  ],
+  "b2f70324-d086-4a5d-a407-cbc4acf98dce": [
+    {
+      "id": "17bdb81d-da14-4415-9e89-c706a1f88b62",
+      "user_id": "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+      "artista1_nome": "bruno mars",
+      "artista1_musica": "res",
+      "artista1_porcentagem": 0,
+      "artista1_imagem": "https://cdn-images.dzcdn.net/images/artist/90f0b5b11df4f87ee878f38569b5995b/1000x1000-000000-80-0-0.jpg",
+      "artista2_nome": "lady gaga",
+      "artista2_musica": "sdsd",
+      "artista2_porcentagem": 0,
+      "artista2_imagem": "https://cdn-images.dzcdn.net/images/artist/7565262f7661b0d762621a8d69ba6f49/1000x1000-000000-80-0-0.jpg",
+      "data_batalha": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "12:00"
+    }
   ]
 }
