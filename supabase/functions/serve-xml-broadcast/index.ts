@@ -179,6 +179,11 @@ const normalizeImageUrl = (value: string | null | undefined, size = 512): string
   } catch {
     return trimmed;
   }
+const ensurePngExtension = (url: string | null | undefined): string => {
+  if (!url) return "";
+  let clean = url.trim();
+  clean = clean.replace(/\.web(p)?(\?.*)?$/i, (match, p1, query) => `.png${query || ""}`);
+  return clean;
 };
 
 const base64ToUint8Array = (dataUrl: string): { data: Uint8Array; contentType: string } => {
@@ -1253,42 +1258,46 @@ Deno.serve(async (req) => {
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
     lines.push("  <dados>");
-    lines.push(`    <empresa_logo>${esc(empresaLogo)}</empresa_logo>`);
+    lines.push(`    <empresa_logo>${esc(ensurePngExtension(empresaLogo))}</empresa_logo>`);
     lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
-    lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
-    lines.push(`    <programa_thumb>${esc(programaThumb)}</programa_thumb>`);
+    lines.push(`    <programa_logo>${esc(ensurePngExtension(programaLogo))}</programa_logo>`);
+    lines.push(`    <programa_thumb>${esc(ensurePngExtension(programaThumb))}</programa_thumb>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
-    lines.push(`    <locutor_foto>${esc(locutorFoto)}</locutor_foto>`);
+    lines.push(`    <locutor_foto>${esc(ensurePngExtension(locutorFoto))}</locutor_foto>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
     lines.push(`    <rede_social_atual>${esc(redeSocialAtual)}</rede_social_atual>`);
     lines.push(`    <rede_social_icone>${esc(redeSocialIcone)}</rede_social_icone>`);
-    lines.push(`    <logo_patrocinador>${esc(logoPatrocinador)}</logo_patrocinador>`);
+    lines.push(`    <logo_patrocinador>${esc(ensurePngExtension(logoPatrocinador))}</logo_patrocinador>`);
     lines.push(`    <titulo>${esc(assunto)}</titulo>`);
-    lines.push(`    <fundo_assunto>${esc(fundoAssunto)}</fundo_assunto>`);
+    lines.push(`    <fundo_assunto>${esc(ensurePngExtension(fundoAssunto))}</fundo_assunto>`);
     lines.push(`    <qrcode_link>${esc(qrLink)}</qrcode_link>`);
     lines.push(`    <ticker>${esc(ticker)}</ticker>`);
-    lines.push(`    <insert_live>${esc(insertLiveUrl)}</insert_live>`);
+    lines.push(`    <insert_live>${esc(ensurePngExtension(insertLiveUrl))}</insert_live>`);
     lines.push(`    <curiosidade>${esc(curiosidade)}</curiosidade>`);
     lines.push(`    <musica_atual>${esc(musicaTexto)}</musica_atual>`);
-    lines.push(`    <musica_capa>${esc(musicaCapa)}</musica_capa>`);
-    lines.push(`    <deezer_artist_img>${esc(deezerArtistImg)}</deezer_artist_img>`);
-    lines.push(`    <banner_l>${esc(bannerLUrl)}</banner_l>`);
+    lines.push(`    <musica_capa>${esc(ensurePngExtension(musicaCapa))}</musica_capa>`);
+    lines.push(`    <deezer_artist_img>${esc(ensurePngExtension(deezerArtistImg))}</deezer_artist_img>`);
+    lines.push(`    <banner_l>${esc(ensurePngExtension(bannerLUrl))}</banner_l>`);
     lines.push(`    <temperatura>${esc(currentTempStr)}</temperatura>`);
-    lines.push(`    <ico_temperatura>${esc(currentTempStr ? currentTempIcon : "")}</ico_temperatura>`);
+    lines.push(`    <ico_temperatura>${esc(currentTempStr ? ensurePngExtension(currentTempIcon) : "")}</ico_temperatura>`);
     lines.push("    <infos_canto>");
     lines.push(`      <titulo>${esc(infoCantoTitulo)}</titulo>`);
     lines.push(`      <descricao>${esc(infoCantoDescricao)}</descricao>`);
-    lines.push(`      <ico_categoria>${esc(infoCantoIcoCategoria)}</ico_categoria>`);
+    lines.push(`      <ico_categoria>${esc(ensurePngExtension(infoCantoIcoCategoria))}</ico_categoria>`);
     lines.push(`      <temp_atual>${esc(infoCantoTempAtual)}</temp_atual>`);
-    lines.push(`      <ico_temp_atual>${esc(infoCantoIcoTemp)}</ico_temp_atual>`);
+    lines.push(`      <ico_temp_atual>${esc(ensurePngExtension(infoCantoIcoTemp))}</ico_temp_atual>`);
     lines.push("    </infos_canto>");
     lines.push("    <a_seguir>");
     lines.push(`      <ativo>${aSeguirEnabled ? "1" : "0"}</ativo>`);
     lines.push(`      <programa_nome>${esc(aSeguirNome)}</programa_nome>`);
     lines.push(`      <nome_programa>${esc(aSeguirNome)}</nome_programa>`);
-    lines.push(`      <programa_logo>${esc(aSeguirLogo)}</programa_logo>`);
+    lines.push(`      <programa_logo>${esc(ensurePngExtension(aSeguirLogo))}</programa_logo>`);
     lines.push(`      <locutor_nome>${esc(aSeguirLocutorNome)}</locutor_nome>`);
-    lines.push(`      <locutor_foto>${esc(aSeguirLocutorFoto)}</locutor_foto>`);
+    lines.push(`      <locutor_foto>${esc(
+      !aSeguirLocutorFoto || aSeguirLocutorFoto.includes("sem-loc") || aSeguirLocutorNome === "Automático" || aSeguirLocutorNome === "—"
+        ? ""
+        : ensurePngExtension(aSeguirLocutorFoto)
+    )}</locutor_foto>`);
     lines.push(`      <horario>${esc(aSeguirHorario)}</horario>`);
     lines.push(`      <texto>${esc(aSeguirTexto)}</texto>`);
     lines.push(`      <intervalo_atualizacao>${aSeguirRefreshSeconds}</intervalo_atualizacao>`);

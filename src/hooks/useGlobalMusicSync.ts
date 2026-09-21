@@ -755,10 +755,30 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
     };
 
 
+    // Instant live sync via Supabase Realtime broadcast across all computers/browsers
+    const liveSyncChannel = supabase
+      .channel(`music-live-sync:${targetId}`)
+      .on("broadcast", { event: "track_change" }, (payload: any) => {
+        const d = payload.payload || payload;
+        if (d && (d.titulo || d.excecao)) {
+          void processTrackData({
+            titulo: d.titulo || "",
+            artista: d.artista || "",
+            duracao: Number(d.duracao) || 180,
+            capa: d.capa || "",
+          });
+        }
+      })
+      .subscribe();
+
     fetchAndSync();
     const interval = setInterval(fetchAndSync, 2000);
     const urlRefresh = setInterval(() => { settingsFetchedRef.current = false; }, 15000);
 
-    return () => { clearInterval(interval); clearInterval(urlRefresh); };
+    return () => {
+      clearInterval(interval);
+      clearInterval(urlRefresh);
+      supabase.removeChannel(liveSyncChannel);
+    };
   }, [user, enabled]);
 }

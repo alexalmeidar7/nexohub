@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight, Loader2, Radio } from "lucide-react";
 import { useAlbumColors } from "@/hooks/useAlbumColors";
-import { readMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { readMusicData, writeMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
 
 interface MusicState {
@@ -42,8 +44,31 @@ export interface FloatingMiniPlayerProps {
 }
 
 export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUserId }: FloatingMiniPlayerProps) {
+  const { user } = useAuth();
+  const targetUid = effectiveUserId || user?.id;
+
   const [state, setState] = useState<MusicState>(() => {
-    return (window as any)?.__lastPlayerMusicState || INITIAL;
+    const last = (window as any)?.__lastPlayerMusicState;
+    if (last?.currentMusic?.titulo) return last;
+    const uid = effectiveUserId || user?.id;
+    if (uid) {
+      try {
+        const d = readMusicData(uid) as any;
+        if (d && (d.titulo || d.excecao)) {
+          return {
+            ...INITIAL,
+            currentMusic: {
+              titulo: d.titulo || "",
+              artista: d.artista || "",
+              capa: d.capa || "",
+              excecao: d.excecao || null,
+            },
+            displayArt: d.capa || null,
+          };
+        }
+      } catch {}
+    }
+    return INITIAL;
   });
   const [showControls, setShowControls] = useState(false);
   const autoHideTimer = useRef<number | null>(null);
@@ -60,9 +85,10 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
     window.addEventListener("player:music", onMusic as EventListener);
 
     const onStorage = () => {
-      if (effectiveUserId) {
+      const uid = targetUid;
+      if (uid) {
         try {
-          const d = readMusicData(effectiveUserId) as any;
+          const d = readMusicData(uid) as any;
           if (d && (d.titulo || d.excecao)) {
             setState(prev => ({
               ...prev,
@@ -78,15 +104,109 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
         } catch {}
       }
     };
+    onStorage();
+
     window.addEventListener("storage", onStorage);
     window.addEventListener(MUSIC_DATA_EVENT, onStorage as EventListener);
 
+    // Realtime broadcast listener for instant cross-computer synchronization
+    let channel: any = null;
+    if (targetUid) {
+      channel = supabase
+        .channel(`music-live-sync:${targetUid}`)
+        .on("broadcast", { event: "track_change" }, (payload: any) => {
+          const d = payload.payload || payload;
+          if (d && (d.titulo || d.excecao)) {
+            writeMusicData(targetUid, d);
+            setState(prev => ({
+              ...prev,
+              currentMusic: {
+                titulo: d.titulo || "",
+                artista: d.artista || "",
+                capa: d.capa || "",
+                excecao: d.excecao || null,
+              },
+              displayArt: d.capa || prev.displayArt,
+            }));
+          } else if (d && d.titulo === "" && d.artista === "") {
+            setState(prev => ({
+              ...prev,
+              currentMusic: null,
+              displayArt: null,
+            }));
+          }
+        })
+        .subscribe();
+    }
+
+    // Active track fetch from server / database so other computers get the playing track immediately on load
+    const fetchActiveTrackFromRemote = async () => {
+      const uid = targetUid;
+      if (!uid) return;
+      try {
+        try {
+          const syncRes = await fetch(`/api/sync-music?userId=${encodeURIComponent(uid)}`, { cache: "no-store" });
+          if (syncRes.ok) {
+            const syncJson = await syncRes.json();
+            const live = syncJson?.music;
+            if (live?.titulo && live.titulo.toLowerCase() !== "sem título" && live.titulo !== "Aguardando leitura...") {
+              const liveDur = Number(live.duracao) || 180;
+              const liveTrack = {
+                titulo: live.titulo,
+                artista: live.artista || "Desconhecido",
+                capa: live.capa || "",
+                duracao: liveDur,
+              };
+              writeMusicData(uid, liveTrack);
+              setState(prev => ({
+                ...prev,
+                currentMusic: liveTrack,
+                displayArt: live.capa || prev.displayArt,
+              }));
+              return;
+            }
+          }
+        } catch {}
+
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("dashboard_items")
+          .eq("user_id", uid)
+          .maybeSingle();
+
+        const di = (settings?.dashboard_items || {}) as Record<string, any>;
+        const curTitle = (di.music_current_title || "").toString().trim();
+        const curArtist = (di.music_current_artist || "").toString().trim();
+        const curCover = (di.music_current_cover || "").toString().trim();
+        const curExcecao = di.music_current_excecao || null;
+        if (curTitle && curTitle.toLowerCase() !== "sem título" && curTitle.toLowerCase() !== "sem titulo" && curTitle.toLowerCase() !== "aguardando leitura...") {
+          const trackData = {
+            titulo: curTitle,
+            artista: curArtist || "Desconhecido",
+            capa: curCover || "",
+            excecao: curExcecao,
+          };
+          writeMusicData(uid, trackData);
+          setState(prev => ({
+            ...prev,
+            currentMusic: trackData,
+            displayArt: curCover || prev.displayArt,
+          }));
+        }
+      } catch {}
+    };
+
+    fetchActiveTrackFromRemote();
+    const pollRemote = setInterval(fetchActiveTrackFromRemote, 4000);
+
     return () => {
+      clearInterval(pollRemote);
+      if (channel) supabase.removeChannel(channel);
       window.removeEventListener("player:music", onMusic as EventListener);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_DATA_EVENT, onStorage as EventListener);
     };
-  }, [effectiveUserId]);
+  }, [targetUid]);
 
   // Track info resolution for smooth entrance / exit animation
   const targetTitulo = (state.currentMusic?.titulo || state.activeChannel?.nome || "").trim();

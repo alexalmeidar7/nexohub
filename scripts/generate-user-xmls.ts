@@ -382,12 +382,12 @@ function generateFallbackBroadcast(st: StationConfig): string {
     default: "INTERATIVA FM",
   };
   const stationLogoMap: Record<string, string> = {
-    interativafm: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/b2f70324-d086-4a5d-a407-cbc4acf98dce/logo-1787846659202.webp",
+    interativafm: "/logos/interativa.png",
     positivafm: "/logos/positiva.png",
-    culturafm973: "https://nexohub.lovable.app/default-sponsor-logo.png",
-    transmissao: "https://nexohub.lovable.app/default-sponsor-logo.png",
-    alex: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5/empresa-logo.png?v=8656178258",
-    default: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/b2f70324-d086-4a5d-a407-cbc4acf98dce/logo-1787846659202.webp",
+    culturafm973: "/logos/cultura.png",
+    transmissao: "/logos/jornal.png",
+    alex: "/logos/positiva.png",
+    default: "/logos/interativa.png",
   };
   const stationWhatsappMap: Record<string, string> = {
     interativafm: "https://wa.me/5562999719490",

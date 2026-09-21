@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<musica>
+  <interprete>BLACK EYED PEAS</interprete>
+  <nome_musica>BOOM BOOM POW!</nome_musica>
+  <titulo>BOOM BOOM POW!</titulo>
+  <artista>BLACK EYED PEAS</artista>
+  <duracao>252</duracao>
+  <capa>https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/16/8c/bf168c92-3c1d-6e8a-e9fa-54d90956b63d/00602527052950.rgb.jpg/600x600bb.jpg</capa>
+  <horario>23:30</horario>
+  <start_time>1789961909101</start_time>
+  <origem>pasta</origem>
+  <dispositivo>IN - LIVE 2</dispositivo>
+</musica>

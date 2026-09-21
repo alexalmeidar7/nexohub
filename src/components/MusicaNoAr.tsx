@@ -14,6 +14,7 @@ import { matchesMusicException, getMusicExceptions, MusicException } from "@/lib
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { fetchTrackCover } from "@/lib/musicCoverResolver";
 import { getMusicData } from "@/lib/musicData";
+import { writeMusicData, writeMusicStart, clearMusicData } from "@/lib/musicStorageKeys";
 
 interface MusicData {
   titulo: string;
@@ -819,6 +820,22 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setLastSource(source);
       lastSourceRef.current = source;
     }
+    candidateUserIds.forEach(uid => {
+      clearMusicData(uid);
+      try {
+        const channel = supabase.channel(`music-live-sync:${uid}`);
+        channel.send({
+          type: "broadcast",
+          event: "track_change",
+          payload: {
+            titulo: "",
+            artista: "",
+            capa: "",
+            duracao: 0,
+          },
+        }).catch(() => {});
+      } catch {}
+    });
     if (dataUserId) {
       try {
         await mergeUserDashboardItems(dataUserId, {
@@ -832,7 +849,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         console.warn("[MusicaNoAr] clearMusic merge failed:", e);
       }
     }
-  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId, music]);
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId, music, candidateUserIds]);
 
   const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta", rawXml?: string, fileModifiedAt?: number) => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -893,6 +910,27 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         if (cover) {
           data.capa = cover;
           coverCacheRef.current[cacheKey] = cover;
+          const currentDev = deviceNameRef.current || "Estúdio";
+          candidateUserIds.forEach(uid => {
+            mergeUserDashboardItems(uid, { music_current_cover: cover }).catch(() => {});
+            writeMusicData(uid, { ...data, capa: cover });
+            try {
+              const channel = supabase.channel(`music-live-sync:${uid}`);
+              channel.send({
+                type: "broadcast",
+                event: "track_change",
+                payload: {
+                  titulo: data.titulo,
+                  artista: data.artista,
+                  capa: cover,
+                  duracao: data.duracao,
+                  startTime: startTimeRef.current || Date.now(),
+                  source: source || "pasta",
+                  deviceName: currentDev,
+                },
+              }).catch(() => {});
+            } catch {}
+          });
           notifySyncServer({
             titulo: data.titulo,
             artista: data.artista,
@@ -966,6 +1004,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             } catch {}
           });
         } catch {}
+        const currentDev = deviceNameRef.current || "Estúdio";
         candidateUserIds.forEach(uid => {
           mergeUserDashboardItems(uid, {
             music_current_cover: activeCover,
@@ -973,6 +1012,23 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             music_current_artist: data.artista,
             music_start_time: existingStart,
           }).catch(() => {});
+          writeMusicData(uid, { ...data, capa: activeCover });
+          try {
+            const channel = supabase.channel(`music-live-sync:${uid}`);
+            channel.send({
+              type: "broadcast",
+              event: "track_change",
+              payload: {
+                titulo: data.titulo,
+                artista: data.artista,
+                capa: activeCover,
+                duracao: dur,
+                startTime: existingStart,
+                source: source || "pasta",
+                deviceName: currentDev,
+              },
+            }).catch(() => {});
+          } catch {}
         });
         notifySyncServer({
           titulo: data.titulo,
@@ -1029,6 +1085,41 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         } catch {}
       });
     } catch {}
+
+    // Synchronize to Supabase user_settings for multi-device live propagation
+    const currentDeviceName = deviceNameRef.current || "Estúdio";
+    const updateDashboardData = {
+      music_current_title: data.titulo,
+      music_current_artist: data.artista,
+      music_current_cover: data.capa || "",
+      music_current_duration: dur,
+      music_start_time: songStartTime,
+      local_reader_device_name: currentDeviceName,
+      local_reader_active_at: Date.now(),
+    };
+
+    candidateUserIds.forEach(uid => {
+      mergeUserDashboardItems(uid, updateDashboardData).catch(() => {});
+      writeMusicData(uid, data);
+      writeMusicStart(uid, songStartTime!);
+      try {
+        const channel = supabase.channel(`music-live-sync:${uid}`);
+        channel.send({
+          type: "broadcast",
+          event: "track_change",
+          payload: {
+            titulo: data.titulo,
+            artista: data.artista,
+            capa: data.capa || "",
+            duracao: dur,
+            horario: data.horario,
+            startTime: songStartTime,
+            source: source || "pasta",
+            deviceName: currentDeviceName,
+          },
+        }).catch(() => {});
+      } catch {}
+    });
 
     setMusic(data);
     setStartTime(songStartTime);

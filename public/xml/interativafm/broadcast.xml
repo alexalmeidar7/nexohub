@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <empresa_logo>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/b2f70324-d086-4a5d-a407-cbc4acf98dce/logo-1787846659202.webp</empresa_logo>
-    <programa_nome>Maratona (3)</programa_nome>
+    <empresa_logo>/logos/interativa.png</empresa_logo>
+    <programa_nome>Central da madrugada</programa_nome>
     <programa_logo></programa_logo>
     <programa_thumb></programa_thumb>
-    <locutor_nome>Ani Cristine</locutor_nome>
-    <locutor_foto>/locutores/ani.png</locutor_foto>
-    <locutor_social>@anicristine</locutor_social>
+    <locutor_nome>Automático</locutor_nome>
+    <locutor_foto></locutor_foto>
+    <locutor_social>@positivafm</locutor_social>
     <rede_social_atual>Instagram</rede_social_atual>
     <rede_social_icone>instagram</rede_social_icone>
     <logo_patrocinador></logo_patrocinador>
@@ -32,15 +32,15 @@
     </infos_canto>
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Insônia</programa_nome>
-      <nome_programa>Insônia</nome_programa>
+      <programa_nome>Comitiva Sertaneja</programa_nome>
+      <nome_programa>Comitiva Sertaneja</nome_programa>
       <programa_logo></programa_logo>
-      <locutor_nome>Automático</locutor_nome>
-      <locutor_foto>/locutores/sem-loc.png</locutor_foto>
-      <horario>00:00</horario>
+      <locutor_nome>Ani Cristine</locutor_nome>
+      <locutor_foto>/locutores/ani.png</locutor_foto>
+      <horario>04:00</horario>
       <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-21T01:15:57.836Z</atualizado_em>
+      <atualizado_em>2026-09-21T03:27:00.159Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

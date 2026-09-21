@@ -348,7 +348,7 @@ const CANONICAL_PRESENTER_BY_PROG: Record<string, { nome: string; foto: string; 
   whatsapp: { nome: "Jonathas Mattos", foto: "/locutores/jonathas.png", instagram: "@jonathasmattoslocutor" },
   domingao: { nome: "Jonathas Mattos", foto: "/locutores/jonathas.png", instagram: "@jonathasmattoslocutor" },
   "vale night": { nome: "Jonathas Mattos", foto: "/locutores/jonathas.png", instagram: "@jonathasmattoslocutor" },
-  madruga: { nome: "Automático", foto: "/locutores/sem-loc.png", instagram: "@positivafm" },
+  madruga: { nome: "Automático", foto: "", instagram: "@positivafm" },
 
   // Interativa
   "falando serio": { nome: "José Luiz", foto: "/locutores/ze.png", instagram: "@interativafm" },
@@ -360,7 +360,7 @@ const CANONICAL_PRESENTER_BY_PROG: Record<string, { nome: string; foto: string; 
   "super play": { nome: "Gabs", foto: "/locutores/gabs.png", instagram: "@frozengabs" },
   "mega bonus": { nome: "Ani Cristine", foto: "/locutores/ani.png", instagram: "@anicristine" },
   "sunset retro": { nome: "Éverson Cândido", foto: "/locutores/morga.png", instagram: "@interativafm" },
-  inson: { nome: "Automático", foto: "/locutores/sem-loc.png", instagram: "@interativafm" },
+  inson: { nome: "Automático", foto: "", instagram: "@interativafm" },
 
   // Cultura
   "show da manha": { nome: "Azevedo Júnior", foto: "/locutores/azevedo.png", instagram: "@azevedojuniorlocutoroficial" },
@@ -383,7 +383,14 @@ function resolveSafePresenter(progName: string | undefined, stationKey: string):
   if (stationKey === "POSITIVA FM") {
     return { nome: "Fernando", foto: "/locutores/fernando.png", instagram: "@positivafm" };
   }
-  return { nome: "Locutor no Ar", foto: "/locutores/sem-loc.png", instagram: "@radio" };
+  return { nome: "Locutor no Ar", foto: "", instagram: "@radio" };
+}
+
+function ensurePngUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  let clean = url.trim();
+  clean = clean.replace(/\.web(p)?(\?.*)?$/i, (match, p1, query) => `.png${query || ""}`);
+  return clean;
 }
 
 const BROADCAST_STATIONS: Record<
@@ -403,7 +410,7 @@ const BROADCAST_STATIONS: Record<
     name: "Interativa FM 94.9",
     freq: "94.9 FM",
     city: "Goiânia - GO",
-    logo: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/b2f70324-d086-4a5d-a407-cbc4acf98dce/logo-1787846659202.webp",
+    logo: "/logos/interativa.png",
     social: "@interativafm",
     whatsapp: "https://wa.me/5562999719490",
   },
@@ -421,7 +428,7 @@ const BROADCAST_STATIONS: Record<
     name: "Cultura FM 97.3",
     freq: "97.3 FM",
     city: "Santos - SP",
-    logo: "https://nexohub.lovable.app/default-sponsor-logo.png",
+    logo: "/logos/cultura.png",
     social: "@culturafm973",
     whatsapp: "https://wa.me/5513997009730",
   },
@@ -430,7 +437,7 @@ const BROADCAST_STATIONS: Record<
     name: "Jornal FM 96.5",
     freq: "96.5 FM",
     city: "Inhumas - GO",
-    logo: "https://nexohub.lovable.app/default-sponsor-logo.png",
+    logo: "/logos/jornal.png",
     social: "@jornalfm",
     whatsapp: "https://wa.me/556299999999",
   },
@@ -439,7 +446,7 @@ const BROADCAST_STATIONS: Record<
     name: "Nexo Brasil Admin",
     freq: "Rede Nexo",
     city: "Goiânia - GO",
-    logo: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5/empresa-logo.png?v=8656178258",
+    logo: "/logos/positiva.png",
     social: "@nexobrasil",
     whatsapp: "https://housemix.nexobrasil.net",
   },
@@ -518,30 +525,33 @@ function buildBroadcastXml(
   const aSeguirNome = nextProg?.nome || "Próximo Programa";
   const aSeguirHorario = nextProg ? normTime(nextProg.horario_inicio) : "00:00";
   const aSeguirLocutor = nextPres.nome;
-  const aSeguirFoto = nextPres.foto;
+  const aSeguirFoto =
+    !nextPres.foto || nextPres.foto.includes("sem-loc") || aSeguirLocutor === "Automático" || aSeguirLocutor === "—"
+      ? ""
+      : nextPres.foto;
   const aSeguirLogo = st.stationKey === "POSITIVA FM" ? "/selos/madrugada.png" : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <empresa_logo>${escapeXml(st.logo)}</empresa_logo>
+    <empresa_logo>${escapeXml(ensurePngUrl(st.logo))}</empresa_logo>
     <programa_nome>${escapeXml(progNome)}</programa_nome>
-    <programa_logo>${escapeXml(progLogo)}</programa_logo>
+    <programa_logo>${escapeXml(ensurePngUrl(progLogo))}</programa_logo>
     <programa_thumb></programa_thumb>
     <locutor_nome>${escapeXml(locutorNome)}</locutor_nome>
-    <locutor_foto>${escapeXml(locutorFoto)}</locutor_foto>
+    <locutor_foto>${escapeXml(ensurePngUrl(locutorFoto))}</locutor_foto>
     <locutor_social>${escapeXml(locutorSocial)}</locutor_social>
     <rede_social_atual>Instagram</rede_social_atual>
     <rede_social_icone>instagram</rede_social_icone>
     <logo_patrocinador></logo_patrocinador>
     <titulo>${escapeXml(titulo)}</titulo>
-    <fundo_assunto>${escapeXml(broadcastOverride?.assuntoBgUrl || "")}</fundo_assunto>
+    <fundo_assunto>${escapeXml(ensurePngUrl(broadcastOverride?.assuntoBgUrl || ""))}</fundo_assunto>
     <qrcode_link>${escapeXml(st.whatsapp)}</qrcode_link>
     <ticker>${escapeXml(ticker)}</ticker>
     <insert_live></insert_live>
     <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
     <musica_atual>${escapeXml(musicaTexto)}</musica_atual>
-    <musica_capa>${escapeXml(musicaCapa)}</musica_capa>
+    <musica_capa>${escapeXml(ensurePngUrl(musicaCapa))}</musica_capa>
     <deezer_artist_img></deezer_artist_img>
     <banner_l></banner_l>
     <temperatura>26ºC</temperatura>
@@ -557,9 +567,9 @@ function buildBroadcastXml(
       <ativo>1</ativo>
       <programa_nome>${escapeXml(aSeguirNome)}</programa_nome>
       <nome_programa>${escapeXml(aSeguirNome)}</nome_programa>
-      <programa_logo>${escapeXml(aSeguirLogo)}</programa_logo>
+      <programa_logo>${escapeXml(ensurePngUrl(aSeguirLogo))}</programa_logo>
       <locutor_nome>${escapeXml(aSeguirLocutor)}</locutor_nome>
-      <locutor_foto>${escapeXml(aSeguirFoto)}</locutor_foto>
+      <locutor_foto>${escapeXml(ensurePngUrl(aSeguirFoto))}</locutor_foto>
       <horario>${escapeXml(aSeguirHorario)}</horario>
       <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
