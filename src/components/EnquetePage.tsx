@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tag, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle, ExternalLink, Radio, StopCircle } from "lucide-react";
+import { Tag, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle, ExternalLink, Radio, StopCircle, Copy, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,8 @@ import { todayInBrasilia } from "@/lib/brasiliaDate";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
-import { getScheduleStatus, isScheduleActive, getBrasiliaDateTime } from "@/lib/scheduledItemUtils";
+import { getScheduleStatus, isScheduleActive, getBrasiliaDateTime, buildEnqueteXml, getActiveEnquete } from "@/lib/scheduledItemUtils";
+import initialEnquetesSync from "@/data/xml_enquetes_sync.json";
 
 interface EnqueteAgendada {
   id: string;
@@ -123,7 +124,11 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
     } catch {}
 
     const localList = getStoredEnquetes(targetUserId);
+    const staticList = (initialEnquetesSync as Record<string, any[]>)[targetSlug] ||
+      (initialEnquetesSync as Record<string, any[]>)[targetUserId] || [];
+
     const map = new Map<string, EnqueteAgendada>();
+    staticList.forEach(s => s?.id && map.set(s.id, s));
     serverEnquetes.forEach(e => e?.id && map.set(e.id, e));
     rows.forEach(r => r?.id && map.set(r.id, r));
     localList.forEach(l => l?.id && map.set(l.id, { ...(map.get(l.id) || {}), ...l }));
@@ -139,6 +144,32 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       saveStoredEnquetes(targetUserId, merged as EnqueteAgendada[]);
     }
     setLoading(false);
+  };
+
+  const handleCopyXml = () => {
+    const { today, currentTime } = getBrasiliaDateTime();
+    const active = getActiveEnquete(enquetes, today, currentTime, true);
+    const stationName = clientAcc?.nome || "Positiva FM 99.1";
+    const xml = buildEnqueteXml(active, stationName);
+    navigator.clipboard.writeText(xml.trim());
+    toast.success("XML da Enquete copiado com sucesso!");
+  };
+
+  const handleDownloadXml = () => {
+    const { today, currentTime } = getBrasiliaDateTime();
+    const active = getActiveEnquete(enquetes, today, currentTime, true);
+    const stationName = clientAcc?.nome || "Positiva FM 99.1";
+    const xml = buildEnqueteXml(active, stationName);
+    const blob = new Blob([xml], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "enquete.xml";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Arquivo enquete.xml baixado com sucesso!");
   };
 
   useEffect(() => {
@@ -390,12 +421,28 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
             href={`/xml/${targetSlug}/enquete.xml`}
             target="_blank"
             rel="noopener noreferrer"
-            className="h-11 px-5 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm"
+            className="h-11 px-4 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm"
             title="Abrir feed XML da Enquete no navegador ou vMix"
           >
             <ExternalLink size={15} className="text-[#0055ff]" />
-            <span>XML ENQUETE</span>
+            <span>VER XML</span>
           </a>
+          <button
+            onClick={handleCopyXml}
+            className="h-11 px-4 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm cursor-pointer"
+            title="Copiar conteúdo XML da enquete ativa para a área de transferência"
+          >
+            <Copy size={15} className="text-[#0055ff]" />
+            <span className="hidden md:inline">COPIAR XML</span>
+          </button>
+          <button
+            onClick={handleDownloadXml}
+            className="h-11 px-4 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm cursor-pointer"
+            title="Baixar arquivo enquete.xml atualizado para o computador"
+          >
+            <Download size={15} className="text-[#0055ff]" />
+            <span className="hidden md:inline">BAIXAR XML</span>
+          </button>
           <button 
             onClick={() => setShowForm(!showForm)}
             className={`h-11 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer ${

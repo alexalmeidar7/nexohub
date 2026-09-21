@@ -13,6 +13,7 @@ import {
   buildBatalhaXml,
   escapeXml,
 } from "@/lib/scheduledItemUtils";
+import initialEnquetesSync from "@/data/xml_enquetes_sync.json";
 
 const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
 const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
@@ -82,7 +83,12 @@ export default function XmlPublicEndpoint() {
           } catch {}
         }
 
-        const activeEnquete = getActiveEnquete(localEnquetes, today, currentTime);
+        if (localEnquetes.length === 0) {
+          localEnquetes = (initialEnquetesSync as Record<string, any[]>)[cleanSlug] ||
+            (initialEnquetesSync as Record<string, any[]>)[stationUid] || [];
+        }
+
+        const activeEnquete = getActiveEnquete(localEnquetes, today, currentTime, true);
 
         if (activeEnquete) {
           const generated = buildEnqueteXml(activeEnquete, stationName);

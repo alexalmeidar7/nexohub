@@ -1211,7 +1211,7 @@ export function dynamicXmlPlugin(): Plugin {
 
               // Update static file on disk immediately using getActiveEnquete
               const { today, currentTime } = getBrasiliaDateTime();
-              const active = getActiveEnquete(enquetes, today, currentTime);
+              const active = getActiveEnquete(enquetes, today, currentTime, true);
               const stName = SLUG_STATION_NAMES[slug] || "House Mix Emissora";
               const xml = buildEnqueteXml(active, stName);
               writeStaticXml(slug, "enquete.xml", xml);
@@ -1838,7 +1838,7 @@ export function dynamicXmlPlugin(): Plugin {
             if (file === "enquete.xml") {
               const store = readSyncData(enquetesFile);
               const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
-              const active = getActiveEnquete(list, today, currentTime);
+              const active = getActiveEnquete(list, today, currentTime, true);
               const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
               const xml = buildEnqueteXml(active, stName);
 

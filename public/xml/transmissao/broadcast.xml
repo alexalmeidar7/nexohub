@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <empresa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</empresa_logo>
-    <programa_nome>Modão Sertanejo</programa_nome>
+    <empresa_logo>/logos/jornal.png</empresa_logo>
+    <programa_nome>Bom dia Positiva</programa_nome>
     <programa_logo></programa_logo>
     <programa_thumb></programa_thumb>
-    <locutor_nome>Fernando</locutor_nome>
-    <locutor_foto>/locutores/fernando.png</locutor_foto>
-    <locutor_social>@positivafm</locutor_social>
+    <locutor_nome>Márcio Rodrigues</locutor_nome>
+    <locutor_foto>/locutores/marcio.png</locutor_foto>
+    <locutor_social>@marciorodrigues.radio</locutor_social>
     <rede_social_atual>Instagram</rede_social_atual>
     <rede_social_icone>instagram</rede_social_icone>
     <logo_patrocinador></logo_patrocinador>
@@ -32,15 +32,15 @@
     </infos_canto>
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Madruga Positiva</programa_nome>
-      <nome_programa>Madruga Positiva</nome_programa>
+      <programa_nome>Flashback Positiva</programa_nome>
+      <nome_programa>Flashback Positiva</nome_programa>
       <programa_logo></programa_logo>
-      <locutor_nome>Automático</locutor_nome>
-      <locutor_foto>/locutores/sem-loc.png</locutor_foto>
-      <horario>00:00</horario>
+      <locutor_nome>Jonathas Mattos</locutor_nome>
+      <locutor_foto>/locutores/jonathas.png</locutor_foto>
+      <horario>12:00</horario>
       <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-21T01:14:41.162Z</atualizado_em>
+      <atualizado_em>2026-09-21T14:16:25.776Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

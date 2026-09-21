@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from "fs";
+import { writeFileSync, mkdirSync, existsSync, readFileSync, copyFileSync } from "fs";
 import { resolve, join } from "path";
 
 const SUPABASE_BASE = "https://zzjfzxxvxbspbdkodoix.supabase.co";
@@ -736,6 +736,8 @@ function generateCombinedGeralXml(
       <pergunta>${extractTag(enqueteXml, "pergunta")}</pergunta>
       <opcao_a>${extractTag(enqueteXml, "resposta1") || extractTag(enqueteXml, "opcao_a") || extractTag(enqueteXml, "opcao1_texto")}</opcao_a>
       <opcao_b>${extractTag(enqueteXml, "resposta2") || extractTag(enqueteXml, "opcao_b") || extractTag(enqueteXml, "opcao2_texto")}</opcao_b>
+      <opcao_c>${extractTag(enqueteXml, "resposta3") || extractTag(enqueteXml, "opcao_c") || extractTag(enqueteXml, "opcao3_texto")}</opcao_c>
+      <opcao_d>${extractTag(enqueteXml, "resposta4") || extractTag(enqueteXml, "opcao_d") || extractTag(enqueteXml, "opcao4_texto")}</opcao_d>
       <resposta1>${extractTag(enqueteXml, "resposta1")}</resposta1>
       <resposta2>${extractTag(enqueteXml, "resposta2")}</resposta2>
       <resposta3>${extractTag(enqueteXml, "resposta3")}</resposta3>
@@ -868,9 +870,15 @@ export async function generateAllUserXmls() {
           const syncData = JSON.parse(readFileSync(enqSyncPath, "utf-8"));
           const list = syncData[st.slug] || syncData[st.uid] || [];
           const { today, currentTime } = getBrasiliaDateTime();
-          const active = list.find((e: any) =>
+          let active = list.find((e: any) =>
             isScheduleActive(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime)
           );
+          if (!active) {
+            active = list.find((e: any) => String(e.data_enquete || "").slice(0, 10) === today && e.horario_fim !== "00:00");
+          }
+          if (!active && list.length > 0) {
+            active = list[0];
+          }
           if (active && active.pergunta) {
             enqueteContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
@@ -1014,6 +1022,18 @@ export async function generateAllUserXmls() {
               (filename === "logos.xml" && !content.includes('id="programa 2"') && existing.includes('id="programa 2"'));
 
             if (isExistingSubstantial && isNewFallback) {
+              if (filename === "geral.xml" && enqueteContent && enqueteContent.includes('ativa="1"')) {
+                try {
+                  const enqMatch = enqueteContent.match(/<enquete[\s\S]*?<\/enquete>/i);
+                  if (enqMatch && existing.includes("<enquete")) {
+                    const mergedGeral = existing.replace(/<enquete[\s\S]*?<\/enquete>/i, enqMatch[0]);
+                    writeFileSync(targetPath, mergedGeral.trim() + "\n", "utf-8");
+                    totalFiles++;
+                    console.log(`[SYNC] Updated active <enquete> block inside preserved ${slug}/geral.xml`);
+                    continue;
+                  }
+                } catch {}
+              }
               console.log(`[PROTECTED] Preserved existing user data for ${slug}/${filename}, skipping fallback overwrite.`);
               continue;
             }
@@ -1021,6 +1041,21 @@ export async function generateAllUserXmls() {
         }
         writeFileSync(targetPath, content.trim() + "\n", "utf-8");
         totalFiles++;
+      }
+    }
+  }
+
+  // Also synchronize default station files (positivafm) to root public/xml/* and public/*
+  const defaultUserDir = join(baseXmlDir, "positivafm");
+  if (existsSync(defaultUserDir)) {
+    const rootFiles = ["enquete.xml", "geral.xml", "batalha.xml", "quiz.xml", "roteiro.xml", "broadcast.xml"];
+    for (const rf of rootFiles) {
+      const src = join(defaultUserDir, rf);
+      if (existsSync(src)) {
+        try {
+          copyFileSync(src, join(baseXmlDir, rf));
+          copyFileSync(src, resolve("public", rf));
+        } catch {}
       }
     }
   }

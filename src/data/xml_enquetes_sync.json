@@ -1,6 +1,18 @@
 {
   "positivafm": [
     {
+      "id": "enq_1790082000000_p01",
+      "pergunta": "Qual dessas coisas você prefere resolver logo para tirar da cabeça?",
+      "resposta1": "Uma conta para pagar",
+      "resposta2": "Uma ligação que precisa fazer",
+      "resposta3": "Uma conversa que está adiando",
+      "resposta4": "Uma pendência de trabalho",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    },
+    {
       "id": "enq_1789644377056_vhdo",
       "pergunta": "Qual dessas coisas você mais demora para decidir?",
       "resposta1": "🍽️ O que pedir para comer",
@@ -38,6 +50,18 @@
     }
   ],
   "d17e65af-e407-466f-9b60-b55c43399513": [
+    {
+      "id": "enq_1790082000000_p01",
+      "pergunta": "Qual dessas coisas você prefere resolver logo para tirar da cabeça?",
+      "resposta1": "Uma conta para pagar",
+      "resposta2": "Uma ligação que precisa fazer",
+      "resposta3": "Uma conversa que está adiando",
+      "resposta4": "Uma pendência de trabalho",
+      "resposta_correta": 1,
+      "data_enquete": "2026-09-21",
+      "horario_inicio": "08:00",
+      "horario_fim": "23:59"
+    },
     {
       "id": "enq_1789644377056_vhdo",
       "pergunta": "Qual dessas coisas você mais demora para decidir?",

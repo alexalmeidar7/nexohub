@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
   <dados>
-    <empresa_logo>https://nexohub.lovable.app/default-sponsor-logo.png</empresa_logo>
-    <programa_nome>Programação automática</programa_nome>
+    <empresa_logo>/logos/cultura.png</empresa_logo>
+    <programa_nome>Jornal da Cultura</programa_nome>
     <programa_logo></programa_logo>
     <programa_thumb></programa_thumb>
     <locutor_nome>Locutor no Ar</locutor_nome>
@@ -32,15 +32,15 @@
     </infos_canto>
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Programação automática</programa_nome>
-      <nome_programa>Programação automática</nome_programa>
+      <programa_nome>De bem com a Vida</programa_nome>
+      <nome_programa>De bem com a Vida</nome_programa>
       <programa_logo></programa_logo>
       <locutor_nome>Locutor no Ar</locutor_nome>
       <locutor_foto>/locutores/sem-loc.png</locutor_foto>
-      <horario>00:00</horario>
+      <horario>12:00</horario>
       <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-21T01:14:41.191Z</atualizado_em>
+      <atualizado_em>2026-09-21T14:23:17.801Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>
