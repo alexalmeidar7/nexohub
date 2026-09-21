@@ -117,13 +117,26 @@ async function readFileWithEncoding(file: File): Promise<string> {
 
 function parseXmlString(xmlStr: string): MusicData | null {
   try {
+    const autoParsed = parseAnyAutomationFile(xmlStr);
+    if (autoParsed) {
+      if (autoParsed.isStopped) return null;
+      if (autoParsed.titulo || autoParsed.artista) {
+        return {
+          titulo: autoParsed.titulo,
+          artista: autoParsed.artista,
+          duracao: autoParsed.duracao || 0,
+          capa: autoParsed.capa || "",
+          horario: autoParsed.horario,
+        };
+      }
+    }
+
     // Strip XML declaration to avoid DOMParser encoding conflicts
     const cleaned = xmlStr.replace(/<\?xml[^?]*\?>\s*/i, "");
     const parser = new DOMParser();
     const doc = parser.parseFromString(cleaned, "application/xml");
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) {
-      console.warn("[MusicaNoAr] XML parser error node:", errorNode.textContent);
       // Fallback: try parsing as text/xml if application/xml fails
       const doc2 = parser.parseFromString(cleaned, "text/xml");
       if (!doc2.querySelector("parsererror")) return extractMusicFromDoc(doc2);
@@ -145,6 +158,9 @@ function parseXmlString(xmlStr: string): MusicData | null {
  */
 function isStoppedXmlPayload(xmlStr: string): boolean {
   try {
+    const autoParsed = parseAnyAutomationFile(xmlStr);
+    if (autoParsed?.isStopped) return true;
+
     const cleaned = xmlStr.replace(/<\?xml[^?]*\?>\s*/i, "");
     const parser = new DOMParser();
     let doc = parser.parseFromString(cleaned, "application/xml");
@@ -187,10 +203,8 @@ import {
   isCulturaFmXmlPayload as isCulturaFmXml,
   culturaFmXmlToPseudoXml as culturaXmlToPseudoXml,
 } from "@/lib/culturaFmXml";
-
-
-
-
+import { saveLocalFileHandle, getLocalFileHandle } from "@/lib/localFileHandleStorage";
+import { parseAnyAutomationFile, convertToStandardXml } from "@/lib/automationFileParser";
 
 function extractMusicFromDoc(doc: Document): MusicData | null {
   const rawTitulo =
@@ -447,6 +461,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const fileInputRef = useRef<HTMLInputElement>(null);
   const localFileRef = useRef<File | null>(null);
   const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
+  const savedHandleRef = useRef<FileSystemFileHandle | null>(null);
+  const [needsFilePermission, setNeedsFilePermission] = useState(false);
   // localPollRef removed — using Web Worker timer instead
   const [uploadHistory, setUploadHistory] = useState<UploadLogEntry[]>([]);
   const [localFileName, setLocalFileName] = useState<string>("");
@@ -1198,7 +1214,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               programa,
               artista,
               musica: titulo,
-            }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
+            }, { onConflict: "user_id,musica,artista,dia" });
 
             // Also ensure the track exists in infomusic so it surfaces under "Músicas sem curiosidades"
             const { data: existingInfo } = await supabase
@@ -1451,7 +1467,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         ? (txtToPseudoXml(rawText) ?? rawText)
         : isCulturaFmXml(dataUserIdRef.current, rawText)
         ? (culturaXmlToPseudoXml(rawText) ?? rawText)
-        : rawText;
+        : (convertToStandardXml(rawText) ?? rawText);
 
 
       // Success — reset health trackers
@@ -1500,17 +1516,93 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     readingRef.current = false;
   }, [syncToStorage]); // stable deps
 
+  // Reconecta com 1 clique o FileSystemFileHandle salvo no IndexedDB caso a permissão esteja em "prompt"
+  const reconnectSavedHandle = useCallback(async () => {
+    const handle = savedHandleRef.current || fileHandleRef.current;
+    if (!handle) return false;
+    try {
+      const perm = await handle.requestPermission({ mode: "read" });
+      if (perm === "granted") {
+        fileHandleRef.current = handle;
+        const file = await handle.getFile();
+        localFileRef.current = file;
+        setLocalFileName(handle.name);
+        setLocalMonitoring(true);
+        setNeedsFilePermission(false);
+        void setSourceMode("pasta");
+        setLastSource("pasta");
+        lastSourceRef.current = "pasta";
+        void readLocalFile();
+        return true;
+      }
+    } catch (err) {
+      console.warn("[MusicaNoAr] Permission request failed:", err);
+    }
+    return false;
+  }, [readLocalFile]);
+
+  // Restaura FileSystemFileHandle do IndexedDB para continuar lendo após refresh/navegação
+  useEffect(() => {
+    let isCancelled = false;
+    const restoreHandle = async () => {
+      if (!('showOpenFilePicker' in window)) return;
+      const keysToTry = [
+        dataUserId,
+        clientAcc?.slug,
+        "current_station",
+      ].filter(Boolean) as string[];
+
+      let handle: FileSystemFileHandle | null = null;
+      for (const k of keysToTry) {
+        handle = await getLocalFileHandle(k);
+        if (handle) break;
+      }
+
+      if (!handle || isCancelled) return;
+      savedHandleRef.current = handle;
+
+      try {
+        const perm = await handle.queryPermission({ mode: "read" });
+        if (perm === "granted") {
+          fileHandleRef.current = handle;
+          const file = await handle.getFile();
+          if (isCancelled) return;
+          localFileRef.current = file;
+          setLocalFileName(handle.name);
+          setLocalMonitoring(true);
+          setNeedsFilePermission(false);
+          void readLocalFile();
+        } else {
+          setLocalFileName(handle.name);
+          setNeedsFilePermission(true);
+        }
+      } catch (err) {
+        console.warn("[MusicaNoAr] Error checking handle permission:", err);
+      }
+    };
+
+    restoreHandle();
+    return () => { isCancelled = true; };
+  }, [dataUserId, clientAcc?.slug, readLocalFile]);
+
   // Handle file select
   const handleFileSelect = async (e?: React.ChangeEvent<HTMLInputElement>) => {
     let file: File | null = null;
     let handle: FileSystemFileHandle | null = null;
 
-    const isJornalFm = dataUserId === JORNAL_FM_USER_ID;
     if ('showOpenFilePicker' in window && !e) {
       try {
-        const pickerTypes = isJornalFm
-          ? [{ description: 'TXT ou XML', accept: { 'text/plain': ['.txt'], 'application/xml': ['.xml'] } }]
-          : [{ description: 'XML', accept: { 'application/xml': ['.xml'] } }];
+        const pickerTypes = [
+          {
+            description: 'Arquivos de Automação de Rádio (XML, TXT, LOG)',
+            accept: {
+              'application/xml': ['.xml'],
+              'text/xml': ['.xml'],
+              'text/plain': ['.txt', '.log', '.nowplaying'],
+              '*/*': ['.xml', '.txt', '.log', '.nowplaying'],
+            },
+          },
+        ];
         const [h] = await (window as any).showOpenFilePicker({
           types: pickerTypes,
           multiple: false,
@@ -1525,8 +1617,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     if (!file) return;
 
     fileHandleRef.current = handle;
+    savedHandleRef.current = handle;
     localFileRef.current = file;
     setLocalFileName(file.name);
+    setNeedsFilePermission(false);
+
+    if (handle) {
+      if (dataUserId) void saveLocalFileHandle(dataUserId, handle);
+      if (clientAcc?.slug) void saveLocalFileHandle(clientAcc.slug, handle);
+      void saveLocalFileHandle("current_station", handle);
+    }
 
     // Persist local filename to DB so it survives across computers/sessions
     candidateUserIds.forEach(uid => {
@@ -1535,12 +1635,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }).catch(() => {});
     });
 
+    void setSourceMode("pasta");
+    setLastSource("pasta");
+    lastSourceRef.current = "pasta";
+
     const rawText = await readFileWithEncoding(file);
     const text = isJornalFmTxt(dataUserId, rawText)
       ? (txtToPseudoXml(rawText) ?? rawText)
       : isCulturaFmXml(dataUserId, rawText)
       ? (culturaXmlToPseudoXml(rawText) ?? rawText)
-      : rawText;
+      : (convertToStandardXml(rawText) ?? rawText);
     localFileContentRef.current = text;
     setLocalFileContent(text);
 
@@ -1777,7 +1881,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     const syncFromDatabase = async () => {
       // Apenas o computador que estiver com arquivo físico em disco aberto ignora o banco enquanto lê o arquivo físico.
       // Computadores secundários (sem arquivo físico em disco aberto) DEVEM sempre sincronizar do banco!
-      if (isLocalReaderActive()) return;
+      if (isLocalReaderActive() || (fileHandleRef.current && isLocalSelected)) return;
 
       // 0. Sincronização direta em rede / servidor local (/api/sync-music)
       try {
@@ -1789,79 +1893,81 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           const syncJson = await syncResp.json();
           const liveMusic = syncJson?.music;
           if (liveMusic && liveMusic.titulo && liveMusic.titulo.trim() !== "" && liveMusic.titulo.toLowerCase() !== "sem título") {
-            const { titulo: cleanT, artista: cleanA } = sanitizeTrackInfo(liveMusic.titulo, liveMusic.artista);
-            const liveCapa = liveMusic.capa || "";
-            const liveDur = Number(liveMusic.duracao) || 180;
             const liveStart = Number(liveMusic.startTime) || Date.now();
             const now = Date.now();
             const el = Math.max(0, (now - liveStart) / 1000);
 
-            setLastSource("pasta");
-            lastSourceRef.current = "pasta";
-            setLocalMonitoring(true);
-            setLocalLastReadAt(Date.now());
-            setLocalDelay(false);
-            setLocalError(null);
-            if (!localFileName && liveMusic.deviceName) {
-              setLocalFileName(`Sincronizado: ${liveMusic.deviceName}`);
-            }
+            // Se o dado tiver mais de 4 horas, não considerar como música ao vivo
+            if (now - liveStart <= 4 * 3600 * 1000) {
+              const { titulo: cleanT, artista: cleanA } = sanitizeTrackInfo(liveMusic.titulo, liveMusic.artista);
+              const liveCapa = liveMusic.capa || "";
+              const liveDur = Number(liveMusic.duracao) || 180;
 
-            const isSameTrack = (musicRef.current &&
-              musicRef.current.titulo?.trim().toLowerCase() === cleanT.toLowerCase() &&
-              musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
-
-            setMusic((prev) => {
-              const activeCapa = liveCapa || (prev?.titulo === cleanT && prev?.capa ? prev.capa : "");
-              if (!activeCapa) {
-                fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
-                  if (cov) {
-                    setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
-                    notifySyncServer({
-                      titulo: cleanT,
-                      artista: cleanA,
-                      duracao: liveDur,
-                      capa: cov,
-                      startTime: liveStart,
-                      source: "pasta",
-                      deviceName: liveMusic.deviceName,
-                    });
-                  }
-                }).catch(() => {});
+              setLastSource("pasta");
+              lastSourceRef.current = "pasta";
+              setLocalMonitoring(true);
+              setLocalLastReadAt(Date.now());
+              setLocalDelay(false);
+              setLocalError(null);
+              if (!localFileName && liveMusic.deviceName) {
+                setLocalFileName(`Sincronizado: ${liveMusic.deviceName}`);
               }
 
-              if (prev?.titulo === cleanT && prev?.artista === cleanA) {
-                if (liveCapa && prev.capa !== liveCapa) {
-                  return { ...prev, capa: liveCapa };
+              const isSameTrack = (musicRef.current &&
+                musicRef.current.titulo?.trim().toLowerCase() === cleanT.toLowerCase() &&
+                musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
+
+              setMusic((prev) => {
+                const activeCapa = liveCapa || (prev?.titulo === cleanT && prev?.capa ? prev.capa : "");
+                if (!activeCapa) {
+                  fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
+                    if (cov) {
+                      setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
+                      notifySyncServer({
+                        titulo: cleanT,
+                        artista: cleanA,
+                        duracao: liveDur,
+                        capa: cov,
+                        startTime: liveStart,
+                        source: "pasta",
+                        deviceName: liveMusic.deviceName,
+                      });
+                    }
+                  }).catch(() => {});
                 }
-                return prev;
+
+                if (prev?.titulo === cleanT && prev?.artista === cleanA) {
+                  if (liveCapa && prev.capa !== liveCapa) {
+                    return { ...prev, capa: liveCapa };
+                  }
+                  return prev;
+                }
+
+                return {
+                  titulo: cleanT,
+                  artista: cleanA,
+                  duracao: liveDur,
+                  capa: activeCapa,
+                };
+              });
+
+              if (!isSameTrack || !startTimeRef.current) {
+                setStartTime(liveStart);
+                setElapsed(Math.min(liveDur, el));
               }
 
-              return {
-                titulo: cleanT,
-                artista: cleanA,
-                duracao: liveDur,
-                capa: activeCapa,
-              };
-            });
+              try {
+                localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({
+                  titulo: cleanT,
+                  artista: cleanA,
+                  duracao: liveDur,
+                  capa: liveCapa,
+                }));
+                localStorage.setItem(MUSIC_START_KEY, liveStart.toString());
+              } catch {}
 
-            if (!isSameTrack || !startTimeRef.current) {
-              setStartTime(liveStart);
-              setElapsed(Math.min(liveDur, el));
-            } else {
-              setElapsed(Math.min(liveDur, el));
+              return; // Sincronizado com sucesso com o leitor ativo
             }
-
-            try {
-              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({
-                titulo: cleanT,
-                artista: cleanA,
-                duracao: liveDur,
-                capa: liveCapa,
-              }));
-              localStorage.setItem(MUSIC_START_KEY, liveStart.toString());
-            } catch {}
-
-            return; // Sincronizado com sucesso com o leitor ativo
           }
         }
       } catch (e) {
@@ -2223,7 +2329,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     void setSourceMode(nextMode);
   };
 
-  const toggleLocalSource = () => {
+  const toggleLocalSource = async () => {
+    if (needsFilePermission && savedHandleRef.current) {
+      const ok = await reconnectSavedHandle();
+      if (ok) return;
+    }
     if (!hasValidLocalSource) return;
     const willActivate = !isLocalSelected;
     const nextMode = buildSourceMode(isOnlineSelected, !isLocalSelected);
@@ -2370,7 +2480,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   return (
     <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
-      <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
+      <input ref={fileInputRef} type="file" accept=".xml,.txt,.log,.nowplaying,application/xml,text/xml,text/plain,*/*" onChange={handleFileSelect} className="hidden" />
 
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
@@ -2876,6 +2986,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       </button>
                     </div>
                   </div>
+
+                  {needsFilePermission && (
+                    <button
+                      type="button"
+                      onClick={reconnectSavedHandle}
+                      className="w-full py-2.5 px-4 rounded-full flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-wider transition-all bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
+                    >
+                      <Radio size={14} className="animate-pulse" />
+                      Reconectar Leitura Local (Clique para autorizar)
+                    </button>
+                  )}
 
                   <button
                     type="button"

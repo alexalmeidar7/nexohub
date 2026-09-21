@@ -1560,6 +1560,10 @@ export function dynamicXmlPlugin(): Plugin {
             }
           }
 
+          if (music && music.startTime && (Date.now() - Number(music.startTime) > 4 * 3600 * 1000)) {
+            music = null;
+          }
+
           res.setHeader("Content-Type", "application/json");
           res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
           res.end(JSON.stringify({ ok: true, music }));

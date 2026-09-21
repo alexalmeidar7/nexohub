@@ -31,38 +31,5 @@
     "source": "pasta",
     "deviceName": "IN - LIVE 2",
     "updated_at": "2026-09-21T03:38:59.127Z"
-  },
-  "positivafm": {
-    "titulo": "Viva La Vida",
-    "artista": "Coldplay",
-    "duracao": 242,
-    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/aa/85/52aa851f-15b7-6322-f91f-df84b15b7b19/190295978044.jpg/600x600bb.jpg",
-    "horario": "15:45",
-    "startTime": 1789822332773,
-    "source": "pasta",
-    "deviceName": "Windows - Chrome (b0925e0e)",
-    "updated_at": "2026-09-21T03:38:59.127Z"
-  },
-  "d17e65af-e407-466f-9b60-b55c43399513": {
-    "titulo": "Viva La Vida",
-    "artista": "Coldplay",
-    "duracao": 242,
-    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/aa/85/52aa851f-15b7-6322-f91f-df84b15b7b19/190295978044.jpg/600x600bb.jpg",
-    "horario": "15:45",
-    "startTime": 1789822332773,
-    "source": "pasta",
-    "deviceName": "Windows - Chrome (b0925e0e)",
-    "updated_at": "2026-09-21T03:38:59.127Z"
-  },
-  "positiva": {
-    "titulo": "Viva La Vida",
-    "artista": "Coldplay",
-    "duracao": 242,
-    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/aa/85/52aa851f-15b7-6322-f91f-df84b15b7b19/190295978044.jpg/600x600bb.jpg",
-    "horario": "15:45",
-    "startTime": 1789822332773,
-    "source": "pasta",
-    "deviceName": "Windows - Chrome (b0925e0e)",
-    "updated_at": "2026-09-21T03:38:59.127Z"
   }
 }
