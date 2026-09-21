@@ -82,19 +82,19 @@ export const CANONICAL_PRESENTERS: Record<string, ResolvedPresenter> = {
   "99824dc1-78da-44b8-9033-920922ead18b": {
     id: "99824dc1-78da-44b8-9033-920922ead18b",
     nome: "Automático",
-    foto: "/locutores/sem-loc.png",
+    foto: "",
     stationKey: "POSITIVA FM",
   },
   "interativa-automatico": {
     id: "interativa-automatico",
     nome: "Automático",
-    foto: "/locutores/sem-loc.png",
+    foto: "",
     stationKey: "INTERATIVA FM",
   },
   "cultura-automatico": {
     id: "cultura-automatico",
     nome: "Automático",
-    foto: "/locutores/sem-loc.png",
+    foto: "",
     stationKey: "CULTURA FM",
   },
 
@@ -358,7 +358,7 @@ function getCanonicalPresenterByProgramName(progName: string, diasSemana?: strin
   if (norm.includes("mega bonus 2")) {
     return CANONICAL_PRESENTERS["0a65fa6b-8326-4b3a-a4d8-5fb73655f6fc"]; // Thiago Santhê
   }
-  if (norm.includes("mega bonus") || norm.includes("top 20") || norm.includes("independencia") || norm.includes("programacao musical")) {
+  if (norm.includes("mega bonus") || norm.includes("top 20") || norm.includes("independencia")) {
     return CANONICAL_PRESENTERS["507bdf72-fcf2-4b17-bb78-22ce22256150"]; // Ani Cristine
   }
   if (norm.includes("sunset retro")) {
@@ -625,11 +625,20 @@ export function resolveSafePresenterPhoto(
     nome = arg1 || arg2;
   }
 
+  if (!foto && !nome) return "";
+
   const norm = (nome || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+
+  if (!norm || norm === "—" || norm === "-" || norm === "none" || norm === "null" || norm === "undefined") {
+    return "";
+  }
+  if (norm.includes("sem loc") || norm.includes("automatico")) {
+    return "";
+  }
 
   const station = normalizeClientKey(stationKeyOrUserId);
 
@@ -663,9 +672,8 @@ export function resolveSafePresenterPhoto(
     if (norm.includes("morga") || norm.includes("everson") || norm.includes("morgantini")) return "/locutores/morga.png";
     if (norm.includes("pablo") || norm.includes("kossa") || norm.includes("santhe")) return "/locutores/pablo.png";
     if (norm.includes("andre")) return "/locutores/andre.png";
-    if (norm.includes("sem loc") || norm.includes("automatico")) return "/locutores/sem-loc.png";
     if (isValidPhoto) return foto!;
-    return "/locutores/ani.png";
+    return "";
   }
 
   // 2. Positiva FM - Strict isolation
@@ -684,9 +692,8 @@ export function resolveSafePresenterPhoto(
     if ((norm.includes("cristiano") || norm === "cris" || norm.startsWith("cris ")) && !norm.includes("cristine") && !norm.includes("ani")) {
       return "/locutores/cris.png";
     }
-    if (norm.includes("sem loc") || norm.includes("automatico")) return "/locutores/sem-loc.png";
     if (isValidPhoto) return foto!;
-    return "/locutores/jonathas.png";
+    return "";
   }
 
   // 3. Cultura FM - Strict isolation
@@ -699,9 +706,8 @@ export function resolveSafePresenterPhoto(
     if (norm.includes("rayssa") || norm.includes("raissa")) return "/locutores/rayssa.png";
     if (norm.includes("junior")) return "/locutores/junior.png";
     if (norm.includes("elco")) return "/locutores/elco.png";
-    if (norm.includes("sem loc") || norm.includes("automatico")) return "/locutores/sem-loc.png";
     if (isValidPhoto) return foto!;
-    return "/locutores/azevedo.png";
+    return "";
   }
 
   // 4. Station unknown / fallback: MUST still protect against false 'cris' match on Ani Cristine!
@@ -739,5 +745,5 @@ export function resolveSafePresenterPhoto(
   if (norm.includes("elco")) return "/locutores/elco.png";
 
   if (isValidPhoto) return foto!;
-  return "/locutores/sem-loc.png";
+  return "";
 }

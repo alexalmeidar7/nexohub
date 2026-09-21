@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Clock, User, Plus } from "lucide-react";
+import { Clock, User, Plus, Radio } from "lucide-react";
 import { useAlbumColors } from "@/hooks/useAlbumColors";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,9 +28,9 @@ interface OnAirDisplayState {
 type AnimPhase = "idle" | "exiting" | "entering-prep";
 
 function formatHour(h: string): string {
-  if (!h) return "";
-  const clean = String(h).trim();
-  return clean.length >= 5 ? clean.slice(0, 5) : clean;
+  if (!h) return "00:00";
+  const parts = h.split(":");
+  return `${parts[0] || "00"}:${parts[1] || "00"}`;
 }
 
 export default function FloatingOnAirPresenter({
@@ -54,7 +54,7 @@ export default function FloatingOnAirPresenter({
 
     const ap = resolvePresenterForProgram(active, syncDb?.apresentadores || [], targetUid || user?.email);
     const apNome = ap?.nome || "—";
-    const apFoto = resolveSafePresenterPhoto(ap?.foto, apNome, targetUid || user?.email);
+    const apFoto = ap ? resolveSafePresenterPhoto(ap.foto, apNome, targetUid || user?.email) : "";
 
     return {
       programaNome: progNome,
@@ -84,7 +84,7 @@ export default function FloatingOnAirPresenter({
           horarioInicio: next.horario_inicio || next.horarioInicio || "00:00",
           horarioFim: next.horario_fim || next.horarioFim || "23:59",
           locutorNome: nextAp?.nome || "—",
-          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome, targetUid || user?.email),
+          locutorFoto: nextAp ? resolveSafePresenterPhoto(nextAp.foto, nextAp.nome, targetUid || user?.email) : "",
         };
       }
     }
@@ -152,7 +152,7 @@ export default function FloatingOnAirPresenter({
           horarioInicio: nextProg.horario_inicio || nextProg.horarioInicio || "00:00",
           horarioFim: nextProg.horario_fim || nextProg.horarioFim || "23:59",
           locutorNome: nextAp?.nome || "—",
-          locutorFoto: resolveSafePresenterPhoto(nextAp?.foto, nextAp?.nome, uid || targetEmail),
+          locutorFoto: nextAp ? resolveSafePresenterPhoto(nextAp.foto, nextAp.nome, uid || targetEmail) : "",
         });
       }
 
@@ -165,7 +165,7 @@ export default function FloatingOnAirPresenter({
           horarioInicio: activeProg.horario_inicio || activeProg.horarioInicio || "00:00",
           horarioFim: activeProg.horario_fim || activeProg.horarioFim || "23:59",
           locutorNome: apNome,
-          locutorFoto: resolveSafePresenterPhoto(ap?.foto, apNome, uid || targetEmail),
+          locutorFoto: ap ? resolveSafePresenterPhoto(ap.foto, apNome, uid || targetEmail) : "",
         };
 
         const key = `${nextState.programaNome}:::${nextState.locutorNome}:::${nextState.horarioInicio}`;
@@ -341,17 +341,13 @@ export default function FloatingOnAirPresenter({
               border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            {resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome, targetUid || user?.email) ? (
+            {onAirInfo.locutorFoto ? (
               <img
-                key={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome, targetUid || user?.email)}
-                src={resolveSafePresenterPhoto(onAirInfo.locutorFoto, onAirInfo.locutorNome, targetUid || user?.email)}
+                key={onAirInfo.locutorFoto}
+                src={onAirInfo.locutorFoto}
                 alt={onAirInfo.locutorNome || "Locutor no ar"}
                 onError={(e) => {
-                  const target = e.currentTarget;
-                  const fallback = resolveSafePresenterPhoto("", onAirInfo.locutorNome, targetUid || user?.email);
-                  if (target.src !== fallback) {
-                    target.src = fallback;
-                  }
+                  e.currentTarget.style.display = "none";
                 }}
                 style={{
                   width: "100%",
@@ -372,7 +368,7 @@ export default function FloatingOnAirPresenter({
                   ...photoAnimStyle,
                 }}
               >
-                <User size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
+                <Radio size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
               </div>
             )}
           </div>
@@ -580,16 +576,12 @@ export default function FloatingOnAirPresenter({
                 border: "1px solid rgba(255,255,255,0.15)",
               }}
             >
-              {resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome, targetUid || user?.email) ? (
+              {nextProgInfo?.locutorFoto ? (
                 <img
-                  src={resolveSafePresenterPhoto(nextProgInfo?.locutorFoto, nextProgInfo?.locutorNome, targetUid || user?.email)}
+                  src={nextProgInfo.locutorFoto}
                   alt={nextProgInfo?.locutorNome || "Próximo locutor"}
                   onError={(e) => {
-                    const target = e.currentTarget;
-                    const fallback = resolveSafePresenterPhoto("", nextProgInfo?.locutorNome, targetUid || user?.email);
-                    if (target.src !== fallback) {
-                      target.src = fallback;
-                    }
+                    e.currentTarget.style.display = "none";
                   }}
                   style={{
                     width: "100%",
@@ -608,7 +600,7 @@ export default function FloatingOnAirPresenter({
                     justifyContent: "center",
                   }}
                 >
-                  <User size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
+                  <Radio size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
                 </div>
               )}
             </div>
