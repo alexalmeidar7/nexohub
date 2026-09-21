@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<geral versao="1.0">
+  <gerado_em>2026-09-18T16:50:06.507Z</gerado_em>
+
+  <!-- DADOS DA EMISSORA -->
+  <estacao>
+    <nome>Positiva FM 99.1</nome>
+    <slug>positivafm</slug>
+    <cidade>Goiânia - GO</cidade>
+    <frequencia>99.1 FM</frequencia>
+    <uid>d17e65af-e407-466f-9b60-b55c43399513</uid>
+  </estacao>
+
+  <!-- NO AR (Música, Programa e Apresentador) -->
+  <no_ar>
+    <musica_atual>
+      <titulo>Música em Reprodução</titulo>
+      <capa_url>https://nexohub.lovable.app/default-sponsor-logo.png</capa_url>
+      <curiosidade>Transmitindo com qualidade digital direto dos estúdios centrais.</curiosidade>
+      <texto_completo>Música em Reprodução</texto_completo>
+    </musica_atual>
+
+    <programa_atual>
+      <nome>Programação Positiva FM 99.1</nome>
+      <estudio>Estudio FM</estudio>
+    </programa_atual>
+
+    <apresentador_atual>
+      <nome>Locutor no Ar</nome>
+      <foto_url>https://nexohub.lovable.app/default-sponsor-logo.png</foto_url>
+      <social>@positivafm</social>
+    </apresentador_atual>
+
+    <a_seguir>
+      <ativo>1</ativo>
+      <programa_nome>Programação Positiva FM 99.1</programa_nome>
+      <horario>12:00</horario>
+      <locutor_nome>Locutor no Ar</locutor_nome>
+      <locutor_foto>https://nexohub.lovable.app/default-sponsor-logo.png</locutor_foto>
+    </a_seguir>
+  </no_ar>
+
+  <!-- PREVISÃO DO TEMPO -->
+  <previsao_tempo>
+    <cidade>Goiânia - GO</cidade>
+    <atual>
+      <temperatura>34ºC</temperatura>
+      <descricao>Céu limpo</descricao>
+      <minima>23ºC</minima>
+      <maxima>34ºC</maxima>
+      <umidade>26%</umidade>
+      <vento>10 km/h</vento>
+      <icone_url>https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/weather-icons/weather-icon-static-0-d.png</icone_url>
+    </atual>
+  </previsao_tempo>
+
+  <!-- ROTEIRO E ALINHAMENTO DO ESTÚDIO -->
+  <roteiro>
+    <programa>Primeira Hora Positiva</programa>
+    <estudio>Estudio FM</estudio>
+    <data>2026-04-16</data>
+    <horario>00:00</horario>
+  </roteiro>
+
+  <!-- INTERATIVIDADE (Batalha, Enquete, Quiz) -->
+  <interatividade>
+    <batalha ativa="1">
+      <titulo>Batalha Musical</titulo>
+      <musica_a>
+        <nome>Na Sola da Bota</nome>
+        <artista>Rionegro &amp; Solimões</artista>
+        <porcentagem>0%</porcentagem>
+      </musica_a>
+      <musica_b>
+        <nome>Leilão</nome>
+        <artista>César Menotti &amp; Fabiano</artista>
+        <porcentagem>0%</porcentagem>
+      </musica_b>
+      <artista1_nome>Rionegro &amp; Solimões</artista1_nome>
+      <artista1_musica>Na Sola da Bota</artista1_musica>
+      <artista1_porcentagem>0%</artista1_porcentagem>
+      <artista1_imagem>https://cdn-images.dzcdn.net/images/artist/a3a6b97ac5cfb1d572a84cba92ddce77/1000x1000-000000-80-0-0.jpg</artista1_imagem>
+      <artista2_nome>César Menotti &amp; Fabiano</artista2_nome>
+      <artista2_musica>Leilão</artista2_musica>
+      <artista2_porcentagem>0%</artista2_porcentagem>
+      <artista2_imagem>https://cdn-images.dzcdn.net/images/artist/775fc9314f5ce7a09329f33bcc802a90/1000x1000-000000-80-0-0.jpg</artista2_imagem>
+      <horario_inicio>08:00</horario_inicio>
+      <horario_fim>23:59</horario_fim>
+    </batalha>
+
+    <enquete ativa="1">
+    <emissora>Positiva FM 99.1</emissora>
+    <pergunta>Qual dessas coisas você prefere resolver logo para tirar da cabeça?</pergunta>
+    <opcao_a>Uma conta para pagar</opcao_a>
+    <opcao_b>Uma ligação que precisa fazer</opcao_b>
+    <opcao_c>Uma conversa que está adiando</opcao_c>
+    <opcao_d>Uma pendência de trabalho</opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
+    <resposta1>Uma conta para pagar</resposta1>
+    <resposta2>Uma ligação que precisa fazer</resposta2>
+    <resposta3>Uma conversa que está adiando</resposta3>
+    <resposta4>Uma pendência de trabalho</resposta4>
+    <resposta_correta>1</resposta_correta>
+    <horario_inicio>08:00</horario_inicio>
+    <horario_fim>23:59</horario_fim>
+  </enquete>
+
+    <quiz ativa="1">
+      <pergunta>Qual o maior sucesso musical deste ano?</pergunta>
+      <alternativa_a>Alternativa A</alternativa_a>
+      <alternativa_b>Alternativa B</alternativa_b>
+      <alternativa_c>Alternativa C</alternativa_c>
+      <alternativa_d>Alternativa D</alternativa_d>
+      <resposta1>Alternativa A</resposta1>
+      <resposta2>Alternativa B</resposta2>
+      <resposta3>Alternativa C</resposta3>
+      <resposta4>Alternativa D</resposta4>
+      <resposta_correta>A</resposta_correta>
+      <resposta_correta_texto>Alternativa A</resposta_correta_texto>
+      <horario_inicio>00:00</horario_inicio>
+      <horario_fim>23:59</horario_fim>
+      <explicacao></explicacao>
+      <imagem_resposta></imagem_resposta>
+    </quiz>
+  </interatividade>
+
+  <!-- PATROCINADORES / LOGOMARCAS -->
+  <patrocinadores>
+    <patrocinador>
+      <nome>Patrocinador Oficial</nome>
+      <logo_url>https://nexohub.lovable.app/default-sponsor-logo.png</logo_url>
+    </patrocinador>
+  </patrocinadores>
+</geral>

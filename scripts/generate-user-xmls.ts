@@ -544,6 +544,24 @@ function generateFallbackBatalha(st: StationConfig): string {
     <artista2_imagem></artista2_imagem>
     <horario_inicio></horario_inicio>
     <horario_fim></horario_fim>
+    <artista1></artista1>
+    <musica1></musica1>
+    <porcentagem1>0%</porcentagem1>
+    <imagem1></imagem1>
+    <foto1></foto1>
+    <artista2></artista2>
+    <musica2></musica2>
+    <porcentagem2>0%</porcentagem2>
+    <imagem2></imagem2>
+    <foto2></foto2>
+    <artista_a></artista_a>
+    <musica_a></musica_a>
+    <porcentagem_a>0%</porcentagem_a>
+    <imagem_a></imagem_a>
+    <artista_b></artista_b>
+    <musica_b></musica_b>
+    <porcentagem_b>0%</porcentagem_b>
+    <imagem_b></imagem_b>
   </batalha>
 </items>
 `;
@@ -956,20 +974,41 @@ export async function generateAllUserXmls() {
             active = list[0];
           }
           if (active && (active.artista1_nome || active.artista2_nome)) {
+            const p1 = active.artista1_porcentagem ?? 0;
+            const p2 = active.artista2_porcentagem ?? 0;
             batalhaContent = `<?xml version="1.0" encoding="UTF-8"?>
 <items>
   <batalha>
     <emissora>${escapeXml(st.name)}</emissora>
     <artista1_nome>${escapeXml(active.artista1_nome || "")}</artista1_nome>
     <artista1_musica>${escapeXml(active.artista1_musica || "")}</artista1_musica>
-    <artista1_porcentagem>${escapeXml(active.artista1_porcentagem ?? 0)}%</artista1_porcentagem>
+    <artista1_porcentagem>${escapeXml(p1)}%</artista1_porcentagem>
     <artista1_imagem>${escapeXml(active.artista1_imagem || "")}</artista1_imagem>
     <artista2_nome>${escapeXml(active.artista2_nome || "")}</artista2_nome>
     <artista2_musica>${escapeXml(active.artista2_musica || "")}</artista2_musica>
-    <artista2_porcentagem>${escapeXml(active.artista2_porcentagem ?? 0)}%</artista2_porcentagem>
+    <artista2_porcentagem>${escapeXml(p2)}%</artista2_porcentagem>
     <artista2_imagem>${escapeXml(active.artista2_imagem || "")}</artista2_imagem>
     <horario_inicio>${escapeXml(active.horario_inicio || "00:00")}</horario_inicio>
     <horario_fim>${escapeXml(active.horario_fim || "23:59")}</horario_fim>
+    <!-- Variantes de tags compatíveis com diferentes títulos vMix -->
+    <artista1>${escapeXml(active.artista1_nome || "")}</artista1>
+    <musica1>${escapeXml(active.artista1_musica || "")}</musica1>
+    <porcentagem1>${escapeXml(p1)}%</porcentagem1>
+    <imagem1>${escapeXml(active.artista1_imagem || "")}</imagem1>
+    <foto1>${escapeXml(active.artista1_imagem || "")}</foto1>
+    <artista2>${escapeXml(active.artista2_nome || "")}</artista2>
+    <musica2>${escapeXml(active.artista2_musica || "")}</musica2>
+    <porcentagem2>${escapeXml(p2)}%</porcentagem2>
+    <imagem2>${escapeXml(active.artista2_imagem || "")}</imagem2>
+    <foto2>${escapeXml(active.artista2_imagem || "")}</foto2>
+    <artista_a>${escapeXml(active.artista1_nome || "")}</artista_a>
+    <musica_a>${escapeXml(active.artista1_musica || "")}</musica_a>
+    <porcentagem_a>${escapeXml(p1)}%</porcentagem_a>
+    <imagem_a>${escapeXml(active.artista1_imagem || "")}</imagem_a>
+    <artista_b>${escapeXml(active.artista2_nome || "")}</artista_b>
+    <musica_b>${escapeXml(active.artista2_musica || "")}</musica_b>
+    <porcentagem_b>${escapeXml(p2)}%</porcentagem_b>
+    <imagem_b>${escapeXml(active.artista2_imagem || "")}</imagem_b>
   </batalha>
 </items>`;
           }
@@ -1099,7 +1138,7 @@ export async function generateAllUserXmls() {
   // Also synchronize default station files (positivafm) to root public/xml/* and public/*
   const defaultUserDir = join(baseXmlDir, "positivafm");
   if (existsSync(defaultUserDir)) {
-    const rootFiles = ["enquete.xml", "geral.xml", "batalha.xml", "quiz.xml", "roteiro.xml", "broadcast.xml"];
+    const rootFiles = ["enquete.xml", "geral.xml", "batalha.xml", "quiz.xml", "roteiro.xml", "broadcast.xml", "tempo.xml", "logos.xml"];
     for (const rf of rootFiles) {
       const src = join(defaultUserDir, rf);
       if (existsSync(src)) {
@@ -1109,9 +1148,54 @@ export async function generateAllUserXmls() {
         } catch {}
       }
     }
+
+    // Generate physical static files in public/functions/v1/ for Supabase URL compatibility
+    const functionsDir = resolve("public", "functions", "v1");
+    if (!existsSync(functionsDir)) mkdirSync(functionsDir, { recursive: true });
+
+    const functionMap: Record<string, string> = {
+      "serve-xml-batalha": "batalha.xml",
+      "serve-xml-enquete": "enquete.xml",
+      "serve-xml-quiz": "quiz.xml",
+      "serve-xml-geral": "geral.xml",
+      "serve-xml-tempo": "tempo.xml",
+      "serve-xml-roteiro-estudio": "roteiro.xml",
+      "serve-xml-broadcast": "broadcast.xml",
+      "serve-xml-logos": "logos.xml",
+    };
+
+    for (const [funcName, xmlFile] of Object.entries(functionMap)) {
+      const src = join(defaultUserDir, xmlFile);
+      if (existsSync(src)) {
+        try {
+          copyFileSync(src, join(functionsDir, funcName));
+          copyFileSync(src, join(functionsDir, `${funcName}.xml`));
+        } catch {}
+      }
+    }
+
+    // Generate physical static files in public/storage/v1/object/public/xml-files/ for weather XML compatibility
+    const storageDir = resolve("public", "storage", "v1", "object", "public", "xml-files");
+    if (!existsSync(storageDir)) mkdirSync(storageDir, { recursive: true });
+
+    const tempoSrc = join(defaultUserDir, "tempo.xml");
+    if (existsSync(tempoSrc)) {
+      const uids = [
+        "d17e65af-e407-466f-9b60-b55c43399513",
+        "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+        "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+        "66337743-4e4f-4950-b58f-750b0c76861e",
+        "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+      ];
+      for (const uid of uids) {
+        try {
+          copyFileSync(tempoSrc, join(storageDir, `xml-tempo-${uid}.xml`));
+        } catch {}
+      }
+    }
   }
 
-  console.log(`Successfully generated and synced ${totalFiles} XML files in public/xml/`);
+  console.log(`Successfully generated and synced ${totalFiles} XML files in public/xml/ and public/functions/v1/`);
 }
 
 generateAllUserXmls().catch((err) => {

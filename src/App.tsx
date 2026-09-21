@@ -327,6 +327,10 @@ const App = () => (
             <Route path="/xml/:slug/:file" element={<XmlPublicEndpoint />} />
             <Route path="/xml/:file" element={<XmlPublicEndpoint />} />
 
+            {/* Supabase Edge Function & Storage compatibility endpoints */}
+            <Route path="/functions/v1/:functionName" element={<XmlPublicEndpoint />} />
+            <Route path="/storage/v1/object/public/xml-files/:fileName" element={<XmlPublicEndpoint />} />
+
 
 
 

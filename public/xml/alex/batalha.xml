@@ -12,5 +12,23 @@
     <artista2_imagem></artista2_imagem>
     <horario_inicio></horario_inicio>
     <horario_fim></horario_fim>
+    <artista1></artista1>
+    <musica1></musica1>
+    <porcentagem1>0%</porcentagem1>
+    <imagem1></imagem1>
+    <foto1></foto1>
+    <artista2></artista2>
+    <musica2></musica2>
+    <porcentagem2>0%</porcentagem2>
+    <imagem2></imagem2>
+    <foto2></foto2>
+    <artista_a></artista_a>
+    <musica_a></musica_a>
+    <porcentagem_a>0%</porcentagem_a>
+    <imagem_a></imagem_a>
+    <artista_b></artista_b>
+    <musica_b></musica_b>
+    <porcentagem_b>0%</porcentagem_b>
+    <imagem_b></imagem_b>
   </batalha>
 </items>

@@ -1,29 +1,116 @@
-<IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
-    Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, HEAD"
-</IfModule>
-
-<FilesMatch "\.(xml|json)$">
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
-    Header set Pragma "no-cache"
-    Header set Expires 0
-</FilesMatch>
-
-<IfModule mod_mime.c>
-    AddType application/xml .xml
-    AddType application/json .json
-</IfModule>
-
+# NexoHub / Antigravity - Web Server Configuration for Hostinger / LiteSpeed / Apache
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
+  RewriteEngine On
+  RewriteBase /
 
-    # If requested file or directory exists, serve directly
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^ - [L]
+  # Set XML MIME type and UTF-8 charset
+  <FilesMatch "\.xml$">
+    Header set Content-Type "application/xml; charset=utf-8"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
 
-    # Rewrite all other URLs to index.html for SPA
-    RewriteRule ^ index.html [L]
+  <FilesMatch "^serve-xml-">
+    Header set Content-Type "application/xml; charset=utf-8"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+
+  # 1. Supabase function XML rewrites for specific stations
+  # Interativa FM
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-batalha/?$ /xml/interativafm/batalha.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-enquete/?$ /xml/interativafm/enquete.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-quiz/?$ /xml/interativafm/quiz.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-geral/?$ /xml/interativafm/geral.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-tempo/?$ /xml/interativafm/tempo.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-roteiro-estudio/?$ /xml/interativafm/roteiro.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-broadcast/?$ /xml/interativafm/broadcast.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=interativa|user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce) [NC]
+  RewriteRule ^functions/v1/serve-xml-logos/?$ /xml/interativafm/logos.xml [L]
+
+  # Cultura FM 97.3
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-batalha/?$ /xml/culturafm973/batalha.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-enquete/?$ /xml/culturafm973/enquete.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-quiz/?$ /xml/culturafm973/quiz.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-geral/?$ /xml/culturafm973/geral.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-tempo/?$ /xml/culturafm973/tempo.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-roteiro-estudio/?$ /xml/culturafm973/roteiro.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-broadcast/?$ /xml/culturafm973/broadcast.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=cultura|user_id=66337743-4e4f-4950-b58f-750b0c76861e) [NC]
+  RewriteRule ^functions/v1/serve-xml-logos/?$ /xml/culturafm973/logos.xml [L]
+
+  # Transmissão / Jornal FM
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-batalha/?$ /xml/transmissao/batalha.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-enquete/?$ /xml/transmissao/enquete.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-quiz/?$ /xml/transmissao/quiz.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-geral/?$ /xml/transmissao/geral.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-tempo/?$ /xml/transmissao/tempo.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-roteiro-estudio/?$ /xml/transmissao/roteiro.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-broadcast/?$ /xml/transmissao/broadcast.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=transmissao|slug=jornal|user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3) [NC]
+  RewriteRule ^functions/v1/serve-xml-logos/?$ /xml/transmissao/logos.xml [L]
+
+  # Alex Estúdio
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-batalha/?$ /xml/alex/batalha.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-enquete/?$ /xml/alex/enquete.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-quiz/?$ /xml/alex/quiz.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-geral/?$ /xml/alex/geral.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-tempo/?$ /xml/alex/tempo.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-roteiro-estudio/?$ /xml/alex/roteiro.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-broadcast/?$ /xml/alex/broadcast.xml [L]
+  RewriteCond %{QUERY_STRING} (?:slug=alex|user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5) [NC]
+  RewriteRule ^functions/v1/serve-xml-logos/?$ /xml/alex/logos.xml [L]
+
+  # Default / Positiva FM rewrites for Supabase functions
+  RewriteRule ^functions/v1/serve-xml-batalha/?$ /xml/positivafm/batalha.xml [L]
+  RewriteRule ^functions/v1/serve-xml-enquete/?$ /xml/positivafm/enquete.xml [L]
+  RewriteRule ^functions/v1/serve-xml-quiz/?$ /xml/positivafm/quiz.xml [L]
+  RewriteRule ^functions/v1/serve-xml-geral/?$ /xml/positivafm/geral.xml [L]
+  RewriteRule ^functions/v1/serve-xml-tempo/?$ /xml/positivafm/tempo.xml [L]
+  RewriteRule ^functions/v1/serve-xml-roteiro-estudio/?$ /xml/positivafm/roteiro.xml [L]
+  RewriteRule ^functions/v1/serve-xml-broadcast/?$ /xml/positivafm/broadcast.xml [L]
+  RewriteRule ^functions/v1/serve-xml-logos/?$ /xml/positivafm/logos.xml [L]
+
+  # Supabase Storage rewrites for weather XML
+  RewriteRule ^storage/v1/object/public/xml-files/xml-tempo-b2f70324-d086-4a5d-a407-cbc4acf98dce\.xml$ /xml/interativafm/tempo.xml [L]
+  RewriteRule ^storage/v1/object/public/xml-files/xml-tempo-66337743-4e4f-4950-b58f-750b0c76861e\.xml$ /xml/culturafm973/tempo.xml [L]
+  RewriteRule ^storage/v1/object/public/xml-files/xml-tempo-48423cc6-f3b1-4bea-8729-dd0ae76a89c3\.xml$ /xml/transmissao/tempo.xml [L]
+  RewriteRule ^storage/v1/object/public/xml-files/xml-tempo-29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5\.xml$ /xml/alex/tempo.xml [L]
+  RewriteRule ^storage/v1/object/public/xml-files/xml-tempo-.*\.xml$ /xml/positivafm/tempo.xml [L]
+
+  # 2. Existing files and directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 3. Single Page Application (SPA) routing fallback
+  RewriteRule ^ index.html [L]
 </IfModule>

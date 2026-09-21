@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<programaExpress>
+  <programa>Primeira Hora Positiva</programa>
+  <estudio>ESTUDIO FM</estudio>
+  <data>2026-09-21</data>
+  <horario>07:24</horario>
+  <hora>07:24</hora>
+  <hora_inicio>07:24</hora_inicio>
+  <hora_fim>08:29</hora_fim>
+  <horario_geracao>08:14</horario_geracao>
+  <atualizado_em>2026-09-21T11:14:00.933Z</atualizado_em>
+  <participantes>
+    <item>
+      <nome>Alysson Lima</nome>
+      <cargo>Apresentador</cargo>
+      <instagram></instagram>
+    </item>
+    <item>
+      <nome>Jane Borges</nome>
+      <cargo>Apresentadora</cargo>
+      <instagram></instagram>
+    </item>
+  </participantes>
+  <bloco numero="1">
+    <noticia ordem="1">
+      <titulo>China põe vitória de Flávio no radar e monitora suas &quot;falas e práticas&quot;</titulo>
+      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/09/Flavio_Bolsonaro_Av_Paulista_2-e1788811799533.jpg?w=1200&amp;h=630&amp;crop=1</imagem>
+      <resumo>Posições sobre Brics, minerais críticos e IA são acompanhadas com atenção; Pequim avalia que comércio não será afetado, mas investimentos dependem de estabilidade</resumo>
+      <texto_materia>Blog Daniel Rittner Diretor editorial da CNN em Brasília, comanda a editoria de Infra. Atuou mais de duas décadas como repórter no Valor Econômico.
+
+O governo chinês tem observado &quot;falas e práticas&quot; do candidato à Presidência da República pelo PL, Flávio Bolsonaro, para avaliar como ficará a relação com o Brasil em caso de vitória do oposicionista.
+
+Segundo relatos feitos à CNN por fontes em Pequim, há preocupação com uma atitude abertamente pró-Estados Unidos e hostil à China por parte de um eventual novo governo de direita, embora autoridades do país vejam Flávio como mais pragmático e moderado do que seu pai, o ex-presidente Jair Bolsonaro (PL).
+
+Confrontos retóricos entre Brasil e China, principalmente no primeiro biênio da gestão anterior, marcaram a relação entre os dois países.
+
+MMG contesta objeções da UE à compra de ativos de níquel da Anglo no Brasil Mundo não está preparado para competir com a China, diz presidente da CNI Lula conversa com presidente chinês Xi Jinping sobre acordo Mercosul-China Naquele período, o ex-deputado Eduardo Bolsonaro (PL-RJ) chegou a culpar os chineses pela pandemia o ex-chanceler Ernesto Araújo chamou o vírus responsável pela covid-19 de &quot;comunavírus&quot;.
+
+O então embaixador da China em Brasília, Yang Wanming, era um diplomata ativo nas redes sociais e reagiu publicamente em diversas ocasiões, o que aumentou a fricção com o Itamaraty.
+
+As alfinetadas mútuos começaram a esmorecer apenas na segunda metade do governo Bolsonaro, após a demissão de Araújo e sua troca por Carlos França como ministro das Relações Exteriores.
+
+Agora, conforme a CNN apurou, a determinação de Pequim é ter muito cuidado. O atual embaixador do país, Zhu Qingqiao, já costuma adotar uma postura bem mais discreta nas plataformas digitais.</texto_materia>
+      <escalada>false</escalada>
+    </noticia>
+  </bloco>
+</programaExpress>

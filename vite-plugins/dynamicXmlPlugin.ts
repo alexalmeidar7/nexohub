@@ -366,10 +366,31 @@ function buildBatalhaXml(batalha?: any, stationName?: string): string {
     <artista2_imagem></artista2_imagem>
     <horario_inicio></horario_inicio>
     <horario_fim></horario_fim>
+    <artista1></artista1>
+    <musica1></musica1>
+    <porcentagem1>0%</porcentagem1>
+    <imagem1></imagem1>
+    <foto1></foto1>
+    <artista2></artista2>
+    <musica2></musica2>
+    <porcentagem2>0%</porcentagem2>
+    <imagem2></imagem2>
+    <foto2></foto2>
+    <artista_a></artista_a>
+    <musica_a></musica_a>
+    <porcentagem_a>0%</porcentagem_a>
+    <imagem_a></imagem_a>
+    <artista_b></artista_b>
+    <musica_b></musica_b>
+    <porcentagem_b>0%</porcentagem_b>
+    <imagem_b></imagem_b>
   </batalha>
 </items>
 `;
   }
+
+  const p1 = batalha.artista1_porcentagem ?? 0;
+  const p2 = batalha.artista2_porcentagem ?? 0;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <items>
@@ -377,14 +398,33 @@ function buildBatalhaXml(batalha?: any, stationName?: string): string {
     <emissora>${escapeXml(emissora)}</emissora>
     <artista1_nome>${escapeXml(batalha.artista1_nome)}</artista1_nome>
     <artista1_musica>${escapeXml(batalha.artista1_musica)}</artista1_musica>
-    <artista1_porcentagem>${escapeXml(batalha.artista1_porcentagem ?? 0)}%</artista1_porcentagem>
+    <artista1_porcentagem>${escapeXml(p1)}%</artista1_porcentagem>
     <artista1_imagem>${escapeXml(batalha.artista1_imagem || "")}</artista1_imagem>
     <artista2_nome>${escapeXml(batalha.artista2_nome)}</artista2_nome>
     <artista2_musica>${escapeXml(batalha.artista2_musica)}</artista2_musica>
-    <artista2_porcentagem>${escapeXml(batalha.artista2_porcentagem ?? 0)}%</artista2_porcentagem>
+    <artista2_porcentagem>${escapeXml(p2)}%</artista2_porcentagem>
     <artista2_imagem>${escapeXml(batalha.artista2_imagem || "")}</artista2_imagem>
     <horario_inicio>${escapeXml(batalha.horario_inicio || "")}</horario_inicio>
     <horario_fim>${escapeXml(batalha.horario_fim || "")}</horario_fim>
+    <!-- Variantes de tags compatíveis com diferentes títulos vMix -->
+    <artista1>${escapeXml(batalha.artista1_nome)}</artista1>
+    <musica1>${escapeXml(batalha.artista1_musica)}</musica1>
+    <porcentagem1>${escapeXml(p1)}%</porcentagem1>
+    <imagem1>${escapeXml(batalha.artista1_imagem || "")}</imagem1>
+    <foto1>${escapeXml(batalha.artista1_imagem || "")}</foto1>
+    <artista2>${escapeXml(batalha.artista2_nome)}</artista2>
+    <musica2>${escapeXml(batalha.artista2_musica)}</musica2>
+    <porcentagem2>${escapeXml(p2)}%</porcentagem2>
+    <imagem2>${escapeXml(batalha.artista2_imagem || "")}</imagem2>
+    <foto2>${escapeXml(batalha.artista2_imagem || "")}</foto2>
+    <artista_a>${escapeXml(batalha.artista1_nome)}</artista_a>
+    <musica_a>${escapeXml(batalha.artista1_musica)}</musica_a>
+    <porcentagem_a>${escapeXml(p1)}%</porcentagem_a>
+    <imagem_a>${escapeXml(batalha.artista1_imagem || "")}</imagem_a>
+    <artista_b>${escapeXml(batalha.artista2_nome)}</artista_b>
+    <musica_b>${escapeXml(batalha.artista2_musica)}</musica_b>
+    <porcentagem_b>${escapeXml(p2)}%</porcentagem_b>
+    <imagem_b>${escapeXml(batalha.artista2_imagem || "")}</imagem_b>
   </batalha>
 </items>
 `;

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <enquete ativa="1">
+    <emissora>Positiva FM 99.1</emissora>
+    <pergunta>Qual dessas coisas você prefere resolver logo para tirar da cabeça?</pergunta>
+    <opcao_a>Uma conta para pagar</opcao_a>
+    <opcao_b>Uma ligação que precisa fazer</opcao_b>
+    <opcao_c>Uma conversa que está adiando</opcao_c>
+    <opcao_d>Uma pendência de trabalho</opcao_d>
+    <votos_a>0</votos_a>
+    <votos_b>0</votos_b>
+    <votos_c>0</votos_c>
+    <votos_d>0</votos_d>
+    <resposta1>Uma conta para pagar</resposta1>
+    <resposta2>Uma ligação que precisa fazer</resposta2>
+    <resposta3>Uma conversa que está adiando</resposta3>
+    <resposta4>Uma pendência de trabalho</resposta4>
+    <resposta_correta>1</resposta_correta>
+    <horario_inicio>08:00</horario_inicio>
+    <horario_fim>23:59</horario_fim>
+  </enquete>
+</items>

@@ -459,6 +459,31 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     // Mantém todas as batalhas (ativas, agendadas e encerradas) na tabela
     setBatalhas(merged);
     saveStoredBatalhas(targetUserId, merged);
+
+    // Se o formulário estiver vazio e nenhuma edição estiver em andamento,
+    // carrega automaticamente a batalha ativa no ar para permitir ajustes imediatos
+    if (!editingIdRef.current) {
+      const { today, currentTime } = getBrasiliaDateTime();
+      const active = getActiveBatalha(merged, today, currentTime, true);
+      if (active && (active.artista1_nome || active.artista2_nome)) {
+        setArtista1(prev => (!prev.nome ? {
+          nome: active.artista1_nome,
+          musica: active.artista1_musica,
+          porcentagem: active.artista1_porcentagem ?? 0,
+          imagemUrl: active.artista1_imagem || "",
+        } : prev));
+        setArtista2(prev => (!prev.nome ? {
+          nome: active.artista2_nome,
+          musica: active.artista2_musica,
+          porcentagem: active.artista2_porcentagem ?? 0,
+          imagemUrl: active.artista2_imagem || "",
+        } : prev));
+        setSchedDate(prev => (!prev ? active.data_batalha : prev));
+        setSchedStart(prev => (!prev ? active.horario_inicio : prev));
+        setSchedEnd(prev => (!prev ? active.horario_fim : prev));
+        setEditingId(prev => (prev === null ? active.id : prev));
+      }
+    }
   };
 
   const handleCopyXml = () => {
@@ -913,11 +938,18 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
               {editingId && (
                 <Button
                   variant="ghost"
-                  onClick={() => { setEditingId(null); setSchedDate(""); setSchedStart(""); setSchedEnd(""); }}
-                  className="opacity-50 hover:opacity-100"
+                  onClick={() => {
+                    setEditingId(null);
+                    setArtista1({ ...EMPTY_ARTIST });
+                    setArtista2({ ...EMPTY_ARTIST });
+                    setSchedDate("");
+                    setSchedStart("");
+                    setSchedEnd("");
+                  }}
+                  className="opacity-70 hover:opacity-100 text-xs rounded-xl"
                   style={{ color: "var(--layout-page-text, #1a1a1a)" }}
                 >
-                  Cancelar
+                  Nova Batalha / Limpar Formulário
                 </Button>
               )}
             </div>

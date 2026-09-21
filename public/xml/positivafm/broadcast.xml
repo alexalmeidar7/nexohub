@@ -2,12 +2,12 @@
 <items>
   <dados>
     <empresa_logo>/logos/positiva.png</empresa_logo>
-    <programa_nome>Modão Sertanejo</programa_nome>
+    <programa_nome>Flashback Positiva</programa_nome>
     <programa_logo>/selos/domingao.png</programa_logo>
     <programa_thumb></programa_thumb>
-    <locutor_nome>Fernando</locutor_nome>
-    <locutor_foto>/locutores/fernando.png</locutor_foto>
-    <locutor_social>@positivafm</locutor_social>
+    <locutor_nome>Jonathas Mattos</locutor_nome>
+    <locutor_foto>/locutores/jonathas.png</locutor_foto>
+    <locutor_social>@jonathasmattoslocutor</locutor_social>
     <rede_social_atual>Instagram</rede_social_atual>
     <rede_social_icone>instagram</rede_social_icone>
     <logo_patrocinador></logo_patrocinador>
@@ -32,15 +32,15 @@
     </infos_canto>
     <a_seguir>
       <ativo>1</ativo>
-      <programa_nome>Madruga Positiva</programa_nome>
-      <nome_programa>Madruga Positiva</nome_programa>
+      <programa_nome>Whatsapp Positiva</programa_nome>
+      <nome_programa>Whatsapp Positiva</nome_programa>
       <programa_logo>/selos/madrugada.png</programa_logo>
-      <locutor_nome>Automático</locutor_nome>
-      <locutor_foto>/locutores/sem-loc.png</locutor_foto>
-      <horario>00:00</horario>
+      <locutor_nome>Jonathas Mattos</locutor_nome>
+      <locutor_foto>/locutores/jonathas.png</locutor_foto>
+      <horario>13:00</horario>
       <texto>Fique conectado!</texto>
       <intervalo_atualizacao>60</intervalo_atualizacao>
-      <atualizado_em>2026-09-21T01:16:05.694Z</atualizado_em>
+      <atualizado_em>2026-09-21T15:13:22.373Z</atualizado_em>
     </a_seguir>
   </dados>
 </items>

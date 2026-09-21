@@ -14,13 +14,19 @@ import {
   escapeXml,
 } from "@/lib/scheduledItemUtils";
 import initialEnquetesSync from "@/data/xml_enquetes_sync.json";
+import initialBatalhasSync from "@/data/xml_batalhas_sync.json";
 
 const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
 const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
 const SUPABASE_BASE = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
 
 export default function XmlPublicEndpoint() {
-  const { slug, file } = useParams<{ slug?: string; file?: string }>();
+  const { slug: pathSlug, file: pathFile, functionName, fileName } = useParams<{
+    slug?: string;
+    file?: string;
+    functionName?: string;
+    fileName?: string;
+  }>();
   const [searchParams] = useSearchParams();
   const [xmlContent, setXmlContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -28,16 +34,49 @@ export default function XmlPublicEndpoint() {
   const [copied, setCopied] = useState(false);
 
   // Normalize slug & filename
-  const cleanSlug = (slug || "default").toLowerCase();
-  const rawFile = (file || "broadcast.xml").toLowerCase();
-  const filename = rawFile.endsWith(".xml") ? rawFile : `${rawFile}.xml`;
+  let resolvedFile = pathFile || "";
+  if (functionName) {
+    const cleanFn = functionName.toLowerCase();
+    if (cleanFn.includes("batalha")) resolvedFile = "batalha.xml";
+    else if (cleanFn.includes("enquete")) resolvedFile = "enquete.xml";
+    else if (cleanFn.includes("quiz")) resolvedFile = "quiz.xml";
+    else if (cleanFn.includes("geral")) resolvedFile = "geral.xml";
+    else if (cleanFn.includes("tempo")) resolvedFile = "tempo.xml";
+    else if (cleanFn.includes("roteiro")) resolvedFile = "roteiro.xml";
+    else if (cleanFn.includes("logos")) resolvedFile = "logos.xml";
+    else if (cleanFn.includes("broadcast")) resolvedFile = "broadcast.xml";
+    else resolvedFile = `${cleanFn.replace(/^serve-xml-/, "")}.xml`;
+  } else if (fileName) {
+    if (fileName.includes("tempo")) resolvedFile = "tempo.xml";
+    else resolvedFile = fileName;
+  }
 
-  // Find account info if available
+  const querySlugOrUid =
+    searchParams.get("slug") ||
+    searchParams.get("user_id") ||
+    searchParams.get("userId") ||
+    searchParams.get("uid") ||
+    "";
+
+  // Find account info if available by query UID, query slug, or path slug
+  const cleanQuery = querySlugOrUid.toLowerCase().trim();
+  const cleanPathSlug = (pathSlug || "").toLowerCase().trim();
+
   const account = CLIENT_ACCOUNTS.find(
-    (c) => c.slug.toLowerCase() === cleanSlug || (c.aliases && c.aliases.includes(cleanSlug))
+    (c) =>
+      (cleanQuery && (c.id.toLowerCase() === cleanQuery ||
+       c.parentUserId?.toLowerCase() === cleanQuery ||
+       c.slug.toLowerCase() === cleanQuery ||
+       (c.aliases && c.aliases.map((a) => a.toLowerCase()).includes(cleanQuery)))) ||
+      (cleanPathSlug && (c.slug.toLowerCase() === cleanPathSlug ||
+       (c.aliases && c.aliases.map((a) => a.toLowerCase()).includes(cleanPathSlug))))
   );
-  const stationUid = account?.id || "b2f70324-d086-4a5d-a407-cbc4acf98dce";
-  const stationName = account?.nome || "House Mix Emissora";
+
+  const cleanSlug = account?.slug || (cleanPathSlug && cleanPathSlug !== "xml" ? cleanPathSlug : (cleanQuery && !cleanQuery.includes("-") ? cleanQuery : "positivafm"));
+  const stationUid = account?.parentUserId || account?.id || (cleanQuery.includes("-") ? cleanQuery : "d17e65af-e407-466f-9b60-b55c43399513");
+  const stationName = account?.nome || (cleanSlug === "positivafm" ? "Positiva FM 99.1" : "House Mix Emissora");
+  const rawFile = (resolvedFile || "broadcast.xml").toLowerCase();
+  const filename = rawFile.endsWith(".xml") ? rawFile : `${rawFile}.xml`;
 
   // Build corresponding Supabase fallback URL
   let supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-broadcast?user_id=${stationUid}`;
@@ -215,8 +254,12 @@ export default function XmlPublicEndpoint() {
             }
           } catch {}
         }
+        if (localBatalhas.length === 0) {
+          localBatalhas = (initialBatalhasSync as Record<string, any[]>)[cleanSlug] ||
+            (initialBatalhasSync as Record<string, any[]>)[stationUid] || [];
+        }
 
-        const activeBat = getActiveBatalha(localBatalhas);
+        const activeBat = getActiveBatalha(localBatalhas, today, currentTime, true);
 
         if (activeBat) {
           const generated = buildBatalhaXml(activeBat, stationName);
@@ -230,9 +273,9 @@ export default function XmlPublicEndpoint() {
         // 2. Try fetching from dynamic endpoints
         const candidateUrls = [
           `/xml/${cleanSlug}/${filename}`,
+          `/xml/positivafm/${filename}`,
           `/batalha.xml`,
           `/xml/batalha.xml`,
-          `/functions/v1/serve-xml-batalha?slug=${cleanSlug}&user_id=${stationUid}`,
         ];
         for (const url of candidateUrls) {
           try {
