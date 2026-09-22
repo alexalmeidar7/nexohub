@@ -467,7 +467,12 @@ export function getStoredAgendaEvents(targetUserId?: string | null): Evento[] {
     const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        const own = targetUserId
+          ? parsed.filter((e: any) => e && (!e.user_id || e.user_id === targetUserId))
+          : parsed;
+        if (own.length > 0) return own;
+      }
     }
     // Fallback global key — SOMENTE eventos que pertencem ao usuário atual
     const fallbackRaw = localStorage.getItem(LOCAL_AGENDA_EVENTS_KEY);
