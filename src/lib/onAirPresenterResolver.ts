@@ -484,7 +484,7 @@ export function resolvePresenterForProgram(
     if (found) {
       const canonical = CANONICAL_PRESENTERS[apId];
       if (!canonical || isCandidateAllowed(canonical)) {
-        const isDead = !found.foto || found.foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") || found.foto.includes("/avatars/usr-");
+        const isDead = !found.foto || found.foto.includes("/avatars/usr-");
         return {
           id: found.id,
           nome: found.nome,
@@ -506,7 +506,7 @@ export function resolvePresenterForProgram(
   if (canonicalByProg && isCandidateAllowed(canonicalByProg)) {
     // If user's list has custom presenter info with this ID, prefer it
     const userCustom = safeList.find((a) => a.id === canonicalByProg.id);
-    const isDead = !userCustom?.foto || userCustom.foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") || userCustom.foto.includes("/avatars/usr-");
+    const isDead = !userCustom?.foto || userCustom.foto.includes("/avatars/usr-");
     return {
       id: canonicalByProg.id,
       nome: userCustom?.nome || canonicalByProg.nome,
@@ -525,7 +525,7 @@ export function resolvePresenterForProgram(
         if (normA.length >= 3 && (normProg.includes(normA) || normA.includes(normProg))) {
           const canon = a.id ? CANONICAL_PRESENTERS[a.id] : null;
           if (canon && !isCandidateAllowed(canon)) continue;
-          const isDead = !a.foto || a.foto.includes("zzjfzxxvxbspbdkodoix.supabase.co") || a.foto.includes("/avatars/usr-");
+          const isDead = !a.foto || a.foto.includes("/avatars/usr-");
           return {
             id: a.id || canon?.id || "",
             nome: a.nome,
@@ -657,9 +657,12 @@ export function resolveSafePresenterPhoto(
 
   const isValidPhoto =
     Boolean(foto) &&
-    !foto!.includes("zzjfzxxvxbspbdkodoix.supabase.co") &&
     !foto!.includes("/avatars/usr-") &&
     !isForeignPhoto(foto!, station);
+
+  // A foto cadastrada pelo próprio cliente SEMPRE tem prioridade sobre
+  // qualquer imagem padrão mantida no código.
+  if (isValidPhoto) return foto!;
 
   // 1. Interativa FM - Strict isolation
   if (station === "INTERATIVA FM") {

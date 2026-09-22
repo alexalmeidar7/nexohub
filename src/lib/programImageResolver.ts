@@ -13,7 +13,6 @@ export function isSafeImageUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
   const trimmed = url.trim();
   if (!trimmed) return false;
-  if (trimmed.includes("zzjfzxxvxbspbdkodoix.supabase.co")) return false;
   return trimmed.startsWith("data:image/") || trimmed.startsWith("/") || trimmed.startsWith("http://") || trimmed.startsWith("https://");
 }
 

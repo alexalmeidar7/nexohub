@@ -2113,15 +2113,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           }
 
           // 2. Se dashboard_items não tiver a música, buscar de musicas_tocadas SOMENTE se não houver faixa ativa tocando
+
+          // Neste computador a leitura do arquivo está acontecendo: a música exibida deve ser
+          // sempre a que o arquivo indica. NUNCA voltar para o histórico (causava alternância
+          // entre o último registro e a música no ar).
+          if (isPhysicalLocalReader()) return;
+
           const hasActiveTrackAlready = Boolean(
             musicRef.current &&
             musicRef.current.titulo &&
             musicRef.current.titulo.toLowerCase() !== "sem título" &&
-            startTimeRef.current &&
-            (Date.now() - startTimeRef.current < ((musicRef.current.duracao || 180) + 60) * 1000)
+            startTimeRef.current
           );
 
-          // Se já estamos tocando uma faixa válida e em tempo real, NUNCA consultar histórico de musicas_tocadas
+          // Se já estamos exibindo uma faixa válida, NUNCA consultar histórico de musicas_tocadas
           if (hasActiveTrackAlready) return;
 
           const { data: lastPlayed } = await supabase
