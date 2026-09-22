@@ -179,6 +179,8 @@ const normalizeImageUrl = (value: string | null | undefined, size = 512): string
   } catch {
     return trimmed;
   }
+};
+
 const ensurePngExtension = (url: string | null | undefined): string => {
   if (!url) return "";
   let clean = url.trim();
@@ -420,8 +422,7 @@ Deno.serve(async (req) => {
         .from("programas")
         .select("id, nome, selo, thumb, capa, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
         .eq("user_id", dataOwnerId)
-        .eq("ativo", true)
-        .or("estudio.ilike.%estúdio fm%,estudio.ilike.%estudio fm%"),
+        .eq("ativo", true),
       supabase
         .from("roteiros")
         .select("tickertitulos")
@@ -469,12 +470,24 @@ Deno.serve(async (req) => {
 
     // Variable special program for today only counts while still inside its time window.
     // Once it ends, fall back to the recurring grade program covering "now".
-    const variavelAtivo = activePrograms.find(
-      (e) => e.isVariavelHoje && nowSeconds < e.endSec,
-    );
+    const studioPriority = (studio: string | null | undefined): number => {
+      const value = (studio || "").toLowerCase();
+      if (value.includes("estúdio fm") || value.includes("estudio fm")) return 3;
+      if (value.includes("principal") || value.includes("ao vivo")) return 2;
+      return 1;
+    };
+
+    const compareCurrentPrograms = (a: typeof activePrograms[number], b: typeof activePrograms[number]) => {
+      const priorityDifference = studioPriority(b.item.estudio) - studioPriority(a.item.estudio);
+      return priorityDifference || b.sortKey - a.sortKey;
+    };
+
+    const variavelAtivo = activePrograms
+      .filter((e) => e.isVariavelHoje && nowSeconds < e.endSec)
+      .sort(compareCurrentPrograms)[0];
     const recorrenteAtivo = activePrograms
       .filter((e) => !e.isVariavelHoje)
-      .sort((a, b) => b.sortKey - a.sortKey)[0];
+      .sort(compareCurrentPrograms)[0];
 
     const prog = (variavelAtivo || recorrenteAtivo)?.item || null;
 
@@ -549,7 +562,8 @@ Deno.serve(async (req) => {
       socialItems.push({ handle: whatsappRaw.trim(), icon: SOCIAL_ICONS.whatsapp });
     }
 
-    const rotationSlot = Math.floor(now.getTime() / 5000);
+    // Cada rede social permanece visível por 4 segundos.
+    const rotationSlot = Math.floor(now.getTime() / 4000);
     let redeSocialAtual = "";
     let redeSocialIcone = "";
     if (socialItems.length > 0) {
@@ -849,13 +863,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If no manual override, use the live curiosity written by the client-side
-    // guard (useGlobalMusicSync). The guard binds the curiosity to a track
-    // signature and a short expiry timestamp so the XML self-invalidates the
-    // instant the current track no longer matches — no need to wait for the
-    // client's next 20s-clear write to land.
-    if (!curiosidade) {
-      const dashboard = (settingsRes.data?.dashboard_items as any) || {};
+    // Se não houver substituição manual, usa a curiosidade da aba Info Music.
+    // A curiosidade só pode ser publicada quando estiver vinculada à música
+    // atualmente identificada no módulo Música no Ar.
+    if (!curiosidade) {      const dashboard = (settingsRes.data?.dashboard_items as any) || {};
       const liveCuriosity = (dashboard.music_current_curiosity || "").toString().trim();
       if (liveCuriosity) {
         const curTitle = (dashboard.music_current_title || "").toString().trim().toLowerCase();
@@ -868,7 +879,7 @@ Deno.serve(async (req) => {
         // Emit curiosity ONLY when it is bound to the track currently on-air
         // and hasn't passed its TTL. If either check fails, XML returns empty
         // immediately regardless of the DB write lag.
-        if ((!boundSig || boundSig === curSig) && notExpired) {
+        if (curTitle && curArtist && boundSig === curSig && notExpired) {
           curiosidade = liveCuriosity;
         }
       }
