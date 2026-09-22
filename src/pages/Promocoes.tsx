@@ -986,7 +986,10 @@ export default function PromocoesKiosk() {
   const PROGRESS_INTERVAL = 50;
 
   useEffect(() => {
-    const banners = getUniqueBanners(promocoes);
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const banners = getUniqueBanners(
+      promocoes.filter(p => (!p.data_inicio || p.data_inicio.slice(0, 10) <= todayKey) && (!p.data_fim || p.data_fim.slice(0, 10) >= todayKey))
+    );
     setCurrentBannerIndex((previousIndex) => banners.length > 0 ? previousIndex % banners.length : 0);
     if (banners.length <= 1) return;
     bannerTimerRef.current = 0;
@@ -1392,7 +1395,14 @@ export default function PromocoesKiosk() {
     programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
   );
 
-  const allPromos = promocoes;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const allPromos = promocoes
+    .filter(p => (!p.data_inicio || p.data_inicio.slice(0, 10) <= todayStr) && (!p.data_fim || p.data_fim.slice(0, 10) >= todayStr))
+    .sort((a, b) => {
+      const at = Date.parse((a as any).updated_at || (a as any).created_at || a.data_inicio || "") || 0;
+      const bt = Date.parse((b as any).updated_at || (b as any).created_at || b.data_inicio || "") || 0;
+      return bt - at;
+    });
   const banners = getUniqueBanners(allPromos);
   // Se não tiver botão_url, usa o nome da promoção como fallback para exibir o botão
   const botoes = allPromos.filter(p => p.botao_url || p.nome);
@@ -1637,7 +1647,9 @@ export default function PromocoesKiosk() {
   }
 
   const presenter = apresentadores.find(a => a.id === onAirProgram?.apresentadorId);
-  const bgUrl = presenter?.background_url || config.backgroundUrl || "";
+  // Fundo fixo: usa somente o fundo escolhido pelo usuário (Config. Tela de Promoção
+  // ou empresa). Nunca alterna com a imagem do locutor, evitando troca entre duas imagens.
+  const bgUrl = (telaPromoConfig as any).bg_image_url || config.backgroundUrl || "";
   const customBgStyle = bgUrl ? {
     backgroundImage: `linear-gradient(rgba(0,0,0,${(telaPromoConfig.bg_opacity ?? 50) / 100}), rgba(0,0,0,${(telaPromoConfig.bg_opacity ?? 50) / 100})), url(${bgUrl})`,
     backgroundSize: "cover",
@@ -2032,7 +2044,7 @@ export default function PromocoesKiosk() {
             ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
             : -1;
           const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
-          const currentProg = (onAirIdx >= 0 && coverIndex === null ? scheduleList[onAirIdx] : null)
+          const currentProg = (onAirIdx >= 0 ? scheduleList[onAirIdx] : null)
             ?? scheduleList[activeIdx]
             ?? scheduleList[0]
             ?? null;
@@ -2134,35 +2146,34 @@ export default function PromocoesKiosk() {
                     Citações
                   </div>
 
-                  {/* Imagem de Capa ou Fallback */}
+                  {/* Fundo em degradê (cores escolhidas) com a LOGO do programa centralizada */}
                   {(() => {
-                    // Exibe exclusivamente a LOGO do programa (selo), sem capa.
-                    const coverImg = (currentProg as any).selo || "";
-                    if (coverImg) {
-                      return (
-                        <div
-                          key={`${normalizeProgramName(currentProg.nome)}-${coverImg}`}
-                          aria-label={currentProg.nome}
-                          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-                          style={{
-                            backgroundImage: `url(${coverImg})`,
-                            animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
-                          }}
-                        />
-                      );
-                    }
+                    const logoImg = (currentProg as any).selo || "";
                     return (
                       <div
                         key={normalizeProgramName(currentProg.nome)}
-                        className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-3 text-center"
+                        className="absolute inset-0 w-full h-full flex items-center justify-center p-6"
                         style={{
-                          background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
+                          background: promoAccentGradient,
+                          animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
                         }}
                       >
-                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 text-red-400">
-                          <Radio size={24} className="animate-pulse" />
-                        </div>
-                        <span className="text-xs font-bold text-white line-clamp-2">{currentProg.nome}</span>
+                        {logoImg ? (
+                          <img
+                            src={logoImg}
+                            alt={currentProg.nome}
+                            className="max-w-full max-h-full object-contain drop-shadow-2xl"
+                            loading="eager"
+                            decoding="async"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-center gap-2">
+                            <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
+                              <Radio size={24} className="animate-pulse" style={{ color: telaPromoConfig.btn_text_color }} />
+                            </div>
+                            <span className="text-xs font-bold line-clamp-2" style={{ color: telaPromoConfig.btn_text_color }}>{currentProg.nome}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
