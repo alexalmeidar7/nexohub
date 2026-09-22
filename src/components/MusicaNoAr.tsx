@@ -1676,30 +1676,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     if (fileHandleRef.current || localFileRef.current) return;
 
     const pollStorage = async () => {
+      // Este computador virou leitor físico (ou leitor online ativo) enquanto o
+      // polling estava rodando: nunca sobrescrever a própria leitura com o
+      // arquivo remoto, senão a tela alterna entre a faixa atual e uma antiga.
+      if (isPhysicalLocalReader()) return;
       try {
-        const targetSlug = clientAcc?.slug || "positivafm";
-        // 1. Tentar ler do servidor de sincronização direta (/xml/slug/local.xml)
-        const localXmlRes = await fetch(`/xml/${encodeURIComponent(targetSlug)}/local.xml?t=${Date.now()}`);
-        if (localXmlRes.ok) {
-          const text = await localXmlRes.text();
-          if (text && text.includes("<musica>")) {
-            if (text !== localFileContentRef.current) {
-              localFileContentRef.current = text;
-              setLocalFileContent(text);
-              lastLocalSuccessRef.current = Date.now();
-              setLocalLastReadAt(Date.now());
-              setLocalDelay(false);
-              setLocalError(null);
-              setLocalActivating(false);
-              setLocalMonitoring(true);
-              const parsed = parseXmlString(text);
-              if (parsed) processMusicRef.current(parsed, "pasta", text);
-            }
-            return;
-          }
-        }
-
-        // 2. Try new path (auth.uid()/local-xml-<dataUserId>.xml) then fall back to legacy flat path
+        // Ler somente o arquivo sincronizado pelo leitor no Storage.
+        // (O antigo caminho estático /xml/<slug>/local.xml podia estar congelado
+        // com uma faixa antiga e era a causa da alternância.)
         const { data: authData } = await supabase.auth.getUser();
         const authUid = authData?.user?.id || dataUserId;
         const candidates = [
@@ -1716,6 +1700,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           const text = await res.text();
           if (!text) continue;
           if (text === localFileContentRef.current) return;
+          // Guarda de recência: não voltar para uma leitura mais antiga do que a já aplicada.
+          if (fileModifiedAt && appliedStartRef.current > 0 && fileModifiedAt < appliedStartRef.current - 5000) return;
           localFileContentRef.current = text;
           setLocalFileContent(text);
           lastLocalSuccessRef.current = Date.now();
