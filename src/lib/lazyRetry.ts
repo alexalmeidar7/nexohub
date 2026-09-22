@@ -21,10 +21,7 @@ export const isChunkErrorMessage = (message?: string) => {
     normalized.includes("loading css chunk") ||
     normalized.includes("chunkloaderror") ||
     normalized.includes("failed to load module script") ||
-    normalized.includes("reading 'default'") ||
-    normalized.includes("reading \"default\"") ||
     normalized.includes("e._result.default") ||
-    normalized.includes("undefined is not an object") ||
     normalized.includes("e._result is undefined") ||
     normalized.includes("chunk mismatch")
   );

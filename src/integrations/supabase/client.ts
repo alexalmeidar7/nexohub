@@ -35,8 +35,10 @@ supabase.functions.invoke = (async (functionName: string, options?: any) => {
   return originalInvoke(functionName, options);
 }) as any;
 
-// Also intercept direct fetch calls aimed at supabase functions
-if (typeof window !== "undefined") {
+// Also intercept direct fetch calls aimed at supabase functions.
+// Only in dev: the /api/* middleware exists solely in the Vite dev server, so in a
+// published build the direct edge-function URL must be left untouched.
+if (typeof window !== "undefined" && import.meta.env.DEV) {
   const origFetch = window.fetch.bind(window);
   window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     try {
