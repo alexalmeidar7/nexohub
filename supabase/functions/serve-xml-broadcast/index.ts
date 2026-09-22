@@ -818,30 +818,32 @@ Deno.serve(async (req) => {
     }
 
     // ── Active Promotions / Banners Rotation ──
-    // Every 5 seconds, switch between active promotions that have a banner_l_url
+    // Every 5 seconds, switch between active promotions. Prefers banner_l_url;
+    // when the promotion has no dedicated "banner L", falls back to imagem_url
+    // (the image registered on the Comercial/Promoções page).
     const today = new Date().toISOString().split("T")[0];
     const { data: promoData } = await supabase
       .from("promocoes")
-      .select("banner_l_url")
+      .select("banner_l_url, imagem_url")
       .eq("user_id", dataOwnerId)
       .lte("data_inicio", today)
-      .gte("data_fim", today)
-      .not("banner_l_url", "is", null);
+      .gte("data_fim", today);
+
+    const promoBanners = (promoData || [])
+      .map((p: any) => String(p?.banner_l_url || p?.imagem_url || "").trim())
+      .filter((u: string) => u.length > 0);
 
     let bannerLUrl = "";
-    if (promoData && promoData.length > 0) {
+    if (promoBanners.length > 0) {
       // Rotate every 5 seconds (using 5-second slots of Unix time)
       const promoSlot = Math.floor(Date.now() / 5000);
-      const idx = promoSlot % promoData.length;
-      const rawUrl = promoData[idx].banner_l_url;
-      if (rawUrl) {
-        bannerLUrl = await ensurePngImageUrl(
-          supabase,
-          rawUrl,
-          `broadcast/${dataOwnerId}/promo-banner-l-${idx}.png`,
-          1920,
-        );
-      }
+      const idx = promoSlot % promoBanners.length;
+      bannerLUrl = await ensurePngImageUrl(
+        supabase,
+        promoBanners[idx],
+        `broadcast/${dataOwnerId}/promo-banner-l-${idx}.png`,
+        1920,
+      );
     }
 
     // ── Music curiosity manual override ──
