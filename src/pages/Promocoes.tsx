@@ -1644,9 +1644,33 @@ export default function PromocoesKiosk() {
       .toLowerCase();
 
     if (normalizedProgramName.includes("vale night")) {
-      const registeredReginaldo = apresentadores.find((a) =>
-        (a?.nome || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().includes("reginaldo")
-      );
+      const normalizePresenterName = (name: string) =>
+        name.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+      const isPositivaTenant = (presenter: any) =>
+        !presenter?.user_id || presenter.user_id === POSITIVA_USER_ID;
+
+      // Reginaldo Serra é o cadastro correto do Vale Night. Primeiro usa os
+      // apresentadores já carregados e depois consulta o snapshot local para
+      // recuperar a foto persistida caso a resposta pública não a contenha.
+      let registeredReginaldo = apresentadores.find((a) => {
+        const name = normalizePresenterName(a?.nome || "");
+        return isPositivaTenant(a) && name.includes("reginaldo") && name.includes("serra");
+      });
+
+      if (!registeredReginaldo) {
+        registeredReginaldo = getSnapshotTable("apresentadores").find((a: any) => {
+          const name = normalizePresenterName(a?.nome || "");
+          return isPositivaTenant(a) && name.includes("reginaldo") && name.includes("serra");
+        });
+      }
+
+      // Compatibilidade com cadastros antigos que ainda usam apenas
+      // “Reginaldo” no nome, sem substituir um cadastro exato de Serra.
+      if (!registeredReginaldo) {
+        registeredReginaldo = apresentadores.find((a) =>
+          isPositivaTenant(a) && normalizePresenterName(a?.nome || "").includes("reginaldo")
+        );
+      }
 
       if (registeredReginaldo) {
         return {
