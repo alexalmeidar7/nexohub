@@ -146,8 +146,8 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
     if (effectiveId) query = query.eq("user_id", effectiveId);
     const { data } = await query;
     if (data && data.length > 0) {
+      // Registros do banco já estão isolados por user_id: são sempre válidos
       supabaseAps = data
-        .filter(a => validStationIds.has(a.id) || (a.nome && validStationNames.has(a.nome.trim().toLowerCase())))
         .map(a => {
           const resolved = resolveParticipanteCategoria(a);
           return {
