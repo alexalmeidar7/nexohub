@@ -574,7 +574,12 @@ Deno.serve(async (req) => {
 
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
-    const assunto = broadcastConfig.assunto || "";
+    // Título/assunto: usa o assunto definido no Broadcast; se estiver vazio,
+    // cai para "No Ar na <nome da emissora>" (configurações da emissora).
+    const empresaNome = String((empRes.data as any)?.nome || "").trim();
+    const assunto =
+      String(broadcastConfig.assunto || "").trim() ||
+      (empresaNome ? `No Ar na ${empresaNome}` : "");
 
     // Locutor override: if user defined a custom presenter name in Broadcast,
     // override locutorNome and try to enrich foto/instagram from registered apresentadores.
