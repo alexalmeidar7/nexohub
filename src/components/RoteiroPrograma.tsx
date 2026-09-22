@@ -320,80 +320,18 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     const { error } = await supabase.from("roteiros").update(updatePayload).eq("id", txtEditRoteiroId);
 
     // ── Regenerate XML and sync immediately ──
+    // Usa o MESMO caminho completo de publicação do botão de envio (sincronismo local,
+    // upload no storage com caminho de fallback e função de persistência), para que o
+    // XML do roteiro sempre reflita as informações recém-salvas.
     if (!error) {
       try {
-        const pList = updatedParticipantes.participantes || [];
-        const blocosList = updatedParticipantes.blocos || [];
-        const escaladaItems = updatedParticipantes.escaladaList || [];
-
-        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
-        xml += `  <programa>${escXml(roteiro.programa_nome || "")}</programa>\n`;
-        xml += `  <estudio>${escXml(roteiro.estudio || "")}</estudio>\n`;
-        xml += `  <data>${roteiro.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
-
-        if (pList.length > 0) {
-          xml += `  <participantes>\n`;
-          pList.forEach((p: any) => {
-            xml += `    <item>\n`;
-            xml += `      <nome>${escXml(p.nome || "")}</nome>\n`;
-            xml += `      <cargo>${escXml(p.cargo || "")}</cargo>\n`;
-            xml += `      <instagram>${escXml(p.instagram || "")}</instagram>\n`;
-            xml += `    </item>\n`;
-          });
-          xml += `  </participantes>\n`;
-        }
-
-        if (escaladaItems.length > 0) {
-          xml += `  <escalada>\n`;
-          escaladaItems.forEach((e: any, i: number) => {
-            xml += `    <item ordem="${i + 1}">\n`;
-            xml += `      <titulo>${escXml(typeof e === "string" ? e : e.titulo || "")}</titulo>\n`;
-            xml += `      <imagem>${escXml(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n`;
-            xml += `    </item>\n`;
-          });
-          xml += `  </escalada>\n`;
-        }
-
-        blocosList.forEach((b: any, bi: number) => {
-          xml += `  <bloco numero="${bi + 1}">\n`;
-          (b.noticias || []).forEach((n: any, ni: number) => {
-            if (!n.titulo) return;
-            xml += `    <noticia ordem="${ni + 1}">\n`;
-            xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
-            xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
-            xml += `      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n`;
-            xml += `      <imagem>${escXml(n.imagemUrl || "")}</imagem>\n`;
-            xml += `      <escalada>${n.escalada || false}</escalada>\n`;
-            xml += `    </noticia>\n`;
-          });
-          xml += `  </bloco>\n`;
+        await regenRef.current({
+          ...roteiro,
+          id: txtEditRoteiroId,
+          conteudo_html: txtEditText,
+          participantes: JSON.stringify(updatedParticipantes),
+          ...(tickertitulos !== null ? { tickertitulos } : {}),
         });
-
-        xml += `</programaExpress>`;
-
-        // Sync immediately to /api/sync-xml-roteiro
-        const owner = roteiro.user_id || propEffectiveUserId || resolvedUserId || user?.id || "d17e65af-e407-466f-9b60-b55c43399513";
-        const clientAcc = findClientAccountById(owner) || findClientAccountByEmail(user?.email);
-        const slug = clientAcc?.slug || "positivafm";
-        try {
-          await fetch("/api/sync-xml-roteiro", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slug, userId: owner, estudio: roteiro.estudio, programaNome: roteiro.programa_nome, xml, roteiro }),
-          });
-        } catch {}
-
-        if (roteiro?.subtitulo?.startsWith("express_xml::")) {
-          const xmlUrl = roteiro.subtitulo.replace("express_xml::", "");
-          const urlObj = new URL(xmlUrl);
-          const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
-          if (pathMatch) {
-            const filePath = decodeURIComponent(pathMatch[1]);
-            const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
-            await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-            await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", roteiro.id);
-          }
-        }
       } catch (e) {
         console.warn("[TxtEdit] XML regen error:", e);
       }
