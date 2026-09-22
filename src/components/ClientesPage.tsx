@@ -71,6 +71,9 @@ export interface ClienteMetadata {
   email_cobranca?: string;
   categoria?: string;
   ativo?: boolean;
+  email?: string;
+  logo?: string | null;
+  logo_url?: string | null;
 }
 
 export const CLIENTES_METADATA_KEY = "nexohub_clientes_metadata_v1";
