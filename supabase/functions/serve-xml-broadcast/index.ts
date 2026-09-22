@@ -904,8 +904,25 @@ Deno.serve(async (req) => {
       const deezerArtistImgRaw = musicData.deezer_artist_img || dashboard.music_deezer_artist_img || "";
       const artistSlug = (artistaAtual || "unknown").replace(/[^a-z0-9]/gi, "_").toLowerCase();
       
-      if (deezerArtistImgRaw) {
-        deezerArtistImg = await ensurePngImageUrl(supabase, deezerArtistImgRaw, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512);
+      let resolvedArtistImg = deezerArtistImgRaw;
+
+      // Fallback: se o sistema ainda não gravou a imagem do artista, busca na Deezer.
+      if (!resolvedArtistImg && artistaAtual) {
+        try {
+          const primary = String(artistaAtual).split(/[\/&,]| feat\.?| ft\.?| with /i)[0].trim();
+          const res = await fetch(
+            `https://api.deezer.com/search/artist?q=${encodeURIComponent(primary || artistaAtual)}&limit=1`,
+            { signal: AbortSignal.timeout(2500) },
+          );
+          if (res.ok) {
+            const json = await res.json();
+            resolvedArtistImg = json?.data?.[0]?.picture_xl || json?.data?.[0]?.picture_big || "";
+          }
+        } catch { /* sem imagem do artista */ }
+      }
+
+      if (resolvedArtistImg) {
+        deezerArtistImg = await ensurePngImageUrl(supabase, resolvedArtistImg, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512);
       }
     }
     
