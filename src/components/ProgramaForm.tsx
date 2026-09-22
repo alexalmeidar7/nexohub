@@ -961,6 +961,18 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     load();
   }, [targetUserId, user?.email]);
 
+  // Recarrega a lista quando um apresentador é cadastrado/editado em outra tela
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        const ap = await getApresentadores(targetUserId, user?.email);
+        setApresentadores(Array.isArray(ap) ? ap : []);
+      } catch {}
+    };
+    window.addEventListener("apresentadores-updated", refresh);
+    return () => window.removeEventListener("apresentadores-updated", refresh);
+  }, [targetUserId, user?.email]);
+
   useEffect(() => {
     nomeDraftRef.current = nome;
     const input = nomeInputRef.current;
