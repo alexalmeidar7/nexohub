@@ -262,7 +262,7 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
           horario_fim: "23:59",
         };
       }
-      const st = getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim, today, currentTime);
+      const st = getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim);
       if (st === "active") {
         return {
           ...e,
