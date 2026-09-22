@@ -127,7 +127,7 @@ serve(async (req) => {
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
-    const roteiros = roteirosRes.data || [];
+    const roteiros = roteiroRes.data || [];
     const activeBatalha = (batalhaRes.data || []).find((b: any) => {
       const ini = normTime(b.horario_inicio, "00:00");
       const fim = normTime(b.horario_fim, "23:59");
@@ -239,7 +239,7 @@ serve(async (req) => {
     // 1. ESTACAO
     xmlParts.push('  <estacao>');
     xmlParts.push(`    <nome>${esc(stationName)}</nome>`);
-    xmlParts.push(`    <slug>${esc(slugParam || "default")}</slug>`);
+    xmlParts.push(`    <slug>${esc(rawSlug || "default")}</slug>`);
     xmlParts.push(`    <cidade>${esc(cityName)}</cidade>`);
     xmlParts.push(`    <frequencia>${esc(stationFreq)}</frequencia>`);
     xmlParts.push(`    <logo_url>${esc(stationLogo)}</logo_url>`);
