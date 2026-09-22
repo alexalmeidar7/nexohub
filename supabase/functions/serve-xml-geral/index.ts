@@ -98,6 +98,8 @@ serve(async (req) => {
       .maybeSingle();
 
     const ownerId = (subUser?.ativo && subUser.parent_user_id) ? subUser.parent_user_id : userId;
+    console.log(`[serve-xml-geral] start owner=${ownerId}`);
+
 
     // Fetch all related entities in parallel
     const [
