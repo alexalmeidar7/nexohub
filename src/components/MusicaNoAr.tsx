@@ -3044,10 +3044,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {uploadHistory.map((entry, i) => {
-                    const fallbackArtist = i === 0 && music?.artista && music.artista.toLowerCase() !== "desconhecido" ? music.artista : "";
-                    const fallbackMusic = i === 0 && music?.titulo && music.titulo.toLowerCase() !== "sem titulo" && music.titulo.toLowerCase() !== "sem título" ? music.titulo : "";
-                    const showArtist = entry.artista || fallbackArtist;
-                    const showMusic = entry.musica || fallbackMusic;
+                    // Each row must display only its own persisted pair. Mixing the
+                    // current track into an older row duplicated the title and hid
+                    // the artist whenever that historical record was incomplete.
+                    const showArtist = entry.artista || "";
+                    const showMusic = entry.musica || "";
                     return (
                       <tr key={i} className="group hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4">
