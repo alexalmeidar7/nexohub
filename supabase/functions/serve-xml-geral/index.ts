@@ -239,7 +239,7 @@ serve(async (req) => {
     // 1. ESTACAO
     xmlParts.push('  <estacao>');
     xmlParts.push(`    <nome>${esc(stationName)}</nome>`);
-    xmlParts.push(`    <slug>${esc(slugParam || "default")}</slug>`);
+    xmlParts.push(`    <slug>${esc(rawSlug || "default")}</slug>`);
     xmlParts.push(`    <cidade>${esc(cityName)}</cidade>`);
     xmlParts.push(`    <frequencia>${esc(stationFreq)}</frequencia>`);
     xmlParts.push(`    <logo_url>${esc(stationLogo)}</logo_url>`);
