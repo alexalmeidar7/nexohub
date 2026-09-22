@@ -473,6 +473,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Computador onde a leitura do arquivo local está acontecendo (persistido no banco),
   // para que a informação apareça igual em qualquer outro computador.
   const [remoteReaderDevice, setRemoteReaderDevice] = useState<string>("");
+  // Horário de início da última leitura já aplicada na tela. Garante que a exibição
+  // NUNCA volte para uma leitura mais antiga (causa da alternância entre registros).
+  const appliedStartRef = useRef<number>(0);
+  const canApplyReading = useCallback((start: number) => {
+    if (!start || start <= 0) return false;
+    return start >= appliedStartRef.current - 2000;
+  }, []);
   const [culturaLastSync, setCulturaLastSync] = useState<number | null>(() => {
     try {
       const raw = localStorage.getItem("cultura-fm-last-sync");
@@ -1916,9 +1923,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const el = Math.max(0, (now - liveStart) / 1000);
 
             // Se já temos uma música tocando e o dado do servidor for mais antigo, ignorar para não alternar
-            if (startTimeRef.current && liveStart < (startTimeRef.current - 5000)) {
+            if (!canApplyReading(liveStart)) {
               return;
             }
+            appliedStartRef.current = Math.max(appliedStartRef.current, liveStart);
 
             // Se o dado tiver mais de 4 horas, não considerar como música ao vivo
             if (now - liveStart <= 4 * 3600 * 1000) {
@@ -2046,9 +2054,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
 
             // Se for uma música diferente, verificar se o registro do banco não é mais antigo que a música já tocando localmente
-            if (!isSameTrack && startTimeRef.current && dbStart && dbStart < (startTimeRef.current - 10000)) {
+            if (!isSameTrack && dbStart && !canApplyReading(dbStart)) {
               // O banco está defasado em relação à faixa já ativa — não alternar para trás
               return;
+            }
+            if (!isSameTrack && dbStart) {
+              appliedStartRef.current = Math.max(appliedStartRef.current, dbStart);
             }
 
             let resolvedStart = dbStart;
@@ -2134,6 +2145,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           // sempre a que o arquivo indica. NUNCA voltar para o histórico (causava alternância
           // entre o último registro e a música no ar).
           if (isPhysicalLocalReader()) return;
+
+          // Já aplicamos uma leitura válida do leitor: não voltar para o histórico.
+          if (appliedStartRef.current > 0) return;
 
           const hasActiveTrackAlready = Boolean(
             musicRef.current &&
@@ -2776,8 +2790,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     </div>
                   </div>
 
-                  {/* High-visibility Responsive Progress Bar */}
-                  {music && music.duracao > 0 && (
+                  {/* Computadores que não são o leitor: apenas informações salvas (música, artista e capa) */}
+                  {!isPhysicalLocalReader() && (remoteReaderDevice || localFileName) && (
+                    <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-wider self-center sm:self-start" style={{ color: "rgba(255,255,255,0.8)" }}>
+                      <FolderOpen size={11} className="text-[#38bdf8]" />
+                      <span className="truncate max-w-[260px]">Leitura em: {remoteReaderDevice || localFileName}</span>
+                    </div>
+                  )}
+
+                  {/* High-visibility Responsive Progress Bar (somente no computador leitor) */}
+                  {music && music.duracao > 0 && isPhysicalLocalReader() && (
                     <div className="space-y-1.5 mt-1.5 w-full max-w-xl">
                       <div className="flex items-center justify-between text-xs font-mono font-bold">
                         <span className="flex items-center gap-1.5 drop-shadow-sm" style={{ color: "#ffffff" }}>

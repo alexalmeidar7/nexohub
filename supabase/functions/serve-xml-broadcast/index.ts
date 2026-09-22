@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
     const [empRes, progsRes, roteiroRes, settingsRes, liveEventsRes] = await Promise.all([
       supabase
         .from("empresa_config")
-        .select("logo, instagram, facebook, youtube, site, telefone_participacao, updated_at")
+        .select("nome, logo, instagram, facebook, youtube, site, telefone_participacao, updated_at")
         .eq("user_id", dataOwnerId)
         .maybeSingle(),
       supabase
@@ -574,7 +574,12 @@ Deno.serve(async (req) => {
 
     const qrLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
     const broadcastConfig = (settingsRes.data?.cenario_config as any)?.broadcast || {};
-    const assunto = broadcastConfig.assunto || "";
+    // Título/assunto: usa o assunto definido no Broadcast; se estiver vazio,
+    // cai para "No Ar na <nome da emissora>" (configurações da emissora).
+    const empresaNome = String((empRes.data as any)?.nome || "").trim();
+    const assunto =
+      String(broadcastConfig.assunto || "").trim() ||
+      (empresaNome ? `No Ar na ${empresaNome}` : "");
 
     // Locutor override: if user defined a custom presenter name in Broadcast,
     // override locutorNome and try to enrich foto/instagram from registered apresentadores.
@@ -818,30 +823,32 @@ Deno.serve(async (req) => {
     }
 
     // ── Active Promotions / Banners Rotation ──
-    // Every 5 seconds, switch between active promotions that have a banner_l_url
+    // Every 5 seconds, switch between active promotions. Prefers banner_l_url;
+    // when the promotion has no dedicated "banner L", falls back to imagem_url
+    // (the image registered on the Comercial/Promoções page).
     const today = new Date().toISOString().split("T")[0];
     const { data: promoData } = await supabase
       .from("promocoes")
-      .select("banner_l_url")
+      .select("banner_l_url, imagem_url")
       .eq("user_id", dataOwnerId)
       .lte("data_inicio", today)
-      .gte("data_fim", today)
-      .not("banner_l_url", "is", null);
+      .gte("data_fim", today);
+
+    const promoBanners = (promoData || [])
+      .map((p: any) => String(p?.banner_l_url || p?.imagem_url || "").trim())
+      .filter((u: string) => u.length > 0);
 
     let bannerLUrl = "";
-    if (promoData && promoData.length > 0) {
+    if (promoBanners.length > 0) {
       // Rotate every 5 seconds (using 5-second slots of Unix time)
       const promoSlot = Math.floor(Date.now() / 5000);
-      const idx = promoSlot % promoData.length;
-      const rawUrl = promoData[idx].banner_l_url;
-      if (rawUrl) {
-        bannerLUrl = await ensurePngImageUrl(
-          supabase,
-          rawUrl,
-          `broadcast/${dataOwnerId}/promo-banner-l-${idx}.png`,
-          1920,
-        );
-      }
+      const idx = promoSlot % promoBanners.length;
+      bannerLUrl = await ensurePngImageUrl(
+        supabase,
+        promoBanners[idx],
+        `broadcast/${dataOwnerId}/promo-banner-l-${idx}.png`,
+        1920,
+      );
     }
 
     // ── Music curiosity manual override ──
@@ -897,8 +904,25 @@ Deno.serve(async (req) => {
       const deezerArtistImgRaw = musicData.deezer_artist_img || dashboard.music_deezer_artist_img || "";
       const artistSlug = (artistaAtual || "unknown").replace(/[^a-z0-9]/gi, "_").toLowerCase();
       
-      if (deezerArtistImgRaw) {
-        deezerArtistImg = await ensurePngImageUrl(supabase, deezerArtistImgRaw, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512);
+      let resolvedArtistImg = deezerArtistImgRaw;
+
+      // Fallback: se o sistema ainda não gravou a imagem do artista, busca na Deezer.
+      if (!resolvedArtistImg && artistaAtual) {
+        try {
+          const primary = String(artistaAtual).split(/[\/&,]| feat\.?| ft\.?| with /i)[0].trim();
+          const res = await fetch(
+            `https://api.deezer.com/search/artist?q=${encodeURIComponent(primary || artistaAtual)}&limit=1`,
+            { signal: AbortSignal.timeout(2500) },
+          );
+          if (res.ok) {
+            const json = await res.json();
+            resolvedArtistImg = json?.data?.[0]?.picture_xl || json?.data?.[0]?.picture_big || "";
+          }
+        } catch { /* sem imagem do artista */ }
+      }
+
+      if (resolvedArtistImg) {
+        deezerArtistImg = await ensurePngImageUrl(supabase, resolvedArtistImg, `broadcast/${dataOwnerId}/artist-${artistSlug}.png`, 512);
       }
     }
     
@@ -1295,8 +1319,8 @@ Deno.serve(async (req) => {
     lines.push(`      <titulo>${esc(infoCantoTitulo)}</titulo>`);
     lines.push(`      <descricao>${esc(infoCantoDescricao)}</descricao>`);
     lines.push(`      <ico_categoria>${esc(ensurePngExtension(infoCantoIcoCategoria))}</ico_categoria>`);
-    lines.push(`      <temp_atual>${esc(infoCantoTempAtual)}</temp_atual>`);
-    lines.push(`      <ico_temp_atual>${esc(ensurePngExtension(infoCantoIcoTemp))}</ico_temp_atual>`);
+    lines.push(`      <temp_atual>${esc(infoCantoTempAtual || currentTempStr)}</temp_atual>`);
+    lines.push(`      <ico_temp_atual>${esc(ensurePngExtension(infoCantoTempAtual ? infoCantoIcoTemp : (currentTempStr ? currentTempIcon : infoCantoIcoTemp)))}</ico_temp_atual>`);
     lines.push("    </infos_canto>");
     lines.push("    <a_seguir>");
     lines.push(`      <ativo>${aSeguirEnabled ? "1" : "0"}</ativo>`);

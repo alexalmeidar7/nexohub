@@ -615,6 +615,8 @@ export function resolveSafePresenterPhoto(
     s.startsWith("/") ||
     s.startsWith("http://") ||
     s.startsWith("https://") ||
+    s.startsWith("data:image/") ||
+    s.startsWith("blob:") ||
     /\.(png|jpg|jpeg|webp|svg|gif)(\?.*)?$/i.test(s);
 
   if (isImgPath(arg1)) {
