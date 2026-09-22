@@ -112,7 +112,7 @@ serve(async (req) => {
       quizRes,
     ] = await Promise.all([
       sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle(),
-      sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, selo, thumb, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
+      sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
       // Sem "*": colunas com base64 pesado estouram a memoria da funcao
       sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true),
       sb.from("xml_upload_history").select("id, musica, artista, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6),
