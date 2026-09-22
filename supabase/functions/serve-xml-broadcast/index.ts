@@ -1319,8 +1319,8 @@ Deno.serve(async (req) => {
     lines.push(`      <titulo>${esc(infoCantoTitulo)}</titulo>`);
     lines.push(`      <descricao>${esc(infoCantoDescricao)}</descricao>`);
     lines.push(`      <ico_categoria>${esc(ensurePngExtension(infoCantoIcoCategoria))}</ico_categoria>`);
-    lines.push(`      <temp_atual>${esc(infoCantoTempAtual)}</temp_atual>`);
-    lines.push(`      <ico_temp_atual>${esc(ensurePngExtension(infoCantoIcoTemp))}</ico_temp_atual>`);
+    lines.push(`      <temp_atual>${esc(infoCantoTempAtual || currentTempStr)}</temp_atual>`);
+    lines.push(`      <ico_temp_atual>${esc(ensurePngExtension(infoCantoTempAtual ? infoCantoIcoTemp : (currentTempStr ? currentTempIcon : infoCantoIcoTemp)))}</ico_temp_atual>`);
     lines.push("    </infos_canto>");
     lines.push("    <a_seguir>");
     lines.push(`      <ativo>${aSeguirEnabled ? "1" : "0"}</ativo>`);
