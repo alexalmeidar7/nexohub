@@ -284,7 +284,7 @@ export default function ConfiguracoesPage({
       if (tid) {
         supabase.from("programas").select("id, nome, descricao, horario_inicio, horario_fim, classificacao_etaria, estudio").eq("user_id", tid).eq("ativo", true).order("nome").then(({ data }) => {
           if (data) setProgramas(data.map(p => ({ id: p.id, nome: p.nome, descricao: p.descricao || "", horario_inicio: p.horario_inicio, horario_fim: p.horario_fim, classificacao_etaria: p.classificacao_etaria || "L", estudio: (p as any).estudio || "" })));
-        }).catch(() => {});
+        }, () => {});
       }
     } else {
       setLoading(false);

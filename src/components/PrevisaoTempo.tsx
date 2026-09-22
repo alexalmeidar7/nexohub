@@ -219,8 +219,7 @@ function savePrimaryCityToStorage(keys: string[], city: PrimaryCity | null, owne
         updated_at: nowIso,
       })
       .eq("user_id", ownerId)
-      .then(() => {})
-      .catch(() => {});
+      .then(() => {}, () => {});
 
     mergeUserDashboardItems(ownerId, {
       cidade_tempo_primary: city,
