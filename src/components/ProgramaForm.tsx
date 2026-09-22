@@ -221,6 +221,45 @@ const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"
 
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 
+/**
+ * Grava o programa no banco confirmando que a linha foi realmente persistida.
+ * Retorna uma mensagem de erro quando nada foi gravado (ex.: RLS bloqueando).
+ */
+async function persistPrograma(opts: {
+  targetId: string;
+  ownerId: string | null | undefined;
+  payload: Record<string, unknown>;
+  isUpdate: boolean;
+}): Promise<string | null> {
+  const { targetId, ownerId, payload, isUpdate } = opts;
+  try {
+    if (isUpdate) {
+      const { data, error } = await supabase
+        .from("programas")
+        .update(payload as any)
+        .eq("id", targetId)
+        .select("id");
+      if (!error && data && data.length > 0) return null;
+      if (error) console.warn("Supabase update programa notice:", error);
+      const { data: upData, error: upErr } = await supabase
+        .from("programas")
+        .upsert({ id: targetId, user_id: ownerId, ...payload } as any, { onConflict: "id" })
+        .select("id");
+      if (!upErr && upData && upData.length > 0) return null;
+      return upErr?.message || "Não foi possível salvar as alterações do programa.";
+    }
+    const { data, error } = await supabase
+      .from("programas")
+      .insert({ id: targetId, user_id: ownerId, ...payload } as any)
+      .select("id");
+    if (!error && data && data.length > 0) return null;
+    return error?.message || "Não foi possível cadastrar o programa.";
+  } catch (err: any) {
+    return err?.message || "Falha de conexão ao salvar o programa.";
+  }
+}
+
+
 export async function getProgramas(targetUserId?: string | null, userEmail?: string | null): Promise<Programa[]> {
   const acc = findClientAccountById(targetUserId) || findClientAccountByEmail(userEmail || targetUserId);
   const effectiveId = acc?.parentUserId || acc?.id || targetUserId;
