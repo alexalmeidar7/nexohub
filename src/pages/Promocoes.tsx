@@ -95,7 +95,7 @@ export function resolveSafePromoBanner(p: any): string {
   if (norm.includes("cabare")) return "/promocoes/cabare.png";
   if (norm.includes("movimento")) return "/promocoes/movimento.png";
 
-  if (p?.imagem_url && !p.imagem_url.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
+  if (p?.imagem_url) {
     return p.imagem_url;
   }
   return "/promocoes/que-premio-e-esse.png";

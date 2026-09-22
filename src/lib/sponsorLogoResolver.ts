@@ -52,7 +52,6 @@ export function isSafeSponsorLogoUrl(url?: string | null): boolean {
   // Disallow old synthetic SVG data URLs
   if (trimmed.startsWith("data:image/svg+xml")) return false;
   if (trimmed.includes("default-sponsor-logo.png")) return false;
-  if (trimmed.includes("zzjfzxxvxbspbdkodoix.supabase.co")) return false;
   return (
     trimmed.startsWith("data:image/") ||
     trimmed.startsWith("/") ||
