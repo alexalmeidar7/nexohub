@@ -127,7 +127,7 @@ serve(async (req) => {
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
-    const roteiros = roteirosRes.data || [];
+    const roteiros = roteiroRes.data || [];
     const activeBatalha = (batalhaRes.data || []).find((b: any) => {
       const ini = normTime(b.horario_inicio, "00:00");
       const fim = normTime(b.horario_fim, "23:59");
