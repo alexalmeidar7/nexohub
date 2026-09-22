@@ -113,7 +113,8 @@ serve(async (req) => {
     ] = await Promise.all([
       sb.from("empresa_config").select("*").eq("user_id", ownerId).maybeSingle(),
       sb.from("programas").select("*").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
-      sb.from("apresentadores").select("*").eq("user_id", ownerId).eq("ativo", true),
+      // Sem "*": a coluna foto pode conter base64 pesado e estourar a memoria da funcao
+      sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true),
       sb.from("xml_upload_history").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6),
       sb.from("logos_patrocinadores").select("*").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false),
       sb.from("roteiros").select("*").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10),
