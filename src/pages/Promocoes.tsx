@@ -848,24 +848,17 @@ export default function PromocoesKiosk() {
       let edgeProgs: any[] = [];
       let edgeAprs: any[] = [];
 
-      // Fallback para snapshot estático local se ainda estiver vazio
+      // Fallback para snapshot estático local — sempre restrito aos IDs do
+      // usuário logado (e do master, no caso de subusuário).
+      const belongsToOwner = (row: any) => {
+        if (ownerIds.length) return ownerIds.includes(row?.user_id);
+        return isPositivaStation && (row?.user_id === POSITIVA_USER_ID || !row?.user_id);
+      };
       if (allPromos.length === 0) {
-        const snapPromos = getSnapshotTable("promocoes");
-        const filtered = snapPromos.filter((p: any) => {
-          if (localUid && p.user_id === localUid) return true;
-          if (isPositivaStation && (p.user_id === POSITIVA_USER_ID || !p.user_id)) return true;
-          return false;
-        });
-        allPromos = isPositivaStation ? (filtered.length > 0 ? filtered : snapPromos) : filtered;
+        allPromos = getSnapshotTable("promocoes").filter(belongsToOwner);
       }
       if (activeTestemunhais.length === 0) {
-        const snapTests = getSnapshotTable("testemunhais");
-        const filtered = snapTests.filter((t: any) => {
-          if (localUid && t.user_id === localUid) return true;
-          if (isPositivaStation && (t.user_id === POSITIVA_USER_ID || !t.user_id)) return true;
-          return false;
-        });
-        activeTestemunhais = isPositivaStation ? (filtered.length > 0 ? filtered : snapTests) : filtered;
+        activeTestemunhais = getSnapshotTable("testemunhais").filter(belongsToOwner);
       }
 
       if (localUid) {
@@ -903,21 +896,18 @@ export default function PromocoesKiosk() {
       setTestemunhais(activeTestemunhais);
 
       let rawProgs = progsData && progsData.length > 0 ? progsData : (edgeProgs.length > 0 ? edgeProgs : []);
-      if (rawProgs.length === 0 && isPositiva) {
+      if (rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
       if (rawProgs.length === 0) {
-        const snapProgs = getSnapshotTable("programas");
-        const filtered = snapProgs.filter((p: any) =>
-          !localUid || p.user_id === localUid || p.user_id === POSITIVA_USER_ID
-        );
+        const filtered = getSnapshotTable("programas").filter(belongsToOwner);
         if (filtered.length > 0) rawProgs = filtered;
       }
-      if (rawProgs.length === 0) {
-        const stationData = getStationDatabaseSync(localUid || undefined);
+      if (rawProgs.length === 0 && localUid) {
+        const stationData = getStationDatabaseSync(localUid);
         if (stationData?.programas && stationData.programas.length > 0) {
           rawProgs = stationData.programas;
-        } else if (localUid) {
+        } else {
           try {
             const fetched = await fetchStationDatabaseData(localUid);
             if (fetched?.programas && fetched.programas.length > 0) {
@@ -926,7 +916,7 @@ export default function PromocoesKiosk() {
           } catch { /* ignore */ }
         }
       }
-      if (rawProgs.length === 0 && isPositiva) {
+      if (rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
 
@@ -936,9 +926,9 @@ export default function PromocoesKiosk() {
         nome: p.nome,
         apresentadorId: p.apresentador_id || p.apresentadorId || "",
         apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || [],
-        selo: resolveSafeProgramSelo(p.selo || p.nome),
-        capa: resolveSafeProgramCover(p.capa || p.thumb || p.selo || p.nome),
-        thumb: resolveSafeProgramCover(p.thumb || p.capa || p.nome),
+        selo: resolveSafeProgramSelo(p.selo),
+        capa: resolveSafeProgramCover(p.capa || p.thumb),
+        thumb: resolveSafeProgramCover(p.thumb || p.capa),
         diasSemana: p.dias_semana || p.diasSemana || [],
         horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
         horarioFim: p.horario_fim || p.horarioFim || "23:59:59",
