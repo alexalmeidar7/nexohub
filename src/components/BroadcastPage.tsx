@@ -1264,10 +1264,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
         {/* ── Navigation (segmented, always labelled) ── */}
         <div className="flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto bg-white" style={{ border: `1px solid ${NAVY_BORDER}` }}>
-          {(["preview", "insert", "assuntos", "ticker", "aseguir"] as const).map(tabId => {
+          {(["preview", "insert", "ticker", "aseguir"] as const).map(tabId => {
             const active = activeTab === tabId;
-            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", assuntos: "Título", ticker: "Ticker", aseguir: "A Seguir" };
-            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock };
+            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", ticker: "Ticker", aseguir: "A Seguir" };
+            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, ticker: TrendingUp, aseguir: Clock };
             const Icon = Icons[tabId];
             return (
               <button
