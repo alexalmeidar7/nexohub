@@ -115,7 +115,7 @@ serve(async (req) => {
       sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, selo, thumb, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
       // Sem "*": colunas com base64 pesado estouram a memoria da funcao
       sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true),
-      sb.from("xml_upload_history").select("id, musica, artista, album, capa, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6),
+      sb.from("xml_upload_history").select("id, musica, artista, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6),
       sb.from("logos_patrocinadores").select("*").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false),
       sb.from("roteiros").select("*").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10),
       sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }),
