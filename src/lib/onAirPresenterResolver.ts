@@ -479,29 +479,31 @@ export function resolvePresenterForProgram(
     program.apresentadoresIds?.[0];
 
   if (apId) {
-    // Look up in filtered station list
-    const found = safeList.find((a) => a.id === apId);
+    // Look up in filtered station list — registered (database) data is ALWAYS authoritative
+    const found = (apresentadoresList || []).find((a) => a?.id === apId) || safeList.find((a) => a.id === apId);
     if (found) {
       const canonical = CANONICAL_PRESENTERS[apId];
-      if (!canonical || isCandidateAllowed(canonical)) {
-        const isDead = !found.foto || found.foto.includes("/avatars/usr-");
-        return {
-          id: found.id,
-          nome: found.nome,
-          foto: isDead ? (canonical?.foto || "") : found.foto,
-          instagram: found.instagram || canonical?.instagram,
-          stationKey: canonical?.stationKey,
-        };
-      }
+      const isDead = !found.foto || found.foto.includes("/avatars/usr-");
+      return {
+        id: found.id,
+        nome: found.nome,
+        foto: isDead ? (canonical?.foto || "") : found.foto,
+        instagram: found.instagram || canonical?.instagram,
+        stationKey: canonical?.stationKey,
+      };
     }
 
     // Look up in canonical directory
     if (CANONICAL_PRESENTERS[apId] && isCandidateAllowed(CANONICAL_PRESENTERS[apId])) {
       return CANONICAL_PRESENTERS[apId];
     }
+
+    // Program has an explicitly registered presenter that we could not load:
+    // never guess another host by program name.
+    return null;
   }
 
-  // 2. Check canonical program name dictionary (e.g. Sertanejo Bom Demais -> Reginaldo Lucena, Mega Bônus -> Ani Cristine)
+  // 2. Check canonical program name dictionary (only for programs with NO registered presenter)
   const canonicalByProg = getCanonicalPresenterByProgramName(progName, diasSemana);
   if (canonicalByProg && isCandidateAllowed(canonicalByProg)) {
     // If user's list has custom presenter info with this ID, prefer it
