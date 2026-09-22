@@ -43,6 +43,13 @@
       "when": 1790035272131,
       "tag": "0005_add_music_source_device_to_user_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790077924030,
+      "tag": "0006_add_music_history_light_fn",
+      "breakpoints": true
     }
   ]
 }
