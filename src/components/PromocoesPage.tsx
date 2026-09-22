@@ -28,6 +28,8 @@ interface Promocao {
   imagem_url: string;
   banner_l_url: string;
   programa_ids?: string[];
+  user_id?: string | null;
+  created_at?: string | null;
 }
 
 const pillInput: React.CSSProperties = {

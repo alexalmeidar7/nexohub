@@ -25,6 +25,7 @@ interface Evt {
   programa_id?: string | null;
   programa?: { id: string; nome: string; horario_inicio?: string; horario_fim?: string } | null;
   synthetic?: boolean;
+  dias_semana?: string[] | string | null;
 }
 
 interface Programa {
