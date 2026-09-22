@@ -25,7 +25,7 @@ interface Evt {
   programa_id?: string | null;
   programa?: { id: string; nome: string; horario_inicio?: string; horario_fim?: string } | null;
   synthetic?: boolean;
-  dias_semana?: string[] | string | null;
+  dias_semana?: number[] | string[] | string | null;
 }
 
 interface Programa {
@@ -67,7 +67,7 @@ function matches(evt: Evt & { periodo_inicio?: string | null; periodo_fim?: stri
   } else if (evt.recorrencia === "programa_semanal" || evt.recorrencia?.startsWith("programa_semanal:") || evt.recorrencia?.startsWith("dias:")) {
     let activeDays: number[] = [1, 2, 3, 4, 5];
     if (evt.dias_semana && Array.isArray(evt.dias_semana) && evt.dias_semana.length > 0) {
-      activeDays = evt.dias_semana;
+      activeDays = (evt.dias_semana as any[]).map(Number).filter((n: number) => !isNaN(n));
     } else if (evt.recorrencia.startsWith("programa_semanal:")) {
       activeDays = evt.recorrencia.slice(17).split(",").map(Number).filter((n: any) => !isNaN(n));
     } else if (evt.recorrencia.startsWith("dias:")) {
