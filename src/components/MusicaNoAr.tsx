@@ -560,6 +560,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     return isPhysicalLocalReader() && localMonitoring && isLocalSourceHealthy();
   }, [isPhysicalLocalReader, localMonitoring, isLocalSourceHealthy]);
 
+  // Este computador também é "leitor" quando lê o XML por link online com sucesso recente.
+  const isOnlineReaderOnClient = useCallback(() => {
+    return Boolean(
+      isOnlineSelected && hasValidOnlineUrl && !onlineError &&
+      lastOnlineSuccessRef.current > 0 &&
+      Date.now() - lastOnlineSuccessRef.current < 60000
+    );
+  }, [isOnlineSelected, hasValidOnlineUrl, onlineError]);
+
+  const isReaderMachine = useCallback(
+    () => isPhysicalLocalReader() || isOnlineReaderOnClient(),
+    [isPhysicalLocalReader, isOnlineReaderOnClient]
+  );
+
   const setSourceMode = async (mode: SourceMode) => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
@@ -2636,15 +2650,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </div>
 
                   {/* Computadores que não são o leitor: apenas informações salvas (música, artista e capa) */}
-                  {!isPhysicalLocalReader() && (remoteReaderDevice || localFileName) && (
+                  {!isReaderMachine() && (remoteReaderDevice || localFileName) && (
                     <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-wider self-center sm:self-start" style={{ color: "rgba(255,255,255,0.8)" }}>
                       <FolderOpen size={11} className="text-[#38bdf8]" />
                       <span className="truncate max-w-[260px]">Leitura em: {remoteReaderDevice || localFileName}</span>
                     </div>
                   )}
 
-                  {/* High-visibility Responsive Progress Bar (somente no computador leitor) */}
-                  {music && music.duracao > 0 && isPhysicalLocalReader() && (
+                  {/* Barra de progresso: computador leitor (arquivo local OU link online) */}
+                  {music && music.duracao > 0 && isReaderMachine() && (
                     <div className="space-y-1.5 mt-1.5 w-full max-w-xl">
                       <div className="flex items-center justify-between text-xs font-mono font-bold">
                         <span className="flex items-center gap-1.5 drop-shadow-sm" style={{ color: "#ffffff" }}>
