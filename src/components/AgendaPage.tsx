@@ -1238,7 +1238,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         }
       });
 
-      const { data: evts } = await supabase
+      const { data: evts, error: evtsErr } = await supabase
         .from("agenda_eventos")
         .select("*")
         .eq("user_id", targetUserId)
@@ -1285,9 +1285,9 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
       });
 
       const dbEventIds = (evts || []).map((e: any) => e.id);
-      pruneStoredAgendaEvents(targetUserId, dbEventIds);
+      if (!evtsErr) pruneStoredAgendaEvents(targetUserId, dbEventIds);
       const baseEvents = Array.from(map.values()).filter(
-        (e) => !isUuidId(e.id) || dbEventIds.includes(e.id),
+        (e) => !!evtsErr || !isUuidId(e.id) || dbEventIds.includes(e.id),
       );
       setEventos(baseEvents);
 
