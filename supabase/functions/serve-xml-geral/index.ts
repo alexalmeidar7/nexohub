@@ -123,6 +123,8 @@ serve(async (req) => {
       sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }),
     ]);
 
+    console.log(`[serve-xml-geral] fetched owner=${ownerId} prog=${programasRes.data?.length || 0} ap=${apresentadoresRes.data?.length || 0} logos=${logosRes.data?.length || 0} rot=${roteiroRes.data?.length || 0} bat=${batalhaRes.data?.length || 0}`);
+
     const empresa = empresaRes.data || {};
     const programas = programasRes.data || [];
     const apresentadores = apresentadoresRes.data || [];
