@@ -198,7 +198,7 @@ export function logoTransformPlugin(): Plugin {
               });
 
               if (!openAiRes.ok) {
-                const errJson = await openAiRes.json().catch(() => ({}));
+                const errJson: any = await openAiRes.json().catch(() => ({} as any));
                 const errMsg = errJson?.error?.message || `Erro na API da OpenAI (Status ${openAiRes.status})`;
                 console.warn("[LogoTransform] OpenAI API error:", errMsg);
 
@@ -215,7 +215,7 @@ export function logoTransformPlugin(): Plugin {
                 return;
               }
 
-              const data = await openAiRes.json();
+              const data: any = await openAiRes.json();
               const b64 = data?.data?.[0]?.b64_json;
               if (!b64) {
                 res.writeHead(500);
