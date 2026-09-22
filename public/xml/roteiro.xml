@@ -1,42 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <programaExpress>
   <programa>Primeira Hora Positiva</programa>
-  <estudio>ESTUDIO FM</estudio>
-  <data>2026-09-21</data>
+  <estudio>Estudio FM</estudio>
+  <data>2026-04-16</data>
   <horario>07:24</horario>
   <hora>07:24</hora>
   <participantes>
     <item>
       <nome>Alysson Lima</nome>
-      <cargo>Locutor / Apresentador</cargo>
+      <cargo>Jornalista</cargo>
       <instagram>@alyssonlima</instagram>
     </item>
     <item>
       <nome>Jane Borges</nome>
-      <cargo>Convidado</cargo>
+      <cargo>Jornalista</cargo>
       <instagram>@janeborges</instagram>
     </item>
   </participantes>
   <bloco numero="1">
     <noticia ordem="1">
-      <titulo>Criminosos furtam escritório de Milton Leite na Zona Sul de SP, levam HD com imagens e deixam R$ 19 mil para trás</titulo>
-      <resumo>HD com imagens de câmeras de segurança teria sido levado. Leite se entregou à polícia na sexta (18), após ter sido alvo de um mandado de prisão na Operação Vectura Corrupta.</resumo>
-      <texto_materia>Por Karina Cordeiro , Dalton Ferreira, Bruno Tavares, Lílian Oliveira, Lucas Passanesi , TV Globo
-
-Um escritório político do ex-vereador Milton Leite (União Brasil) foi furtado neste domingo (20) em São Paulo. Os criminosos levaram um HD de segurança e deixaram mais de R$ 19 mil em dinheiro vivo no local.
-
-O ex-vereador está preso temporariamente em Mogi das Cruzes (SP). Ele se entregou nesta sexta-feira (18) sob suspeitas de ligação com o PCC no transporte público paulistano.
-
-Parte dos documentos e as cédulas encontradas no imóvel foram apreendidos pelos policiais civis que atenderam a ocorrência. A polícia não confirmou oficialmente e nem negou que o imóvel pertença a Milton.
-
-Na saída para o IML ainda na sexta (18), após se entregar, Milton falou com a imprensa e afirmou ser inocente das acusações.
-
-Escritório de Milton Leite é furtado na zona sul da capital
-
-Um imóvel usado como escritório político pelo ex-vereador Milton Leite ( União Brasil ), em Santo Amaro, na Zona Sul de São Paulo , foi furtado na noite deste domingo (20). Os criminosos levaram o HD que armazenava imagens do circuito interno de segurança, mas deixaram para trás mais de R$ 19 mil em dinheiro encontrados no local.
-
-O furto ocorreu por volta das 21h15, em um imóvel na Rua General Bráulio Guimarães. Segundo relatos de moradores, o local pertence ao ex-presidente da Câmara Municipal de São Paulo e atual presidente estadual do União Brasil, que segue preso em Mogi das Cruzes, na Grande São Paulo .</texto_materia>
-      <imagem>https://s2-g1.glbimg.com/eI0qTFt-NVSPF8HcByizXIc4Avc=/1920x0/filters:format(jpeg)/https://i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2026/y/P/iPBimZQ4yHXi69jLuzug/bdsp-roubo-residencia-20260921-0343-frame-1893.jpeg</imagem>
+      <titulo>Justiça marca audiência para adolescente bêbado que atropelou e matou casal em Goiânia</titulo>
+      <resumo>Adolescente está apreendido desde 24 de agosto, quando foi localizado pela Polícia Civil; audiência está marcada para 30 de setembro</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/foto-87-1789490047.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="2">
+      <titulo>Greve chega ao fim e administrativos da Educação voltam ao trabalho em Goiânia</titulo>
+      <resumo>Categoria aprovou proposta da Prefeitura após 21 dias de paralisação; atividades serão retomadas nesta quarta-feira (16)</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://ohoje.com/wp-content/uploads/2026/09/WhatsApp_Image_2020-12-18_at_11.51.24.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="3">
+      <titulo>Avanço de canal de umidade traz chuvas isoladas para Goiânia e outras regiões; confira previsão do tempo</titulo>
+      <resumo>Goiás passa por extremos climáticos, com chuva e calor, além de alerta de seca em algumas localidades, com termômetros chegando a 40 ºC</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://cdn.diariodegoias.com.br/wp-content/uploads/1781145972/2024/12/Chuva-e-sol-em-Goias-scaled.jpg</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="4">
+      <titulo>Goiânia cria cartão que pode bancar gás, luz, água e aluguel</titulo>
+      <resumo>Novo Goiânia+Humana será voltado a pessoas em situação de pobreza e vulnerabilidade. Valores, critérios e prazo de cada benefício ainda serão definidos</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/cartao-goiania-1789504266.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="5">
+      <titulo>Julgamento sobre futuro de Moraes pode ficar parado no STF até dezembro</titulo>
+      <resumo>Após pedir vista, Dino tem 90 dias para devolver caso sobre questão de ordem apresentada por Gilmar; plenário tem 4 votos a 3 para julgar casos de Moraes e Mendonça separadamente</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/09/ministros-andre-mendonca-alexandre-de-moraes-dias-toffoli-plenario-stf.jpg?w=1200&amp;h=630&amp;crop=1</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="6">
+      <titulo>CNT/MDA: Lula soma 47,3% contra 40% de Flávio Bolsonaro</titulo>
+      <resumo>Resultado revela vantagem acima da margem de erro para o atual presidente</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://www.maisgoias.com.br/wp-content/uploads/2026/09/lula-e-flavio-1789502658.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="7">
+      <titulo>PRTB substitui Pablo Marçal e indica Leonardo Avalanche como candidato a presidente</titulo>
+      <resumo>Avalanche é presidente do partido e inicialmente tinha sido inscrito como candidato a vice</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://uploads.maisgoias.com.br/2026/09/avalanche-1788982281.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="8">
+      <titulo>Sancionado, novo Move Brasil garante R$ 30 bilhões para motoristas e entregadores de app comprarem veículos próprios</titulo>
+      <resumo>Move Brasil foi sancionado pelo presidente segunda (14). Incentivo financia carros e motos em até 84 vezes e reduz juros para mulheres</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://cdn.diariodegoias.com.br/wp-content/uploads/2026/09/15115929/55529071195_c86e44e660_o-856x481.webp</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="9">
+      <titulo>Fed e Copom decidem juros nesta quarta com apostas em rumos opostos</titulo>
+      <resumo>Superquarta traz expectativa de avanço das taxas nos EUA pela 1ª vez em três anos e último corte da Selic em 2026</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/2026/06/ChatGPT-Image-16-de-jun.-de-2026-22_00_23.png?w=1200&amp;h=630&amp;crop=1</imagem>
+      <escalada>false</escalada>
+    </noticia>
+    <noticia ordem="10">
+      <titulo>Saída temporária de presos em SP: 3ª &quot;saidinha&quot; de 2026 inicia</titulo>
+      <resumo>O terceiro período de saída temporária de presos em São Paulo para 2026 começa nesta terça-feira. Detentos do regime semiaberto saem sob regras judiciais.</resumo>
+      <texto_materia></texto_materia>
+      <imagem>https://istoe.com.br/wp-content/uploads/2026/09/Saida-no-Complexo-Penitenciario-1-1200x630.png</imagem>
       <escalada>false</escalada>
     </noticia>
   </bloco>
