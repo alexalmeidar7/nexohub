@@ -2118,7 +2118,8 @@ export default function PromocoesKiosk() {
 
                   {/* Imagem de Capa ou Fallback */}
                   {(() => {
-                    const coverImg = currentProg.capa || (currentProg as any).thumb || (currentProg as any).selo || "";
+                    // Exibe exclusivamente a LOGO do programa (selo), sem capa.
+                    const coverImg = (currentProg as any).selo || "";
                     if (coverImg) {
                       return (
                         <div
@@ -2440,7 +2441,7 @@ export default function PromocoesKiosk() {
               <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 flex-shrink-0 gap-3" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <div className="flex items-center gap-4">
                     {(() => {
-                      const dlgCover = selectedProgram?.capa || (selectedProgram as any)?.thumb || (selectedProgram as any)?.selo || "";
+                      const dlgCover = (selectedProgram as any)?.selo || "";
                       if (dlgCover) {
                         return (
                           <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">
