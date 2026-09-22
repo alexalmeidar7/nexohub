@@ -489,10 +489,46 @@ export function getStoredAgendaEvents(targetUserId?: string | null): Evento[] {
   return [];
 }
 
+const isUuidId = (id?: string | null) =>
+  !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+/**
+ * Remove do cache local qualquer evento do banco (id uuid) que NÃO pertença
+ * mais a este usuário — evita vazamento de eventos entre contas.
+ */
+export function pruneStoredAgendaEvents(targetUserId?: string | null, dbIds?: string[]) {
+  if (!targetUserId) return;
+  try {
+    const ids = new Set(dbIds || []);
+    const key = getAgendaStorageKey(targetUserId);
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (e: any) => e && (!isUuidId(e.id) || ids.has(e.id)) && (!e.user_id || e.user_id === targetUserId),
+        );
+        if (cleaned.length !== parsed.length) localStorage.setItem(key, JSON.stringify(cleaned));
+      }
+    }
+    const fbRaw = localStorage.getItem(LOCAL_AGENDA_EVENTS_KEY);
+    if (fbRaw) {
+      const parsed = JSON.parse(fbRaw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (e: any) => e && (e.user_id !== targetUserId || !isUuidId(e.id) || ids.has(e.id)),
+        );
+        if (cleaned.length !== parsed.length) localStorage.setItem(LOCAL_AGENDA_EVENTS_KEY, JSON.stringify(cleaned));
+      }
+    }
+  } catch {}
+}
+
 export function saveStoredAgendaEvent(evt: Evento, targetUserId?: string | null) {
   if (!evt || !evt.id) return;
   try {
     const effectiveUid = targetUserId || evt.user_id || "default";
+    if (targetUserId && !evt.user_id) evt = { ...evt, user_id: targetUserId };
     const key = getAgendaStorageKey(effectiveUid);
     const existing = getStoredAgendaEvents(effectiveUid);
     const filtered = existing.filter((e) => e.id !== evt.id);
@@ -1248,10 +1284,13 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         saveStoredAgendaEvent(mergedEvt, targetUserId);
       });
 
-      const baseEvents = Array.from(map.values());
+      const dbEventIds = (evts || []).map((e: any) => e.id);
+      pruneStoredAgendaEvents(targetUserId, dbEventIds);
+      const baseEvents = Array.from(map.values()).filter(
+        (e) => !isUuidId(e.id) || dbEventIds.includes(e.id),
+      );
       setEventos(baseEvents);
 
-      const dbEventIds = (evts || []).map((e: any) => e.id);
       if (dbEventIds.length) {
         const { data: parts } = await supabase
           .from("agenda_participantes")
@@ -1402,7 +1441,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           saveStoredAgendaEvent(mergedEvt, targetUserId);
         });
 
-        const baseEvents: Evento[] = Array.from(map.values());
+        const dbIdsNow = evts.map((e: any) => e.id);
+        pruneStoredAgendaEvents(targetUserId, dbIdsNow);
+        const baseEvents: Evento[] = Array.from(map.values()).filter(
+          (e) => !isUuidId(e.id) || dbIdsNow.includes(e.id),
+        );
         setEventos(baseEvents);
         setLoadingData(false);
 
