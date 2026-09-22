@@ -2146,6 +2146,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           // entre o último registro e a música no ar).
           if (isPhysicalLocalReader()) return;
 
+          // Já aplicamos uma leitura válida do leitor: não voltar para o histórico.
+          if (appliedStartRef.current > 0) return;
+
           const hasActiveTrackAlready = Boolean(
             musicRef.current &&
             musicRef.current.titulo &&
