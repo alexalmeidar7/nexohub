@@ -1858,6 +1858,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       if (isLocalReaderActive() || (fileHandleRef.current && isLocalSelected) || isOnlineActiveOnClient) return;
       if (syncInFlightRef.current) return;
       syncInFlightRef.current = true;
+      try {
 
       // The effective account is the single source of truth. Mixing the
       // sub-user, parent and authenticated IDs made older tracks alternate.
@@ -1932,7 +1933,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const now = Date.now();
             const el = Math.max(0, (now - resolvedStart) / 1000);
 
-            const activeSrc = (di.music_source as string) || (isOnlineSelected ? "online" : "pasta");
+            const activeSrc: "online" | "pasta" = di.music_source === "online" ? "online" : "pasta";
             setLastSource(activeSrc);
             lastSourceRef.current = activeSrc;
 
@@ -2144,7 +2145,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           console.warn(`[MusicaNoAr] Erro ao sincronizar para o uid ${uid}:`, err);
         }
       }
-      syncInFlightRef.current = false;
+      } finally {
+        syncInFlightRef.current = false;
+      }
     };
 
     // Leitura inicial imediata
