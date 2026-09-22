@@ -248,9 +248,10 @@ async function persistPrograma(opts: {
       if (!upErr && upData && upData.length > 0) return null;
       return upErr?.message || "Não foi possível salvar as alterações do programa.";
     }
+    const isDbId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
     const { data, error } = await supabase
       .from("programas")
-      .insert({ id: targetId, user_id: ownerId, ...payload } as any)
+      .insert({ ...(isDbId ? { id: targetId } : {}), user_id: ownerId, ...payload } as any)
       .select("id");
     if (!error && data && data.length > 0) return null;
     return error?.message || "Não foi possível cadastrar o programa.";
