@@ -118,52 +118,21 @@ export function resolveSafePromoButton(p: any): string {
   return "";
 }
 
+// Retorna apenas imagens realmente cadastradas (URL ou caminho).
+// Nunca inventa arte por nome de programa: isso causava vazamento visual
+// entre contas (ex.: capa "flashback" da Positiva aparecendo na Interativa).
+const isRealImageRef = (value?: string): boolean => {
+  const v = (value || "").trim();
+  if (!v) return false;
+  return v.startsWith("http") || v.startsWith("data:") || v.startsWith("/");
+};
+
 export function resolveSafeProgramCover(nameOrCover?: string): string {
-  const norm = (nameOrCover || "").toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("flashback")) return "/programas/flashback.png";
-  if (norm.includes("whatsapp")) return "/programas/whatsapp.png";
-  if (norm.includes("bom dia")) return "/programas/bom-dia.png";
-  if (norm.includes("primeira hora")) return "/programas/primeira-hora.png";
-  if (norm.includes("sertanejo") && (norm.includes("1") || norm.includes("primeira"))) return "/programas/sbd1.png";
-  if (norm.includes("sertanejo") && (norm.includes("2") || norm.includes("segunda"))) return "/programas/sbd2.png";
-  if (norm.includes("sertanejo")) return "/programas/sbd1.png";
-  if (norm.includes("vale night")) return "/programas/vale-night.png";
-  if (norm.includes("palco")) return "/programas/palco-positiva.png";
-  if (norm.includes("energia")) return "/programas/energia-positiva.png";
-  if (norm.includes("modao")) return "/programas/modao.png";
-  if (norm.includes("domingao")) return "/programas/domingao.png";
-  if (norm.includes("madruga")) return "/programas/madrugada.png";
-
-  if (nameOrCover && !nameOrCover.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
-    return nameOrCover;
-  }
-  return "/programas/flashback.png";
+  return isRealImageRef(nameOrCover) ? (nameOrCover as string).trim() : "";
 }
 
 export function resolveSafeProgramSelo(nameOrSelo?: string): string {
-  const norm = (nameOrSelo || "").toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("flashback")) return "/selos/flashback.png";
-  if (norm.includes("whatsapp")) return "/selos/whatsapp.png";
-  if (norm.includes("bom dia")) return "/selos/bom-dia.png";
-  if (norm.includes("primeira hora")) return "/selos/primeira-hora.png";
-  if (norm.includes("sertanejo") && (norm.includes("1") || norm.includes("primeira"))) return "/selos/sbd1.png";
-  if (norm.includes("sertanejo") && (norm.includes("2") || norm.includes("segunda"))) return "/selos/sbd2.png";
-  if (norm.includes("sertanejo")) return "/selos/sbd1.png";
-  if (norm.includes("vale night")) return "/selos/vale-night.png";
-  if (norm.includes("palco")) return "/selos/palco-positiva.png";
-  if (norm.includes("energia")) return "/selos/energia-positiva.png";
-  if (norm.includes("modao")) return "/selos/modao.png";
-  if (norm.includes("domingao")) return "/selos/domingao.png";
-  if (norm.includes("madruga")) return "/selos/madrugada.png";
-
-  if (nameOrSelo && !nameOrSelo.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
-    return nameOrSelo;
-  }
-  return "/selos/flashback.png";
+  return isRealImageRef(nameOrSelo) ? (nameOrSelo as string).trim() : "";
 }
 
 export { resolveSafePresenterPhoto };
@@ -469,6 +438,23 @@ export default function PromocoesKiosk() {
   const [programasSectionOpen, setProgramasSectionOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
+  // Aplica em tempo real o estilo salvo na Configuração da Tela de Promoção
+  useEffect(() => {
+    const apply = (cfg: any) => {
+      if (cfg && typeof cfg === "object") setTelaPromoConfig({ ...defaultTelaPromoConfig, ...cfg });
+    };
+    const onCustom = (e: Event) => apply((e as CustomEvent).detail);
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || !e.key.startsWith("nexohub_telapromo_") || !e.newValue) return;
+      try { apply(JSON.parse(e.newValue)); } catch {}
+    };
+    window.addEventListener("telapromo-updated", onCustom as EventListener);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("telapromo-updated", onCustom as EventListener);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
   const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
   const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
@@ -730,9 +716,9 @@ export default function PromocoesKiosk() {
         nome: p.nome,
         apresentadorId: p.apresentador_id || p.apresentadorId || "",
         apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || [],
-        selo: resolveSafeProgramSelo(p.selo || p.nome),
-        capa: resolveSafeProgramCover(p.capa || p.thumb || p.selo || p.nome),
-        thumb: resolveSafeProgramCover(p.thumb || p.capa || p.nome),
+        selo: resolveSafeProgramSelo(p.selo),
+        capa: resolveSafeProgramCover(p.capa || p.thumb),
+        thumb: resolveSafeProgramCover(p.thumb || p.capa),
         diasSemana: p.dias_semana || p.diasSemana || [],
         horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
         horarioFim: p.horario_fim || p.horarioFim || "23:59:59",
@@ -777,6 +763,20 @@ export default function PromocoesKiosk() {
       const isPositiva = !localUid || localUid === POSITIVA_USER_ID;
       const targetUid = localUid || POSITIVA_USER_ID;
 
+      // Isolamento de contas: subusuário herda os dados do usuário master.
+      let ownerIds: string[] = localUid ? [localUid] : [];
+      if (localUid) {
+        try {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("parent_user_id")
+            .eq("id", localUid as any)
+            .maybeSingle();
+          const parentId = (prof as any)?.parent_user_id;
+          if (parentId && parentId !== localUid) ownerIds = [localUid, parentId];
+        } catch { /* ignore */ }
+      }
+
       let empresaData: any = null;
       let promoData: any = null;
       let progsData: any = null;
@@ -785,16 +785,36 @@ export default function PromocoesKiosk() {
 
       try {
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000));
+        const scopePromos = supabase.from("promocoes").select("*").order("data_inicio");
+        const scopeProgs = supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%");
+        const scopeTests = supabase.from("testemunhais").select("*");
+        const scopeSettings = supabase
+          .from("user_settings")
+          .select("user_id, cenario_config, weather_city, weather_lat, weather_lon");
+        const safe = (q: any) => Promise.resolve(q).catch(() => ({ data: null })) as Promise<any>;
         const fetches = Promise.all([
           getEmpresaConfig().catch(() => null),
-          supabase.from("promocoes").select("*").order("data_inicio").catch(() => ({ data: null })),
-          supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%").catch(() => ({ data: null })),
-          supabase.from("testemunhais").select("*").catch(() => ({ data: null })),
-          supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").maybeSingle().catch(() => ({ data: null })),
+          safe(ownerIds.length ? scopePromos.in("user_id", ownerIds as any) : scopePromos),
+          safe(ownerIds.length ? scopeProgs.in("user_id", ownerIds as any) : scopeProgs),
+          safe(ownerIds.length ? scopeTests.in("user_id", ownerIds as any) : scopeTests),
+          safe(ownerIds.length
+            ? scopeSettings.in("user_id", ownerIds as any).limit(2)
+            : scopeSettings.limit(1)),
         ]);
-        const results: any = await Promise.race([fetches, timeoutPromise]).catch(() => null);
+        const results: any[] | null = await Promise.race([fetches, timeoutPromise]).catch(() => null) as any;
         if (results) {
-          [empresaData, { data: promoData } = {}, { data: progsData } = {}, { data: testData } = {}, { data: settingsData } = {}] = results;
+          empresaData = results[0];
+          promoData = results[1]?.data ?? null;
+          progsData = results[2]?.data ?? null;
+          testData = results[3]?.data ?? null;
+          const settingsRows: any = results[4]?.data ?? null;
+          const rows = Array.isArray(settingsRows) ? settingsRows : (settingsRows ? [settingsRows] : []);
+          settingsData =
+            rows.find((r: any) => r.user_id === localUid && (r.cenario_config as any)?.tela_promo_bg) ||
+            rows.find((r: any) => (r.cenario_config as any)?.tela_promo_bg) ||
+            rows.find((r: any) => r.user_id === localUid) ||
+            rows[0] ||
+            null;
         }
       } catch {}
 
@@ -848,24 +868,17 @@ export default function PromocoesKiosk() {
       let edgeProgs: any[] = [];
       let edgeAprs: any[] = [];
 
-      // Fallback para snapshot estático local se ainda estiver vazio
+      // Fallback para snapshot estático local — sempre restrito aos IDs do
+      // usuário logado (e do master, no caso de subusuário).
+      const belongsToOwner = (row: any) => {
+        if (ownerIds.length) return ownerIds.includes(row?.user_id);
+        return isPositivaStation && (row?.user_id === POSITIVA_USER_ID || !row?.user_id);
+      };
       if (allPromos.length === 0) {
-        const snapPromos = getSnapshotTable("promocoes");
-        const filtered = snapPromos.filter((p: any) => {
-          if (localUid && p.user_id === localUid) return true;
-          if (isPositivaStation && (p.user_id === POSITIVA_USER_ID || !p.user_id)) return true;
-          return false;
-        });
-        allPromos = isPositivaStation ? (filtered.length > 0 ? filtered : snapPromos) : filtered;
+        allPromos = getSnapshotTable("promocoes").filter(belongsToOwner);
       }
       if (activeTestemunhais.length === 0) {
-        const snapTests = getSnapshotTable("testemunhais");
-        const filtered = snapTests.filter((t: any) => {
-          if (localUid && t.user_id === localUid) return true;
-          if (isPositivaStation && (t.user_id === POSITIVA_USER_ID || !t.user_id)) return true;
-          return false;
-        });
-        activeTestemunhais = isPositivaStation ? (filtered.length > 0 ? filtered : snapTests) : filtered;
+        activeTestemunhais = getSnapshotTable("testemunhais").filter(belongsToOwner);
       }
 
       if (localUid) {
@@ -903,21 +916,18 @@ export default function PromocoesKiosk() {
       setTestemunhais(activeTestemunhais);
 
       let rawProgs = progsData && progsData.length > 0 ? progsData : (edgeProgs.length > 0 ? edgeProgs : []);
-      if (rawProgs.length === 0 && isPositiva) {
+      if (rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
       if (rawProgs.length === 0) {
-        const snapProgs = getSnapshotTable("programas");
-        const filtered = snapProgs.filter((p: any) =>
-          !localUid || p.user_id === localUid || p.user_id === POSITIVA_USER_ID
-        );
+        const filtered = getSnapshotTable("programas").filter(belongsToOwner);
         if (filtered.length > 0) rawProgs = filtered;
       }
-      if (rawProgs.length === 0) {
-        const stationData = getStationDatabaseSync(localUid || undefined);
+      if (rawProgs.length === 0 && localUid) {
+        const stationData = getStationDatabaseSync(localUid);
         if (stationData?.programas && stationData.programas.length > 0) {
           rawProgs = stationData.programas;
-        } else if (localUid) {
+        } else {
           try {
             const fetched = await fetchStationDatabaseData(localUid);
             if (fetched?.programas && fetched.programas.length > 0) {
@@ -926,7 +936,7 @@ export default function PromocoesKiosk() {
           } catch { /* ignore */ }
         }
       }
-      if (rawProgs.length === 0 && isPositiva) {
+      if (rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
 
@@ -936,9 +946,9 @@ export default function PromocoesKiosk() {
         nome: p.nome,
         apresentadorId: p.apresentador_id || p.apresentadorId || "",
         apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || [],
-        selo: resolveSafeProgramSelo(p.selo || p.nome),
-        capa: resolveSafeProgramCover(p.capa || p.thumb || p.selo || p.nome),
-        thumb: resolveSafeProgramCover(p.thumb || p.capa || p.nome),
+        selo: resolveSafeProgramSelo(p.selo),
+        capa: resolveSafeProgramCover(p.capa || p.thumb),
+        thumb: resolveSafeProgramCover(p.thumb || p.capa),
         diasSemana: p.dias_semana || p.diasSemana || [],
         horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
         horarioFim: p.horario_fim || p.horarioFim || "23:59:59",
@@ -951,7 +961,7 @@ export default function PromocoesKiosk() {
       try {
         aprs = edgeAprs.length > 0 ? edgeAprs : await getApresentadores();
       } catch {}
-      if (!aprs || aprs.length === 0 || isPositiva) {
+      if ((!aprs || aprs.length === 0) && !localUid) {
         aprs = DEFAULT_POSITIVA_APRESENTADORES;
       }
       setApresentadores(aprs.map((a: any) => ({
@@ -2016,17 +2026,15 @@ export default function PromocoesKiosk() {
 
         {/* Banner rotativo + capa do programa no ar */}
         {(() => {
-          // Prioriza os programas que possuem citações cadastradas
-          const scheduleList = filteredPrograms.length > 0 ? filteredPrograms : mergeProgramList(programas);
+          // Exibe SOMENTE os programas que possuem citações cadastradas
+          const scheduleList = filteredPrograms;
           const onAirIdx = onAirProgram
             ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
             : -1;
           const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
           const currentProg = (onAirIdx >= 0 && coverIndex === null ? scheduleList[onAirIdx] : null)
             ?? scheduleList[activeIdx]
-            ?? (onAirProgram ? programas.find(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome)) : null)
             ?? scheduleList[0]
-            ?? (programas[0] as any)
             ?? null;
           const goPrev = (e: React.MouseEvent) => {
             e.stopPropagation();
@@ -2128,7 +2136,8 @@ export default function PromocoesKiosk() {
 
                   {/* Imagem de Capa ou Fallback */}
                   {(() => {
-                    const coverImg = currentProg.capa || (currentProg as any).thumb || (currentProg as any).selo || "";
+                    // Exibe exclusivamente a LOGO do programa (selo), sem capa.
+                    const coverImg = (currentProg as any).selo || "";
                     if (coverImg) {
                       return (
                         <div
@@ -2450,7 +2459,7 @@ export default function PromocoesKiosk() {
               <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 flex-shrink-0 gap-3" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <div className="flex items-center gap-4">
                     {(() => {
-                      const dlgCover = selectedProgram?.capa || (selectedProgram as any)?.thumb || (selectedProgram as any)?.selo || "";
+                      const dlgCover = (selectedProgram as any)?.selo || "";
                       if (dlgCover) {
                         return (
                           <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">

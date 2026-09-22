@@ -162,16 +162,22 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
 
         await supabase
           .from("user_settings")
-          .upsert({ user_id: targetUserId, cenario_config: updated as any });
+          .upsert({ user_id: targetUserId, cenario_config: updated as any }, { onConflict: "user_id" });
       } catch (err) {
         console.warn("Supabase telapromo config save warning:", err);
       }
 
       try {
         localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(config));
+        if (user?.id && user.id !== targetUserId) {
+          localStorage.setItem(getLocalStorageKey(user.id), JSON.stringify(config));
+        }
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent("telapromo-updated", { detail: config }));
       } catch {}
 
-      toast.success("Configuração da Tela de Promoção salva!");
+      toast.success("Configuração da Tela de Promoção salva e aplicada na tela do locutor!");
     } catch {
       toast.error("Erro ao salvar configuração.");
     } finally {
@@ -216,6 +222,16 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
         .upsert({ user_id: user.id, cenario_config: merged }, { onConflict: "user_id" });
 
       if (saveError) throw saveError;
+
+      try {
+        localStorage.setItem(getLocalStorageKey(user.id), JSON.stringify(nextConfig));
+        if (targetUserId && targetUserId !== user.id) {
+          localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(nextConfig));
+        }
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent("telapromo-updated", { detail: nextConfig }));
+      } catch {}
 
       setUploadProgress(100);
       setUploadStatus("done");

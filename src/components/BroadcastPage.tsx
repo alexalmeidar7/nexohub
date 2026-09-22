@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic, Save } from "lucide-react";
-import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
@@ -253,7 +252,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [allProgramasFull, setAllProgramasFull] = useState<any[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir" | "assuntos">("preview");
+  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir">("preview");
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState<number>(() => Date.now());
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
@@ -611,37 +610,21 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             .maybeSingle();
           setNewsTitles(parseTitles(chosen));
         } else {
-        // Busca os últimos roteiros jornalísticos (aceita variações de acento/caixa)
-        const { data: rows } = await supabase
-          .from("roteiros")
-          .select("tickertitulos, conteudo_html, tipo_programa, created_at")
-          .eq("user_id", stationUid)
-          .ilike("tipo_programa", "%jorn%")
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        let titles: string[] = [];
-        for (const r of rows || []) {
-          titles = parseTitles(r);
-          if (titles.length > 0) break;
-        }
-
-        // Fallback: qualquer roteiro recente que já tenha títulos de ticker
-        if (titles.length === 0) {
-          const { data: anyRows } = await supabase
+          // Sempre o roteiro MAIS RECENTE do usuário (edição mais nova primeiro)
+          const { data: rows } = await supabase
             .from("roteiros")
-            .select("tickertitulos, conteudo_html, created_at")
+            .select("tickertitulos, conteudo_html, tipo_programa, updated_at, created_at")
             .eq("user_id", stationUid)
-            .not("tickertitulos", "is", null)
+            .order("updated_at", { ascending: false, nullsFirst: false })
             .order("created_at", { ascending: false })
-            .limit(3);
-          for (const r of anyRows || []) {
+            .limit(15);
+
+          let titles: string[] = [];
+          for (const r of rows || []) {
             titles = parseTitles(r);
             if (titles.length > 0) break;
           }
-        }
-
-        if (titles.length > 0) setNewsTitles(titles);
+          setNewsTitles(titles);
         }
       }
 
@@ -1280,10 +1263,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
         {/* ── Navigation (segmented, always labelled) ── */}
         <div className="flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto bg-white" style={{ border: `1px solid ${NAVY_BORDER}` }}>
-          {(["preview", "insert", "assuntos", "ticker", "aseguir"] as const).map(tabId => {
+          {(["preview", "insert", "ticker", "aseguir"] as const).map(tabId => {
             const active = activeTab === tabId;
-            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", assuntos: "Título", ticker: "Ticker", aseguir: "A Seguir" };
-            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock };
+            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", ticker: "Ticker", aseguir: "A Seguir" };
+            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, ticker: TrendingUp, aseguir: Clock };
             const Icon = Icons[tabId];
             return (
               <button
@@ -1464,128 +1447,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           </div>
         )}
 
-        {activeTab === "assuntos" && (
-          <div className="max-w-3xl mx-auto flex flex-col gap-6 w-full">
-            {/* Seletor de modo de envio do título */}
-            <div className="p-5 rounded-2xl bg-white" style={cardStyle}>
-              <div className="text-[10px] font-black uppercase tracking-[0.15em] mb-3 text-slate-600">Como enviar o título ao XML</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {([
-                  { v: "simples" as const, label: "Título Simples", desc: "Digite o assunto e ele vai automaticamente para o XML broadcast" },
-                  { v: "web" as const, label: "Título Web", desc: "Até 3 mensagens rotativas por programa" },
-                ]).map(({ v, label, desc }) => {
-                  const on = (data.tituloMode || "simples") === v;
-                  return (
-                    <button
-                      key={v}
-                      onClick={() => {
-                        const nextData = { ...latestDataRef.current, tituloMode: v };
-                        setData(nextData);
-                        void handleSave(nextData);
-                      }}
-                      className="text-left p-4 rounded-xl transition-all cursor-pointer"
-                      style={{
-                        backgroundColor: on ? `${CYAN}10` : "#f8fafc",
-                        border: `1.5px solid ${on ? CYAN : NAVY_BORDER}`,
-                      }}
-                    >
-                      <span className="text-[11px] font-black uppercase tracking-widest block" style={{ color: on ? CYAN : "#0f172a" }}>{label}</span>
-                      <p className="text-[11px] mt-1 text-slate-500">{desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Conteúdo do Título Simples */}
-            {(data.tituloMode || "simples") === "simples" && (
-            <div className="p-6 rounded-2xl bg-white" style={cardStyle}>
-              <div className="space-y-6">
-                <div className="relative group">
-                  <label className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 block text-slate-600">Assunto / Título</label>
-                  <input
-                    type="text"
-                    value={data.assunto}
-                    onChange={e => setData({ ...data, assunto: e.target.value })}
-                    onBlur={onFieldBlur}
-                    placeholder="Defina o assunto principal..."
-                    className="w-full px-5 py-3.5 rounded-full text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#0055ff]/20 outline-none"
-                    style={inputStyle}
-                  />
-                  <p className="text-[10px] mt-2 text-slate-400">Enviado automaticamente para o XML broadcast ao sair do campo.</p>
-                </div>
-
-                <div className="relative group">
-                  <label className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 block text-slate-600">Apresentador (Substituir)</label>
-                  <div className="relative">
-                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={data.locutor_override}
-                      onChange={async e => {
-                        const val = e.target.value;
-                        setData({ ...data, locutor_override: val });
-                        if (val.trim().length >= 2 && stationUid) {
-                          const { data: results } = await supabase
-                            .from("apresentadores")
-                            .select("nome, instagram, foto")
-                            .eq("user_id", stationUid)
-                            .ilike("nome", `%${val.trim()}%`)
-                            .limit(5);
-                          setLocutorSearchResults(results || []);
-                          setShowLocutorDropdown(true);
-                        } else {
-                          setLocutorSearchResults([]);
-                          setShowLocutorDropdown(false);
-                        }
-                      }}
-                      onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
-                      onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
-                      placeholder={locutorNome || "Nome do locutor..."}
-                      className="w-full pl-11 pr-5 py-3.5 rounded-full text-[13px] font-medium outline-none"
-                      style={inputStyle}
-                    />
-                  </div>
-
-                  {showLocutorDropdown && locutorSearchResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-2 rounded-2xl shadow-xl overflow-hidden bg-white border border-slate-200">
-                      {locutorSearchResults.map((r, i) => (
-                        <button
-                          key={i}
-                          onMouseDown={e => {
-                            e.preventDefault();
-                            setData({ ...data, locutor_override: r.nome });
-                            if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
-                            if (r.foto) setLocutorFoto(r.foto);
-                            setShowLocutorDropdown(false);
-                            setLocutorSearchResults([]);
-                          }}
-                          className="w-full text-left px-4 py-3 text-xs flex items-center gap-3 text-slate-800 hover:bg-slate-50 transition-colors cursor-pointer"
-                          style={{ borderBottom: i < locutorSearchResults.length - 1 ? `1px solid ${NAVY_BORDER}` : "none" }}
-                        >
-                          {r.foto && <img src={r.foto} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />}
-                          <div className="flex-1 min-w-0">
-                            <span className="font-bold block truncate text-slate-800">{r.nome}</span>
-                            {r.instagram && <span className="text-[10px] text-[#0055ff]">@{r.instagram.replace("@", "")}</span>}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            </div>
-            )}
-
-            {(data.tituloMode || "simples") === "web" && (
-              <div className="p-6 rounded-2xl bg-white" style={cardStyle}>
-                <SectionHeader n="01" label="Título Web · Mensagens Rotativas" color={CYAN} />
-                <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={stationUid} />
-              </div>
-            )}
-          </div>
-        )}
 
         {activeTab === "ticker" && (
           <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>

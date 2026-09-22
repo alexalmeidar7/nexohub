@@ -221,6 +221,46 @@ const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"
 
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 
+/**
+ * Grava o programa no banco confirmando que a linha foi realmente persistida.
+ * Retorna uma mensagem de erro quando nada foi gravado (ex.: RLS bloqueando).
+ */
+async function persistPrograma(opts: {
+  targetId: string;
+  ownerId: string | null | undefined;
+  payload: Record<string, unknown>;
+  isUpdate: boolean;
+}): Promise<string | null> {
+  const { targetId, ownerId, payload, isUpdate } = opts;
+  try {
+    if (isUpdate) {
+      const { data, error } = await supabase
+        .from("programas")
+        .update(payload as any)
+        .eq("id", targetId)
+        .select("id");
+      if (!error && data && data.length > 0) return null;
+      if (error) console.warn("Supabase update programa notice:", error);
+      const { data: upData, error: upErr } = await supabase
+        .from("programas")
+        .upsert({ id: targetId, user_id: ownerId, ...payload } as any, { onConflict: "id" })
+        .select("id");
+      if (!upErr && upData && upData.length > 0) return null;
+      return upErr?.message || "Não foi possível salvar as alterações do programa.";
+    }
+    const isDbId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
+    const { data, error } = await supabase
+      .from("programas")
+      .insert({ ...(isDbId ? { id: targetId } : {}), user_id: ownerId, ...payload } as any)
+      .select("id");
+    if (!error && data && data.length > 0) return null;
+    return error?.message || "Não foi possível cadastrar o programa.";
+  } catch (err: any) {
+    return err?.message || "Falha de conexão ao salvar o programa.";
+  }
+}
+
+
 export async function getProgramas(targetUserId?: string | null, userEmail?: string | null): Promise<Programa[]> {
   const acc = findClientAccountById(targetUserId) || findClientAccountByEmail(userEmail || targetUserId);
   const effectiveId = acc?.parentUserId || acc?.id || targetUserId;
@@ -1190,25 +1230,16 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         tipo_programa: tipoPrograma || null,
       };
 
-      try {
-        if (isExistingDbUuid) {
-          const { error: updErr } = await supabase.from("programas").update(programPayload).eq("id", targetId);
-          if (updErr) {
-            console.warn("Supabase update programa notice:", updErr);
-            await supabase.from("programas").upsert({ id: targetId, user_id: effectiveOwnerId, ...programPayload });
-          }
-        } else {
-          const { error: insErr } = await supabase.from("programas").insert({
-            id: isUuid(targetId) ? targetId : undefined,
-            user_id: effectiveOwnerId,
-            ...programPayload,
-          });
-          if (insErr) {
-            console.warn("Supabase insert programa (variavel) notice:", insErr);
-          }
-        }
-      } catch (err) {
-        console.warn("Supabase insert/update programa (variavel) error:", err);
+      const persistErrVar = await persistPrograma({
+        targetId,
+        ownerId: effectiveOwnerId,
+        payload: programPayload,
+        isUpdate: isExistingDbUuid,
+      });
+      if (persistErrVar) {
+        setSaving(false);
+        setConflictMsg(`Não foi possível salvar o programa: ${persistErrVar}`);
+        return;
       }
 
       // Salva vinculação com o cliente selecionado
@@ -1291,25 +1322,16 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       tipo_programa: tipoPrograma || null,
     };
 
-    try {
-      if (isExistingDbUuid) {
-        const { error: updErr } = await supabase.from("programas").update(programPayload).eq("id", targetId);
-        if (updErr) {
-          console.warn("Supabase update programa notice:", updErr);
-          await supabase.from("programas").upsert({ id: targetId, user_id: effectiveOwnerId, ...programPayload });
-        }
-      } else {
-        const { error: insErr } = await supabase.from("programas").insert({
-          id: isUuid(targetId) ? targetId : undefined,
-          user_id: effectiveOwnerId,
-          ...programPayload,
-        });
-        if (insErr) {
-          console.warn("Supabase insert programa notice:", insErr);
-        }
-      }
-    } catch (err) {
-      console.warn("Supabase insert/update programa error:", err);
+    const persistErr = await persistPrograma({
+      targetId,
+      ownerId: effectiveOwnerId,
+      payload: programPayload,
+      isUpdate: isExistingDbUuid,
+    });
+    if (persistErr) {
+      setSaving(false);
+      setConflictMsg(`Não foi possível salvar o programa: ${persistErr}`);
+      return;
     }
 
     // Salva vinculação com o cliente selecionado
