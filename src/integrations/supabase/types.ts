@@ -2907,6 +2907,7 @@ export type Database = {
           infomusic_excecoes_artista_url: string | null
           infomusic_excecoes_capa_url: string | null
           last_manual_curiosity_id: string | null
+          music_source_device: string | null
           music_source_mode: string
           music_xml_url: string | null
           shopping_active: boolean
@@ -2932,6 +2933,7 @@ export type Database = {
           infomusic_excecoes_artista_url?: string | null
           infomusic_excecoes_capa_url?: string | null
           last_manual_curiosity_id?: string | null
+          music_source_device?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
@@ -2957,6 +2959,7 @@ export type Database = {
           infomusic_excecoes_artista_url?: string | null
           infomusic_excecoes_capa_url?: string | null
           last_manual_curiosity_id?: string | null
+          music_source_device?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
