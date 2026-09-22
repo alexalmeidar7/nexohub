@@ -2776,8 +2776,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     </div>
                   </div>
 
-                  {/* High-visibility Responsive Progress Bar */}
-                  {music && music.duracao > 0 && (
+                  {/* Computadores que não são o leitor: apenas informações salvas (música, artista e capa) */}
+                  {!isPhysicalLocalReader() && (remoteReaderDevice || localFileName) && (
+                    <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-wider self-center sm:self-start" style={{ color: "rgba(255,255,255,0.8)" }}>
+                      <FolderOpen size={11} className="text-[#38bdf8]" />
+                      <span className="truncate max-w-[260px]">Leitura em: {remoteReaderDevice || localFileName}</span>
+                    </div>
+                  )}
+
+                  {/* High-visibility Responsive Progress Bar (somente no computador leitor) */}
+                  {music && music.duracao > 0 && isPhysicalLocalReader() && (
                     <div className="space-y-1.5 mt-1.5 w-full max-w-xl">
                       <div className="flex items-center justify-between text-xs font-mono font-bold">
                         <span className="flex items-center gap-1.5 drop-shadow-sm" style={{ color: "#ffffff" }}>
