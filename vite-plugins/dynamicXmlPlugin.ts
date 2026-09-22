@@ -729,6 +729,18 @@ const ALL_ALIASES: Record<string, string[]> = {
   alex: ["alex", "superadmin"],
 };
 
+function createSponsorBadgeSvg(brandName: string): string {
+  const label = (brandName || "PATROCINADOR").toUpperCase();
+  const safe = label.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string)
+  );
+  const fontSize = safe.length > 18 ? 40 : safe.length > 12 ? 52 : 64;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300">
+  <rect width="600" height="300" rx="24" fill="#0f172a"/>
+  <text x="300" y="165" text-anchor="middle" font-family="Montserrat, Arial, sans-serif" font-size="${fontSize}" font-weight="700" fill="#ffffff">${safe}</text>
+</svg>`;
+}
+
 export function dynamicXmlPlugin(): Plugin {
   const rootDir = process.cwd();
   const enquetesFile = path.join(rootDir, "src", "data", "xml_enquetes_sync.json");
@@ -1088,7 +1100,7 @@ export function dynamicXmlPlugin(): Plugin {
                     signal: AbortSignal.timeout(15000),
                   });
                   if (aiRes.ok) {
-                    const aiData = await aiRes.json();
+                    const aiData: any = await aiRes.json();
                     const aiText = aiData.choices?.[0]?.message?.content?.trim();
                     if (aiText && aiText.length > 50) {
                       journalisticText = aiText;
