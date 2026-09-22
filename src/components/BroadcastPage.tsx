@@ -611,37 +611,21 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             .maybeSingle();
           setNewsTitles(parseTitles(chosen));
         } else {
-        // Busca os últimos roteiros jornalísticos (aceita variações de acento/caixa)
-        const { data: rows } = await supabase
-          .from("roteiros")
-          .select("tickertitulos, conteudo_html, tipo_programa, created_at")
-          .eq("user_id", stationUid)
-          .ilike("tipo_programa", "%jorn%")
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        let titles: string[] = [];
-        for (const r of rows || []) {
-          titles = parseTitles(r);
-          if (titles.length > 0) break;
-        }
-
-        // Fallback: qualquer roteiro recente que já tenha títulos de ticker
-        if (titles.length === 0) {
-          const { data: anyRows } = await supabase
+          // Sempre o roteiro MAIS RECENTE do usuário (edição mais nova primeiro)
+          const { data: rows } = await supabase
             .from("roteiros")
-            .select("tickertitulos, conteudo_html, created_at")
+            .select("tickertitulos, conteudo_html, tipo_programa, updated_at, created_at")
             .eq("user_id", stationUid)
-            .not("tickertitulos", "is", null)
+            .order("updated_at", { ascending: false, nullsFirst: false })
             .order("created_at", { ascending: false })
-            .limit(3);
-          for (const r of anyRows || []) {
+            .limit(15);
+
+          let titles: string[] = [];
+          for (const r of rows || []) {
             titles = parseTitles(r);
             if (titles.length > 0) break;
           }
-        }
-
-        if (titles.length > 0) setNewsTitles(titles);
+          setNewsTitles(titles);
         }
       }
 
