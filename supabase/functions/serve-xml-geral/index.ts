@@ -197,6 +197,20 @@ serve(async (req) => {
       }
     }
 
+    // Busca a foto apenas dos locutores usados (evita carregar base64 de todos)
+    const fotoIds = [currentPresenter?.id, nextPresenter?.id].filter(Boolean);
+    if (fotoIds.length > 0) {
+      const { data: fotos } = await sb
+        .from("apresentadores")
+        .select("id, foto")
+        .in("id", fotoIds);
+      (fotos || []).forEach((f: any) => {
+        if (currentPresenter?.id === f.id) currentPresenter.foto = f.foto;
+        if (nextPresenter?.id === f.id) nextPresenter.foto = f.foto;
+      });
+    }
+
+
     // Music data
     const currentMusic = musicHistory[0] || null;
     const pastMusics = musicHistory.slice(1);
