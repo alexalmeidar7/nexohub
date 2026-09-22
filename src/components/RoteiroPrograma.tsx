@@ -317,7 +317,34 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     };
     if (tickertitulos !== null) updatePayload.tickertitulos = tickertitulos;
 
-    const { error } = await supabase.from("roteiros").update(updatePayload).eq("id", txtEditRoteiroId);
+    // Confirma que a linha foi realmente atualizada. Sem o .select(), um update
+    // que não encontra a linha (id local/antigo) retorna sucesso e o XML continua
+    // com os dados antigos.
+    let { data: updatedRows, error } = await supabase
+      .from("roteiros")
+      .update(updatePayload)
+      .eq("id", txtEditRoteiroId)
+      .select("id");
+
+    if (!error && (!updatedRows || updatedRows.length === 0) && roteiro?.programa_nome) {
+      const ownerId = roteiro.user_id || resolvedUserId || propEffectiveUserId || user?.id;
+      if (ownerId) {
+        const retry = await supabase
+          .from("roteiros")
+          .update(updatePayload)
+          .eq("user_id", ownerId)
+          .eq("programa_nome", roteiro.programa_nome)
+          .select("id");
+        updatedRows = retry.data;
+        error = retry.error;
+      }
+    }
+
+    if (!error && (!updatedRows || updatedRows.length === 0)) {
+      setTxtSaving(false);
+      toast.error("Não foi possível salvar este roteiro no servidor.");
+      return;
+    }
 
     // ── Regenerate XML and sync immediately ──
     // Usa o MESMO caminho completo de publicação do botão de envio (sincronismo local,
