@@ -423,7 +423,7 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       let currentGroupId = isValidUuid(oldGroupId) ? oldGroupId : safeUuid();
       const validProgramaIds = (grupo.programa_ids || []).filter(isValidUuid);
 
-      try {
+      {
         const { data: savedGrp, error: grpErr } = await (supabase as any)
           .from("cenario_estudio_grupos")
           .upsert({
@@ -439,12 +439,11 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
           .maybeSingle();
 
         if (grpErr) {
-          console.warn("Notice upserting grupo in supabase:", grpErr);
-        } else if (savedGrp?.id) {
-          currentGroupId = savedGrp.id;
+          console.error("Erro ao salvar template do cenário:", grpErr);
+          toast.error(`Não foi possível salvar o template: ${grpErr.message || "erro no servidor"}`);
+          return;
         }
-      } catch (err) {
-        console.warn("Error upserting grupo in supabase:", err);
+        if (savedGrp?.id) currentGroupId = savedGrp.id;
       }
 
       // 2) Upload single artwork (posicao=0) if pending
@@ -453,71 +452,54 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
 
       if (arte?._file) {
         const ext = arte._file.type?.includes("webp") ? "webp" : arte._file.type?.includes("jpeg") ? "jpg" : "png";
-        const storagePath = `${ownerId}/cenario-estudio/${currentGroupId}/arte-${Date.now()}.${ext}`;
         const fileContentType = arte._file.type || "image/png";
         let uploadSuccess = false;
+        let lastUploadError = "";
 
-        // Try primary bucket: empresa-assets
-        try {
-          const { error: upErr } = await (supabase as any).storage
-            .from("empresa-assets")
-            .upload(storagePath, arte._file, {
-              upsert: true,
-              contentType: fileContentType,
-              cacheControl: "3600",
-            });
-          if (!upErr) {
-            const { data: urlData } = (supabase as any).storage
-              .from("empresa-assets")
-              .getPublicUrl(storagePath);
-            if (urlData?.publicUrl) {
-              arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-              uploadSuccess = true;
-            }
-          } else {
-            console.warn("empresa-assets upload notice:", upErr);
-          }
-        } catch (e) {
-          console.warn("empresa-assets upload error:", e);
-        }
+        // O XML do vMix precisa de uma URL pública real (nunca base64).
+        // Ordem de tentativa: bucket dos cenários e depois os alternativos públicos.
+        const attempts: { bucket: string; path: string }[] = [
+          { bucket: "cenario-estudio", path: `${ownerId}/${currentGroupId}/arte-${Date.now()}.${ext}` },
+          { bucket: "empresa-assets", path: `${ownerId}/cenario-estudio/${currentGroupId}/arte-${Date.now()}.${ext}` },
+          { bucket: "comercial", path: `${ownerId}/cenarios/${currentGroupId}/arte-${Date.now()}.${ext}` },
+        ];
 
-        // Try fallback bucket: comercial
-        if (!uploadSuccess) {
+        for (const attempt of attempts) {
+          if (uploadSuccess) break;
           try {
-            const comPath = `${ownerId}/cenarios/${currentGroupId}/arte-${Date.now()}.${ext}`;
-            const { error: comErr } = await (supabase as any).storage
-              .from("comercial")
-              .upload(comPath, arte._file, {
+            const { error: upErr } = await (supabase as any).storage
+              .from(attempt.bucket)
+              .upload(attempt.path, arte._file, {
                 upsert: true,
                 contentType: fileContentType,
                 cacheControl: "3600",
               });
-            if (!comErr) {
-              const { data: urlData } = (supabase as any).storage
-                .from("comercial")
-                .getPublicUrl(comPath);
-              if (urlData?.publicUrl) {
-                arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-                uploadSuccess = true;
-              }
-            } else {
-              console.warn("comercial upload notice:", comErr);
+            if (upErr) {
+              lastUploadError = upErr.message || String(upErr);
+              console.warn(`${attempt.bucket} upload notice:`, upErr);
+              continue;
+            }
+            const { data: urlData } = (supabase as any).storage
+              .from(attempt.bucket)
+              .getPublicUrl(attempt.path);
+            if (urlData?.publicUrl) {
+              arteUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+              uploadSuccess = true;
             }
           } catch (e) {
-            console.warn("comercial upload error:", e);
+            lastUploadError = e instanceof Error ? e.message : String(e);
+            console.warn(`${attempt.bucket} upload error:`, e);
           }
         }
 
-        // Final fallback: use localPreview (base64) so user artwork is NEVER lost
-        if (!uploadSuccess && arte._localPreview) {
-          arteUrl = arte._localPreview;
+        if (!uploadSuccess) {
+          toast.error(`Não foi possível enviar a imagem: ${lastUploadError || "falha no envio"}`);
+          return;
         }
-      } else if (!arteUrl && arte?._localPreview) {
-        arteUrl = arte._localPreview;
       }
 
       // 3) Upsert TVs (single record holding the artwork at posicao=0)
-      try {
+      {
         const { error: tvErr } = await (supabase as any).from("cenario_estudio_tvs").upsert(
           {
             grupo_id: currentGroupId,
@@ -529,10 +511,10 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
           { onConflict: "grupo_id,posicao" }
         );
         if (tvErr) {
-          console.warn("Notice upserting tvs in supabase:", tvErr);
+          console.error("Erro ao salvar imagem do cenário:", tvErr);
+          toast.error(`Imagem não registrada: ${tvErr.message || "erro no servidor"}`);
+          return;
         }
-      } catch (err) {
-        console.warn("Error upserting tvs in supabase:", err);
       }
 
       // 4) Update state & localStorage
