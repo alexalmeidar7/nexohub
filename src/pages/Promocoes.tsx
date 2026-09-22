@@ -774,20 +774,23 @@ export default function PromocoesKiosk() {
         const scopeSettings = supabase
           .from("user_settings")
           .select("user_id, cenario_config, weather_city, weather_lat, weather_lon");
+        const safe = (q: any) => Promise.resolve(q).catch(() => ({ data: null })) as Promise<any>;
         const fetches = Promise.all([
           getEmpresaConfig().catch(() => null),
-          (ownerIds.length ? scopePromos.in("user_id", ownerIds as any) : scopePromos).catch(() => ({ data: null })),
-          (ownerIds.length ? scopeProgs.in("user_id", ownerIds as any) : scopeProgs).catch(() => ({ data: null })),
-          (ownerIds.length ? scopeTests.in("user_id", ownerIds as any) : scopeTests).catch(() => ({ data: null })),
-          (ownerIds.length
+          safe(ownerIds.length ? scopePromos.in("user_id", ownerIds as any) : scopePromos),
+          safe(ownerIds.length ? scopeProgs.in("user_id", ownerIds as any) : scopeProgs),
+          safe(ownerIds.length ? scopeTests.in("user_id", ownerIds as any) : scopeTests),
+          safe(ownerIds.length
             ? scopeSettings.in("user_id", ownerIds as any).limit(2)
-            : scopeSettings.limit(1)
-          ).catch(() => ({ data: null })),
+            : scopeSettings.limit(1)),
         ]);
-        const results: any = await Promise.race([fetches, timeoutPromise]).catch(() => null);
+        const results: any[] | null = await Promise.race([fetches, timeoutPromise]).catch(() => null) as any;
         if (results) {
-          let settingsRows: any = null;
-          [empresaData, { data: promoData } = {}, { data: progsData } = {}, { data: testData } = {}, { data: settingsRows } = {}] = results;
+          empresaData = results[0];
+          promoData = results[1]?.data ?? null;
+          progsData = results[2]?.data ?? null;
+          testData = results[3]?.data ?? null;
+          const settingsRows: any = results[4]?.data ?? null;
           const rows = Array.isArray(settingsRows) ? settingsRows : (settingsRows ? [settingsRows] : []);
           settingsData =
             rows.find((r: any) => r.user_id === localUid && (r.cenario_config as any)?.tela_promo_bg) ||
