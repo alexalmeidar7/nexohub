@@ -116,25 +116,15 @@ export function resolveSponsorLogoUrl(
       return assetMap.urlMapping[baseName];
     }
 
-    // 3. If URL is a Supabase storage path or dead domain, rewrite to local storage route
-    if (
-      trimmed.includes("/storage/v1/object/public/comercial/") ||
-      trimmed.includes("zzjfzxxvxbspbdkodoix.supabase.co")
-    ) {
-      if (baseName && baseName.endsWith(".png") || baseName.endsWith(".webp") || baseName.endsWith(".jpg")) {
-        return `/storage/comercial/logos/${baseName}`;
-      }
-    }
-
-    // 4. Valid local relative URL (e.g. /storage/comercial/logos/...)
+    // 3. Valid local relative URL (e.g. /storage/comercial/logos/...)
     if (trimmed.startsWith("/") && !trimmed.includes("default-sponsor-logo.png")) {
       return trimmed;
     }
 
-    // 5. Valid external URL (e.g. hosted CDN)
+    // 4. Endereço válido (armazenamento do próprio sistema ou CDN externa):
+    // a logo cadastrada pelo cliente tem prioridade sobre qualquer arte padrão.
     if (
       (trimmed.startsWith("http://") || trimmed.startsWith("https://")) &&
-      !trimmed.includes("zzjfzxxvxbspbdkodoix.supabase.co") &&
       !trimmed.includes("default-sponsor-logo.png")
     ) {
       return trimmed;
