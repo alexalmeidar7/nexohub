@@ -57,6 +57,25 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
 
   const getLocalStorageKey = (uId: string) => `nexohub_enquetes_${uId}`;
 
+  const SUPABASE_FN_URL = import.meta.env.VITE_SUPABASE_URL || "";
+  const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+
+  const postEnqueteFn = async (payload: Record<string, unknown>) => {
+    if (!SUPABASE_FN_URL) return;
+    try {
+      await fetch(`${SUPABASE_FN_URL}/functions/v1/serve-xml-enquete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(SUPABASE_ANON ? { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      console.warn("Erro ao sincronizar enquete com a Edge Function:", e);
+    }
+  };
+
   const getStoredEnquetes = (uId: string): EnqueteAgendada[] => {
     try {
       const raw = localStorage.getItem(getLocalStorageKey(uId)) || localStorage.getItem(`nexohub_enquetes_${targetSlug}`);
@@ -79,17 +98,8 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
         body: JSON.stringify({ slug: targetSlug, userId: uId, enquetes: list }),
       }).catch(() => {});
 
-      // Sincroniza imediatamente com a função de XML para vMix
-      const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
-      const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
-      const effectiveSupabaseUrl = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
-      if (effectiveSupabaseUrl) {
-        fetch(`${effectiveSupabaseUrl}/functions/v1/serve-xml-enquete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, enquetes: list }),
-        }).catch(() => {});
-      }
+      // Sincroniza imediatamente com a função de XML para vMix (banco = fonte do XML)
+      void postEnqueteFn({ action: "sync", slug: targetSlug, user_id: uId, enquetes: list });
     } catch {}
   };
 
@@ -209,22 +219,13 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       }
 
       // Envia diretamente para a Edge Function via POST para garantir atualização no vMix
-      const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
-      const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
-      const effectiveSupabaseUrl = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
-      if (effectiveSupabaseUrl) {
-        await fetch(`${effectiveSupabaseUrl}/functions/v1/serve-xml-enquete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "save",
-            slug: targetSlug,
-            user_id: targetUserId,
-            enquete: newEnquete,
-            enquetes: updated,
-          }),
-        }).catch((e) => console.warn("Erro ao sincronizar enquete com Edge Function:", e));
-      }
+      await postEnqueteFn({
+        action: "save",
+        slug: targetSlug,
+        user_id: targetUserId,
+        enquete: newEnquete,
+        enquetes: updated,
+      });
     } catch (err) {
       console.warn("Supabase enquete save network error:", err);
     } finally {
@@ -375,21 +376,12 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
           .delete()
           .eq("id", id);
       }
-      const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
-      const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
-      const effectiveSupabaseUrl = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
-      if (effectiveSupabaseUrl) {
-        await fetch(`${effectiveSupabaseUrl}/functions/v1/serve-xml-enquete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "delete",
-            slug: targetSlug,
-            user_id: targetUserId,
-            id,
-          }),
-        }).catch(() => {});
-      }
+      await postEnqueteFn({
+        action: "delete",
+        slug: targetSlug,
+        user_id: targetUserId,
+        id,
+      });
     } catch (err) {
       console.warn("Erro ao excluir enquete no Supabase:", err);
     }
