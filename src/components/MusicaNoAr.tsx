@@ -2054,9 +2054,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
 
             // Se for uma música diferente, verificar se o registro do banco não é mais antigo que a música já tocando localmente
-            if (!isSameTrack && startTimeRef.current && dbStart && dbStart < (startTimeRef.current - 10000)) {
+            if (!isSameTrack && dbStart && !canApplyReading(dbStart)) {
               // O banco está defasado em relação à faixa já ativa — não alternar para trás
               return;
+            }
+            if (!isSameTrack && dbStart) {
+              appliedStartRef.current = Math.max(appliedStartRef.current, dbStart);
             }
 
             let resolvedStart = dbStart;
