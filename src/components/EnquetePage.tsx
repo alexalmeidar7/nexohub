@@ -134,8 +134,14 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
     } catch {}
 
     const localList = getStoredEnquetes(targetUserId);
-    const staticList = (initialEnquetesSync as Record<string, any[]>)[targetSlug] ||
-      (initialEnquetesSync as Record<string, any[]>)[targetUserId] || [];
+    // Lista de exemplo serve apenas como semente inicial: se já existe qualquer
+    // dado real (banco, servidor ou local), nunca reinserir — itens excluídos
+    // não devem voltar sozinhos.
+    const hasRealData = rows.length > 0 || serverEnquetes.length > 0 || localList.length > 0;
+    const staticList = hasRealData ? [] : (
+      (initialEnquetesSync as Record<string, any[]>)[targetSlug] ||
+      (initialEnquetesSync as Record<string, any[]>)[targetUserId] || []
+    );
 
     const map = new Map<string, EnqueteAgendada>();
     staticList.forEach(s => s?.id && map.set(s.id, s));

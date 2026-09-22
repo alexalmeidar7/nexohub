@@ -418,8 +418,13 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     } catch {}
 
     const localList = getStoredBatalhas(targetUserId);
-    const staticList = (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
-      (initialBatalhasSync as Record<string, any[]>)[targetUserId] || [];
+    // Lista de exemplo é apenas semente inicial: com qualquer dado real presente,
+    // não reinserir (batalhas excluídas não devem reaparecer).
+    const hasRealData = rows.length > 0 || serverList.length > 0 || localList.length > 0;
+    const staticList = hasRealData ? [] : (
+      (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
+      (initialBatalhasSync as Record<string, any[]>)[targetUserId] || []
+    );
 
     const map = new Map<string, BatalhaAgendada>();
 
