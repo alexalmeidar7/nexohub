@@ -1637,6 +1637,38 @@ export default function PromocoesKiosk() {
     transition: "background-image 1000ms ease-in-out"
   } : buildTelaPromoBgStyle(telaPromoConfig);
 
+  const resolvePromoOnAirPresenter = () => {
+    const normalizedProgramName = (onAirProgram?.nome || "")
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .toLowerCase();
+
+    if (normalizedProgramName.includes("vale night")) {
+      const registeredReginaldo = apresentadores.find((a) =>
+        (a?.nome || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().includes("reginaldo")
+      );
+
+      if (registeredReginaldo) {
+        return {
+          ...registeredReginaldo,
+          foto: resolveSafePresenterPhoto(
+            registeredReginaldo.nome,
+            registeredReginaldo.foto,
+            validSlug || (isPositivaUser ? "POSITIVA FM" : undefined),
+          ),
+        };
+      }
+    }
+
+    return resolvePresenterForProgram(
+      onAirProgram,
+      apresentadores,
+      validSlug || (isPositivaUser ? "POSITIVA FM" : undefined),
+    ) || (onAirProgram?.apresentadorId
+      ? apresentadores.find((a) => a.id === onAirProgram.apresentadorId)
+      : null);
+  };
+
   return (
     <div className="text-white min-h-screen p-8 flex flex-col items-center animate-fade-in" style={{ ...customBgStyle, ...promoThemeVars, color: telaPromoConfig.header_text_color }}>
       <style>{`
@@ -1670,11 +1702,7 @@ export default function PromocoesKiosk() {
 
             {/* Presenter photo - ao lado do ícone de ao vivo */}
             {(() => {
-              const presenter = resolvePresenterForProgram(
-                onAirProgram,
-                apresentadores,
-                validSlug || (isPositivaUser ? "POSITIVA FM" : undefined)
-              ) || (onAirProgram?.apresentadorId ? apresentadores.find(a => a.id === onAirProgram.apresentadorId) : null);
+              const presenter = resolvePromoOnAirPresenter();
 
               const photo = presenter?.foto ? resolveSafePresenterPhoto(presenter.nome, presenter.foto, validSlug || (isPositivaUser ? "POSITIVA FM" : "INTERATIVA FM")) : null;
 
@@ -1697,11 +1725,7 @@ export default function PromocoesKiosk() {
               <div className="flex items-center gap-2">
                 <span className="font-bold uppercase tracking-widest text-xs" style={{ color: telaPromoConfig.header_text_color }}>No Ar</span>
                 {(() => {
-                  const p = resolvePresenterForProgram(
-                    onAirProgram,
-                    apresentadores,
-                    validSlug || (isPositivaUser ? "POSITIVA FM" : undefined)
-                  );
+                  const p = resolvePromoOnAirPresenter();
                   return p?.nome ? (
                     <span className="text-[11px] font-semibold opacity-90" style={{ color: telaPromoConfig.btn_color_b }}>
                       • {p.nome}
