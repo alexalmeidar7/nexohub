@@ -11,11 +11,15 @@ Deno.serve(async (req) => {
 
   try {
     const { artista, musica, userId: requestedUserId, deezerArtistImg } = await req.json();
-    if (!artista || !musica || typeof artista !== "string" || typeof musica !== "string") {
-      return new Response(JSON.stringify({ error: "artista e musica são obrigatórios" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (
+      typeof artista !== "string" || typeof musica !== "string" ||
+      !artista.trim() || !musica.trim()
+    ) {
+      // Sem dados suficientes: não é erro, apenas nada a gerar
+      return new Response(
+        JSON.stringify({ ok: false, curiosidade: "", skipped: true, reason: "missing_track_info" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Identify the calling user from JWT
