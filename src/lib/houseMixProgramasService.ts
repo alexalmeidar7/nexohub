@@ -20,6 +20,7 @@ export interface HouseMixProgram {
   thumb?: string | null;
   cliente_id?: string | null;
   cliente_nome?: string | null;
+  cliente?: string | null;
 }
 
 const STORAGE_CUSTOM_PROGRAMS_KEY = "nexohub_housemix_programs_v2";
@@ -107,7 +108,7 @@ export const DEFAULT_STATION_DATA: Record<
   string,
   {
     estudios: string[];
-    programas: Omit<HouseMixProgram, "id" | "ativo">[];
+    programas: (Omit<HouseMixProgram, "id" | "ativo"> & { id?: string; ativo?: boolean })[];
   }
 > = {
   "INTERATIVA FM": {

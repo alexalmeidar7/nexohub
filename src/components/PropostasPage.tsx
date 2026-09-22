@@ -1176,6 +1176,7 @@ export default function PropostasPage({ effectiveUserId }: { effectiveUserId?: s
                             cliente_desde: new Date().toISOString().split("T")[0],
                             nome_contato: "",
                             email_cobranca: "",
+                            ativo: true,
                           });
                           setIsBuscaAberta(false);
                           setIsNovoClienteModalOpen(true);

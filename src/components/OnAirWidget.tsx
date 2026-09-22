@@ -162,6 +162,7 @@ function findNextPrograms(programas: Programa[], count: number): Programa[] {
 interface ApresentadorInfo {
   nome: string;
   foto: string;
+  background_url?: string;
 }
 
 function useProgramProgress(inicio?: string, fim?: string): number {

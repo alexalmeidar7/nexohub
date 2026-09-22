@@ -17,6 +17,7 @@ export interface BatalhaAgendada {
   data_batalha: string;
   horario_inicio: string;
   horario_fim: string;
+  user_id?: string | null;
 }
 
 interface Props {

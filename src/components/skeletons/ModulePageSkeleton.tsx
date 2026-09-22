@@ -18,6 +18,7 @@ export type SkeletonVariant =
   | "musica"
   | "form"
   | "list"
+  | "housemix"
   | "table";
 
 interface Props {

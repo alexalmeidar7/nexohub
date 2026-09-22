@@ -791,7 +791,7 @@ export default function ProdutosPage({
         <div className="mt-7 pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
           {editingId && (
             <button
-              onClick={handleResetForm}
+              onClick={() => handleResetForm()}
               className="h-11 px-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer"
             >
               <X size={15} /> Cancelar

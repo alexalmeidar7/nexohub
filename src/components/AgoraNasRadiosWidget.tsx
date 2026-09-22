@@ -510,13 +510,13 @@ export default function AgoraNasRadiosWidget() {
           {/* Card do Locutor / Apresentador */}
           <div className="flex items-center gap-3 p-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
             <div className="relative shrink-0">
-              {resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome, currentRadio.id || currentRadio.name) ? (
+              {resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome, currentRadio.id || currentRadio.nome) ? (
                 <img
-                  src={resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome, currentRadio.id || currentRadio.name)}
+                  src={resolveSafePresenterPhoto(currentRadio.locutorFoto, currentRadio.locutorNome, currentRadio.id || currentRadio.nome)}
                   alt={currentRadio.locutorNome}
                   className="w-10 h-10 rounded-full object-cover ring-2 ring-[#00BFF0]/40 shadow-md"
                   onError={(e) => {
-                    const fallback = resolveSafePresenterPhoto("", currentRadio.locutorNome, currentRadio.id || currentRadio.name) || "/locutores/sem-loc.png";
+                    const fallback = resolveSafePresenterPhoto("", currentRadio.locutorNome, currentRadio.id || currentRadio.nome) || "/locutores/sem-loc.png";
                     (e.currentTarget as HTMLImageElement).src = fallback;
                   }}
                 />

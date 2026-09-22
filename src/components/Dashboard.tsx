@@ -1142,7 +1142,6 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
       page === "sorteios" ||
       page === "clientes" ||
       page === "logos" ||
-      page === "roteiros" ||
       page === "agenda" ||
       page === "broadcast" ||
       page === "cenario" ||
@@ -1154,11 +1153,11 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     const modulesSource = planModules ?? enabledModules;
     if (!modulesSource) return true;
 
-    if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "logos" || page === "preroll" || page === "shopping" || page === "propostas") {
+    if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "preroll" || page === "shopping" || page === "propostas") {
       return modulesSource.has("comercial") || modulesSource.has(page) || modulesSource.has("logos");
     }
 
-    if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete" || page === "quiz") {
+    if (page === "batalha" || page === "enquete" || page === "quiz") {
       return modulesSource.has("vmix") || modulesSource.has(page);
     }
 
@@ -1225,7 +1224,6 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
       currentPage !== "subusuarios" &&
       currentPage !== "pacotes" &&
       currentPage !== "logos" &&
-      currentPage !== "roteiros" &&
       currentPage !== "agenda" &&
       currentPage !== "programas" &&
       currentPage !== "apresentadores" &&
@@ -1786,7 +1784,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               {currentPage === "produtos" && (
                 <ProdutosPage
                   accentColor={layoutColors.accentColor}
-                  onNavigate={setCurrentPage}
+                  onNavigate={(p) => setCurrentPage(p as Page)}
                 />
               )}
 

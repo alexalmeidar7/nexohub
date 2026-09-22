@@ -369,7 +369,7 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
       const id = editingId || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ads_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
       const existing = editingId ? campanhas.find(c => c.id === editingId) : null;
 
-      const finalMediaUrl = mediaUrl || existing?.mediaUrl || null;
+      const finalMediaUrl = mediaUrl || existing?.midiaUrl || null;
       const finalMediaType = (file ? mediaType : existing?.mediaType) || "video";
 
       const newCampanha: Campanha = {
@@ -385,7 +385,7 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
         views: existing?.views || 0,
         clicks: existing?.clicks || 0,
         midia: file ? file.name : existing?.midia || null,
-        mediaUrl: finalMediaUrl,
+        midiaUrl: finalMediaUrl,
         mediaType: finalMediaType as any,
         linkUrl: videoLink.trim() || botLink.trim() || "",
         slots: chVideo ? videoSlots : [],
@@ -451,7 +451,7 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
   async function togglePausa(c: Campanha) {
     if (!targetUserId) return;
     const nextActive = c.status !== "Ativa";
-    const nextStatus = nextActive ? "Ativa" : "Pausada";
+    const nextStatus: Campanha["status"] = nextActive ? "Ativa" : "Pausada";
 
     const updated = campanhas.map(item => item.id === c.id ? { ...item, status: nextStatus } : item);
     setCampanhas(updated);
