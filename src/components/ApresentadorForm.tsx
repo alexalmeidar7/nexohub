@@ -334,13 +334,39 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
     let error: any = null;
     let savedId = editingId;
-    if (editingId) {
-      const res = await supabase.from("apresentadores").update(payload as any).eq("id", editingId);
+    const isUuid = (v?: string | null) =>
+      !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+    if (editingId && isUuid(editingId)) {
+      const res = await supabase
+        .from("apresentadores")
+        .update(payload as any)
+        .eq("id", editingId)
+        .select("id");
       error = res.error;
+      if (!res.error && (!res.data || res.data.length === 0)) {
+        // Registro não existia no banco → grava como novo
+        const ins = await supabase
+          .from("apresentadores")
+          .insert({ user_id: ownerId, ...payload } as any)
+          .select("id");
+        error = ins.error;
+        if (ins.data?.[0]?.id) savedId = ins.data[0].id;
+      }
     } else {
-      const res = await supabase.from("apresentadores").insert({ user_id: ownerId, ...payload } as any).select();
+      const res = await supabase
+        .from("apresentadores")
+        .insert({ user_id: ownerId, ...payload } as any)
+        .select("id");
       error = res.error;
       if (res.data?.[0]?.id) savedId = res.data[0].id;
+    }
+
+    if (error) {
+      console.error("Erro ao salvar apresentador:", error);
+      toast.error(`Não foi possível salvar: ${error.message || "erro no servidor"}`);
+      setSaving(false);
+      return;
     }
 
     // Sync to isolated localStorage
@@ -363,10 +389,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       setApresentadores(updated);
       localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
     } catch {}
-
-    if (error) {
-      console.warn("Aviso ao salvar apresentador no Supabase:", error);
-    }
 
     // Dispara atualização imediata dos XMLs que dependem de apresentadores
     try {
