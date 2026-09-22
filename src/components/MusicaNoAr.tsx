@@ -476,9 +476,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Horário de início da última leitura já aplicada na tela. Garante que a exibição
   // NUNCA volte para uma leitura mais antiga (causa da alternância entre registros).
   const appliedStartRef = useRef<number>(0);
+  const syncInFlightRef = useRef(false);
   const canApplyReading = useCallback((start: number) => {
     if (!start || start <= 0) return false;
-    return start >= appliedStartRef.current - 2000;
+    return start >= appliedStartRef.current;
   }, []);
   const [culturaLastSync, setCulturaLastSync] = useState<number | null>(() => {
     try {
@@ -607,65 +608,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   useEffect(() => {
     if (!dataUserId) return;
     const loadData = async () => {
-      // Tentar carregar faixa ativa do servidor local de sincronização direta (/api/sync-music)
-      try {
-        const targetSlug = clientAcc?.slug || "positivafm";
-        const syncResp = await fetch(`/api/sync-music?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(dataUserId)}`, { cache: "no-store" });
-        if (syncResp.ok) {
-          const syncJson = await syncResp.json();
-          const liveMusic = syncJson?.music;
-          if (liveMusic?.titulo && liveMusic.titulo.toLowerCase() !== "sem título" && liveMusic.titulo !== "Aguardando leitura...") {
-            const liveDur = Number(liveMusic.duracao) || 180;
-            const liveStart = Number(liveMusic.startTime) || Date.now();
-            const now = Date.now();
-            const el = Math.max(0, (now - liveStart) / 1000);
-            const initialMusic: MusicData = {
-              titulo: liveMusic.titulo,
-              artista: liveMusic.artista || "Desconhecido",
-              duracao: liveDur,
-              capa: liveMusic.capa || "",
-            };
-            if (!isPhysicalLocalReader()) {
-              setMusic(initialMusic);
-              setStartTime(liveStart);
-              setElapsed(Math.min(liveDur, el));
-              setLastSource("pasta");
-              lastSourceRef.current = "pasta";
-              setLocalMonitoring(true);
-              setLocalLastReadAt(Date.now());
-              setLocalDelay(false);
-              setLocalError(null);
-              if (!localFileName && liveMusic.deviceName) {
-                setLocalFileName(`Sincronizado: ${liveMusic.deviceName}`);
-              }
-              if (!initialMusic.capa) {
-                fetchCoverFromiTunes(initialMusic.titulo, initialMusic.artista).then((cov) => {
-                  if (cov) {
-                    setMusic(m => m && m.titulo === initialMusic.titulo ? { ...m, capa: cov } : m);
-                    notifySyncServer({
-                      titulo: initialMusic.titulo,
-                      artista: initialMusic.artista,
-                      duracao: liveDur,
-                      capa: cov,
-                      startTime: liveStart,
-                      source: "pasta",
-                    });
-                  }
-                }).catch(() => {});
-              }
-            } else {
-              setMusic(prev => prev || initialMusic);
-              setStartTime(prev => prev || liveStart);
-              setElapsed(prev => (prev > 0 ? prev : Math.min(liveDur, el)));
-            }
-            try {
-              localStorage.setItem(MUSIC_START_KEY, liveStart.toString());
-              localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(initialMusic));
-            } catch {}
-          }
-        }
-      } catch {}
-
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
@@ -717,6 +659,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             duracao: dur,
             capa: di.music_current_cover || "",
           };
+          appliedStartRef.current = Math.max(appliedStartRef.current, dbStart);
           if (!isPhysicalLocalReader()) {
             // Em computadores secundários sem o arquivo local em disco, o banco é a verdade absoluta
             setMusic(initialMusic);
@@ -754,7 +697,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setSourceModeLoaded(true);
     };
     loadData();
-  }, [dataUserId, clientAcc?.slug, notifySyncServer]);
+  }, [dataUserId]);
 
   useEffect(() => {
     if (!sourceModeLoaded) return;
@@ -1899,6 +1842,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         t = parts.slice(1).join(" - ").trim();
       }
 
+      // Repair values previously persisted from a container XML node, where
+      // the title became "artist title" while the artist field stayed empty.
+      if (a && t.toLowerCase().startsWith(`${a.toLowerCase()} `)) {
+        t = t.slice(a.length).trim();
+      }
+
       return { titulo: t, artista: a || "Desconhecido" };
     };
 
@@ -1907,106 +1856,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       // Computador com leitor local físico em disco OU leitor online ativo nunca deve sobrescrever a própria leitura.
       const isOnlineActiveOnClient = isOnlineSelected && hasValidOnlineUrl && !onlineError && lastOnlineSuccessRef.current > 0 && (Date.now() - lastOnlineSuccessRef.current < 20000);
       if (isLocalReaderActive() || (fileHandleRef.current && isLocalSelected) || isOnlineActiveOnClient) return;
-
-      // 0. Sincronização direta em rede / servidor local (/api/sync-music)
+      if (syncInFlightRef.current) return;
+      syncInFlightRef.current = true;
       try {
-        const targetSlug = clientAcc?.slug || "positivafm";
-        const syncResp = await fetch(`/api/sync-music?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(dataUserId || "")}`, {
-          cache: "no-store",
-        });
-        if (syncResp.ok) {
-          const syncJson = await syncResp.json();
-          const liveMusic = syncJson?.music;
-          if (liveMusic && liveMusic.titulo && liveMusic.titulo.trim() !== "" && liveMusic.titulo.toLowerCase() !== "sem título") {
-            const liveStart = Number(liveMusic.startTime) || Date.now();
-            const now = Date.now();
-            const el = Math.max(0, (now - liveStart) / 1000);
 
-            // Se já temos uma música tocando e o dado do servidor for mais antigo, ignorar para não alternar
-            if (!canApplyReading(liveStart)) {
-              return;
-            }
-            appliedStartRef.current = Math.max(appliedStartRef.current, liveStart);
-
-            // Se o dado tiver mais de 4 horas, não considerar como música ao vivo
-            if (now - liveStart <= 4 * 3600 * 1000) {
-              const { titulo: cleanT, artista: cleanA } = sanitizeTrackInfo(liveMusic.titulo, liveMusic.artista);
-              const liveCapa = liveMusic.capa || "";
-              const liveDur = Number(liveMusic.duracao) || 180;
-
-              const activeSrc = liveMusic.source || (isOnlineSelected ? "online" : "pasta");
-              setLastSource(activeSrc);
-              lastSourceRef.current = activeSrc;
-              setLocalMonitoring(true);
-              setLocalLastReadAt(Date.now());
-              setLocalDelay(false);
-              setLocalError(null);
-              if (!localFileName && liveMusic.deviceName) {
-                setLocalFileName(`Sincronizado: ${liveMusic.deviceName}`);
-              }
-
-              const isSameTrack = (musicRef.current &&
-                musicRef.current.titulo?.trim().toLowerCase() === cleanT.toLowerCase() &&
-                musicRef.current.artista?.trim().toLowerCase() === cleanA.toLowerCase());
-
-              setMusic((prev) => {
-                const activeCapa = liveCapa || (prev?.titulo === cleanT && prev?.capa ? prev.capa : "");
-                if (!activeCapa) {
-                  fetchCoverFromiTunes(cleanT, cleanA).then((cov) => {
-                    if (cov) {
-                      setMusic((m) => (m && m.titulo === cleanT ? { ...m, capa: cov } : m));
-                      notifySyncServer({
-                        titulo: cleanT,
-                        artista: cleanA,
-                        duracao: liveDur,
-                        capa: cov,
-                        startTime: liveStart,
-                        source: activeSrc,
-                        deviceName: liveMusic.deviceName,
-                      });
-                    }
-                  }).catch(() => {});
-                }
-
-                if (prev?.titulo === cleanT && prev?.artista === cleanA) {
-                  if (liveCapa && prev.capa !== liveCapa) {
-                    return { ...prev, capa: liveCapa };
-                  }
-                  return prev;
-                }
-
-                return {
-                  titulo: cleanT,
-                  artista: cleanA,
-                  duracao: liveDur,
-                  capa: activeCapa,
-                };
-              });
-
-              if (!isSameTrack || !startTimeRef.current) {
-                setStartTime(liveStart);
-                setElapsed(Math.min(liveDur, el));
-              }
-
-              try {
-                localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({
-                  titulo: cleanT,
-                  artista: cleanA,
-                  duracao: liveDur,
-                  capa: liveCapa,
-                }));
-                localStorage.setItem(MUSIC_START_KEY, liveStart.toString());
-              } catch {}
-
-              return; // Sincronizado com sucesso com o leitor ativo
-            }
-          }
-        }
-      } catch (e) {
-        // Fallback para as próximas etapas
-      }
-
-      const targetIds = candidateUserIds.length > 0 ? candidateUserIds : (dataUserId ? [dataUserId] : []);
+      // The effective account is the single source of truth. Mixing the
+      // sub-user, parent and authenticated IDs made older tracks alternate.
+      const targetIds = dataUserId ? [dataUserId] : [];
 
       // Escolher SEMPRE a leitura mais recente entre todos os candidatos.
       // Antes, o primeiro candidato com qualquer título vencia, o que fazia a tela
@@ -2077,7 +1933,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const now = Date.now();
             const el = Math.max(0, (now - resolvedStart) / 1000);
 
-            const activeSrc = (di.music_source as string) || (isOnlineSelected ? "online" : "pasta");
+            const activeSrc: "online" | "pasta" = di.music_source === "online" ? "online" : "pasta";
             setLastSource(activeSrc);
             lastSourceRef.current = activeSrc;
 
@@ -2288,6 +2144,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         } catch (err) {
           console.warn(`[MusicaNoAr] Erro ao sincronizar para o uid ${uid}:`, err);
         }
+      }
+      } finally {
+        syncInFlightRef.current = false;
       }
     };
 
@@ -3185,10 +3044,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {uploadHistory.map((entry, i) => {
-                    const fallbackArtist = i === 0 && music?.artista && music.artista.toLowerCase() !== "desconhecido" ? music.artista : "";
-                    const fallbackMusic = i === 0 && music?.titulo && music.titulo.toLowerCase() !== "sem titulo" && music.titulo.toLowerCase() !== "sem título" ? music.titulo : "";
-                    const showArtist = entry.artista || fallbackArtist;
-                    const showMusic = entry.musica || fallbackMusic;
+                    // Each row must display only its own persisted pair. Mixing the
+                    // current track into an older row duplicated the title and hid
+                    // the artist whenever that historical record was incomplete.
+                    const showArtist = entry.artista || "";
+                    const showMusic = entry.musica || "";
                     return (
                       <tr key={i} className="group hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4">
