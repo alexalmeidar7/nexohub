@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic, Save } from "lucide-react";
-import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
@@ -253,7 +252,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [allProgramasFull, setAllProgramasFull] = useState<any[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir" | "assuntos">("preview");
+  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir">("preview");
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState<number>(() => Date.now());
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
