@@ -3333,13 +3333,16 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
           setEventTypesConfig(profile.event_types_config);
         }
 
-        const { data: evts } = await supabase
+        const { data: fetchedEvts } = await supabase
           .from("agenda_eventos")
           .select("*")
           .eq("user_id", stationUid)
           .order("data");
-        
-        if (evts) setEventos(evts);
+
+        if (fetchedEvts) {
+          evts = fetchedEvts;
+          setEventos(fetchedEvts as any);
+        }
       }
       
       let progs: any[] = [];
