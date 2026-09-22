@@ -1923,9 +1923,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const el = Math.max(0, (now - liveStart) / 1000);
 
             // Se já temos uma música tocando e o dado do servidor for mais antigo, ignorar para não alternar
-            if (startTimeRef.current && liveStart < (startTimeRef.current - 5000)) {
+            if (!canApplyReading(liveStart)) {
               return;
             }
+            appliedStartRef.current = Math.max(appliedStartRef.current, liveStart);
 
             // Se o dado tiver mais de 4 horas, não considerar como música ao vivo
             if (now - liveStart <= 4 * 3600 * 1000) {
