@@ -21,13 +21,12 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
   const resolvedUid = clientAcc?.parentUserId || clientAcc?.id || uid;
 
   const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
-  const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
   
   const currentOrigin = typeof window !== "undefined" && window.location.origin
     ? window.location.origin
     : "https://housemix.nexobrasil.net";
 
-  const effectiveSupabaseUrl = isDeadDomain ? currentOrigin : envSupabase;
+  const effectiveSupabaseUrl = envSupabase || currentOrigin;
 
   const feeds = useMemo(() => {
     const baseUrl = `${currentOrigin}/xml`;
@@ -49,7 +48,8 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
       {
         label: "XML ROTEIRO",
         kicker: "XML",
-        url: `${baseUrl}/${resolvedSlug}/roteiro.xml`,
+        // Link direto para o feed dinâmico: evita cópias estáticas antigas no host.
+        url: `${effectiveSupabaseUrl}/functions/v1/serve-xml-roteiro-estudio?user_id=${resolvedUid}&estudio=Estudio%20FM`,
         supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-roteiro-estudio?user_id=${resolvedUid}&estudio=Estudio%20FM`,
         description: "Roteiro e alinhamento do estúdio no ar",
       },

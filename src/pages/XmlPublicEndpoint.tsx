@@ -17,8 +17,7 @@ import initialEnquetesSync from "@/data/xml_enquetes_sync.json";
 import initialBatalhasSync from "@/data/xml_batalhas_sync.json";
 
 const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
-const isDeadDomain = !envSupabase || envSupabase.includes("zzjfzxxvxbspbdkodoix.supabase.co");
-const SUPABASE_BASE = isDeadDomain ? (typeof window !== "undefined" ? window.location.origin : "") : envSupabase;
+const SUPABASE_BASE = envSupabase || (typeof window !== "undefined" ? window.location.origin : "");
 
 export default function XmlPublicEndpoint() {
   const { slug: pathSlug, file: pathFile, functionName, fileName } = useParams<{
@@ -303,24 +302,13 @@ export default function XmlPublicEndpoint() {
 
       // Special dynamic handler for roteiro.xml
       if (filename.includes("roteiro")) {
-        try {
-          const staticUrl = `/xml/${cleanSlug}/${filename}?t=${Date.now()}`;
-          const res = await fetch(staticUrl);
-          if (res.ok) {
-            const text = await res.text();
-            if (text.includes("<programaExpress>") && !text.includes("<error>")) {
-              if (isMounted) {
-                setXmlContent(text.trim());
-                setLoading(false);
-                return;
-              }
-            }
-          }
-        } catch {}
-
+        // O roteiro oficial é dinâmico. Consulte-o antes de qualquer cópia
+        // estática, que pode existir no host com conteúdo antigo.
         if (supabaseFallbackUrl) {
           try {
-            const fbRes = await fetch(`${supabaseFallbackUrl}&t=${Date.now()}`);
+            const fbRes = await fetch(`${supabaseFallbackUrl}&t=${Date.now()}`, {
+              cache: "no-store",
+            });
             if (fbRes.ok) {
               const fbText = await fbRes.text();
               if (fbText.includes("<programaExpress>") && !fbText.includes("<error>")) {
@@ -333,6 +321,21 @@ export default function XmlPublicEndpoint() {
             }
           } catch {}
         }
+
+        try {
+          const staticUrl = `/xml/${cleanSlug}/${filename}?t=${Date.now()}`;
+          const res = await fetch(staticUrl, { cache: "no-store" });
+          if (res.ok) {
+            const text = await res.text();
+            if (text.includes("<programaExpress>") && !text.includes("<error>")) {
+              if (isMounted) {
+                setXmlContent(text.trim());
+                setLoading(false);
+                return;
+              }
+            }
+          }
+        } catch {}
       }
 
       // 1. Try static / dynamic endpoints
