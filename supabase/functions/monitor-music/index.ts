@@ -151,8 +151,10 @@ Deno.serve(async (req) => {
     });
 
     let inserted = 0;
+    const deadline = Date.now() + 40_000;
+    let timedOut = false;
 
-    for (const setting of candidates) {
+    const processUser = async (setting: any) => {
       try {
         const url = (setting.music_xml_url || "").trim();
         const mode = (setting.music_source_mode || "").toLowerCase();
