@@ -746,6 +746,20 @@ export default function PromocoesKiosk() {
       const isPositiva = !localUid || localUid === POSITIVA_USER_ID;
       const targetUid = localUid || POSITIVA_USER_ID;
 
+      // Isolamento de contas: subusuário herda os dados do usuário master.
+      let ownerIds: string[] = localUid ? [localUid] : [];
+      if (localUid) {
+        try {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("parent_user_id")
+            .eq("id", localUid as any)
+            .maybeSingle();
+          const parentId = (prof as any)?.parent_user_id;
+          if (parentId && parentId !== localUid) ownerIds = [localUid, parentId];
+        } catch { /* ignore */ }
+      }
+
       let empresaData: any = null;
       let promoData: any = null;
       let progsData: any = null;
@@ -754,16 +768,33 @@ export default function PromocoesKiosk() {
 
       try {
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000));
+        const scopePromos = supabase.from("promocoes").select("*").order("data_inicio");
+        const scopeProgs = supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%");
+        const scopeTests = supabase.from("testemunhais").select("*");
+        const scopeSettings = supabase
+          .from("user_settings")
+          .select("user_id, cenario_config, weather_city, weather_lat, weather_lon");
         const fetches = Promise.all([
           getEmpresaConfig().catch(() => null),
-          supabase.from("promocoes").select("*").order("data_inicio").catch(() => ({ data: null })),
-          supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%").catch(() => ({ data: null })),
-          supabase.from("testemunhais").select("*").catch(() => ({ data: null })),
-          supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").maybeSingle().catch(() => ({ data: null })),
+          (ownerIds.length ? scopePromos.in("user_id", ownerIds as any) : scopePromos).catch(() => ({ data: null })),
+          (ownerIds.length ? scopeProgs.in("user_id", ownerIds as any) : scopeProgs).catch(() => ({ data: null })),
+          (ownerIds.length ? scopeTests.in("user_id", ownerIds as any) : scopeTests).catch(() => ({ data: null })),
+          (ownerIds.length
+            ? scopeSettings.in("user_id", ownerIds as any).limit(2)
+            : scopeSettings.limit(1)
+          ).catch(() => ({ data: null })),
         ]);
         const results: any = await Promise.race([fetches, timeoutPromise]).catch(() => null);
         if (results) {
-          [empresaData, { data: promoData } = {}, { data: progsData } = {}, { data: testData } = {}, { data: settingsData } = {}] = results;
+          let settingsRows: any = null;
+          [empresaData, { data: promoData } = {}, { data: progsData } = {}, { data: testData } = {}, { data: settingsRows } = {}] = results;
+          const rows = Array.isArray(settingsRows) ? settingsRows : (settingsRows ? [settingsRows] : []);
+          settingsData =
+            rows.find((r: any) => r.user_id === localUid && (r.cenario_config as any)?.tela_promo_bg) ||
+            rows.find((r: any) => (r.cenario_config as any)?.tela_promo_bg) ||
+            rows.find((r: any) => r.user_id === localUid) ||
+            rows[0] ||
+            null;
         }
       } catch {}
 
