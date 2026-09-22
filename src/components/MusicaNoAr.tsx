@@ -473,6 +473,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Computador onde a leitura do arquivo local está acontecendo (persistido no banco),
   // para que a informação apareça igual em qualquer outro computador.
   const [remoteReaderDevice, setRemoteReaderDevice] = useState<string>("");
+  // Horário de início da última leitura já aplicada na tela. Garante que a exibição
+  // NUNCA volte para uma leitura mais antiga (causa da alternância entre registros).
+  const appliedStartRef = useRef<number>(0);
+  const canApplyReading = useCallback((start: number) => {
+    if (!start || start <= 0) return false;
+    return start >= appliedStartRef.current - 2000;
+  }, []);
   const [culturaLastSync, setCulturaLastSync] = useState<number | null>(() => {
     try {
       const raw = localStorage.getItem("cultura-fm-last-sync");
