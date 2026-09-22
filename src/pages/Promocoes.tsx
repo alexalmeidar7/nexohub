@@ -118,52 +118,21 @@ export function resolveSafePromoButton(p: any): string {
   return "";
 }
 
+// Retorna apenas imagens realmente cadastradas (URL ou caminho).
+// Nunca inventa arte por nome de programa: isso causava vazamento visual
+// entre contas (ex.: capa "flashback" da Positiva aparecendo na Interativa).
+const isRealImageRef = (value?: string): boolean => {
+  const v = (value || "").trim();
+  if (!v) return false;
+  return v.startsWith("http") || v.startsWith("data:") || v.startsWith("/");
+};
+
 export function resolveSafeProgramCover(nameOrCover?: string): string {
-  const norm = (nameOrCover || "").toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("flashback")) return "/programas/flashback.png";
-  if (norm.includes("whatsapp")) return "/programas/whatsapp.png";
-  if (norm.includes("bom dia")) return "/programas/bom-dia.png";
-  if (norm.includes("primeira hora")) return "/programas/primeira-hora.png";
-  if (norm.includes("sertanejo") && (norm.includes("1") || norm.includes("primeira"))) return "/programas/sbd1.png";
-  if (norm.includes("sertanejo") && (norm.includes("2") || norm.includes("segunda"))) return "/programas/sbd2.png";
-  if (norm.includes("sertanejo")) return "/programas/sbd1.png";
-  if (norm.includes("vale night")) return "/programas/vale-night.png";
-  if (norm.includes("palco")) return "/programas/palco-positiva.png";
-  if (norm.includes("energia")) return "/programas/energia-positiva.png";
-  if (norm.includes("modao")) return "/programas/modao.png";
-  if (norm.includes("domingao")) return "/programas/domingao.png";
-  if (norm.includes("madruga")) return "/programas/madrugada.png";
-
-  if (nameOrCover && !nameOrCover.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
-    return nameOrCover;
-  }
-  return "/programas/flashback.png";
+  return isRealImageRef(nameOrCover) ? (nameOrCover as string).trim() : "";
 }
 
 export function resolveSafeProgramSelo(nameOrSelo?: string): string {
-  const norm = (nameOrSelo || "").toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("flashback")) return "/selos/flashback.png";
-  if (norm.includes("whatsapp")) return "/selos/whatsapp.png";
-  if (norm.includes("bom dia")) return "/selos/bom-dia.png";
-  if (norm.includes("primeira hora")) return "/selos/primeira-hora.png";
-  if (norm.includes("sertanejo") && (norm.includes("1") || norm.includes("primeira"))) return "/selos/sbd1.png";
-  if (norm.includes("sertanejo") && (norm.includes("2") || norm.includes("segunda"))) return "/selos/sbd2.png";
-  if (norm.includes("sertanejo")) return "/selos/sbd1.png";
-  if (norm.includes("vale night")) return "/selos/vale-night.png";
-  if (norm.includes("palco")) return "/selos/palco-positiva.png";
-  if (norm.includes("energia")) return "/selos/energia-positiva.png";
-  if (norm.includes("modao")) return "/selos/modao.png";
-  if (norm.includes("domingao")) return "/selos/domingao.png";
-  if (norm.includes("madruga")) return "/selos/madrugada.png";
-
-  if (nameOrSelo && !nameOrSelo.includes("zzjfzxxvxbspbdkodoix.supabase.co")) {
-    return nameOrSelo;
-  }
-  return "/selos/flashback.png";
+  return isRealImageRef(nameOrSelo) ? (nameOrSelo as string).trim() : "";
 }
 
 export { resolveSafePresenterPhoto };
