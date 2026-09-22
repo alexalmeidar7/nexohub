@@ -1322,25 +1322,16 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       tipo_programa: tipoPrograma || null,
     };
 
-    try {
-      if (isExistingDbUuid) {
-        const { error: updErr } = await supabase.from("programas").update(programPayload).eq("id", targetId);
-        if (updErr) {
-          console.warn("Supabase update programa notice:", updErr);
-          await supabase.from("programas").upsert({ id: targetId, user_id: effectiveOwnerId, ...programPayload });
-        }
-      } else {
-        const { error: insErr } = await supabase.from("programas").insert({
-          id: isUuid(targetId) ? targetId : undefined,
-          user_id: effectiveOwnerId,
-          ...programPayload,
-        });
-        if (insErr) {
-          console.warn("Supabase insert programa notice:", insErr);
-        }
-      }
-    } catch (err) {
-      console.warn("Supabase insert/update programa error:", err);
+    const persistErr = await persistPrograma({
+      targetId,
+      ownerId: effectiveOwnerId,
+      payload: programPayload,
+      isUpdate: isExistingDbUuid,
+    });
+    if (persistErr) {
+      setSaving(false);
+      setConflictMsg(`Não foi possível salvar o programa: ${persistErr}`);
+      return;
     }
 
     // Salva vinculação com o cliente selecionado
