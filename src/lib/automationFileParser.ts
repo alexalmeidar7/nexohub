@@ -44,6 +44,16 @@ function parseDurationString(duracaoStr: string): number {
   return 0;
 }
 
+function firstLeafText(doc: Document, selectors: string[]): string {
+  for (const selector of selectors) {
+    const element = doc.querySelector(selector);
+    if (!element || element.children.length > 0) continue;
+    const value = element.textContent?.trim() || "";
+    if (value) return value;
+  }
+  return "";
+}
+
 /**
  * Attempts to parse raw text as XML.
  */
@@ -65,10 +75,10 @@ function parseXmlContent(text: string): ParsedAutomationTrack | null {
       return { titulo: "", artista: "", duracao: 0, isStopped: true };
     }
 
-    const rawTitulo =
-      doc.querySelector("nome_musica, titulo, title, name, track, musica")?.textContent || "";
-    const rawArtista =
-      doc.querySelector("interprete, artista, artist, band, cantora, cantor")?.textContent || "";
+    // Never read a container such as <musica> or <track> as the title. Its
+    // textContent concatenates every child and duplicates title/artist.
+    const rawTitulo = firstLeafText(doc, ["nome_musica", "titulo", "title", "track > name", "song > name"]);
+    const rawArtista = firstLeafText(doc, ["interprete", "nome_interprete", "artista", "artist", "band", "cantora", "cantor"]);
 
     const titulo = normalizeMusicText(cleanFragment(rawTitulo));
     const artista = normalizeMusicText(cleanFragment(rawArtista));
