@@ -1649,7 +1649,7 @@ export default function PromocoesKiosk() {
   const presenter = apresentadores.find(a => a.id === onAirProgram?.apresentadorId);
   // Fundo fixo: usa somente o fundo escolhido pelo usuário (Config. Tela de Promoção
   // ou empresa). Nunca alterna com a imagem do locutor, evitando troca entre duas imagens.
-  const bgUrl = (telaPromoConfig as any).bg_image_url || config.backgroundUrl || "";
+  const bgUrl = (telaPromoConfig as any).bg_type === "imagem" ? ((telaPromoConfig as any).bg_image_url || "") : "";
   const customBgStyle = bgUrl ? {
     backgroundImage: `linear-gradient(rgba(0,0,0,${(telaPromoConfig.bg_opacity ?? 50) / 100}), rgba(0,0,0,${(telaPromoConfig.bg_opacity ?? 50) / 100})), url(${bgUrl})`,
     backgroundSize: "cover",
