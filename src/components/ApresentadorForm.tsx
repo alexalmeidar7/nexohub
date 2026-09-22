@@ -214,8 +214,12 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
   });
 
   const finalAps = Array.from(new Set(Array.from(mergedMap.values())));
-  // Final strict filter: ensure no item from another station can EVER slip in
+  const dbIds = new Set(supabaseAps.map(a => a.id));
+  const dbNames = new Set(supabaseAps.map(a => (a.nome || "").trim().toLowerCase()).filter(Boolean));
+  // Final filter: mantém cadastros do banco (já isolados por user_id) e da própria emissora
   return finalAps.filter(a => {
+    if (dbIds.has(a.id)) return true;
+    if (a.nome && dbNames.has(a.nome.trim().toLowerCase())) return true;
     if (validStationIds.has(a.id)) return true;
     if (a.nome && validStationNames.has(a.nome.trim().toLowerCase())) return true;
     return (a as any).stationKey === resolvedStation;
