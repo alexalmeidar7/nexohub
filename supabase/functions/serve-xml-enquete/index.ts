@@ -200,6 +200,24 @@ Deno.serve(async (req) => {
       scheduled = list[0];
     }
 
+    // Fallback adicional: nenhuma enquete para hoje -> usa a mais recente cujo horario bate agora
+    if (!scheduled) {
+      const { data: recent } = await sb
+        .from("enquetes_agendadas")
+        .select("*")
+        .eq("user_id", resolvedUid)
+        .lte("data_enquete", today)
+        .order("data_enquete", { ascending: false })
+        .limit(20);
+      scheduled =
+        (recent || []).find((e: any) => {
+          const start = normTime(e.horario_inicio, "00:00");
+          const end = normTime(e.horario_fim, "23:59");
+          return start <= end ? currentTime >= start && currentTime <= end : currentTime >= start || currentTime <= end;
+        }) || (allowLatest ? (recent || [])[0] : undefined);
+    }
+
+
     let pergunta = "", r1 = "", r2 = "", r3 = "", r4 = "";
     let correta = 1, ini = "", fim = "";
 
