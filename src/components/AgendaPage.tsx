@@ -1442,9 +1442,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         });
 
         const dbIdsNow = evts.map((e: any) => e.id);
-        pruneStoredAgendaEvents(targetUserId, dbIdsNow);
+        // Só limpa o cache quando a consulta ao banco realmente respondeu
+        const dbAnswered = !!raceRes;
+        if (dbAnswered) pruneStoredAgendaEvents(targetUserId, dbIdsNow);
         const baseEvents: Evento[] = Array.from(map.values()).filter(
-          (e) => !isUuidId(e.id) || dbIdsNow.includes(e.id),
+          (e) => !dbAnswered || !isUuidId(e.id) || dbIdsNow.includes(e.id),
         );
         setEventos(baseEvents);
         setLoadingData(false);
