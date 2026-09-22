@@ -3391,6 +3391,15 @@ export type Database = {
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       current_parent_user_id: { Args: never; Returns: string }
       expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }
+      get_music_history_light: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          artista: string
+          created_at: string
+          id: string
+          musica: string
+        }[]
+      }
       get_public_broadcast_assuntos: {
         Args: { _programa_id?: string; _user_id: string }
         Returns: {

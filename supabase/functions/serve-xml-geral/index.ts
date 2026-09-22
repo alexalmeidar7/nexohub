@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const serve = Deno.serve;
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -98,29 +98,30 @@ serve(async (req) => {
       .maybeSingle();
 
     const ownerId = (subUser?.ativo && subUser.parent_user_id) ? subUser.parent_user_id : userId;
+    console.log(`[serve-xml-geral] start owner=${ownerId}`);
+
 
     // Fetch all related entities in parallel
-    const [
-      empresaRes,
-      programasRes,
-      apresentadoresRes,
-      musicHistoryRes,
-      logosRes,
-      roteiroRes,
-      batalhaRes,
-      enquetesRes,
-      quizRes,
-    ] = await Promise.all([
-      sb.from("empresa_config").select("*").eq("user_id", ownerId).maybeSingle(),
-      sb.from("programas").select("*").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
-      sb.from("apresentadores").select("*").eq("user_id", ownerId).eq("ativo", true),
-      sb.from("xml_upload_history").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6),
-      sb.from("logos_patrocinadores").select("*").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false),
-      sb.from("roteiros").select("*").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10),
-      sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }),
-      sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }),
-      sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }),
-    ]);
+    const step = async <T>(name: string, p: PromiseLike<T>): Promise<T> => {
+      const r = await p;
+      console.log(`[serve-xml-geral] step ${name} ok`);
+      return r;
+    };
+
+    const empresaRes = await step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle());
+    const programasRes = await step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"));
+    const apresentadoresRes = await step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true));
+    // Alguns registros de historico possuem campos gigantes (dezenas de MB) e estouram
+    // a memoria da funcao. A RPC devolve apenas os primeiros caracteres de cada campo.
+    const musicHistoryRes = await step("musicHistory", sb.rpc("get_music_history_light", { _user_id: ownerId, _limit: 6 }));
+    const logosRes = await step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false));
+    const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10));
+    const batalhaRes = await step("batalha", sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }));
+    const enquetesRes = await step("enquetes", sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }));
+    const quizRes = await step("quiz", sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }));
+
+
+    console.log(`[serve-xml-geral] fetched owner=${ownerId} prog=${programasRes.data?.length || 0} ap=${apresentadoresRes.data?.length || 0} logos=${logosRes.data?.length || 0} rot=${roteiroRes.data?.length || 0} bat=${batalhaRes.data?.length || 0}`);
 
     const empresa = empresaRes.data || {};
     const programas = programasRes.data || [];
@@ -195,6 +196,38 @@ serve(async (req) => {
         nextPresenter = apresentadores.find((a: any) => a.id === apId);
       }
     }
+
+    // Busca a foto apenas dos locutores usados e somente quando for URL
+    // (fotos em base64 chegam a 2 MB e estouram a memoria da funcao)
+    const fotoIds = [currentPresenter?.id, nextPresenter?.id].filter(Boolean);
+    if (fotoIds.length > 0) {
+      const { data: fotos } = await sb
+        .from("apresentadores")
+        .select("id, foto")
+        .in("id", fotoIds)
+        .like("foto", "http%");
+      (fotos || []).forEach((f: any) => {
+        if (currentPresenter?.id === f.id) currentPresenter.foto = f.foto;
+        if (nextPresenter?.id === f.id) nextPresenter.foto = f.foto;
+      });
+    }
+
+    // Selo/thumb apenas dos programas exibidos e somente quando for URL
+    const progIds = [currentProgram?.id, nextProgram?.id].filter(Boolean);
+    if (progIds.length > 0) {
+      const { data: selos } = await sb
+        .from("programas")
+        .select("id, selo, thumb")
+        .in("id", progIds)
+        .like("selo", "http%");
+      (selos || []).forEach((p: any) => {
+        if (currentProgram?.id === p.id) { currentProgram.selo = p.selo; currentProgram.thumb = p.thumb; }
+        if (nextProgram?.id === p.id) { nextProgram.selo = p.selo; nextProgram.thumb = p.thumb; }
+      });
+    }
+
+
+
 
     // Music data
     const currentMusic = musicHistory[0] || null;

@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
 
       if (action === "sync" && Array.isArray(body.enquetes)) {
         for (const item of body.enquetes) {
+          if (!item?.pergunta) continue;
           const row: any = {
             user_id: targetUid,
             pergunta: item.pergunta || "",
@@ -103,8 +104,23 @@ Deno.serve(async (req) => {
             horario_inicio: item.horario_inicio || "00:00",
             horario_fim: item.horario_fim || "23:59",
           };
-          if (isUUID(item.id)) row.id = item.id;
-          await sb.from("enquetes_agendadas").upsert(row);
+          if (isUUID(item.id)) {
+            row.id = item.id;
+            await sb.from("enquetes_agendadas").upsert(row);
+            continue;
+          }
+          // IDs locais (enq_...) nao existem no banco: casa pela pergunta para evitar duplicidade
+          const { data: existing } = await sb
+            .from("enquetes_agendadas")
+            .select("id")
+            .eq("user_id", targetUid)
+            .eq("pergunta", row.pergunta)
+            .limit(1);
+          if (existing && existing.length > 0) {
+            await sb.from("enquetes_agendadas").update(row).eq("id", existing[0].id);
+          } else {
+            await sb.from("enquetes_agendadas").insert(row);
+          }
         }
         return new Response(JSON.stringify({ ok: true, action: "synced", count: body.enquetes.length }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -183,6 +199,24 @@ Deno.serve(async (req) => {
     if (!scheduled && (list || []).length > 0 && allowLatest) {
       scheduled = list[0];
     }
+
+    // Fallback adicional: nenhuma enquete para hoje -> usa a mais recente cujo horario bate agora
+    if (!scheduled) {
+      const { data: recent } = await sb
+        .from("enquetes_agendadas")
+        .select("*")
+        .eq("user_id", resolvedUid)
+        .lte("data_enquete", today)
+        .order("data_enquete", { ascending: false })
+        .limit(20);
+      scheduled =
+        (recent || []).find((e: any) => {
+          const start = normTime(e.horario_inicio, "00:00");
+          const end = normTime(e.horario_fim, "23:59");
+          return start <= end ? currentTime >= start && currentTime <= end : currentTime >= start || currentTime <= end;
+        }) || (allowLatest ? (recent || [])[0] : undefined);
+    }
+
 
     let pergunta = "", r1 = "", r2 = "", r3 = "", r4 = "";
     let correta = 1, ini = "", fim = "";
