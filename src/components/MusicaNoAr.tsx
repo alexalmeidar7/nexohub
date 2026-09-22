@@ -560,6 +560,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     return isPhysicalLocalReader() && localMonitoring && isLocalSourceHealthy();
   }, [isPhysicalLocalReader, localMonitoring, isLocalSourceHealthy]);
 
+  // Este computador também é "leitor" quando lê o XML por link online com sucesso recente.
+  const isOnlineReaderOnClient = useCallback(() => {
+    return Boolean(
+      isOnlineSelected && hasValidOnlineUrl && !onlineError &&
+      lastOnlineSuccessRef.current > 0 &&
+      Date.now() - lastOnlineSuccessRef.current < 60000
+    );
+  }, [isOnlineSelected, hasValidOnlineUrl, onlineError]);
+
+  const isReaderMachine = useCallback(
+    () => isPhysicalLocalReader() || isOnlineReaderOnClient(),
+    [isPhysicalLocalReader, isOnlineReaderOnClient]
+  );
+
   const setSourceMode = async (mode: SourceMode) => {
     setSourceModeState(mode);
     localStorage.setItem(SOURCE_MODE_KEY, mode);
