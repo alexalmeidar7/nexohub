@@ -1502,7 +1502,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     const handle = savedHandleRef.current || fileHandleRef.current;
     if (!handle) return false;
     try {
-      const perm = await handle.requestPermission({ mode: "read" });
+      const perm = await (handle as any).requestPermission({ mode: "read" });
       if (perm === "granted") {
         fileHandleRef.current = handle;
         const file = await handle.getFile();
@@ -1543,7 +1543,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       savedHandleRef.current = handle;
 
       try {
-        const perm = await handle.queryPermission({ mode: "read" });
+        const perm = await (handle as any).queryPermission({ mode: "read" });
         if (perm === "granted") {
           fileHandleRef.current = handle;
           const file = await handle.getFile();
