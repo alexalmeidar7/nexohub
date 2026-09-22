@@ -438,6 +438,23 @@ export default function PromocoesKiosk() {
   const [programasSectionOpen, setProgramasSectionOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
+  // Aplica em tempo real o estilo salvo na Configuração da Tela de Promoção
+  useEffect(() => {
+    const apply = (cfg: any) => {
+      if (cfg && typeof cfg === "object") setTelaPromoConfig({ ...defaultTelaPromoConfig, ...cfg });
+    };
+    const onCustom = (e: Event) => apply((e as CustomEvent).detail);
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || !e.key.startsWith("nexohub_telapromo_") || !e.newValue) return;
+      try { apply(JSON.parse(e.newValue)); } catch {}
+    };
+    window.addEventListener("telapromo-updated", onCustom as EventListener);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("telapromo-updated", onCustom as EventListener);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
   const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
   const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
