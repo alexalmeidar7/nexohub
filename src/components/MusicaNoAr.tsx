@@ -2000,19 +2000,35 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       const targetIds = candidateUserIds.length > 0 ? candidateUserIds : (dataUserId ? [dataUserId] : []);
 
+      // Escolher SEMPRE a leitura mais recente entre todos os candidatos.
+      // Antes, o primeiro candidato com qualquer título vencia, o que fazia a tela
+      // alternar entre leituras diferentes (ex.: "sem reprodução", leitura antiga e a atual).
+      const isPlaceholderTitle = (t: string) =>
+        !t || t === "sem título" || t === "sem titulo" || t === "aguardando leitura..." || t === "sem reprodução" || t === "sem reproducao";
+
+      let freshest: { uid: string; di: Record<string, any>; start: number } | null = null;
       for (const uid of targetIds) {
         if (isCancelled) return;
         try {
-          // 1. Ler user_settings (dashboard_items)
-          const { data: settings } = await supabase
+          const { data: s } = await supabase
             .from("user_settings")
             .select("dashboard_items")
             .eq("user_id", uid)
             .maybeSingle();
-
           if (isCancelled) return;
+          const d = (s?.dashboard_items || {}) as Record<string, any>;
+          const t = (d.music_current_title || "").toString().trim().toLowerCase();
+          if (isPlaceholderTitle(t)) continue;
+          const st = typeof d.music_start_time === "number" && d.music_start_time > 0 ? d.music_start_time : 0;
+          if (!freshest || st > freshest.start) freshest = { uid, di: d, start: st };
+        } catch {}
+      }
 
-          const di = (settings?.dashboard_items || {}) as Record<string, any>;
+      for (const uid of freshest ? [freshest.uid] : targetIds) {
+        if (isCancelled) return;
+        try {
+          // 1. Usar a leitura mais recente de user_settings (dashboard_items)
+          const di = (freshest && uid === freshest.uid ? freshest.di : {}) as Record<string, any>;
           const dbTitle = (di.music_current_title || "").toString().trim();
           const dbArtist = (di.music_current_artist || "").toString().trim();
           const dbCover = (di.music_current_cover || "").toString();
