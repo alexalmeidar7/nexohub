@@ -212,6 +212,21 @@ serve(async (req) => {
       });
     }
 
+    // Selo/thumb apenas dos programas exibidos e somente quando for URL
+    const progIds = [currentProgram?.id, nextProgram?.id].filter(Boolean);
+    if (progIds.length > 0) {
+      const { data: selos } = await sb
+        .from("programas")
+        .select("id, selo, thumb")
+        .in("id", progIds)
+        .like("selo", "http%");
+      (selos || []).forEach((p: any) => {
+        if (currentProgram?.id === p.id) { currentProgram.selo = p.selo; currentProgram.thumb = p.thumb; }
+        if (nextProgram?.id === p.id) { nextProgram.selo = p.selo; nextProgram.thumb = p.thumb; }
+      });
+    }
+
+
 
 
     // Music data
