@@ -102,28 +102,22 @@ serve(async (req) => {
 
 
     // Fetch all related entities in parallel
-    const [
-      empresaRes,
-      programasRes,
-      apresentadoresRes,
-      musicHistoryRes,
-      logosRes,
-      roteiroRes,
-      batalhaRes,
-      enquetesRes,
-      quizRes,
-    ] = await Promise.all([
-      sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle(),
-      sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
-      // Sem "*": colunas com base64 pesado estouram a memoria da funcao
-      sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true),
-      sb.from("xml_upload_history").select("id, musica, artista, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6),
-      sb.from("logos_patrocinadores").select("id, nome, logo_url").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false),
-      sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10),
-      sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }),
-      sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }),
-      sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }),
-    ]);
+    const step = async <T>(name: string, p: PromiseLike<T>): Promise<T> => {
+      const r = await p;
+      console.log(`[serve-xml-geral] step ${name} ok`);
+      return r;
+    };
+
+    const empresaRes = await step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle());
+    const programasRes = await step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"));
+    const apresentadoresRes = await step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true));
+    const musicHistoryRes = await step("musicHistory", sb.from("xml_upload_history").select("id, musica, artista, created_at").eq("user_id", ownerId).order("created_at", { ascending: false }).limit(6));
+    const logosRes = await step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false));
+    const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10));
+    const batalhaRes = await step("batalha", sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }));
+    const enquetesRes = await step("enquetes", sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }));
+    const quizRes = await step("quiz", sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }));
+
 
     console.log(`[serve-xml-geral] fetched owner=${ownerId} prog=${programasRes.data?.length || 0} ap=${apresentadoresRes.data?.length || 0} logos=${logosRes.data?.length || 0} rot=${roteiroRes.data?.length || 0} bat=${batalhaRes.data?.length || 0}`);
 
