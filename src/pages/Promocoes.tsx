@@ -2006,17 +2006,15 @@ export default function PromocoesKiosk() {
 
         {/* Banner rotativo + capa do programa no ar */}
         {(() => {
-          // Prioriza os programas que possuem citações cadastradas
-          const scheduleList = filteredPrograms.length > 0 ? filteredPrograms : mergeProgramList(programas);
+          // Exibe SOMENTE os programas que possuem citações cadastradas
+          const scheduleList = filteredPrograms;
           const onAirIdx = onAirProgram
             ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
             : -1;
           const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
           const currentProg = (onAirIdx >= 0 && coverIndex === null ? scheduleList[onAirIdx] : null)
             ?? scheduleList[activeIdx]
-            ?? (onAirProgram ? programas.find(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome)) : null)
             ?? scheduleList[0]
-            ?? (programas[0] as any)
             ?? null;
           const goPrev = (e: React.MouseEvent) => {
             e.stopPropagation();
