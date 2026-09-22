@@ -699,9 +699,9 @@ export default function PromocoesKiosk() {
         nome: p.nome,
         apresentadorId: p.apresentador_id || p.apresentadorId || "",
         apresentadoresIds: p.apresentadores_ids || p.apresentadoresIds || [],
-        selo: resolveSafeProgramSelo(p.selo || p.nome),
-        capa: resolveSafeProgramCover(p.capa || p.thumb || p.selo || p.nome),
-        thumb: resolveSafeProgramCover(p.thumb || p.capa || p.nome),
+        selo: resolveSafeProgramSelo(p.selo),
+        capa: resolveSafeProgramCover(p.capa || p.thumb),
+        thumb: resolveSafeProgramCover(p.thumb || p.capa),
         diasSemana: p.dias_semana || p.diasSemana || [],
         horarioInicio: p.horario_inicio || p.horarioInicio || "00:00:00",
         horarioFim: p.horario_fim || p.horarioFim || "23:59:59",
@@ -941,7 +941,7 @@ export default function PromocoesKiosk() {
       try {
         aprs = edgeAprs.length > 0 ? edgeAprs : await getApresentadores();
       } catch {}
-      if (!aprs || aprs.length === 0 || isPositiva) {
+      if ((!aprs || aprs.length === 0) && !localUid) {
         aprs = DEFAULT_POSITIVA_APRESENTADORES;
       }
       setApresentadores(aprs.map((a: any) => ({
