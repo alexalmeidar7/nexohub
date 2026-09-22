@@ -284,6 +284,7 @@ interface Programa {
   thumb?: string | null;
   tipo_programa?: string | null;
   tipoPrograma?: string | null;
+  user_id?: string | null;
 }
 
 interface Apresentador {
@@ -336,6 +337,7 @@ interface Evento {
   dias_semana?: number[];
   programa?: Programa;
   participantes?: Participante[];
+  user_id?: string | null;
 }
 
 export const DIAS_DA_SEMANA = [
@@ -467,16 +469,13 @@ export function getStoredAgendaEvents(targetUserId?: string | null): Evento[] {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-    // Check fallback global key
+    // Fallback global key — SOMENTE eventos que pertencem ao usuário atual
     const fallbackRaw = localStorage.getItem(LOCAL_AGENDA_EVENTS_KEY);
     if (fallbackRaw) {
       const parsed = JSON.parse(fallbackRaw);
       if (Array.isArray(parsed)) {
-        if (targetUserId) {
-          const userEvents = parsed.filter(e => e.user_id === targetUserId || !e.user_id || e.user_id === "local");
-          if (userEvents.length > 0) return userEvents;
-        }
-        return parsed;
+        if (!targetUserId) return [];
+        return parsed.filter((e: any) => e && e.user_id === targetUserId);
       }
     }
   } catch (err) {
