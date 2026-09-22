@@ -3321,6 +3321,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
     const stationUid = clientAcc?.parentUserId || (clientAcc?.id && isUuid(clientAcc.id) ? clientAcc.id : null) || (user?.id && isUuid(user.id) ? user.id : null);
 
     const fetchData = async () => {
+      let evts: any[] | null = null;
       if (stationUid && isUuid(stationUid)) {
         // Fetch user profile for event types config
         const { data: profile } = await supabase
@@ -3333,13 +3334,16 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
           setEventTypesConfig(profile.event_types_config);
         }
 
-        const { data: evts } = await supabase
+        const { data: fetchedEvts } = await supabase
           .from("agenda_eventos")
           .select("*")
           .eq("user_id", stationUid)
           .order("data");
-        
-        if (evts) setEventos(evts);
+
+        if (fetchedEvts) {
+          evts = fetchedEvts;
+          setEventos(fetchedEvts as any);
+        }
       }
       
       let progs: any[] = [];
@@ -3369,7 +3373,7 @@ function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Pa
       setLoading(false);
     };
     fetchData();
-  }, [user, effectiveUserId]);
+  }, [user]);
 
   if (loading) return (
     <div className="animate-pulse h-full">

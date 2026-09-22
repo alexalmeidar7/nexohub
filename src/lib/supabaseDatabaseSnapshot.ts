@@ -1,4 +1,5 @@
 import localDb from '../data/supabase_local_db.json';
+import { findClientAccountByEmail, findClientAccountById } from './clientAuthAccounts';
 
 export interface LocalDbSnapshot {
   exportedAt: string;

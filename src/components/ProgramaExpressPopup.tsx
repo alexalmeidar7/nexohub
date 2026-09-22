@@ -635,7 +635,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
             userId: user.id,
             estudio,
             programaNome,
-            xml: xmlString,
+            xml: xmlContent,
             roteiro: {
               id: editingId || `rot_${Date.now()}`,
               programa_nome: programaNome,

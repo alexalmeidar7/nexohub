@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
+import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 
 const DashboardGradeDialog = lazyRetry(() => import("./DashboardGradeDialog"));
 

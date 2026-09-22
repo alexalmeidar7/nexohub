@@ -25,6 +25,20 @@ import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAut
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
 
+/**
+ * Este navegador está lendo o arquivo local/online neste momento?
+ * Nesse caso a leitura local é a autoridade e o sync não deve interferir.
+ */
+function isReaderActiveOnThisClient(): boolean {
+  try {
+    const localTs = parseInt(localStorage.getItem("masterview_local_reader_active") || "0", 10);
+    if (Date.now() - localTs < 30_000) return true;
+    const onlineTs = parseInt(localStorage.getItem("masterview_online_reader_active") || "0", 10);
+    if (Date.now() - onlineTs < 30_000) return true;
+  } catch {}
+  return false;
+}
+
 const BREAK_LABELS = new Set(["break", "ebs curtas", "intervalo", "commercial break"]);
 
 function isBreakTrack(data: { titulo?: string; artista?: string }) {
@@ -487,7 +501,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
       // Se este navegador estiver monitorando ativamente um arquivo local (MusicaNoAr),
       // o arquivo local é a autoridade absoluta. NÃO interferir com sync online, storage ou DB!
-      if (isLocalReaderActiveOnClient()) {
+      if (isReaderActiveOnThisClient()) {
         return;
       }
 

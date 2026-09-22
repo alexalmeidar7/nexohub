@@ -470,6 +470,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [editingDeviceName, setEditingDeviceName] = useState(false);
   const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
   const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
+  // Computador onde a leitura do arquivo local está acontecendo (persistido no banco),
+  // para que a informação apareça igual em qualquer outro computador.
+  const [remoteReaderDevice, setRemoteReaderDevice] = useState<string>("");
   const [culturaLastSync, setCulturaLastSync] = useState<number | null>(() => {
     try {
       const raw = localStorage.getItem("cultura-fm-last-sync");
@@ -659,12 +662,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       const [{ data }, history] = await Promise.all([
         supabase
           .from("user_settings")
-          .select("music_xml_url, music_source_mode, dashboard_items")
+          .select("music_xml_url, music_source_mode, dashboard_items, music_source_device")
           .eq("user_id", dataUserId)
           .maybeSingle(),
         loadUploadHistoryFromDb(dataUserId),
       ]);
       setUploadHistory(history);
+      if (typeof (data as any)?.music_source_device === "string" && (data as any).music_source_device.trim()) {
+        setRemoteReaderDevice((data as any).music_source_device.trim());
+      }
       if (typeof data?.music_xml_url === "string") {
         const isStorageUrl = data.music_xml_url.includes("/storage/v1/object/") || data.music_xml_url.includes("/xml-files/local-xml-");
         if (!isStorageUrl) {
