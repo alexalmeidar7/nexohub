@@ -197,18 +197,21 @@ serve(async (req) => {
       }
     }
 
-    // Busca a foto apenas dos locutores usados (evita carregar base64 de todos)
+    // Busca a foto apenas dos locutores usados e somente quando for URL
+    // (fotos em base64 chegam a 2 MB e estouram a memoria da funcao)
     const fotoIds = [currentPresenter?.id, nextPresenter?.id].filter(Boolean);
     if (fotoIds.length > 0) {
       const { data: fotos } = await sb
         .from("apresentadores")
         .select("id, foto")
-        .in("id", fotoIds);
+        .in("id", fotoIds)
+        .like("foto", "http%");
       (fotos || []).forEach((f: any) => {
         if (currentPresenter?.id === f.id) currentPresenter.foto = f.foto;
         if (nextPresenter?.id === f.id) nextPresenter.foto = f.foto;
       });
     }
+
 
 
     // Music data
