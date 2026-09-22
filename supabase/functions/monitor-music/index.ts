@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
               "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)",
               Accept: "application/xml, text/xml, */*",
             },
-            signal: AbortSignal.timeout(10000),
+            signal: AbortSignal.timeout(4000),
           });
           const buffer = await response.arrayBuffer();
           text = decodeXmlBuffer(buffer, response.headers.get("content-type") || "");
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
             if (!pub?.publicUrl) continue;
             try {
               const res = await fetch(`${pub.publicUrl}?t=${Date.now()}`, {
-                signal: AbortSignal.timeout(8000),
+                signal: AbortSignal.timeout(4000),
                 headers: { "Cache-Control": "no-cache" },
               });
               if (!res.ok) continue;
@@ -207,13 +207,13 @@ Deno.serve(async (req) => {
           }
         }
 
-        if (!text) continue;
+        if (!text) return;
 
         // Parse music data
         const titulo = normalizeMusicText(extractTag(text, "nome_musica", "titulo", "title"));
         const artista = normalizeMusicText(extractTag(text, "interprete", "nome_interprete", "artista", "artist"));
 
-        if (!titulo || titulo === "Sem título" || !artista || artista === "Desconhecido") continue;
+        if (!titulo || titulo === "Sem título" || !artista || artista === "Desconhecido") return;
 
         // Skip if this exact song is already the last recorded for this user.
         const { data: lastSong } = await supabase
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
-        if (lastSong?.artista === artista && lastSong?.musica === titulo) continue;
+        if (lastSong?.artista === artista && lastSong?.musica === titulo) return;
 
         // Get current program
         const { data: programas } = await supabase
@@ -248,11 +248,24 @@ Deno.serve(async (req) => {
         inserted++;
       } catch {
         // Skip this user on error
-        continue;
       }
+    };
+
+    // Processa em lotes paralelos com limite de tempo global, para nunca
+    // estourar o tempo de execução quando há muitos usuários/XMLs lentos.
+    const CONCURRENCY = 8;
+    let processed = 0;
+    for (let i = 0; i < candidates.length; i += CONCURRENCY) {
+      if (Date.now() > deadline) {
+        timedOut = true;
+        break;
+      }
+      const batch = candidates.slice(i, i + CONCURRENCY);
+      await Promise.allSettled(batch.map((s: any) => processUser(s)));
+      processed += batch.length;
     }
 
-    return new Response(JSON.stringify({ processed: candidates.length, inserted }), {
+    return new Response(JSON.stringify({ processed, total: candidates.length, inserted, timedOut }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
