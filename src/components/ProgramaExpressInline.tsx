@@ -1370,7 +1370,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const progObj = programas.find(p => p.id === programaId);
-    const targetDate = editData?.dataPrograma || localDateStr;
+    const targetDate = localDateStr;
     const targetHorario = progObj?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5) || localTimeStr;
     const targetHorarioFim = progObj?.horario_fim?.slice(0, 5) || "";
     const nowIso = now.toISOString();
@@ -1631,7 +1631,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const ownerId = effectiveUserId || user.id;
       const selectedProg = programas.find(p => p.id === programaId);
       const tipoProg = selectedProgTipo || selectedProg?.tipo_programa || "Jornalístico";
-      const targetDataPrograma = editData?.dataPrograma || localDateStr;
+      // Ao salvar uma nova edição, não reutilizar a data da versão carregada.
+      const targetDataPrograma = localDateStr;
       const targetHorario = selectedProg?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5) || localTimeStr;
 
       let roteiroId = editingId ? editingId.replace(/^express_/, "").replace(/^rot_/, "") : null;
