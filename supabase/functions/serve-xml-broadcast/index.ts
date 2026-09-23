@@ -427,7 +427,9 @@ Deno.serve(async (req) => {
         .from("roteiros")
         .select("tickertitulos")
         .eq("user_id", dataOwnerId)
+        .ilike("estudio", "%fm%")
         .in("tipo_programa", ["Jornalístico", "express"])
+
         .not("tickertitulos", "is", null)
         .neq("tickertitulos", "")
         .order("created_at", { ascending: false })
@@ -447,8 +449,16 @@ Deno.serve(async (req) => {
     ]);
 
     const emp = empRes.data;
+    // Broadcast XML is FM-only: never surface Podcast studio programs.
+    const isFmStudio = (studio: string | null | undefined): boolean => {
+      const value = (studio || "").toLowerCase();
+      if (value.includes("podcast")) return false;
+      return value.includes("fm");
+    };
     const activePrograms = (progsRes.data || [])
+      .filter((item) => isFmStudio((item as any).estudio))
       .map((item) => ({
+
         item,
         sortKey: getCurrentProgramSortKey(
           nowSeconds,
@@ -622,7 +632,7 @@ Deno.serve(async (req) => {
     let aSeguirTexto = "";
 
     if (aSeguirEnabled) {
-      const allProgs = progsRes.data || [];
+      const allProgs = (progsRes.data || []).filter((p: any) => isFmStudio(p.estudio));
       let nextProg: any = null;
       let nextStart = -1;
 
