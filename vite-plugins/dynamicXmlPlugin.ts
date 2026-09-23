@@ -859,8 +859,8 @@ export function dynamicXmlPlugin(): Plugin {
             const isExistingSubstantial = existing.trim().length > 200;
             const isNewFallback =
               content.includes("Patrocinador Oficial") ||
-              content.includes("Locutor de Plantão") ||
-              (filename === "logos.xml" && !content.includes('id="programa 2"') && existing.includes('id="programa 2"'));
+              content.includes("Locutor de Plantão");
+
 
             if (isExistingSubstantial && isNewFallback) {
               continue;
