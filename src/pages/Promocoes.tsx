@@ -1472,37 +1472,6 @@ export default function PromocoesKiosk() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedPromo, selectedProgram, autoScrolling, activeScrollTarget]);
 
-   // Inline teleprompter controls renderer (not a component to avoid remount)
-  const renderTeleprompterControls = (target: "promo" | "program") => (
-    <div className="flex items-center gap-3 p-[10px] rounded-xl" style={{ backgroundColor: "var(--layout-slider-bg, #1b1b1d)" }}>
-      <div className="flex items-center gap-1.5 flex-1 pl-2">
-        <button 
-          type="button" 
-          onClick={() => setFontSize(s => Math.max(12, s - 2))} 
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" 
-          style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
-          title="Diminuir texto"
-        >
-          <Minus size={14} />
-        </button>
-        <button 
-          type="button" 
-          onClick={() => setFontSize(s => Math.min(56, s + 2))} 
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" 
-          style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
-          title="Aumentar texto"
-        >
-          <Plus size={14} />
-        </button>
-      </div>
-      
-      <div className="flex items-center gap-2 flex-[4] justify-center px-4">
-        <span className="text-[11px] font-bold uppercase tracking-wider opacity-60">Aumentar e diminuir o tamanho do texto</span>
-      </div>
-      <div className="flex-1" />
-    </div>
-  );
-
   if (userSlug === ":userSlug") {
     return <Navigate to="/telapromo" replace />;
   }
@@ -1589,6 +1558,9 @@ export default function PromocoesKiosk() {
         .promo-scroll::-webkit-scrollbar-thumb{background:var(--promo-border);border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:var(--promo-border);border-radius:2px}
         .promo-scroll{scrollbar-width:thin;scrollbar-color:var(--promo-border) var(--promo-btn-a)}
+        @keyframes citation-on-air{0%,100%{box-shadow:0 0 0 1px var(--promo-border),0 0 12px var(--promo-border)}50%{box-shadow:0 0 0 1px transparent,0 0 0 transparent}}
+        .citation-on-air{animation:citation-on-air 1.6s ease-in-out infinite}
+        @media (prefers-reduced-motion:reduce){.citation-on-air{animation:none;box-shadow:0 0 0 1px var(--promo-border)}}
         @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px var(--promo-border)}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--promo-border) 20%, transparent)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
         @keyframes audience-shimmer{0%{background-position:0 0}100%{background-position:40px 0}}
@@ -1749,7 +1721,7 @@ export default function PromocoesKiosk() {
                   title={`Citação: ${programa.nome}`}
                   aria-label={`Abrir citação de ${programa.nome}`}
                   onClick={() => { setSelectedProgram(programa); stopAutoScroll(); }}
-                  className="h-12 w-14 sm:h-14 sm:w-16 p-1 border-2 transition-transform hover:scale-105 focus-visible:ring-2"
+                  className={`h-14 w-14 sm:h-16 sm:w-16 rounded-lg p-1.5 border-2 transition-transform hover:scale-105 focus-visible:ring-2 ${isOnAir ? "citation-on-air" : ""}`}
                   style={{ background: promoAccentGradient, borderColor: isOnAir ? "var(--promo-border)" : "transparent", color: "var(--promo-text)" }}
                 >
                   <img src={programa.selo} alt="" className="w-full h-full object-contain" />
@@ -2073,61 +2045,37 @@ export default function PromocoesKiosk() {
           }, 0);
         }
       }}>
-        <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl w-[95vw] sm:w-full h-[85vh] sm:h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
-          <DialogTitle className="sr-only">{selectedPromo?.nome || "Detalhes da Promoção"}</DialogTitle>
-          {/* Banner fixo no topo com padding */}
-          {selectedPromo?.imagem_url && (
-            <div className="flex-shrink-0 pt-4 px-4">
-              <img src={selectedPromo.imagem_url} alt="Banner" className="w-full object-contain max-h-[220px] rounded-lg" />
+        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
+          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14 border-b" style={{ borderColor: "var(--promo-border)", background: promoAccentGradient, color: "var(--promo-text)" }}>
+            <div className="flex items-center gap-4 min-w-0">
+              {selectedPromo?.imagem_url && <img src={selectedPromo.imagem_url} alt="" className="w-16 h-12 object-contain flex-shrink-0 rounded" />}
+              <div className="min-w-0">
+                <span className="text-xs font-semibold uppercase opacity-80">Promoção</span>
+                <DialogTitle className="text-lg sm:text-xl font-bold leading-tight break-words" style={{ color: "var(--promo-text)" }}>{selectedPromo?.nome || "Detalhes da promoção"}</DialogTitle>
+              </div>
             </div>
-          )}
-
-          {/* Período com ícone de calendário */}
-          <div className="px-4 pt-2 text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: "rgba(255, 255, 255, 0.6)" }}>
-            <Calendar size={12} />
-            <span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span>
+          </DialogHeader>
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2 border-b" style={{ borderColor: "var(--promo-border)" }}>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.max(12, s - 2))} aria-label="Diminuir texto" title="Diminuir texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Minus size={16} /></Button>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.min(56, s + 2))} aria-label="Aumentar texto" title="Aumentar texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Plus size={16} /></Button>
           </div>
-
-          {/* Controles teleprompter - painel estilizado */}
-          <div className="flex-shrink-0 px-4 pt-2">
-            {renderTeleprompterControls("promo")}
-          </div>
-
-          {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
-          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-6 pb-6 mr-[1px]">
-            <div
-              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent"
-              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white", wordBreak: "normal", overflowWrap: "break-word", hyphens: "none", maxWidth: "100%" }}
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize((selectedPromo?.texto || "")
-                  .replace(/<p><br><\/p>/g, '<p>&nbsp;</p>')
-                  .replace(/<p><\/p>/g, '<p>&nbsp;</p>')
-                  .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
-                  .replace(/background-color:\s*[^;"]+;?/gi, "background-color: transparent"), {
-                  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
-                  ALLOWED_ATTR: ['style', 'class']
-                }),
-              }}
-            />
-
-            {/* Oferecimento dentro do scroll, após o texto */}
+          <div ref={modalScrollRef} className="overflow-y-auto min-h-0 flex-1 px-5 sm:px-8 py-6 space-y-5 promo-scroll">
+            {selectedPromo?.imagem_url && <img src={selectedPromo.imagem_url} alt={`Banner de ${selectedPromo.nome || "promoção"}`} className="w-full max-h-[220px] object-contain rounded-md" />}
+            {(selectedPromo?.data_inicio || selectedPromo?.data_fim) && <div className="text-xs flex items-center gap-1.5 opacity-70"><Calendar size={14} /><span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span></div>}
+            <article className="border-l-4 pl-5 sm:pl-6" style={{ borderColor: "var(--promo-border)" }}>
+              <div
+                className="promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent break-words"
+                style={{ fontSize: `${fontSize}px`, lineHeight: 1.55, color: "var(--layout-page-text)", overflowWrap: "break-word" }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize((selectedPromo?.texto || "").replace(/(?:&nbsp;|\u00a0)/gi, " "), { ALLOWED_TAGS: ["b", "i", "em", "strong", "u", "br", "p", "span", "div", "ul", "ol", "li"] }) }}
+              />
+            </article>
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
-              <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                <span className="text-sm uppercase tracking-wider" style={{ color: "rgba(255, 255, 255, 0.5)" }}>Oferecimento</span>
+              <div className="pt-4 border-t text-center" style={{ borderColor: "var(--promo-border)" }}>
+                <span className="text-xs font-semibold uppercase opacity-70">Oferecimento</span>
                 <div
-                  className="text-lg sm:text-xl font-bold mt-2 promo-html-content whitespace-pre-wrap [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent"
-                  style={{ color: "white", lineHeight: 1.4, wordBreak: "normal", overflowWrap: "break-word", hyphens: "none", maxWidth: "100%" }}
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(selectedPromo.oferecimento
-                      .replace(/\/\//g, "<br/>")
-                      .replace(/<p><br><\/p>/g, '<p>&nbsp;</p>')
-                      .replace(/<p><\/p>/g, '<p>&nbsp;</p>')
-                      .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
-                      .replace(/background-color:\s*[^;"]+;?/gi, "background-color: transparent"), {
-                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
-                      ALLOWED_ATTR: ['style', 'class']
-                    }),
-                  }}
+                  className="mt-2 promo-html-content whitespace-pre-wrap break-words [&_*]:!bg-transparent"
+                  style={{ fontSize: `${fontSize}px`, color: "var(--layout-page-text)", lineHeight: 1.55, overflowWrap: "break-word" }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedPromo.oferecimento.replace(/\/\//g, "<br/>").replace(/(?:&nbsp;|\u00a0)/gi, " "), { ALLOWED_TAGS: ["b", "i", "em", "strong", "u", "br", "p", "span", "div", "ul", "ol", "li"] }) }}
                 />
               </div>
             )}
