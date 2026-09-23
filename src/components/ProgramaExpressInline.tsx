@@ -896,7 +896,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const saveInProgressRef = useRef(false);
   const autoSaveInFlightRef = useRef<Promise<void> | null>(null);
   useEffect(() => {
-    if (!editingId || !initialized || !user || !programaId || novoOpen === false) return;
+    if (!editingId || !initialized || !user || !programaId || !novoRoteiroOpen || isPodcast) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       if (saveInProgressRef.current) return;
