@@ -1182,7 +1182,8 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       }
 
       const cleanId = String(r.id || "").replace(/^express_/, "");
-      const owner = r.user_id || propEffectiveUserId || resolvedUserId || user?.id || "d17e65af-e407-466f-9b60-b55c43399513";
+      const owner = r.user_id || propEffectiveUserId || resolvedUserId || user?.id;
+      if (!owner) throw new Error("Conta do roteiro não identificada");
       if (!filePath) {
         filePath = `express/${owner}/express_${cleanId}.xml`;
       }
@@ -1190,7 +1191,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       // 1. Sync to local /api/sync-xml-roteiro (writes to public/xml/[slug]/roteiro.xml)
       try {
         const clientAcc = findClientAccountById(owner) || findClientAccountByEmail(user?.email);
-        const slug = clientAcc?.slug || "positivafm";
+        const slug = clientAcc?.slug || owner;
         await fetch("/api/sync-xml-roteiro", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1239,22 +1240,15 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       try {
         const updatePayload: any = { xml_pushed_at: nowIso };
         if (isUuid) {
-          await supabase.from("roteiros").update(updatePayload).eq("id", cleanId);
+          await supabase.from("roteiros").update(updatePayload).eq("id", cleanId).eq("user_id", owner);
         }
         if (r.user_id && r.programa_nome) {
-          await supabase.from("roteiros").update(updatePayload).eq("user_id", r.user_id).eq("programa_nome", r.programa_nome);
+          await supabase.from("roteiros").update(updatePayload).eq("user_id", owner).eq("programa_nome", r.programa_nome);
         }
       } catch {}
 
-      // Update LocalStorage across all candidate uids
-      const candidateUids = Array.from(new Set([
-        r.user_id,
-        owner,
-        user?.id,
-        propEffectiveUserId,
-        resolvedUserId,
-        "d17e65af-e407-466f-9b60-b55c43399513"
-      ].filter(Boolean) as string[]));
+      // O cache local pertence somente à conta do roteiro.
+      const candidateUids = [owner];
 
       candidateUids.forEach((uid) => {
         try {
@@ -1340,7 +1334,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       const { data: allRoteiros } = await supabase
         .from("roteiros")
         .select("id, programa_nome, estudio, data_programa, subtitulo, participantes")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .like("subtitulo", "express_xml::%");
 
       if (!allRoteiros || allRoteiros.length === 0) {
