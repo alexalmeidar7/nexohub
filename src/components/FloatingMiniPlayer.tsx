@@ -285,7 +285,12 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
   // Track info resolution for smooth entrance / exit animation
   const targetTitulo = (state.currentMusic?.titulo || state.activeChannel?.nome || "").trim();
   const targetArtista = (state.currentMusic?.artista || (state.activeChannel?.nome ? "Ao vivo" : "")).trim();
-  const targetArt = state.displayArt || state.currentMusic?.capa || (targetTitulo ? getTrackCoverSync(targetTitulo, targetArtista) : null) || null;
+  // Never show a leftover cover/logo when there is no real track playing.
+  const hasRealTrack = !!targetTitulo && !["sem título", "sem titulo", "sem reprodução", "sem reproducao", "aguardando leitura..."].includes(targetTitulo.toLowerCase());
+  const targetArt = hasRealTrack
+    ? (state.displayArt || state.currentMusic?.capa || getTrackCoverSync(targetTitulo, targetArtista) || null)
+    : null;
+
   const currentKey = `${targetTitulo}:::${targetArtista}:::${targetArt}`;
 
   const [displayedInfo, setDisplayedInfo] = useState<DisplayedMusicInfo>(() => ({
