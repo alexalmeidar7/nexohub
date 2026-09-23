@@ -892,10 +892,14 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   // Auto-save debounced (only when editing existing roteiro)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInProgressRef = useRef(false);
+  const autoSaveInFlightRef = useRef<Promise<void> | null>(null);
   useEffect(() => {
     if (!editingId || !initialized || !user || !programaId) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(async () => {
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (saveInProgressRef.current) return;
+      const autoSave = async () => {
       const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
       if (totalNews === 0) return;
       setAutoSaving(true);
@@ -914,7 +918,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
         const nowIso = new Date().toISOString();
-        await supabase.from("roteiros").update({ 
+        const { data: savedRows, error: saveError } = await supabase.from("roteiros").update({
           programa_nome: pNome, 
           estudio, 
           titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, 
@@ -925,11 +929,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           configuracoes: configuracoes as any,
           xml_pushed_at: nowIso,
           updated_at: nowIso,
-        } as any).eq("id", editingId);
+        } as any).eq("id", editingId).eq("user_id", effectiveUserId || user.id).select("id");
+        if (saveError || !savedRows?.length) throw saveError || new Error("O roteiro não foi encontrado na conta atual");
 
         setLastAutoSaved(Date.now());
-      } catch (e) { console.error("Auto-save error:", e); }
-      setAutoSaving(false);
+      } catch (e) { console.error("Auto-save error:", e); toast.error("Salvamento automático não concluído. Use Salvar para conferir a gravação."); }
+      finally { setAutoSaving(false); }
+      };
+      const pending = autoSave();
+      autoSaveInFlightRef.current = pending;
+      void pending.finally(() => { if (autoSaveInFlightRef.current === pending) autoSaveInFlightRef.current = null; });
     }, 2000);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1594,7 +1603,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
     }
     setSaving(true);
+    saveInProgressRef.current = true;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     try {
+      if (autoSaveInFlightRef.current) await autoSaveInFlightRef.current;
       const xmlContent = generateXml(activeBlocos);
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
       if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
@@ -1635,14 +1647,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         roteiroId = null;
       }
 
-      let dbSaveSuccess = false;
       if (!roteiroId) {
         // Try finding existing record in DB for this program & studio (strictly this account)
         try {
           const { data: existingProg } = await supabase
             .from("roteiros")
             .select("id")
-            .in("user_id", Array.from(new Set([ownerId, user.id])))
+            .eq("user_id", ownerId)
             .eq("programa_nome", programaNome)
             .eq("estudio", estudio)
             .is("agendado_para_envio", null)
@@ -1676,32 +1687,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           updated_at: nowIso,
         } as any).select("id").single();
 
-        if (insertRes.error && ownerId !== user.id) {
-          insertRes = await supabase.from("roteiros").insert({
-            user_id: user.id,
-            programa_nome: programaNome,
-            estudio,
-            titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
-            subtitulo: "",
-            tipo_programa: tipoProg,
-            data_programa: targetDataPrograma,
-            horario: targetHorario,
-            conteudo_html: html,
-            participantes: blocosJson,
-            status: "feito",
-            tickertitulos,
-            xml_pushed_at: nowIso,
-            updated_at: nowIso,
-          } as any).select("id").single();
-        }
-
         if (insertRes.data?.id) {
           roteiroId = insertRes.data.id;
-          dbSaveSuccess = true;
           setEditingId(roteiroId);
         } else {
-          roteiroId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `rot_${ownerId}_${Date.now()}`;
-          setEditingId(roteiroId);
+          throw insertRes.error || new Error("Não foi possível gravar o roteiro na conta atual");
         }
       }
 
@@ -1752,6 +1742,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             .from("roteiros")
             .update(baseUpdatePayload)
             .eq("id", roteiroId)
+            .eq("user_id", ownerId)
             .select("id");
           saved = !upd.error && !!upd.data && upd.data.length > 0;
         }
@@ -1760,7 +1751,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           const upd2 = await supabase
             .from("roteiros")
             .update(baseUpdatePayload)
-            .in("user_id", Array.from(new Set([ownerId, user.id])))
+            .eq("user_id", ownerId)
             .eq("programa_nome", programaNome)
             .eq("estudio", estudio)
             .is("agendado_para_envio", null)
@@ -1773,29 +1764,26 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         }
         if (!saved) {
           // Last resort: create the record so the content is never lost
-          let ins = await supabase
+          const ins = await supabase
             .from("roteiros")
             .insert({ ...baseUpdatePayload, user_id: ownerId, created_at: nowIso } as any)
             .select("id")
             .single();
-          if (ins.error && ownerId !== user.id) {
-            ins = await supabase
-              .from("roteiros")
-              .insert({ ...baseUpdatePayload, user_id: user.id, created_at: nowIso } as any)
-              .select("id")
-              .single();
-          }
           if (ins.data?.id) {
             saved = true;
             roteiroId = ins.data.id;
             setEditingId(roteiroId);
-          } else if (ins.error) {
-            toast.error(`Não foi possível gravar o roteiro no servidor: ${ins.error.message}`);
-          }
+          } else throw ins.error || new Error("Não foi possível confirmar a gravação do roteiro");
+        }
+        if (!saved) throw new Error("Não foi possível confirmar a gravação do roteiro");
+        const confirmed = await supabase.from("roteiros")
+          .select("id, updated_at, participantes")
+          .eq("id", roteiroId).eq("user_id", ownerId).maybeSingle();
+        if (confirmed.error || !confirmed.data || JSON.stringify(confirmed.data.participantes) !== JSON.stringify(JSON.parse(blocosJson))) {
+          throw confirmed.error || new Error("O conteúdo salvo não corresponde ao roteiro enviado");
         }
       } catch (updErr: any) {
-        console.warn("Supabase update roteiro notice:", updErr);
-        toast.error(`Não foi possível gravar o roteiro no servidor: ${updErr?.message || updErr}`);
+        throw new Error(`Não foi possível gravar o roteiro no servidor: ${updErr?.message || updErr}`);
       }
 
 
@@ -1982,6 +1970,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       return false;
     } finally {
       setSaving(false);
+      saveInProgressRef.current = false;
     }
   };
 
