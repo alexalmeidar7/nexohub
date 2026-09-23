@@ -241,6 +241,16 @@ async function persistPrograma(opts: {
   };
 
   try {
+    // Garante uma sessão real e válida antes de gravar (evita gravar como anônimo
+    // quando o token de renovação expirou e a tela manteve o usuário "logado").
+    let { data: sess } = await supabase.auth.getSession();
+    if (!sess?.session) {
+      const r = await supabase.auth.refreshSession();
+      sess = { session: r.data.session } as any;
+    }
+    if (!sess?.session) {
+      return "Sua sessão expirou. Saia e entre novamente com seu e-mail e senha para salvar o programa.";
+    }
     if (isUpdate) {
       const { data, error } = await supabase
         .from("programas")
