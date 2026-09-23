@@ -22,10 +22,6 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
 
   const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
   
-  const currentOrigin = typeof window !== "undefined" && window.location.origin
-    ? window.location.origin
-    : "https://housemix.nexobrasil.net";
-
   const effectiveSupabaseUrl = envSupabase || "https://zzjfzxxvxbspbdkodoix.supabase.co";
 
   const feeds = useMemo(() => {
@@ -95,7 +91,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
         description: "Quiz interativo com alternativas e gabarito",
       },
     ];
-  }, [resolvedSlug, resolvedUid, effectiveSupabaseUrl, currentOrigin]);
+  }, [resolvedSlug, resolvedUid, effectiveSupabaseUrl]);
 
   return (
     <div className="space-y-4">
