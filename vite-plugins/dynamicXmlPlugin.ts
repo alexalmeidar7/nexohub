@@ -839,6 +839,9 @@ export function dynamicXmlPlugin(): Plugin {
   }
 
   function writeStaticXml(slug: string, filename: string, content: string) {
+    // XMLs de dados são lidos diretamente do Supabase. Persistir previews em
+    // public/ ou dist/ faria o próximo deploy servir uma cópia desatualizada.
+    if (filename !== "tempo.xml") return;
     try {
       if (!content || content.trim().length < 50) return;
       const norm = normalizeSlug(slug);
