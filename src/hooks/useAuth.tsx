@@ -467,6 +467,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (sess.session && mounted) {
             lastGoodSessionRef.current = sess.session;
             setSession(sess.session);
+          } else if (mounted && /missing|invalid|already used|expired/i.test(error.message || "")) {
+            // Sessão morta: força tela de login em vez de falhar nas gravações.
+            purgeStoredAuth();
+            lastGoodSessionRef.current = null;
+            manualSignOutRef.current = true;
+            void updateAuth(null);
           }
           return;
         }
