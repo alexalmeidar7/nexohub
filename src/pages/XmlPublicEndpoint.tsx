@@ -57,7 +57,7 @@ export default function XmlPublicEndpoint() {
        (c.aliases && c.aliases.map((a) => a.toLowerCase()).includes(cleanPathSlug))))
   );
 
-  const cleanSlug = account?.slug || (cleanPathSlug && cleanPathSlug !== "xml" ? cleanPathSlug : (cleanQuery && !cleanQuery.includes("-") ? cleanQuery : "positivafm"));
+  const cleanSlug = account?.slug || (cleanPathSlug && cleanPathSlug !== "xml" ? cleanPathSlug : cleanQuery);
   const stationUid = cleanQuery && /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(cleanQuery)
     ? cleanQuery : (account?.parentUserId || account?.id || "");
   const stationName = account?.nome || (cleanSlug === "positivafm" ? "Positiva FM 99.1" : "House Mix Emissora");
