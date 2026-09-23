@@ -1,5 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const esc = (s: string) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
@@ -20,19 +24,19 @@ Deno.serve(async (req) => {
     }
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: subUser, error: subError } = await sb.from("sub_users")
+      .select("parent_user_id, ativo").eq("auth_user_id", userId).maybeSingle();
+    if (subError) throw subError;
+    const ownerId = subUser?.ativo && subUser.parent_user_id ? subUser.parent_user_id : userId;
 
-    const userIds = [userId];
-    if (userId !== "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5") {
-      userIds.push("29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5");
-    }
-
-    // Carrega candidatos: roteiros deste user ou cadastrados pelo admin
-    const { data: allUserRoteiros } = await sb
+    // Cada feed consulta exclusivamente os roteiros da estação solicitada.
+    const { data: allUserRoteiros, error: queryError } = await sb
       .from("roteiros")
       .select("programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
-      .in("user_id", userIds)
+      .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
-      .limit(50);
+       .limit(200);
+    if (queryError) throw queryError;
 
     const norm = (s: string) =>
       String(s || "")
@@ -47,36 +51,22 @@ Deno.serve(async (req) => {
       const rEst = norm(r.estudio);
       return (
         rEst === targetEst ||
-        rEst.includes(targetEst) ||
-        targetEst.includes(rEst) ||
         (targetEst.includes("FM") && rEst.includes("FM"))
       );
     });
-
-    if (candidates.length === 0) {
-      candidates = allUserRoteiros || [];
-    }
 
     // Carrega horarios dos programas para fallback
     const { data: progs } = await sb
       .from("programas")
       .select("nome, horario_inicio")
-      .eq("user_id", userId);
+      .eq("user_id", ownerId);
     const progMap = new Map<string, string>();
     (progs || []).forEach((p: any) => { if (p.nome) progMap.set(p.nome, (p.horario_inicio || "").slice(0, 5)); });
 
-    // Ordena pelo timestamp mais recente (xml_pushed_at, updated_at, created_at)
+    // Uma republicação antiga não pode superar uma edição mais recente.
     candidates.sort((a: any, b: any) => {
-      const tsA = Math.max(
-        a.xml_pushed_at ? new Date(a.xml_pushed_at).getTime() : 0,
-        a.updated_at ? new Date(a.updated_at).getTime() : 0,
-        a.created_at ? new Date(a.created_at).getTime() : 0
-      );
-      const tsB = Math.max(
-        b.xml_pushed_at ? new Date(b.xml_pushed_at).getTime() : 0,
-        b.updated_at ? new Date(b.updated_at).getTime() : 0,
-        b.created_at ? new Date(b.created_at).getTime() : 0
-      );
+      const tsA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const tsB = new Date(b.updated_at || b.created_at || 0).getTime();
       return tsB - tsA;
     });
 
@@ -102,7 +92,8 @@ Deno.serve(async (req) => {
       const finalHora = r.horario || progMap.get(r.programa_nome) || "00:00";
       xml += `  <programa>${esc(r.programa_nome || "")}</programa>\n`;
       xml += `  <estudio>${esc(r.estudio || "")}</estudio>\n`;
-      xml += `  <data>${r.data_programa || new Date().toISOString().split("T")[0]}</data>\n`;
+      xml += `  <data>${esc(r.data_programa || new Date().toISOString().split("T")[0])}</data>\n`;
+      xml += `  <atualizado_em>${esc(r.updated_at || r.created_at || "")}</atualizado_em>\n`;
       xml += `  <horario>${esc(finalHora)}</horario>\n`;
       xml += `  <hora>${esc(finalHora)}</hora>\n`;
 
@@ -175,9 +166,9 @@ Deno.serve(async (req) => {
       },
     });
   } catch (err) {
-    return new Response(`<error>${String(err)}</error>`, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" },
+    return new Response(`<error>${esc(String(err))}</error>`, {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
     });
   }
 });

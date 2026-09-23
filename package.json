@@ -6,9 +6,8 @@
   "scripts": {
     "predev": "npx tsx scripts/generate-sitemap.ts",
     "dev": "vite",
-    "prebuild": "npx tsx scripts/generate-sitemap.ts && npx tsx scripts/generate-user-xmls.ts",
+    "prebuild": "npx tsx scripts/generate-sitemap.ts",
     "build": "vite build",
-    "sync-xmls": "npx tsx scripts/generate-user-xmls.ts",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",

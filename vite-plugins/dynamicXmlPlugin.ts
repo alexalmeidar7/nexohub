@@ -839,6 +839,9 @@ export function dynamicXmlPlugin(): Plugin {
   }
 
   function writeStaticXml(slug: string, filename: string, content: string) {
+    // XMLs de dados são lidos diretamente do Supabase. Persistir previews em
+    // public/ ou dist/ faria o próximo deploy servir uma cópia desatualizada.
+    if (filename !== "tempo.xml") return;
     try {
       if (!content || content.trim().length < 50) return;
       const norm = normalizeSlug(slug);
@@ -1446,25 +1449,8 @@ export function dynamicXmlPlugin(): Plugin {
               const rawSlug = parsed.slug || "positivafm";
               const slug = normalizeSlug(rawSlug);
               const xml = parsed.xml;
-              if (xml && typeof xml === "string") {
-                writeStaticXml(slug, "roteiro.xml", xml);
-
-                // Also persist in xml_roteiros_sync.json for persistent live memory
-                const rotStore = readSyncData(roteirosFile);
-                const item = {
-                  id: parsed.roteiro?.id || `rot_${Date.now()}`,
-                  programa_nome: parsed.programaNome || parsed.roteiro?.programa_nome || "Programa",
-                  estudio: parsed.estudio || parsed.roteiro?.estudio || "ESTÚDIO FM",
-                  data_programa: parsed.roteiro?.data_programa || new Date().toISOString().slice(0, 10),
-                  horario: parsed.roteiro?.horario || "",
-                  xml,
-                  updated_at: new Date().toISOString(),
-                };
-                rotStore[slug] = [item];
-                rotStore[rawSlug] = [item];
-                if (parsed.userId) rotStore[parsed.userId] = [item];
-                writeSyncData(roteirosFile, rotStore);
-              }
+              // Compatibility-only endpoint: the database, not preview snapshots,
+              // supplies every public roteiro XML request.
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ ok: true, slug }));
             } catch (err: any) {
@@ -1898,6 +1884,46 @@ export function dynamicXmlPlugin(): Plugin {
           const parsedXml = parseXmlRequest(url);
           if (parsedXml) {
             const { file, slug, rawSlug } = parsedXml;
+            const liveFeed: Record<string, string> = {
+              "roteiro.xml": "serve-xml-roteiro-estudio",
+              "geral.xml": "serve-xml-geral",
+              "broadcast.xml": "serve-xml-broadcast",
+              "apenas-xml.xml": "serve-xml-broadcast",
+              "logos.xml": "serve-xml-logos",
+              "enquete.xml": "serve-xml-enquete",
+              "batalha.xml": "serve-xml-batalha",
+              "quiz.xml": "serve-xml-quiz",
+              "musica.xml": "serve-xml-broadcast",
+              "music.xml": "serve-xml-broadcast",
+              "local.xml": "serve-xml-broadcast",
+              "musica-agora.xml": "serve-xml-broadcast",
+            };
+            const feed = liveFeed[file];
+            const uid = SLUG_TO_UID[slug] || (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(rawSlug) ? rawSlug : "");
+            if (feed && uid) {
+              try {
+                const upstream = new URL(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/${feed}`);
+                upstream.searchParams.set("user_id", uid);
+                if (file === "roteiro.xml") upstream.searchParams.set("estudio", "Estudio FM");
+                if (["musica.xml", "music.xml", "local.xml", "musica-agora.xml"].includes(file)) upstream.searchParams.set("tipo", "musica");
+                if (file === "geral.xml" || file === "enquete.xml" || file === "quiz.xml") upstream.searchParams.set("slug", slug);
+                const response = await fetch(upstream, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+                if (!response.ok) throw new Error(`Feed ${feed}: ${response.status}`);
+                const xml = await response.text();
+                if (!xml.includes("<?xml") || xml.includes("<error>")) throw new Error(`Feed ${feed}: resposta inválida`);
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(xml);
+              } catch (error) {
+                console.warn("[XML ao vivo]", error);
+                res.statusCode = 503;
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store");
+                res.end("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Feed temporariamente indisponível</error>");
+              }
+              return;
+            }
             const { today, currentTime } = getBrasiliaDateTime();
 
             // 1. enquete.xml

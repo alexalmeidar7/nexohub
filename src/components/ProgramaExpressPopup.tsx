@@ -509,7 +509,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n`;
     xml += `  <estudio>${estudio}</estudio>\n`;
-    xml += `  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
+    xml += `  <data>${new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" })}</data>\n`;
 
     if (participantes.length > 0) {
       xml += `  <participantes>\n`;
@@ -585,7 +585,8 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       const blob = new Blob([xmlContent], { type: "application/xml; charset=utf-8" });
       const fileName = `express_${programaId}_${Date.now()}.xml`;
       const filePath = `express/${user.id}/${fileName}`;
-      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml; charset=utf-8" });
+      const { error: uploadError } = await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml; charset=utf-8" });
+      if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
@@ -595,6 +596,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         .flatMap(b => (b.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()))
         .join("  •  ");
       const nowIso = new Date().toISOString();
+      const savedDate = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
       const isUuid = (v: any): v is string =>
         typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
@@ -608,6 +610,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         participantes: blocosJson,
         tickertitulos,
         status: "feito",
+        data_programa: savedDate,
         xml_pushed_at: nowIso,
         updated_at: nowIso,
       };
@@ -615,7 +618,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
       // Confirm the write actually landed (an update matching 0 rows returns no error)
       let saved = false;
       if (isUuid(editingId)) {
-        const upd = await supabase.from("roteiros").update(payload).eq("id", editingId).select("id");
+        const upd = await supabase.from("roteiros").update(payload).eq("id", editingId).eq("user_id", user.id).select("id");
         if (upd.error) throw upd.error;
         saved = !!upd.data && upd.data.length > 0;
       }
@@ -631,14 +634,25 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         saved = !upd2.error && !!upd2.data && upd2.data.length > 0;
       }
       if (!saved) {
-        const { error } = await supabase.from("roteiros").insert({
+        const { data: inserted, error } = await supabase.from("roteiros").insert({
           ...payload,
           user_id: user.id,
           tipo_programa: "Jornalístico",
-          data_programa: new Date().toISOString().split("T")[0],
+          data_programa: savedDate,
           horario: new Date().toTimeString().slice(0, 5),
-        });
-        if (error) throw error;
+        }).select("id").single();
+        if (error || !inserted?.id) throw error || new Error("Roteiro não persistido");
+      }
+      const { data: confirmed, error: confirmError } = await supabase.from("roteiros")
+         .select("id, participantes")
+         .eq("user_id", user.id)
+         .eq("programa_nome", programaNome)
+         .eq("estudio", estudio)
+         .is("agendado_para_envio", null)
+         .order("updated_at", { ascending: false })
+         .limit(1).maybeSingle();
+      if (confirmError || !confirmed || JSON.stringify(typeof confirmed.participantes === "string" ? JSON.parse(confirmed.participantes) : confirmed.participantes) !== JSON.stringify(JSON.parse(blocosJson))) {
+        throw confirmError || new Error("O conteúdo do roteiro não foi confirmado no banco de dados");
       }
 
 
@@ -659,7 +673,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
               id: editingId || `rot_${Date.now()}`,
               programa_nome: programaNome,
               estudio,
-              data_programa: new Date().toISOString().split("T")[0],
+              data_programa: savedDate,
             },
           }),
         });

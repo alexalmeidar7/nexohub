@@ -1,21 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Check, Copy, Download, ExternalLink, RefreshCw, FileCode } from "lucide-react";
-import { findClientAccountById, findClientAccountByEmail, CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
-import {
-  getBrasiliaDateTime,
-  isScheduleActive,
-  getActiveEnquete,
-  getActiveQuiz,
-  getActiveBatalha,
-  buildEnqueteXml,
-  buildQuizXml,
-  buildBatalhaXml,
-  escapeXml,
-} from "@/lib/scheduledItemUtils";
-import initialEnquetesSync from "@/data/xml_enquetes_sync.json";
-import initialBatalhasSync from "@/data/xml_batalhas_sync.json";
-
+import { CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
 const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_BASE = envSupabase || (typeof window !== "undefined" ? window.location.origin : "");
 
@@ -71,13 +57,14 @@ export default function XmlPublicEndpoint() {
        (c.aliases && c.aliases.map((a) => a.toLowerCase()).includes(cleanPathSlug))))
   );
 
-  const cleanSlug = account?.slug || (cleanPathSlug && cleanPathSlug !== "xml" ? cleanPathSlug : (cleanQuery && !cleanQuery.includes("-") ? cleanQuery : "positivafm"));
-  const stationUid = account?.parentUserId || account?.id || (cleanQuery.includes("-") ? cleanQuery : "d17e65af-e407-466f-9b60-b55c43399513");
+  const cleanSlug = account?.slug || (cleanPathSlug && cleanPathSlug !== "xml" ? cleanPathSlug : cleanQuery);
+  const stationUid = cleanQuery && /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(cleanQuery)
+    ? cleanQuery : (account?.parentUserId || account?.id || "");
   const stationName = account?.nome || (cleanSlug === "positivafm" ? "Positiva FM 99.1" : "House Mix Emissora");
   const rawFile = (resolvedFile || "broadcast.xml").toLowerCase();
   const filename = rawFile.endsWith(".xml") ? rawFile : `${rawFile}.xml`;
 
-  // Build corresponding Supabase fallback URL
+  // Build the official live endpoint (never another tenant's default XML)
   let supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-broadcast?user_id=${stationUid}`;
   if (filename.includes("geral")) {
     supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-geral?user_id=${stationUid}&slug=${cleanSlug}`;
@@ -97,295 +84,28 @@ export default function XmlPublicEndpoint() {
 
   const loadXml = useCallback(async (isMounted = true) => {
     try {
-      const { today, currentTime } = getBrasiliaDateTime();
-
-      // Special dynamic handler for enquete.xml
-      if (filename.includes("enquete")) {
-        // 1. Check local storage for station scheduled enquetes
-        const localKeys = [
-          `nexohub_enquetes_${stationUid}`,
-          `nexohub_enquetes_${cleanSlug}`,
-          `nexohub_enquetes_${account?.slug || ""}`,
-        ];
-        let localEnquetes: any[] = [];
-        for (const k of localKeys) {
-          try {
-            const raw = localStorage.getItem(k);
-            if (raw) {
-              const p = JSON.parse(raw);
-              if (Array.isArray(p) && p.length > 0) {
-                localEnquetes = p;
-                break;
-              }
-            }
-          } catch {}
-        }
-
-        if (localEnquetes.length === 0) {
-          localEnquetes = (initialEnquetesSync as Record<string, any[]>)[cleanSlug] ||
-            (initialEnquetesSync as Record<string, any[]>)[stationUid] || [];
-        }
-
-        const activeEnquete = getActiveEnquete(localEnquetes, today, currentTime, true);
-
-        if (activeEnquete) {
-          const generated = buildEnqueteXml(activeEnquete, stationName);
-          if (isMounted) {
-            setXmlContent(generated.trim());
-            setLoading(false);
-          }
-          return;
-        }
-
-        // 2. Try fetching from dynamic endpoints
-        const candidateUrls = [
-          `/xml/${cleanSlug}/${filename}`,
-          `/enquete.xml`,
-          `/xml/enquete.xml`,
-          `/functions/v1/serve-xml-enquete?slug=${cleanSlug}&user_id=${stationUid}`,
-        ];
-        for (const url of candidateUrls) {
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const text = await res.text();
-              if (text.includes("<enquete>") || (text.includes("<?xml") && !text.includes("<!DOCTYPE html>"))) {
-                if (isMounted) {
-                  setXmlContent(text.trim());
-                  setLoading(false);
-                }
-                return;
-              }
-            }
-          } catch {}
-        }
-
-        // 3. Fallback: clean empty XML
-        if (isMounted) {
-          setXmlContent(buildEnqueteXml(null).trim());
-          setLoading(false);
-        }
-        return;
+      // Feed oficial é sempre consultado diretamente. Dados locais e arquivos
+      // gerados no build não podem substituir alterações recentes do banco.
+      if (!stationUid) throw new Error("Estação não identificada para este XML");
+      const response = await fetch(`${supabaseFallbackUrl}${supabaseFallbackUrl.includes("?") ? "&" : "?"}t=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Feed XML indisponível (${response.status})`);
+      const liveXml = await response.text();
+      if (!liveXml.includes("<") || liveXml.includes("<error>") || liveXml.includes("<!DOCTYPE html>")) {
+        throw new Error("Feed XML retornou conteúdo inválido");
       }
-
-      // Special dynamic handler for quiz.xml
-      if (filename.includes("quiz")) {
-        // 1. Check local storage for station scheduled quizzes
-        const localKeys = [
-          `nexohub_quizzes_${stationUid}`,
-          `nexohub_quizzes_${cleanSlug}`,
-          `nexohub_quizzes_${account?.slug || ""}`,
-        ];
-        let localQuizzes: any[] = [];
-        for (const k of localKeys) {
-          try {
-            const raw = localStorage.getItem(k);
-            if (raw) {
-              const p = JSON.parse(raw);
-              if (Array.isArray(p) && p.length > 0) {
-                localQuizzes = p;
-                break;
-              }
-            }
-          } catch {}
-        }
-
-        const activeQuiz = getActiveQuiz(localQuizzes);
-
-        if (activeQuiz) {
-          const generated = buildQuizXml(activeQuiz);
-          if (isMounted) {
-            setXmlContent(generated.trim());
-            setLoading(false);
-          }
-          return;
-        }
-
-        // 2. Try fetching from dynamic endpoints
-        const candidateUrls = [
-          `/xml/${cleanSlug}/${filename}`,
-          `/quiz.xml`,
-          `/xml/quiz.xml`,
-          `/functions/v1/serve-xml-quiz?slug=${cleanSlug}&user_id=${stationUid}`,
-        ];
-        for (const url of candidateUrls) {
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const text = await res.text();
-              if (text.includes("<quiz>") || (text.includes("<?xml") && !text.includes("<!DOCTYPE html>"))) {
-                if (isMounted) {
-                  setXmlContent(text.trim());
-                  setLoading(false);
-                }
-                return;
-              }
-            }
-          } catch {}
-        }
-
-        // 3. Fallback: clean empty XML
-        if (isMounted) {
-          setXmlContent(buildQuizXml(null).trim());
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Special dynamic handler for batalha.xml
-      if (filename.includes("batalha")) {
-        // 1. Check local storage for station scheduled battles
-        const localKeys = [
-          `nexohub_batalhas_${stationUid}`,
-          `nexohub_batalhas_${cleanSlug}`,
-          `nexohub_batalhas_${account?.slug || ""}`,
-        ];
-        let localBatalhas: any[] = [];
-        for (const k of localKeys) {
-          try {
-            const raw = localStorage.getItem(k);
-            if (raw) {
-              const p = JSON.parse(raw);
-              if (Array.isArray(p) && p.length > 0) {
-                localBatalhas = p;
-                break;
-              }
-            }
-          } catch {}
-        }
-        if (localBatalhas.length === 0) {
-          localBatalhas = (initialBatalhasSync as Record<string, any[]>)[cleanSlug] ||
-            (initialBatalhasSync as Record<string, any[]>)[stationUid] || [];
-        }
-
-        const activeBat = getActiveBatalha(localBatalhas, today, currentTime, true);
-
-        if (activeBat) {
-          const generated = buildBatalhaXml(activeBat, stationName);
-          if (isMounted) {
-            setXmlContent(generated.trim());
-            setLoading(false);
-          }
-          return;
-        }
-
-        // 2. Try fetching from dynamic endpoints
-        const candidateUrls = [
-          `/xml/${cleanSlug}/${filename}`,
-          `/xml/positivafm/${filename}`,
-          `/batalha.xml`,
-          `/xml/batalha.xml`,
-        ];
-        for (const url of candidateUrls) {
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const text = await res.text();
-              if (text.includes("<batalha>") || (text.includes("<?xml") && !text.includes("<!DOCTYPE html>"))) {
-                if (isMounted) {
-                  setXmlContent(text.trim());
-                  setLoading(false);
-                }
-                return;
-              }
-            }
-          } catch {}
-        }
-
-        // 3. Fallback: clean empty XML
-        if (isMounted) {
-          setXmlContent(buildBatalhaXml(null, stationName).trim());
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Special dynamic handler for roteiro.xml
-      if (filename.includes("roteiro")) {
-        // O roteiro oficial é dinâmico. Consulte-o antes de qualquer cópia
-        // estática, que pode existir no host com conteúdo antigo.
-        if (supabaseFallbackUrl) {
-          try {
-            const fbRes = await fetch(`${supabaseFallbackUrl}&t=${Date.now()}`, {
-              cache: "no-store",
-            });
-            if (fbRes.ok) {
-              const fbText = await fbRes.text();
-              if (fbText.includes("<programaExpress>") && !fbText.includes("<error>")) {
-                if (isMounted) {
-                  setXmlContent(fbText.trim());
-                  setLoading(false);
-                  return;
-                }
-              }
-            }
-          } catch {}
-        }
-
-        try {
-          const staticUrl = `/xml/${cleanSlug}/${filename}?t=${Date.now()}`;
-          const res = await fetch(staticUrl, { cache: "no-store" });
-          if (res.ok) {
-            const text = await res.text();
-            if (text.includes("<programaExpress>") && !text.includes("<error>")) {
-              if (isMounted) {
-                setXmlContent(text.trim());
-                setLoading(false);
-                return;
-              }
-            }
-          }
-        } catch {}
-      }
-
-      // 1. Try static / dynamic endpoints
-      const candidateUrls = [
-        `/xml/${cleanSlug}/${filename}?t=${Date.now()}`,
-        `/${cleanSlug}/${filename}?t=${Date.now()}`,
-        ...(filename.includes("broadcast")
-          ? [`/functions/v1/serve-xml-broadcast?user_id=${stationUid}&t=${Date.now()}`]
-          : []),
-      ];
-
-      for (const staticUrl of candidateUrls) {
-        try {
-          const res = await fetch(staticUrl);
-          if (res.ok) {
-            const text = await res.text();
-            if (text.includes("<?xml") || (text.includes("<") && !text.includes("<!DOCTYPE html>"))) {
-              if (isMounted) {
-                setXmlContent(text.trim());
-                setLoading(false);
-                return;
-              }
-            }
-          }
-        } catch {}
-      }
-
-      // 2. If static file not found on host, try fetching from the XML endpoint
-      if (supabaseFallbackUrl) {
-        try {
-          const fbRes = await fetch(supabaseFallbackUrl);
-          if (fbRes.ok) {
-            const fbText = await fbRes.text();
-            if (fbText.includes("<") && !fbText.includes("<!DOCTYPE html>")) {
-              if (isMounted) {
-                setXmlContent(fbText.trim());
-                setLoading(false);
-                return;
-              }
-            }
-          }
-        } catch {}
+      if (isMounted) {
+        setXmlContent(liveXml.trim());
+        setLoading(false);
+        setError(null);
       }
     } catch (err: any) {
       if (isMounted) {
+        setXmlContent("");
         setError(err?.message || "Erro ao carregar feed XML");
         setLoading(false);
       }
     }
-  }, [cleanSlug, filename, supabaseFallbackUrl, stationUid, account?.slug]);
+  }, [supabaseFallbackUrl, stationUid]);
 
   useEffect(() => {
     let isMounted = true;
@@ -402,7 +122,7 @@ export default function XmlPublicEndpoint() {
           filename.includes("quiz") ||
           filename.includes("geral") ||
           filename.includes("roteiro") ||
-          filename.includes("broadcast"))
+          filename.includes("broadcast") || filename.includes("batalha") || filename.includes("logos") || filename.includes("tempo"))
       ) {
         loadXml(isMounted);
       }

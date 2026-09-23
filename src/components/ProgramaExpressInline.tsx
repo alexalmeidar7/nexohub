@@ -890,46 +890,48 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
   }, [editData, initialized]);
 
-  // Auto-save debounced (only when editing existing roteiro)
+  // O envio explícito confirma a persistência antes de atualizar o XML.
+  // Não há salvamento paralelo com dados antigos durante a edição.
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInProgressRef = useRef(false);
+  const autoSaveInFlightRef = useRef<Promise<void> | null>(null);
   useEffect(() => {
-    if (!editingId || !initialized || !user || !programaId) return;
+    if (!editingId || !initialized || !user || !programaId || !novoRoteiroOpen || isPodcast) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(async () => {
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (saveInProgressRef.current) return;
+      const autoSave = async () => {
       const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
       if (totalNews === 0) return;
       setAutoSaving(true);
       try {
-        const xmlContent = generateXml();
         const pNome = programas.find(p => p.id === programaId)?.nome || "";
         let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${pNome}</h2>`;
         if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
         blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
-        const blob = new Blob([xmlContent], { type: "application/xml" });
-        const filePath = editingXmlPath || `express/${user.id}/express_${editingId}.xml`;
-        if (!editingXmlPath) setEditingXmlPath(filePath);
-        await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-        const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
         const nowIso = new Date().toISOString();
-        await supabase.from("roteiros").update({ 
+        const { data: savedRows, error: saveError } = await supabase.from("roteiros").update({
           programa_nome: pNome, 
           estudio, 
           titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, 
-          subtitulo: `express_xml::${urlData.publicUrl}`, 
           conteudo_html: html, 
           participantes: blocosJson, 
           tickertitulos: autoTickerTitulos,
           configuracoes: configuracoes as any,
-          xml_pushed_at: nowIso,
           updated_at: nowIso,
-        } as any).eq("id", editingId);
+        } as any).eq("id", editingId).eq("user_id", effectiveUserId || user.id).select("id");
+        if (saveError || !savedRows?.length) throw saveError || new Error("O roteiro não foi encontrado na conta atual");
 
         setLastAutoSaved(Date.now());
-      } catch (e) { console.error("Auto-save error:", e); }
-      setAutoSaving(false);
+      } catch (e) { console.error("Auto-save error:", e); toast.error("Salvamento automático não concluído. Use Salvar para conferir a gravação."); }
+      finally { setAutoSaving(false); }
+      };
+      const pending = autoSave();
+      autoSaveInFlightRef.current = pending;
+      void pending.finally(() => { if (autoSaveInFlightRef.current === pending) autoSaveInFlightRef.current = null; });
     }, 2000);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1365,10 +1367,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const generateXml = (overrideBlocos?: Bloco[]): string => {
     const activeBlocos = overrideBlocos || blocos;
     const now = new Date();
-    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const localDateStr = now.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    const localTimeStr = now.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false });
     const progObj = programas.find(p => p.id === programaId);
-    const targetDate = editData?.dataPrograma || localDateStr;
+    const targetDate = localDateStr;
     const targetHorario = progObj?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5) || localTimeStr;
     const targetHorarioFim = progObj?.horario_fim?.slice(0, 5) || "";
     const nowIso = now.toISOString();
@@ -1594,7 +1596,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
     }
     setSaving(true);
+    saveInProgressRef.current = true;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     try {
+      if (autoSaveInFlightRef.current) await autoSaveInFlightRef.current;
       const xmlContent = generateXml(activeBlocos);
       let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${programaNome}</h2>`;
       if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
@@ -1619,14 +1624,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const tickertitulos = allTitles.join("  •  ");
 
       const now = new Date();
-      const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const localDateStr = now.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      const localTimeStr = now.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false });
       const nowIso = now.toISOString();
 
       const ownerId = effectiveUserId || user.id;
       const selectedProg = programas.find(p => p.id === programaId);
       const tipoProg = selectedProgTipo || selectedProg?.tipo_programa || "Jornalístico";
-      const targetDataPrograma = editData?.dataPrograma || localDateStr;
+      // Ao salvar uma nova edição, não reutilizar a data da versão carregada.
+      const targetDataPrograma = localDateStr;
       const targetHorario = selectedProg?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5) || localTimeStr;
 
       let roteiroId = editingId ? editingId.replace(/^express_/, "").replace(/^rot_/, "") : null;
@@ -1635,14 +1641,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         roteiroId = null;
       }
 
-      let dbSaveSuccess = false;
       if (!roteiroId) {
         // Try finding existing record in DB for this program & studio (strictly this account)
         try {
           const { data: existingProg } = await supabase
             .from("roteiros")
             .select("id")
-            .in("user_id", Array.from(new Set([ownerId, user.id])))
+            .eq("user_id", ownerId)
             .eq("programa_nome", programaNome)
             .eq("estudio", estudio)
             .is("agendado_para_envio", null)
@@ -1676,42 +1681,22 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           updated_at: nowIso,
         } as any).select("id").single();
 
-        if (insertRes.error && ownerId !== user.id) {
-          insertRes = await supabase.from("roteiros").insert({
-            user_id: user.id,
-            programa_nome: programaNome,
-            estudio,
-            titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${programaNome}`,
-            subtitulo: "",
-            tipo_programa: tipoProg,
-            data_programa: targetDataPrograma,
-            horario: targetHorario,
-            conteudo_html: html,
-            participantes: blocosJson,
-            status: "feito",
-            tickertitulos,
-            xml_pushed_at: nowIso,
-            updated_at: nowIso,
-          } as any).select("id").single();
-        }
-
         if (insertRes.data?.id) {
           roteiroId = insertRes.data.id;
-          dbSaveSuccess = true;
           setEditingId(roteiroId);
         } else {
-          roteiroId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `rot_${ownerId}_${Date.now()}`;
-          setEditingId(roteiroId);
+          throw insertRes.error || new Error("Não foi possível gravar o roteiro na conta atual");
         }
       }
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
-      const storageUid = user.id;
+      const storageUid = ownerId;
       const filePath = editingXmlPath || `express/${storageUid}/express_${roteiroId}.xml`;
       if (!editingXmlPath) setEditingXmlPath(filePath);
       let xmlUrl = "";
       try {
-        await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+        const { error: uploadError } = await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+        if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         xmlUrl = urlData?.publicUrl || "";
       } catch (eStorage) {
@@ -1752,6 +1737,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             .from("roteiros")
             .update(baseUpdatePayload)
             .eq("id", roteiroId)
+            .eq("user_id", ownerId)
             .select("id");
           saved = !upd.error && !!upd.data && upd.data.length > 0;
         }
@@ -1760,7 +1746,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           const upd2 = await supabase
             .from("roteiros")
             .update(baseUpdatePayload)
-            .in("user_id", Array.from(new Set([ownerId, user.id])))
+            .eq("user_id", ownerId)
             .eq("programa_nome", programaNome)
             .eq("estudio", estudio)
             .is("agendado_para_envio", null)
@@ -1773,29 +1759,29 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         }
         if (!saved) {
           // Last resort: create the record so the content is never lost
-          let ins = await supabase
+          const ins = await supabase
             .from("roteiros")
             .insert({ ...baseUpdatePayload, user_id: ownerId, created_at: nowIso } as any)
             .select("id")
             .single();
-          if (ins.error && ownerId !== user.id) {
-            ins = await supabase
-              .from("roteiros")
-              .insert({ ...baseUpdatePayload, user_id: user.id, created_at: nowIso } as any)
-              .select("id")
-              .single();
-          }
           if (ins.data?.id) {
             saved = true;
             roteiroId = ins.data.id;
             setEditingId(roteiroId);
-          } else if (ins.error) {
-            toast.error(`Não foi possível gravar o roteiro no servidor: ${ins.error.message}`);
-          }
+          } else throw ins.error || new Error("Não foi possível confirmar a gravação do roteiro");
+        }
+        if (!saved) throw new Error("Não foi possível confirmar a gravação do roteiro");
+        const confirmed = await supabase.from("roteiros")
+          .select("id, updated_at, participantes")
+          .eq("id", roteiroId).eq("user_id", ownerId).maybeSingle();
+        const persistedParts = typeof confirmed.data?.participantes === "string"
+          ? JSON.parse(confirmed.data.participantes)
+          : confirmed.data?.participantes;
+        if (confirmed.error || !confirmed.data || JSON.stringify(persistedParts) !== JSON.stringify(JSON.parse(blocosJson))) {
+          throw confirmed.error || new Error("O conteúdo salvo não corresponde ao roteiro enviado");
         }
       } catch (updErr: any) {
-        console.warn("Supabase update roteiro notice:", updErr);
-        toast.error(`Não foi possível gravar o roteiro no servidor: ${updErr?.message || updErr}`);
+        throw new Error(`Não foi possível gravar o roteiro no servidor: ${updErr?.message || updErr}`);
       }
 
 
@@ -1819,7 +1805,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       // If scheduled: also create a separate scheduled roteiro record so it appears in "roteiros agendados"
       if (schedule && scheduledDateTime) {
-        let scheduledRoteiroId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `rot_sched_${ownerId}_${Date.now()}`;
+        let scheduledRoteiroId: string | null = null;
         const schedPayload: any = {
           user_id: ownerId,
           programa_nome: programaNome,
@@ -1841,15 +1827,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         };
 
         try {
-          let insSched = await supabase.from("roteiros").insert(schedPayload).select("id").single();
-          if (insSched.data?.id) {
-            scheduledRoteiroId = insSched.data.id;
-          } else if (insSched.error && ownerId !== user.id) {
-            const insRetry = await supabase.from("roteiros").insert({ ...schedPayload, user_id: user.id }).select("id").single();
-            if (insRetry.data?.id) scheduledRoteiroId = insRetry.data.id;
-          }
+          const insSched = await supabase.from("roteiros").insert(schedPayload).select("id").single();
+          if (insSched.error || !insSched.data?.id) throw insSched.error || new Error("Não foi possível agendar o roteiro");
+          scheduledRoteiroId = insSched.data.id;
         } catch (eSched) {
-          console.warn("Supabase insert scheduled roteiro notice:", eSched);
+          throw new Error(`Não foi possível agendar o roteiro: ${eSched instanceof Error ? eSched.message : eSched}`);
         }
 
         const fullSchedRecord = {
@@ -1870,7 +1852,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const clientAcc = (ownerId && findClientAccountById(ownerId)) ||
           (user?.id && findClientAccountById(user.id)) ||
           (user?.email && findClientAccountByEmail(user.email));
-        const targetSlug = clientAcc?.slug || "positivafm";
+         const targetSlug = clientAcc?.slug || ownerId;
         await fetch("/api/sync-xml-roteiro", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1982,6 +1964,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       return false;
     } finally {
       setSaving(false);
+      saveInProgressRef.current = false;
     }
   };
 

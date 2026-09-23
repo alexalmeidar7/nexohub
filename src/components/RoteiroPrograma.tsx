@@ -313,6 +313,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     const updatePayload: any = {
       conteudo_html: txtEditText,
       participantes: JSON.stringify(updatedParticipantes),
+      data_programa: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
       updated_at: new Date().toISOString(),
     };
     if (tickertitulos !== null) updatePayload.tickertitulos = tickertitulos;
@@ -324,6 +325,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       .from("roteiros")
       .update(updatePayload)
       .eq("id", txtEditRoteiroId)
+      .eq("user_id", roteiro?.user_id || resolvedUserId || propEffectiveUserId || user?.id)
       .select("id");
 
     if (!error && (!updatedRows || updatedRows.length === 0) && roteiro?.programa_nome) {
@@ -340,9 +342,9 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       }
     }
 
-    if (!error && (!updatedRows || updatedRows.length === 0)) {
+    if (error || !updatedRows || updatedRows.length === 0) {
       setTxtSaving(false);
-      toast.error("Não foi possível salvar este roteiro no servidor.");
+      toast.error(`Não foi possível salvar este roteiro no servidor: ${error?.message || "registro não encontrado"}`);
       return;
     }
 
@@ -354,9 +356,11 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       try {
         await regenRef.current({
           ...roteiro,
-          id: txtEditRoteiroId,
+          id: updatedRows?.[0]?.id || txtEditRoteiroId,
           conteudo_html: txtEditText,
           participantes: JSON.stringify(updatedParticipantes),
+          data_programa: updatePayload.data_programa,
+          updated_at: updatePayload.updated_at,
           ...(tickertitulos !== null ? { tickertitulos } : {}),
         });
       } catch (e) {
@@ -765,32 +769,21 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     const effectiveUserId = await resolveEffectiveUserId();
     const progs = _currentProgramas || programas;
 
-    const acc = findClientAccountById(effectiveUserId) || findClientAccountByEmail(user?.email);
-    const candidateUserIds = Array.from(
-      new Set(
-        [
-          effectiveUserId,
-          user.id,
-          propEffectiveUserId,
-          resolvedUserId,
-          acc?.id,
-          acc?.parentUserId,
-        ].filter(Boolean) as string[]
-      )
-    );
+    const candidateUserIds = [effectiveUserId];
 
     let dbRoteiros: any[] = [];
+    let dbUnavailable = false;
     try {
       const res = await supabase
         .from("roteiros")
         .select("*")
-        .in("user_id", candidateUserIds)
+        .eq("user_id", effectiveUserId)
         .order("updated_at", { ascending: false });
-
-      if (res.data && res.data.length > 0) {
+      if (res.error) dbUnavailable = true;
+      if (!res.error && res.data && res.data.length > 0) {
         dbRoteiros = res.data.filter((r: any) => !r.programa_nome?.includes("<"));
       }
-    } catch {}
+    } catch { dbUnavailable = true; }
 
     // O banco de dados é a ÚNICA fonte de verdade. O cache local só é usado
     // quando o banco não respondeu com nenhum registro (modo offline),
@@ -806,7 +799,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       );
       // Cache local reescrito integralmente com o estado do banco
       candidateUserIds.forEach((uid) => saveStoredRoteiros(uid, data));
-    } else {
+    } else if (dbUnavailable) {
       const localRoteiros: any[] = [];
       candidateUserIds.forEach((uid) => {
         const stored = getStoredRoteiros(uid);
@@ -828,7 +821,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
 
     // Se a tabela estiver vazia, busca os arquivos XML REAIS gravados no Storage (empresa-assets/express/{userId})
-    if (data.length === 0) {
+    if (data.length === 0 && dbUnavailable) {
       try {
         let files: any[] = [];
         try {
@@ -920,7 +913,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     }
 
     // Se ainda vazio, consulta o endpoint oficial do servidor serve-xml-roteiro-estudio para os estúdios reais
-    if (data.length === 0) {
+    if (data.length === 0 && dbUnavailable) {
       try {
         const candidateEstudios = Array.from(new Set([
           "Estudio FM",
@@ -1189,7 +1182,8 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       }
 
       const cleanId = String(r.id || "").replace(/^express_/, "");
-      const owner = r.user_id || propEffectiveUserId || resolvedUserId || user?.id || "d17e65af-e407-466f-9b60-b55c43399513";
+      const owner = r.user_id || propEffectiveUserId || resolvedUserId || user?.id;
+      if (!owner) throw new Error("Conta do roteiro não identificada");
       if (!filePath) {
         filePath = `express/${owner}/express_${cleanId}.xml`;
       }
@@ -1197,7 +1191,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       // 1. Sync to local /api/sync-xml-roteiro (writes to public/xml/[slug]/roteiro.xml)
       try {
         const clientAcc = findClientAccountById(owner) || findClientAccountByEmail(user?.email);
-        const slug = clientAcc?.slug || "positivafm";
+        const slug = clientAcc?.slug || owner;
         await fetch("/api/sync-xml-roteiro", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1246,22 +1240,15 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       try {
         const updatePayload: any = { xml_pushed_at: nowIso };
         if (isUuid) {
-          await supabase.from("roteiros").update(updatePayload).eq("id", cleanId);
+          await supabase.from("roteiros").update(updatePayload).eq("id", cleanId).eq("user_id", owner);
         }
         if (r.user_id && r.programa_nome) {
-          await supabase.from("roteiros").update(updatePayload).eq("user_id", r.user_id).eq("programa_nome", r.programa_nome);
+          await supabase.from("roteiros").update(updatePayload).eq("user_id", owner).eq("programa_nome", r.programa_nome);
         }
       } catch {}
 
-      // Update LocalStorage across all candidate uids
-      const candidateUids = Array.from(new Set([
-        r.user_id,
-        owner,
-        user?.id,
-        propEffectiveUserId,
-        resolvedUserId,
-        "d17e65af-e407-466f-9b60-b55c43399513"
-      ].filter(Boolean) as string[]));
+      // O cache local pertence somente à conta do roteiro.
+      const candidateUids = [owner];
 
       candidateUids.forEach((uid) => {
         try {
@@ -1344,10 +1331,11 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     if (!user) return;
     setRegenerating(true);
     try {
+      const effectiveUserId = await resolveEffectiveUserId();
       const { data: allRoteiros } = await supabase
         .from("roteiros")
         .select("id, programa_nome, estudio, data_programa, subtitulo, participantes")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .like("subtitulo", "express_xml::%");
 
       if (!allRoteiros || allRoteiros.length === 0) {
