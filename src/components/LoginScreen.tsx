@@ -193,6 +193,28 @@ export default function LoginScreen() {
     }
 
     const clientAccount = verifyClientCredentials(email.trim(), pass);
+
+    const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
+
+    // IMPORTANTE: sempre tentamos a autenticação real primeiro. Uma sessão
+    // simulada (client-token-*) não tem JWT válido, então qualquer gravação no
+    // banco é recusada pelas políticas de segurança (ex.: cadastro de programa).
+    if (clientAccount) {
+      try {
+        const { data: realData } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
+        if (realData?.session) {
+          localStorage.setItem("nexohub_backup_session", JSON.stringify(realData.session));
+          localStorage.setItem(KEEP_CONNECTED_KEY, "true");
+          localStorage.removeItem("nexohub_force_role");
+          localStorage.removeItem("nexohub_explicit_logout");
+          window.location.replace("/home");
+          return;
+        }
+      } catch {
+        /* sem conexão ou credencial diferente no banco — segue para sessão local */
+      }
+    }
+
     if (clientAccount) {
       const targetRole = (clientAccount.isAdmin || clientAccount.email.toLowerCase() === "alex@nexobrasil.net") ? "admin" : "user";
       const clientSession = {
@@ -224,7 +246,6 @@ export default function LoginScreen() {
       return;
     }
 
-    const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
