@@ -1446,25 +1446,8 @@ export function dynamicXmlPlugin(): Plugin {
               const rawSlug = parsed.slug || "positivafm";
               const slug = normalizeSlug(rawSlug);
               const xml = parsed.xml;
-              if (xml && typeof xml === "string") {
-                writeStaticXml(slug, "roteiro.xml", xml);
-
-                // Also persist in xml_roteiros_sync.json for persistent live memory
-                const rotStore = readSyncData(roteirosFile);
-                const item = {
-                  id: parsed.roteiro?.id || `rot_${Date.now()}`,
-                  programa_nome: parsed.programaNome || parsed.roteiro?.programa_nome || "Programa",
-                  estudio: parsed.estudio || parsed.roteiro?.estudio || "ESTÚDIO FM",
-                  data_programa: parsed.roteiro?.data_programa || new Date().toISOString().slice(0, 10),
-                  horario: parsed.roteiro?.horario || "",
-                  xml,
-                  updated_at: new Date().toISOString(),
-                };
-                rotStore[slug] = [item];
-                rotStore[rawSlug] = [item];
-                if (parsed.userId) rotStore[parsed.userId] = [item];
-                writeSyncData(roteirosFile, rotStore);
-              }
+              // Compatibility-only endpoint: the database, not preview snapshots,
+              // supplies every public roteiro XML request.
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ ok: true, slug }));
             } catch (err: any) {
