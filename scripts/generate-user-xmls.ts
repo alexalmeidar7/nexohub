@@ -806,10 +806,6 @@ export async function generateAllUserXmls() {
   for (const st of STATIONS) {
     console.log(`Processing station: ${st.name} (${st.slug}, uid: ${st.uid})...`);
 
-    // Snapshots are never a source of truth: fail the build rather than ship stale XML.
-    // These feeds change after deployment, so published integrations must use live links.
-    continue;
-
     // 1. Fetch live XMLs from Supabase
     const [tempoRemote, roteiroRemote, broadcastRemote, logosRemote, batalhaRemote, enqueteRemote, quizRemote, geralRemote] =
       await Promise.all([
