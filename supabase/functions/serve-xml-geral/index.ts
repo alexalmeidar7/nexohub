@@ -115,7 +115,8 @@ serve(async (req) => {
     // a memoria da funcao. A RPC devolve apenas os primeiros caracteres de cada campo.
     const musicHistoryRes = await step("musicHistory", sb.rpc("get_music_history_light", { _user_id: ownerId, _limit: 6 }));
     const logosRes = await step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false));
-    const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo").eq("user_id", ownerId).ilike("estudio", "%fm%").order("data_programa", { ascending: false }).limit(10));
+    const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo, updated_at").eq("user_id", ownerId).ilike("estudio", "%fm%").order("updated_at", { ascending: false }).limit(10));
+    if (roteiroRes.error) throw roteiroRes.error;
     const batalhaRes = await step("batalha", sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }));
     const enquetesRes = await step("enquetes", sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }));
     const quizRes = await step("quiz", sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }));

@@ -222,7 +222,8 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=3",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "CDN-Cache-Control": "no-store",
       },
     });
   } catch (err) {
