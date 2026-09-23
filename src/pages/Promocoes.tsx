@@ -1351,7 +1351,7 @@ export default function PromocoesKiosk() {
   }, [testemunhais, programas, todayDateStr]);
 
   const filteredPrograms = mergeProgramList(
-    programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
+    programas.filter(p => p.selo && programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
   );
 
   const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -1803,11 +1803,7 @@ export default function PromocoesKiosk() {
                   className="h-12 w-14 sm:h-14 sm:w-16 p-1 border-2 transition-transform hover:scale-105 focus-visible:ring-2"
                   style={{ background: promoAccentGradient, borderColor: isOnAir ? "var(--promo-border)" : "transparent", color: "var(--promo-text)" }}
                 >
-                  {programa.selo ? (
-                    <img src={programa.selo} alt="" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-[9px] leading-tight text-center normal-case whitespace-normal break-words">{programa.nome}</span>
-                  )}
+                  <img src={programa.selo} alt="" className="w-full h-full object-contain" />
                 </Button>
               );
             })}
