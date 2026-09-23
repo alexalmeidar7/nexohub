@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getSnapshotTable, getSnapshotPromocoes } from "@/lib/supabaseDatabaseSnapshot";
 import { findClientAccountById, findClientAccountByEmail, POSITIVA_USER_ID, isPositivaStationAccount } from "@/lib/clientAuthAccounts";
 import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check, Bold, Italic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -176,73 +175,31 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     if (!ownerId) return;
     setLoading(true);
     let itemsList: Promocao[] = [];
+    let onlineLoaded = false;
     try {
-      const { data: promosData } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
-      if (promosData) {
-        itemsList = promosData.map(p => ({
-          ...p,
-          nome: p.nome || "",
-          texto: p.texto || "",
-          oferecimento: p.oferecimento || "",
-          imagem_url: p.imagem_url || "",
-          banner_l_url: p.banner_l_url || "",
-        })) as Promocao[];
+      const { data, error } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
+      if (!error && data) {
+        itemsList = data as Promocao[];
+        onlineLoaded = true;
       }
-    } catch (e) {
-      console.warn("Error loading promocoes from Supabase:", e);
+    } catch (error) {
+      console.warn("Erro ao carregar promoções:", error);
     }
-
-    if (itemsList.length === 0) {
+    // A leitura pública é uma segunda fonte online, nunca uma mistura com cache local.
+    if (!onlineLoaded) {
       try {
-        const targetSlugOrId = ownerSlug || ownerId;
-        if (targetSlugOrId) {
-          const { data: edgeData } = await supabase.functions.invoke("public-promo-data", {
-            body: { slug: targetSlugOrId }
-          });
-          if (edgeData?.promocoes?.length > 0) {
-            const validPromos = edgeData.promocoes.filter((p: any) =>
-              p.user_id === ownerId || (isPositivaStation && p.user_id === POSITIVA_USER_ID)
-            );
-            if (validPromos.length > 0) {
-              itemsList = validPromos.map((p: any) => ({
-                ...p,
-                nome: p.nome || "",
-                texto: p.texto || "",
-                oferecimento: p.oferecimento || "",
-                imagem_url: p.imagem_url || "",
-                banner_l_url: p.banner_l_url || "",
-              })) as Promocao[];
-            }
-          }
+        const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: ownerId } });
+        if (!error && Array.isArray(data?.promocoes)) {
+          itemsList = data.promocoes.filter((promo: Promocao) => promo.user_id === ownerId);
+          onlineLoaded = true;
         }
-      } catch {}
-    }
-
-    if (itemsList.length === 0) {
-      const snapPromos = getSnapshotPromocoes(ownerSlug || ownerId);
-      if (snapPromos && snapPromos.length > 0) {
-        itemsList = snapPromos.map((p: any) => ({
-          ...p,
-          nome: p.nome || "",
-          texto: p.texto || "",
-          oferecimento: p.oferecimento || "",
-          imagem_url: p.imagem_url || "",
-          banner_l_url: p.banner_l_url || "",
-        })) as Promocao[];
+      } catch (error) {
+        console.warn("Erro ao carregar promoções públicas:", error);
       }
     }
-
-    const localList = getStoredPromos(ownerId);
-    const map = new Map<string, Promocao>();
-    itemsList.forEach(p => map.set(p.id, p));
-    localList.forEach(p => map.set(p.id, p));
-    let merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-    if (!isPositivaStation) {
-      merged = merged.filter((p: any) => p.user_id !== POSITIVA_USER_ID);
-    }
-
-    setItems(merged);
-    saveStoredPromos(ownerId, merged);
+    const current = onlineLoaded ? itemsList : getStoredPromos(ownerId).filter(p => p.user_id === ownerId);
+    setItems(current);
+    if (onlineLoaded) saveStoredPromos(ownerId, current);
     setLoading(false);
   };
 
@@ -271,27 +228,16 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     const isField1 = field === 'imagem_url';
     if (isField1) setUploading1(true); else setUploading2(true);
 
-    const fallbackToBase64 = () => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        setForm(prev => ({ ...prev, [field]: base64 }));
-        toast({ title: `Imagem ${isField1 ? '1' : '2'} carregada com sucesso` });
-      };
-      reader.readAsDataURL(file);
-    };
-
     try {
       const fileExt = file.name.split('.').pop();
       const folder = isField1 ? 'promos' : 'promos_l';
-      const fileName = `${ownerId}/${folder}/${Date.now()}.${fileExt}`;
+      const fileName = `${ownerId}/${folder}/${crypto.randomUUID()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('comercial')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { upsert: false });
 
       if (uploadError) {
-        console.warn("Storage upload error (fallback para Base64):", uploadError.message);
-        fallbackToBase64();
+        toast({ title: `Imagem ${isField1 ? '1' : '2'} não enviada`, description: uploadError.message, variant: "destructive" });
         return;
       }
 
@@ -302,15 +248,14 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       setForm(prev => ({ ...prev, [field]: publicUrl }));
       toast({ title: `Imagem ${isField1 ? '1' : '2'} enviada com sucesso` });
     } catch (error: any) {
-      console.warn("Exceção no upload (fallback para Base64):", error);
-      fallbackToBase64();
+      toast({ title: `Imagem ${isField1 ? '1' : '2'} não enviada`, description: error?.message || "Verifique sua conexão.", variant: "destructive" });
     } finally {
       if (isField1) setUploading1(false); else setUploading2(false);
     }
   };
 
   const handleSave = async () => {
-    if (!ownerId) return;
+    if (!ownerId || uploading1 || uploading2 || saving) return;
     if (!form.nome.trim()) {
       toast({ title: "O nome da promoção é obrigatório", variant: "destructive" });
       return;
@@ -321,36 +266,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     }
 
     setSaving(true);
-    const id = editingId || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `promo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
-
-    const existingRecord = editingId ? items.find(i => i.id === editingId) : null;
-    const newRecord: Promocao = {
-      id,
-      user_id: ownerId,
-      nome: form.nome.trim(),
-      texto: form.texto.trim(),
-      oferecimento: form.oferecimento.trim(),
-      data_inicio: form.data_inicio,
-      data_fim: form.data_fim,
-      imagem_url: form.imagem_url,
-      banner_l_url: form.banner_l_url,
-      created_at: existingRecord?.created_at || new Date().toISOString(),
-    };
-
-    // Atualiza imediatamente o estado e localStorage
-    const currentStored = getStoredPromos(ownerId);
-    const map = new Map<string, Promocao>();
-    items.forEach(i => map.set(i.id, i));
-    currentStored.forEach(i => map.set(i.id, i));
-    map.set(id, newRecord);
-
-    const updatedList = editingId
-      ? Array.from(map.values()).map(p => p.id === editingId ? newRecord : p)
-      : [newRecord, ...Array.from(map.values()).filter(p => p.id !== id)];
-
-    setItems(updatedList);
-    saveStoredPromos(ownerId, updatedList);
-
     const payload = {
       user_id: ownerId,
       nome: form.nome.trim(),
@@ -362,25 +277,22 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       banner_l_url: form.banner_l_url,
     };
 
-    // Sincroniza em background com Supabase
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      if (editingId && isUuid) {
-        const { error } = await supabase.from("promocoes").update(payload).eq("id", editingId);
-        if (error) console.warn("Supabase promo update warning (mantido localmente):", error.message);
-      } else {
-        const insertPayload = isUuid ? { id, ...payload } : payload;
-        const { error } = await supabase.from("promocoes").insert([insertPayload]);
-        if (error) console.warn("Supabase promo insert warning (mantido localmente):", error.message);
-      }
+      const result = editingId
+        ? await supabase.from("promocoes").update(payload).eq("id", editingId).eq("user_id", ownerId).select("*").single()
+        : await supabase.from("promocoes").insert([payload]).select("*").single();
+      if (result.error || !result.data) throw new Error(result.error?.message || "A gravação não foi confirmada.");
+      const saved = result.data as Promocao;
+      const updatedList = editingId ? items.map(p => p.id === editingId ? saved : p) : [saved, ...items];
+      setItems(updatedList);
+      saveStoredPromos(ownerId, updatedList);
+      toast({ title: editingId ? "Promoção atualizada com sucesso" : "Promoção cadastrada com sucesso" });
+      reset();
     } catch (err: any) {
-      console.warn("Supabase promo network error:", err);
+      toast({ title: "Não foi possível salvar a promoção", description: err?.message || "Verifique sua conexão e tente novamente.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
-
-    toast({ title: editingId ? "Promoção atualizada com sucesso" : "Promoção cadastrada com sucesso" });
-    reset();
   };
 
   const handleEdit = async (item: Promocao) => {
@@ -584,8 +496,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button style={limeBtn} onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            <button style={limeBtn} onClick={handleSave} disabled={saving || uploading1 || uploading2}>
+              {saving || uploading1 || uploading2 ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {editingId ? "Atualizar" : "Cadastrar Promoção"}
             </button>
             {editingId && <button style={ghostBtn} onClick={reset}><X size={16} /> Cancelar</button>}

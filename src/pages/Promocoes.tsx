@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, Legend } from "recharts";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { Slider } from "@/components/ui/slider";
@@ -79,43 +80,8 @@ const PROGRAMAS_VISIVEIS = [
 const REMOVED_PROGRAM_COVER_PATH = "/programas/d17e65af-e407-466f-9b60-b55c43399513/d40fca1b-5f5a-4588-8d4a-35323fe88b9f_capa.webp";
 
 export function resolveSafePromoBanner(p: any): string {
-  const norm = `${p?.nome || ""} ${p?.botao_url || ""} ${p?.imagem_url || ""}`.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("premio") || norm.includes("que premio")) return "/promocoes/que-premio-e-esse.png";
-  if (norm.includes("role")) return "/promocoes/role-positiva.png";
-  if (norm.includes("parada") || norm.includes("estrada")) return "/promocoes/parada-positiva.png";
-  if (norm.includes("burger") || norm.includes("burguer")) return "/promocoes/super-burguer.png";
-  if (norm.includes("resenha")) return "/promocoes/resenha.png";
-  if (norm.includes("caldas")) return "/promocoes/partiu-caldas.png";
-  if (norm.includes("peguei")) return "/promocoes/te-peguei-positiva.png";
-  if (norm.includes("pix")) return "/promocoes/meu-pix-positiva.png";
-  if (norm.includes("encontro")) return "/promocoes/encontro-marcado.png";
-  if (norm.includes("luan") || norm.includes("historico")) return "/promocoes/luan-santana.png";
-  if (norm.includes("cabare")) return "/promocoes/cabare.png";
-  if (norm.includes("movimento")) return "/promocoes/movimento.png";
-
-  if (p?.imagem_url) {
-    return p.imagem_url;
-  }
-  return "/promocoes/que-premio-e-esse.png";
-}
-
-export function resolveSafePromoButton(p: any): string {
-  const norm = `${p?.nome || ""} ${p?.botao_url || ""}`.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("premio") || norm.includes("que premio")) return "/promocoes/bts/que-premio-e-esse.png";
-  if (norm.includes("role")) return "/promocoes/bts/role-positiva.png";
-  if (norm.includes("parada") || norm.includes("estrada")) return "/promocoes/bts/parada-positiva.png";
-  if (norm.includes("burger") || norm.includes("burguer")) return "/promocoes/bts/super-burguer.png";
-  if (norm.includes("resenha")) return "/promocoes/bts/resenha.png";
-  if (norm.includes("caldas")) return "/promocoes/partiu-caldas.png";
-  if (norm.includes("peguei")) return "/promocoes/te-peguei-positiva.png";
-  if (norm.includes("pix")) return "/promocoes/bts/meu-pix-positiva.png";
-  if (norm.includes("encontro")) return "/promocoes/bts/encontro-marcado.png";
-  if (norm.includes("luan") || norm.includes("historico")) return "/promocoes/bts/luan-santana.png";
-  return "";
+  // A arte cadastrada é a única fonte do banner; não inferir por nome.
+  return typeof p?.imagem_url === "string" ? p.imagem_url.trim() : "";
 }
 
 // Retorna apenas imagens realmente cadastradas (URL ou caminho).
@@ -455,8 +421,6 @@ export default function PromocoesKiosk() {
       window.removeEventListener("storage", onStorage);
     };
   }, []);
-  const [coverIndex, setCoverIndex] = useState<number | null>(null);
-  const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
   const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
   const [weatherInfo, setWeatherInfo] = useState<{ city: string | null; lat: number | null; lon: number | null }>({ city: null, lat: null, lon: null });
   const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
@@ -668,11 +632,10 @@ export default function PromocoesKiosk() {
       });
 
       let allPromos = data?.promocoes || [];
-      if (allPromos.length === 0) {
+      if (!data) {
         const snapPromos = getSnapshotTable("promocoes");
         if (isPositivaStation) {
-          const filtered = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID || !p.user_id);
-          allPromos = filtered.length > 0 ? filtered : snapPromos;
+          allPromos = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID);
         } else if (syncDb?.userId) {
           allPromos = snapPromos.filter((p: any) => p.user_id === syncDb.userId);
         }
@@ -680,18 +643,16 @@ export default function PromocoesKiosk() {
       allPromos = allPromos.map((p: any) => ({
         ...p,
         imagem_url: resolveSafePromoBanner(p),
-        banner_l_url: resolveSafePromoBanner(p),
-        botao_icone_url: resolveSafePromoButton(p),
+        banner_l_url: p.banner_l_url || "",
         nome: p.nome || p.botao_url || "Promoção",
       }));
       setPromocoes(allPromos);
 
       let activeTestemunhais = data?.testemunhais || [];
-      if (activeTestemunhais.length === 0) {
+      if (!data) {
         const snapTests = getSnapshotTable("testemunhais");
         if (isPositivaStation) {
-          const filtered = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID || !t.user_id);
-          activeTestemunhais = filtered.length > 0 ? filtered : snapTests;
+          activeTestemunhais = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID);
         } else if (syncDb?.userId) {
           activeTestemunhais = snapTests.filter((t: any) => t.user_id === syncDb.userId);
         }
@@ -703,7 +664,7 @@ export default function PromocoesKiosk() {
       }
 
       let rawProgs = data?.programas || [];
-      if (rawProgs.length === 0) {
+      if (!data && rawProgs.length === 0) {
         if (isPositivaStation) {
           rawProgs = syncDb?.programas && syncDb.programas.length > 0 ? syncDb.programas : DEFAULT_POSITIVA_PROGRAMAS;
         } else if (syncDb?.programas && syncDb.programas.length > 0) {
@@ -728,7 +689,7 @@ export default function PromocoesKiosk() {
       setProgramas(mapped);
 
       let aprs = data?.apresentadores || [];
-      if (aprs.length === 0) {
+      if (!data && aprs.length === 0) {
         if (isPositivaStation) {
           aprs = (DEFAULT_STATION_PARTICIPANTES["POSITIVA FM"] as any) || DEFAULT_POSITIVA_APRESENTADORES;
         } else if (syncDb?.apresentadores && syncDb.apresentadores.length > 0) {
@@ -872,24 +833,24 @@ export default function PromocoesKiosk() {
       // usuário logado (e do master, no caso de subusuário).
       const belongsToOwner = (row: any) => {
         if (ownerIds.length) return ownerIds.includes(row?.user_id);
-        return isPositivaStation && (row?.user_id === POSITIVA_USER_ID || !row?.user_id);
+        return isPositivaStation && row?.user_id === POSITIVA_USER_ID;
       };
-      if (allPromos.length === 0) {
+       if (promoData === null) {
         allPromos = getSnapshotTable("promocoes").filter(belongsToOwner);
       }
-      if (activeTestemunhais.length === 0) {
+       if (testData === null) {
         activeTestemunhais = getSnapshotTable("testemunhais").filter(belongsToOwner);
       }
 
-      if (localUid) {
+       if (localUid) {
         try {
-          const rawLocal = localStorage.getItem(`nexohub_testemunhais_${localUid}`);
-          if (rawLocal) {
+           const rawLocal = testData === null ? localStorage.getItem(`nexohub_testemunhais_${localUid}`) : null;
+           if (rawLocal) {
             const parsed = JSON.parse(rawLocal);
             if (Array.isArray(parsed) && parsed.length > 0) {
               const map = new Map<string, any>();
               activeTestemunhais.forEach((t: any) => map.set(t.id, t));
-              parsed.forEach((t: any) => map.set(t.id, t));
+              parsed.filter(belongsToOwner).forEach((t: any) => map.set(t.id, t));
               activeTestemunhais = Array.from(map.values());
             }
           }
@@ -907,23 +868,22 @@ export default function PromocoesKiosk() {
       allPromos = allPromos.map((p: any) => ({
         ...p,
         imagem_url: resolveSafePromoBanner(p),
-        banner_l_url: resolveSafePromoBanner(p),
-        botao_icone_url: resolveSafePromoButton(p),
+        banner_l_url: p.banner_l_url || "",
         nome: p.nome || p.botao_url || "Promoção",
       }));
 
       setPromocoes(allPromos);
       setTestemunhais(activeTestemunhais);
 
-      let rawProgs = progsData && progsData.length > 0 ? progsData : (edgeProgs.length > 0 ? edgeProgs : []);
-      if (rawProgs.length === 0 && !localUid && isPositiva) {
+      let rawProgs = progsData !== null ? progsData : edgeProgs;
+      if (progsData === null && rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
-      if (rawProgs.length === 0) {
+      if (progsData === null && rawProgs.length === 0) {
         const filtered = getSnapshotTable("programas").filter(belongsToOwner);
         if (filtered.length > 0) rawProgs = filtered;
       }
-      if (rawProgs.length === 0 && localUid) {
+      if (progsData === null && rawProgs.length === 0 && localUid) {
         const stationData = getStationDatabaseSync(localUid);
         if (stationData?.programas && stationData.programas.length > 0) {
           rawProgs = stationData.programas;
@@ -936,7 +896,7 @@ export default function PromocoesKiosk() {
           } catch { /* ignore */ }
         }
       }
-      if (rawProgs.length === 0 && !localUid && isPositiva) {
+      if (progsData === null && rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
 
@@ -986,7 +946,7 @@ export default function PromocoesKiosk() {
   const PROGRESS_INTERVAL = 50;
 
   useEffect(() => {
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const banners = getUniqueBanners(
       promocoes.filter(p => (!p.data_inicio || p.data_inicio.slice(0, 10) <= todayKey) && (!p.data_fim || p.data_fim.slice(0, 10) >= todayKey))
     );
@@ -1181,7 +1141,7 @@ export default function PromocoesKiosk() {
   // Cada programa possui uma única citação vigente. Registros antigos duplicados
   // não devem aparecer como novas citações: prevalece o texto atualizado por último.
   const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const baseIds = new Set(prog.mergedIds || [prog.id]);
     const targetNameNorm = normalizeProgramName(prog.nome);
 
@@ -1193,7 +1153,7 @@ export default function PromocoesKiosk() {
       }
     }
 
-    // Mapa ID -> Nome de programas conhecidos (programas carregados + snapshot estático)
+    // Só associa IDs de programas carregados para esta conta.
     const progNameById = new Map<string, string>();
     for (const p of programas) {
       progNameById.set(p.id, normalizeProgramName(p.nome));
@@ -1201,19 +1161,6 @@ export default function PromocoesKiosk() {
         p.mergedIds.forEach(id => progNameById.set(id, normalizeProgramName(p.nome)));
       }
     }
-    try {
-      const snapProgs = getSnapshotTable("programas");
-      for (const p of snapProgs) {
-        if (p.id && p.nome) {
-          const sName = normalizeProgramName(p.nome);
-          progNameById.set(p.id, sName);
-          if (sName === targetNameNorm) {
-            baseIds.add(p.id);
-          }
-        }
-      }
-    } catch {}
-
     const matches = testemunhais.filter(t => {
       const tIds = getTestemunhalProgramIds(t);
       if (tIds.length === 0) return false;
@@ -1227,7 +1174,6 @@ export default function PromocoesKiosk() {
       for (const tId of tIds) {
         const refName = progNameById.get(tId);
         if (refName && refName === targetNameNorm) return true;
-        if (refName && (refName.includes(targetNameNorm) || targetNameNorm.includes(refName))) return true;
       }
 
       return false;
@@ -1362,16 +1308,10 @@ export default function PromocoesKiosk() {
     );
   };
 
-  const todayDateStr = new Date().toISOString().split("T")[0];
+  const todayDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const programNamesWithTestemunhais = useMemo(() => {
     const set = new Set<string>();
     const progNameById = new Map<string, string>();
-    try {
-      const snapProgs = getSnapshotTable("programas");
-      for (const p of snapProgs) {
-        if (p.id && p.nome) progNameById.set(p.id, normalizeProgramName(p.nome));
-      }
-    } catch {}
     for (const p of programas) {
       progNameById.set(p.id, normalizeProgramName(p.nome));
       if (p.mergedIds) {
@@ -1392,10 +1332,10 @@ export default function PromocoesKiosk() {
   }, [testemunhais, programas, todayDateStr]);
 
   const filteredPrograms = mergeProgramList(
-    programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
+    programas.filter(p => p.selo && programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
   );
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const allPromos = promocoes
     .filter(p => (!p.data_inicio || p.data_inicio.slice(0, 10) <= todayStr) && (!p.data_fim || p.data_fim.slice(0, 10) >= todayStr))
     .sort((a, b) => {
@@ -1508,50 +1448,6 @@ export default function PromocoesKiosk() {
       if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
     };
   }, [selectedProgram, autoPlay, startAutoScroll]);
-
-
-  // Pré-carrega imagens do programa atual/anterior/próximo com debounce + cancelamento
-  const preloadedUrlsRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    const pending: HTMLImageElement[] = [];
-    const timer = window.setTimeout(() => {
-      const list = mergeProgramList(programas);
-      if (!list.length) return;
-      const onAirIdx = onAirProgram ? list.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome)) : -1;
-      const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
-      const targets = [
-        list[activeIdx],
-        list[(activeIdx + 1) % list.length],
-        list[(activeIdx - 1 + list.length) % list.length],
-      ].filter(Boolean);
-      const urls = new Set<string>();
-      for (const prog of targets) {
-        if (prog?.capa) urls.add(prog.capa);
-        const tests = getTestemunhaisForProgram(prog!);
-        for (const t of tests) if (t.imagem_url) urls.add(t.imagem_url);
-      }
-      const cache = preloadedUrlsRef.current;
-      urls.forEach(url => {
-        if (cache.has(url)) return;
-        const img = new Image();
-        img.decoding = "async";
-        img.src = url;
-        img.onload = img.onerror = () => cache.add(url);
-        pending.push(img);
-      });
-    }, 180);
-
-    return () => {
-      window.clearTimeout(timer);
-      for (const img of pending) {
-        if (!img.complete) {
-          img.onload = null;
-          img.onerror = null;
-          img.src = ""; // aborta o download em navegadores modernos
-        }
-      }
-    };
-  }, [coverIndex, onAirProgram, programas, testemunhais]);
 
 
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
@@ -1872,6 +1768,29 @@ export default function PromocoesKiosk() {
           userId={audienceUserId}
         />
 
+        {/* Citações disponíveis nos programas cadastrados para esta emissora. */}
+        {filteredPrograms.length > 0 && (
+          <nav aria-label="Citações dos programas" className="w-full flex flex-wrap items-center gap-2 -mt-3">
+            {filteredPrograms.map((programa) => {
+              const isOnAir = !!onAirProgram && normalizeProgramName(onAirProgram.nome) === normalizeProgramName(programa.nome);
+              return (
+                <Button
+                  key={programa.id}
+                  type="button"
+                  variant="glass"
+                  title={`Citação: ${programa.nome}`}
+                  aria-label={`Abrir citação de ${programa.nome}`}
+                  onClick={() => { setSelectedProgram(programa); stopAutoScroll(); }}
+                  className="h-12 w-14 sm:h-14 sm:w-16 p-1 border-2 transition-transform hover:scale-105 focus-visible:ring-2"
+                  style={{ background: promoAccentGradient, borderColor: isOnAir ? "var(--promo-border)" : "transparent", color: "var(--promo-text)" }}
+                >
+                  <img src={programa.selo} alt="" className="w-full h-full object-contain" />
+                </Button>
+              );
+            })}
+          </nav>
+        )}
+
         {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) - oculta para usuário Positiva */}
         {!isPositivaUser && (() => {
           const a = Math.max(0, audioCount ?? 0);
@@ -2036,179 +1955,35 @@ export default function PromocoesKiosk() {
         })()}
 
 
-        {/* Banner rotativo + capa do programa no ar */}
-        {(() => {
-          // Exibe SOMENTE os programas que possuem citações cadastradas
-          const scheduleList = filteredPrograms;
-          const onAirIdx = onAirProgram
-            ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
-            : -1;
-          const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
-          const currentProg = (onAirIdx >= 0 ? scheduleList[onAirIdx] : null)
-            ?? scheduleList[activeIdx]
-            ?? scheduleList[0]
-            ?? null;
-          const goPrev = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (!scheduleList.length) return;
-            setCoverSlideDir("left");
-            setCoverIndex((activeIdx - 1 + scheduleList.length) % scheduleList.length);
-          };
-          const goNext = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (!scheduleList.length) return;
-            setCoverSlideDir("right");
-            setCoverIndex((activeIdx + 1) % scheduleList.length);
-          };
-          return (
-            <div className="w-full flex gap-4 items-stretch">
-              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ height: 276 }}>
-                {banners.length > 0 ? (
-                  <div className="relative w-full h-full overflow-hidden">
-                    <div
-                      className="flex transition-transform duration-700 ease-in-out h-full"
-                      style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
-                    >
-                      {banners.map((banner) => (
-                        <div key={banner.id} className="w-full h-full flex-shrink-0 flex items-center justify-center bg-black/20">
-                          <img src={banner.imagem_url} alt={banner.texto} className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
+        {/* Banners exibem exclusivamente a Imagem 1 cadastrada. */}
+        <div className="w-full overflow-hidden rounded-lg shadow-2xl relative h-[220px] sm:h-[276px]">
+          {banners.length > 0 ? (
+            <div className="relative w-full h-full overflow-hidden">
+              <div className="flex transition-transform duration-700 ease-in-out h-full" style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}>
+                {banners.map((banner) => (
+                  <div key={banner.id} className="w-full h-full flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: "var(--promo-btn-a)" }}>
+                    <img src={banner.imagem_url} alt={banner.nome || "Banner da promoção"} className="w-full h-full object-contain" />
                   </div>
-                ) : (
-                  <div className="h-[200px] flex items-center justify-center text-white/30">Nenhum banner ativo</div>
-                )}
-
-                {banners.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                    <button
-                      onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "rgba(0,0,0,0.35)" }}>
-                      {banners.map((_, i) => (
-                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer flex items-center justify-center hover:opacity-80 transition-opacity" aria-label={`Ir para banner ${i + 1}`}>
-                          <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+                ))}
               </div>
-
-              {currentProg && (
-                <div
-                  className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03] shadow-2xl border border-white/10"
-                  style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (currentProg) {
-                      // Mantém a versão unificada do programa para que a busca da
-                      // citação considere todos os IDs das grades duplicadas.
-                      setSelectedProgram({
-                        ...currentProg,
-                        mergedIds: [...(currentProg.mergedIds || [currentProg.id])],
-                        diasSemana: [...(currentProg.diasSemana || [])],
-                        schedules: (currentProg.schedules || []).map(schedule => ({
-                          ...schedule,
-                          dias: [...schedule.dias],
-                        })),
-                      });
-                      stopAutoScroll();
-                    }
-                  }}
-                  title={`Citações - ${currentProg.nome}`}
-                >
-                  {/* Badge No Ar (se for o programa atual) */}
-                  {onAirProgram && normalizeProgramName(onAirProgram.nome) === normalizeProgramName(currentProg.nome) ? (
-                    <div className="pointer-events-none absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md z-20 flex items-center gap-1.5 shadow-lg bg-red-600 text-white">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                      No Ar
-                    </div>
-                  ) : null}
-
-                  {/* Badge Citações */}
-                  <div
-                    className="pointer-events-none absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md z-20 whitespace-nowrap shadow-lg transition-opacity duration-200"
-                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}
-                  >
-                    Citações
-                  </div>
-
-                  {/* Fundo em degradê (cores escolhidas) com a LOGO do programa centralizada */}
-                  {(() => {
-                    const logoImg = (currentProg as any).selo || "";
-                    return (
-                      <div
-                        key={normalizeProgramName(currentProg.nome)}
-                        className="absolute inset-0 w-full h-full flex items-center justify-center p-6"
-                        style={{
-                          background: promoAccentGradient,
-                          animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
-                        }}
-                      >
-                        {logoImg ? (
-                          <img
-                            src={logoImg}
-                            alt={currentProg.nome}
-                            className="max-w-full max-h-full object-contain drop-shadow-2xl"
-                            loading="eager"
-                            decoding="async"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center text-center gap-2">
-                            <div className="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
-                              <Radio size={24} className="animate-pulse" style={{ color: telaPromoConfig.btn_text_color }} />
-                            </div>
-                            <span className="text-xs font-bold line-clamp-2" style={{ color: telaPromoConfig.btn_text_color }}>{currentProg.nome}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Gradiente inferior com nome do programa e indicação de clique */}
-                  <div className="absolute inset-x-0 bottom-0 pt-8 pb-2 px-2.5 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 flex flex-col justify-end pointer-events-none">
-                    <span className="text-xs font-bold text-white leading-tight drop-shadow line-clamp-1">{currentProg.nome}</span>
-                    <span className="text-[10px] text-white/70 drop-shadow">Clique para ver citação</span>
-                  </div>
-
-                  {scheduleList.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={goPrev}
-                        className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-20"
-                        aria-label="Programa anterior"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={goNext}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-20"
-                        aria-label="Próximo programa"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
-          );
-        })()}
+          ) : (
+            <div className="h-full flex items-center justify-center opacity-70">Nenhum banner ativo</div>
+          )}
+          {banners.length > 1 && (
+            <>
+              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8" aria-label="Banner anterior"><ChevronLeft size={20} /></Button>
+              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" aria-label="Próximo banner"><ChevronRight size={20} /></Button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "var(--promo-btn-a)" }}>
+                {banners.map((_, i) => (
+                  <Button variant="ghost" size="icon" key={i} onClick={() => changeBanner(i)} className="h-5 w-8 p-0" aria-label={`Ir para banner ${i + 1}`}>
+                    <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Programas removidos conforme solicitado */}
 
@@ -2217,50 +1992,20 @@ export default function PromocoesKiosk() {
           <div>
             <h2 className="text-lg font-bold mb-4" style={{ color: "white" }}>Promoções</h2>
 
-            <div className="grid grid-cols-4 gap-4">
-              {botoes.map(promo => {
-                const title = (promo.botao_url || promo.nome || "").toLowerCase();
-                const PromoIcon =
-                  title.includes("prêmio") || title.includes("premio") ? Gift :
-                  title.includes("pizza") ? Pizza :
-                  title.includes("burger") || title.includes("hambur") ? ShoppingBag :
-                  title.includes("resenha") || title.includes("happy") || title.includes("cervej") || title.includes("chop") ? Beer :
-                  title.includes("estrada") || title.includes("moviment") ? Truck :
-                  title.includes("positiva") && title.includes("parada") ? Trophy :
-                  title.includes("night") || title.includes("noite") || title.includes("cabaré") || title.includes("balada") ? PartyPopper :
-                  title.includes("music") || title.includes("karaoke") || title.includes("palco") ? Music :
-                  title.includes("amor") || title.includes("heart") || title.includes("namor") ? Heart :
-                  title.includes("ingresso") || title.includes("ticket") ? Ticket :
-                  title.includes("star") || title.includes("estrela") ? Star :
-                  Sparkles;
-
-                const cardRadius = telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "16px";
-                const buttonIcon = (promo as any).botao_icone_url || resolveSafePromoButton(promo);
-
-                return (
-                  <div
-                    key={promo.id}
-                    className="w-full h-16 cursor-pointer transition-all duration-200 flex items-center gap-3 px-4 font-bold text-sm outline-4 outline-transparent hover:scale-[1.03] shadow-lg overflow-hidden"
-                    style={{
-                      background: `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, ${telaPromoConfig.btn_color_b} 100%)`,
-                      color: telaPromoConfig.btn_text_color,
-                      borderRadius: cardRadius,
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
-                    onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
-                    onClick={() => setSelectedPromo(promo)}
-                  >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
-                      {buttonIcon ? (
-                        <img src={buttonIcon} alt={promo.botao_url || promo.nome} className="w-7 h-7 object-contain" />
-                      ) : (
-                        <PromoIcon size={18} />
-                      )}
-                    </div>
-                    <span className="truncate">{promo.botao_url || promo.nome}</span>
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {botoes.map(promo => (
+                <Button
+                  key={promo.id}
+                  type="button"
+                  variant="glass"
+                  title={promo.nome || promo.botao_url}
+                  onClick={() => setSelectedPromo(promo)}
+                  className="w-full h-14 min-w-0 px-3 text-sm normal-case whitespace-normal break-words text-center leading-tight border-0 hover:brightness-110"
+                  style={{ background: promoAccentGradient, color: "var(--promo-text)", borderRadius: telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "8px" }}
+                >
+                  <span className="line-clamp-2">{promo.nome || promo.botao_url}</span>
+                </Button>
+              ))}
             </div>
           </div>
         )}
@@ -2422,150 +2167,32 @@ export default function PromocoesKiosk() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Programação */}
-      <Dialog open={!!selectedProgram} onOpenChange={(open) => { 
-        if (!open) closeProgramModal(); 
-        else {
-          // Reset scroll to top when opening the modal
-          setTimeout(() => {
-            if (programModalScrollRef.current) {
-              programModalScrollRef.current.scrollTop = 0;
-            }
-          }, 0);
-        }
-      }}>
-        <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:!w-10 [&>button]:!h-10 [&>button]:!rounded-full [&>button]:!flex [&>button]:!items-center [&>button]:!justify-center [&>button]:!text-white [&>button]:!font-bold [&>button]:!transition [&>button]:!shadow-[0_0_12px_rgba(0,0,0,0.4)] [&>button]:hover:!scale-110 [&>button]:!top-3 [&>button]:!right-3 [&>button_svg]:!w-[18px] [&>button_svg]:!h-[18px] [&>button]:!border-none" style={{ backgroundColor: "#111111", "--layout-accent-color": "var(--layout-accent-color, #a60101)" } as any}>
-          <DialogTitle className="sr-only">Citações do Programa {selectedProgram?.nome}</DialogTitle>
-          {/* Custom style to override shadcn close button colors to match theme */}
-          <style>{`
-            [data-state=open] .promo-dialog-close-theme button {
-              background-color: var(--layout-accent-color, #a60101) !important;
-            }
-          `}</style>
-          <div className="promo-dialog-close-theme h-full flex flex-col">
-
-          {/* Botões de ajuste de fonte ao lado esquerdo do botão fechar */}
-          <div className="absolute top-3 right-16 z-50 flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setFontSize(s => Math.max(12, s - 2))}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold hover:scale-110 transition shadow-[0_0_12px_rgba(0,0,0,0.4)]"
-              style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
-              title="Diminuir texto"
-            >
-              <Minus size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setFontSize(s => Math.min(56, s + 2))}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold hover:scale-110 transition shadow-[0_0_12px_rgba(0,0,0,0.4)]"
-              style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
-              title="Aumentar texto"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-          <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
-              {/* Header com Logo e Horário */}
-              <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 flex-shrink-0 gap-3" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
-                  <div className="flex items-center gap-4">
-                    {(() => {
-                      const dlgCover = (selectedProgram as any)?.selo || "";
-                      if (dlgCover) {
-                        return (
-                          <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">
-                            <img src={dlgCover} alt={selectedProgram?.nome} className="w-full h-full object-cover" />
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 text-red-400 border border-white/10">
-                          <Radio size={24} />
-                        </div>
-                      );
-                    })()}
-                    <div className="flex flex-col">
-                      <h2 className="text-xl font-black tracking-tight" style={{ color: "white" }}>{selectedProgram?.nome}</h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Clock size={14} className="text-white/40" />
-                        {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
-                          selectedProgram.schedules.map((s, i) => (
-                            <div key={i} className="text-sm font-bold" style={{ color: "rgba(255, 255, 255, 0.7)" }}>
-                              {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
-                              {s.dias.length > 0 && <span className="text-[10px] ml-1 opacity-50 font-normal">({s.dias.join(", ")})</span>}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-sm font-bold" style={{ color: "rgba(255, 255, 255, 0.7)" }}>
-                            {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-              </div>
-
-
-              {/* Container principal sem scroll lateral, permitindo que os boxes individuais tenham scroll interno se necessário */}
-              <div className="flex-1 min-h-0 px-4 sm:px-8 pb-32 flex flex-col items-center">
-                {(() => {
-                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
-                  if (tests.length === 0) {
-                    return (
-                      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center w-full">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
-                          <MessageSquareQuote size={22} style={{ color: "rgba(255,255,255,0.3)" }} />
-                        </div>
-                        <p className="text-sm" style={{ color: "rgba(255, 255, 255, 0.4)" }}>Nenhuma citação disponível para este programa.</p>
-                      </div>
-                    );
-                  }
-                  return (
-                    <div className="flex flex-col w-full py-4 h-full">
-                      {tests.map((t) => (
-                        <div
-                          key={t.id}
-                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full mb-12 last:mb-0 flex flex-col max-h-full"
-                          style={{ backgroundColor: "#1a1a1a" }}
-                        >
-                          {/* Barra de destaque no topo */}
-                          <div className="h-1 w-full flex-shrink-0" style={{ backgroundColor: (t as any).is_promo ? "#00BFF0" : "var(--layout-accent-color, #a60101)" }} />
-
-                          <div className="p-6 sm:p-8 overflow-y-auto promo-scroll min-h-0 flex-1">
-                            {/* Imagem do testemunhal removida conforme solicitado */}
-
-                            <div
-                              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent max-w-full"
-                              style={{ 
-                                fontSize: `${fontSize}px`, 
-                                lineHeight: 1.5, 
-                                color: "white",
-                                 wordBreak: "normal",
-                                 overflowWrap: "break-word",
-                                 hyphens: "none",
-                                display: "block"
-                              }}
-                              dangerouslySetInnerHTML={{
-                                __html: DOMPurify.sanitize(t.texto
-                                  .replace(/<p><br><\/p>/g, '<p>&nbsp;</p>')
-                                  .replace(/<p><\/p>/g, '<p>&nbsp;</p>')
-                                  .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
-                                  .replace(/background-color:\s*[^;"]+;?/gi, "background-color: transparent")
-                                  .replace(/font-size\s*:\s*[^;\"]+;?/gi, ""), {
-                                  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
-                                  ALLOWED_ATTR: ['style', 'class']
-                                }),
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
+      {/* Texto da citação, com leitura confortável e controles discretos. */}
+      <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
+        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
+          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14 border-b" style={{ borderColor: "var(--promo-border)", background: promoAccentGradient, color: "var(--promo-text)" }}>
+            <div className="flex items-center gap-4 min-w-0">
+              {selectedProgram?.selo && <img src={selectedProgram.selo} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
+              <div className="min-w-0">
+                <span className="text-xs font-semibold uppercase opacity-80">Citação do programa</span>
+                <DialogTitle className="text-lg sm:text-xl font-bold leading-tight break-words" style={{ color: "var(--promo-text)" }}>{selectedProgram?.nome}</DialogTitle>
               </div>
             </div>
+          </DialogHeader>
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2 border-b" style={{ borderColor: "var(--promo-border)" }}>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.max(12, s - 2))} aria-label="Diminuir texto" title="Diminuir texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Minus size={16} /></Button>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.min(56, s + 2))} aria-label="Aumentar texto" title="Aumentar texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Plus size={16} /></Button>
+          </div>
+          <div ref={programModalScrollRef} className="overflow-y-auto min-h-0 flex-1 px-5 sm:px-8 py-6 space-y-5 promo-scroll">
+            {selectedProgram && getTestemunhaisForProgram(selectedProgram).map((t) => (
+              <article key={t.id} className="border-l-4 pl-5 sm:pl-6" style={{ borderColor: "var(--promo-border)" }}>
+                <div
+                  className="promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent break-words"
+                  style={{ fontSize: `${fontSize}px`, lineHeight: 1.55, color: "var(--layout-page-text)", overflowWrap: "break-word" }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize((t.texto || "").replace(/(?:&nbsp;|\u00a0)/gi, " "), { ALLOWED_TAGS: ["b", "i", "em", "strong", "u", "br", "p", "span", "div", "ul", "ol", "li"] }) }}
+                />
+              </article>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
