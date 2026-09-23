@@ -432,7 +432,7 @@ Deno.serve(async (req) => {
 
         .not("tickertitulos", "is", null)
         .neq("tickertitulos", "")
-        .order("created_at", { ascending: false })
+        .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
       supabase
