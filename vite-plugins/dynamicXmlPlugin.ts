@@ -1898,6 +1898,41 @@ export function dynamicXmlPlugin(): Plugin {
           const parsedXml = parseXmlRequest(url);
           if (parsedXml) {
             const { file, slug, rawSlug } = parsedXml;
+            const liveFeed: Record<string, string> = {
+              "roteiro.xml": "serve-xml-roteiro-estudio",
+              "geral.xml": "serve-xml-geral",
+              "broadcast.xml": "serve-xml-broadcast",
+              "apenas-xml.xml": "serve-xml-broadcast",
+              "logos.xml": "serve-xml-logos",
+              "enquete.xml": "serve-xml-enquete",
+              "batalha.xml": "serve-xml-batalha",
+              "quiz.xml": "serve-xml-quiz",
+            };
+            const feed = liveFeed[file];
+            const uid = SLUG_TO_UID[slug] || (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(rawSlug) ? rawSlug : "");
+            if (feed && uid) {
+              try {
+                const upstream = new URL(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/${feed}`);
+                upstream.searchParams.set("user_id", uid);
+                if (file === "roteiro.xml") upstream.searchParams.set("estudio", "Estudio FM");
+                if (file === "geral.xml" || file === "enquete.xml" || file === "quiz.xml") upstream.searchParams.set("slug", slug);
+                const response = await fetch(upstream, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+                if (!response.ok) throw new Error(`Feed ${feed}: ${response.status}`);
+                const xml = await response.text();
+                if (!xml.includes("<?xml") || xml.includes("<error>")) throw new Error(`Feed ${feed}: resposta inválida`);
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.end(xml);
+              } catch (error) {
+                console.warn("[XML ao vivo]", error);
+                res.statusCode = 503;
+                res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                res.setHeader("Cache-Control", "no-store");
+                res.end("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Feed temporariamente indisponível</error>");
+              }
+              return;
+            }
             const { today, currentTime } = getBrasiliaDateTime();
 
             // 1. enquete.xml
