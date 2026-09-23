@@ -170,6 +170,7 @@ export type Database = {
           ativo: boolean | null
           background_url: string | null
           cargo: string | null
+          categoria: string | null
           created_at: string
           foto: string | null
           id: string
@@ -182,6 +183,7 @@ export type Database = {
           ativo?: boolean | null
           background_url?: string | null
           cargo?: string | null
+          categoria?: string | null
           created_at?: string
           foto?: string | null
           id?: string
@@ -194,6 +196,7 @@ export type Database = {
           ativo?: boolean | null
           background_url?: string | null
           cargo?: string | null
+          categoria?: string | null
           created_at?: string
           foto?: string | null
           id?: string
