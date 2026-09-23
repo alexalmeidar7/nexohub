@@ -652,8 +652,7 @@ export default function PromocoesKiosk() {
       if (!data) {
         const snapPromos = getSnapshotTable("promocoes");
         if (isPositivaStation) {
-          const filtered = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID || !p.user_id);
-          allPromos = filtered.length > 0 ? filtered : snapPromos;
+          allPromos = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID);
         } else if (syncDb?.userId) {
           allPromos = snapPromos.filter((p: any) => p.user_id === syncDb.userId);
         }
@@ -670,8 +669,7 @@ export default function PromocoesKiosk() {
       if (!data) {
         const snapTests = getSnapshotTable("testemunhais");
         if (isPositivaStation) {
-          const filtered = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID || !t.user_id);
-          activeTestemunhais = filtered.length > 0 ? filtered : snapTests;
+          activeTestemunhais = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID);
         } else if (syncDb?.userId) {
           activeTestemunhais = snapTests.filter((t: any) => t.user_id === syncDb.userId);
         }
@@ -683,7 +681,7 @@ export default function PromocoesKiosk() {
       }
 
       let rawProgs = data?.programas || [];
-      if (rawProgs.length === 0) {
+      if (!data && rawProgs.length === 0) {
         if (isPositivaStation) {
           rawProgs = syncDb?.programas && syncDb.programas.length > 0 ? syncDb.programas : DEFAULT_POSITIVA_PROGRAMAS;
         } else if (syncDb?.programas && syncDb.programas.length > 0) {
@@ -708,7 +706,7 @@ export default function PromocoesKiosk() {
       setProgramas(mapped);
 
       let aprs = data?.apresentadores || [];
-      if (aprs.length === 0) {
+      if (!data && aprs.length === 0) {
         if (isPositivaStation) {
           aprs = (DEFAULT_STATION_PARTICIPANTES["POSITIVA FM"] as any) || DEFAULT_POSITIVA_APRESENTADORES;
         } else if (syncDb?.apresentadores && syncDb.apresentadores.length > 0) {
@@ -852,7 +850,7 @@ export default function PromocoesKiosk() {
       // usuário logado (e do master, no caso de subusuário).
       const belongsToOwner = (row: any) => {
         if (ownerIds.length) return ownerIds.includes(row?.user_id);
-        return isPositivaStation && (row?.user_id === POSITIVA_USER_ID || !row?.user_id);
+        return isPositivaStation && row?.user_id === POSITIVA_USER_ID;
       };
        if (promoData === null) {
         allPromos = getSnapshotTable("promocoes").filter(belongsToOwner);
@@ -869,7 +867,7 @@ export default function PromocoesKiosk() {
             if (Array.isArray(parsed) && parsed.length > 0) {
               const map = new Map<string, any>();
               activeTestemunhais.forEach((t: any) => map.set(t.id, t));
-              parsed.forEach((t: any) => map.set(t.id, t));
+              parsed.filter(belongsToOwner).forEach((t: any) => map.set(t.id, t));
               activeTestemunhais = Array.from(map.values());
             }
           }
@@ -894,15 +892,15 @@ export default function PromocoesKiosk() {
       setPromocoes(allPromos);
       setTestemunhais(activeTestemunhais);
 
-      let rawProgs = progsData && progsData.length > 0 ? progsData : (edgeProgs.length > 0 ? edgeProgs : []);
-      if (rawProgs.length === 0 && !localUid && isPositiva) {
+      let rawProgs = progsData !== null ? progsData : edgeProgs;
+      if (progsData === null && rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
-      if (rawProgs.length === 0) {
+      if (progsData === null && rawProgs.length === 0) {
         const filtered = getSnapshotTable("programas").filter(belongsToOwner);
         if (filtered.length > 0) rawProgs = filtered;
       }
-      if (rawProgs.length === 0 && localUid) {
+      if (progsData === null && rawProgs.length === 0 && localUid) {
         const stationData = getStationDatabaseSync(localUid);
         if (stationData?.programas && stationData.programas.length > 0) {
           rawProgs = stationData.programas;
@@ -915,7 +913,7 @@ export default function PromocoesKiosk() {
           } catch { /* ignore */ }
         }
       }
-      if (rawProgs.length === 0 && !localUid && isPositiva) {
+      if (progsData === null && rawProgs.length === 0 && !localUid && isPositiva) {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
 
@@ -2188,7 +2186,7 @@ export default function PromocoesKiosk() {
 
       {/* Texto da citação, com leitura confortável e controles discretos. */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
+        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
           <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14 border-b" style={{ borderColor: "var(--promo-border)", background: promoAccentGradient, color: "var(--promo-text)" }}>
             <div className="flex items-center gap-4 min-w-0">
               {selectedProgram?.selo && <img src={selectedProgram.selo} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
