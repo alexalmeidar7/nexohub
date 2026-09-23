@@ -785,7 +785,8 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         .from("roteiros")
         .select("*")
         .in("user_id", candidateUserIds)
-        .order("created_at", { ascending: false });
+        .order("updated_at", { ascending: false });
+
       if (res.data && res.data.length > 0) {
         dbRoteiros = res.data.filter((r: any) => !r.programa_nome?.includes("<"));
       }
