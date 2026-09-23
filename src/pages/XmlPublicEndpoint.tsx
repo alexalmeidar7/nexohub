@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Check, Copy, Download, ExternalLink, RefreshCw, FileCode } from "lucide-react";
-import { findClientAccountById, findClientAccountByEmail, CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
+import { CLIENT_ACCOUNTS } from "@/lib/clientAuthAccounts";
 const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_BASE = envSupabase || (typeof window !== "undefined" ? window.location.origin : "");
 
@@ -58,12 +58,13 @@ export default function XmlPublicEndpoint() {
   );
 
   const cleanSlug = account?.slug || (cleanPathSlug && cleanPathSlug !== "xml" ? cleanPathSlug : (cleanQuery && !cleanQuery.includes("-") ? cleanQuery : "positivafm"));
-  const stationUid = account?.parentUserId || account?.id || (cleanQuery.includes("-") ? cleanQuery : "d17e65af-e407-466f-9b60-b55c43399513");
+  const stationUid = cleanQuery && /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(cleanQuery)
+    ? cleanQuery : (account?.parentUserId || account?.id || "");
   const stationName = account?.nome || (cleanSlug === "positivafm" ? "Positiva FM 99.1" : "House Mix Emissora");
   const rawFile = (resolvedFile || "broadcast.xml").toLowerCase();
   const filename = rawFile.endsWith(".xml") ? rawFile : `${rawFile}.xml`;
 
-  // Build corresponding Supabase fallback URL
+  // Build the official live endpoint (never another tenant's default XML)
   let supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-broadcast?user_id=${stationUid}`;
   if (filename.includes("geral")) {
     supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-geral?user_id=${stationUid}&slug=${cleanSlug}`;
@@ -85,6 +86,7 @@ export default function XmlPublicEndpoint() {
     try {
       // Feed oficial é sempre consultado diretamente. Dados locais e arquivos
       // gerados no build não podem substituir alterações recentes do banco.
+      if (!stationUid) throw new Error("Estação não identificada para este XML");
       const response = await fetch(`${supabaseFallbackUrl}${supabaseFallbackUrl.includes("?") ? "&" : "?"}t=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) throw new Error(`Feed XML indisponível (${response.status})`);
       const liveXml = await response.text();
@@ -103,7 +105,7 @@ export default function XmlPublicEndpoint() {
         setLoading(false);
       }
     }
-  }, [supabaseFallbackUrl]);
+  }, [supabaseFallbackUrl, stationUid]);
 
   useEffect(() => {
     let isMounted = true;
@@ -120,7 +122,7 @@ export default function XmlPublicEndpoint() {
           filename.includes("quiz") ||
           filename.includes("geral") ||
           filename.includes("roteiro") ||
-          filename.includes("broadcast"))
+          filename.includes("broadcast") || filename.includes("batalha") || filename.includes("logos") || filename.includes("tempo"))
       ) {
         loadXml(isMounted);
       }
