@@ -2,3 +2,4 @@
 - [ ] Garantir que os XMLs públicos consultem dados atuais da conta e estúdio corretos, sem cópias antigas.
 - [ ] Testar os feeds reais e confirmar o comportamento do editor.
 - [x] Conferir no /locutor os banners cadastrados, botões de citação sob os quadros e leitura da citação.
+- [ ] Ajustar botões de citação em /locutor (logo estável, WhatsApp Positiva, destaque no ar) e unificar o visual dos pop-ups.
