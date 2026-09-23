@@ -313,6 +313,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     const updatePayload: any = {
       conteudo_html: txtEditText,
       participantes: JSON.stringify(updatedParticipantes),
+      data_programa: new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
       updated_at: new Date().toISOString(),
     };
     if (tickertitulos !== null) updatePayload.tickertitulos = tickertitulos;
@@ -324,6 +325,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       .from("roteiros")
       .update(updatePayload)
       .eq("id", txtEditRoteiroId)
+      .eq("user_id", roteiro?.user_id || resolvedUserId || propEffectiveUserId || user?.id)
       .select("id");
 
     if (!error && (!updatedRows || updatedRows.length === 0) && roteiro?.programa_nome) {
@@ -354,9 +356,11 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       try {
         await regenRef.current({
           ...roteiro,
-          id: txtEditRoteiroId,
+          id: updatedRows?.[0]?.id || txtEditRoteiroId,
           conteudo_html: txtEditText,
           participantes: JSON.stringify(updatedParticipantes),
+          data_programa: updatePayload.data_programa,
+          updated_at: updatePayload.updated_at,
           ...(tickertitulos !== null ? { tickertitulos } : {}),
         });
       } catch (e) {
