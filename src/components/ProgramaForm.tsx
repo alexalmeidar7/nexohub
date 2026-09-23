@@ -232,6 +232,14 @@ async function persistPrograma(opts: {
   isUpdate: boolean;
 }): Promise<string | null> {
   const { targetId, ownerId, payload, isUpdate } = opts;
+  const friendly = (msg?: string | null) => {
+    const m = (msg || "").toLowerCase();
+    if (m.includes("row-level security") || m.includes("permission denied") || m.includes("jwt")) {
+      return "Sua sessão não tem permissão para gravar no banco. Saia e entre novamente com seu e-mail e senha para salvar o programa.";
+    }
+    return msg || null;
+  };
+
   try {
     if (isUpdate) {
       const { data, error } = await supabase
@@ -246,7 +254,7 @@ async function persistPrograma(opts: {
         .upsert({ id: targetId, user_id: ownerId, ...payload } as any, { onConflict: "id" })
         .select("id");
       if (!upErr && upData && upData.length > 0) return null;
-      return upErr?.message || "Não foi possível salvar as alterações do programa.";
+      return friendly(upErr?.message) || "Não foi possível salvar as alterações do programa.";
     }
     const isDbId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
     const { data, error } = await supabase
@@ -254,7 +262,8 @@ async function persistPrograma(opts: {
       .insert({ ...(isDbId ? { id: targetId } : {}), user_id: ownerId, ...payload } as any)
       .select("id");
     if (!error && data && data.length > 0) return null;
-    return error?.message || "Não foi possível cadastrar o programa.";
+    return friendly(error?.message) || "Não foi possível cadastrar o programa.";
+
   } catch (err: any) {
     return err?.message || "Falha de conexão ao salvar o programa.";
   }
