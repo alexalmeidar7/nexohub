@@ -1123,6 +1123,9 @@ export default function PromocoesKiosk() {
     if (normalized.replace(/\s+/g, "").includes("FLASHBACK")) {
       return "FLASHBACK";
     }
+    if (normalized.startsWith("WHATSAPP POSITIVA")) {
+      return "WHATSAPP POSITIVA";
+    }
 
     return normalized;
   };
@@ -1197,42 +1200,8 @@ export default function PromocoesKiosk() {
     return [...standardTests, ...promoTests];
   };
 
-  // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
-  const canonicalCoverByName = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const p of programas) {
-      const cover = p.capa || p.thumb || p.selo || "";
-      if (!cover) continue;
-      const key = normalizeProgramName(p.nome);
-      if (!map.has(key)) map.set(key, cover);
-    }
-    return map;
-  }, [programas]);
-
-  const normalizeCoverKey = (cover: string) => {
-    const value = cover.trim();
-    if (!value) return "";
-    if (value.startsWith("data:")) return value;
-
-    try {
-      const url = new URL(value, window.location.origin);
-      url.hash = "";
-      url.search = "";
-      return url.href.toLowerCase();
-    } catch {
-      return value.split("#")[0].split("?")[0].toLowerCase();
-    }
-  };
-
-  const isRemovedProgramCover = (cover: string) =>
-    normalizeCoverKey(cover).includes(REMOVED_PROGRAM_COVER_PATH);
-
   const isRemovedCitationProgram = (programName: string) => {
     const normalizedName = normalizeProgramName(programName);
-
-    if (normalizedName === "WHATSAPP POSITIVA" || normalizedName.startsWith("WHATSAPP POSITIVA SABADO")) {
-      return true;
-    }
 
     const isSertanejoSabado = normalizedName.includes("SERTANEJO BOM DEMAIS")
       && normalizedName.includes("EDICAO")
@@ -1246,9 +1215,7 @@ export default function PromocoesKiosk() {
   };
 
   const mergeProgramList = (list: ProgramaGrade[]) => {
-    const visibleList = list.filter(programa =>
-      !isRemovedProgramCover(programa.capa) && !isRemovedCitationProgram(programa.nome)
-    );
+    const visibleList = list.filter(programa => !isRemovedCitationProgram(programa.nome));
     const mergedByName = Array.from(
       visibleList
         .slice()
@@ -1256,13 +1223,11 @@ export default function PromocoesKiosk() {
         .reduce((map, programa) => {
           const dedupeKey = normalizeProgramName(programa.nome);
           const mergedIds = Array.from(new Set([...(programa.mergedIds || []), programa.id]));
-          const canonicalCover = canonicalCoverByName.get(dedupeKey) || programa.capa || "";
           const existing = map.get(dedupeKey);
 
           if (!existing) {
             map.set(dedupeKey, {
               ...programa,
-              capa: canonicalCover,
               mergedIds,
               apresentadoresIds: Array.from(new Set(programa.apresentadoresIds || [])),
               diasSemana: Array.from(new Set(programa.diasSemana || [])),
@@ -1276,7 +1241,7 @@ export default function PromocoesKiosk() {
             ]));
             existing.diasSemana = Array.from(new Set([...existing.diasSemana, ...programa.diasSemana]));
             existing.schedules = [...existing.schedules, ...programa.schedules];
-            if (canonicalCover) existing.capa = canonicalCover;
+            if (!existing.selo && programa.selo) existing.selo = programa.selo;
           }
 
           return map;
@@ -1287,12 +1252,11 @@ export default function PromocoesKiosk() {
     return Array.from(
       mergedByName.reduce((map, programa) => {
         const normalizedName = normalizeProgramName(programa.nome);
-        const coverKey = normalizeCoverKey(programa.capa);
         // As variações “Madruga” e “Madrugada Positiva” representam o mesmo
         // programa no carrossel de Citações e devem ocupar apenas um card.
         const visualKey = normalizedName.includes("MADRUGA")
           ? "programa:MADRUGA-POSITIVA"
-          : coverKey || `programa:${normalizedName}`;
+          : `programa:${normalizedName}`;
         const existing = map.get(visualKey);
 
         if (!existing) {
