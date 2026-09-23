@@ -232,6 +232,14 @@ async function persistPrograma(opts: {
   isUpdate: boolean;
 }): Promise<string | null> {
   const { targetId, ownerId, payload, isUpdate } = opts;
+  const friendly = (msg?: string | null) => {
+    const m = (msg || "").toLowerCase();
+    if (m.includes("row-level security") || m.includes("permission denied") || m.includes("jwt")) {
+      return "Sua sessão não tem permissão para gravar no banco. Saia e entre novamente com seu e-mail e senha para salvar o programa.";
+    }
+    return msg || null;
+  };
+
   try {
     if (isUpdate) {
       const { data, error } = await supabase
