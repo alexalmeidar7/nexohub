@@ -17,7 +17,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
   }, [uid, user?.email]);
 
   const hookSlug = useUserSlug(uid || undefined);
-  const resolvedSlug = clientAcc?.slug || hookSlug || "p";
+  const resolvedSlug = clientAcc?.slug || hookSlug || uid;
   const resolvedUid = clientAcc?.parentUserId || clientAcc?.id || uid;
 
   const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
@@ -26,7 +26,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
     ? window.location.origin
     : "https://housemix.nexobrasil.net";
 
-  const effectiveSupabaseUrl = envSupabase || currentOrigin;
+  const effectiveSupabaseUrl = envSupabase || "https://zzjfzxxvxbspbdkodoix.supabase.co";
 
   const feeds = useMemo(() => {
     const liveUrl = (feed: string, extra = "") => `${effectiveSupabaseUrl}/functions/v1/${feed}?user_id=${encodeURIComponent(resolvedUid)}${extra}`;
