@@ -1367,7 +1367,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const generateXml = (overrideBlocos?: Bloco[]): string => {
     const activeBlocos = overrideBlocos || blocos;
     const now = new Date();
-    const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const localDateStr = now.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
     const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const progObj = programas.find(p => p.id === programaId);
     const targetDate = localDateStr;
@@ -1624,7 +1624,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       const tickertitulos = allTitles.join("  •  ");
 
       const now = new Date();
-      const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const localDateStr = now.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
       const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const nowIso = now.toISOString();
 
