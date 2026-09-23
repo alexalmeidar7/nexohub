@@ -77,8 +77,6 @@ const PROGRAMAS_VISIVEIS = [
   "PALCO POSITIVA",
 ];
 
-const REMOVED_PROGRAM_COVER_PATH = "/programas/d17e65af-e407-466f-9b60-b55c43399513/d40fca1b-5f5a-4588-8d4a-35323fe88b9f_capa.webp";
-
 export function resolveSafePromoBanner(p: any): string {
   // A arte cadastrada é a única fonte do banner; não inferir por nome.
   return typeof p?.imagem_url === "string" ? p.imagem_url.trim() : "";
@@ -395,6 +393,7 @@ export default function PromocoesKiosk() {
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
+  const hadOnlineProgramsRef = useRef(false);
   const [testemunhais, setTestemunhais] = useState<Testemunhal[]>([]);
   const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number; apresentadorId: string; diasSemana?: string[] } | null>(null);
   const [apresentadores, setApresentadores] = useState<any[]>([]);
@@ -578,6 +577,7 @@ export default function PromocoesKiosk() {
 
 
   useEffect(() => {
+    hadOnlineProgramsRef.current = false;
     const isPositivaStation = !validSlug || validSlug === "positivafm" || validSlug === "positiva";
 
     const loadPublic = async () => {
@@ -590,6 +590,9 @@ export default function PromocoesKiosk() {
           if (res?.data && !res.error) data = res.data;
         } catch {}
       }
+      // Uma falha temporária não deve substituir a logo do banco por uma arte do fallback.
+      if (!data && hadOnlineProgramsRef.current) return;
+      if (data) hadOnlineProgramsRef.current = true;
 
       const syncDb = validSlug ? getStationDatabaseSync(validSlug) : null;
 
@@ -686,7 +689,7 @@ export default function PromocoesKiosk() {
         descricao: p.descricao || "",
         schedules: p.schedules || [{ dias: p.dias_semana || p.diasSemana || [], horarioInicio: p.horario_inicio || p.horarioInicio, horarioFim: p.horario_fim || p.horarioFim }],
       }));
-      setProgramas(mapped);
+       setProgramas(mapped);
 
       let aprs = data?.apresentadores || [];
       if (!data && aprs.length === 0) {
@@ -900,7 +903,7 @@ export default function PromocoesKiosk() {
         rawProgs = DEFAULT_POSITIVA_PROGRAMAS;
       }
 
-      const mapped = rawProgs.map((p: any) => ({
+       const mapped = rawProgs.map((p: any) => ({
         id: p.id,
         mergedIds: p.mergedIds || [p.id],
         nome: p.nome,
@@ -915,7 +918,8 @@ export default function PromocoesKiosk() {
         descricao: p.descricao || "",
         schedules: p.schedules || [{ dias: p.dias_semana || p.diasSemana || [], horarioInicio: p.horario_inicio || p.horarioInicio, horarioFim: p.horario_fim || p.horarioFim }],
       }));
-      setProgramas(mapped);
+       if (progsData !== null) hadOnlineProgramsRef.current = true;
+       if (progsData !== null || !hadOnlineProgramsRef.current) setProgramas(mapped);
 
       let aprs: any[] = [];
       try {
