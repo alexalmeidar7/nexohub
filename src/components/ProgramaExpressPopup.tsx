@@ -509,7 +509,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n`;
     xml += `  <programa>${programaNome}</programa>\n`;
     xml += `  <estudio>${estudio}</estudio>\n`;
-    xml += `  <data>${new Date().toISOString().split("T")[0]}</data>\n`;
+    xml += `  <data>${new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" })}</data>\n`;
 
     if (participantes.length > 0) {
       xml += `  <participantes>\n`;
