@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       .select("programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
       .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
-      .limit(200);
+       .limit(200);
     if (queryError) throw queryError;
 
     const norm = (s: string) =>
