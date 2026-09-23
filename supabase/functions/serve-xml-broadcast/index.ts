@@ -630,7 +630,7 @@ Deno.serve(async (req) => {
     let aSeguirTexto = "";
 
     if (aSeguirEnabled) {
-      const allProgs = progsRes.data || [];
+      const allProgs = (progsRes.data || []).filter((p: any) => isFmStudio(p.estudio));
       let nextProg: any = null;
       let nextStart = -1;
 
