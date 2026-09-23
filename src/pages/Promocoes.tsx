@@ -2188,8 +2188,8 @@ export default function PromocoesKiosk() {
               <article key={t.id} className="border-l-4 pl-5 sm:pl-6" style={{ borderColor: "var(--promo-border)" }}>
                 <div
                   className="promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent break-words"
-                  style={{ fontSize: `${fontSize}px`, lineHeight: 1.55, color: "var(--layout-page-text)", overflowWrap: "anywhere" }}
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t.texto || "", { ALLOWED_TAGS: ["b", "i", "em", "strong", "u", "br", "p", "span", "div", "ul", "ol", "li"] }) }}
+                  style={{ fontSize: `${fontSize}px`, lineHeight: 1.55, color: "var(--layout-page-text)", overflowWrap: "break-word" }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize((t.texto || "").replace(/(?:&nbsp;|\u00a0)/gi, " "), { ALLOWED_TAGS: ["b", "i", "em", "strong", "u", "br", "p", "span", "div", "ul", "ol", "li"] }) }}
                 />
               </article>
             ))}

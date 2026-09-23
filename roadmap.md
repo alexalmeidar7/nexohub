@@ -1,4 +1,4 @@
 - [ ] Corrigir a gravação do roteiro sem falso sucesso nem sobrescrita por salvamento automático.
 - [ ] Garantir que os XMLs públicos consultem dados atuais da conta e estúdio corretos, sem cópias antigas.
 - [ ] Testar os feeds reais e confirmar o comportamento do editor.
-- [ ] Conferir no /locutor os banners cadastrados, botões de citação sob os quadros e leitura da citação.
+- [x] Conferir no /locutor os banners cadastrados, botões de citação sob os quadros e leitura da citação.
