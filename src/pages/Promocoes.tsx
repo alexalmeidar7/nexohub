@@ -1951,14 +1951,6 @@ export default function PromocoesKiosk() {
         )}
       </div>
 
-      {/* Modal da Promoção */}
-      <style>{`
-        .promo-text-force-white,
-        .promo-text-force-white * {
-          color: white !important;
-        }
-      `}</style>
-
       {/* Dialog de detalhes de audiência do dia */}
       <Dialog open={audienceDetailsOpen} onOpenChange={setAudienceDetailsOpen}>
         <DialogContent className="max-w-3xl text-white border border-white/10 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
@@ -2060,7 +2052,7 @@ export default function PromocoesKiosk() {
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.min(56, s + 2))} aria-label="Aumentar texto" title="Aumentar texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Plus size={16} /></Button>
           </div>
           <div ref={modalScrollRef} className="overflow-y-auto min-h-0 flex-1 px-5 sm:px-8 py-6 space-y-5 promo-scroll">
-            {selectedPromo?.imagem_url && <img src={selectedPromo.imagem_url} alt={`Banner de ${selectedPromo.nome || "promoção"}`} className="w-full max-h-[220px] object-contain rounded-md" />}
+            {selectedPromo?.imagem_url && <img src={selectedPromo.imagem_url} alt={`Banner de ${selectedPromo.nome || "promoção"}`} className="w-full max-h-[220px] object-contain rounded-md shrink-0" />}
             {(selectedPromo?.data_inicio || selectedPromo?.data_fim) && <div className="text-xs flex items-center gap-1.5 opacity-70"><Calendar size={14} /><span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span></div>}
             <article className="border-l-4 pl-5 sm:pl-6" style={{ borderColor: "var(--promo-border)" }}>
               <div
