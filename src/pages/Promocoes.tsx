@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, Legend } from "recharts";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { Slider } from "@/components/ui/slider";
@@ -79,26 +80,8 @@ const PROGRAMAS_VISIVEIS = [
 const REMOVED_PROGRAM_COVER_PATH = "/programas/d17e65af-e407-466f-9b60-b55c43399513/d40fca1b-5f5a-4588-8d4a-35323fe88b9f_capa.webp";
 
 export function resolveSafePromoBanner(p: any): string {
-  const norm = `${p?.nome || ""} ${p?.botao_url || ""} ${p?.imagem_url || ""}`.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("premio") || norm.includes("que premio")) return "/promocoes/que-premio-e-esse.png";
-  if (norm.includes("role")) return "/promocoes/role-positiva.png";
-  if (norm.includes("parada") || norm.includes("estrada")) return "/promocoes/parada-positiva.png";
-  if (norm.includes("burger") || norm.includes("burguer")) return "/promocoes/super-burguer.png";
-  if (norm.includes("resenha")) return "/promocoes/resenha.png";
-  if (norm.includes("caldas")) return "/promocoes/partiu-caldas.png";
-  if (norm.includes("peguei")) return "/promocoes/te-peguei-positiva.png";
-  if (norm.includes("pix")) return "/promocoes/meu-pix-positiva.png";
-  if (norm.includes("encontro")) return "/promocoes/encontro-marcado.png";
-  if (norm.includes("luan") || norm.includes("historico")) return "/promocoes/luan-santana.png";
-  if (norm.includes("cabare")) return "/promocoes/cabare.png";
-  if (norm.includes("movimento")) return "/promocoes/movimento.png";
-
-  if (p?.imagem_url) {
-    return p.imagem_url;
-  }
-  return "/promocoes/que-premio-e-esse.png";
+  // A arte cadastrada é a única fonte do banner; não inferir por nome.
+  return typeof p?.imagem_url === "string" ? p.imagem_url.trim() : "";
 }
 
 export function resolveSafePromoButton(p: any): string {
@@ -668,7 +651,7 @@ export default function PromocoesKiosk() {
       });
 
       let allPromos = data?.promocoes || [];
-      if (allPromos.length === 0) {
+      if (!data) {
         const snapPromos = getSnapshotTable("promocoes");
         if (isPositivaStation) {
           const filtered = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID || !p.user_id);
@@ -680,14 +663,13 @@ export default function PromocoesKiosk() {
       allPromos = allPromos.map((p: any) => ({
         ...p,
         imagem_url: resolveSafePromoBanner(p),
-        banner_l_url: resolveSafePromoBanner(p),
-        botao_icone_url: resolveSafePromoButton(p),
+        banner_l_url: p.banner_l_url || "",
         nome: p.nome || p.botao_url || "Promoção",
       }));
       setPromocoes(allPromos);
 
       let activeTestemunhais = data?.testemunhais || [];
-      if (activeTestemunhais.length === 0) {
+      if (!data) {
         const snapTests = getSnapshotTable("testemunhais");
         if (isPositivaStation) {
           const filtered = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID || !t.user_id);
@@ -874,17 +856,17 @@ export default function PromocoesKiosk() {
         if (ownerIds.length) return ownerIds.includes(row?.user_id);
         return isPositivaStation && (row?.user_id === POSITIVA_USER_ID || !row?.user_id);
       };
-      if (allPromos.length === 0) {
+       if (promoData === null) {
         allPromos = getSnapshotTable("promocoes").filter(belongsToOwner);
       }
-      if (activeTestemunhais.length === 0) {
+       if (testData === null) {
         activeTestemunhais = getSnapshotTable("testemunhais").filter(belongsToOwner);
       }
 
-      if (localUid) {
+       if (localUid) {
         try {
-          const rawLocal = localStorage.getItem(`nexohub_testemunhais_${localUid}`);
-          if (rawLocal) {
+           const rawLocal = testData === null ? localStorage.getItem(`nexohub_testemunhais_${localUid}`) : null;
+           if (rawLocal) {
             const parsed = JSON.parse(rawLocal);
             if (Array.isArray(parsed) && parsed.length > 0) {
               const map = new Map<string, any>();
@@ -907,8 +889,7 @@ export default function PromocoesKiosk() {
       allPromos = allPromos.map((p: any) => ({
         ...p,
         imagem_url: resolveSafePromoBanner(p),
-        banner_l_url: resolveSafePromoBanner(p),
-        botao_icone_url: resolveSafePromoButton(p),
+        banner_l_url: p.banner_l_url || "",
         nome: p.nome || p.botao_url || "Promoção",
       }));
 
@@ -1193,7 +1174,7 @@ export default function PromocoesKiosk() {
       }
     }
 
-    // Mapa ID -> Nome de programas conhecidos (programas carregados + snapshot estático)
+    // Só associa IDs de programas carregados para esta conta.
     const progNameById = new Map<string, string>();
     for (const p of programas) {
       progNameById.set(p.id, normalizeProgramName(p.nome));
@@ -1201,19 +1182,6 @@ export default function PromocoesKiosk() {
         p.mergedIds.forEach(id => progNameById.set(id, normalizeProgramName(p.nome)));
       }
     }
-    try {
-      const snapProgs = getSnapshotTable("programas");
-      for (const p of snapProgs) {
-        if (p.id && p.nome) {
-          const sName = normalizeProgramName(p.nome);
-          progNameById.set(p.id, sName);
-          if (sName === targetNameNorm) {
-            baseIds.add(p.id);
-          }
-        }
-      }
-    } catch {}
-
     const matches = testemunhais.filter(t => {
       const tIds = getTestemunhalProgramIds(t);
       if (tIds.length === 0) return false;
@@ -1227,7 +1195,6 @@ export default function PromocoesKiosk() {
       for (const tId of tIds) {
         const refName = progNameById.get(tId);
         if (refName && refName === targetNameNorm) return true;
-        if (refName && (refName.includes(targetNameNorm) || targetNameNorm.includes(refName))) return true;
       }
 
       return false;
@@ -1366,12 +1333,6 @@ export default function PromocoesKiosk() {
   const programNamesWithTestemunhais = useMemo(() => {
     const set = new Set<string>();
     const progNameById = new Map<string, string>();
-    try {
-      const snapProgs = getSnapshotTable("programas");
-      for (const p of snapProgs) {
-        if (p.id && p.nome) progNameById.set(p.id, normalizeProgramName(p.nome));
-      }
-    } catch {}
     for (const p of programas) {
       progNameById.set(p.id, normalizeProgramName(p.nome));
       if (p.mergedIds) {
@@ -1395,7 +1356,7 @@ export default function PromocoesKiosk() {
     programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
   );
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const allPromos = promocoes
     .filter(p => (!p.data_inicio || p.data_inicio.slice(0, 10) <= todayStr) && (!p.data_fim || p.data_fim.slice(0, 10) >= todayStr))
     .sort((a, b) => {
