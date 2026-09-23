@@ -905,17 +905,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (totalNews === 0) return;
       setAutoSaving(true);
       try {
-        const xmlContent = generateXml();
         const pNome = programas.find(p => p.id === programaId)?.nome || "";
         let html = `<h2 style="text-align:center;font-weight:bold;">PROGRAMA EXPRESS — ${pNome}</h2>`;
         if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
         blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
-        const blob = new Blob([xmlContent], { type: "application/xml" });
-        const filePath = editingXmlPath || `express/${user.id}/express_${editingId}.xml`;
-        if (!editingXmlPath) setEditingXmlPath(filePath);
-        await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
-        const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
         const nowIso = new Date().toISOString();
@@ -923,12 +917,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           programa_nome: pNome, 
           estudio, 
           titulo: `${autoTitlePrefix()}PROGRAMA EXPRESS — ${pNome}`, 
-          subtitulo: `express_xml::${urlData.publicUrl}`, 
           conteudo_html: html, 
           participantes: blocosJson, 
           tickertitulos: autoTickerTitulos,
           configuracoes: configuracoes as any,
-          xml_pushed_at: nowIso,
           updated_at: nowIso,
         } as any).eq("id", editingId).eq("user_id", effectiveUserId || user.id).select("id");
         if (saveError || !savedRows?.length) throw saveError || new Error("O roteiro não foi encontrado na conta atual");

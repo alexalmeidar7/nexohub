@@ -765,7 +765,6 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     const effectiveUserId = await resolveEffectiveUserId();
     const progs = _currentProgramas || programas;
 
-    const acc = findClientAccountById(effectiveUserId) || findClientAccountByEmail(user?.email);
     const candidateUserIds = [effectiveUserId];
 
     let dbRoteiros: any[] = [];
