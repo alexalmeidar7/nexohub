@@ -97,6 +97,20 @@ export default function XmlPublicEndpoint() {
 
   const loadXml = useCallback(async (isMounted = true) => {
     try {
+      // Feed oficial é sempre consultado diretamente. Dados locais e arquivos
+      // gerados no build não podem substituir alterações recentes do banco.
+      const response = await fetch(`${supabaseFallbackUrl}${supabaseFallbackUrl.includes("?") ? "&" : "?"}t=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Feed XML indisponível (${response.status})`);
+      const liveXml = await response.text();
+      if (!liveXml.includes("<") || liveXml.includes("<error>") || liveXml.includes("<!DOCTYPE html>")) {
+        throw new Error("Feed XML retornou conteúdo inválido");
+      }
+      if (isMounted) {
+        setXmlContent(liveXml.trim());
+        setLoading(false);
+        setError(null);
+      }
+      return;
       const { today, currentTime } = getBrasiliaDateTime();
 
       // Special dynamic handler for enquete.xml
@@ -381,6 +395,7 @@ export default function XmlPublicEndpoint() {
       }
     } catch (err: any) {
       if (isMounted) {
+        setXmlContent("");
         setError(err?.message || "Erro ao carregar feed XML");
         setLoading(false);
       }
