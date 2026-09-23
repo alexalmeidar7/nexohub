@@ -1010,7 +1010,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       }
     }
     const finalHistorico = Array.from(progMap.values());
-    finalHistorico.sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
+    finalHistorico.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime());
 
     setHistorico(finalHistorico);
     setAgendados(activeAgendados);
