@@ -1368,7 +1368,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     const activeBlocos = overrideBlocos || blocos;
     const now = new Date();
     const localDateStr = now.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    const localTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const localTimeStr = now.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false });
     const progObj = programas.find(p => p.id === programaId);
     const targetDate = localDateStr;
     const targetHorario = progObj?.horario_inicio?.slice(0, 5) || editData?.horario?.slice(0, 5) || localTimeStr;
