@@ -342,9 +342,9 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       }
     }
 
-    if (!error && (!updatedRows || updatedRows.length === 0)) {
+    if (error || !updatedRows || updatedRows.length === 0) {
       setTxtSaving(false);
-      toast.error("Não foi possível salvar este roteiro no servidor.");
+      toast.error(`Não foi possível salvar este roteiro no servidor: ${error?.message || "registro não encontrado"}`);
       return;
     }
 
