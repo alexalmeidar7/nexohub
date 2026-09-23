@@ -1637,14 +1637,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       let dbSaveSuccess = false;
       if (!roteiroId) {
-        // Try finding existing record in DB for this program & studio
+        // Try finding existing record in DB for this program & studio (strictly this account)
         try {
           const { data: existingProg } = await supabase
             .from("roteiros")
             .select("id")
+            .in("user_id", Array.from(new Set([ownerId, user.id])))
             .eq("programa_nome", programaNome)
             .eq("estudio", estudio)
             .is("agendado_para_envio", null)
+            .order("updated_at", { ascending: false })
+            .limit(1)
             .maybeSingle();
           if (existingProg?.id && isCleanUuid(existingProg.id)) {
             roteiroId = existingProg.id;
@@ -1652,6 +1655,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           }
         } catch {}
       }
+
 
       if (!roteiroId) {
         // Try insert with ownerId first (client station's ID) so public XML endpoints find it
