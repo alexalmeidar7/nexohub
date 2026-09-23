@@ -447,8 +447,16 @@ Deno.serve(async (req) => {
     ]);
 
     const emp = empRes.data;
+    // Broadcast XML is FM-only: never surface Podcast studio programs.
+    const isFmStudio = (studio: string | null | undefined): boolean => {
+      const value = (studio || "").toLowerCase();
+      if (value.includes("podcast")) return false;
+      return value.includes("fm");
+    };
     const activePrograms = (progsRes.data || [])
+      .filter((item) => isFmStudio((item as any).estudio))
       .map((item) => ({
+
         item,
         sortKey: getCurrentProgramSortKey(
           nowSeconds,
