@@ -785,51 +785,47 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         .from("roteiros")
         .select("*")
         .in("user_id", candidateUserIds)
-        .order("created_at", { ascending: false });
+        .order("updated_at", { ascending: false });
+
       if (res.data && res.data.length > 0) {
         dbRoteiros = res.data.filter((r: any) => !r.programa_nome?.includes("<"));
       }
     } catch {}
 
-    // Collect all locally stored roteiros across all candidate user IDs
-    const localRoteiros: any[] = [];
-    candidateUserIds.forEach((uid) => {
-      const stored = getStoredRoteiros(uid);
-      if (Array.isArray(stored) && stored.length > 0) {
-        localRoteiros.push(...stored.filter((r: any) => !r.programa_nome?.includes("<")));
-      }
-    });
+    // O banco de dados é a ÚNICA fonte de verdade. O cache local só é usado
+    // quando o banco não respondeu com nenhum registro (modo offline),
+    // evitando datas/horários diferentes entre preview e usuário final.
+    let data: any[] = [];
 
-    // Merge DB and local storage roteiros seamlessly
-    const combinedMap = new Map<string, any>();
-    localRoteiros.forEach((r) => {
-      if (r?.id) combinedMap.set(r.id, r);
-    });
-    dbRoteiros.forEach((r) => {
-      if (r?.id) {
-        const localItem = combinedMap.get(r.id);
-        if (localItem) {
-          const localPush = localItem.xml_pushed_at ? new Date(localItem.xml_pushed_at).getTime() : 0;
-          const dbPush = r.xml_pushed_at ? new Date(r.xml_pushed_at).getTime() : 0;
-          const newestPush = localPush > dbPush ? localItem.xml_pushed_at : r.xml_pushed_at;
-          combinedMap.set(r.id, {
-            ...localItem,
-            ...r,
-            xml_pushed_at: newestPush || localItem.xml_pushed_at || r.xml_pushed_at,
-          });
-        } else {
-          combinedMap.set(r.id, r);
-        }
-      }
-    });
-
-    let data = Array.from(combinedMap.values());
-    data.sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
-
-    // Save only if we actually have data
-    if (data.length > 0) {
+    if (dbRoteiros.length > 0) {
+      data = [...dbRoteiros];
+      data.sort(
+        (a, b) =>
+          new Date(b.updated_at || b.created_at || 0).getTime() -
+          new Date(a.updated_at || a.created_at || 0).getTime()
+      );
+      // Cache local reescrito integralmente com o estado do banco
       candidateUserIds.forEach((uid) => saveStoredRoteiros(uid, data));
+    } else {
+      const localRoteiros: any[] = [];
+      candidateUserIds.forEach((uid) => {
+        const stored = getStoredRoteiros(uid);
+        if (Array.isArray(stored) && stored.length > 0) {
+          localRoteiros.push(...stored.filter((r: any) => !r.programa_nome?.includes("<")));
+        }
+      });
+      const combinedMap = new Map<string, any>();
+      localRoteiros.forEach((r) => {
+        if (r?.id) combinedMap.set(r.id, r);
+      });
+      data = Array.from(combinedMap.values());
+      data.sort(
+        (a, b) =>
+          new Date(b.updated_at || b.created_at || 0).getTime() -
+          new Date(a.updated_at || a.created_at || 0).getTime()
+      );
     }
+
 
     // Se a tabela estiver vazia, busca os arquivos XML REAIS gravados no Storage (empresa-assets/express/{userId})
     if (data.length === 0) {
@@ -1014,7 +1010,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       }
     }
     const finalHistorico = Array.from(progMap.values());
-    finalHistorico.sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
+    finalHistorico.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime());
 
     setHistorico(finalHistorico);
     setAgendados(activeAgendados);
