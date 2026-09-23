@@ -29,15 +29,15 @@
   RewriteRule ^xml/(transmissao|jornal)/(geral|broadcast|logos|enquete|batalha|quiz)\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-$2?user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3 [R=302,L,NE]
   RewriteRule ^xml/(alex|superadmin)/(geral|broadcast|logos|enquete|batalha|quiz)\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-$2?user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5 [R=302,L,NE]
 
-  RewriteRule ^xml/(positivafm|positiva|p)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=d17e65af-e407-466f-9b60-b55c43399513&estudio=Estudio+FM [R=302,L,NE]
+  RewriteRule ^xml/(positivafm|positiva|p)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=d17e65af-e407-466f-9b60-b55c43399513&estudio=FM [R=302,L,NE]
   RewriteRule ^xml/(positivafm|positiva|p)/apenas-xml\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-broadcast?user_id=d17e65af-e407-466f-9b60-b55c43399513 [R=302,L,NE]
-  RewriteRule ^xml/(interativafm|interativa)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce&estudio=Estudio+FM [R=302,L,NE]
+  RewriteRule ^xml/(interativafm|interativa)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce&estudio=FM [R=302,L,NE]
   RewriteRule ^xml/(interativafm|interativa)/apenas-xml\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-broadcast?user_id=b2f70324-d086-4a5d-a407-cbc4acf98dce [R=302,L,NE]
-  RewriteRule ^xml/(culturafm973|cultura)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=66337743-4e4f-4950-b58f-750b0c76861e&estudio=Estudio+FM [R=302,L,NE]
+  RewriteRule ^xml/(culturafm973|cultura)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=66337743-4e4f-4950-b58f-750b0c76861e&estudio=FM [R=302,L,NE]
   RewriteRule ^xml/(culturafm973|cultura)/apenas-xml\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-broadcast?user_id=66337743-4e4f-4950-b58f-750b0c76861e [R=302,L,NE]
-  RewriteRule ^xml/(transmissao|jornal)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3&estudio=Estudio+FM [R=302,L,NE]
+  RewriteRule ^xml/(transmissao|jornal)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3&estudio=FM [R=302,L,NE]
   RewriteRule ^xml/(transmissao|jornal)/apenas-xml\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-broadcast?user_id=48423cc6-f3b1-4bea-8729-dd0ae76a89c3 [R=302,L,NE]
-  RewriteRule ^xml/(alex|superadmin)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5&estudio=Estudio+FM [R=302,L,NE]
+  RewriteRule ^xml/(alex|superadmin)/roteiro\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5&estudio=FM [R=302,L,NE]
   RewriteRule ^xml/(alex|superadmin)/apenas-xml\.xml$ https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-broadcast?user_id=29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5 [R=302,L,NE]
 
   # 2. Existing files and directories
