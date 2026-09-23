@@ -349,7 +349,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (lastGoodSessionRef.current) {
-          console.warn("Auth: Ignored involuntary SIGNED_OUT event; keeping user logged in.");
+          // Confere se o login ainda vale de verdade. Se o token de renovação
+          // morreu, não fingimos estar conectados (o banco recusaria as gravações).
+          void supabase.auth.refreshSession().then(({ data, error }) => {
+            if (!mounted) return;
+            if (data?.session && !error) { void updateAuth(data.session); return; }
+            console.warn("Auth: sessão inválida, exigindo novo login.");
+            purgeStoredAuth();
+            lastGoodSessionRef.current = null;
+            manualSignOutRef.current = true;
+            void updateAuth(null);
+          }).catch(() => { /* rede: mantém estado até voltar */ });
           return;
         }
 
@@ -457,6 +467,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (sess.session && mounted) {
             lastGoodSessionRef.current = sess.session;
             setSession(sess.session);
+          } else if (mounted && /missing|invalid|already used|expired/i.test(error.message || "")) {
+            // Sessão morta: força tela de login em vez de falhar nas gravações.
+            purgeStoredAuth();
+            lastGoodSessionRef.current = null;
+            manualSignOutRef.current = true;
+            void updateAuth(null);
           }
           return;
         }

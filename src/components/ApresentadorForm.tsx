@@ -364,7 +364,10 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
     if (error) {
       console.error("Erro ao salvar apresentador:", error);
-      toast.error(`Não foi possível salvar: ${error.message || "erro no servidor"}`);
+      const m = String(error.message || "");
+      toast.error(/row-level security|jwt|permission/i.test(m)
+        ? "Sua sessão expirou. Saia e entre novamente com seu e-mail e senha para salvar."
+        : `Não foi possível salvar: ${m || "erro no servidor"}`);
       setSaving(false);
       return;
     }
