@@ -766,31 +766,21 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     const progs = _currentProgramas || programas;
 
     const acc = findClientAccountById(effectiveUserId) || findClientAccountByEmail(user?.email);
-    const candidateUserIds = Array.from(
-      new Set(
-        [
-          effectiveUserId,
-          user.id,
-          propEffectiveUserId,
-          resolvedUserId,
-          acc?.id,
-          acc?.parentUserId,
-        ].filter(Boolean) as string[]
-      )
-    );
+    const candidateUserIds = [effectiveUserId];
 
     let dbRoteiros: any[] = [];
+    let dbUnavailable = false;
     try {
       const res = await supabase
         .from("roteiros")
         .select("*")
-        .in("user_id", candidateUserIds)
+        .eq("user_id", effectiveUserId)
         .order("updated_at", { ascending: false });
-
-      if (res.data && res.data.length > 0) {
+      if (res.error) dbUnavailable = true;
+      if (!res.error && res.data && res.data.length > 0) {
         dbRoteiros = res.data.filter((r: any) => !r.programa_nome?.includes("<"));
       }
-    } catch {}
+    } catch { dbUnavailable = true; }
 
     // O banco de dados é a ÚNICA fonte de verdade. O cache local só é usado
     // quando o banco não respondeu com nenhum registro (modo offline),
@@ -806,7 +796,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       );
       // Cache local reescrito integralmente com o estado do banco
       candidateUserIds.forEach((uid) => saveStoredRoteiros(uid, data));
-    } else {
+    } else if (dbUnavailable) {
       const localRoteiros: any[] = [];
       candidateUserIds.forEach((uid) => {
         const stored = getStoredRoteiros(uid);
@@ -828,7 +818,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
 
     // Se a tabela estiver vazia, busca os arquivos XML REAIS gravados no Storage (empresa-assets/express/{userId})
-    if (data.length === 0) {
+    if (data.length === 0 && dbUnavailable) {
       try {
         let files: any[] = [];
         try {
@@ -920,7 +910,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     }
 
     // Se ainda vazio, consulta o endpoint oficial do servidor serve-xml-roteiro-estudio para os estúdios reais
-    if (data.length === 0) {
+    if (data.length === 0 && dbUnavailable) {
       try {
         const candidateEstudios = Array.from(new Set([
           "Estudio FM",

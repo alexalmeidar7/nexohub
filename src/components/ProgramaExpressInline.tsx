@@ -890,12 +890,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
   }, [editData, initialized]);
 
-  // Auto-save debounced (only when editing existing roteiro)
+  // O envio explícito confirma a persistência antes de atualizar o XML.
+  // Não há salvamento paralelo com dados antigos durante a edição.
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInProgressRef = useRef(false);
   const autoSaveInFlightRef = useRef<Promise<void> | null>(null);
   useEffect(() => {
-    if (!editingId || !initialized || !user || !programaId) return;
+    if (!editingId || !initialized || !user || !programaId || novoOpen === false) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       if (saveInProgressRef.current) return;
@@ -1779,7 +1780,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const confirmed = await supabase.from("roteiros")
           .select("id, updated_at, participantes")
           .eq("id", roteiroId).eq("user_id", ownerId).maybeSingle();
-        if (confirmed.error || !confirmed.data || JSON.stringify(confirmed.data.participantes) !== JSON.stringify(JSON.parse(blocosJson))) {
+        const persistedParts = typeof confirmed.data?.participantes === "string"
+          ? JSON.parse(confirmed.data.participantes)
+          : confirmed.data?.participantes;
+        if (confirmed.error || !confirmed.data || JSON.stringify(persistedParts) !== JSON.stringify(JSON.parse(blocosJson))) {
           throw confirmed.error || new Error("O conteúdo salvo não corresponde ao roteiro enviado");
         }
       } catch (updErr: any) {
@@ -1807,7 +1811,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       // If scheduled: also create a separate scheduled roteiro record so it appears in "roteiros agendados"
       if (schedule && scheduledDateTime) {
-        let scheduledRoteiroId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `rot_sched_${ownerId}_${Date.now()}`;
+        let scheduledRoteiroId: string | null = null;
         const schedPayload: any = {
           user_id: ownerId,
           programa_nome: programaNome,
@@ -1829,15 +1833,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         };
 
         try {
-          let insSched = await supabase.from("roteiros").insert(schedPayload).select("id").single();
-          if (insSched.data?.id) {
-            scheduledRoteiroId = insSched.data.id;
-          } else if (insSched.error && ownerId !== user.id) {
-            const insRetry = await supabase.from("roteiros").insert({ ...schedPayload, user_id: user.id }).select("id").single();
-            if (insRetry.data?.id) scheduledRoteiroId = insRetry.data.id;
-          }
+          const insSched = await supabase.from("roteiros").insert(schedPayload).select("id").single();
+          if (insSched.error || !insSched.data?.id) throw insSched.error || new Error("Não foi possível agendar o roteiro");
+          scheduledRoteiroId = insSched.data.id;
         } catch (eSched) {
-          console.warn("Supabase insert scheduled roteiro notice:", eSched);
+          throw new Error(`Não foi possível agendar o roteiro: ${eSched instanceof Error ? eSched.message : eSched}`);
         }
 
         const fullSchedRecord = {
