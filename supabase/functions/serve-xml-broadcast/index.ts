@@ -427,7 +427,9 @@ Deno.serve(async (req) => {
         .from("roteiros")
         .select("tickertitulos")
         .eq("user_id", dataOwnerId)
+        .ilike("estudio", "%fm%")
         .in("tipo_programa", ["Jornalístico", "express"])
+
         .not("tickertitulos", "is", null)
         .neq("tickertitulos", "")
         .order("created_at", { ascending: false })
