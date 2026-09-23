@@ -1331,6 +1331,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     if (!user) return;
     setRegenerating(true);
     try {
+      const effectiveUserId = await resolveEffectiveUserId();
       const { data: allRoteiros } = await supabase
         .from("roteiros")
         .select("id, programa_nome, estudio, data_programa, subtitulo, participantes")
