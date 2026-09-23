@@ -53,19 +53,22 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
                     (user?.id && findClientAccountById(user.id)) ||
                     (user?.email && findClientAccountByEmail(user.email));
   const stationUid = effectiveUserId || clientAcc?.parentUserId || clientAcc?.id || user?.id;
-  const stationSlug = clientAcc?.slug || (user as any)?.user_metadata?.slug || (clientAcc?.email ? clientAcc.email.split("@")[0].toLowerCase() : "") || "positivafm";
+  const stationSlug = clientAcc?.slug || (user as any)?.user_metadata?.slug || (clientAcc?.email ? clientAcc.email.split("@")[0].toLowerCase() : "") || "";
 
+  // STRICT tenant isolation: only the logged station's own ids may be used as
+  // localStorage scopes. Using slugs or a hardcoded fallback (e.g. "positivafm")
+  // made one station read/write another station's "música no ar" data, which is
+  // why the widget could show a different radio's logo/cover.
   const candidateUids = useMemo(() => {
     return Array.from(new Set([
       stationUid,
-      stationSlug,
       clientAcc?.id,
       clientAcc?.parentUserId,
-      clientAcc?.slug,
       effectiveUserId,
       user?.id,
     ].filter(Boolean))) as string[];
-  }, [stationUid, stationSlug, clientAcc?.id, clientAcc?.parentUserId, clientAcc?.slug, effectiveUserId, user?.id]);
+  }, [stationUid, clientAcc?.id, clientAcc?.parentUserId, effectiveUserId, user?.id]);
+
 
   const [state, setState] = useState<MusicState>(() => {
     const last = (window as any)?.__lastPlayerMusicState;
