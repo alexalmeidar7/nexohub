@@ -20,12 +20,16 @@ Deno.serve(async (req) => {
     }
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: subUser, error: subError } = await sb.from("sub_users")
+      .select("parent_user_id, ativo").eq("auth_user_id", userId).maybeSingle();
+    if (subError) throw subError;
+    const ownerId = subUser?.ativo && subUser.parent_user_id ? subUser.parent_user_id : userId;
 
     // Cada feed consulta exclusivamente os roteiros da estação solicitada.
     const { data: allUserRoteiros, error: queryError } = await sb
       .from("roteiros")
       .select("programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
-      .eq("user_id", userId)
+      .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
       .limit(200);
     if (queryError) throw queryError;
@@ -51,7 +55,7 @@ Deno.serve(async (req) => {
     const { data: progs } = await sb
       .from("programas")
       .select("nome, horario_inicio")
-      .eq("user_id", userId);
+      .eq("user_id", ownerId);
     const progMap = new Map<string, string>();
     (progs || []).forEach((p: any) => { if (p.nome) progMap.set(p.nome, (p.horario_inicio || "").slice(0, 5)); });
 
