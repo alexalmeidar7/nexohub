@@ -231,10 +231,10 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     try {
       const fileExt = file.name.split('.').pop();
       const folder = isField1 ? 'promos' : 'promos_l';
-      const fileName = `${ownerId}/${folder}/${Date.now()}.${fileExt}`;
+      const fileName = `${ownerId}/${folder}/${crypto.randomUUID()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('comercial')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { upsert: false });
 
       if (uploadError) {
         toast({ title: `Imagem ${isField1 ? '1' : '2'} não enviada`, description: uploadError.message, variant: "destructive" });
@@ -255,7 +255,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   };
 
   const handleSave = async () => {
-    if (!ownerId) return;
+    if (!ownerId || uploading1 || uploading2 || saving) return;
     if (!form.nome.trim()) {
       toast({ title: "O nome da promoção é obrigatório", variant: "destructive" });
       return;
@@ -496,8 +496,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button style={limeBtn} onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            <button style={limeBtn} onClick={handleSave} disabled={saving || uploading1 || uploading2}>
+              {saving || uploading1 || uploading2 ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {editingId ? "Atualizar" : "Cadastrar Promoção"}
             </button>
             {editingId && <button style={ghostBtn} onClick={reset}><X size={16} /> Cancelar</button>}

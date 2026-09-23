@@ -84,23 +84,6 @@ export function resolveSafePromoBanner(p: any): string {
   return typeof p?.imagem_url === "string" ? p.imagem_url.trim() : "";
 }
 
-export function resolveSafePromoButton(p: any): string {
-  const norm = `${p?.nome || ""} ${p?.botao_url || ""}`.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (norm.includes("premio") || norm.includes("que premio")) return "/promocoes/bts/que-premio-e-esse.png";
-  if (norm.includes("role")) return "/promocoes/bts/role-positiva.png";
-  if (norm.includes("parada") || norm.includes("estrada")) return "/promocoes/bts/parada-positiva.png";
-  if (norm.includes("burger") || norm.includes("burguer")) return "/promocoes/bts/super-burguer.png";
-  if (norm.includes("resenha")) return "/promocoes/bts/resenha.png";
-  if (norm.includes("caldas")) return "/promocoes/partiu-caldas.png";
-  if (norm.includes("peguei")) return "/promocoes/te-peguei-positiva.png";
-  if (norm.includes("pix")) return "/promocoes/bts/meu-pix-positiva.png";
-  if (norm.includes("encontro")) return "/promocoes/bts/encontro-marcado.png";
-  if (norm.includes("luan") || norm.includes("historico")) return "/promocoes/bts/luan-santana.png";
-  return "";
-}
-
 // Retorna apenas imagens realmente cadastradas (URL ou caminho).
 // Nunca inventa arte por nome de programa: isso causava vazamento visual
 // entre contas (ex.: capa "flashback" da Positiva aparecendo na Interativa).
@@ -963,7 +946,7 @@ export default function PromocoesKiosk() {
   const PROGRESS_INTERVAL = 50;
 
   useEffect(() => {
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const banners = getUniqueBanners(
       promocoes.filter(p => (!p.data_inicio || p.data_inicio.slice(0, 10) <= todayKey) && (!p.data_fim || p.data_fim.slice(0, 10) >= todayKey))
     );
