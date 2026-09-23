@@ -1690,12 +1690,13 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
 
       const blob = new Blob([xmlContent], { type: "application/xml" });
-      const storageUid = user.id;
+       const storageUid = ownerId;
       const filePath = editingXmlPath || `express/${storageUid}/express_${roteiroId}.xml`;
       if (!editingXmlPath) setEditingXmlPath(filePath);
       let xmlUrl = "";
       try {
-        await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+         const { error: uploadError } = await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
         xmlUrl = urlData?.publicUrl || "";
       } catch (eStorage) {
@@ -1851,7 +1852,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         const clientAcc = (ownerId && findClientAccountById(ownerId)) ||
           (user?.id && findClientAccountById(user.id)) ||
           (user?.email && findClientAccountByEmail(user.email));
-        const targetSlug = clientAcc?.slug || "positivafm";
+         const targetSlug = clientAcc?.slug || ownerId;
         await fetch("/api/sync-xml-roteiro", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
