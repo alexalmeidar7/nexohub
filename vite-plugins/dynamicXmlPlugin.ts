@@ -1907,7 +1907,7 @@ export function dynamicXmlPlugin(): Plugin {
                 if (file === "roteiro.xml") upstream.searchParams.set("estudio", "Estudio FM");
                 if (["musica.xml", "music.xml", "local.xml", "musica-agora.xml"].includes(file)) upstream.searchParams.set("tipo", "musica");
                 if (file === "geral.xml" || file === "enquete.xml" || file === "quiz.xml") upstream.searchParams.set("slug", slug);
-                const response = await fetch(upstream, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+                const response = await fetch(upstream, { headers: { "Cache-Control": "no-cache" }, signal: AbortSignal.timeout(15000) });
                 if (!response.ok) throw new Error(`Feed ${feed}: ${response.status}`);
                 const xml = await response.text();
                 if (!xml.includes("<?xml") || xml.includes("<error>")) throw new Error(`Feed ${feed}: resposta inválida`);
