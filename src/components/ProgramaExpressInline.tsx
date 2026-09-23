@@ -1637,14 +1637,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
       let dbSaveSuccess = false;
       if (!roteiroId) {
-        // Try finding existing record in DB for this program & studio
+        // Try finding existing record in DB for this program & studio (strictly this account)
         try {
           const { data: existingProg } = await supabase
             .from("roteiros")
             .select("id")
+            .in("user_id", Array.from(new Set([ownerId, user.id])))
             .eq("programa_nome", programaNome)
             .eq("estudio", estudio)
             .is("agendado_para_envio", null)
+            .order("updated_at", { ascending: false })
+            .limit(1)
             .maybeSingle();
           if (existingProg?.id && isCleanUuid(existingProg.id)) {
             roteiroId = existingProg.id;
@@ -1652,6 +1655,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           }
         } catch {}
       }
+
 
       if (!roteiroId) {
         // Try insert with ownerId first (client station's ID) so public XML endpoints find it
@@ -1740,13 +1744,60 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         updated_at: nowIso,
       };
 
-      if (dbSaveSuccess || editingId) {
-        try {
-          await supabase.from("roteiros").update(baseUpdatePayload).eq("id", roteiroId);
-        } catch (updErr) {
-          console.warn("Supabase update roteiro notice:", updErr);
+      // Persist to DB and CONFIRM the write landed (0 rows updated = silent data loss)
+      try {
+        let saved = false;
+        if (isCleanUuid(roteiroId)) {
+          const upd = await supabase
+            .from("roteiros")
+            .update(baseUpdatePayload)
+            .eq("id", roteiroId)
+            .select("id");
+          saved = !upd.error && !!upd.data && upd.data.length > 0;
         }
+        if (!saved) {
+          // Fallback: match the same program/studio of this account
+          const upd2 = await supabase
+            .from("roteiros")
+            .update(baseUpdatePayload)
+            .in("user_id", Array.from(new Set([ownerId, user.id])))
+            .eq("programa_nome", programaNome)
+            .eq("estudio", estudio)
+            .is("agendado_para_envio", null)
+            .select("id");
+          if (!upd2.error && upd2.data && upd2.data.length > 0) {
+            saved = true;
+            roteiroId = upd2.data[0].id;
+            setEditingId(roteiroId);
+          }
+        }
+        if (!saved) {
+          // Last resort: create the record so the content is never lost
+          let ins = await supabase
+            .from("roteiros")
+            .insert({ ...baseUpdatePayload, user_id: ownerId, created_at: nowIso } as any)
+            .select("id")
+            .single();
+          if (ins.error && ownerId !== user.id) {
+            ins = await supabase
+              .from("roteiros")
+              .insert({ ...baseUpdatePayload, user_id: user.id, created_at: nowIso } as any)
+              .select("id")
+              .single();
+          }
+          if (ins.data?.id) {
+            saved = true;
+            roteiroId = ins.data.id;
+            setEditingId(roteiroId);
+          } else if (ins.error) {
+            toast.error(`Não foi possível gravar o roteiro no servidor: ${ins.error.message}`);
+          }
+        }
+      } catch (updErr: any) {
+        console.warn("Supabase update roteiro notice:", updErr);
+        toast.error(`Não foi possível gravar o roteiro no servidor: ${updErr?.message || updErr}`);
       }
+
 
       // RESILIENT LOCAL STORAGE: Always save base roteiro so the program box is never lost
       const fullBaseRecord = {
