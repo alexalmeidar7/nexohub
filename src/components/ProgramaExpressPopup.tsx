@@ -591,37 +591,56 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
       // Store blocos + participantes as JSON for edit reconstruction
       const blocosJson = JSON.stringify({ blocos, participantes });
+      const tickertitulos = blocos
+        .flatMap(b => (b.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()))
+        .join("  •  ");
+      const nowIso = new Date().toISOString();
 
-      if (editingId) {
-        // Update existing
-        const { error } = await supabase.from("roteiros").update({
-          programa_nome: programaNome,
-          estudio,
-          titulo: `PROGRAMA EXPRESS — ${programaNome}`,
-          subtitulo: `express_xml::${xmlUrl}`,
-          conteudo_html: html,
-          participantes: blocosJson,
-          updated_at: new Date().toISOString(),
-        }).eq("id", editingId);
+      const isUuid = (v: any): v is string =>
+        typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
-        if (error) throw error;
-      } else {
-        // Insert new
+      const payload: any = {
+        programa_nome: programaNome,
+        estudio,
+        titulo: `PROGRAMA EXPRESS — ${programaNome}`,
+        subtitulo: `express_xml::${xmlUrl}`,
+        conteudo_html: html,
+        participantes: blocosJson,
+        tickertitulos,
+        status: "feito",
+        xml_pushed_at: nowIso,
+        updated_at: nowIso,
+      };
+
+      // Confirm the write actually landed (an update matching 0 rows returns no error)
+      let saved = false;
+      if (isUuid(editingId)) {
+        const upd = await supabase.from("roteiros").update(payload).eq("id", editingId).select("id");
+        if (upd.error) throw upd.error;
+        saved = !!upd.data && upd.data.length > 0;
+      }
+      if (!saved) {
+        const upd2 = await supabase
+          .from("roteiros")
+          .update(payload)
+          .eq("user_id", user.id)
+          .eq("programa_nome", programaNome)
+          .eq("estudio", estudio)
+          .is("agendado_para_envio", null)
+          .select("id");
+        saved = !upd2.error && !!upd2.data && upd2.data.length > 0;
+      }
+      if (!saved) {
         const { error } = await supabase.from("roteiros").insert({
+          ...payload,
           user_id: user.id,
-          programa_nome: programaNome,
-          estudio,
-          titulo: `PROGRAMA EXPRESS — ${programaNome}`,
-          subtitulo: `express_xml::${xmlUrl}`,
           tipo_programa: "Jornalístico",
           data_programa: new Date().toISOString().split("T")[0],
           horario: new Date().toTimeString().slice(0, 5),
-          conteudo_html: html,
-          participantes: blocosJson,
-          status: "feito",
         });
         if (error) throw error;
       }
+
 
       // Sync immediately to /api/sync-xml-roteiro
       try {
