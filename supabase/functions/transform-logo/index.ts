@@ -104,7 +104,6 @@ serve(async (req) => {
     formData.append("model", "dall-e-2");
     formData.append("n", "1");
     formData.append("size", "1024x1024");
-    formData.append("response_format", "b64_json");
 
     const openAiRes = await fetch("https://api.openai.com/v1/images/edits", {
       method: "POST",
@@ -132,7 +131,14 @@ serve(async (req) => {
     }
 
     const data = await openAiRes.json();
-    const b64 = data?.data?.[0]?.b64_json;
+    let b64 = data?.data?.[0]?.b64_json;
+    if (!b64 && data?.data?.[0]?.url) {
+      const imgRes = await fetch(data.data[0].url);
+      const buf = new Uint8Array(await imgRes.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      b64 = btoa(bin);
+    }
     if (!b64) {
       return new Response(JSON.stringify({ success: false, error: "Imagem não retornada pela OpenAI." }), {
         status: 500,
