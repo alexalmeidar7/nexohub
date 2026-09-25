@@ -8,6 +8,7 @@ import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
+import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 
 
 
@@ -252,7 +253,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [allProgramasFull, setAllProgramasFull] = useState<any[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<"preview" | "insert" | "ticker" | "aseguir">("preview");
+  const [activeTab, setActiveTab] = useState<"preview" | "titulo" | "insert" | "ticker" | "aseguir">("preview");
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState<number>(() => Date.now());
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
@@ -1263,10 +1264,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
         {/* ── Navigation (segmented, always labelled) ── */}
         <div className="flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto bg-white" style={{ border: `1px solid ${NAVY_BORDER}` }}>
-          {(["preview", "insert", "ticker", "aseguir"] as const).map(tabId => {
+          {(["preview", "titulo", "insert", "ticker", "aseguir"] as const).map(tabId => {
             const active = activeTab === tabId;
-            const labels: Record<string, string> = { preview: "Ao Vivo", insert: "Insert", ticker: "Ticker", aseguir: "A Seguir" };
-            const Icons: Record<string, any> = { preview: ImageIcon, insert: Youtube, ticker: TrendingUp, aseguir: Clock };
+            const labels: Record<string, string> = { preview: "Ao Vivo", titulo: "Título", insert: "Insert", ticker: "Ticker", aseguir: "A Seguir" };
+            const Icons: Record<string, any> = { preview: ImageIcon, titulo: Mic, insert: Youtube, ticker: TrendingUp, aseguir: Clock };
             const Icon = Icons[tabId];
             return (
               <button
@@ -1444,6 +1445,40 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === "titulo" && (
+          <div className="max-w-3xl mx-auto flex flex-col gap-5 w-full">
+            <div className="p-6 rounded-2xl flex flex-col gap-4 bg-white" style={{ ...cardStyle, border: `1px solid ${NAVY_BORDER}` }}>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Assunto / Título no ar</span>
+                <input
+                  value={data.assunto}
+                  onChange={e => setData(prev => ({ ...prev, assunto: e.target.value }))}
+                  className="h-10 px-3 rounded-lg border border-slate-200 text-sm"
+                  placeholder="Digite o assunto do momento"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Trocar nome do locutor (opcional)</span>
+                <input
+                  value={data.locutor_override}
+                  onChange={e => setData(prev => ({ ...prev, locutor_override: e.target.value }))}
+                  className="h-10 px-3 rounded-lg border border-slate-200 text-sm"
+                  placeholder="Deixe vazio para usar o locutor do programa"
+                />
+              </label>
+              <button
+                onClick={() => handleSave({ ...data })}
+                disabled={saving}
+                className="self-end flex items-center gap-2 px-5 h-10 rounded-full text-[11px] font-black uppercase tracking-[0.15em] cursor-pointer"
+                style={{ backgroundColor: CYAN, color: "#fff" }}
+              >
+                <Save size={14} /> Salvar título
+              </button>
+            </div>
+            <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={stationUid || undefined} />
           </div>
         )}
 
