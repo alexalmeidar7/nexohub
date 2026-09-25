@@ -215,7 +215,11 @@ export function logoTransformPlugin(): Plugin {
               }
 
               const data: any = await openAiRes.json();
-              const b64 = data?.data?.[0]?.b64_json;
+              let b64 = data?.data?.[0]?.b64_json;
+              if (!b64 && data?.data?.[0]?.url) {
+                const imgRes = await fetch(data.data[0].url);
+                b64 = Buffer.from(await imgRes.arrayBuffer()).toString("base64");
+              }
               if (!b64) {
                 res.writeHead(500);
                 res.end(JSON.stringify({ success: false, error: "A OpenAI não retornou a imagem processada." }));
