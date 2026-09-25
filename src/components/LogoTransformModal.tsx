@@ -23,8 +23,9 @@ import {
 import {
   transformLogoWithBackend,
   dataUrlToFile,
-  fileToDataUrl,
+  uploadToPngDataUrl,
 } from "@/services/logoTransformService";
+
 
 export interface ProgramItem {
   id: string;
@@ -77,6 +78,8 @@ export function LogoTransformModal({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoNotice, setInfoNotice] = useState<string | null>(null);
+  const [transformFailed, setTransformFailed] = useState(false);
+
 
   // Background style for previewing white logo
   const [previewBg, setPreviewBg] = useState<"dark" | "checker" | "black">("dark");
@@ -95,6 +98,7 @@ export function LogoTransformModal({
       setStep("preview");
       setErrorMessage(null);
       setInfoNotice(null);
+      setTransformFailed(false);
       setSavingFinal(false);
       setSelectedPrograms(["__none__"]);
 
@@ -106,8 +110,9 @@ export function LogoTransformModal({
 
       try {
         setLoading(true);
-        const origUrl = await fileToDataUrl(initialFile);
+        const origUrl = await uploadToPngDataUrl(initialFile);
         setOriginalDataUrl(origUrl);
+
 
         const initialVersionsList: LogoTransformVersion[] = [
           {
@@ -126,14 +131,12 @@ export function LogoTransformModal({
         });
 
         if (res.error) {
-          if (res.code === "NO_API_KEY") {
-            setInfoNotice(
-              "Chave OPENAI_API_KEY não configurada no backend (.env). Pré-visualização convertida para vetor branco flat 1080×1080 via motor local."
-            );
-          } else {
-            setErrorMessage(`Aviso da IA: ${res.error}`);
-          }
+          setTransformFailed(true);
+          setErrorMessage(
+            `Não foi possível ajustar a logo automaticamente: ${res.error}. A imagem enviada foi mantida sem alterações.`
+          );
         }
+
 
         const v1: LogoTransformVersion = {
           id: "version_01",
