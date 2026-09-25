@@ -167,6 +167,8 @@ export function LogoTransformModal({
     setLoading(true);
     setErrorMessage(null);
     setInfoNotice(null);
+    setTransformFailed(false);
+
 
     try {
       // Calculate next version index based on existing versions
@@ -184,14 +186,12 @@ export function LogoTransformModal({
       });
 
       if (res.error) {
-        if (res.code === "NO_API_KEY") {
-          setInfoNotice(
-            "Chave OPENAI_API_KEY não configurada no .env. Gerada nova variação com motor de vetorização local 1080×1080."
-          );
-        } else {
-          setErrorMessage(`Aviso: ${res.error}`);
-        }
+        setTransformFailed(true);
+        setErrorMessage(
+          `Não foi possível ajustar a logo automaticamente: ${res.error}. A imagem enviada foi mantida sem alterações.`
+        );
       }
+
 
       const newVersion: LogoTransformVersion = {
         id: versionKey,
