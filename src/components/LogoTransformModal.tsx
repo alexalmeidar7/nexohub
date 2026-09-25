@@ -423,7 +423,9 @@ export function LogoTransformModal({
                 <button
                   type="button"
                   onClick={handleApprove}
-                  disabled={loading || !currentVersion || currentVersion.id === "original"}
+                  disabled={loading || savingFinal || transformFailed || !currentVersion || currentVersion.id === "original"}
+                  title={transformFailed ? "O ajuste falhou. Tente outra opção antes de aprovar." : "Aprovar"}
+
                   className="w-full sm:w-auto min-w-[190px] h-11 px-8 rounded-full font-black text-xs uppercase tracking-wider text-white transition-all duration-200 hover:brightness-110 active:scale-95 flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(0,85,255,0.35)] disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: "#0055ff" }}
                 >

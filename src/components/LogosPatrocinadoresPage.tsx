@@ -1508,7 +1508,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                     <input
                       ref={clientLogoInputRef}
                       type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf,.pdf"
                       className="hidden"
                       onChange={handleClientLogoSelected}
                     />
