@@ -186,7 +186,6 @@ export function logoTransformPlugin(): Plugin {
               formData.append("model", "dall-e-2");
               formData.append("n", "1");
               formData.append("size", "1024x1024");
-              formData.append("response_format", "b64_json");
 
               // Call OpenAI API silently in the backend
               const openAiRes = await fetch("https://api.openai.com/v1/images/edits", {
