@@ -1880,6 +1880,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         initialFile={clientSelectedFile}
         programas={programas}
         defaultExpirationDate={dataFinal || defaultExpiration}
+        preselectedProgramIds={editingFullId ? [programaId] : programaIds}
         onApproveAndSave={handleApproveAndSaveAiLogo}
       />
     </div>

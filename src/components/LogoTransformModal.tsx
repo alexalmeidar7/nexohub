@@ -46,6 +46,7 @@ interface LogoTransformModalProps {
   initialFile: File | null;
   programas: ProgramItem[];
   defaultExpirationDate?: string;
+  preselectedProgramIds?: string[];
   onApproveAndSave: (result: {
     file: File;
     nome: string;
@@ -61,6 +62,7 @@ export function LogoTransformModal({
   initialFile,
   programas,
   defaultExpirationDate = "2026-12-31",
+  preselectedProgramIds,
   onApproveAndSave,
 }: LogoTransformModalProps) {
   // Step state: 'preview' (review & retry) -> 'select_program' (pick target program)
@@ -205,17 +207,31 @@ export function LogoTransformModal({
     }
   };
 
-  // Action: APROVAR
-  const handleApprove = () => {
+  // Action: APROVAR — salva direto no(s) programa(s) já escolhido(s) no campo PROGRAMA
+  const handleApprove = async () => {
     if (!currentVersion || currentVersion.id === "original") return;
-
-    setApprovedVersionId(currentVersion.id);
+    const approved = currentVersion;
+    setApprovedVersionId(approved.id);
     setVersions((prev) =>
-      prev.map((v) => (v.id === currentVersion.id ? { ...v, status: "approved" } : v))
+      prev.map((v) => (v.id === approved.id ? { ...v, status: "approved" } : v))
     );
-
-    // Advance to "SELECIONE O PROGRAMA"
-    setStep("select_program");
+    const targets = (preselectedProgramIds || []).filter((p) => p && p !== "__none__");
+    setSavingFinal(true);
+    try {
+      const finalFileName = `${(logoName || "LOGO_PATROCINADOR").toLowerCase().replace(/[^a-z0-9]/g, "_")}_1080.png`;
+      await onApproveAndSave({
+        file: dataUrlToFile(approved.dataUrl, finalFileName),
+        nome: logoName.trim().toUpperCase() || "PATROCINADOR",
+        programaIds: targets.length ? targets : ["__none__"],
+        dataFinal: expirationDate,
+        version: approved.id,
+      });
+      onClose();
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Erro ao salvar a logo.");
+    } finally {
+      setSavingFinal(false);
+    }
   };
 
   // Toggle program in multi-selection
@@ -274,7 +290,7 @@ export function LogoTransformModal({
             </div>
             <div>
               <DialogTitle className="text-sm font-black uppercase tracking-wider text-white m-0">
-                Transformação Automática de Logo • IA
+                Transformação Automática de Logo
               </DialogTitle>
               <DialogDescription className="text-xs text-blue-200/80 m-0">
                 {step === "preview"
@@ -341,36 +357,6 @@ export function LogoTransformModal({
                   })}
                 </div>
 
-                {/* Preview background selector */}
-                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewBg("dark")}
-                    className={`px-2.5 py-0.5 text-[10px] font-bold rounded-lg transition-colors ${
-                      previewBg === "dark" ? "bg-white text-[#002132] shadow-xs" : "text-slate-500"
-                    }`}
-                  >
-                    Escuro
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewBg("black")}
-                    className={`px-2.5 py-0.5 text-[10px] font-bold rounded-lg transition-colors ${
-                      previewBg === "black" ? "bg-black text-white shadow-xs" : "text-slate-500"
-                    }`}
-                  >
-                    Preto
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewBg("checker")}
-                    className={`px-2.5 py-0.5 text-[10px] font-bold rounded-lg transition-colors ${
-                      previewBg === "checker" ? "bg-white text-[#002132] shadow-xs" : "text-slate-500"
-                    }`}
-                  >
-                    Xadrez
-                  </button>
-                </div>
               </div>
 
               {/* Large Preview Area */}
