@@ -848,15 +848,17 @@ export default function PromocoesKiosk() {
        if (localUid) {
         try {
            const rawLocal = testData === null ? localStorage.getItem(`nexohub_testemunhais_${localUid}`) : null;
-           if (rawLocal) {
-            const parsed = JSON.parse(rawLocal);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              const map = new Map<string, any>();
-              activeTestemunhais.forEach((t: any) => map.set(t.id, t));
-              parsed.filter(belongsToOwner).forEach((t: any) => map.set(t.id, t));
-              activeTestemunhais = Array.from(map.values());
-            }
-          }
+            if (rawLocal) {
+             const parsed = JSON.parse(rawLocal);
+             if (Array.isArray(parsed) && parsed.length > 0) {
+               // Cache local entra primeiro; registros do banco (quando houver)
+               // sempre prevalecem por serem a fonte de verdade.
+               const map = new Map<string, any>();
+               parsed.filter(belongsToOwner).forEach((t: any) => map.set(t.id, t));
+               activeTestemunhais.forEach((t: any) => map.set(t.id, t));
+               activeTestemunhais = Array.from(map.values());
+             }
+           }
         } catch {}
         if (!isPositivaStation) {
           activeTestemunhais = activeTestemunhais.filter((t: any) => t.user_id !== POSITIVA_USER_ID && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id));
