@@ -314,6 +314,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       data_fim: form.data_fim,
       programa_ids: validProgIds,
       programa_id: validProgId,
+      updated_at: new Date().toISOString(),
     };
 
     try {
