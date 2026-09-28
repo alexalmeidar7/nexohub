@@ -317,15 +317,17 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       updated_at: new Date().toISOString(),
     };
 
+    let saveError: string | null = null;
     try {
       if (editingId && isUuid(editingId)) {
-        const { error } = await supabase.from("testemunhais").update(payload).eq("id", editingId);
-        if (error) console.warn("Supabase update error (testemunhais):", error);
+        const { data, error } = await supabase.from("testemunhais").update(payload).eq("id", editingId).select("id");
+        if (error) saveError = error.message;
+        else if (!data || data.length === 0) saveError = "Nenhum registro foi atualizado (sessão expirada ou sem permissão).";
       } else if (!editingId && isUuid(ownerId)) {
         const insertPayload = isUuid(id) ? { id, ...payload } : payload;
         const { data, error } = await supabase.from("testemunhais").insert([insertPayload]).select();
         if (error) {
-          console.warn("Supabase insert error (testemunhais):", error);
+          saveError = error.message;
         } else if (data?.[0]?.id && data[0].id !== id) {
           const remoteId = data[0].id;
           const finalizedList = updatedList.map(item => item.id === id ? { ...item, id: remoteId } : item);
@@ -334,10 +336,14 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
         }
       }
     } catch (e: any) {
-      console.warn("Supabase testemunhais save warning:", e);
+      saveError = e?.message || String(e);
     } finally {
       setSaving(false);
-      toast({ title: editingId ? "Citação atualizada com sucesso" : "Citação cadastrada com sucesso" });
+      if (saveError) {
+        toast({ title: "Erro ao salvar citação no banco", description: saveError, variant: "destructive" });
+      } else {
+        toast({ title: editingId ? "Citação atualizada com sucesso" : "Citação cadastrada com sucesso" });
+      }
       reset();
     }
   };
