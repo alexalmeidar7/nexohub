@@ -250,12 +250,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
       // 1. Check database table first
       const dbTargetId = stationUid || targetUserId;
+      let dbLogosOk = false;
       if (dbTargetId) {
         try {
           const [resL, resP] = await Promise.all([
             supabase.from("logos_patrocinadores").select("*").eq("user_id", dbTargetId).order("created_at", { ascending: false }),
             supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", dbTargetId).eq("ativo", true),
           ]);
+          if (!resL.error && Array.isArray(resL.data)) dbLogosOk = true;
           if (resL.data && resL.data.length > 0) lData = resL.data;
           if (resP.data && resP.data.length > 0) {
             pData = resP.data.map((p: any) => ({
@@ -271,7 +273,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       }
 
       // 1.1 Fetch real logos from candidate XML feeds or local endpoints
-      if (lData.length === 0) {
+      if (lData.length === 0 && !dbLogosOk) {
         const candidateUrls = [
           `/xml/${stationSlug}/logos.xml`,
           `/xml/${stationSlug.replace(/fm$/i, "")}/logos.xml`,
@@ -338,7 +340,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       }
 
       // 1.2 Fallback to local database snapshot if still empty
-      if (lData.length === 0) {
+      if (lData.length === 0 && !dbLogosOk) {
         const snapLogos = getSnapshotLogos(stationUid).concat(getSnapshotLogos(stationSlug));
         if (snapLogos.length > 0) {
           const seen = new Set<string>();
@@ -373,8 +375,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           lData.forEach((l: any) => map.set(l.id, l));
           localLogos.forEach((l: any) => {
             if (!map.has(l.id)) {
+              // Banco respondeu: cache local não ressuscita registros do banco
+              if (dbLogosOk && /^[0-9a-f-]{36}$/i.test(String(l.id))) return;
               map.set(l.id, l);
-            } else {
+            } else if (!dbLogosOk) {
               map.set(l.id, { ...map.get(l.id), ...l });
             }
           });
@@ -833,13 +837,18 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       "";
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("logos_patrocinadores")
         .update({ excluido: true, excluido_at: new Date().toISOString(), ativo: false })
-        .eq("id", id);
-      if (error) console.warn("[handleSoftDelete] Supabase notice:", error.message);
-    } catch (e) {
-      console.warn("[handleSoftDelete] notice:", e);
+        .eq("id", id)
+        .select("id");
+      if (error) throw error;
+      if (/^[0-9a-f-]{36}$/i.test(id) && (!data || data.length === 0)) {
+        throw new Error("Nenhum registro foi atualizado (sessão expirada ou sem permissão).");
+      }
+    } catch (e: any) {
+      toast({ title: "Erro ao excluir logo", description: e?.message || String(e), variant: "destructive" });
+      return;
     }
 
     if (activeUid) {
