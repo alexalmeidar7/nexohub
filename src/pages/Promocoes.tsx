@@ -1607,9 +1607,11 @@ export default function PromocoesKiosk() {
         .promo-scroll::-webkit-scrollbar-thumb{background:var(--promo-border);border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:var(--promo-border);border-radius:2px}
         .promo-scroll{scrollbar-width:thin;scrollbar-color:var(--promo-border) var(--promo-btn-a)}
-        @keyframes citation-on-air{0%,100%{box-shadow:0 0 0 1px var(--promo-border),0 0 12px var(--promo-border)}50%{box-shadow:0 0 0 1px transparent,0 0 0 transparent}}
+        @keyframes citation-on-air{0%,100%{box-shadow:0 0 0 2px var(--promo-border)}50%{box-shadow:0 0 0 2px transparent}}
         .citation-on-air{animation:citation-on-air 1.6s ease-in-out infinite}
-        @media (prefers-reduced-motion:reduce){.citation-on-air{animation:none;box-shadow:0 0 0 1px var(--promo-border)}}
+        @media (prefers-reduced-motion:reduce){.citation-on-air{animation:none;box-shadow:0 0 0 2px var(--promo-border)}}
+        .promo-flat-btn{transition:filter .15s ease}
+        .promo-flat-btn:hover{filter:brightness(1.18)}
         @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px var(--promo-border)}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--promo-border) 20%, transparent)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
         @keyframes audience-shimmer{0%{background-position:0 0}100%{background-position:40px 0}}
@@ -1770,10 +1772,10 @@ export default function PromocoesKiosk() {
                   title={`Citação: ${programa.nome}`}
                   aria-label={`Abrir citação de ${programa.nome}`}
                   onClick={() => { setSelectedProgram(programa); stopAutoScroll(); }}
-                  className={`h-14 w-14 sm:h-16 sm:w-16 rounded-lg p-1.5 border-2 transition-transform hover:scale-105 focus-visible:ring-2 ${isOnAir ? "citation-on-air" : ""}`}
-                  style={{ background: promoAccentGradient, borderColor: isOnAir ? "var(--promo-border)" : "transparent", color: "var(--promo-text)" }}
+                  className={`h-14 w-14 sm:h-16 sm:w-16 rounded-lg p-1.5 border-0 shadow-none promo-flat-btn focus-visible:ring-2 ${isOnAir ? "citation-on-air" : ""}`}
+                  style={{ background: telaPromoConfig.btn_color_b, color: "var(--promo-text)" }}
                 >
-                  <img src={programa.selo} alt="" className="w-full h-full object-contain" />
+                  <img src={getProgramLogo(programa)} alt="" className="w-full h-full object-contain" />
                 </Button>
               );
             })}
