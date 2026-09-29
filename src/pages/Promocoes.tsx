@@ -2130,7 +2130,7 @@ export default function PromocoesKiosk() {
         <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-0" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)" }}>
           <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14" style={{ background: promoAccentGradient, color: "var(--promo-text)" }}>
             <div className="flex items-center gap-4 min-w-0">
-              {selectedProgram?.selo && <img src={selectedProgram.selo} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
+              {selectedProgram && <img src={getProgramLogo(selectedProgram)} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
               <div className="min-w-0">
                 <span className="text-xs font-semibold uppercase opacity-80">Citação do programa</span>
                 <DialogTitle className="text-lg sm:text-xl font-bold leading-tight break-words" style={{ color: "var(--promo-text)" }}>{selectedProgram?.nome}</DialogTitle>
