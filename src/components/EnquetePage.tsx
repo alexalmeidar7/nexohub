@@ -239,7 +239,7 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
     }
 
     toast.success("Enquete agendada com sucesso!");
-    setShowForm(false);
+    // Mantém o formulário aberto e totalmente limpo após salvar
     setFormData({
       pergunta: "",
       resposta1: "",
