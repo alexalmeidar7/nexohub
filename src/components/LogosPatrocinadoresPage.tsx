@@ -1573,12 +1573,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           draggable
                           onDragStart={() => handleDragStart(logo)}
                         >
-                          <div className="relative group">
+                          <div
+                            className="relative group rounded-2xl border border-slate-700 shadow-sm overflow-hidden"
+                            style={{ backgroundColor: "hsl(var(--card))" }}
+                          >
                             <img
                               src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
                               alt={logo.nome}
-                              className="w-full aspect-square rounded-2xl object-contain p-2.5 border border-slate-700 shadow-sm"
-                              style={{ backgroundColor: "hsl(var(--foreground))" }}
+                              className="w-full aspect-square object-contain p-2.5 bg-transparent"
                               onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;
                                 target.onerror = null;
