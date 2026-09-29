@@ -438,6 +438,8 @@ export default function PromocoesKiosk() {
   const [audienceDetailsOpen, setAudienceDetailsOpen] = useState(false);
   const [audienceChart, setAudienceChart] = useState<Array<{ hora: string; audio: number; video: number; total: number; programa: string }>>([]);
   const [audienceChartLoading, setAudienceChartLoading] = useState(false);
+  // Logos oficiais dos programas (tabela logos_patrocinadores) para os botões de citação.
+  const [programLogos, setProgramLogos] = useState<Record<string, string>>({});
 
   const isPositivaUser = useMemo(() => {
     // 1. URL slug (ex.: /positivafm/locutor ou /positiva/locutor)
