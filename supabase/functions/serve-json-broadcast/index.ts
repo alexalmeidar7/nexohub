@@ -1098,54 +1098,6 @@ serve(async (req) => {
         if (lat != null && lon != null) {
           const pontos: { via: string; desc: string; score: number }[] = [];
 
-          // 0) HERE Traffic API v7 (250k req/mês grátis) — fonte principal
-          try {
-            const hereKey = Deno.env.get("HERE_API_KEY") || "";
-            if (hereKey) {
-              const d = 0.20;
-              const west = lon - d, south = lat - d, east = lon + d, north = lat + d;
-              const bbox = `bbox:${west.toFixed(5)},${south.toFixed(5)},${east.toFixed(5)},${north.toFixed(5)}`;
-              const hUrl = `https://data.traffic.hereapi.com/v7/incidents?in=${encodeURIComponent(bbox)}&locationReferencing=shape&lang=pt-BR&apiKey=${hereKey}`;
-              const hRes = await fetchWithTimeout(hUrl);
-              if (hRes.ok) {
-                const hData = await hRes.json();
-                const results: any[] = Array.isArray(hData?.results) ? hData.results : [];
-                const typePriority: Record<string, number> = {
-                  accident: 100000,
-                  roadClosure: 90000,
-                  vehicleObstruction: 60000,
-                  obstruction: 55000,
-                  laneRestriction: 40000,
-                  construction: 30000,
-                  massTransit: 15000,
-                  weather: 20000,
-                  congestion: 10000,
-                  other: 5000,
-                };
-                for (const r of results) {
-                  const inc = r?.incidentDetails || {};
-                  const loc = r?.location || {};
-                  const via = (loc?.description?.value || loc?.street || "").toString().trim();
-                  if (!via) continue;
-                  const type = (inc?.type || "").toString();
-                  const criticality = typeof inc?.criticality === "number" ? inc.criticality : 0;
-                  const summary = (inc?.summary?.value || inc?.description?.value || type || "ocorrência").toString();
-                  const basePriority = typePriority[type] ?? 5000;
-                  const critWeight = (4 - criticality) * 8000;
-                  pontos.push({ via, desc: summary, score: basePriority + critWeight });
-                }
-                pontos.sort((a, b) => b.score - a.score);
-              } else {
-                const txt = await hRes.text().catch(() => "");
-                console.warn(`[serve-xml-broadcast] HERE status=${hRes.status} body=${txt.slice(0, 200)}`);
-              }
-            }
-          } catch (e) {
-            console.warn("[serve-xml-broadcast] HERE fetch exception", e);
-          }
-
-
-
           // 1) Waze Live Map (fallback gratuito, sem chave)
           if (pontos.length === 0) try {
 
