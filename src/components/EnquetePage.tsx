@@ -616,7 +616,7 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
               textTransform: "uppercase",
             }}
           >
-            Total: <span style={{ color: "#00BFF0" }}>{enquetes.length}</span>
+            Total: <span style={{ color: "#00BFF0" }}>{proximasEnquetes.length}</span>
           </div>
         </div>
 
@@ -632,7 +632,7 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
               </tr>
             </thead>
             <tbody>
-              {enquetes.length > 0 ? enquetes.map((e, idx) => {
+              {proximasEnquetes.length > 0 ? proximasEnquetes.map((e, idx) => {
                 const status = getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim);
                 return (
                   <tr
