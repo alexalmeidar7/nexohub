@@ -1470,7 +1470,6 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                         const dataFormatada = yy ? format(new Date(yy, (mm || 1) - 1, dd || 1), "dd/MM/yyyy") : "";
                         const hasXml = (typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::")) || String(r.id || "").startsWith("express_") || !!r.participantes;
                         const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
-                        const cleanTitulo = (r.titulo || "").replace("[AUTO]", "").trim();
                         return (
                           <div
                             key={r.id}
