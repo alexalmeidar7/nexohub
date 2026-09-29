@@ -39,8 +39,8 @@ const PROMO_MUTED = `color-mix(in srgb, ${PROMO_HEADER} 62%, transparent)`;
 
 const cardStyle: React.CSSProperties = {
   background: PROMO_CARD_BG,
-  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 18%, transparent)`,
-  boxShadow: CARD_SHADOW,
+  border: "none",
+  boxShadow: "none",
   borderRadius: 14,
   padding: "10px 14px",
   color: PROMO_TEXT,
@@ -252,7 +252,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
             <div className="flex flex-col gap-3 flex-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-inner">
+                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-md">
                     {weatherIcon(code ?? 0, 32)}
                   </div>
                   <div>
@@ -267,7 +267,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
                 </div>
 
                 <div className="text-right">
-                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10" style={{ fontSize: 8, fontWeight: 700, color: PROMO_TEXT }}>
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: 8, fontWeight: 700, color: PROMO_TEXT }}>
                     <MapPin size={8} className="mr-1 opacity-70" />
                     {effectiveCity}
                   </div>
@@ -282,7 +282,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
               </div>
 
               <div className="grid grid-cols-3 gap-1.5 mt-auto">
-                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center border border-white/5">
+                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center">
                   <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Chuva</span>
                   <div className="flex items-center gap-1 text-[10px] font-bold text-blue-400">
                     <CloudRain size={9} /> {rain}%
@@ -291,7 +291,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
                 
                 {humidity != null && (
                   <div 
-                    className={`rounded-lg p-1.5 flex flex-col items-center justify-center border transition-all duration-500 ${humidity < 30 ? 'bg-[#8B0000] border-red-500/50 animate-pulse' : 'bg-white/5 border-white/5'}`}
+                    className={`rounded-lg p-1.5 flex flex-col items-center justify-center transition-all duration-500 ${humidity < 30 ? 'bg-[#8B0000] animate-pulse' : 'bg-white/5'}`}
                   >
                     <span className={`text-[8px] uppercase font-bold mb-0.5 ${humidity < 30 ? 'text-white/60' : 'opacity-40'}`}>Umidade</span>
                     <div 
@@ -302,7 +302,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
                   </div>
                 )}
 
-                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center border border-white/5">
+                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center">
                   <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Vento</span>
                   <div className="flex items-center gap-1 text-[10px] font-bold">
                     <Navigation size={9} className="rotate-[135deg]" /> {data?.current?.wind_speed_10m ?? 0} <span className="text-[7px] opacity-60">km/h</span>
@@ -311,7 +311,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
               </div>
 
               {/* Navigation Arrows for Today view */}
-              <div className="flex items-center justify-between mt-auto pt-1 border-t border-white/5">
+              <div className="flex items-center justify-between mt-auto pt-1">
                 <button
                   type="button"
                   onClick={() => setDayIdx((v) => Math.max(0, v - 1))}
@@ -833,7 +833,6 @@ function BlitzBox({ userId }: { userId?: string | null }) {
                       padding: "6px 8px",
                       marginBottom: 4,
                       background: `color-mix(in srgb, ${PROMO_BORDER} 6%, transparent)`,
-                      border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 15%, transparent)`,
                       color: PROMO_TEXT,
                       cursor: "pointer",
                     }}
@@ -872,7 +871,6 @@ function BlitzBox({ userId }: { userId?: string | null }) {
             style={{
               width: "100%", maxWidth: 460,
               background: PROMO_CARD_BG,
-              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 30%, transparent)`,
               borderRadius: 18, color: PROMO_TEXT, overflow: "hidden",
               fontFamily: "'Montserrat', sans-serif",
               boxShadow: "0 24px 60px rgba(0,0,0,0.55)",

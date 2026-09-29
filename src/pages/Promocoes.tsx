@@ -438,6 +438,8 @@ export default function PromocoesKiosk() {
   const [audienceDetailsOpen, setAudienceDetailsOpen] = useState(false);
   const [audienceChart, setAudienceChart] = useState<Array<{ hora: string; audio: number; video: number; total: number; programa: string }>>([]);
   const [audienceChartLoading, setAudienceChartLoading] = useState(false);
+  // Logos oficiais dos programas (tabela logos_patrocinadores) para os botões de citação.
+  const [programLogos, setProgramLogos] = useState<Record<string, string>>({});
 
   const isPositivaUser = useMemo(() => {
     // 1. URL slug (ex.: /positivafm/locutor ou /positiva/locutor)
@@ -496,6 +498,51 @@ export default function PromocoesKiosk() {
     })();
     return () => { cancelled = true; };
   }, [audienceDetailsOpen, audienceUserId]);
+
+  // Busca as logos cadastradas dos programas para usar nos botões de citação.
+  useEffect(() => {
+    if (!audienceUserId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("logos_patrocinadores")
+          .select("programa_id, programa_nome, logo_url, data_final, ativo, excluido")
+          .eq("user_id", audienceUserId)
+          .order("created_at", { ascending: false });
+        if (cancelled || !data) return;
+        const now = new Date();
+        const map: Record<string, string> = {};
+        for (const l of data as any[]) {
+          if (l.excluido) continue;
+          if (l.ativo === false) continue;
+          if (l.data_final) {
+            const df = new Date(`${String(l.data_final).slice(0, 10)}T23:59:59`);
+            if (df < now) continue;
+          }
+          const url = typeof l.logo_url === "string" ? l.logo_url.trim() : "";
+          if (!url || !isRealImageRef(url)) continue;
+          if (l.programa_id && !map[l.programa_id]) map[l.programa_id] = url;
+          if (l.programa_nome) {
+            const key = `n:${normalizeProgramName(l.programa_nome)}`;
+            if (!map[key]) map[key] = url;
+          }
+        }
+        setProgramLogos(map);
+      } catch { /* fallback: usa o selo do programa */ }
+    })();
+    return () => { cancelled = true; };
+  }, [audienceUserId]);
+
+  const getProgramLogo = useCallback((programa: ProgramaGrade): string => {
+    const byId = programLogos[programa.id];
+    if (byId) return byId;
+    for (const id of programa.mergedIds || []) {
+      const url = programLogos[id];
+      if (url) return url;
+    }
+    return programLogos[`n:${normalizeProgramName(programa.nome)}`] || programa.selo;
+  }, [programLogos]);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
@@ -1560,9 +1607,11 @@ export default function PromocoesKiosk() {
         .promo-scroll::-webkit-scrollbar-thumb{background:var(--promo-border);border-radius:5px}
         .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:var(--promo-border);border-radius:2px}
         .promo-scroll{scrollbar-width:thin;scrollbar-color:var(--promo-border) var(--promo-btn-a)}
-        @keyframes citation-on-air{0%,100%{box-shadow:0 0 0 1px var(--promo-border),0 0 12px var(--promo-border)}50%{box-shadow:0 0 0 1px transparent,0 0 0 transparent}}
+        @keyframes citation-on-air{0%,100%{box-shadow:0 0 0 2px var(--promo-border)}50%{box-shadow:0 0 0 2px transparent}}
         .citation-on-air{animation:citation-on-air 1.6s ease-in-out infinite}
-        @media (prefers-reduced-motion:reduce){.citation-on-air{animation:none;box-shadow:0 0 0 1px var(--promo-border)}}
+        @media (prefers-reduced-motion:reduce){.citation-on-air{animation:none;box-shadow:0 0 0 2px var(--promo-border)}}
+        .promo-flat-btn{transition:filter .15s ease}
+        .promo-flat-btn:hover{filter:brightness(1.18)}
         @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px var(--promo-border)}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--promo-border) 20%, transparent)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
         @keyframes audience-shimmer{0%{background-position:0 0}100%{background-position:40px 0}}
@@ -1593,8 +1642,8 @@ export default function PromocoesKiosk() {
               return photo ? (
                 <div className="relative group/presenter flex-shrink-0">
                   <div
-                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center border-2 border-white/20 shadow-lg"
-                    style={{ background: promoAccentGradient, boxShadow: `0 0 0 2px ${colorMix(telaPromoConfig.card_border_color, 35, "#ffffff")}` }}
+                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
+                    style={{ background: telaPromoConfig.btn_color_b }}
                   >
                     <img src={photo} alt={presenter?.nome || "Locutor no Ar"} className="w-full h-full object-cover" />
                   </div>
@@ -1723,10 +1772,10 @@ export default function PromocoesKiosk() {
                   title={`Citação: ${programa.nome}`}
                   aria-label={`Abrir citação de ${programa.nome}`}
                   onClick={() => { setSelectedProgram(programa); stopAutoScroll(); }}
-                  className={`h-14 w-14 sm:h-16 sm:w-16 rounded-lg p-1.5 border-2 transition-transform hover:scale-105 focus-visible:ring-2 ${isOnAir ? "citation-on-air" : ""}`}
-                  style={{ background: promoAccentGradient, borderColor: isOnAir ? "var(--promo-border)" : "transparent", color: "var(--promo-text)" }}
+                  className={`h-14 w-14 sm:h-16 sm:w-16 rounded-lg p-1.5 border-0 shadow-none promo-flat-btn focus-visible:ring-2 ${isOnAir ? "citation-on-air" : ""}`}
+                  style={{ background: telaPromoConfig.btn_color_b, color: "var(--promo-text)" }}
                 >
-                  <img src={programa.selo} alt="" className="w-full h-full object-contain" />
+                  <img src={getProgramLogo(programa)} alt="" className="w-full h-full object-contain" />
                 </Button>
               );
             })}
@@ -1749,7 +1798,7 @@ export default function PromocoesKiosk() {
             <div className="w-full px-2 -mt-2 flex items-center gap-2">
               <div
                 className="relative flex-1 min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
-                style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 18, "#0a0a0a"), border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 24, "#ffffff")}` }}
+                style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 18, "#0a0a0a") }}
                 title="Audiência ao vivo: áudio × vídeo"
               >
                 {/* Preenchimento áudio */}
@@ -1834,7 +1883,6 @@ export default function PromocoesKiosk() {
                       className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-pointer hover:brightness-110 transition"
                       style={{
                         background: promoDarkGradient,
-                        border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}`,
                         color: telaPromoConfig.btn_text_color,
                       }}
                     >
@@ -1847,8 +1895,8 @@ export default function PromocoesKiosk() {
                   </TooltipTrigger>
                   <TooltipContent
                     side="bottom"
-                    className="border border-white/15 p-0 overflow-hidden"
-                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color, borderColor: colorMix(telaPromoConfig.card_border_color, 32, "#ffffff") }}
+                    className="border-0 p-0 overflow-hidden"
+                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}
                   >
                     {peakAudience ? (() => {
                       const d = new Date(peakAudience.timestamp);
@@ -1856,7 +1904,7 @@ export default function PromocoesKiosk() {
                       const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
                       return (
                         <div className="min-w-[220px]">
-                          <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ background: promoAccentGradient, borderColor: colorMix(telaPromoConfig.card_border_color, 24, "#ffffff") }}>
+                          <div className="flex items-center gap-2 px-3 py-2" style={{ background: promoAccentGradient }}>
                             <Trophy size={16} style={{ color: telaPromoConfig.btn_text_color }} />
                             <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: telaPromoConfig.btn_text_color }}>Melhor audiência do dia</span>
                           </div>
@@ -1875,7 +1923,7 @@ export default function PromocoesKiosk() {
                               type="button"
                               onClick={() => setAudienceDetailsOpen(true)}
                               className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all hover:brightness-110"
-                              style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color, border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}` }}
+                              style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color }}
                             >
                               Ver detalhes
                             </button>
@@ -1914,8 +1962,8 @@ export default function PromocoesKiosk() {
           )}
           {banners.length > 1 && (
             <>
-              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8" aria-label="Banner anterior"><ChevronLeft size={20} /></Button>
-              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" aria-label="Próximo banner"><ChevronRight size={20} /></Button>
+              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 border-0 shadow-none" aria-label="Banner anterior"><ChevronLeft size={20} /></Button>
+              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 border-0 shadow-none" aria-label="Próximo banner"><ChevronRight size={20} /></Button>
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "var(--promo-btn-a)" }}>
                 {banners.map((_, i) => (
                   <Button variant="ghost" size="icon" key={i} onClick={() => changeBanner(i)} className="h-5 w-8 p-0" aria-label={`Ir para banner ${i + 1}`}>
@@ -1942,8 +1990,8 @@ export default function PromocoesKiosk() {
                   variant="glass"
                   title={promo.nome || promo.botao_url}
                   onClick={() => setSelectedPromo(promo)}
-                  className="w-full h-14 min-w-0 px-3 text-sm normal-case whitespace-normal break-words text-center leading-tight border-0 hover:brightness-110"
-                  style={{ background: promoAccentGradient, color: "var(--promo-text)", borderRadius: telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "8px" }}
+                  className="w-full h-14 min-w-0 px-3 text-sm normal-case whitespace-normal break-words text-center leading-tight border-0 shadow-none promo-flat-btn"
+                  style={{ background: telaPromoConfig.btn_color_b, color: "var(--promo-text)", borderRadius: telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "8px" }}
                 >
                   <span className="line-clamp-2">{promo.nome || promo.botao_url}</span>
                 </Button>
@@ -1955,8 +2003,8 @@ export default function PromocoesKiosk() {
 
       {/* Dialog de detalhes de audiência do dia */}
       <Dialog open={audienceDetailsOpen} onOpenChange={setAudienceDetailsOpen}>
-        <DialogContent className="max-w-3xl text-white border border-white/10 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
-          <DialogHeader className="px-5 py-4 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.6), rgba(0,0,0,0))" }}>
+        <DialogContent className="max-w-3xl text-white border-0 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+          <DialogHeader className="px-5 py-4" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.6), rgba(0,0,0,0))" }}>
             <DialogTitle className="flex items-center gap-2 text-white">
               <Trophy size={18} style={{ color: "#ffffff" }} />
               Audiência do dia
@@ -1964,15 +2012,15 @@ export default function PromocoesKiosk() {
           </DialogHeader>
 
           <div className="px-5 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+            <div className="rounded-lg p-3" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
               <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Programa</div>
               <div className="text-sm font-bold truncate">{peakAudience?.programa || "—"}</div>
             </div>
-            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+            <div className="rounded-lg p-3" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
               <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Locutor</div>
               <div className="text-sm font-bold truncate">{peakAudience?.locutor || "—"}</div>
             </div>
-            <div className="rounded-lg p-3 border" style={{ background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)", borderColor: "rgba(255,255,255,0.2)" }}>
+            <div className="rounded-lg p-3" style={{ background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)" }}>
               <div className="text-[10px] uppercase tracking-wider opacity-80 mb-1 text-white">Pico do dia</div>
               <div className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience ? peakAudience.total.toLocaleString("pt-BR") : "—"}</div>
               {peakAudience && (
@@ -1985,7 +2033,7 @@ export default function PromocoesKiosk() {
 
           <div className="px-5 py-4">
             <div className="text-[11px] uppercase tracking-wider opacity-60 mb-2">Evolução ao longo do dia</div>
-            <div className="w-full h-[300px] rounded-lg border border-white/10 p-2" style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
+            <div className="w-full h-[300px] rounded-lg p-2" style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
               {audienceChartLoading ? (
                 <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">Carregando…</div>
               ) : audienceChart.length === 0 ? (
@@ -2039,8 +2087,8 @@ export default function PromocoesKiosk() {
           }, 0);
         }
       }}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
-          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14 border-b" style={{ borderColor: "var(--promo-border)", background: promoAccentGradient, color: "var(--promo-text)" }}>
+        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-0" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)" }}>
+          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14" style={{ background: promoAccentGradient, color: "var(--promo-text)" }}>
             <div className="flex items-center gap-4 min-w-0">
               {selectedPromo?.imagem_url && <img src={selectedPromo.imagem_url} alt="" className="w-16 h-12 object-contain flex-shrink-0 rounded" />}
               <div className="min-w-0">
@@ -2049,7 +2097,7 @@ export default function PromocoesKiosk() {
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2 border-b" style={{ borderColor: "var(--promo-border)" }}>
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2">
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.max(12, s - 2))} aria-label="Diminuir texto" title="Diminuir texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Minus size={16} /></Button>
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.min(56, s + 2))} aria-label="Aumentar texto" title="Aumentar texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Plus size={16} /></Button>
           </div>
@@ -2079,17 +2127,17 @@ export default function PromocoesKiosk() {
 
       {/* Texto da citação, com leitura confortável e controles discretos. */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
-          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14 border-b" style={{ borderColor: "var(--promo-border)", background: promoAccentGradient, color: "var(--promo-text)" }}>
+        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-0" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)" }}>
+          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14" style={{ background: promoAccentGradient, color: "var(--promo-text)" }}>
             <div className="flex items-center gap-4 min-w-0">
-              {selectedProgram?.selo && <img src={selectedProgram.selo} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
+              {selectedProgram && <img src={getProgramLogo(selectedProgram)} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
               <div className="min-w-0">
                 <span className="text-xs font-semibold uppercase opacity-80">Citação do programa</span>
                 <DialogTitle className="text-lg sm:text-xl font-bold leading-tight break-words" style={{ color: "var(--promo-text)" }}>{selectedProgram?.nome}</DialogTitle>
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2 border-b" style={{ borderColor: "var(--promo-border)" }}>
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2">
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.max(12, s - 2))} aria-label="Diminuir texto" title="Diminuir texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Minus size={16} /></Button>
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.min(56, s + 2))} aria-label="Aumentar texto" title="Aumentar texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Plus size={16} /></Button>
           </div>
