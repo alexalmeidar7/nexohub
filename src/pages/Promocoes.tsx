@@ -1798,7 +1798,7 @@ export default function PromocoesKiosk() {
             <div className="w-full px-2 -mt-2 flex items-center gap-2">
               <div
                 className="relative flex-1 min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
-                style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 18, "#0a0a0a"), border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 24, "#ffffff")}` }}
+                style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 18, "#0a0a0a") }}
                 title="Audiência ao vivo: áudio × vídeo"
               >
                 {/* Preenchimento áudio */}
@@ -1883,7 +1883,6 @@ export default function PromocoesKiosk() {
                       className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-pointer hover:brightness-110 transition"
                       style={{
                         background: promoDarkGradient,
-                        border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}`,
                         color: telaPromoConfig.btn_text_color,
                       }}
                     >
@@ -1896,8 +1895,8 @@ export default function PromocoesKiosk() {
                   </TooltipTrigger>
                   <TooltipContent
                     side="bottom"
-                    className="border border-white/15 p-0 overflow-hidden"
-                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color, borderColor: colorMix(telaPromoConfig.card_border_color, 32, "#ffffff") }}
+                    className="border-0 p-0 overflow-hidden"
+                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}
                   >
                     {peakAudience ? (() => {
                       const d = new Date(peakAudience.timestamp);
@@ -1905,7 +1904,7 @@ export default function PromocoesKiosk() {
                       const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
                       return (
                         <div className="min-w-[220px]">
-                          <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ background: promoAccentGradient, borderColor: colorMix(telaPromoConfig.card_border_color, 24, "#ffffff") }}>
+                          <div className="flex items-center gap-2 px-3 py-2" style={{ background: promoAccentGradient }}>
                             <Trophy size={16} style={{ color: telaPromoConfig.btn_text_color }} />
                             <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: telaPromoConfig.btn_text_color }}>Melhor audiência do dia</span>
                           </div>
@@ -1924,7 +1923,7 @@ export default function PromocoesKiosk() {
                               type="button"
                               onClick={() => setAudienceDetailsOpen(true)}
                               className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all hover:brightness-110"
-                              style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color, border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}` }}
+                              style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color }}
                             >
                               Ver detalhes
                             </button>
@@ -2098,7 +2097,7 @@ export default function PromocoesKiosk() {
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2 border-b" style={{ borderColor: "var(--promo-border)" }}>
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2">
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.max(12, s - 2))} aria-label="Diminuir texto" title="Diminuir texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Minus size={16} /></Button>
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.min(56, s + 2))} aria-label="Aumentar texto" title="Aumentar texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Plus size={16} /></Button>
           </div>
@@ -2128,8 +2127,8 @@ export default function PromocoesKiosk() {
 
       {/* Texto da citação, com leitura confortável e controles discretos. */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
-          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14 border-b" style={{ borderColor: "var(--promo-border)", background: promoAccentGradient, color: "var(--promo-text)" }}>
+        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-0" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)" }}>
+          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14" style={{ background: promoAccentGradient, color: "var(--promo-text)" }}>
             <div className="flex items-center gap-4 min-w-0">
               {selectedProgram?.selo && <img src={selectedProgram.selo} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
               <div className="min-w-0">
@@ -2138,7 +2137,7 @@ export default function PromocoesKiosk() {
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2 border-b" style={{ borderColor: "var(--promo-border)" }}>
+          <div className="flex-shrink-0 flex items-center justify-end gap-2 px-5 py-2">
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.max(12, s - 2))} aria-label="Diminuir texto" title="Diminuir texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Minus size={16} /></Button>
             <Button type="button" variant="ghost" size="icon" onClick={() => setFontSize(s => Math.min(56, s + 2))} aria-label="Aumentar texto" title="Aumentar texto" className="h-9 w-9" style={{ color: "var(--layout-page-text)" }}><Plus size={16} /></Button>
           </div>
