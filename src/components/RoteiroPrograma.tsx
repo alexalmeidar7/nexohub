@@ -1470,7 +1470,6 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                         const dataFormatada = yy ? format(new Date(yy, (mm || 1) - 1, dd || 1), "dd/MM/yyyy") : "";
                         const hasXml = (typeof r.subtitulo === "string" && r.subtitulo.startsWith("express_xml::")) || String(r.id || "").startsWith("express_") || !!r.participantes;
                         const isAuto = typeof r.titulo === "string" && r.titulo.includes("[AUTO]");
-                        const cleanTitulo = (r.titulo || "").replace("[AUTO]", "").trim();
                         return (
                           <div
                             key={r.id}
@@ -1487,9 +1486,9 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                             }}
                           >
                             <div className="flex items-start gap-1.5">
-                              <p style={{ ...MONT, flex: 1, fontSize: 13, fontWeight: 800, color: DARK, lineHeight: 1.25, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              <p style={{ ...MONT, flex: 1, fontSize: 13, fontWeight: 800, color: CYAN, lineHeight: 1.25, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {r.programa_nome || "Sem programa"}
-                                
+
                               </p>
                               {isAuto && (
                                 <span style={{ ...MONT, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 999, background: "#8b5cf6", color: "#fff", letterSpacing: 1 }} title="Gerado por Automação">
@@ -1506,15 +1505,19 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                               const pList: any[] = parsed.participantes || [];
                               const blocosList: any[] = parsed.blocos || [];
                               const escaladaItems: any[] = parsed.escaladaList || [];
+                              // Primeiro título real do roteiro (sem o rótulo "PROGRAMA EXPRESS —")
                               let firstTitle = "";
-                              if (escaladaItems.length > 0) firstTitle = escaladaItems[0]?.titulo || escaladaItems[0] || "";
+                              const pickTitle = (t: any) => {
+                                const s = String(t || "").replace(/^PROGRAMA EXPRESS\s*[-—]\s*/i, "").trim();
+                                return s;
+                              };
+                              if (escaladaItems.length > 0) firstTitle = pickTitle(escaladaItems[0]?.titulo || escaladaItems[0]);
                               if (!firstTitle) {
                                 for (const b of blocosList) {
                                   const n = (b.noticias || []).find((x: any) => x.titulo);
-                                  if (n) { firstTitle = n.titulo; break; }
+                                  if (n) { firstTitle = pickTitle(n.titulo); break; }
                                 }
                               }
-                              if (!firstTitle) firstTitle = cleanTitulo;
                               const participantesStr = pList.map((p: any) => p.nome).filter(Boolean).join(", ");
                               return (
                                 <>
@@ -1523,14 +1526,14 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                                       Atualizado em: <span style={{ color: DARK }}>{updStr}</span>
                                     </div>
                                   )}
-                                  {firstTitle && (
-                                    <p style={{ ...MONT, fontSize: 11, fontWeight: 700, lineHeight: 1.35, color: DARK, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                                      {firstTitle}
-                                    </p>
-                                  )}
                                   {participantesStr && (
                                     <p style={{ ...MONT, fontSize: 10, lineHeight: 1.4, color: "#475569", margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                       👥 {participantesStr}
+                                    </p>
+                                  )}
+                                  {firstTitle && (
+                                    <p style={{ ...MONT, fontSize: 11, fontWeight: 700, lineHeight: 1.35, color: DARK, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                      {firstTitle}
                                     </p>
                                   )}
                                   {(() => {
