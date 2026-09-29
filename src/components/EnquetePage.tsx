@@ -394,6 +394,29 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
     toast.success("Enquete excluída com sucesso.");
   };
 
+  const handleReuse = (item: EnqueteAgendada) => {
+    setFormData({
+      pergunta: item.pergunta || "",
+      resposta1: item.resposta1 || "",
+      resposta2: item.resposta2 || "",
+      resposta3: item.resposta3 || "",
+      resposta4: item.resposta4 || "",
+      resposta_correta: item.resposta_correta || 1,
+      data_enquete: todayInBrasilia(),
+      horario_inicio: "00:00",
+      horario_fim: "23:59",
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.success("Enquete carregada no formulário. Ajuste a data/horário e salve para agendar novamente.");
+  };
+
+  // Separa enquetes: próximas/ativas vs encerradas (máx. 50 exibidas)
+  const proximasEnquetes = enquetes.filter(e => getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim) !== "expired");
+  const encerradasEnquetes = enquetes
+    .filter(e => getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim) === "expired")
+    .slice(0, 50);
+
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
