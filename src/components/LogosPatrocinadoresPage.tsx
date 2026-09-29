@@ -1481,10 +1481,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       if (!isProgramSelected) return;
                       clientLogoInputRef.current?.click();
                     }}
-                    className={`group/ajustar w-28 h-20 rounded-2xl flex items-center justify-center p-2 text-center transition-all select-none shrink-0 ${
+                    className={`group/ajustar w-20 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all select-none shrink-0 ${
                       isProgramSelected
-                        ? "bg-gradient-to-br from-[#0055ff] to-[#002b66] border-2 border-transparent text-white cursor-pointer shadow-[0_4px_14px_rgba(0,85,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,85,255,0.45)] hover:-translate-y-0.5 active:scale-95"
-                        : "bg-slate-100/70 border-2 border-dashed border-slate-200 text-slate-400 cursor-not-allowed opacity-50 shadow-none"
+                        ? "bg-[#0055ff] border-2 border-[#0055ff] text-white shadow-[0_4px_14px_rgba(0,85,255,0.3)] hover:brightness-110 hover:shadow-[0_6px_20px_rgba(0,85,255,0.45)] active:scale-95"
+                        : "bg-[#f8fafc] border-2 border-dashed border-slate-200 text-slate-400 cursor-not-allowed opacity-50 shadow-none"
                     }`}
                     title={
                       isProgramSelected
@@ -1492,10 +1492,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                         : "Selecione um programa para habilitar o ajuste da logo"
                     }
                   >
-                    <span className="flex flex-col items-center gap-1">
-                      <Sparkles size={18} className="transition-transform duration-300 group-hover/ajustar:rotate-12 group-hover/ajustar:scale-125 group-hover/ajustar:animate-pulse" />
-                      <span className="text-[11px] font-black uppercase tracking-wider leading-tight">Ajustar Logo</span>
-                    </span>
+                    <Sparkles size={18} className="transition-transform duration-300 group-hover/ajustar:rotate-12 group-hover/ajustar:scale-125" />
+                    <span className="text-[10px] font-bold uppercase tracking-wide leading-tight text-center mt-1">Ajustar Logo</span>
                     <input
                       ref={clientLogoInputRef}
                       type="file"
