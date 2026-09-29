@@ -562,7 +562,13 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     }
 
     toast.success(editingId ? "Batalha atualizada com sucesso" : "Batalha agendada com sucesso");
+    // Limpa completamente o formulário após salvar/agendar
     setEditingId(null);
+    setArtista1({ ...EMPTY_ARTIST });
+    setArtista2({ ...EMPTY_ARTIST });
+    setPercentagesTouched(false);
+    skip1Ref.current = 0;
+    skip2Ref.current = 0;
     setSchedDate("");
     setSchedStart("");
     setSchedEnd("");
@@ -875,6 +881,9 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
                     setEditingId(null);
                     setArtista1({ ...EMPTY_ARTIST });
                     setArtista2({ ...EMPTY_ARTIST });
+                    setPercentagesTouched(false);
+                    skip1Ref.current = 0;
+                    skip2Ref.current = 0;
                     setSchedDate("");
                     setSchedStart("");
                     setSchedEnd("");
