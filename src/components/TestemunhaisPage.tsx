@@ -458,14 +458,14 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                   return (
                     <span
                       key={pid}
-                      className="inline-flex items-center gap-2 bg-white border border-slate-200/90 text-slate-800 text-[11px] font-bold uppercase tracking-wide px-3.5 py-1.5 rounded-full shadow-xs"
+                      className="inline-flex items-center gap-2 bg-[#0055ff] text-white text-[11px] font-bold uppercase tracking-wide px-3.5 py-1.5 rounded-full shadow-md"
                     >
-                      <Check size={12} className="text-[#0055ff]" />
+                      <Check size={12} className="text-white" />
                       {prog?.nome || "Programa"}
                       <button
                         type="button"
                         onClick={() => setForm(current => ({ ...current, programa_ids: current.programa_ids.filter(id => id !== pid) }))}
-                        className="text-slate-400 hover:text-rose-600 transition-colors"
+                        className="text-white/70 hover:text-white transition-colors"
                         aria-label={`Remover ${prog?.nome || "programa"}`}
                       >
                         <X size={12} />
