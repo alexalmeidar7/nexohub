@@ -2004,8 +2004,8 @@ export default function PromocoesKiosk() {
 
       {/* Dialog de detalhes de audiência do dia */}
       <Dialog open={audienceDetailsOpen} onOpenChange={setAudienceDetailsOpen}>
-        <DialogContent className="max-w-3xl text-white border border-white/10 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
-          <DialogHeader className="px-5 py-4 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.6), rgba(0,0,0,0))" }}>
+        <DialogContent className="max-w-3xl text-white border-0 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+          <DialogHeader className="px-5 py-4" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.6), rgba(0,0,0,0))" }}>
             <DialogTitle className="flex items-center gap-2 text-white">
               <Trophy size={18} style={{ color: "#ffffff" }} />
               Audiência do dia
@@ -2088,8 +2088,8 @@ export default function PromocoesKiosk() {
           }, 0);
         }
       }}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)", borderColor: "var(--promo-border)" }}>
-          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14 border-b" style={{ borderColor: "var(--promo-border)", background: promoAccentGradient, color: "var(--promo-text)" }}>
+        <DialogContent className="max-w-3xl w-[calc(100vw-24px)] max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-0" style={{ ...promoThemeVars, backgroundColor: "var(--layout-page-bg)", color: "var(--layout-page-text)" }}>
+          <DialogHeader className="flex-shrink-0 px-5 py-5 pr-14" style={{ background: promoAccentGradient, color: "var(--promo-text)" }}>
             <div className="flex items-center gap-4 min-w-0">
               {selectedPromo?.imagem_url && <img src={selectedPromo.imagem_url} alt="" className="w-16 h-12 object-contain flex-shrink-0 rounded" />}
               <div className="min-w-0">
