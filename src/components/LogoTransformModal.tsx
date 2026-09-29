@@ -76,6 +76,7 @@ export function LogoTransformModal({
   const [approvedVersionId, setApprovedVersionId] = useState<string>("");
 
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoNotice, setInfoNotice] = useState<string | null>(null);
   const [transformFailed, setTransformFailed] = useState(false);
@@ -89,6 +90,19 @@ export function LogoTransformModal({
   const [logoName, setLogoName] = useState("");
   const [expirationDate, setExpirationDate] = useState(defaultExpirationDate);
   const [savingFinal, setSavingFinal] = useState(false);
+
+  useEffect(() => {
+    if (!loading) return;
+    const timer = window.setInterval(() => {
+      setProgress((current) => {
+        if (current < 35) return Math.min(35, current + 3);
+        if (current < 70) return Math.min(70, current + 2);
+        if (current < 92) return Math.min(92, current + 1);
+        return current;
+      });
+    }, 700);
+    return () => window.clearInterval(timer);
+  }, [loading]);
 
   // Initialize session when a new initialFile is passed
   useEffect(() => {
@@ -109,8 +123,10 @@ export function LogoTransformModal({
       setSessionId(sid);
 
       try {
+        setProgress(4);
         setLoading(true);
         const origUrl = await uploadToPngDataUrl(initialFile);
+        setProgress(12);
         setOriginalDataUrl(origUrl);
 
 
@@ -129,6 +145,7 @@ export function LogoTransformModal({
           sessionId: sid,
           version: "version_01",
         });
+        setProgress(100);
 
         if (res.error) {
           setTransformFailed(true);
@@ -149,6 +166,7 @@ export function LogoTransformModal({
         setVersions([...initialVersionsList, v1]);
         setActiveVersionId("version_01");
       } catch (err: any) {
+        setTransformFailed(true);
         setErrorMessage(err?.message || "Erro ao processar imagem da logo.");
       } finally {
         setLoading(false);
@@ -165,6 +183,7 @@ export function LogoTransformModal({
     if (!originalDataUrl || loading) return;
 
     setLoading(true);
+    setProgress(8);
     setErrorMessage(null);
     setInfoNotice(null);
     setTransformFailed(false);
@@ -184,6 +203,7 @@ export function LogoTransformModal({
         version: versionKey,
         isRetry: true,
       });
+      setProgress(100);
 
       if (res.error) {
         setTransformFailed(true);
@@ -204,6 +224,7 @@ export function LogoTransformModal({
       setVersions((prev) => [...prev, newVersion]);
       setActiveVersionId(versionKey);
     } catch (err: any) {
+      setTransformFailed(true);
       setErrorMessage(err?.message || "Erro ao gerar nova opção com a IA.");
     } finally {
       setLoading(false);
@@ -374,14 +395,27 @@ export function LogoTransformModal({
                   }`}
                 >
                   {loading ? (
-                    <div className="flex flex-col items-center text-center gap-3 p-4 text-slate-300">
-                      <Loader2 className="animate-spin text-blue-400" size={34} />
+                    <div className="flex w-full flex-col items-center text-center gap-3 p-4 text-slate-300">
+                      <div className="relative flex h-16 w-16 items-center justify-center">
+                        <Loader2 className="animate-spin text-blue-400" size={58} strokeWidth={1.5} />
+                        <span className="absolute text-xs font-black text-white">{progress}%</span>
+                      </div>
                       <span className="text-xs font-black uppercase tracking-wider text-white">
-                        Processando logo no Backend...
+                        {progress < 20
+                          ? "Preparando a imagem..."
+                          : progress < 70
+                            ? "Vetorizando a logo..."
+                            : "Finalizando transparência..."}
                       </span>
                       <span className="text-[11px] text-slate-400 max-w-xs">
                         Vetorizando traços e gerando versão branca 1080×1080 com canal Alpha transparente.
                       </span>
+                      <div className="h-2 w-full max-w-[220px] overflow-hidden rounded-full bg-slate-700" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Progresso do ajuste da logo">
+                        <div
+                          className="h-full rounded-full bg-blue-400 transition-[width] duration-500 ease-out"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
                     </div>
                   ) : currentVersion ? (
                     <img
