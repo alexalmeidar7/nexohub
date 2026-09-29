@@ -150,7 +150,7 @@ export async function transformLogoWithBackend(params: {
       return {
         success: true,
         version: data.version || version,
-        imageBase64: await normalizeTo1080(data.imageBase64),
+        imageBase64: await forceWhiteLogo(await normalizeTo1080(data.imageBase64)),
         width: 1080,
         height: 1080,
         sessionId: data.sessionId || sessionId,
@@ -180,4 +180,31 @@ export function dataUrlToFile(dataUrl: string, filename: string): File {
     u8arr[n] = bstr.charCodeAt(n);
   }
   return new File([u8arr], filename, { type: mime });
+}
+
+/**
+ * Converts every visible pixel to pure white #FFFFFF keeping the alpha channel,
+ * so the adjusted logo is always the white version on transparent background.
+ */
+export async function forceWhiteLogo(dataUrl: string): Promise<string> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.crossOrigin = "anonymous";
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = dataUrl;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth || img.width;
+  canvas.height = img.naturalHeight || img.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return dataUrl;
+  ctx.drawImage(img, 0, 0);
+  const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const p = d.data;
+  for (let i = 0; i < p.length; i += 4) {
+    p[i] = 255; p[i + 1] = 255; p[i + 2] = 255;
+  }
+  ctx.putImageData(d, 0, 0);
+  return canvas.toDataURL("image/png");
 }

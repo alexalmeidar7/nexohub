@@ -1500,9 +1500,9 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       if (!isProgramSelected) return;
                       clientLogoInputRef.current?.click();
                     }}
-                    className={`w-28 h-20 rounded-2xl flex items-center justify-center p-2 text-center transition-all select-none shrink-0 ${
+                    className={`group/ajustar w-28 h-20 rounded-2xl flex items-center justify-center p-2 text-center transition-all select-none shrink-0 ${
                       isProgramSelected
-                        ? "bg-white border-2 border-dashed border-[#0055ff]/60 hover:border-[#0055ff] hover:bg-blue-50/50 text-[#0055ff] cursor-pointer shadow-xs active:scale-95"
+                        ? "bg-gradient-to-br from-[#0055ff] to-[#002b66] border-2 border-transparent text-white cursor-pointer shadow-[0_4px_14px_rgba(0,85,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,85,255,0.45)] hover:-translate-y-0.5 active:scale-95"
                         : "bg-slate-100/70 border-2 border-dashed border-slate-200 text-slate-400 cursor-not-allowed opacity-50 shadow-none"
                     }`}
                     title={
@@ -1511,8 +1511,9 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                         : "Selecione um programa para habilitar o ajuste da logo"
                     }
                   >
-                    <span className="text-[11px] font-black uppercase tracking-wider leading-tight">
-                      Ajustar Logo
+                    <span className="flex flex-col items-center gap-1">
+                      <Sparkles size={18} className="transition-transform duration-300 group-hover/ajustar:rotate-12 group-hover/ajustar:scale-125 group-hover/ajustar:animate-pulse" />
+                      <span className="text-[11px] font-black uppercase tracking-wider leading-tight">Ajustar Logo</span>
                     </span>
                     <input
                       ref={clientLogoInputRef}
@@ -1576,8 +1577,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                     {excludedLogos.length === 0 ? "Nenhuma logo excluída." : "Nenhuma logo encontrada."}
                   </p>
                 ) : (
-                <div className="p-5">
-                  <p className="text-[11px] font-medium text-slate-500 mb-4">
+                <div className="p-5 bg-slate-900">
+                  <p className="text-[11px] font-medium text-slate-300 mb-4">
                     Arraste uma logo para um programa para restaurá-la, ou clique no botão de restaurar.
                     <br /><span className="text-slate-400 text-[10px]">Logos excluídas são mantidas por até 180 dias.</span>
                   </p>
@@ -1595,7 +1596,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                             <img
                               src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
                               alt={logo.nome}
-                              className="w-full aspect-square rounded-2xl object-contain p-2.5 bg-black border border-slate-800 shadow-sm"
+                              className="w-full aspect-square rounded-2xl object-contain p-2.5 bg-slate-950 border border-slate-700 shadow-sm"
                               onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;
                                 target.onerror = null;
@@ -1612,7 +1613,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                             </div>
                           </div>
                           {logo.nome && (
-                            <p className="text-[11px] font-bold text-slate-700 truncate">{logo.nome}</p>
+                            <p className="text-[11px] font-bold text-slate-100 truncate">{logo.nome}</p>
                           )}
                           <span className="text-[9px] font-medium text-slate-400 block">{isExpiredOnly ? "vencida • " : ""}{diasRestantes}d para expirar</span>
                         </div>
@@ -1668,7 +1669,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             </div>
             <div className="space-y-3">
               {section.items.map(({ programa, logos: gLogos }) => (
-                <Collapsible key={programa.id} defaultOpen={gLogos.length > 0}>
+                <Collapsible key={programa.id} defaultOpen={false}>
                   <div className="rounded-2xl overflow-hidden border border-slate-200/80 bg-white shadow-sm transition-all"
                     onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, programa.id)}
                     onContextMenu={(e) => handleProgramaContextMenu(e, programa)}
