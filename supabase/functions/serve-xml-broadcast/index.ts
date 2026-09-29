@@ -545,16 +545,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    let sponsorLogos: { nome: string; logo_url: string }[] = [];
+    let sponsorLogos: { id: string; nome: string; logo_url: string; created_at?: string }[] = [];
     if (programaId) {
+      // Sempre lê direto do banco: logos inseridas aparecem e excluídas/vencidas saem imediatamente.
       const { data: logos } = await supabase
         .from("logos_patrocinadores")
-        .select("nome, logo_url")
+        .select("id, nome, logo_url, created_at, data_final, ativo, excluido, excluido_at")
         .eq("user_id", dataOwnerId)
         .eq("programa_id", programaId)
-        .eq("ativo", true)
-        .eq("excluido", false);
-      if (logos) sponsorLogos = logos;
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true });
+      const todayStr = now.toISOString().slice(0, 10);
+      sponsorLogos = ((logos || []) as any[]).filter((l) =>
+        l.logo_url &&
+        l.ativo !== false &&
+        l.excluido !== true &&
+        !l.excluido_at &&
+        (!l.data_final || String(l.data_final).slice(0, 10) >= todayStr)
+      );
     }
 
     const socialItems: { handle: string; icon: string }[] = [];
@@ -964,10 +972,14 @@ Deno.serve(async (req) => {
       const generated = await ensurePngImageUrl(
         supabase,
         sponsor.logo_url,
-        `broadcast/${dataOwnerId}/sponsor-${idx}-${(sponsor.nome || "logo").replace(/[^a-z0-9]/gi, "_").toLowerCase()}.png`,
+        `broadcast/${dataOwnerId}/sponsor-${sponsor.id}.png`,
         512,
       );
-      logoPatrocinador = generated || BLANK_LOGO_URL;
+      // Versiona pela própria logo para o vMix nunca reutilizar imagem antiga em cache.
+      const ver = `${sponsor.id.slice(0, 8)}${String(sponsor.logo_url).length}`;
+      logoPatrocinador = generated
+        ? `${generated.split("?")[0]}?v=${ver}`
+        : BLANK_LOGO_URL;
     }
 
     const empresaLogo = emp?.logo
