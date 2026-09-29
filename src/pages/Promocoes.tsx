@@ -1963,8 +1963,8 @@ export default function PromocoesKiosk() {
           )}
           {banners.length > 1 && (
             <>
-              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8" aria-label="Banner anterior"><ChevronLeft size={20} /></Button>
-              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" aria-label="Próximo banner"><ChevronRight size={20} /></Button>
+              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 border-0 shadow-none" aria-label="Banner anterior"><ChevronLeft size={20} /></Button>
+              <Button variant="glass" size="icon" onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 border-0 shadow-none" aria-label="Próximo banner"><ChevronRight size={20} /></Button>
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "var(--promo-btn-a)" }}>
                 {banners.map((_, i) => (
                   <Button variant="ghost" size="icon" key={i} onClick={() => changeBanner(i)} className="h-5 w-8 p-0" aria-label={`Ir para banner ${i + 1}`}>

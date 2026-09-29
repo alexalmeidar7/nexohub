@@ -39,8 +39,8 @@ const PROMO_MUTED = `color-mix(in srgb, ${PROMO_HEADER} 62%, transparent)`;
 
 const cardStyle: React.CSSProperties = {
   background: PROMO_CARD_BG,
-  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 18%, transparent)`,
-  boxShadow: CARD_SHADOW,
+  border: "none",
+  boxShadow: "none",
   borderRadius: 14,
   padding: "10px 14px",
   color: PROMO_TEXT,
