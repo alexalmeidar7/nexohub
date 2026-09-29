@@ -499,6 +499,51 @@ export default function PromocoesKiosk() {
     return () => { cancelled = true; };
   }, [audienceDetailsOpen, audienceUserId]);
 
+  // Busca as logos cadastradas dos programas para usar nos botões de citação.
+  useEffect(() => {
+    if (!audienceUserId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("logos_patrocinadores")
+          .select("programa_id, programa_nome, logo_url, data_final, ativo, excluido")
+          .eq("user_id", audienceUserId)
+          .order("created_at", { ascending: false });
+        if (cancelled || !data) return;
+        const now = new Date();
+        const map: Record<string, string> = {};
+        for (const l of data as any[]) {
+          if (l.excluido) continue;
+          if (l.ativo === false) continue;
+          if (l.data_final) {
+            const df = new Date(`${String(l.data_final).slice(0, 10)}T23:59:59`);
+            if (df < now) continue;
+          }
+          const url = typeof l.logo_url === "string" ? l.logo_url.trim() : "";
+          if (!url || !isRealImageRef(url)) continue;
+          if (l.programa_id && !map[l.programa_id]) map[l.programa_id] = url;
+          if (l.programa_nome) {
+            const key = `n:${normalizeProgramName(l.programa_nome)}`;
+            if (!map[key]) map[key] = url;
+          }
+        }
+        setProgramLogos(map);
+      } catch { /* fallback: usa o selo do programa */ }
+    })();
+    return () => { cancelled = true; };
+  }, [audienceUserId]);
+
+  const getProgramLogo = useCallback((programa: ProgramaGrade): string => {
+    const byId = programLogos[programa.id];
+    if (byId) return byId;
+    for (const id of programa.mergedIds || []) {
+      const url = programLogos[id];
+      if (url) return url;
+    }
+    return programLogos[`n:${normalizeProgramName(programa.nome)}`] || programa.selo;
+  }, [programLogos]);
+
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
     const raw = localStorage.getItem(key);
