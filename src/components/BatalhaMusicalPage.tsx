@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
-import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff, ExternalLink, Copy, Download } from "lucide-react";
+import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
-import { getBrasiliaDateTime, getActiveBatalha, buildBatalhaXml } from "@/lib/scheduledItemUtils";
 import initialBatalhasSync from "@/data/xml_batalhas_sync.json";
 
 interface Artista {
@@ -461,61 +460,12 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       return a.horario_inicio.localeCompare(b.horario_inicio);
     });
 
-    // Mantém todas as batalhas (ativas, agendadas e encerradas) na tabela
+    // Mantém todas as batalhas (ativas, agendadas e encerradas) na tabela.
+    // O formulário permanece sempre limpo — sem preenchimento automático.
     setBatalhas(merged);
     saveStoredBatalhas(targetUserId, merged);
-
-    // Se o formulário estiver vazio e nenhuma edição estiver em andamento,
-    // carrega automaticamente a batalha ativa no ar para permitir ajustes imediatos
-    if (!editingIdRef.current) {
-      const { today, currentTime } = getBrasiliaDateTime();
-      const active = getActiveBatalha(merged, today, currentTime, true);
-      if (active && (active.artista1_nome || active.artista2_nome)) {
-        setArtista1(prev => (!prev.nome ? {
-          nome: active.artista1_nome,
-          musica: active.artista1_musica,
-          porcentagem: active.artista1_porcentagem ?? 0,
-          imagemUrl: active.artista1_imagem || "",
-        } : prev));
-        setArtista2(prev => (!prev.nome ? {
-          nome: active.artista2_nome,
-          musica: active.artista2_musica,
-          porcentagem: active.artista2_porcentagem ?? 0,
-          imagemUrl: active.artista2_imagem || "",
-        } : prev));
-        setSchedDate(prev => (!prev ? active.data_batalha : prev));
-        setSchedStart(prev => (!prev ? active.horario_inicio : prev));
-        setSchedEnd(prev => (!prev ? active.horario_fim : prev));
-        setEditingId(prev => (prev === null ? active.id : prev));
-      }
-    }
   };
 
-  const handleCopyXml = () => {
-    const { today, currentTime } = getBrasiliaDateTime();
-    const active = getActiveBatalha(batalhas, today, currentTime, true);
-    const stationName = clientAcc?.nome || "Positiva FM 99.1";
-    const xml = buildBatalhaXml(active, stationName);
-    navigator.clipboard.writeText(xml.trim());
-    toast.success("XML da Batalha Musical copiado com sucesso!");
-  };
-
-  const handleDownloadXml = () => {
-    const { today, currentTime } = getBrasiliaDateTime();
-    const active = getActiveBatalha(batalhas, today, currentTime, true);
-    const stationName = clientAcc?.nome || "Positiva FM 99.1";
-    const xml = buildBatalhaXml(active, stationName);
-    const blob = new Blob([xml], { type: "application/xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "batalha.xml";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Download do arquivo batalha.xml iniciado!");
-  };
 
   useEffect(() => {
     editingIdRef.current = editingId;
@@ -721,37 +671,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
               <p className="text-[11px]" style={{ color: subtleText }}>Configure os artistas e acompanhe a disputa</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={`/xml/${targetSlug}/batalha.xml`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-slate-200/40 transition shadow-sm"
-              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-              title="Abrir feed XML da Batalha Musical no navegador ou vMix"
-            >
-              <ExternalLink size={15} style={{ color: accentColor }} />
-              <span>VER XML</span>
-            </a>
-            <button
-              onClick={handleCopyXml}
-              className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-slate-200/40 transition shadow-sm cursor-pointer"
-              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-              title="Copiar conteúdo XML da Batalha ativa para a área de transferência"
-            >
-              <Copy size={15} style={{ color: accentColor }} />
-              <span className="hidden md:inline">COPIAR XML</span>
-            </button>
-            <button
-              onClick={handleDownloadXml}
-              className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-slate-200/40 transition shadow-sm cursor-pointer"
-              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-              title="Baixar arquivo batalha.xml atualizado para o computador"
-            >
-              <Download size={15} style={{ color: accentColor }} />
-              <span className="hidden md:inline">BAIXAR XML</span>
-            </button>
-          </div>
+          <div />
         </div>
 
         {/* Card Body */}
