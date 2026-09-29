@@ -1149,25 +1149,6 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push({ programa: p, logos: gLogos });
     });
-    // Grupo especial: logos sem programa vinculado ou com programa não encontrado
-    const semProgLogos = logos.filter(
-      (l) =>
-        (!l.programa_id ||
-          l.programa_id === "__none__" ||
-          !programas.some(
-            (p) =>
-              p.id === l.programa_id ||
-              normalizeProgName(p.nome) === normalizeProgName(l.programa_id) ||
-              normalizeProgName(p.id) === normalizeProgName(l.programa_id) ||
-              normalizeProgName(p.nome) === normalizeProgName((l as any).programa_nome) ||
-              normalizeProgName(p.id) === normalizeProgName((l as any).programa_nome)
-          )) &&
-        l.ativo
-    );
-    if (semProgLogos.length > 0) {
-      const placeholder = { id: "__none__", nome: "TODOS OS PROGRAMAS / GERAL", estudio: "Estúdio Geral", horario_inicio: "" } as unknown as Programa;
-      map.set("Estúdio Geral", [{ programa: placeholder, logos: semProgLogos }]);
-    }
     // Ordem preferida: FM primeiro, depois Podcast, depois demais alfabético
     const order = (label: string) =>
       /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : /geral/i.test(label) ? 9 : 3;
