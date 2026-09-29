@@ -33,10 +33,10 @@ export default function BatalhaScheduleTable({ batalhas: allBatalhas, onEdit, on
   const isEnc = mode === "encerradas";
   const batalhas = isEnc
     ? allBatalhas
-        .filter((b) => getScheduleStatus(b.data_batalha, b.horario_inicio, b.horario_fim) === "ended")
+        .filter((b) => getScheduleStatus(b.data_batalha, b.horario_inicio, b.horario_fim) === "expired")
         .sort((a, b) => (b.data_batalha + b.horario_fim).localeCompare(a.data_batalha + a.horario_fim))
         .slice(0, 50)
-    : allBatalhas.filter((b) => getScheduleStatus(b.data_batalha, b.horario_inicio, b.horario_fim) !== "ended");
+    : allBatalhas.filter((b) => getScheduleStatus(b.data_batalha, b.horario_inicio, b.horario_fim) !== "expired");
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
