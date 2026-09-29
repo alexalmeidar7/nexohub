@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2, CalendarClock } from "lucide-react";
+import { Pencil, Trash2, CalendarClock, History, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getScheduleStatus } from "@/lib/scheduledItemUtils";
@@ -25,9 +25,18 @@ interface Props {
   onEdit: (b: BatalhaAgendada) => void;
   onRefresh: () => void;
   onDelete?: (id: string) => Promise<void> | void;
+  mode?: "agendadas" | "encerradas";
+  onReuse?: (b: BatalhaAgendada) => void;
 }
 
-export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDelete }: Props) {
+export default function BatalhaScheduleTable({ batalhas: allBatalhas, onEdit, onRefresh, onDelete, mode = "agendadas", onReuse }: Props) {
+  const isEnc = mode === "encerradas";
+  const batalhas = isEnc
+    ? allBatalhas
+        .filter((b) => getScheduleStatus(b.data_batalha, b.horario_inicio, b.horario_fim) === "expired")
+        .sort((a, b) => (b.data_batalha + b.horario_fim).localeCompare(a.data_batalha + a.horario_fim))
+        .slice(0, 50)
+    : allBatalhas.filter((b) => getScheduleStatus(b.data_batalha, b.horario_inicio, b.horario_fim) !== "expired");
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -82,8 +91,8 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDe
             gap: 12,
           }}
         >
-          <CalendarClock size={24} style={{ color: CYAN }} />
-          Batalhas Agendadas
+          {isEnc ? <History size={24} style={{ color: CYAN }} /> : <CalendarClock size={24} style={{ color: CYAN }} />}
+          {isEnc ? "Batalhas Encerradas" : "Batalhas Agendadas"}
         </h2>
         <div
           style={{
@@ -97,7 +106,7 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDe
             textTransform: "uppercase",
           }}
         >
-          Total: <span style={{ color: CYAN }}>{batalhas.length}</span>
+          Total: <span style={{ color: CYAN }}>{batalhas.length}</span>{isEnc ? " / 50" : ""}
         </div>
       </div>
 
@@ -156,7 +165,7 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDe
                 <td style={{ padding: "14px 20px", textAlign: "right" }}>
                   <div style={{ display: "inline-flex", gap: 8 }}>
                     <button
-                      onClick={() => onEdit(b)}
+                      onClick={() => (isEnc && onReuse ? onReuse(b) : onEdit(b))}
                       style={{
                         width: 32, height: 32, borderRadius: 12,
                         background: CARD_BG, border: "none", cursor: "pointer",
@@ -164,9 +173,9 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh, onDe
                         color: DARK, transition: "all 0.2s"
                       }}
                       className="hover:scale-110 active:scale-95"
-                      title="Editar"
+                      title={isEnc ? "Usar novamente" : "Editar"}
                     >
-                      <Pencil size={14} />
+                      {isEnc ? <RotateCcw size={14} /> : <Pencil size={14} />}
                     </button>
                     <button
                       onClick={() => handleDelete(b.id)}

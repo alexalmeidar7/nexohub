@@ -668,6 +668,14 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     scrollToForm(formRef.current);
   };
 
+  const handleReuseBatalha = (b: BatalhaAgendada) => {
+    handleEditBatalha(b);
+    // Reutilizar cria uma nova batalha (preserva o histórico da encerrada)
+    setEditingId(null);
+    setSchedDate(new Date().toLocaleDateString("en-CA"));
+    toast.info("Batalha carregada no formulário — ajuste data/horário e salve");
+  };
+
   const inputStyle: React.CSSProperties = {
     backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 60%, transparent)",
     border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
@@ -964,6 +972,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
       {/* Scheduled battles table */}
       <BatalhaScheduleTable batalhas={batalhas} onEdit={handleEditBatalha} onRefresh={loadBatalhas} onDelete={handleDeleteBatalha} />
+      <BatalhaScheduleTable mode="encerradas" batalhas={batalhas} onEdit={handleEditBatalha} onReuse={handleReuseBatalha} onRefresh={loadBatalhas} onDelete={handleDeleteBatalha} />
       </div>
     </div>
   );
