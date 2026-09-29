@@ -3,22 +3,23 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/images/edits";
 const IMAGE_MODEL = "openai/gpt-image-2.5-sunburst";
 
-const BASE_PROMPT = `Recorte e isole APENAS a logomarca presente na imagem enviada e entregue-a com fundo 100% transparente.
+const BASE_PROMPT = `Use a imagem enviada como referência visual obrigatória. Extraia e vetorize APENAS a logomarca, transformando todos os elementos que pertencem à marca em branco puro #FFFFFF e entregando fundo 100% transparente.
 
 Regras obrigatórias de fidelidade:
-- Reproduza a logo exatamente como está na imagem original: todas as letras, palavras, números, slogans, símbolos, ícones, traços finos, contornos e detalhes pequenos.
-- Mantenha as cores originais da logo, inclusive gradientes, tonalidades e diferenças de cor entre elementos.
+- Reproduza exatamente todas as letras, palavras, números, slogans, símbolos, ícones, espaços vazados, traços finos, contornos e detalhes pequenos da logo original.
+- Converta todas as partes visíveis da logo para branco puro #FFFFFF, preservando separações, vazados e transparências internas. Não preserve nenhuma cor original.
 - Mantenha a tipografia, o peso das letras, o espaçamento e as proporções originais.
-- Se a imagem for uma foto, um print de tela, um documento ou tiver fundo colorido, remova SOMENTE o fundo, a moldura, a interface do sistema e qualquer elemento que não faça parte da logo.
-- Não transforme a logo em silhueta, não deixe em branco sólido, não achate em uma forma única e não remova textos.
+- Se a imagem for uma foto, print de tela, documento, JPG ou tiver fundo colorido, identifique os limites reais da marca e remova completamente SOMENTE o fundo, a moldura, a interface e qualquer elemento que não faça parte da logo.
+- O fundo inteiro do canvas, inclusive atrás e dentro dos espaços vazados da marca, deve ter alpha 0. Nunca crie placa, faixa, quadrado ou retângulo branco atrás da logo.
+- Não transforme o conjunto em uma única silhueta sólida: letras e símbolos devem continuar separados e legíveis, com todos os recortes internos preservados.
 - Não invente, não redesenhe, não simplifique e não adicione elementos novos.
 - Não adicione sombra, brilho, 3D, textura, borda, moldura ou fundo.
 
-Resultado: a logo completa e legível, centralizada, com margem de respiro, nitidez alta, nenhuma parte cortada, PNG quadrado com canal alpha e fundo totalmente transparente.`;
+Resultado: arte flat com aparência vetorial, logo completa e legível em #FFFFFF, centralizada, com margem de respiro, alta nitidez, nenhuma parte cortada, PNG quadrado com canal alpha e fundo totalmente transparente. O único conteúdo opaco deve ser a própria logo.`;
 
 const RETRY_SUFFIX = `
 
-Nesta nova tentativa, melhore a limpeza das bordas e a nitidez dos detalhes finos, continuando fiel a todas as cores, textos e formas originais da logo.`;
+Nesta nova tentativa, melhore a separação entre a logo e o fundo, a limpeza das bordas, os espaços vazados e a nitidez dos detalhes finos. Mantenha toda a marca branca #FFFFFF e todo o fundo transparente.`;
 
 function base64ToBytes(base64: string): Uint8Array {
   const binaryStr = atob(base64);
@@ -79,7 +80,7 @@ Deno.serve(async (req) => {
     form.append("image", new Blob([bytes], { type: mime }), "logo.png");
     form.append("prompt", isRetry ? `${BASE_PROMPT}${RETRY_SUFFIX}` : BASE_PROMPT);
     form.append("size", "1024x1024");
-    form.append("quality", "high");
+    form.append("quality", "max");
     form.append("background", "transparent");
     form.append("output_format", "png");
     form.append("n", "1");

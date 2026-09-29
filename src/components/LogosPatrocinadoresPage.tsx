@@ -1558,8 +1558,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                     {excludedLogos.length === 0 ? "Nenhuma logo excluída." : "Nenhuma logo encontrada."}
                   </p>
                 ) : (
-                <div className="p-5 bg-slate-900">
-                  <p className="text-[11px] font-medium text-slate-300 mb-4">
+                <div className="p-5 bg-white">
+                  <p className="text-[11px] font-medium text-slate-600 mb-4">
                     Arraste uma logo para um programa para restaurá-la, ou clique no botão de restaurar.
                     <br /><span className="text-slate-400 text-[10px]">Logos excluídas são mantidas por até 180 dias.</span>
                   </p>
@@ -1573,11 +1573,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           draggable
                           onDragStart={() => handleDragStart(logo)}
                         >
-                          <div className="relative group">
+                          <div
+                            className="sponsor-deleted-logo-box relative group rounded-2xl border border-slate-700 shadow-sm overflow-hidden"
+                            data-nexo-skip
+                          >
                             <img
                               src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
                               alt={logo.nome}
-                              className="w-full aspect-square rounded-2xl object-contain p-2.5 bg-slate-950 border border-slate-700 shadow-sm"
+                              className="w-full aspect-square object-contain p-2.5 bg-transparent"
                               onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;
                                 target.onerror = null;
@@ -1594,7 +1597,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                             </div>
                           </div>
                           {logo.nome && (
-                            <p className="text-[11px] font-bold text-slate-100 truncate">{logo.nome}</p>
+                            <p className="text-[11px] font-bold text-slate-700 truncate">{logo.nome}</p>
                           )}
                           <span className="text-[9px] font-medium text-slate-400 block">{isExpiredOnly ? "vencida • " : ""}{diasRestantes}d para expirar</span>
                         </div>

@@ -1693,6 +1693,11 @@ html, body, #root {
   overflow-x: hidden;
 }
 img, video, canvas, svg { max-width: 100%; }
+
+/* Individual preview tile only; the deleted-logos section itself stays light. */
+.sponsor-deleted-logo-box {
+  background-color: hsl(var(--card)) !important;
+}
 @media (max-width: 640px) {
   /* Reduce oversized fixed widths that break narrow phones */
   .min-w-\[900px\], .min-w-\[1000px\], .min-w-\[1200px\] { min-width: 100% !important; }

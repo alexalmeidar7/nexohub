@@ -110,6 +110,45 @@ export async function normalizeTo1080(dataUrl: string): Promise<string> {
 }
 
 /**
+ * Rejects the common failed edit where the service returns an opaque square or
+ * rectangle instead of a cut-out logo. A valid transparent logo must retain
+ * meaningful transparent space around its outer canvas.
+ */
+async function validateTransparentLogo(dataUrl: string): Promise<void> {
+  const img = await loadImage(dataUrl);
+  const sampleSize = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = sampleSize;
+  canvas.height = sampleSize;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Não foi possível validar a transparência da logo.");
+  ctx.clearRect(0, 0, sampleSize, sampleSize);
+  ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+  const pixels = ctx.getImageData(0, 0, sampleSize, sampleSize).data;
+  let opaque = 0;
+  let borderOpaque = 0;
+  let borderPixels = 0;
+  const border = 8;
+
+  for (let y = 0; y < sampleSize; y += 1) {
+    for (let x = 0; x < sampleSize; x += 1) {
+      const alpha = pixels[(y * sampleSize + x) * 4 + 3];
+      if (alpha > 24) opaque += 1;
+      if (x < border || y < border || x >= sampleSize - border || y >= sampleSize - border) {
+        borderPixels += 1;
+        if (alpha > 24) borderOpaque += 1;
+      }
+    }
+  }
+
+  const opaqueRatio = opaque / (sampleSize * sampleSize);
+  const borderOpaqueRatio = borderOpaque / borderPixels;
+  if (opaqueRatio > 0.82 || borderOpaqueRatio > 0.7) {
+    throw new Error("O ajuste retornou um fundo preenchido em vez de uma logo transparente. Tente outra opção.");
+  }
+}
+
+/**
  * Sends the real uploaded artwork to the backend for background removal,
  * keeping every color, word and detail of the logo.
  * The API key never reaches the browser.
@@ -147,10 +186,12 @@ export async function transformLogoWithBackend(params: {
     }
 
     if (data?.success && data?.imageBase64) {
+      const normalized = await normalizeTo1080(data.imageBase64);
+      await validateTransparentLogo(normalized);
       return {
         success: true,
         version: data.version || version,
-        imageBase64: await forceWhiteLogo(await normalizeTo1080(data.imageBase64)),
+        imageBase64: await forceWhiteLogo(normalized),
         width: 1080,
         height: 1080,
         sessionId: data.sessionId || sessionId,
