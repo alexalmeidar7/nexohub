@@ -1574,8 +1574,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           onDragStart={() => handleDragStart(logo)}
                         >
                           <div
-                            className="relative group rounded-2xl border border-slate-700 shadow-sm overflow-hidden"
-                            style={{ backgroundColor: "hsl(var(--card))" }}
+                            className="sponsor-deleted-logo-box relative group rounded-2xl border border-slate-700 shadow-sm overflow-hidden"
                           >
                             <img
                               src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
