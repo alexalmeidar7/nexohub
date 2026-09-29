@@ -1506,15 +1506,19 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                               const pList: any[] = parsed.participantes || [];
                               const blocosList: any[] = parsed.blocos || [];
                               const escaladaItems: any[] = parsed.escaladaList || [];
+                              // Primeiro título real do roteiro (sem o rótulo "PROGRAMA EXPRESS —")
                               let firstTitle = "";
-                              if (escaladaItems.length > 0) firstTitle = escaladaItems[0]?.titulo || escaladaItems[0] || "";
+                              const pickTitle = (t: any) => {
+                                const s = String(t || "").replace(/^PROGRAMA EXPRESS\s*[-—]\s*/i, "").trim();
+                                return s;
+                              };
+                              if (escaladaItems.length > 0) firstTitle = pickTitle(escaladaItems[0]?.titulo || escaladaItems[0]);
                               if (!firstTitle) {
                                 for (const b of blocosList) {
                                   const n = (b.noticias || []).find((x: any) => x.titulo);
-                                  if (n) { firstTitle = n.titulo; break; }
+                                  if (n) { firstTitle = pickTitle(n.titulo); break; }
                                 }
                               }
-                              if (!firstTitle) firstTitle = cleanTitulo;
                               const participantesStr = pList.map((p: any) => p.nome).filter(Boolean).join(", ");
                               return (
                                 <>
