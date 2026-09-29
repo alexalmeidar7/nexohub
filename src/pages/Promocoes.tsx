@@ -1642,8 +1642,8 @@ export default function PromocoesKiosk() {
               return photo ? (
                 <div className="relative group/presenter flex-shrink-0">
                   <div
-                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center border-2 border-white/20 shadow-lg"
-                    style={{ background: promoAccentGradient, boxShadow: `0 0 0 2px ${colorMix(telaPromoConfig.card_border_color, 35, "#ffffff")}` }}
+                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
+                    style={{ background: telaPromoConfig.btn_color_b }}
                   >
                     <img src={photo} alt={presenter?.nome || "Locutor no Ar"} className="w-full h-full object-cover" />
                   </div>
@@ -1991,8 +1991,8 @@ export default function PromocoesKiosk() {
                   variant="glass"
                   title={promo.nome || promo.botao_url}
                   onClick={() => setSelectedPromo(promo)}
-                  className="w-full h-14 min-w-0 px-3 text-sm normal-case whitespace-normal break-words text-center leading-tight border-0 hover:brightness-110"
-                  style={{ background: promoAccentGradient, color: "var(--promo-text)", borderRadius: telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "8px" }}
+                  className="w-full h-14 min-w-0 px-3 text-sm normal-case whitespace-normal break-words text-center leading-tight border-0 shadow-none promo-flat-btn"
+                  style={{ background: telaPromoConfig.btn_color_b, color: "var(--promo-text)", borderRadius: telaPromoConfig.card_style === "sharp" ? "4px" : telaPromoConfig.card_style === "pill" ? "50px" : "8px" }}
                 >
                   <span className="line-clamp-2">{promo.nome || promo.botao_url}</span>
                 </Button>
