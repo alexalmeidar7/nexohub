@@ -1695,7 +1695,7 @@ html, body, #root {
 img, video, canvas, svg { max-width: 100%; }
 
 /* Individual preview tile only; the deleted-logos section itself stays light. */
-.mv-content-area .sponsor-deleted-logo-box {
+.sponsor-deleted-logo-box {
   background-color: hsl(var(--card)) !important;
 }
 @media (max-width: 640px) {
