@@ -2012,15 +2012,15 @@ export default function PromocoesKiosk() {
           </DialogHeader>
 
           <div className="px-5 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+            <div className="rounded-lg p-3" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
               <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Programa</div>
               <div className="text-sm font-bold truncate">{peakAudience?.programa || "—"}</div>
             </div>
-            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+            <div className="rounded-lg p-3" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
               <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Locutor</div>
               <div className="text-sm font-bold truncate">{peakAudience?.locutor || "—"}</div>
             </div>
-            <div className="rounded-lg p-3 border" style={{ background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)", borderColor: "rgba(255,255,255,0.2)" }}>
+            <div className="rounded-lg p-3" style={{ background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)" }}>
               <div className="text-[10px] uppercase tracking-wider opacity-80 mb-1 text-white">Pico do dia</div>
               <div className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience ? peakAudience.total.toLocaleString("pt-BR") : "—"}</div>
               {peakAudience && (
@@ -2033,7 +2033,7 @@ export default function PromocoesKiosk() {
 
           <div className="px-5 py-4">
             <div className="text-[11px] uppercase tracking-wider opacity-60 mb-2">Evolução ao longo do dia</div>
-            <div className="w-full h-[300px] rounded-lg border border-white/10 p-2" style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
+            <div className="w-full h-[300px] rounded-lg p-2" style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
               {audienceChartLoading ? (
                 <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">Carregando…</div>
               ) : audienceChart.length === 0 ? (
