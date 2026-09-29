@@ -1527,14 +1527,14 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                                       Atualizado em: <span style={{ color: DARK }}>{updStr}</span>
                                     </div>
                                   )}
-                                  {firstTitle && (
-                                    <p style={{ ...MONT, fontSize: 11, fontWeight: 700, lineHeight: 1.35, color: DARK, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                                      {firstTitle}
-                                    </p>
-                                  )}
                                   {participantesStr && (
                                     <p style={{ ...MONT, fontSize: 10, lineHeight: 1.4, color: "#475569", margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                       👥 {participantesStr}
+                                    </p>
+                                  )}
+                                  {firstTitle && (
+                                    <p style={{ ...MONT, fontSize: 11, fontWeight: 700, lineHeight: 1.35, color: DARK, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                      {firstTitle}
                                     </p>
                                   )}
                                   {(() => {
