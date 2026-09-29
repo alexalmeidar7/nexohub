@@ -394,6 +394,29 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
     toast.success("Enquete excluída com sucesso.");
   };
 
+  const handleReuse = (item: EnqueteAgendada) => {
+    setFormData({
+      pergunta: item.pergunta || "",
+      resposta1: item.resposta1 || "",
+      resposta2: item.resposta2 || "",
+      resposta3: item.resposta3 || "",
+      resposta4: item.resposta4 || "",
+      resposta_correta: item.resposta_correta || 1,
+      data_enquete: todayInBrasilia(),
+      horario_inicio: "00:00",
+      horario_fim: "23:59",
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.success("Enquete carregada no formulário. Ajuste a data/horário e salve para agendar novamente.");
+  };
+
+  // Separa enquetes: próximas/ativas vs encerradas (máx. 50 exibidas)
+  const proximasEnquetes = enquetes.filter(e => getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim) !== "expired");
+  const encerradasEnquetes = enquetes
+    .filter(e => getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim) === "expired")
+    .slice(0, 50);
+
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
@@ -593,7 +616,7 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
               textTransform: "uppercase",
             }}
           >
-            Total: <span style={{ color: "#00BFF0" }}>{enquetes.length}</span>
+            Total: <span style={{ color: "#00BFF0" }}>{proximasEnquetes.length}</span>
           </div>
         </div>
 
@@ -609,7 +632,7 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
               </tr>
             </thead>
             <tbody>
-              {enquetes.length > 0 ? enquetes.map((e, idx) => {
+              {proximasEnquetes.length > 0 ? proximasEnquetes.map((e, idx) => {
                 const status = getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim);
                 return (
                   <tr
@@ -708,6 +731,121 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
           </table>
         </div>
       </section>
+
+      {encerradasEnquetes.length > 0 && (
+        <section
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 24,
+            padding: 32,
+            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+            fontFamily: "'Montserrat', sans-serif",
+          }}
+        >
+          <div className="flex items-center justify-between mb-8">
+            <h2
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                letterSpacing: 2,
+                color: "#0A2540",
+                textTransform: "uppercase",
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <StopCircle size={24} style={{ color: "#94A3B8" }} />
+              Enquetes Encerradas
+            </h2>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#0A2540",
+                background: "#F1F5F9",
+                padding: "6px 16px",
+                borderRadius: 999,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+              }}
+            >
+              Total: <span style={{ color: "#64748B" }}>{encerradasEnquetes.length}</span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto" style={{ borderRadius: 24, border: "1px solid #E2E8F0" }}>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr style={{ background: "#64748B" }}>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Data / Horário</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Pergunta</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Opções</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "right" }}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {encerradasEnquetes.map((e, idx) => (
+                  <tr
+                    key={e.id}
+                    style={{ background: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC", transition: "background 0.2s ease" }}
+                    className="hover:bg-[#F1F5F9]"
+                  >
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
+                      <div className="flex flex-col">
+                        <span style={{ fontWeight: 700 }}>
+                          {new Date(e.data_enquete + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        </span>
+                        <span style={{ fontSize: 10, opacity: 0.6 }}>
+                          {e.horario_inicio} - {e.horario_fim}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 500, color: "#0A2540" }}>
+                      {e.pergunta}
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
+                      <div className="flex flex-wrap gap-2">
+                        {[e.resposta1, e.resposta2, e.resposta3, e.resposta4].filter(Boolean).map((resp, i) => (
+                          <span key={i} style={{ padding: "2px 8px", background: "#F1F5F9", borderRadius: 999, fontSize: 10, color: "#475569", fontWeight: 600 }}>
+                            {resp}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ padding: "14px 20px", textAlign: "right" }}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleReuse(e)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-50 text-[#0055ff] border border-blue-200/80 hover:bg-[#0055ff] hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
+                          title="Reutilizar esta enquete: carrega os dados no formulário para agendar novamente"
+                        >
+                          <Copy size={13} />
+                          USAR NOVAMENTE
+                        </button>
+                        <button
+                          onClick={() => handleDelete(e.id)}
+                          style={{
+                            width: 32, height: 32, borderRadius: 12,
+                            background: "#FEE2E2", border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: "#DC2626", transition: "all 0.2s"
+                          }}
+                          className="hover:scale-110 active:scale-95"
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
