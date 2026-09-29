@@ -1477,10 +1477,10 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                             className="flex-shrink-0 flex flex-col gap-2 transition-all hover:-translate-y-0.5"
                             style={{
                               ...MONT,
-                              minWidth: 240,
-                              maxWidth: 290,
-                              padding: 14,
-                              borderRadius: 20,
+                              minWidth: 196,
+                              maxWidth: 214,
+                              padding: 11,
+                              borderRadius: 16,
                               background: "#FFFFFF",
                               border: `2px solid ${isAuto ? "#8b5cf6" : CYAN}`,
                               boxShadow: "0 2px 10px rgba(10, 37, 64, 0.06)",
@@ -1584,8 +1584,8 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                                 msg += `_Nos vemos no programa ;)_`;
                                 setWhatsAppHistoricoData({ titulo: r.titulo || "Roteiro", programaNome: r.programa_nome || "", estudio: r.estudio || "", data: dataStr, horario: r.horario || "", participantes: pList, conteudoTexto: "", _expressFormatted: msg });
                                 setShowWhatsAppDialog(true);
-                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: "#296f4d", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar por WhatsApp">
-                                <MessageSquare size={13} style={{ color: "#d9ff65" }} />
+                              }} style={{ width: 28, height: 28, borderRadius: "50%", background: CYAN, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.15s ease, box-shadow 0.15s ease", boxShadow: "0 2px 6px rgba(0, 85, 255, 0.28)" }} title="Enviar por WhatsApp">
+                                <MessageSquare size={13} style={{ color: "#FFFFFF" }} />
                               </button>
                               {hasXml && (
                                 <button onClick={async () => {
@@ -1603,7 +1603,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                                     toast.success("O XML atualizado com sucesso!");
                                     fetchHistorico();
                                   } else toast.error("Falha ao enviar XML");
-                                }} style={{ width: 30, height: 30, borderRadius: "50%", background: "#00dbff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="O XML' atualize a data e horário automáticamente">
+                                }} style={{ width: 28, height: 28, borderRadius: "50%", background: CYAN, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.15s ease, box-shadow 0.15s ease", boxShadow: "0 2px 6px rgba(0, 85, 255, 0.28)" }} title="Enviar para o XML">
                                   <Send size={13} style={{ color: "#FFFFFF" }} />
                                 </button>
                               )}
@@ -1634,11 +1634,11 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                                   dataPrograma: r.data_programa || "",
                                 });
                                 setNovoRoteiroOpen(true);
-                              }} style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Editar">
-                                <Pencil size={13} style={{ color: DARK }} />
+                              }} style={{ width: 28, height: 28, borderRadius: "50%", background: CYAN, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.15s ease, box-shadow 0.15s ease", boxShadow: "0 2px 6px rgba(0, 85, 255, 0.28)" }} title="Editar">
+                                <Pencil size={13} style={{ color: "#FFFFFF" }} />
                               </button>
-                              <button onClick={() => excluirRoteiro(r.id)} style={{ marginLeft: "auto", width: 30, height: 30, borderRadius: "50%", background: "#FEE2E2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Excluir">
-                                <Trash2 size={13} style={{ color: "#dc2626" }} />
+                              <button onClick={() => excluirRoteiro(r.id)} style={{ marginLeft: "auto", width: 28, height: 28, borderRadius: "50%", background: CYAN, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.15s ease, box-shadow 0.15s ease", boxShadow: "0 2px 6px rgba(0, 85, 255, 0.28)" }} title="Excluir">
+                                <Trash2 size={13} style={{ color: "#FFFFFF" }} />
                               </button>
                             </div>
                           </div>
