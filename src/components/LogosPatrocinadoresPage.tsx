@@ -1575,6 +1575,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                         >
                           <div
                             className="sponsor-deleted-logo-box relative group rounded-2xl border border-slate-700 shadow-sm overflow-hidden"
+                            data-nexo-skip
                           >
                             <img
                               src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
