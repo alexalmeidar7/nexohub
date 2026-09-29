@@ -833,7 +833,6 @@ function BlitzBox({ userId }: { userId?: string | null }) {
                       padding: "6px 8px",
                       marginBottom: 4,
                       background: `color-mix(in srgb, ${PROMO_BORDER} 6%, transparent)`,
-                      border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 15%, transparent)`,
                       color: PROMO_TEXT,
                       cursor: "pointer",
                     }}
@@ -872,7 +871,6 @@ function BlitzBox({ userId }: { userId?: string | null }) {
             style={{
               width: "100%", maxWidth: 460,
               background: PROMO_CARD_BG,
-              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 30%, transparent)`,
               borderRadius: 18, color: PROMO_TEXT, overflow: "hidden",
               fontFamily: "'Montserrat', sans-serif",
               boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
