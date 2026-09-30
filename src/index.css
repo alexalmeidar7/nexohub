@@ -505,8 +505,8 @@
 .mv-content-area input[type="tel"],
 .mv-content-area textarea,
 .mv-content-area select,
-input, 
-textarea {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea {
   background-color: transparent !important;
   background: none !important;
   border: none !important;
