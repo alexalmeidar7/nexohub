@@ -828,6 +828,32 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // Atualiza o registro real no banco: tenta pelo id; se não achar (id de cache/XML/snapshot),
+  // localiza pelo dono + arquivo da imagem (+ programa). Garante sessão válida antes.
+  const updateLogoRecord = async (item: Logo | undefined, id: string, patch: Record<string, any>, ownerFallback: string) => {
+    const { data: sess } = await supabase.auth.getSession();
+    if (!sess?.session) {
+      const { data: ref } = await supabase.auth.refreshSession();
+      if (!ref?.session) throw new Error("Sua sessão expirou. Saia e entre novamente para continuar.");
+    }
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isUuid) {
+      const { data, error } = await supabase.from("logos_patrocinadores").update(patch).eq("id", id).select("id");
+      if (error) throw error;
+      if (data && data.length > 0) return data;
+    }
+    const owner = item?.user_id && /^[0-9a-f-]{36}$/i.test(item.user_id) ? item.user_id : ownerFallback;
+    const file = (item?.logo_url || "").split("?")[0].split("/").pop();
+    if (!file || !owner) throw new Error("Não foi possível identificar a logo no banco.");
+    let q = supabase.from("logos_patrocinadores").update(patch).eq("user_id", owner).ilike("logo_url", `%${file}%`);
+    if (item?.programa_id && /^[0-9a-f-]{36}$/i.test(item.programa_id)) q = q.eq("programa_id", item.programa_id);
+    else q = q.is("programa_id", null);
+    const { data, error } = await q.select("id");
+    if (error) throw error;
+    if (data && data.length > 0) return data;
+    throw new Error("Logo não encontrada no banco. Recarregue a página e tente novamente.");
+  };
+
   const handleSoftDelete = async (id: string) => {
     const activeUid =
       dataUserId ||
@@ -837,26 +863,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       "";
 
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       const patch = { excluido: true, excluido_at: new Date().toISOString(), ativo: false };
-      let q = supabase.from("logos_patrocinadores").update(patch);
-      if (isUuid) {
-        q = q.eq("id", id);
-      } else {
-        // Logo carregada pelo XML (ex.: subusuário): localizar o registro real pelo dono + imagem
-        const item = logos.find((l) => l.id === id);
-        const owner = item?.user_id || activeUid;
-        if (!item?.logo_url || !owner) throw new Error("Não foi possível identificar a logo no banco.");
-        q = q.eq("user_id", owner).eq("logo_url", item.logo_url);
-        if (item.programa_id && /^[0-9a-f-]{36}$/i.test(item.programa_id)) {
-          q = q.eq("programa_id", item.programa_id);
-        }
-      }
-      const { data, error } = await q.select("id");
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        throw new Error("Nenhum registro foi atualizado (sessão expirada ou sem permissão).");
-      }
+      await updateLogoRecord(logos.find((l) => l.id === id), id, patch, activeUid);
     } catch (e: any) {
       toast({ title: "Erro ao excluir logo", description: e?.message || String(e), variant: "destructive" });
       return;
@@ -907,12 +915,16 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     setRestoring(true);
 
     try {
-      await supabase
-        .from("logos_patrocinadores")
-        .update({ excluido: false, excluido_at: null, ativo: true, programa_id: first, data_final: restoreDate })
-        .eq("id", restoreLogo.id);
-    } catch (e) {
-      console.warn("[confirmRestore] Supabase notice:", e);
+      await updateLogoRecord(
+        restoreLogo,
+        restoreLogo.id,
+        { excluido: false, excluido_at: null, ativo: true, programa_id: first, data_final: restoreDate },
+        activeUid
+      );
+    } catch (e: any) {
+      setRestoring(false);
+      toast({ title: "Erro ao restaurar logo", description: e?.message || String(e), variant: "destructive" });
+      return;
     }
 
     if (activeUid) {
