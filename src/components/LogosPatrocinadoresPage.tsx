@@ -837,13 +837,24 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       "";
 
     try {
-      const { data, error } = await supabase
-        .from("logos_patrocinadores")
-        .update({ excluido: true, excluido_at: new Date().toISOString(), ativo: false })
-        .eq("id", id)
-        .select("id");
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      const patch = { excluido: true, excluido_at: new Date().toISOString(), ativo: false };
+      let q = supabase.from("logos_patrocinadores").update(patch);
+      if (isUuid) {
+        q = q.eq("id", id);
+      } else {
+        // Logo carregada pelo XML (ex.: subusuário): localizar o registro real pelo dono + imagem
+        const item = logos.find((l) => l.id === id);
+        const owner = item?.user_id || activeUid;
+        if (!item?.logo_url || !owner) throw new Error("Não foi possível identificar a logo no banco.");
+        q = q.eq("user_id", owner).eq("logo_url", item.logo_url);
+        if (item.programa_id && /^[0-9a-f-]{36}$/i.test(item.programa_id)) {
+          q = q.eq("programa_id", item.programa_id);
+        }
+      }
+      const { data, error } = await q.select("id");
       if (error) throw error;
-      if (/^[0-9a-f-]{36}$/i.test(id) && (!data || data.length === 0)) {
+      if (!data || data.length === 0) {
         throw new Error("Nenhum registro foi atualizado (sessão expirada ou sem permissão).");
       }
     } catch (e: any) {
