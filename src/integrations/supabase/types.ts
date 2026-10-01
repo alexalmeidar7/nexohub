@@ -1751,6 +1751,7 @@ export type Database = {
           classificacao_etaria: string | null
           created_at: string
           data_variavel: string | null
+          deleted_at: string | null
           descricao: string | null
           dias_semana: string[] | null
           estudio: string | null
@@ -1772,6 +1773,7 @@ export type Database = {
           classificacao_etaria?: string | null
           created_at?: string
           data_variavel?: string | null
+          deleted_at?: string | null
           descricao?: string | null
           dias_semana?: string[] | null
           estudio?: string | null
@@ -1793,6 +1795,7 @@ export type Database = {
           classificacao_etaria?: string | null
           created_at?: string
           data_variavel?: string | null
+          deleted_at?: string | null
           descricao?: string | null
           dias_semana?: string[] | null
           estudio?: string | null
