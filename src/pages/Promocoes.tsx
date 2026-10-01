@@ -394,7 +394,9 @@ export default function PromocoesKiosk() {
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const [programas, setProgramas] = useState<ProgramaGrade[]>([]);
   const hadOnlineProgramsRef = useRef(false);
-  const [testemunhais, setTestemunhais] = useState<Testemunhal[]>([]);
+  const [testemunhais, setTestemunhaisRaw] = useState<Testemunhal[]>([]);
+  const [lastCitationReadAt, setLastCitationReadAt] = useState<Date | null>(null);
+  const setTestemunhais = (rows: Testemunhal[]) => { setTestemunhaisRaw(rows); setLastCitationReadAt(new Date()); };
   const [onAirProgram, setOnAirProgram] = useState<{ nome: string; horarioInicio: string; horarioFim: string; progress: number; apresentadorId: string; diasSemana?: string[] } | null>(null);
   const [apresentadores, setApresentadores] = useState<any[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -990,8 +992,27 @@ export default function PromocoesKiosk() {
 
     const load = isPublicMode ? loadPublic : loadAuth;
     load().finally(() => setLoading(false));
-    const interval = setInterval(load, 10000); // Changed from 30s to 10s for better synchronization
-    return () => clearInterval(interval);
+    const interval = setInterval(load, 10000);
+    // Atualização instantânea: qualquer alteração nas tabelas da página recarrega do banco.
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    const trigger = () => { if (debounce) clearTimeout(debounce); debounce = setTimeout(() => { load(); }, 400); };
+    const channel = supabase
+      .channel(`locutor-live-${userSlug || "self"}-${Math.random().toString(36).slice(2, 8)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "testemunhais" }, trigger)
+      .on("postgres_changes", { event: "*", schema: "public", table: "promocoes" }, trigger)
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas" }, trigger)
+      .on("postgres_changes", { event: "*", schema: "public", table: "logos_patrocinadores" }, trigger)
+      .subscribe();
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      clearInterval(interval);
+      if (debounce) clearTimeout(debounce);
+      supabase.removeChannel(channel);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, [isPublicMode, userSlug]);
 
   // Banner auto-rotate with progress tracking
@@ -2132,7 +2153,14 @@ export default function PromocoesKiosk() {
             <div className="flex items-center gap-4 min-w-0">
               {selectedProgram && <img src={getProgramLogo(selectedProgram)} alt="" className="w-16 h-12 object-contain flex-shrink-0" />}
               <div className="min-w-0">
-                <span className="text-xs font-semibold uppercase opacity-80">Citação do programa</span>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="text-xs font-semibold uppercase opacity-80">Citação do programa</span>
+                  {lastCitationReadAt && (
+                    <span className="text-[11px] font-medium opacity-80">
+                      Última leitura de atualização: {lastCitationReadAt.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    </span>
+                  )}
+                </div>
                 <DialogTitle className="text-lg sm:text-xl font-bold leading-tight break-words" style={{ color: "var(--promo-text)" }}>{selectedProgram?.nome}</DialogTitle>
               </div>
             </div>
