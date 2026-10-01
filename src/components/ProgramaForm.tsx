@@ -1418,7 +1418,6 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
-  const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
   const updateProgramaRow = async (id: string, patch: Record<string, any>): Promise<string | null> => {
     if (!isUuid(id)) return null; // programa só local
