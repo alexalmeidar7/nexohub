@@ -64,6 +64,13 @@
       "when": 1790554910425,
       "tag": "0008_add_updated_at_to_testemunhais",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790862869589,
+      "tag": "0009_realtime_locutor_tables",
+      "breakpoints": true
     }
   ]
 }
