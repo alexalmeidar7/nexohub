@@ -280,20 +280,25 @@ async function persistPrograma(opts: {
 }
 
 
+/** true quando a última leitura veio do banco online (fonte de verdade). */
+export let lastProgramasFromDb = false;
+
 export async function getProgramas(targetUserId?: string | null, userEmail?: string | null): Promise<Programa[]> {
+  lastProgramasFromDb = false;
   const acc = findClientAccountById(targetUserId) || findClientAccountByEmail(userEmail || targetUserId);
   const effectiveId = acc?.parentUserId || acc?.id || targetUserId;
   const targetSlug = acc?.slug || targetUserId;
   const stationName = acc?.nome || acc?.razaoSocial || "";
 
   try {
-    let query = supabase.from("programas").select("*");
+    let query = supabase.from("programas").select("*").is("deleted_at" as any, null);
     if (effectiveId) {
       query = query.eq("user_id", effectiveId);
     }
-    const { data } = await query;
-    if (data && data.length > 0) {
-      return data.map(p => sanitizeProgramImages({
+    const { data, error } = await query;
+    lastProgramasFromDb = !error && Array.isArray(data) && !!effectiveId;
+    if (lastProgramasFromDb) {
+      return (data || []).map(p => sanitizeProgramImages({
         id: p.id || `prog_${Math.random()}`,
         nome: p.nome || "Programa Sem Nome",
         apresentadorId: p.apresentador_id || "",
@@ -979,7 +984,9 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         }
       });
 
-      let combinedProgs = Array.from(baseMap.values());
+      // Banco online é a fonte de verdade: quando respondeu, ignora grade padrão/cache local
+      // (senão programas excluídos ou inativados "voltam" da cópia local).
+      let combinedProgs = lastProgramasFromDb ? (Array.isArray(pg) ? [...pg] : []) : Array.from(baseMap.values());
 
       // FILTRAGEM ESTRITA: garante que programas de outras emissoras NUNCA apareçam
       if (isClient && stationKey) {
@@ -1411,21 +1418,34 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
+
+  const updateProgramaRow = async (id: string, patch: Record<string, any>): Promise<string | null> => {
+    if (!isUuid(id)) return null; // programa só local
+    const { data: s } = await supabase.auth.getSession();
+    if (!s.session) await supabase.auth.refreshSession().catch(() => null);
+    const { data, error } = await supabase.from("programas").update(patch as any).eq("id", id).select("id");
+    if (error) return error.message;
+    if (!data || data.length === 0) return "Nenhum registro foi alterado. Sua sessão pode ter expirado — saia e entre novamente.";
+    return null;
+  };
+
   const removePrograma = async (id: string) => {
-    try {
-      await supabase.from("programas").delete().eq("id", id);
-    } catch (e) {
-      console.warn("Error deleting program from supabase:", e);
+    // Exclusão lógica: preserva logos, agenda e citações ligadas ao programa.
+    const err = await updateProgramaRow(id, { ativo: false, deleted_at: new Date().toISOString() });
+    if (err) {
+      toast({ title: "Erro ao excluir programa", description: err, variant: "destructive" });
+      return;
     }
     removeCustomProgram(id, selectedCliente);
+    toast({ title: "Programa excluído" });
     await load();
   };
 
   const toggleAtivo = async (id: string, current: boolean) => {
-    try {
-      await supabase.from("programas").update({ ativo: !current } as any).eq("id", id);
-    } catch (e) {
-      console.warn("Error updating program ativo in supabase:", e);
+    const err = await updateProgramaRow(id, { ativo: !current });
+    if (err) {
+      toast({ title: "Erro ao alterar status", description: err, variant: "destructive" });
+      return;
     }
     try {
       const all = getStoredCustomPrograms();

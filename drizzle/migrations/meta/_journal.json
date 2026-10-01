@@ -71,6 +71,13 @@
       "when": 1790862869589,
       "tag": "0009_realtime_locutor_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790872874791,
+      "tag": "0010_programas_soft_delete",
+      "breakpoints": true
     }
   ]
 }
