@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
       if (isPodcast) {
         xml += `  <roteiro>\n`;
         xml += `    <tituloTarja>${esc(podcastData.tituloTarja || "")}</tituloTarja>\n`;
+       xml += `    <subtituloTarja>${esc(podcastData.subtituloTarja || "")}</subtituloTarja>\n`;
         xml += `    <introducao>${esc(podcastData.introducao || "")}</introducao>\n`;
         xml += `    <perguntas>\n`;
         (podcastData.perguntas || []).filter((p: string) => p && p.trim()).forEach((p: string, i: number) => {

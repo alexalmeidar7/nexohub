@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar, Clock, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { NEXO } from "@/components/nexo/NexoUI";
 
 interface AgendarRoteiroPopupProps {
   open: boolean;
@@ -12,12 +13,21 @@ interface AgendarRoteiroPopupProps {
   roteiroId: string | null;
   onScheduled: () => void;
   onSaveAndSchedule?: (data: string, horario: string) => Promise<boolean>;
+  title?: string;
+  submitLabel?: string;
 }
 
-export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onScheduled, onSaveAndSchedule }: AgendarRoteiroPopupProps) {
+export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onScheduled, onSaveAndSchedule, title = "Agendar", submitLabel = "Agendar" }: AgendarRoteiroPopupProps) {
   const [data, setData] = useState("");
   const [horario, setHorario] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setData("");
+      setHorario("");
+    }
+  }, [open]);
 
   const handleSchedule = async () => {
     if (!data || !horario) {
@@ -62,46 +72,48 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-md rounded-2xl border-none shadow-2xl" 
-        style={{ backgroundColor: "#D6F4FB", fontFamily: "'Montserrat', sans-serif" }}
+        className="max-w-md rounded-2xl border-none"
+        style={{ backgroundColor: NEXO.CARD_BG, fontFamily: NEXO.FONT }}
         overlayClassName="z-[10000]"
         contentZIndex="z-[10001]"
       >
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: "#0A2540" }}>
-            <Calendar className="w-5 h-5 text-[#00BFF0]" />
-            Agendar
+          <DialogTitle className="text-lg font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: NEXO.DARK }}>
+            <Calendar className="w-5 h-5" style={{ color: NEXO.CYAN }} />
+            {title}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "#0A254099" }}>Data</label>
+            <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO.DARK }}>Data</label>
             <div className="relative">
               <Input 
                 type="date" 
                 value={data} 
                 onChange={e => setData(e.target.value)}
-                className="pl-10 h-11 border-2 border-[#00BFF0] rounded-xl bg-white text-[#0A2540]"
+                className="pl-10 h-11 rounded-full"
+                style={{ border: `2px solid ${NEXO.CYAN}`, backgroundColor: NEXO.WHITE, color: NEXO.DARK }}
               />
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#00BFF0]" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: NEXO.CYAN }} />
             </div>
           </div>
           
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "#0A254099" }}>Horário</label>
+            <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO.DARK }}>Horário</label>
             <div className="relative">
               <Input 
                 type="time" 
                 value={horario} 
                 onChange={e => setHorario(e.target.value)}
-                className="pl-10 h-11 border-2 border-[#00BFF0] rounded-xl bg-white text-[#0A2540]"
+                className="pl-10 h-11 rounded-full"
+                style={{ border: `2px solid ${NEXO.CYAN}`, backgroundColor: NEXO.WHITE, color: NEXO.DARK }}
               />
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#00BFF0]" />
+              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: NEXO.CYAN }} />
             </div>
           </div>
           
-          <p className="text-[10px] leading-relaxed italic" style={{ color: "#0A254080" }}>
+          <p className="text-[10px] leading-relaxed italic" style={{ color: NEXO.MUTED }}>
             * O roteiro será enviado automaticamente para o XML na data e hora selecionadas.
           </p>
         </div>
@@ -110,18 +122,18 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
           <Button 
             variant="ghost" 
             onClick={() => onOpenChange(false)}
-            className="flex-1 rounded-xl font-bold uppercase text-[11px] tracking-wider"
-            style={{ color: "#0A2540" }}
+            className="flex-1 rounded-full font-bold uppercase text-[11px] tracking-wider"
+            style={{ color: NEXO.DARK }}
           >
             <X className="w-4 h-4 mr-2" /> Cancelar
           </Button>
           <Button 
             onClick={handleSchedule}
             disabled={loading}
-            className="flex-1 rounded-xl font-bold uppercase text-[11px] tracking-wider shadow-lg transition-transform hover:scale-105"
-            style={{ backgroundColor: "#00BFF0", color: "#FFFFFF" }}
+            className="flex-1 rounded-full font-bold uppercase text-[11px] tracking-wider transition-[filter] hover:brightness-110"
+            style={{ backgroundColor: NEXO.CYAN, color: NEXO.WHITE }}
           >
-            {loading ? "Salvando..." : <><Check className="w-4 h-4 mr-2" /> Agendar</>}
+            {loading ? "Salvando..." : <><Check className="w-4 h-4 mr-2" /> {submitLabel}</>}
           </Button>
         </DialogFooter>
       </DialogContent>

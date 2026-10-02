@@ -652,6 +652,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       if (roteiroMatch) {
         const rXml = roteiroMatch[1];
         const tituloTarja = cleanXmlVal(getTag(rXml, "tituloTarja") || getTag(rXml, "titulo"));
+        const subtituloTarja = cleanXmlVal(getTag(rXml, "subtituloTarja") || getTag(rXml, "subtitulo"));
         const introducao = cleanXmlVal(getTag(rXml, "introducao"));
         const concluindo = cleanXmlVal(getTag(rXml, "concluindo"));
         const perguntas: string[] = [];
@@ -662,6 +663,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         }
         podcastData = {
           tituloTarja,
+          subtituloTarja,
           introducao,
           perguntas,
           concluindo,
@@ -1131,6 +1133,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         const podcast = podcastData;
         xml += `  <roteiro>\n`;
         xml += `    <tituloTarja>${escXml(podcast.tituloTarja || "")}</tituloTarja>\n`;
+        xml += `    <subtituloTarja>${escXml(podcast.subtituloTarja || "")}</subtituloTarja>\n`;
         xml += `    <introducao>${escXml(podcast.introducao || "")}</introducao>\n`;
         xml += `    <perguntas>\n`;
         (podcast.perguntas || []).filter((p: any) => p?.trim()).forEach((p: any, i: number) => { 

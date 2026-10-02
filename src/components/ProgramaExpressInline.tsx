@@ -19,6 +19,7 @@ const AgendarRoteiroPopup = lazyRetry(() => import("./AgendarRoteiroPopup"));
 /* ── Podcast-specific types ── */
 interface PodcastData {
   tituloTarja: string;
+  subtituloTarja: string;
   introducao: string;
   agendamentoData: string;
   agendamentoHorario: string;
@@ -135,6 +136,7 @@ const emptyNewsItem = (): NewsItem => ({ titulo: "", imagemUrl: "", escalada: fa
 function normalizePodcastData(data?: Partial<PodcastData> | null): PodcastData {
   return {
     tituloTarja: typeof data?.tituloTarja === "string" ? data.tituloTarja : "",
+    subtituloTarja: typeof data?.subtituloTarja === "string" ? data.subtituloTarja : "",
     introducao: typeof data?.introducao === "string" ? data.introducao : "",
     agendamentoData: typeof data?.agendamentoData === "string" ? data.agendamentoData : "",
     agendamentoHorario: typeof data?.agendamentoHorario === "string" ? data.agendamentoHorario : "",
@@ -490,7 +492,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
-    tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
+    tituloTarja: "", subtituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
   });
 
   const isPodcast = (estudio || "").trim().toLowerCase() === "podcast";
@@ -1012,7 +1014,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setEditedFields(new Set());
     setLastAutoSaved(null);
     initialDataRef.current = null;
-    setPodcastData({ tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
+    setPodcastData({ tituloTarja: "", subtituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""] });
   };
 
   /* Generate plain-text representation of current script for editing */
@@ -1391,6 +1393,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     if (isPodcast) {
       xml += `  <roteiro>\n`;
       xml += `    <tituloTarja>${escXml(podcastData.tituloTarja)}</tituloTarja>\n`;
+      xml += `    <subtituloTarja>${escXml(podcastData.subtituloTarja)}</subtituloTarja>\n`;
       xml += `    <introducao>${escXml(podcastData.introducao)}</introducao>\n`;
       xml += `    <perguntas>\n`;
       podcastData.perguntas.filter(p => p.trim()).forEach((p, i) => { xml += `      <pergunta ordem="${i + 1}">${escXml(p)}</pergunta>\n`; });
@@ -1606,6 +1609,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (isPodcast) {
         html += `<h3 style="font-weight:bold;margin-top:16px;">🎙️ ROTEIRO</h3>`;
         if (podcastData.tituloTarja) html += `<p><strong>Tarja:</strong> ${podcastData.tituloTarja}</p>`;
+        if (podcastData.subtituloTarja) html += `<p><strong>Subtítulo:</strong> ${podcastData.subtituloTarja}</p>`;
         if (podcastData.introducao) html += `<p><strong>Introdução:</strong> ${podcastData.introducao}</p>`;
         const validPerguntas = podcastData.perguntas.filter(p => p.trim());
         if (validPerguntas.length > 0) { html += `<h4 style="font-weight:bold;margin-top:12px;">❓ Perguntas</h4><ol>`; validPerguntas.forEach(p => { html += `<li>${p}</li>`; }); html += `</ol>`; }
@@ -1884,9 +1888,11 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
 
       // Create or update agenda event when podcast is scheduled
-      if (isPodcast && podcastData.agendamentoData) {
+      const agendaData = schedule?.data || podcastData.agendamentoData;
+      const agendaHorario = schedule?.horario || podcastData.agendamentoHorario;
+      if (isPodcast && agendaData) {
         try {
-          const horario = podcastData.agendamentoHorario || "00:00";
+          const horario = agendaHorario || "00:00";
           const descricao = `Roteiro: ${programaNome}${horario ? ` às ${horario}` : ""}${podcastData.tituloTarja ? ` — ${podcastData.tituloTarja}` : ""}`;
           let targetEventoId = editData?.agendaEventoId;
 
@@ -1896,7 +1902,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               .select("id, horario_gravacao")
               .eq("user_id", ownerId)
               .eq("programa_id", programaId)
-              .eq("data", podcastData.agendamentoData)
+              .eq("data", agendaData)
               .eq("tipo_evento", "gravacao")
               .limit(10);
 
@@ -1907,7 +1913,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
           if (targetEventoId) {
             await supabase.from("agenda_eventos").update({
-              data: podcastData.agendamentoData,
+              data: agendaData,
               local: estudio || "Podcast",
               descricao,
               programa_id: programaId,
@@ -1918,7 +1924,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           } else {
             let agendaInsert = await supabase.from("agenda_eventos").insert({
               user_id: ownerId,
-              data: podcastData.agendamentoData,
+              data: agendaData,
               local: estudio || "Podcast",
               descricao,
               prioridade: "alta",
@@ -1930,7 +1936,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             if (agendaInsert.error && ownerId !== user.id) {
               await supabase.from("agenda_eventos").insert({
                 user_id: user.id,
-                data: podcastData.agendamentoData,
+                data: agendaData,
                 local: estudio || "Podcast",
                 descricao,
                 prioridade: "alta",
@@ -2363,41 +2369,28 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                 <span className="text-sm font-bold" style={{ color: "#8b5cf6" }}>🎙️ Roteiro</span>
               </div>
               <div className="p-4 space-y-4">
-                {/* Titulo da Tarja */}
-                <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
                   <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Type size={12} style={{ color: "#8b5cf6" }} /> Título da Tarja
+                    <Type size={12} style={{ color: NEXO_CYAN }} /> Título
                   </label>
                   <input
                     value={podcastData.tituloTarja}
                     onChange={e => setPodcastData(prev => ({ ...prev, tituloTarja: e.target.value }))}
-                    placeholder="Ex: Entrevista com especialista em tecnologia"
-                    className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none"
+                    placeholder="Título principal"
+                    className="w-full px-4 py-2.5 rounded-full text-[12px] outline-none"
                     style={inputStyle}
                   />
-                </div>
-
-                {/* Agendamento de Publicação */}
-                <div className="rounded-lg p-3" style={{ border: "1px dashed #8b5cf666", backgroundColor: "#8b5cf608" }}>
-                  <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#8b5cf6" }}>
-                    📅 Agendar publicação no XML (opcional)
-                  </label>
-                  <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                    Antes da data/hora informada, o XML mostrará apenas o programa. Depois, será atualizado com o conteúdo completo.
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <Type size={12} style={{ color: NEXO_CYAN }} /> Subtítulo
+                    </label>
                     <input
-                      type="date"
-                      value={podcastData.agendamentoData}
-                      onChange={e => setPodcastData(prev => ({ ...prev, agendamentoData: e.target.value }))}
-                      className="px-3 py-2 rounded-lg text-[12px] outline-none"
-                      style={inputStyle}
-                    />
-                    <input
-                      type="time"
-                      value={podcastData.agendamentoHorario}
-                      onChange={e => setPodcastData(prev => ({ ...prev, agendamentoHorario: e.target.value }))}
-                      className="px-3 py-2 rounded-lg text-[12px] outline-none"
+                      value={podcastData.subtituloTarja}
+                      onChange={e => setPodcastData(prev => ({ ...prev, subtituloTarja: e.target.value }))}
+                      placeholder="Complemento da tarja"
+                      className="w-full px-4 py-2.5 rounded-full text-[12px] outline-none"
                       style={inputStyle}
                     />
                   </div>
@@ -2710,10 +2703,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             style={{ ...nexoPillSecondary, padding: "14px 24px", fontSize: 13, backgroundColor: "#C6F03C", color: "#0A2540" }}
           >
             <Calendar size={16} />
-            Agendar
+            {isPodcast ? "Agendar e salvar" : "Agendar"}
           </button>
-          
-          <button 
+
+          {!isPodcast && <button 
             onClick={() => { void handleSave(); }} 
             disabled={saving || !programaId} 
             className="flex-[2] flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition-transform active:scale-95" 
@@ -2725,7 +2718,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               <Check size={16} />
             )}
             {saving ? "Salvando..." : "Salvar"}
-          </button>
+          </button>}
         </div>
 
         <Suspense fallback={null}>
@@ -2735,6 +2728,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             roteiroId={editingId} 
             onScheduled={fetchScheduledRoteiros}
             onSaveAndSchedule={async (data, horario) => handleSave({ data, horario })}
+            title={isPodcast ? "Agendar e salvar" : "Agendar"}
+            submitLabel={isPodcast ? "Salvar e agendar" : "Agendar"}
           />
         </Suspense>
 
