@@ -2363,10 +2363,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         {isPodcast ? (
           <div className="space-y-5">
             {/* ── Roteiro ── */}
-            <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #8b5cf644", backgroundColor: "#8b5cf60a" }}>
-              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: "#8b5cf615" }}>
-                <FileText size={16} style={{ color: "#8b5cf6" }} />
-                <span className="text-sm font-bold" style={{ color: "#8b5cf6" }}>🎙️ Roteiro</span>
+            <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${NEXO_CYAN}22`, backgroundColor: `${NEXO_CYAN}08` }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: `${NEXO_CYAN}12` }}>
+                <FileText size={16} style={{ color: NEXO_CYAN }} />
+                <span className="text-sm font-bold" style={{ color: NEXO_CYAN }}>Roteiro</span>
               </div>
               <div className="p-4 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2399,7 +2399,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                 {/* Introdução do Tema */}
                 <div>
                   <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <MessageSquare size={12} style={{ color: "#8b5cf6" }} /> Introdução do Tema
+                    <MessageSquare size={12} style={{ color: NEXO_CYAN }} /> Introdução do Tema
                   </label>
                   <textarea
                     value={podcastData.introducao}
@@ -2411,17 +2411,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   />
                 </div>
 
-                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, #8b5cf6 15%, transparent)" }} />
+                <div className="h-px" style={{ backgroundColor: `${NEXO_CYAN}18` }} />
 
                 {/* Perguntas */}
                 <div>
                   <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <HelpCircle size={12} style={{ color: "#8b5cf6" }} /> Perguntas
+                    <HelpCircle size={12} style={{ color: NEXO_CYAN }} /> Perguntas
                   </label>
                   <div className="space-y-2">
                     {podcastData.perguntas.map((pergunta, idx) => (
                       <div key={idx} className="flex items-start gap-2">
-                        <span className="text-[11px] font-bold mt-2.5 shrink-0 w-5 text-center" style={{ color: "#8b5cf6" }}>{idx + 1}.</span>
+                        <span className="text-[11px] font-bold mt-2.5 shrink-0 w-5 text-center" style={{ color: NEXO_CYAN }}>{idx + 1}.</span>
                         <textarea
                           value={pergunta}
                           onChange={e => {
@@ -2449,18 +2449,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   <button
                     onClick={() => setPodcastData(prev => ({ ...prev, perguntas: [...prev.perguntas, ""] }))}
                     className="flex items-center gap-1.5 text-[11px] font-semibold py-2 px-4 rounded-full hover:opacity-80 transition-all mt-3"
-                    style={{ color: "#8b5cf6", border: "1px dashed color-mix(in srgb, #8b5cf6 40%, transparent)", backgroundColor: "#8b5cf608" }}
+                    style={{ color: NEXO_CYAN, border: `1px dashed ${NEXO_CYAN}66`, backgroundColor: `${NEXO_CYAN}08` }}
                   >
                     <Plus size={12} /> Adicionar + uma pergunta
                   </button>
                 </div>
 
-                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, #8b5cf6 15%, transparent)" }} />
+                <div className="h-px" style={{ backgroundColor: `${NEXO_CYAN}18` }} />
 
                 {/* Concluindo */}
                 <div>
                   <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Check size={12} style={{ color: "#8b5cf6" }} /> Concluindo
+                    <Check size={12} style={{ color: NEXO_CYAN }} /> Concluindo
                   </label>
                   <textarea
                     value={podcastData.concluindo}
@@ -2700,7 +2700,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             onClick={() => setShowSchedulePopup(true)} 
             disabled={saving || !programaId} 
             className="flex-1 flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition-transform active:scale-95" 
-            style={{ ...nexoPillSecondary, padding: "14px 24px", fontSize: 13, backgroundColor: "#C6F03C", color: "#0A2540" }}
+            style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13, backgroundColor: NEXO_CYAN, color: "#FFFFFF" }}
           >
             <Calendar size={16} />
             {isPodcast ? "Agendar e salvar" : "Agendar"}
