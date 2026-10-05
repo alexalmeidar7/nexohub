@@ -2065,6 +2065,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         agendaEventoId: editingId || undefined,
         podcastData: isPodcastEstudio ? {
           tituloTarja: "",
+          subtituloTarja: "",
           introducao: "",
           agendamentoData: dataPrograma,
           agendamentoHorario: formHorarioGravacao || "",
