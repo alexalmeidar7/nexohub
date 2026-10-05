@@ -4,4 +4,4 @@
 - [x] Conferir no /locutor os banners cadastrados, botões de citação sob os quadros e leitura da citação.
 - [x] Ajustar botões de citação em /locutor (logo estável, WhatsApp Positiva, destaque no ar) e unificar o visual dos pop-ups.
 - [x] Simplificar o formulário Podcast com título/subtítulo e fluxo único “Agendar e salvar”.
-- [ ] Confirmar que o roteiro Podcast salvo entra imediatamente em Roteiros Agendados.
+- [ ] Confirmar com uma conta que tenha programas Podcast que o roteiro salvo entra imediatamente em Roteiros Agendados (a conta disponível no preview não possui opções de estúdio/programa).

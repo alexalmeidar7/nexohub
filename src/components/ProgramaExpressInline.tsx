@@ -66,14 +66,6 @@ const nexoPillPrimary: React.CSSProperties = {
   color: "#FFFFFF",
   border: `2px solid ${NEXO_CYAN}`,
 };
-const nexoPillSecondary: React.CSSProperties = {
-  ...nexoPillGhost,
-  background: NEXO_LIME,
-  color: NEXO_DARK,
-  border: `2px solid ${NEXO_LIME}`,
-};
-
-
 interface NewsItem {
   titulo: string;
   imagemUrl: string;
@@ -2475,16 +2467,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             </div>
 
             {/* ── Apoio ── */}
-            <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #06b6d444", backgroundColor: "#06b6d40a" }}>
-              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: "#06b6d415" }}>
-                <Upload size={16} style={{ color: "#06b6d4" }} />
-                <span className="text-sm font-bold" style={{ color: "#06b6d4" }}>📎 Apoio</span>
+            <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${NEXO_CYAN}22`, backgroundColor: `${NEXO_CYAN}08` }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: `${NEXO_CYAN}12` }}>
+                <Upload size={16} style={{ color: NEXO_CYAN }} />
+                <span className="text-sm font-bold" style={{ color: NEXO_CYAN }}>Apoio</span>
               </div>
               <div className="p-4 space-y-5">
                 {/* Imagens */}
                 <div>
                   <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <ImagePlus size={12} style={{ color: "#06b6d4" }} /> Imagens
+                    <ImagePlus size={12} style={{ color: NEXO_CYAN }} /> Imagens
                   </label>
                   <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
                     Cole links ou faça upload de imagens de apoio
@@ -2506,7 +2498,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                           className="flex-1 px-3 py-2 rounded-lg text-[11px] outline-none min-w-0"
                           style={inputStyle}
                         />
-                        <label className="p-1.5 rounded-full hover:opacity-70 shrink-0 cursor-pointer" style={{ color: "#06b6d4" }} title="Upload imagem">
+                        <label className="p-1.5 rounded-full hover:opacity-70 shrink-0 cursor-pointer" style={{ color: NEXO_CYAN }} title="Upload imagem">
                           <Upload size={12} />
                           <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                             const file = e.target.files?.[0];
@@ -2538,18 +2530,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   <button
                     onClick={() => setPodcastData(prev => ({ ...prev, apoioImagens: [...prev.apoioImagens, ""] }))}
                     className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2"
-                    style={{ color: "#06b6d4", border: "1px dashed color-mix(in srgb, #06b6d4 40%, transparent)" }}
+                    style={{ color: NEXO_CYAN, border: `1px dashed ${NEXO_CYAN}66` }}
                   >
                     <Plus size={12} /> Adicionar imagem
                   </button>
                 </div>
 
-                <div className="h-px" style={{ backgroundColor: "color-mix(in srgb, #06b6d4 15%, transparent)" }} />
+                <div className="h-px" style={{ backgroundColor: `${NEXO_CYAN}18` }} />
 
                 {/* Vídeos */}
                 <div>
                   <label className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Video size={12} style={{ color: "#06b6d4" }} /> Vídeos
+                    <Video size={12} style={{ color: NEXO_CYAN }} /> Vídeos
                   </label>
                   <p className="text-[10px] mb-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
                     Cole links ou faça upload de vídeos de apoio
@@ -2569,7 +2561,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                           className="flex-1 px-3 py-2 rounded-lg text-[11px] outline-none min-w-0"
                           style={inputStyle}
                         />
-                        <label className="p-1.5 rounded-full hover:opacity-70 shrink-0 cursor-pointer" style={{ color: "#06b6d4" }} title="Upload vídeo">
+                        <label className="p-1.5 rounded-full hover:opacity-70 shrink-0 cursor-pointer" style={{ color: NEXO_CYAN }} title="Upload vídeo">
                           <Upload size={12} />
                           <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
                             const file = e.target.files?.[0];
@@ -2601,7 +2593,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   <button
                     onClick={() => setPodcastData(prev => ({ ...prev, apoioVideos: [...prev.apoioVideos, ""] }))}
                     className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 rounded-full hover:opacity-80 transition-all mt-2"
-                    style={{ color: "#06b6d4", border: "1px dashed color-mix(in srgb, #06b6d4 40%, transparent)" }}
+                    style={{ color: NEXO_CYAN, border: `1px dashed ${NEXO_CYAN}66` }}
                   >
                     <Plus size={12} /> Adicionar vídeo
                   </button>
