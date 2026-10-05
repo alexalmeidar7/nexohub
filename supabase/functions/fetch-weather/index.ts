@@ -24,26 +24,59 @@ serve(async (req) => {
         });
       }
       
-      // We use Nominatim (OpenStreetMap) for better address search instead of Open-Meteo geocoding which is city-focused
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=${count || 5}&addressdetails=1&accept-language=pt-BR`;
-      
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent": "LovableVMIX/1.0",
+      const limit = Math.min(Math.max(Number(count) || 5, 1), 10);
+      let results: any[] = [];
+
+      // 1) Nominatim (better address search) — may block automated calls
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=${limit}&addressdetails=1&accept-language=pt-BR`;
+        const res = await fetch(url, {
+          headers: { "User-Agent": "NexoHub/1.0 (alex@nexobrasil.net)", "Accept": "application/json" },
+          signal: AbortSignal.timeout(6000),
+        });
+        const ct = res.headers.get("content-type") || "";
+        if (res.ok && ct.includes("json")) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            results = data.map((item: any) => ({
+              name: String(item.display_name || "").split(",")[0],
+              display_name: item.display_name,
+              latitude: parseFloat(item.lat),
+              longitude: parseFloat(item.lon),
+              admin1: item.address?.state || item.address?.city || "",
+              country: item.address?.country || "",
+            }));
+          }
+        } else {
+          await res.body?.cancel();
+          console.warn(`[fetch-weather] Nominatim status=${res.status}, using Open-Meteo fallback`);
         }
-      });
-      
-      const data = await res.json();
-      
-      // Transform Nominatim data to match the previous structure
-      const results = data.map((item: any) => ({
-        name: item.display_name.split(',')[0], // Extract first part as name
-        display_name: item.display_name,
-        latitude: parseFloat(item.lat),
-        longitude: parseFloat(item.lon),
-        admin1: item.address?.state || item.address?.city || "",
-        country: item.address?.country || ""
-      }));
+      } catch (err) {
+        console.warn("[fetch-weather] Nominatim failed, using Open-Meteo fallback:", err);
+      }
+
+      // 2) Fallback: Open-Meteo geocoding (no key)
+      if (results.length === 0) {
+        try {
+          const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=${limit}&language=pt&format=json`;
+          const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+          if (res.ok) {
+            const data = await res.json();
+            results = (data?.results || []).map((item: any) => ({
+              name: item.name,
+              display_name: [item.name, item.admin1, item.country].filter(Boolean).join(", "),
+              latitude: item.latitude,
+              longitude: item.longitude,
+              admin1: item.admin1 || "",
+              country: item.country || "",
+            }));
+          } else {
+            await res.body?.cancel();
+          }
+        } catch (err) {
+          console.warn("[fetch-weather] Open-Meteo geocoding failed:", err);
+        }
+      }
 
       return new Response(JSON.stringify({ results }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
