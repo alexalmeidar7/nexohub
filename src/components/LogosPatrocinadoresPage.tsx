@@ -810,7 +810,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const resetForm = () => {
     setProgramaId("");
-    setProgramaIds(["__none__"]);
+    setProgramaIds([]);
     setDataFinal(defaultExpiration);
     setNomeLogo("");
     setPendingFiles([]);
