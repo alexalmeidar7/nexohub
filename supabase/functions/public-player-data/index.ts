@@ -153,7 +153,14 @@ Deno.serve(async (req) => {
         .order("email", { ascending: true })
         .limit(1)
         .maybeSingle();
-      if (profileError) throw profileError;
+      if (profileError) {
+        // Retry curto: falhas momentâneas do banco não devem derrubar o player
+        await new Promise((r) => setTimeout(r, 400));
+        const retry = await supabase.from("profiles").select("user_id, email")
+          .ilike("email", `${slugLower}@%`).order("email", { ascending: true }).limit(1).maybeSingle();
+        if (retry.error) throw retry.error;
+        data = retry.data;
+      }
 
       // 2) Match exato do local-part em sub_users: resolve para o pai (herança)
       if (!data?.user_id) {
@@ -230,9 +237,9 @@ Deno.serve(async (req) => {
         .eq("is_midroll", true)
         .order("priority", { ascending: true });
 
-      if (error) throw error;
+      if (error) console.warn("[public-player-data] midrolls error:", error.message);
 
-      return new Response(JSON.stringify({ userId, prerolls: data || [] }), {
+      return new Response(JSON.stringify({ userId, prerolls: data || [], ...(error ? { ok: false, partial: true } : {}) }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -245,7 +252,7 @@ Deno.serve(async (req) => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (settingsError) throw settingsError;
+      if (settingsError) console.warn("[public-player-data] now_playing error:", settingsError.message);
 
       const dashboardItems = (settingsData?.dashboard_items ?? null) as Record<string, any> | null;
 
@@ -378,8 +385,9 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
+    console.error("[public-player-data] fatal:", err);
+    return new Response(JSON.stringify({ ok: false, error: "Dados temporariamente indisponíveis", retryable: true }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
