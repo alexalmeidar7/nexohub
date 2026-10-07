@@ -1865,8 +1865,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         console.warn("[ProgramaExpress] sync-xml-roteiro notice:", eSync);
       }
 
-      // If saving without schedule (button "Salvar"): automatically push to XML
-      if (!schedule) {
+      // Push to XML on "Salvar" and always on Podcast "Agendar e salvar"
+      if (!schedule || isPodcast) {
         try {
           const urlMatch = import.meta.env.VITE_SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/);
           const projectId = urlMatch ? urlMatch[1] : "";
