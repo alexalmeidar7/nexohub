@@ -1866,8 +1866,9 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
         if (editingId) {
           saveStoredEventColor(editingId, selectedEventColor);
-          const { error: updErr } = await supabase.from("agenda_eventos").update(payload).eq("id", editingId);
-          if (!updErr) {
+          const { data: updRows, error: updErr } = await supabase.from("agenda_eventos").update(payload).eq("id", editingId).select("id");
+          if (updErr || !updRows?.length) throw updErr || new Error("Nenhum registro foi atualizado (sessão expirada ou sem permissão)");
+          {
             try {
               await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
               if (validParts.length) {
@@ -1889,7 +1890,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
             .select()
             .single();
 
-          if (!error && evt) {
+          if (error || !evt) throw error || new Error("O banco não confirmou a gravação do evento");
+          {
             deleteStoredAgendaEvent(finalEventId, targetUserId);
             saveStoredEventColor(evt.id, selectedEventColor);
             const syncedEvent: Evento = {
@@ -1917,8 +1919,10 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
             }
           }
         }
-      } catch (err) {
-        console.warn("Supabase network error, evento salvo localmente:", err);
+      } catch (err: any) {
+        console.error("[Agenda] Falha ao gravar evento:", err);
+        toast({ title: "Evento NÃO foi salvo", description: err?.message || "Falha ao gravar no servidor. Tente novamente.", variant: "destructive" });
+        return;
       }
 
       try {
