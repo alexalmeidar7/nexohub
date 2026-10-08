@@ -1242,7 +1242,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         .from("agenda_eventos")
         .select("*")
         .eq("user_id", targetUserId)
-        .gte("data", winStart)
+        // Eventos recorrentes começam no passado e continuam valendo: nunca filtrá-los pela data inicial
+        .or(`data.gte.${winStart},and(recorrencia.not.is.null,recorrencia.neq.unico)`)
         .lte("data", winEnd)
         .order("data");
 
