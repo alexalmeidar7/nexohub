@@ -604,8 +604,13 @@ export default function CortesVideoPage() {
         }
       }
 
+      const mp4MimeType = "video/mp4";
+      if (!MediaRecorder.isTypeSupported(mp4MimeType)) {
+        throw new Error("Este navegador não oferece suporte à exportação de vídeo em MP4.");
+      }
+
       const recorder = new MediaRecorder(stream, {
-        mimeType,
+        mimeType: mp4MimeType,
         videoBitsPerSecond: 8000000, // 8 Mbps
       });
 
@@ -615,11 +620,11 @@ export default function CortesVideoPage() {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType });
+        const blob = new Blob(chunks, { type: mp4MimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${projectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video"}.webm`;
+        a.download = `${projectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video"}.mp4`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
