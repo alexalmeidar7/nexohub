@@ -124,6 +124,8 @@ export default function CortesVideoPage() {
   // Export State
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
+  const [exportStart, setExportStart] = useState(0);
+  const [exportEnd, setExportEnd] = useState(60);
 
   // Canvas & Preview Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -147,6 +149,11 @@ export default function CortesVideoPage() {
     });
     return Math.ceil(maxTime / 6) * 6; // snap to 6-second increments for ruler
   }, [clips, textOverlays]);
+
+  useEffect(() => {
+    setExportStart(prev => Math.min(Math.max(0, prev), totalDuration));
+    setExportEnd(prev => prev === 60 ? totalDuration : Math.min(Math.max(0, prev), totalDuration));
+  }, [totalDuration]);
 
   // Pre-load / maintain HTML5 video elements for clips
   useEffect(() => {
@@ -640,13 +647,18 @@ export default function CortesVideoPage() {
 
       // Render through the project step by step
       const exportFps = 30;
+      const normalizedExportStart = Math.max(0, Math.min(exportStart, totalDuration));
+      const normalizedExportEnd = Math.max(normalizedExportStart, Math.min(exportEnd, totalDuration));
       const step = 1 / exportFps;
-      const totalSteps = Math.ceil(totalDuration / step);
+      const totalSteps = Math.max(1, Math.ceil((normalizedExportEnd - normalizedExportStart) / step));
       let stepCount = 0;
-      let renderTime = 0;
+      let renderTime = normalizedExportStart;
 
       const exportLoop = () => {
-        if (renderTime >= totalDuration) {
+        if (renderTime >= normalizedExportEnd) {
+          renderCanvasFrame(normalizedExportEnd);
+          setCurrentTime(normalizedExportEnd);
+          setExportProgress(100);
           recorder.stop();
           return;
         }
@@ -1202,6 +1214,41 @@ export default function CortesVideoPage() {
             <span className="text-xs font-mono font-bold text-slate-700 ml-2">
               {formatTime(currentTime)} / {formatTime(totalDuration)}
             </span>
+
+            <div className="flex items-center gap-2 ml-3 pl-3 border-l border-slate-200">
+              <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Início
+                <input
+                  type="number"
+                  min={0}
+                  max={Math.max(0, exportEnd)}
+                  step={0.1}
+                  value={exportStart}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(Number(e.target.value) || 0, exportEnd));
+                    setExportStart(value);
+                  }}
+                  className="w-16 rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-mono font-normal text-slate-700 outline-none focus:border-blue-500"
+                  aria-label="Ponto inicial da exportação em segundos"
+                />
+              </label>
+              <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Fim
+                <input
+                  type="number"
+                  min={Math.max(0, exportStart)}
+                  max={totalDuration}
+                  step={0.1}
+                  value={exportEnd}
+                  onChange={(e) => {
+                    const value = Math.max(exportStart, Math.min(Number(e.target.value) || 0, totalDuration));
+                    setExportEnd(value);
+                  }}
+                  className="w-16 rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-mono font-normal text-slate-700 outline-none focus:border-blue-500"
+                  aria-label="Ponto final da exportação em segundos"
+                />
+              </label>
+            </div>
           </div>
 
           {/* Right: Zoom Controls & Em Forma */}
