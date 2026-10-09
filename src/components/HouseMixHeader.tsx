@@ -916,7 +916,7 @@ export default function HouseMixHeader({
                 <Fragment key={item.id}>
                   {index > 0 && (
                     <span
-                      className="h-3 w-px bg-slate-300/80 rounded-full shrink-0 select-none pointer-events-none"
+                      className="h-5 w-px bg-slate-400/70 rounded-full shrink-0 select-none pointer-events-none"
                       aria-hidden="true"
                     />
                   )}

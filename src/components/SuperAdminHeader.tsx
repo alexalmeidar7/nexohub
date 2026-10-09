@@ -896,6 +896,8 @@ export default function SuperAdminHeader({
               home
             </button>
 
+            <span className="h-5 w-px bg-slate-400/70 rounded-full shrink-0 select-none pointer-events-none" aria-hidden="true" />
+
             <button
               onClick={() => onNavigate("clientes")}
               className={`text-sm font-semibold transition-colors px-3 py-1.5 rounded-full ${
@@ -904,6 +906,8 @@ export default function SuperAdminHeader({
             >
               clientes
             </button>
+
+            <span className="h-5 w-px bg-slate-400/70 rounded-full shrink-0 select-none pointer-events-none" aria-hidden="true" />
 
             {/* Produtos Dropdown (Mouse over abrindo para baixo) */}
             <div
@@ -954,6 +958,8 @@ export default function SuperAdminHeader({
                 </div>
               )}
             </div>
+
+            <span className="h-5 w-px bg-slate-400/70 rounded-full shrink-0 select-none pointer-events-none" aria-hidden="true" />
 
             {/* Business Dropdown (Mouse over abrindo para baixo) */}
             <div
@@ -1014,6 +1020,8 @@ export default function SuperAdminHeader({
                 </div>
               )}
             </div>
+
+            <span className="h-5 w-px bg-slate-400/70 rounded-full shrink-0 select-none pointer-events-none" aria-hidden="true" />
 
             {/* Agenda Link (ao lado de business) */}
             <button
