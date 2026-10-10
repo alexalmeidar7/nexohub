@@ -1748,6 +1748,9 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                   className="h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm"
                 >
                   <option value="">Locutor do programa</option>
+                  {data.locutor_override && data.locutor_override.trim().toLocaleLowerCase("pt-BR") !== locutorNome.trim().toLocaleLowerCase("pt-BR") && !locutoresCadastrados.some((locutor) => locutor.nome.trim().toLocaleLowerCase("pt-BR") === data.locutor_override.trim().toLocaleLowerCase("pt-BR")) && (
+                    <option value={data.locutor_override}>{data.locutor_override}</option>
+                  )}
                   {locutorNome && !locutoresCadastrados.some((locutor) => locutor.nome.trim().toLocaleLowerCase("pt-BR") === locutorNome.trim().toLocaleLowerCase("pt-BR")) && (
                     <option value={locutorNome}>{locutorNome} (no ar)</option>
                   )}
