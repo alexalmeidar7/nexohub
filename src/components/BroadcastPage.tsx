@@ -8,7 +8,6 @@ import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
-import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 
 
 
@@ -1478,7 +1477,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 <Save size={14} /> Salvar título
               </button>
             </div>
-            <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={stationUid || undefined} />
           </div>
         )}
 
