@@ -137,3 +137,31 @@ body:has(.vmix-flat-palette) [data-radix-dialog-content] button:hover {
   background-color: #0042A3 !important;
   border: 1px solid #FFFFFF !important;
 }
+
+
+/* Match the palette to utility-class surfaces used by the vMix workspace. */
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#0d0d0d]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#111114]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#141414]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#151517]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#17171b]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#1a1a1a]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#1a1a1f]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#1e1e24]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-[#222228]"],
+.vmix-flat-palette :not(button):not([role="button"])[class*="bg-black/"] {
+  background-color: var(--vmix-flat-section) !important;
+}
+
+/* Accent surfaces become the specified blue instead of the old lime/teal palette. */
+.vmix-flat-palette [class*="bg-[#C6F03C]"],
+.vmix-flat-palette [class*="bg-[#c6f03c]"],
+.vmix-flat-palette [style*="background-color: rgb(198, 240, 60)"],
+.vmix-flat-palette [style*="background-color:#C6F03C"] {
+  background-color: var(--vmix-flat-on) !important;
+}
+
+/* The page canvas stays #111111; video/canvas signal areas stay black. */
+.vmix-flat-palette main main[style*="#000000"] {
+  background-color: var(--vmix-flat-page) !important;
+}
