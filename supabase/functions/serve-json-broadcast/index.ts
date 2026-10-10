@@ -1021,6 +1021,58 @@ serve(async (req) => {
       }
     }
 
+    // Manual inserts: schedule them across the configured time window on selected dates/weekdays.
+    const manualInserts = Array.isArray((broadcastConfig as any)?.manualInserts)
+      ? (broadcastConfig as any).manualInserts as Array<Record<string, any>>
+      : [];
+    const toClockSeconds = (value: unknown): number => {
+      const parts = String(value || "").split(":").map(Number);
+      if (parts.length < 2 || parts.some((part) => !Number.isFinite(part))) return -1;
+      return parts[0] * 3600 + parts[1] * 60;
+    };
+    const weekdayMatches = (days: unknown): boolean =>
+      Array.isArray(days) && days.includes(todayName);
+    for (const item of manualInserts) {
+      if (!item?.enabled || !item.imageUrl) continue;
+      if (String(item.startDate || "") > todayDate || String(item.endDate || "") < todayDate) continue;
+      if (!weekdayMatches(item.weekdays)) continue;
+      const startSec = toClockSeconds(item.startTime);
+      const endSec = toClockSeconds(item.endTime);
+      if (startSec < 0 || endSec <= startSec || nowSeconds < startSec || nowSeconds >= endSec) continue;
+      const count = Math.max(1, Math.min(100, Number(item.occurrencesPerDay) || 1));
+      const duration = Math.max(1, Math.min(3600, Number(item.durationSeconds) || 30));
+      const span = endSec - startSec;
+      for (let i = 0; i < count; i++) {
+        const slotStart = Math.floor(startSec + (span * (i + 1)) / (count + 1));
+        if (nowSeconds >= slotStart && nowSeconds < slotStart + duration) {
+          insertLiveUrl = String(item.imageUrl);
+          break;
+        }
+      }
+      if (insertLiveUrl === String(item.imageUrl)) break;
+    }
+
+    // One-off manual trigger takes priority over both agenda and scheduled manual inserts.
+    const manualInsertNowId = String((broadcastConfig as any)?.manualInsertNowId || "");
+    const manualInsertNowUntil = (broadcastConfig as any)?.manualInsertNowUntil;
+    const manualInsertUntilMs = manualInsertNowUntil ? new Date(manualInsertNowUntil).getTime() : 0;
+    if (manualInsertNowId && Number.isFinite(manualInsertUntilMs) && Date.now() < manualInsertUntilMs) {
+      const forcedInsert = manualInserts.find((item) => item.id === manualInsertNowId && item.imageUrl);
+      if (forcedInsert) insertLiveUrl = String(forcedInsert.imageUrl);
+    } else {
+      // Backwards compatibility with the original 30-second agenda insert button.
+      const manualUntil = (broadcastConfig as any)?.insertLiveManualUntil;
+      if (manualUntil && insertLiveUrl === IMG_BLANK_URL) {
+        const untilMs = new Date(manualUntil).getTime();
+        if (Number.isFinite(untilMs) && Date.now() < untilMs) {
+          for (const ev of liveEvents) {
+            const arte = Array.isArray(ev.artes_urls) ? (ev.artes_urls[4] || "").trim() : "";
+            if (arte) { insertLiveUrl = arte; break; }
+          }
+        }
+      }
+    }
+
     // Convert INSERT LIVE banner to PNG (vMix/CEF requires .png; source is uploaded as .webp).
     // Use a version derived from the source URL so that swapping the arte busts vMix/CDN cache
     // even though the destination path (insert-live.png) is upserted in place.
