@@ -292,6 +292,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
   const [tickerNewsSettingsOpen, setTickerNewsSettingsOpen] = useState(false);
   const [tickerSocialSettingsOpen, setTickerSocialSettingsOpen] = useState(false);
+  const [tickerPreviewIndex, setTickerPreviewIndex] = useState(0);
   const [saving, setSaving] = useState(false);
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [programaLogo, setProgramaLogo] = useState<string | null>(null);
@@ -996,6 +997,13 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     if (data.ticker.trim()) items.push({ source: "Livre", text: data.ticker.trim() });
     return items;
   }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, tickerSocialItems]);
+
+  useEffect(() => {
+    setTickerPreviewIndex(0);
+    if (!data.tickerUnitario || tickerItems.length < 2) return;
+    const timer = setInterval(() => setTickerPreviewIndex(index => (index + 1) % tickerItems.length), 4000);
+    return () => clearInterval(timer);
+  }, [data.tickerUnitario, tickerItems]);
 
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
@@ -1803,29 +1811,39 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
             {/* Prévia em movimento do texto que está sendo composto para o ticker */}
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Prévia do ticker</span>
-                <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[9px] font-bold text-blue-600">Texto em movimento</span>
+                <div className="flex items-center gap-2">
+                  <button type="button" role="switch" aria-checked={data.tickerUnitario} onClick={() => { const nextData = { ...latestDataRef.current, tickerUnitario: !data.tickerUnitario }; setData(nextData); setTickerPreviewIndex(0); void handleSave(nextData); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5" title="Envia um item por vez, a cada 4 segundos">
+                    <span className="text-[9px] font-bold text-slate-700">Envio unitário</span>
+                    <span className="relative h-4 w-7 rounded-full" style={{ backgroundColor: data.tickerUnitario ? "#0055ff" : "#cbd5e1" }}><span className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all" style={{ left: data.tickerUnitario ? "14px" : "2px" }} /></span>
+                  </button>
+                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[9px] font-bold text-blue-600">{data.tickerUnitario ? "Troca a cada 4s" : "Texto em movimento"}</span>
+                </div>
               </div>
               <div className="relative h-10 overflow-hidden rounded-lg border border-slate-200 bg-white">
                 {composedTicker ? (
-                  <div
-                    key={composedTicker}
-                    className="absolute top-0 whitespace-nowrap text-[13px] font-semibold text-slate-800"
-                    style={{
-                      lineHeight: "40px",
-                      animation: `tickerSlidePreview ${Math.max(12, Math.round(composedTicker.length * 0.16))}s linear infinite`,
-                      willChange: "transform",
-                    }}
-                  >
-                    {composedTicker}
-                    <style>{`
-                      @keyframes tickerSlidePreview {
-                        0% { transform: translateX(0); }
-                        100% { transform: translateX(-100%); }
-                      }
-                    `}</style>
-                  </div>
+                  data.tickerUnitario ? (
+                    <div key={tickerPreviewIndex + "-" + (tickerItems[tickerPreviewIndex]?.text || composedTicker)} className="absolute inset-0 overflow-hidden">
+                      <div className="absolute inset-x-2 whitespace-nowrap text-center text-[12px] font-semibold text-slate-800" style={{ lineHeight: "40px", animation: "tickerUnitarioVertical 4s linear both", willChange: "transform" }}>
+                        {tickerItems[tickerPreviewIndex]?.text || composedTicker}
+                      </div>
+                      <style>{`
+                        @keyframes tickerUnitarioVertical {
+                          0% { transform: translateY(100%); opacity: 0; }
+                          12% { opacity: 1; }
+                          25% { transform: translateY(0); opacity: 1; }
+                          78% { transform: translateY(0); opacity: 1; }
+                          100% { transform: translateY(-100%); opacity: 0; }
+                        }
+                      `}</style>
+                    </div>
+                  ) : (
+                    <div key={composedTicker} className="absolute top-0 whitespace-nowrap text-[13px] font-semibold text-slate-800" style={{ lineHeight: "40px", animation: "tickerSlidePreview " + Math.max(12, Math.round(composedTicker.length * 0.16)) + "s linear infinite", willChange: "transform" }}>
+                      {composedTicker}
+                      <style>{`@keyframes tickerSlidePreview { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }`}</style>
+                    </div>
+                  )
                 ) : (
                   <div className="flex h-full items-center justify-center px-3 text-[11px] text-slate-400">
                     Ative uma fonte ou digite um texto adicional para visualizar o ticker.
@@ -1998,34 +2016,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
               className="w-full px-3 py-2 rounded-xl text-[12px] resize-none mt-4 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ ...inputStyle, border: `1px solid ${NAVY_BORDER}` }}
             />
-
-            <button
-              type="button"
-              role="switch"
-              aria-checked={data.tickerUnitario}
-              onClick={() => {
-                const nextData = { ...latestDataRef.current, tickerUnitario: !data.tickerUnitario };
-                setData(nextData);
-                void handleSave(nextData);
-              }}
-              className="flex w-full items-center gap-3 px-4 py-3 rounded-xl mt-4 text-left"
-              style={{
-                backgroundColor: data.tickerUnitario ? "rgba(0,85,255,0.06)" : "#ffffff",
-                border: `1px solid ${data.tickerUnitario ? CYAN : NAVY_BORDER}`,
-              }}
-              title="Quando ativo, o XML entrega apenas um item do ticker por vez, rotacionando a cada 4 segundos."
-            >
-              <div className="min-w-0 flex-1">
-                <span className="text-[12px] font-bold text-slate-800 block">Envio Unitário</span>
-                <p className="text-[10px] text-slate-500">Entrega um item por vez no XML, trocando a cada 4s</p>
-              </div>
-              <span className="shrink-0 inline-flex items-center gap-2">
-                <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: data.tickerUnitario ? "#0055ff" : "#94a3b8" }}>{data.tickerUnitario ? "Ligado" : "Desligado"}</span>
-                <span className="relative h-6 w-11 rounded-full" style={{ backgroundColor: data.tickerUnitario ? "#0055ff" : "#cbd5e1" }}>
-                  <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm" style={{ left: data.tickerUnitario ? "22px" : "2px" }} />
-                </span>
-              </span>
-            </button>
 
             {/* Preview e resumo do ticker removidos conforme solicitado. */}
 
