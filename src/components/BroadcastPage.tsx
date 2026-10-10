@@ -2102,31 +2102,40 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 </span>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                {([
-                  { label: "Logo do programa (.png)", url: aSeguirXmlPreview.programa_logo, caption: aSeguirXmlPreview.programa_nome || "—", contain: true },
-                  { label: "Foto do locutor (.png)", url: aSeguirXmlPreview.locutor_foto, caption: aSeguirXmlPreview.locutor_nome || "—", contain: false },
-                ]).map(({ label, url, caption, contain }) => (
-                  <div key={label} className="rounded-lg overflow-hidden border border-slate-200 bg-white">
-                    <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100">
-                      {label}
+              <style>{`
+                @keyframes nextHostRise { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+                @keyframes nextInfoEnter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+                .next-host-rise { animation: nextHostRise 750ms cubic-bezier(.2,.8,.2,1) both; }
+                .next-info-enter { animation: nextInfoEnter 650ms ease-out both; }
+                @media (prefers-reduced-motion: reduce) { .next-host-rise, .next-info-enter { animation: none; } }
+              `}</style>
+              <div className="relative isolate overflow-hidden rounded-[24px] bg-black text-white min-h-[245px] sm:min-h-[290px]">
+                <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% 100%, rgba(140,20,20,.24), transparent 70%)" }} />
+                <div className="relative grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-stretch gap-2 sm:gap-4 min-h-[245px] sm:min-h-[290px] px-4 sm:px-7">
+                  <div key={`program-${nextProgramInfo?.next?.id || aSeguirXmlPreview.programa_nome}`} className="next-info-enter z-10 flex flex-col items-start justify-between py-6 sm:py-8 min-w-0">
+                    {data.aSeguirEnabled && data.aSeguirShowLogoPrograma !== false && aSeguirXmlPreview.programa_logo !== BLANK_PNG_ASEGUIR ? (
+                      <img src={aSeguirXmlPreview.programa_logo} alt="Logo do próximo programa" className="w-full max-w-[150px] h-[100px] sm:h-[135px] object-contain object-left" />
+                    ) : <span />}
+                    <div className="min-w-0">
+                      {aSeguirXmlPreview.horario && <div className="text-lg sm:text-2xl font-black tabular-nums leading-tight">{aSeguirXmlPreview.horario}{nextProgramInfo?.next?.horario_fim ? ` – ${String(nextProgramInfo.next.horario_fim).slice(0,5)}` : ""}</div>}
+                      {aSeguirXmlPreview.programa_nome && <div className="mt-2 text-[11px] sm:text-sm font-extrabold uppercase leading-snug break-words">{aSeguirXmlPreview.programa_nome}</div>}
                     </div>
-                    <div className="relative w-full" style={{ paddingBottom: "56.25%", backgroundColor: "#f1f5f9" }}>
-                      <img
-                        src={url}
-                        alt={label}
-                        className="absolute inset-0 w-full h-full"
-                        style={{ objectFit: contain ? "contain" : "cover", opacity: aSeguirActive ? 1 : 0.35 }}
-                      />
-                    </div>
-                    <div className="px-2 py-1.5 text-[10px] truncate font-bold text-slate-800">{caption}</div>
                   </div>
-                ))}
+                  <div className="relative min-w-0 self-stretch overflow-hidden">
+                    {data.aSeguirEnabled && data.aSeguirShowFotoLocutor !== false && aSeguirXmlPreview.locutor_foto !== BLANK_PNG_ASEGUIR && (
+                      <img key={`host-${nextProgramInfo?.next?.id || ""}-${aSeguirXmlPreview.locutor_foto}`} src={aSeguirXmlPreview.locutor_foto} alt="Foto do próximo locutor" className="next-host-rise absolute bottom-0 left-0 h-full w-full object-contain object-bottom" />
+                    )}
+                  </div>
+                  <div key={`presenter-${nextProgramInfo?.next?.id || aSeguirXmlPreview.locutor_nome}`} className="next-info-enter z-10 flex items-center justify-start min-w-0 py-6 sm:py-8">
+                    {aSeguirXmlPreview.locutor_nome && (
+                      <div className="border-l-[3px] border-blue-500 pl-3 sm:pl-5 min-w-0">
+                        <div className="text-[9px] sm:text-xs uppercase tracking-widest text-white/60 mb-2">Apresentador</div>
+                        <div className="text-base sm:text-2xl font-black uppercase leading-tight break-words">{aSeguirXmlPreview.locutor_nome}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-
-              <p className="mt-2 text-[10px] text-slate-500">
-                As imagens são convertidas para .png pelo servidor no momento do envio — a prévia mostra a origem cadastrada.
-              </p>
             </div>
 
             {data.aSeguirEnabled && (
