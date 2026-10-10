@@ -269,14 +269,14 @@ body:has(.vmix-flat-palette) [data-radix-dialog-content].vmix-connection-dialog-
   transition: none !important;
 }
 
-.vmix-connection-dialog-clean button:first-of-type {
+.vmix-connection-dialog-clean .vmix-connection-primary {
   background: #0065F9 !important;
   background-color: #0065F9 !important;
   color: #FFFFFF !important;
   border: 1px solid transparent !important;
 }
 
-.vmix-connection-dialog-clean button:last-of-type {
+.vmix-connection-dialog-clean .vmix-connection-cancel {
   background: #0042A3 !important;
   background-color: #0042A3 !important;
   color: #FFFFFF !important;
