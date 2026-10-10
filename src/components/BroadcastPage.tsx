@@ -1536,89 +1536,136 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         )}
 
         {activeTab === "insert" && (
-          <div className="max-w-3xl mx-auto flex flex-col gap-6 w-full">
-            {/* Robust Control Bento */}
-            <div 
-              className="p-6 rounded-2xl flex flex-col gap-5 bg-white" 
-              style={{ 
-                ...cardStyle, 
-                border: `1px solid ${NAVY_BORDER}`, 
-                boxShadow: "0 4px 20px rgba(0,0,0,0.04)"
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}15` }}>
-                    <TrendingUp size={16} style={{ color: CYAN }} />
+          <div className="max-w-5xl mx-auto flex flex-col gap-5 w-full">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 flex flex-col gap-5" style={cardStyle}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600"><CalendarDays size={19} /></div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-800">Insert da agenda</h3>
+                    <p className="mt-1 text-xs text-slate-500">Artes cadastradas nos eventos da agenda de programação.</p>
                   </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-800" style={{ fontFamily: "'Sora', sans-serif" }}>
-                    Painel de Controle
-                  </span>
                 </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  <span className="text-[9px] font-black text-green-700 uppercase">Online</span>
-                </div>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase text-emerald-700">Automático</span>
               </div>
-
               {insertLiveArt ? (
-                <div className="flex flex-col gap-4">
-                  {/* Imagem que será enviada no insert */}
-                  <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 text-slate-600">Imagem do Insert Live</div>
-                    <div className="rounded-xl overflow-hidden bg-slate-50 border border-slate-200 p-2">
-                      <img src={insertLiveArt} alt="Insert Live" className="w-full max-h-56 object-contain" />
+                <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4 items-center">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+                    <img src={insertLiveArt} alt="Insert da agenda" className="w-full h-32 object-contain rounded-lg" />
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Entradas previstas hoje</div>
+                      {insertLiveSchedule.length ? (
+                        <div className="flex flex-wrap gap-2">{insertLiveSchedule.map(t => <span key={t} className="px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold tabular-nums">{t}</span>)}</div>
+                      ) : <p className="text-xs text-slate-400">Sem horários calculados para hoje.</p>}
                     </div>
+                    <button onClick={handleInsertNow} disabled={insertingNow} className="self-start flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white">
+                      <Send size={14} /> {insertingNow ? "Insert ativo..." : "Enviar insert da agenda agora"}
+                    </button>
                   </div>
-
-                  {/* Horários programados */}
-                  <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.15em] mb-2 text-slate-600">Horários de Inserção Automática</div>
-                    {insertLiveSchedule.length === 0 ? (
-                      <p className="text-[11px] text-slate-400 italic">Sem horários calculados para hoje.</p>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {insertLiveSchedule.map(t => (
-                          <span
-                            key={t}
-                            className="px-3 py-1.5 rounded-lg text-[12px] font-bold tabular-nums"
-                            style={{ backgroundColor: `${CYAN}12`, border: `1px solid ${CYAN}35`, color: CYAN }}
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={handleInsertNow}
-                    disabled={insertingNow}
-                    className="w-full py-3.5 rounded-2xl text-[12px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-[0.98] shadow-md cursor-pointer"
-                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
-                  >
-                    <Youtube size={16} />
-                    {insertingNow ? "Live Ativa (30s)" : "Inserir Agora (Manual)"}
-                  </button>
                 </div>
               ) : (
-                <p className="text-[11px] text-slate-500 italic">
-                  Nenhuma imagem de Insert Live cadastrada para hoje (arte 5 do evento de live na agenda).
-                </p>
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
+                  <ImageIcon size={22} className="mx-auto mb-2 text-slate-400" />
+                  <p className="text-xs font-semibold text-slate-600">Nenhum insert de agenda disponível agora.</p>
+                  <p className="mt-1 text-[11px] text-slate-400">Os inserts de eventos continuam sendo gerenciados pela agenda de programação.</p>
+                </div>
               )}
+            </div>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sincronização Ativa</span>
-                <div className="flex gap-1">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="w-1.5 h-3 rounded-full bg-[#0055ff]" />
-                  ))}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 flex flex-col gap-5" style={cardStyle}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600"><ImagePlus size={19} /></div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-800">{manualInsertDraft.id ? "Editar insert manual" : "Cadastrar insert manual"}</h3>
+                    <p className="mt-1 text-xs text-slate-500">Agende uma arte, defina quando aparece e controle a frequência no XML.</p>
+                  </div>
+                </div>
+                {manualInsertDraft.id && <button onClick={resetManualInsertForm} className="text-xs font-bold text-slate-500 hover:text-slate-800">Cancelar edição</button>}
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5">
+                <div className="flex flex-col gap-3">
+                  <label className="flex min-h-[170px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-center hover:border-blue-300 hover:bg-blue-50/40">
+                    {manualInsertImageFile ? (
+                      <img src={URL.createObjectURL(manualInsertImageFile)} alt="Prévia do insert" className="max-h-36 max-w-full rounded-lg object-contain" />
+                    ) : manualInsertDraft.imageUrl ? (
+                      <img src={manualInsertDraft.imageUrl} alt="Insert selecionado" className="max-h-36 max-w-full rounded-lg object-contain" />
+                    ) : <ImagePlus size={28} className="text-slate-400" />}
+                    <span className="text-xs font-bold text-slate-700">{manualInsertImageFile ? manualInsertImageFile.name : manualInsertDraft.imageUrl ? "Trocar imagem" : "Enviar imagem"}</span>
+                    <span className="text-[10px] text-slate-400">PNG, JPG ou WEBP</span>
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={e => setManualInsertImageFile(e.target.files?.[0] || null)} />
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Nome do insert</span>
+                    <input value={manualInsertDraft.name} onChange={e => setManualInsertDraft(p => ({ ...p, name: e.target.value }))} placeholder="Ex.: Oferta da semana" className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                  </label>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Dia inicial</span><input type="date" value={manualInsertDraft.startDate} onChange={e => setManualInsertDraft(p => ({ ...p, startDate: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Dia final</span><input type="date" value={manualInsertDraft.endDate} onChange={e => setManualInsertDraft(p => ({ ...p, endDate: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Horário inicial</span><input type="time" value={manualInsertDraft.startTime} onChange={e => setManualInsertDraft(p => ({ ...p, startTime: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Horário final</span><input type="time" value={manualInsertDraft.endTime} onChange={e => setManualInsertDraft(p => ({ ...p, endTime: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Entradas no XML por dia</span><input type="number" min="1" max="100" value={manualInsertDraft.occurrencesPerDay} onChange={e => setManualInsertDraft(p => ({ ...p, occurrencesPerDay: Number(e.target.value) }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /><span className="text-[10px] text-slate-400">Distribuídas ao longo do horário definido.</span></label>
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Duração de cada entrada (segundos)</span><input type="number" min="1" max="3600" value={manualInsertDraft.durationSeconds} onChange={e => setManualInsertDraft(p => ({ ...p, durationSeconds: Number(e.target.value) }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /><span className="text-[10px] text-slate-400">Tempo em que a arte permanece disponível no XML.</span></label>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">Repetir nos dias da semana</div>
+                    <div className="flex flex-wrap gap-2">
+                      {WEEK_DAYS.map(day => {
+                        const checked = manualInsertDraft.weekdays.includes(day.value);
+                        return <button key={day.value} type="button" onClick={() => setManualInsertDraft(p => ({ ...p, weekdays: checked ? p.weekdays.filter(d => d !== day.value) : [...p.weekdays, day.value] }))} className={`min-w-11 rounded-lg border px-3 py-2 text-xs font-bold ${checked ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-500"}`}>{day.label}</button>;
+                      })}
+                    </div>
+                    <p className="mt-2 text-[10px] text-slate-400">A arte só entra nos dias selecionados, dentro do período e da faixa de horário.</p>
+                  </div>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" checked={manualInsertDraft.enabled} onChange={e => setManualInsertDraft(p => ({ ...p, enabled: e.target.checked }))} className="h-4 w-4 accent-blue-600" /> Manter este insert agendado e ativo</label>
                 </div>
               </div>
+              <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+                <button onClick={resetManualInsertForm} type="button" className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Limpar formulário</button>
+                <button onClick={handleSaveManualInsert} disabled={manualInsertSaving || manualInsertUploading} type="button" className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-blue-700 disabled:opacity-50">
+                  {manualInsertSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}{manualInsertUploading ? "Enviando imagem..." : manualInsertDraft.id ? "Salvar alterações" : "Salvar agendamento"}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 flex flex-col gap-4" style={cardStyle}>
+              <div className="flex items-center justify-between gap-3">
+                <div><h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-800">Inserts manuais agendados</h3><p className="mt-1 text-xs text-slate-500">Envie um insert para o XML imediatamente, edite ou exclua o agendamento.</p></div>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{manualInserts.length}</span>
+              </div>
+              {manualInserts.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center"><CalendarDays size={22} className="mx-auto mb-2 text-slate-300" /><p className="text-xs font-semibold text-slate-600">Nenhum insert manual agendado</p><p className="mt-1 text-[11px] text-slate-400">Preencha o formulário acima para criar o primeiro.</p></div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {manualInserts.map(item => (
+                    <div key={item.id} className="grid grid-cols-1 md:grid-cols-[100px_1fr_auto] gap-4 items-center rounded-xl border border-slate-200 p-3">
+                      <div className="h-20 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden"><img src={item.imageUrl} alt={item.name} className="max-h-full max-w-full object-contain" /></div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2"><h4 className="text-sm font-bold text-slate-800">{item.name}</h4><span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${item.enabled ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{item.enabled ? "Ativo" : "Pausado"}</span></div>
+                        <p className="mt-1 text-[11px] text-slate-500">{item.startDate} até {item.endDate} · {item.startTime}–{item.endTime}</p>
+                        <p className="mt-1 text-[10px] text-slate-400">{item.occurrencesPerDay} entrada(s)/dia · {item.durationSeconds}s cada · {item.weekdays.join(", ") || "Sem dias selecionados"}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 md:justify-end">
+                        <button onClick={() => handleManualInsertNow(item)} className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black uppercase text-white hover:bg-blue-700"><Send size={12} /> Enviar agora</button>
+                        <button onClick={() => { setManualInsertDraft({ ...item }); setManualInsertImageFile(null); }} className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50"><Pencil size={12} /> Editar</button>
+                        <button onClick={() => handleDeleteManualInsert(item.id)} className="flex items-center gap-1.5 rounded-lg border border-red-100 px-3 py-2 text-[10px] font-bold text-red-600 hover:bg-red-50"><Trash2 size={12} /> Excluir</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
-
+ 
         {activeTab === "titulo" && (
           <div className="max-w-3xl mx-auto flex flex-col gap-5 w-full">
             <div className="p-6 rounded-2xl flex flex-col gap-4 bg-white" style={{ ...cardStyle, border: `1px solid ${NAVY_BORDER}` }}>
