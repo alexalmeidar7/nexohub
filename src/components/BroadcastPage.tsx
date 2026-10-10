@@ -2062,21 +2062,20 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
               <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-700">Informações enviadas para o XML</div>
               <p className="mb-3 text-[10px] text-slate-500">Escolha quais dados do próximo programa devem permanecer atualizados no XML BROADCAST.</p>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="flex flex-wrap items-center justify-center gap-3 py-2">
                 {([
-                  { key: "aSeguirShowPrograma" as const, label: "Nome do programa", desc: "Título do próximo programa" },
-                  { key: "aSeguirShowLogoPrograma" as const, label: "Logo do programa", desc: "Imagem/logo do próximo programa em PNG" },
-                  { key: "aSeguirShowHorario" as const, label: "Horário inicial", desc: "Hora prevista de início" },
-                  { key: "aSeguirShowLocutor" as const, label: "Nome do locutor", desc: "Apresentador cadastrado na grade" },
-                  { key: "aSeguirShowFotoLocutor" as const, label: "Foto do locutor", desc: "Imagem do apresentador em PNG" },
-                ]).map(({ key, label, desc }) => {
+                  { key: "aSeguirShowPrograma" as const, label: "Nome do programa" },
+                  { key: "aSeguirShowLogoPrograma" as const, label: "Logo do programa" },
+                  { key: "aSeguirShowHorario" as const, label: "Horário inicial" },
+                  { key: "aSeguirShowLocutor" as const, label: "Nome do locutor" },
+                  { key: "aSeguirShowFotoLocutor" as const, label: "Foto do locutor" },
+                ]).map(({ key, label }) => {
                   const active = data[key] !== false;
-                  return <button key={key} type="button" role="switch" aria-checked={active} disabled={!data.aSeguirEnabled}
+                  return <button key={key} type="button" aria-pressed={active} disabled={!data.aSeguirEnabled}
                     onClick={() => { const nextData = { ...latestDataRef.current, [key]: !active }; setData(nextData); void handleSave(nextData); }}
-                    className="flex items-center gap-3 rounded-xl border px-3 py-3 text-left disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ borderColor: active ? CYAN : NAVY_BORDER, backgroundColor: active ? "rgba(0,85,255,0.05)" : "#fff" }}>
-                    <span className="min-w-0 flex-1"><span className="block text-[11px] font-bold text-slate-800">{label}</span><span className="mt-0.5 block text-[9px] text-slate-500">{desc}</span></span>
-                    <span className="relative h-5 w-9 shrink-0 rounded-full" style={{ backgroundColor: active ? "#0055ff" : "#cbd5e1" }}><span className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all" style={{ left: active ? "18px" : "2px" }} /></span>
+                    className="rounded-xl px-4 py-3 text-[10px] sm:text-[11px] font-extrabold text-white transition-opacity duration-150 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: CYAN, opacity: active ? 1 : 0.5 }}>
+                    {label}
                   </button>;
                 })}
               </div>
