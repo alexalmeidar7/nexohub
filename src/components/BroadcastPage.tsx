@@ -2036,50 +2036,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
               </div>
             </div>
 
-            <div className="mt-3 grid gap-3">
-              {([
-                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa — a informação permanece no XML até o início do programa", fallback: 300, options: [{ v: 300, l: "5 min" }, { v: 600, l: "10 min" }, { v: 900, l: "15 min" }] },
-                { key: "aSeguirRefreshSeconds" as const, label: "Atualizar no XML a cada", hint: "Intervalo em que o backend regera as informações do programa a seguir no XML BROADCAST", fallback: 60, options: [{ v: 15, l: "15 s" }, { v: 30, l: "30 s" }, { v: 60, l: "1 min" }, { v: 120, l: "2 min" }, { v: 300, l: "5 min" }] },
-              ]).map(({ key, label, hint, fallback, options }) => {
-                const current = Number(data[key] ?? fallback);
-                return (
-                  <div
-                    key={key}
-                    className="p-4 rounded-xl bg-slate-50 border border-slate-200"
-                    style={{ opacity: data.aSeguirEnabled ? 1 : 0.55 }}
-                  >
-                    <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>{label}</div>
-                    <p className="text-[10px] mb-3 text-slate-500">{hint}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {options.map(({ v, l }) => {
-                        const active = current === v;
-                        return (
-                          <button
-                            key={v}
-                            type="button"
-                            disabled={!data.aSeguirEnabled}
-                            onClick={() => {
-                              const nextData = { ...latestDataRef.current, [key]: v };
-                              setData(nextData);
-                              void handleSave(nextData);
-                            }}
-                            className="px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide transition-colors"
-                            style={{
-                              backgroundColor: active ? CYAN : "#ffffff",
-                              color: active ? "#ffffff" : "#334155",
-                              border: `1px solid ${active ? CYAN : "#cbd5e1"}`,
-                              cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
-                            }}
-                          >
-                            {l}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {/* Os dados selecionados são atualizados automaticamente em cada leitura do XML. */}
 
             {data.aSeguirEnabled && (
               <div
@@ -2096,74 +2053,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
               </div>
             )}
 
-            {/* Countdown status */}
-            <div
-              className="mt-4 p-4 rounded-xl"
-              style={{
-                backgroundColor: data.aSeguirEnabled ? "rgba(0,85,255,0.05)" : "#f8fafc",
-                border: `1px solid ${data.aSeguirEnabled ? "rgba(0,85,255,0.3)" : NAVY_BORDER}`,
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>Contagem regressiva</div>
-                <span
-                  className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                  style={{
-                    backgroundColor: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? "#22c55e" : "#e2e8f0") : "#e2e8f0",
-                    color: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? "#ffffff" : "#64748b") : "#64748b",
-                  }}
-                >
-                  {data.aSeguirEnabled ? (nextProgramInfo?.isForced ? "Forçado agora" : nextProgramInfo?.isInWindow ? "No ar no XML" : "Aguardando") : "Desligado"}
-                </span>
-              </div>
-
-              {!data.aSeguirEnabled ? (
-                <p className="text-[11px] text-slate-500">
-                  Habilite o módulo A Seguir para ver a contagem regressiva.
-                </p>
-              ) : !nextProgramInfo ? (
-                <p className="text-[11px] text-slate-500">
-                  Nenhum programa seguinte encontrado na grade.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium">Próximo programa</span>
-                    <span className="font-bold text-slate-800 truncate max-w-[55%]">
-                      {nextProgramInfo.next?.nome || "—"} às {(nextProgramInfo.next?.horario_inicio || "").toString().slice(0, 5)}
-                    </span>
-                  </div>
-
-                  {(nextProgramInfo.isInWindow || nextProgramInfo.isForced) ? (
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500 font-medium">XML preenchido por mais</span>
-                      <span className="font-mono font-bold text-green-600">
-                        {formatCountdown(nextProgramInfo.isForced ? nextProgramInfo.forcedRemainingSeconds : nextProgramInfo.windowCloseSeconds)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500 font-medium">XML será preenchido em</span>
-                      <span className="font-mono font-bold" style={{ color: CYAN }}>
-                        {formatCountdown(nextProgramInfo.windowOpenSeconds)}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium">Permanecerá no XML</span>
-                    <span className="font-mono font-bold text-slate-800">
-                      {formatCountdown(nextProgramInfo.actualDurationSeconds)}
-                    </span>
-                  </div>
-
-                  <div className="pt-2 text-[10px] text-slate-500">
-                    As imagens e textos entram <strong className="text-slate-700">{formatCountdown(nextProgramInfo.windowOpenSeconds)}</strong> antes do início do próximo programa e ficam no XML por <strong className="text-slate-700">{formatCountdown(nextProgramInfo.actualDurationSeconds)}</strong>.
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Prévia do XML */}
             <div
               className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200"
@@ -2179,7 +2068,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                     color: aSeguirActive ? "#ffffff" : "#64748b",
                   }}
                 >
-                  {aSeguirActive ? "Valores no XML agora" : "Fora da janela (blanck)"}
+                  {data.aSeguirEnabled ? "Atualizado conforme a programação" : "Desligado"}
                 </span>
               </div>
 
