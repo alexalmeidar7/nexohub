@@ -8,6 +8,7 @@ import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
 import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
+import { getApresentadores, resolveParticipanteCategoria } from "@/components/ApresentadorForm";
 
 
 
@@ -341,26 +342,44 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     }
     let cancelled = false;
     (async () => {
-      const { data: presenters, error } = await supabase
-        .from("apresentadores")
-        .select("id, nome, categoria, cargo")
-        .eq("user_id", stationUid)
-        .order("nome", { ascending: true });
-      if (!cancelled && !error) {
+      try {
+        // Use the same normalized participant source as the Cadastros screen.
+        // It resolves category from both categoria and cargo and includes station-local/default records.
+        const presenters = await getApresentadores(stationUid, user?.email);
         const allowedCategories = new Set(["apresentador", "jornalista"]);
-        setLocutoresCadastrados(
-          (presenters || [])
-            .filter((p: any) => {
-              if (!p.nome) return false;
-              const category = String(p.categoria || "").trim().toLocaleLowerCase("pt-BR");
-              return allowedCategories.has(category);
-            })
-            .map((p: any) => ({ id: p.id, nome: p.nome }))
-        );
+        const eligible = (presenters || [])
+          .map((p: any) => {
+            const resolved = resolveParticipanteCategoria(p);
+            const category = String(p.categoria || p.cargo || resolved.categoria || "")
+              .trim()
+              .normalize("NFD")
+              .replace(/[\\u0300-\\u036f]/g, "")
+              .toLocaleLowerCase("pt-BR");
+            return { id: String(p.id), nome: String(p.nome || "").trim(), category };
+          })
+          .filter((p: any) => p.nome && allowedCategories.has(p.category))
+          .sort((a: any, b: any) => a.nome.localeCompare(b.nome, "pt-BR"));
+        if (!cancelled) {
+          setLocutoresCadastrados(eligible.map(({ id, nome }: any) => ({ id, nome })));
+        }
+      } catch (error) {
+        console.error("[BroadcastPage] Erro ao carregar apresentadores/jornalistas:", error);
+        if (!cancelled) setLocutoresCadastrados([]);
       }
     })();
     return () => { cancelled = true; };
-  }, [stationUid]);
+  }, [stationUid, user?.email]);
+
+  // When opening Título, select the currently-on-air presenter unless the user already chose an override.
+  useEffect(() => {
+    if (activeTab !== "titulo" || !locutorNome || data.locutor_override) return;
+    const currentOnAir = locutoresCadastrados.find(
+      (p) => p.nome.trim().toLocaleLowerCase("pt-BR") === locutorNome.trim().toLocaleLowerCase("pt-BR")
+    );
+    if (currentOnAir) {
+      setData((prev) => prev.locutor_override ? prev : { ...prev, locutor_override: currentOnAir.nome });
+    }
+  }, [activeTab, locutorNome, locutoresCadastrados, data.locutor_override]);
 
   const tituloDefault = `PARTICIPE DA PROGRAMAÇÃO${whatsappNumber ? ` - WHATSAPP: ${whatsappNumber}` : ""}`;
 
