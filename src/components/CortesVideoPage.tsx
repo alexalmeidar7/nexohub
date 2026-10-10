@@ -416,10 +416,11 @@ export default function CortesVideoPage() {
     if (activeClip) {
       if (activeClip.type === "video") {
         const vid = videoSources.get(activeClip.url);
-        if (vid && vid.readyState >= 2 && !vid.seeking) {
+        if (vid && vid.readyState >= 2) {
           const clipInternalTime = activeClip.mediaStart + (time - activeClip.start);
-          // During export, let the source video play continuously; seeking every frame causes flicker.
-          if (syncVideo && Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
+          // Never issue another seek while one is pending. During a seek, draw the last decoded frame
+          // rather than clearing to black; this prevents visible flashes in the preview/export.
+          if (syncVideo && !vid.seeking && Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
             try { vid.currentTime = clipInternalTime; } catch { /* metadata may still be loading */ }
           }
 
