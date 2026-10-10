@@ -2352,7 +2352,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
         {/* CONNECTION MODAL */}
         <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
 
-          <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-0 overflow-hidden">
+          <DialogContent className={`vmix-connection-dialog sm:max-w-md rounded-[28px] p-0 overflow-hidden ${cleanLayout ? "vmix-connection-dialog-clean" : ""}`}>
             <div className="p-8 space-y-6">
               <div className="space-y-2">
                 <h2 className="text-xl font-black uppercase tracking-tight text-[#C6F03C]">Configurar Conexão</h2>
