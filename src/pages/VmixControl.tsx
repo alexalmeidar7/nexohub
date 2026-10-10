@@ -133,7 +133,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #C6F03C20" }}>
         <div className="flex items-center gap-2" />
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <img src={vmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6" />
+          <img src={cleanVmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#C6F03C99" }}>{user.email}</span>
