@@ -1484,8 +1484,9 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Assunto / Título no ar</span>
                 <input
                   value={data.assunto}
+                  onFocus={() => setData(prev => ({ ...prev, assunto: "" }))}
                   onChange={e => setData(prev => ({ ...prev, assunto: e.target.value }))}
-                  className="h-10 px-3 rounded-lg border border-slate-200 text-sm font-bold"
+                  className="h-10 px-3 rounded-lg border border-slate-200 text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={tituloDefault}
                 />
               </label>
