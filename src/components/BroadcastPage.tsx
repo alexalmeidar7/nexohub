@@ -26,6 +26,17 @@ function extractHandle(value: string): string {
   return `@${clean.replace(/^@/, "")}`;
 }
 
+function normalizeSiteDomain(value: string): string {
+  const clean = String(value || "").trim();
+  if (!clean) return "";
+  try {
+    const url = new URL(clean.match(/^https?:\/\//i) ? clean : `https://${clean}`);
+    return url.hostname.replace(/^www\./i, "").replace(/\.+$/, "");
+  } catch {
+    return clean.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split(/[/?#]/)[0].replace(/\/+$/, "");
+  }
+}
+
 const WMO_LABELS: Record<number, string> = {
   0: "Céu limpo", 1: "Poucas nuvens", 2: "Parcialmente nublado", 3: "Nublado",
   45: "Nevoeiro", 48: "Nevoeiro com geada", 51: "Garoa leve", 53: "Garoa moderada",
@@ -435,7 +446,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       if (emp?.instagram) socials.push({ tipo: "instagram", valor: extractHandle(emp.instagram), icon: <Instagram size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.png" });
       if (emp?.facebook) socials.push({ tipo: "facebook", valor: extractHandle(emp.facebook), icon: <Facebook size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.png" });
       if (emp?.youtube) socials.push({ tipo: "youtube", valor: extractHandle(emp.youtube), icon: <Youtube size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.png" });
-      if (emp?.site) socials.push({ tipo: "site", valor: extractHandle(emp.site), icon: <Globe size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.png" });
+      if (emp?.site) socials.push({ tipo: "site", valor: normalizeSiteDomain(emp.site), icon: <Globe size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.png" });
       if (emp?.telefone_participacao) {
         socials.push({ tipo: "whatsapp", valor: emp.telefone_participacao, icon: <MessageCircle size={11} />, iconPng: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.png" });
         setWhatsappNumber(emp.telefone_participacao);
@@ -981,16 +992,16 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       parts.push(quotesText);
     }
     if (data.tickerSocials && tickerSocialItems.length > 0) {
-      const labels: Record<string, string> = {
-        instagram: "Instagram",
-        facebook: "Facebook",
-        youtube: "YouTube",
-        site: "Site",
-        whatsapp: "WhatsApp",
+      const socialIcons: Record<string, string> = {
+        instagram: "📸",
+        facebook: "ⓕ",
+        youtube: "▶",
+        site: "🌐",
+        whatsapp: "☏",
       };
       parts.push(
         tickerSocialItems
-          .map(s => `${labels[s.tipo] || s.tipo}: ${s.valor}`)
+          .map(s => `${socialIcons[s.tipo] || "•"} ${s.tipo === "site" ? normalizeSiteDomain(s.valor) : s.valor}`)
           .join("  •  ")
       );
     }
