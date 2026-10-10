@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic, Save } from "lucide-react";
+import { Loader2, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic, Save, CalendarDays, Trash2, Pencil, Send, Plus, ImagePlus } from "lucide-react";
 import { useUserSlug } from "@/hooks/useUserSlug";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
@@ -32,6 +32,43 @@ const WMO_LABELS: Record<number, string> = {
   71: "Neve leve", 73: "Neve moderada", 75: "Neve forte", 80: "Pancadas leves",
   81: "Pancadas moderadas", 82: "Pancadas fortes", 95: "Trovoadas", 96: "Trovoadas com granizo",
 };
+
+type ManualInsert = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  occurrencesPerDay: number;
+  durationSeconds: number;
+  weekdays: string[];
+  enabled: boolean;
+};
+
+const WEEK_DAYS = [
+  { value: "Segunda", label: "Seg" },
+  { value: "Terça", label: "Ter" },
+  { value: "Quarta", label: "Qua" },
+  { value: "Quinta", label: "Qui" },
+  { value: "Sexta", label: "Sex" },
+  { value: "Sábado", label: "Sáb" },
+  { value: "Domingo", label: "Dom" },
+];
+
+const newManualInsert = (): Omit<ManualInsert, "id"> => ({
+  name: "",
+  imageUrl: "",
+  startDate: new Date().toLocaleDateString("en-CA"),
+  endDate: new Date(Date.now() + 7 * 86400000).toLocaleDateString("en-CA"),
+  startTime: "07:00",
+  endTime: "23:00",
+  occurrencesPerDay: 4,
+  durationSeconds: 30,
+  weekdays: WEEK_DAYS.map((d) => d.value),
+  enabled: true,
+});
 
 interface BroadcastData {
   assunto: string;
@@ -246,6 +283,11 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [sponsorLogos, setSponsorLogos] = useState<{nome: string; logo_url: string}[]>([]);
   const [insertLiveArt, setInsertLiveArt] = useState<string>("");
   const [insertLiveSchedule, setInsertLiveSchedule] = useState<string[]>([]);
+  const [manualInserts, setManualInserts] = useState<ManualInsert[]>([]);
+  const [manualInsertDraft, setManualInsertDraft] = useState<Omit<ManualInsert, "id"> & { id?: string }>(newManualInsert());
+  const [manualInsertImageFile, setManualInsertImageFile] = useState<File | null>(null);
+  const [manualInsertSaving, setManualInsertSaving] = useState(false);
+  const [manualInsertUploading, setManualInsertUploading] = useState(false);
   const [insertingNow, setInsertingNow] = useState(false);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
@@ -719,6 +761,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
       if (loadedConfig) {
         setData((prev) => ({ ...defaultBroadcast, ...prev, ...loadedConfig }));
+        setManualInserts(Array.isArray(loadedConfig.manualInserts) ? loadedConfig.manualInserts : []);
       }
     })();
   }, [stationUid, userSlug]);
@@ -1084,6 +1127,105 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
 
 
+
+  const saveManualInserts = useCallback(async (nextInserts: ManualInsert[]) => {
+    if (!stationUid) throw new Error("Usuário não identificado");
+    const { data: cur, error: readError } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
+    if (readError) throw readError;
+    const existing = cur?.cenario_config && typeof cur.cenario_config === "object" ? cur.cenario_config as Record<string, any> : {};
+    const broadcast = { ...(existing.broadcast || {}), manualInserts: nextInserts };
+    const { error } = await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", stationUid);
+    if (error) throw error;
+    setManualInserts(nextInserts);
+  }, [stationUid]);
+
+  const resetManualInsertForm = () => {
+    setManualInsertDraft(newManualInsert());
+    setManualInsertImageFile(null);
+  };
+
+  const handleSaveManualInsert = async () => {
+    if (!stationUid) return toast.error("Não foi possível identificar a conta.");
+    if (!manualInsertDraft.name.trim()) return toast.error("Informe um nome para o insert.");
+    if (!manualInsertDraft.imageUrl && !manualInsertImageFile) return toast.error("Envie a imagem do insert.");
+    if (!manualInsertDraft.startDate || !manualInsertDraft.endDate || manualInsertDraft.endDate < manualInsertDraft.startDate) return toast.error("Confira o período de início e fim.");
+    if (manualInsertDraft.startTime >= manualInsertDraft.endTime) return toast.error("O horário final deve ser posterior ao inicial.");
+    setManualInsertSaving(true);
+    try {
+      let imageUrl = manualInsertDraft.imageUrl;
+      if (manualInsertImageFile) {
+        setManualInsertUploading(true);
+        const extension = manualInsertImageFile.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "") || "png";
+        const path = `broadcast/${stationUid}/manual-inserts/${manualInsertDraft.id || crypto.randomUUID()}-${Date.now()}.${extension}`;
+        const { error: uploadError } = await supabase.storage.from("empresa-assets").upload(path, manualInsertImageFile, {
+          upsert: true,
+          contentType: manualInsertImageFile.type || "image/png",
+          cacheControl: "3600",
+        });
+        if (uploadError) throw uploadError;
+        imageUrl = supabase.storage.from("empresa-assets").getPublicUrl(path).data.publicUrl;
+        setManualInsertUploading(false);
+      }
+      const item: ManualInsert = {
+        id: manualInsertDraft.id || crypto.randomUUID(),
+        name: manualInsertDraft.name.trim(),
+        imageUrl,
+        startDate: manualInsertDraft.startDate,
+        endDate: manualInsertDraft.endDate,
+        startTime: manualInsertDraft.startTime,
+        endTime: manualInsertDraft.endTime,
+        occurrencesPerDay: Math.max(1, Math.min(100, Number(manualInsertDraft.occurrencesPerDay) || 1)),
+        durationSeconds: Math.max(1, Math.min(3600, Number(manualInsertDraft.durationSeconds) || 30)),
+        weekdays: manualInsertDraft.weekdays.length ? manualInsertDraft.weekdays : WEEK_DAYS.map((d) => d.value),
+        enabled: manualInsertDraft.enabled,
+      };
+      const next = manualInserts.some((x) => x.id === item.id)
+        ? manualInserts.map((x) => x.id === item.id ? item : x)
+        : [...manualInserts, item];
+      await saveManualInserts(next);
+      toast.success(manualInsertDraft.id ? "Insert atualizado." : "Insert agendado.");
+      resetManualInsertForm();
+    } catch (error) {
+      console.error(error);
+      toast.error("Não foi possível salvar o insert.");
+    } finally {
+      setManualInsertSaving(false);
+      setManualInsertUploading(false);
+    }
+  };
+
+  const handleDeleteManualInsert = async (id: string) => {
+    if (!window.confirm("Excluir este insert agendado?")) return;
+    try {
+      await saveManualInserts(manualInserts.filter((item) => item.id !== id));
+      toast.success("Insert excluído.");
+      if (manualInsertDraft.id === id) resetManualInsertForm();
+    } catch (error) {
+      console.error(error);
+      toast.error("Não foi possível excluir o insert.");
+    }
+  };
+
+  const handleManualInsertNow = async (item: ManualInsert) => {
+    if (!stationUid) return;
+    try {
+      const { data: cur, error: readError } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
+      if (readError) throw readError;
+      const existing = cur?.cenario_config && typeof cur.cenario_config === "object" ? cur.cenario_config as Record<string, any> : {};
+      const broadcast = {
+        ...(existing.broadcast || {}),
+        manualInsertNowId: item.id,
+        manualInsertNowUntil: new Date(Date.now() + item.durationSeconds * 1000).toISOString(),
+      };
+      const { error } = await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", stationUid);
+      if (error) throw error;
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-json-broadcast?user_id=${encodeURIComponent(stationUid)}&t=${Date.now()}`, { cache: "no-store" }).catch(() => undefined);
+      toast.success(`Insert "${item.name}" enviado para o XML por ${item.durationSeconds}s.`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Não foi possível enviar o insert para o XML.");
+    }
+  };
 
   const handleInsertNow = useCallback(async () => {
     if (!stationUid || !insertLiveArt) return;
