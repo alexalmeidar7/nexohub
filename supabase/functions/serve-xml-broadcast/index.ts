@@ -628,25 +628,23 @@ Deno.serve(async (req) => {
 
     // ── A SEGUIR (next program) ──────────────────────────────────────────
     const aSeguirEnabled = !!broadcastConfig.aSeguirEnabled;
-    // Intervalo (segundos) escolhido pelo usuário para o backend regerar o nódulo.
-    const aSeguirRefreshSeconds = Number(broadcastConfig.aSeguirRefreshSeconds) > 0
-      ? Math.max(15, Number(broadcastConfig.aSeguirRefreshSeconds))
-      : 60;
+    const showNextProgram = broadcastConfig.aSeguirShowPrograma !== false;
+    const showNextStart = broadcastConfig.aSeguirShowHorario !== false;
+    const showNextPresenter = broadcastConfig.aSeguirShowLocutor !== false;
+    const showNextPresenterPhoto = broadcastConfig.aSeguirShowFotoLocutor !== false;
     let aSeguirNome = "";
     let aSeguirLogo = "";
     let aSeguirLocutorNome = "";
     let aSeguirLocutorFoto = "";
     let aSeguirHorario = "";
     let aSeguirTexto = "";
+    const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+    aSeguirLogo = BLANK_PNG_ASEG;
+    aSeguirLocutorFoto = BLANK_PNG_ASEG;
 
     if (aSeguirEnabled) {
-      const allProgs = (progsRes.data || []).filter((p: any) => isFmStudio(p.estudio));
+      const allProgs = progsRes.data || [];
       let nextProg: any = null;
-      let nextStart = -1;
-
-      // Referência: o programa a seguir é o que vem DEPOIS do programa no ar
-      // agora (a partir do horário de término dele), não simplesmente o
-      // próximo horário maior que "agora".
       const curEndSec = prog ? timeToSeconds((prog as any).horario_fim) : -1;
       const refSeconds = curEndSec > nowSeconds ? curEndSec : nowSeconds;
 
@@ -654,7 +652,6 @@ Deno.serve(async (req) => {
         const refDate = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
         const refDayName = dayMap[dayFormatter.format(refDate).toLowerCase()] || "";
         const refDateStr = dateFormatter.format(refDate);
-
         const candidates = allProgs
           .map((p: any) => ({ p, start: timeToSeconds(p.horario_inicio) }))
           .filter(({ p, start }) => {
@@ -663,81 +660,42 @@ Deno.serve(async (req) => {
             const runs = p.variavel
               ? normalizeDateValue(p.data_variavel) === refDateStr
               : (Array.isArray(p.dias_semana) ? p.dias_semana : []).includes(refDayName);
-            if (!runs) return false;
-            return offset > 0 ? true : start >= refSeconds;
+            return runs && (offset > 0 || start >= refSeconds);
           })
           .sort((a, b) => a.start - b.start);
-
-        if (candidates.length > 0) {
-          nextProg = candidates[0].p;
-          nextStart = candidates[0].start;
-        }
+        if (candidates.length > 0) nextProg = candidates[0].p;
       }
 
       if (nextProg) {
-        aSeguirNome = nextProg.nome || "";
-        aSeguirHorario = (nextProg.horario_inicio || "").toString().slice(0, 5);
-        aSeguirTexto = aSeguirHorario ? `começa às: ${aSeguirHorario}` : "";
-        aSeguirLogo = nextProg.selo
-          ? await ensurePngImageUrl(supabase, nextProg.selo, `broadcast/${dataOwnerId}/${nextProg.id}-aseguir-logo.png`, 512)
-          : "";
-
-        const nextApIds = (nextProg.apresentadores_ids && nextProg.apresentadores_ids.length > 0)
-          ? nextProg.apresentadores_ids
-          : (nextProg.apresentador_id ? [nextProg.apresentador_id] : []);
-        if (nextApIds.length > 0) {
-          const { data: nextPresenters } = await supabase
-            .from("apresentadores")
-            .select("id, nome, foto")
-            .eq("user_id", dataOwnerId)
-            .in("id", nextApIds);
-          const nextAp = (nextPresenters || [])
-            .sort((a: any, b: any) => nextApIds.indexOf(a.id) - nextApIds.indexOf(b.id))[0];
-          if (nextAp) {
-            aSeguirLocutorNome = nextAp.nome || "";
-            aSeguirLocutorFoto = nextAp.foto
-              ? await ensurePngImageUrl(supabase, nextAp.foto, `broadcast/${dataOwnerId}/${nextAp.id}-aseguir-locutor.png`, 1080)
-              : "";
+        if (showNextProgram) aSeguirNome = nextProg.nome || "";
+        if (showNextStart) {
+          aSeguirHorario = (nextProg.horario_inicio || "").toString().slice(0, 5);
+          aSeguirTexto = aSeguirHorario ? `começa às: ${aSeguirHorario}` : "";
+        }
+        if (showNextPresenter || showNextPresenterPhoto) {
+          const nextApIds = (nextProg.apresentadores_ids && nextProg.apresentadores_ids.length > 0)
+            ? nextProg.apresentadores_ids
+            : (nextProg.apresentador_id ? [nextProg.apresentador_id] : []);
+          if (nextApIds.length > 0) {
+            const { data: nextPresenters } = await supabase
+              .from("apresentadores")
+              .select("id, nome, foto")
+              .eq("user_id", dataOwnerId)
+              .in("id", nextApIds);
+            const nextAp = (nextPresenters || [])
+              .sort((a: any, b: any) => nextApIds.indexOf(a.id) - nextApIds.indexOf(b.id))[0];
+            if (nextAp) {
+              if (showNextPresenter) aSeguirLocutorNome = nextAp.nome || "";
+              if (showNextPresenterPhoto && nextAp.foto) {
+                aSeguirLocutorFoto = await ensurePngImageUrl(
+                  supabase, nextAp.foto, `broadcast/${dataOwnerId}/${nextAp.id}-aseguir-locutor.png`, 1080,
+                ) || BLANK_PNG_ASEG;
+              }
+            }
           }
         }
       }
-
-      // Janela de exibição configurável pelo usuário:
-      // entra `lead` segundos antes do início e permanece até o horário de início.
-      const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
-      const leadSeconds = Number(broadcastConfig.aSeguirLeadSeconds) > 0
-        ? Number(broadcastConfig.aSeguirLeadSeconds)
-        : 300;
-      const forceUntilRaw = broadcastConfig.aSeguirForceUntil;
-      const forceUntilMs = forceUntilRaw ? Date.parse(String(forceUntilRaw)) : 0;
-      const forcedActive = !!forceUntilMs && forceUntilMs > now.getTime();
-
-      let inWindow = false;
-      if (nextStart >= 0) {
-        let delta = nextStart - nowSeconds;
-        if (delta < 0) delta += 24 * 60 * 60;
-        // Permanece no XML até o horário de início do programa.
-        inWindow = delta <= leadSeconds;
-      }
-
-      if (!forcedActive && !inWindow) {
-        aSeguirNome = "";
-        aSeguirHorario = "";
-        aSeguirTexto = "";
-        aSeguirLogo = BLANK_PNG_ASEG;
-        aSeguirLocutorNome = "";
-        aSeguirLocutorFoto = BLANK_PNG_ASEG;
-      } else {
-        if (!aSeguirLogo) aSeguirLogo = BLANK_PNG_ASEG;
-        if (!aSeguirLocutorFoto) aSeguirLocutorFoto = BLANK_PNG_ASEG;
-      }
-    } else {
-      const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
-      aSeguirLogo = BLANK_PNG_ASEG;
-      aSeguirLocutorFoto = BLANK_PNG_ASEG;
     }
-
-
 
     const tickerParts: string[] = [];
     const rssEnabled = !!(broadcastConfig.tickerRssEnabled && typeof broadcastConfig.tickerRssUrl === "string" && broadcastConfig.tickerRssUrl.trim());
