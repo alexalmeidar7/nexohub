@@ -172,3 +172,35 @@ body:has(.vmix-flat-palette) [data-radix-dialog-content] button:hover {
 .vmix-flat-palette :not(main):not(button):not([role="button"]):not(video):not(canvas):not(iframe)[class*="bg-black"] {
   background-color: var(--vmix-flat-section) !important;
 }
+
+
+/* App-like flat connection tiles, scoped only to the clean /vmix-control connection picker. */
+.vmix-clean-layout .vmix-connection-card {
+  background-color: var(--vmix-flat-hover, #0042A3) !important;
+  border: 0 !important;
+  border-radius: 30px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  overflow: hidden;
+}
+.vmix-clean-layout .vmix-connection-card:hover {
+  background-color: var(--vmix-flat-hover, #0042A3) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.vmix-clean-layout .vmix-connection-card-button,
+.vmix-clean-layout .vmix-connection-card-button:hover {
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  box-shadow: none !important;
+  transform: none !important;
+  outline: none !important;
+}
+.vmix-clean-layout .vmix-connection-card-button:focus-visible {
+  outline: 2px solid #FFFFFF !important;
+  outline-offset: -4px;
+}
+.vmix-clean-layout .vmix-connection-icon { flex-shrink: 0; }
+.vmix-clean-layout .vmix-connection-card .absolute.top-8.right-8 { display: none !important; }

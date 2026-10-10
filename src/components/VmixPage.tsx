@@ -463,7 +463,7 @@ interface NetworkInterfaceInfo {
   recommendation?: string;
 }
 
-export default function VmixPage({ forcedConnected = false }: { forcedConnected?: boolean }) {
+export default function VmixPage({ forcedConnected = false, cleanLayout = false }: { forcedConnected?: boolean; cleanLayout?: boolean }) {
   const navigate = useNavigate();
   const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
@@ -2250,7 +2250,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-12 px-6 min-h-[90vh] flex flex-col items-center justify-center">
+      <div className={`w-full max-w-7xl mx-auto py-12 px-6 min-h-[90vh] flex flex-col items-center justify-center ${cleanLayout ? "vmix-clean-layout" : ""}`}>
         <div className="flex flex-col items-center gap-16 w-full">
           
 
@@ -2267,16 +2267,16 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
                   setVmixPass("");
                   setShowStudioSelector(true);
                 }}
-                className="group relative aspect-square w-full rounded-[48px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-5 transition-all duration-500 hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] hover:-translate-y-2"
+                className={cleanLayout ? "vmix-connection-card group relative aspect-square w-full rounded-[30px] flex flex-col items-center justify-center gap-5" : "group relative aspect-square w-full rounded-[48px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-5 transition-all duration-500 hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] hover:-translate-y-2"}
               >
-                <div className="w-28 h-28 rounded-full bg-[#C6F03C]/5 flex items-center justify-center transition-all duration-500 group-hover:bg-[#C6F03C]/10 group-hover:scale-110">
-                  <Plus size={44} className="text-[#C6F03C]" />
+                <div className={cleanLayout ? "vmix-connection-icon flex h-20 w-20 items-center justify-center rounded-[24px]" : "w-28 h-28 rounded-full bg-[#C6F03C]/5 flex items-center justify-center transition-all duration-500 group-hover:bg-[#C6F03C]/10 group-hover:scale-110"} style={cleanLayout ? { backgroundColor: "#0065F9" } : undefined}>
+                  <Plus size={cleanLayout ? 34 : 44} className={cleanLayout ? "text-white" : "text-[#C6F03C]"} />
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C6F03C]/60 group-hover:text-[#C6F03C] transition-colors">Adicionar</span>
-                  <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-white/20">Configurar novo estúdio</span>
+                  <span className={cleanLayout ? "text-[11px] font-bold uppercase tracking-[0.12em] text-white" : "text-[10px] font-black uppercase tracking-[0.2em] text-[#C6F03C]/60 group-hover:text-[#C6F03C] transition-colors"}>Adicionar</span>
+                  <span className={cleanLayout ? "text-[9px] font-medium uppercase tracking-[0.06em] text-white/75" : "text-[8px] font-bold uppercase tracking-[0.1em] text-white/20"}>Configurar novo estúdio</span>
                 </div>
-                <div className="absolute inset-0 rounded-[48px] border-2 border-transparent group-hover:border-[#C6F03C]/10 transition-all" />
+                {!cleanLayout && <div className="absolute inset-0 rounded-[48px] border-2 border-transparent group-hover:border-[#C6F03C]/10 transition-all />}
               </button>
             </div>
 
@@ -2285,18 +2285,19 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
               <div key={conn.id} className="flex flex-col gap-6 w-full max-w-[260px]">
                 <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Estúdio Salvo</p>
                 <div
-                  className="group relative aspect-square rounded-[48px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-5 transition-all duration-500 hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] hover:-translate-y-2"
+                  className={cleanLayout ? "vmix-connection-card group relative aspect-square rounded-[30px] flex flex-col items-center justify-center gap-5" : "group relative aspect-square rounded-[48px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-5 transition-all duration-500 hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] hover:-translate-y-2"}
                 >
                   <button
                     onClick={() => handleSelectConnection(conn)}
-                    className="flex flex-col items-center justify-center gap-5 w-full h-full"
+                    className={cleanLayout ? "vmix-connection-card-button flex flex-col items-center justify-center gap-5 w-full h-full" : "flex flex-col items-center justify-center gap-5 w-full h-full"}
+                    style={cleanLayout ? { backgroundColor: "transparent", borderRadius: "inherit" } : undefined}
                   >
-                    <div className="w-20 h-20 rounded-[32px] bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-all duration-500 group-hover:scale-105">
-                      <Monitor size={32} className="text-white/20 group-hover:text-[#C6F03C] transition-colors" />
+                    <div className={cleanLayout ? "vmix-connection-icon flex h-16 w-16 items-center justify-center rounded-[22px]" : "w-20 h-20 rounded-[32px] bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-all duration-500 group-hover:scale-105"} style={cleanLayout ? { backgroundColor: "#0065F9" } : undefined}>
+                      <Monitor size={cleanLayout ? 28 : 32} className={cleanLayout ? "text-white" : "text-white/20 group-hover:text-[#C6F03C] transition-colors"} />
                     </div>
                     <div className="flex flex-col items-center gap-1 px-6">
-                      <span className="text-sm font-black text-white/80 group-hover:text-white uppercase tracking-widest text-center truncate w-full">{conn.name}</span>
-                      <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">{conn.url.replace(/^https?:\/\//, "")}</span>
+                      <span className={cleanLayout ? "text-sm font-semibold text-white uppercase tracking-wide text-center truncate w-full" : "text-sm font-black text-white/80 group-hover:text-white uppercase tracking-widest text-center truncate w-full"}>{conn.name}</span>
+                      <span className={cleanLayout ? "text-[9px] font-medium text-white/75 uppercase tracking-wide text-center" : "text-[8px] font-bold text-white/20 uppercase tracking-widest"}>{conn.url.replace(/^https?:\/\//, "")}</span>
                     </div>
                   </button>
 
