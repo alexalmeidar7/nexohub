@@ -306,6 +306,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
   const tituloDefault = `PARTICIPE DA PROGRAMAÇÃO${whatsappNumber ? ` - WHATSAPP: ${whatsappNumber}` : ""}`;
 
+  useEffect(() => {
+    if (activeTab === "titulo" && !data.assunto.trim()) {
+      setData(prev => prev.assunto.trim() ? prev : { ...prev, assunto: tituloDefault });
+    }
+  }, [activeTab, tituloDefault, data.assunto]);
+
 
 
   // Auto-sync foto/instagram/cargo whenever locutor_override matches a registered apresentador
