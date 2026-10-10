@@ -1554,71 +1554,36 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         <div className={`flex-1 min-h-0 ${activeTab === "preview" ? "overflow-hidden flex items-center justify-center py-2" : "overflow-y-auto pr-1 pb-10"}`}>
 
         {activeTab === "preview" && (
-        <div 
-          className="w-full mx-auto flex flex-col items-center justify-center gap-3 min-h-0 py-1"
-          style={{ 
-            maxWidth: "min(600px, calc((100vh - 410px) * 16 / 9))",
-            width: "100%"
-          }}
-        >
-            {/* 16:9 preview stage with Tally Border */}
-            <div 
-              className="w-full relative rounded-2xl overflow-hidden group transition-all duration-500"
-              style={{ 
-                backgroundColor: "#000",
-                border: `6px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
-                boxShadow: insertLiveArt 
-                  ? "0 0 60px rgba(220,38,38,0.25), 0 20px 80px rgba(0,0,0,0.8)" 
-                  : "0 30px 100px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)"
-              }}
-            >
-
-              <div 
-                className="relative overflow-hidden" 
-                style={{ 
-                  width: "100%", 
-                  aspectRatio: "16/9",
-                  border: `4px solid ${insertingNow ? '#ef4444' : '#ffffff08'}`,
-                  transition: 'border-color 0.3s ease',
-                  boxShadow: insertingNow ? '0 0 40px rgba(239, 68, 68, 0.2)' : 'none'
-                }}
-              >
-                <MockupPreview
-                  empresaLogo={empresaLogo}
-                  programaNome={programaNome}
-                  programaLogo={programaLogo}
-                  displayLocutor={displayLocutor}
-                  locutorInstagram={locutorInstagram}
-                  locutorFoto={locutorFoto}
-                  accentColor={accentColor}
-                  assunto={data.assunto}
-                  showQrCode={data.showQrCode}
-                  whatsappNumber={whatsappNumber}
-                  empresaSocials={empresaSocials}
-                  composedTicker={composedTicker}
-                  sponsorLogos={sponsorLogos}
-                  assuntoBgUrl={effectiveAssuntoBgUrl}
-                  insertLiveArt={insertLiveArt}
-                  programaAssuntos={programaAssuntos}
-                  programaAssuntoRotation={programaAssuntoRotation}
-                  videoStreamUrl={videoStreamUrl}
-                  reloadKey={reloadKey}
-                />
-                
-                {/* Floating Status HUD (Master badge removed as requested) */}
-                {insertingNow && (
-                  <div className="absolute top-4 left-4 flex gap-2 pointer-events-none z-20">
-                    <div className="px-3 py-1.5 rounded-lg bg-[#ef4444]/90 backdrop-blur-md border border-white/20 flex items-center gap-2 shadow-lg">
-                      <Youtube size={12} className="text-white" />
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">LIVE ACTIVE</span>
+          <div className="w-full mx-auto flex items-center justify-center py-3 sm:py-5" style={{ maxWidth: "min(1100px, 100%)" }}>
+            <div className="w-full overflow-hidden rounded-[24px] bg-black text-white" style={{ border: "1px solid #1e293b" }}>
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                <div className="relative aspect-video min-h-[220px] md:min-h-[340px] bg-black overflow-hidden">
+                  {videoStreamUrl ? <VideoLivePreview streamUrl={videoStreamUrl} reloadKey={reloadKey} /> : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+                      <div className="h-10 w-10 rounded-full border-[3px] border-blue-500/25 border-t-blue-500 animate-spin" />
+                      <span className="text-xs font-semibold text-white/70">Aguardando vídeo ao vivo…</span>
                     </div>
+                  )}
+                  {videoStreamUrl && <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider"><span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" /> Prévia ao vivo</div>}
+                </div>
+                <div className="flex min-w-0 flex-col gap-5 p-5 sm:p-7 md:p-8">
+                  <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                    {empresaLogo ? <img src={empresaLogo} alt="Logo da emissora" className="h-11 w-11 rounded-xl bg-white object-contain p-1" /> : <div className="h-11 w-11 rounded-xl bg-blue-600 flex items-center justify-center text-xs font-black">HM</div>}
+                    <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-400">House Mix · Broadcast</p><h2 className="mt-1 truncate text-base sm:text-lg font-extrabold">{programaNome || "Programação ao vivo"}</h2></div>
                   </div>
-                )}
+                  <div className="flex items-center gap-4 min-w-0">
+                    {locutorFoto ? <img src={locutorFoto} alt={displayLocutor} className="h-16 w-16 shrink-0 rounded-2xl bg-white/10 object-contain object-bottom" /> : <div className="h-16 w-16 shrink-0 rounded-2xl bg-white/10 flex items-center justify-center text-blue-400"><Mic size={24} /></div>}
+                    <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">Apresentador</p><p className="mt-1 break-words text-lg font-extrabold leading-tight">{displayLocutor}</p>{locutorInstagram && <p className="mt-1 truncate text-xs text-blue-300">@{locutorInstagram.replace(/^@/, "")}</p>}</div>
+                  </div>
+                  {data.assunto && <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4"><p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">Assunto no ar</p><p className="mt-2 text-sm sm:text-base font-bold leading-snug">{data.assunto}</p></div>}
+                  {showQrCode && whatsappNumber && <div className="flex items-center gap-3 rounded-xl border border-white/10 p-3"><div className="h-10 w-10 shrink-0 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-300"><Phone size={18} /></div><div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-wider text-white/45">WhatsApp participação</p><p className="mt-1 text-sm font-bold">{whatsappNumber}</p></div></div>}
+                  {composedTicker && <div className="mt-auto border-t border-white/10 pt-4"><p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">Ticker</p><p className="text-xs leading-relaxed text-white/80 line-clamp-3">{composedTicker}</p></div>}
+                  {empresaSocials.length > 0 && <div className="flex flex-wrap gap-2">{empresaSocials.slice(0,4).map((social,i)=><span key={social.tipo + i} className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-semibold text-white/70">{social.tipo === "site" ? normalizeSiteDomain(social.valor) : social.valor}</span>)}</div>}
+                </div>
               </div>
             </div>
-        </div>
+          </div>
         )}
-
         {activeTab === "insert" && (
           <div className="max-w-5xl mx-auto flex flex-col gap-5 w-full">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 flex flex-col gap-5" style={cardStyle}>
@@ -2296,15 +2261,14 @@ function VideoLivePreview({ streamUrl, reloadKey }: { streamUrl: string; reloadK
   }
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
-      <video
-        ref={videoRef}
-        muted
-        autoPlay
-        playsInline
-        loop
-        className="w-full h-full object-cover"
-      />
+    <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
+      {!isLoaded && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black">
+          <div className="h-10 w-10 rounded-full border-[3px] border-blue-500/25 border-t-blue-500 animate-spin" />
+          <span className="text-xs font-semibold text-blue-400">Carregando vídeo…</span>
+        </div>
+      )}
+      <video ref={videoRef} muted autoPlay playsInline loop className="h-full w-full object-contain" />
     </div>
   );
 }
