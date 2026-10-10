@@ -1765,6 +1765,38 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
             <SectionHeader n="02" label="Ticker System" color={CYAN} />
 
+            {/* Prévia em movimento do texto que está sendo composto para o ticker */}
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Prévia do ticker</span>
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[9px] font-bold text-blue-600">Texto em movimento</span>
+              </div>
+              <div className="relative h-10 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                {composedTicker ? (
+                  <div
+                    key={composedTicker}
+                    className="absolute top-0 whitespace-nowrap text-[13px] font-semibold text-slate-800"
+                    style={{
+                      lineHeight: "40px",
+                      animation: `tickerSlidePreview ${Math.max(18, Math.round(composedTicker.length * 0.22))}s linear infinite`,
+                    }}
+                  >
+                    {composedTicker}
+                    <style>{`
+                      @keyframes tickerSlidePreview {
+                        0% { transform: translateX(100%); }
+                        100% { transform: translateX(-100%); }
+                      }
+                    `}</style>
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center px-3 text-[11px] text-slate-400">
+                    Ative uma fonte ou digite um texto adicional para visualizar o ticker.
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* A configuração RSS/XML avançada foi removida desta tela conforme solicitado. */}
             <div className="space-y-2">
               {([
