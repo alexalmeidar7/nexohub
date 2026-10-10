@@ -102,6 +102,7 @@ interface BroadcastData {
   assuntoBgProgramaIds: string[];
   aSeguirEnabled: boolean;
   aSeguirShowPrograma?: boolean;
+  aSeguirShowLogoPrograma?: boolean;
   aSeguirShowHorario?: boolean;
   aSeguirShowLocutor?: boolean;
   aSeguirShowFotoLocutor?: boolean;
@@ -132,6 +133,7 @@ const defaultBroadcast: BroadcastData = {
   assuntoBgProgramaIds: [],
   aSeguirEnabled: false,
   aSeguirShowPrograma: true,
+  aSeguirShowLogoPrograma: true,
   aSeguirShowHorario: true,
   aSeguirShowLocutor: true,
   aSeguirShowFotoLocutor: true,
@@ -1425,7 +1427,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     return {
       ativo: data.aSeguirEnabled ? "1" : "0",
       programa_nome: aSeguirActive && data.aSeguirShowPrograma !== false ? (nextProgramInfo?.next?.nome || "") : "",
-      programa_logo: BLANK_PNG_ASEGUIR,
+      programa_logo: aSeguirActive && data.aSeguirShowLogoPrograma !== false ? (nextProgramInfo?.next?.selo || nextProgramInfo?.next?.logo || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
       locutor_nome: aSeguirActive && data.aSeguirShowLocutor !== false ? (aSeguirLocutor?.nome || "") : "",
       locutor_foto: aSeguirActive && data.aSeguirShowFotoLocutor !== false ? (aSeguirLocutor?.foto || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
       horario,
@@ -2032,6 +2034,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
               <div className="grid gap-2 sm:grid-cols-2">
                 {([
                   { key: "aSeguirShowPrograma" as const, label: "Nome do programa", desc: "Título do próximo programa" },
+                  { key: "aSeguirShowLogoPrograma" as const, label: "Logo do programa", desc: "Imagem/logo do próximo programa em PNG" },
                   { key: "aSeguirShowHorario" as const, label: "Horário inicial", desc: "Hora prevista de início" },
                   { key: "aSeguirShowLocutor" as const, label: "Nome do locutor", desc: "Apresentador cadastrado na grade" },
                   { key: "aSeguirShowFotoLocutor" as const, label: "Foto do locutor", desc: "Imagem do apresentador em PNG" },
