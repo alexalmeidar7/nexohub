@@ -1812,13 +1812,14 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                     className="absolute top-0 whitespace-nowrap text-[13px] font-semibold text-slate-800"
                     style={{
                       lineHeight: "40px",
-                      animation: `tickerSlidePreview ${Math.max(18, Math.round(composedTicker.length * 0.22))}s linear infinite`,
+                      animation: `tickerSlidePreview ${Math.max(12, Math.round(composedTicker.length * 0.16))}s linear infinite`,
+                      willChange: "transform",
                     }}
                   >
                     {composedTicker}
                     <style>{`
                       @keyframes tickerSlidePreview {
-                        0% { transform: translateX(100%); }
+                        0% { transform: translateX(0); }
                         100% { transform: translateX(-100%); }
                       }
                     `}</style>
