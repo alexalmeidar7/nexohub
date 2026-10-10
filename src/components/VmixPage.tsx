@@ -2276,7 +2276,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
                   <span className={cleanLayout ? "text-[12px] font-bold uppercase tracking-[0.1em] text-white" : "text-[10px] font-black uppercase tracking-[0.2em] text-[#C6F03C]/60 group-hover:text-[#C6F03C] transition-colors"}>Adicionar</span>
                   <span className={cleanLayout ? "text-[9px] font-medium uppercase tracking-[0.04em] text-white/75 text-center" : "text-[8px] font-bold uppercase tracking-[0.1em] text-white/20"}>Configurar novo estúdio</span>
                 </div>
-                {!cleanLayout && <div className="absolute inset-0 rounded-[48px] border-2 border-transparent group-hover:border-[#C6F03C]/10 transition-all />}
+                {!cleanLayout && <div className="absolute inset-0 rounded-[48px] border-2 border-transparent group-hover:border-[#C6F03C]/10 transition-all" />}
               </button>
             </div>
 
