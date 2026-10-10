@@ -343,11 +343,20 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     (async () => {
       const { data: presenters, error } = await supabase
         .from("apresentadores")
-        .select("id, nome")
+        .select("id, nome, categoria, cargo")
         .eq("user_id", stationUid)
         .order("nome", { ascending: true });
       if (!cancelled && !error) {
-        setLocutoresCadastrados((presenters || []).filter((p: any) => !!p.nome));
+        const allowedCategories = new Set(["apresentador", "jornalista"]);
+        setLocutoresCadastrados(
+          (presenters || [])
+            .filter((p: any) => {
+              if (!p.nome) return false;
+              const category = String(p.categoria || "").trim().toLocaleLowerCase("pt-BR");
+              return allowedCategories.has(category);
+            })
+            .map((p: any) => ({ id: p.id, nome: p.nome }))
+        );
       }
     })();
     return () => { cancelled = true; };
