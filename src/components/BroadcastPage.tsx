@@ -2053,21 +2053,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
             {/* Os dados selecionados são atualizados automaticamente em cada leitura do XML. */}
 
-            {data.aSeguirEnabled && (
-              <div
-                className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px] bg-blue-50 border border-blue-200"
-              >
-                <span className="font-bold uppercase tracking-widest text-[#0055ff]">
-                  Envio automático em backend ativo
-                </span>
-                <span className="font-mono text-slate-600">
-                  {aSeguirSentAt
-                    ? `último envio ${aSeguirSentAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
-                    : "aguardando primeiro ciclo…"}
-                </span>
-              </div>
-            )}
-
             {/* Prévia do XML */}
             <div
               className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200"
@@ -2113,6 +2098,21 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 As imagens são convertidas para .png pelo servidor no momento do envio — a prévia mostra a origem cadastrada.
               </p>
             </div>
+
+            {data.aSeguirEnabled && (
+              <div
+                className="mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px] bg-blue-50 border border-blue-200"
+              >
+                <span className="font-bold uppercase tracking-widest text-[#0055ff]">
+                  Envio automático em backend ativo
+                </span>
+                <span className="font-mono text-slate-600">
+                  {aSeguirSentAt
+                    ? `último envio ${aSeguirSentAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                    : "aguardando primeiro ciclo…"}
+                </span>
+              </div>
+            )}
 
           </div>
         )}
