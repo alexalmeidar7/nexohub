@@ -8,7 +8,12 @@ import vmixControlLogo from "@/assets/logo-mixcontrol.png";
 import nexoLogo from "@/assets/logo-nxo.png";
 import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
 
-export default function VmixControl({ forcedConnected = false }: { forcedConnected?: boolean }) {
+type VmixControlProps = {
+  forcedConnected?: boolean;
+  cleanLayout?: boolean;
+};
+
+export default function VmixControl({ forcedConnected = false, cleanLayout = false }: VmixControlProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -33,11 +38,8 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
     setError("");
     setSigning(true);
     clearSignOutFlag();
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    if (err) setError("Usuário/e-mail ou senha incorretos.");
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (err) setError(cleanLayout ? "Usuário/e-mail ou senha incorretos." : "E-mail ou senha incorretos.");
     setSigning(false);
   };
 
@@ -46,100 +48,102 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
     setUser(null);
   };
 
-  if (loading) return <VmixControlSkeleton />;
+  if (loading) return <VmixControlSkeleton cleanLayout={cleanLayout} />;
 
-  return (
-    <div className="relative min-h-screen w-full overflow-hidden flex flex-col" style={{ backgroundColor: "#151515", color: "#fff" }}>
-      {/* Top navigation pill follows the visual language of the House Mix home header. */}
-      <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
-        <div
-          className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8"
-          style={{ backgroundColor: "#242424" }}
-        >
-          <img
-            src={vmixControlLogo}
-            alt="Nexo vMix Control"
-            className="block h-auto max-h-[22px] w-auto max-w-full object-contain object-left"
-          />
-          {user && (
-            <div className="ml-auto flex items-center gap-3 pl-4">
-              <span className="hidden sm:block max-w-[260px] truncate text-xs font-medium text-white/65">{user.email}</span>
-              <button
-                onClick={handleLogout}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#333333] text-white transition-colors hover:bg-[#444444] active:scale-95"
-                title="Sair"
-                aria-label="Sair da conta"
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
-
-      <main className="relative flex-1 flex items-center justify-center px-4 py-8 sm:py-10">
-        {!user ? (
-          <form
-            onSubmit={handleLogin}
-            className="w-full max-w-[380px] min-h-[438px] rounded-[28px] px-8 py-9 sm:px-8 flex flex-col"
-            style={{ backgroundColor: "#aaa", color: "#222" }}
-          >
-            <h1 className="mb-7 text-[18px] font-medium tracking-tight">login de acesso</h1>
-
-            {error && (
-              <div className="mb-3 rounded-lg bg-red-100/80 px-3 py-2 text-xs font-medium text-red-800" role="alert">
-                {error}
+  // The clean House Mix-inspired layout is opt-in and is enabled only on /vmix-control.
+  if (cleanLayout) {
+    return (
+      <div className="relative min-h-screen w-full overflow-hidden flex flex-col" style={{ backgroundColor: "#151515", color: "#fff" }}>
+        <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
+          <div className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8" style={{ backgroundColor: "#242424" }}>
+            <img src={vmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[22px] w-auto max-w-full object-contain object-left" />
+            {user && (
+              <div className="ml-auto flex items-center gap-3 pl-4">
+                <span className="hidden sm:block max-w-[260px] truncate text-xs font-medium text-white/65">{user.email}</span>
+                <button onClick={handleLogout} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#333333] text-white transition-colors hover:bg-[#444444] active:scale-95" title="Sair" aria-label="Sair da conta">
+                  <LogOut size={16} />
+                </button>
               </div>
             )}
-
-            <div className="flex flex-col gap-3">
-              <input
-                type="text"
-                required
-                autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="usuário"
-                aria-label="Usuário ou e-mail"
-                className="h-[51px] w-full rounded-full border-0 bg-white px-5 text-[15px] text-[#222] outline-none placeholder:text-[#b8b8b8] focus:ring-2 focus:ring-[#0055ff]/25"
-              />
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="********"
-                aria-label="Senha"
-                className="h-[51px] w-full rounded-full border border-white/70 bg-white px-5 text-[15px] text-[#222] outline-none transition placeholder:text-[#b8b8b8] focus:border-[#0055ff] focus:ring-2 focus:ring-[#0055ff]/15"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={signing}
-              className="mt-3 inline-flex h-[51px] w-fit min-w-[101px] items-center justify-center gap-2 rounded-full bg-[#292929] px-7 text-sm font-medium text-white hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60"
-            >
-              {signing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {signing ? "entrando" : "entrar"}
-            </button>
-
-            <div className="mt-auto pt-10 text-[15px] leading-[1.4] text-[#292929]">
-              <p className="font-semibold">esqueceu login ou senha?</p>
-              <p>fale com o suporte</p>
-            </div>
-          </form>
-        ) : (
-          <div className="w-full h-full min-h-[480px] rounded-2xl" style={{ color: "#fff" }}>
-            <VmixPage forcedConnected={forcedConnected} />
           </div>
-        )}
-      </main>
+        </header>
 
-      {/* Nexo brand signature anchored at the lower-left, as in the supplied reference. */}
-      <footer className="pointer-events-none absolute bottom-5 sm:bottom-7 left-5 sm:left-8 lg:left-[max(32px,calc((100vw-1656px)/2))] z-10">
-        <img src={nexoLogo} alt="Nexo soluções visuais" className="block h-auto w-[104px] sm:w-[119px] object-contain" />
-      </footer>
+        <main className="relative flex-1 flex items-center justify-center px-4 py-8 sm:py-10">
+          {!user ? (
+            <form onSubmit={handleLogin} className="w-full max-w-[380px] min-h-[438px] rounded-[28px] px-8 py-9 sm:px-8 flex flex-col" style={{ backgroundColor: "#aaa", color: "#222" }}>
+              <h1 className="mb-7 text-[18px] font-medium tracking-tight">login de acesso</h1>
+              {error && <div className="mb-3 rounded-lg bg-red-100/80 px-3 py-2 text-xs font-medium text-red-800" role="alert">{error}</div>}
+              <div className="flex flex-col gap-3">
+                <input type="text" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="usuário" aria-label="Usuário ou e-mail" className="h-[51px] w-full rounded-full border-0 bg-white px-5 text-[15px] text-[#222] outline-none placeholder:text-[#b8b8b8] focus:ring-2 focus:ring-[#0055ff]/25" />
+                <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" aria-label="Senha" className="h-[51px] w-full rounded-full border-0 bg-white px-5 text-[15px] text-[#222] outline-none placeholder:text-[#b8b8b8] focus:ring-2 focus:ring-[#0055ff]/25" />
+              </div>
+              <button type="submit" disabled={signing} className="mt-3 inline-flex h-[51px] w-fit min-w-[101px] items-center justify-center gap-2 rounded-full bg-[#292929] px-7 text-sm font-medium text-white hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60">
+                {signing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {signing ? "entrando" : "entrar"}
+              </button>
+              <div className="mt-auto pt-10 text-[15px] leading-[1.4] text-[#292929]">
+                <p className="font-semibold">esqueceu login ou senha?</p>
+                <p>fale com o suporte</p>
+              </div>
+            </form>
+          ) : (
+            <div className="w-full h-full min-h-[480px]" style={{ color: "#fff" }}>
+              <VmixPage forcedConnected={forcedConnected} />
+            </div>
+          )}
+        </main>
+
+        <footer className="pointer-events-none absolute bottom-5 sm:bottom-7 left-5 sm:left-8 lg:left-[max(32px,calc((100vw-1656px)/2))] z-10">
+          <img src={nexoLogo} alt="Nexo soluções visuais" className="block h-auto w-[104px] sm:w-[119px] object-contain" />
+        </footer>
+      </div>
+    );
+  }
+
+  // Original layout retained for /vmix-control/switcher and any other callers.
+  if (!user) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: "#000000" }}>
+        <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl p-8 flex flex-col gap-5" style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
+          <div className="flex flex-col items-center gap-2 mb-2">
+            <img src={vmixControlLogo} alt="Mix Control" className="h-8" />
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff45" }}>Faça login para acessar o controle</p>
+          </div>
+          {error && <div className="text-xs text-center font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: "#dc262620", color: "#f87171", border: "1px solid #dc262640" }}>{error}</div>}
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>E-mail</label>
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all" style={{ backgroundColor: "#141414", color: "#fff", border: "1px solid #ffffff14" }} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Senha</label>
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all" style={{ backgroundColor: "#141414", color: "#fff", border: "1px solid #ffffff14" }} />
+          </div>
+          <button type="submit" disabled={signing} className="w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#C6F03C", color: "#000" }}>
+            {signing ? <Loader2 className="animate-spin" size={16} /> : null}
+            Entrar
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#000000" }}>
+      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #C6F03C20" }}>
+        <div className="flex items-center gap-2" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <img src={vmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6" />
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#C6F03C99" }}>{user.email}</span>
+          <button onClick={handleLogout} className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C30" }} title="Sair">
+            <LogOut size={15} />
+          </button>
+        </div>
+      </header>
+      <main className="flex-1 p-6" style={{ backgroundColor: "#000000" }}>
+        <VmixPage forcedConnected={forcedConnected} />
+      </main>
     </div>
   );
 }
