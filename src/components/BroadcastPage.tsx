@@ -1892,29 +1892,33 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
               style={{ ...inputStyle, border: `1px solid ${NAVY_BORDER}` }}
             />
 
-            <label
-              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer mt-4"
+            <button
+              type="button"
+              role="switch"
+              aria-checked={data.tickerUnitario}
+              onClick={() => {
+                const nextData = { ...latestDataRef.current, tickerUnitario: !data.tickerUnitario };
+                setData(nextData);
+                void handleSave(nextData);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 rounded-xl mt-4 text-left"
               style={{
                 backgroundColor: data.tickerUnitario ? "rgba(0,85,255,0.06)" : "#ffffff",
                 border: `1px solid ${data.tickerUnitario ? CYAN : NAVY_BORDER}`,
               }}
               title="Quando ativo, o XML entrega apenas um item do ticker por vez, rotacionando a cada 4 segundos."
             >
-              <input
-                type="checkbox"
-                checked={data.tickerUnitario}
-                onChange={e => {
-                  const nextData = { ...latestDataRef.current, tickerUnitario: e.target.checked };
-                  setData(nextData);
-                  void handleSave(nextData);
-                }}
-                style={{ accentColor: CYAN }}
-              />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <span className="text-[12px] font-bold text-slate-800 block">Envio Unitário</span>
                 <p className="text-[10px] text-slate-500">Entrega um item por vez no XML, trocando a cada 4s</p>
               </div>
-            </label>
+              <span className="shrink-0 inline-flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: data.tickerUnitario ? "#0055ff" : "#94a3b8" }}>{data.tickerUnitario ? "Ligado" : "Desligado"}</span>
+                <span className="relative h-6 w-11 rounded-full" style={{ backgroundColor: data.tickerUnitario ? "#0055ff" : "#cbd5e1" }}>
+                  <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm" style={{ left: data.tickerUnitario ? "22px" : "2px" }} />
+                </span>
+              </span>
+            </button>
 
             {/* Preview do ticker (o que está sendo enviado no XML) */}
             <div
