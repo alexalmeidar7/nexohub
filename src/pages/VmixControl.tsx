@@ -108,7 +108,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
       <div className="vmix-flat-palette h-screen flex items-center justify-center" style={{ backgroundColor: "#111111" }}>
         <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl p-8 flex flex-col gap-5" style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
           <div className="flex flex-col items-center gap-2 mb-2">
-            <img src={vmixControlLogo} alt="Mix Control" className="h-8" />
+            <img src={cleanVmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6 w-auto max-w-full object-contain" />
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff45" }}>Faça login para acessar o controle</p>
           </div>
           {error && <div className="text-xs text-center font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: "#dc262620", color: "#f87171", border: "1px solid #dc262640" }}>{error}</div>}
