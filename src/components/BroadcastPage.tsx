@@ -290,6 +290,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
 
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
+  const [tickerNewsSettingsOpen, setTickerNewsSettingsOpen] = useState(false);
+  const [tickerSocialSettingsOpen, setTickerSocialSettingsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [programaLogo, setProgramaLogo] = useState<string | null>(null);
@@ -1848,7 +1850,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                       role="switch"
                       aria-checked={active}
                       onClick={() => {
-                        const nextData = { ...latestDataRef.current, [key]: !active };
+                        const nextActive = !active;
+                        const nextData = { ...latestDataRef.current, [key]: nextActive };
+                        if (key === "tickerNews") setTickerNewsSettingsOpen(false);
+                        if (key === "tickerSocials") setTickerSocialSettingsOpen(false);
                         setData(nextData);
                         void handleSave(nextData);
                       }}
@@ -1864,6 +1869,11 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                         <p className="text-[10px] text-slate-500 truncate">{desc}</p>
                       </div>
                       <span className="shrink-0 inline-flex items-center gap-2">
+                        {(key === "tickerNews" || key === "tickerSocials") && active && (
+                          <button type="button" onClick={e => { e.stopPropagation(); key === "tickerNews" ? setTickerNewsSettingsOpen(v => !v) : setTickerSocialSettingsOpen(v => !v); }} className="rounded-full border border-blue-200 bg-white px-2 py-1 text-[9px] font-bold text-blue-600 hover:bg-blue-50">
+                            {(key === "tickerNews" ? tickerNewsSettingsOpen : tickerSocialSettingsOpen) ? "Fechar ajustes ↑" : "Ajustar ↓"}
+                          </button>
+                        )}
                         <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: active ? "#0055ff" : "#94a3b8" }}>{active ? "Ligado" : "Desligado"}</span>
                         <span className="relative h-6 w-11 rounded-full transition-colors" style={{ backgroundColor: active ? "#0055ff" : "#cbd5e1" }}>
                           <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform" style={{ left: active ? "22px" : "2px" }} />
@@ -1872,7 +1882,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                     </button>
 
                     {/* Seleção da fonte das notícias (roteiro) */}
-                    {key === "tickerNews" && active && (
+                    {key === "tickerNews" && active && tickerNewsSettingsOpen && (
                       <div
                         className="mt-2 ml-4 p-3 rounded-xl space-y-2 bg-slate-50 border border-slate-200"
                         style={{ borderLeft: `3px solid ${CYAN}` }}
@@ -1937,7 +1947,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                     )}
 
                     {/* Submenu — seleção de redes sociais */}
-                    {key === "tickerSocials" && active && (
+                    {key === "tickerSocials" && active && tickerSocialSettingsOpen && (
                       <div
                         className="mt-2 ml-4 p-3 rounded-xl space-y-1.5 bg-slate-50 border border-slate-200"
                         style={{ borderLeft: `3px solid ${CYAN}` }}
