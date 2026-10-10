@@ -101,6 +101,10 @@ interface BroadcastData {
   useCustomAssuntoBg: boolean;
   assuntoBgProgramaIds: string[];
   aSeguirEnabled: boolean;
+  aSeguirShowPrograma?: boolean;
+  aSeguirShowHorario?: boolean;
+  aSeguirShowLocutor?: boolean;
+  aSeguirShowFotoLocutor?: boolean;
   aSeguirForceUntil?: string;
   aSeguirLeadSeconds: number;
   aSeguirRefreshSeconds?: number;
@@ -127,6 +131,10 @@ const defaultBroadcast: BroadcastData = {
   useCustomAssuntoBg: false,
   assuntoBgProgramaIds: [],
   aSeguirEnabled: false,
+  aSeguirShowPrograma: true,
+  aSeguirShowHorario: true,
+  aSeguirShowLocutor: true,
+  aSeguirShowFotoLocutor: true,
   aSeguirForceUntil: "",
   aSeguirLeadSeconds: 300,
   aSeguirRefreshSeconds: 60,
@@ -1405,15 +1413,15 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   }, [user, nextProgId]);
 
   const BLANK_PNG_ASEGUIR = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
-  const aSeguirActive = !!data.aSeguirEnabled && !!nextProgramInfo && (nextProgramInfo.isInWindow || nextProgramInfo.isForced);
+  const aSeguirActive = !!data.aSeguirEnabled && !!nextProgramInfo;
   const aSeguirXmlPreview = (() => {
-    const horario = aSeguirActive ? (nextProgramInfo?.next?.horario_inicio || "").toString().slice(0, 5) : "";
+    const horario = aSeguirActive && data.aSeguirShowHorario !== false ? (nextProgramInfo?.next?.horario_inicio || "").toString().slice(0, 5) : "";
     return {
       ativo: data.aSeguirEnabled ? "1" : "0",
-      programa_nome: aSeguirActive ? (nextProgramInfo?.next?.nome || "") : "",
-      programa_logo: aSeguirActive ? (nextProgramInfo?.next?.selo || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
-      locutor_nome: aSeguirActive ? (aSeguirLocutor?.nome || "") : "",
-      locutor_foto: aSeguirActive ? (aSeguirLocutor?.foto || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
+      programa_nome: aSeguirActive && data.aSeguirShowPrograma !== false ? (nextProgramInfo?.next?.nome || "") : "",
+      programa_logo: BLANK_PNG_ASEGUIR,
+      locutor_nome: aSeguirActive && data.aSeguirShowLocutor !== false ? (aSeguirLocutor?.nome || "") : "",
+      locutor_foto: aSeguirActive && data.aSeguirShowFotoLocutor !== false ? (aSeguirLocutor?.foto || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
       horario,
       texto: horario ? `começa às: ${horario}` : "",
     };
@@ -1991,31 +1999,42 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
             <SectionHeader n="03" label="A Seguir" color={CYAN} />
 
-            <label
-              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer mt-4"
-              style={{
-                backgroundColor: data.aSeguirEnabled ? "rgba(0,85,255,0.06)" : "#ffffff",
-                border: `1px solid ${data.aSeguirEnabled ? CYAN : NAVY_BORDER}`,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={data.aSeguirEnabled}
-                onChange={e => {
-                  const nextData = { ...latestDataRef.current, aSeguirEnabled: e.target.checked };
-                  setData(nextData);
-                  void handleSave(nextData);
-                }}
-                style={{ accentColor: CYAN }}
-              />
-              <div className="min-w-0">
-                <span className="text-[12px] font-bold text-slate-800 block">Habilitar módulo A Seguir</span>
-                <p className="text-[10px] text-slate-500">
-                  Envia no XML BROADCAST o nódulo <code>&lt;a_seguir&gt;</code> com foto do locutor (.png),
-                  logo do programa (.png) e o texto "começa às: HH:MM" do próximo programa da grade.
-                </p>
+            <button type="button" role="switch" aria-checked={!!data.aSeguirEnabled}
+              onClick={() => { const nextData = { ...latestDataRef.current, aSeguirEnabled: !data.aSeguirEnabled }; setData(nextData); void handleSave(nextData); }}
+              className="mt-4 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left"
+              style={{ backgroundColor: data.aSeguirEnabled ? "rgba(0,85,255,0.06)" : "#ffffff", border: `1px solid ${data.aSeguirEnabled ? CYAN : NAVY_BORDER}` }}>
+              <div className="min-w-0 flex-1">
+                <span className="block text-[12px] font-bold text-slate-800">A Seguir</span>
+                <p className="text-[10px] text-slate-500">{data.aSeguirEnabled ? "Ativo: o XML BROADCAST acompanha automaticamente o próximo programa da grade durante todo o dia." : "Desligado: os campos de A Seguir serão desativados no XML."}</p>
               </div>
-            </label>
+              <span className="inline-flex shrink-0 items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: data.aSeguirEnabled ? "#0055ff" : "#94a3b8" }}>{data.aSeguirEnabled ? "Ligado" : "Desligado"}</span>
+                <span className="relative h-6 w-11 rounded-full" style={{ backgroundColor: data.aSeguirEnabled ? "#0055ff" : "#cbd5e1" }}>
+                  <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all" style={{ left: data.aSeguirEnabled ? "22px" : "2px" }} />
+                </span>
+              </span>
+            </button>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+              <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-700">Informações enviadas para o XML</div>
+              <p className="mb-3 text-[10px] text-slate-500">Escolha quais dados do próximo programa devem permanecer atualizados no XML BROADCAST.</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {([
+                  { key: "aSeguirShowPrograma" as const, label: "Nome do programa", desc: "Título do próximo programa" },
+                  { key: "aSeguirShowHorario" as const, label: "Horário inicial", desc: "Hora prevista de início" },
+                  { key: "aSeguirShowLocutor" as const, label: "Nome do locutor", desc: "Apresentador cadastrado na grade" },
+                  { key: "aSeguirShowFotoLocutor" as const, label: "Foto do locutor", desc: "Imagem do apresentador em PNG" },
+                ]).map(({ key, label, desc }) => {
+                  const active = data[key] !== false;
+                  return <button key={key} type="button" role="switch" aria-checked={active} disabled={!data.aSeguirEnabled}
+                    onClick={() => { const nextData = { ...latestDataRef.current, [key]: !active }; setData(nextData); void handleSave(nextData); }}
+                    className="flex items-center gap-3 rounded-xl border px-3 py-3 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ borderColor: active ? CYAN : NAVY_BORDER, backgroundColor: active ? "rgba(0,85,255,0.05)" : "#fff" }}>
+                    <span className="min-w-0 flex-1"><span className="block text-[11px] font-bold text-slate-800">{label}</span><span className="mt-0.5 block text-[9px] text-slate-500">{desc}</span></span>
+                    <span className="relative h-5 w-9 shrink-0 rounded-full" style={{ backgroundColor: active ? "#0055ff" : "#cbd5e1" }}><span className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all" style={{ left: active ? "18px" : "2px" }} /></span>
+                  </button>;
+                })}
+              </div>
+            </div>
 
             <div className="mt-3 grid gap-3">
               {([
