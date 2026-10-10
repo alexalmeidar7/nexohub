@@ -365,21 +365,27 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         // Use the same normalized participant source as the Cadastros screen.
         // It resolves category from both categoria and cargo and includes station-local/default records.
         const presenters = await getApresentadores(stationUid, user?.email);
-        const allowedCategories = new Set(["apresentador", "jornalista"]);
+        const normalizeCategory = (value: unknown) => String(value || "")
+          .trim()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLocaleLowerCase("pt-BR");
         const eligible = (presenters || [])
           .map((p: any) => {
             const resolved = resolveParticipanteCategoria(p);
-            const category = String(p.categoria || p.cargo || resolved.categoria || "")
-              .trim()
-              .normalize("NFD")
-              .replace(/[\\u0300-\\u036f]/g, "")
-              .toLocaleLowerCase("pt-BR");
-            return { id: String(p.id), nome: String(p.nome || "").trim(), category };
+            const resolvedCategory = normalizeCategory(resolved.categoria);
+            const rawCategories = [p.categoria, p.cargo, resolved.categoria, resolved.cargo]
+              .map(normalizeCategory)
+              .join(" ");
+            const isEligible = ["apresentador", "jornalista"].includes(resolvedCategory)
+              || /apresentador|jornalista/.test(rawCategories);
+            return { id: String(p.id), nome: String(p.nome || "").trim(), isEligible };
           })
-          .filter((p: any) => p.nome && allowedCategories.has(p.category))
+          .filter((p: any) => p.nome && p.isEligible)
+          .map(({ id, nome }: any) => ({ id, nome }))
           .sort((a: any, b: any) => a.nome.localeCompare(b.nome, "pt-BR"));
         if (!cancelled) {
-          setLocutoresCadastrados(eligible.map(({ id, nome }: any) => ({ id, nome })));
+          setLocutoresCadastrados(eligible);
         }
       } catch (error) {
         console.error("[BroadcastPage] Erro ao carregar apresentadores/jornalistas:", error);
@@ -505,7 +511,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         const logoUrl = prog.selo || null;
         if (logoUrl) setProgramaLogo(logoUrl);
 
-        const apIds = prog.apresentadores_ids || (prog.apresentador_id ? [prog.apresentador_id] : []);
+        const apIds = Array.isArray(prog.apresentadores_ids) && prog.apresentadores_ids.length > 0 ? prog.apresentadores_ids : (prog.apresentador_id ? [prog.apresentador_id] : []);
         if (apIds.length > 0) {
           const { data: ap } = await supabase.from("apresentadores").select("nome, foto, instagram, cargo").in("id", apIds).limit(1).maybeSingle();
           if (ap) {
@@ -1742,6 +1748,9 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                   className="h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm"
                 >
                   <option value="">Locutor do programa</option>
+                  {locutorNome && !locutoresCadastrados.some((locutor) => locutor.nome.trim().toLocaleLowerCase("pt-BR") === locutorNome.trim().toLocaleLowerCase("pt-BR")) && (
+                    <option value={locutorNome}>{locutorNome} (no ar)</option>
+                  )}
                   {locutoresCadastrados.map((locutor) => (
                     <option key={locutor.id} value={locutor.nome}>{locutor.nome}</option>
                   ))}
@@ -2094,103 +2103,11 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 ))}
               </div>
 
-              <div className="mt-3 rounded-lg overflow-hidden border border-slate-200 bg-white">
-                {([
-                  ["ativo", aSeguirXmlPreview.ativo],
-                  ["programa_nome", aSeguirXmlPreview.programa_nome],
-                  ["locutor_nome", aSeguirXmlPreview.locutor_nome],
-                  ["horario", aSeguirXmlPreview.horario],
-                  ["texto", aSeguirXmlPreview.texto],
-                  ["programa_logo", aSeguirXmlPreview.programa_logo],
-                  ["locutor_foto", aSeguirXmlPreview.locutor_foto],
-                ] as [string, string][]).map(([field, value], i) => {
-                  // URLs de imagem: mostra apenas o nome do arquivo para evitar poluição visual
-                  const isImg = field === "programa_logo" || field === "locutor_foto";
-                  const short = isImg && value
-                    ? (() => {
-                        try {
-                          const f = decodeURIComponent(new URL(value).pathname.split("/").pop() || value);
-                          return f.length > 44 ? `${f.slice(0, 40)}…` : f;
-                        } catch {
-                          const f = value.split("/").pop() || value;
-                          return f.length > 44 ? `${f.slice(0, 40)}…` : f;
-                        }
-                      })()
-                    : value;
-                  return (
-                  <div
-                    key={field}
-                    className="flex items-start gap-3 px-3 py-1.5 text-[10px]"
-                    style={{ backgroundColor: i % 2 === 0 ? "#f8fafc" : "#ffffff" }}
-                  >
-                    <span className="font-mono font-bold shrink-0 w-[110px]" style={{ color: CYAN }}>{field}</span>
-                    <span className="font-mono break-all font-medium" style={{ color: value ? "#0f172a" : "#94a3b8" }} title={value || ""}>
-                      {short || "(vazio)"}
-                    </span>
-                  </div>
-                  );
-                })}
-
-              </div>
-
               <p className="mt-2 text-[10px] text-slate-500">
                 As imagens são convertidas para .png pelo servidor no momento do envio — a prévia mostra a origem cadastrada.
               </p>
             </div>
 
-            <div
-              className="mt-4 p-5 rounded-2xl flex flex-col gap-4 bg-slate-50 border border-slate-200"
-            >
-              <div className="min-w-0">
-                <div className="text-[12px] font-black uppercase tracking-widest mb-1 text-slate-800">Manual Force</div>
-                <p className="text-[10px] text-slate-500">
-                  Força o envio das informações do próximo programa ao XML pelo tempo configurado, ignorando a janela automática.
-                </p>
-                {data.aSeguirForceUntil && new Date(data.aSeguirForceUntil).getTime() > Date.now() && (
-                  <p className="text-[10px] mt-2 font-bold text-green-600">
-                    STATUS: ATIVO ATÉ {new Date(data.aSeguirForceUntil).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                  </p>
-                )}
-              </div>
-              <button
-                type="button"
-                disabled={!data.aSeguirEnabled || saving}
-                onClick={() => {
-                  // Força até o horário de início do próximo programa
-                  const dur = Math.max(30, Number(nextProgramInfo?.secondsUntilStart) || 300);
-                  const until = new Date(Date.now() + dur * 1000).toISOString();
-                  const nextData = { ...latestDataRef.current, aSeguirForceUntil: until };
-                  setData(nextData);
-                  void handleSave(nextData);
-                  toast.success(`Módulo A Seguir forçado por ${Math.round(dur / 60 * 10) / 10} min`);
-                }}
-                className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02] text-white shadow-sm cursor-pointer"
-                style={{
-                  backgroundColor: data.aSeguirEnabled ? "#0055ff" : "#cbd5e1",
-                  cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
-                  boxShadow: data.aSeguirEnabled ? "0 4px 14px rgba(0,85,255,0.25)" : "none"
-                }}
-              >
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                Forçar Envio Manual
-              </button>
-            </div>
-
-            <div className="mt-4 p-4 rounded-xl text-[11px] leading-relaxed bg-slate-50 border border-slate-200 text-slate-600">
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>Campos no XML</div>
-              <div>a_seguir/ativo</div>
-              <div>a_seguir/programa_nome</div>
-              <div>a_seguir/nome_programa</div>
-              <div>a_seguir/programa_logo (.png)</div>
-              <div>a_seguir/locutor_nome</div>
-              <div>a_seguir/locutor_foto (.png)</div>
-              <div>a_seguir/horario</div>
-              <div>a_seguir/texto → "começa às: 14:00"</div>
-              <p className="mt-3 text-slate-500">
-                As informações entram no XML conforme a antecedência configurada e permanecem até o horário de início do programa.
-                Fora dessa janela, as imagens ficam com <code>blanck.png</code> e os textos vazios.
-              </p>
-            </div>
           </div>
         )}
 
