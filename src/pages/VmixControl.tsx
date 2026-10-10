@@ -8,6 +8,7 @@ import vmixControlLogo from "@/assets/logo-mixcontrol.png";
 import cleanVmixControlLogo from "@/assets/logo-vmixcontrol-clean.png";
 import nexoLogo from "@/assets/logo-nxo.png";
 import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
+import "@/styles/vmix-flat-palette.css";
 
 type VmixControlProps = {
   forcedConnected?: boolean;
@@ -54,7 +55,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   // The clean House Mix-inspired layout is opt-in and is enabled only on /vmix-control.
   if (cleanLayout) {
     return (
-      <div className="relative min-h-screen w-full overflow-hidden flex flex-col" style={{ backgroundColor: "#151515", color: "#fff" }}>
+      <div className="vmix-flat-palette relative min-h-screen w-full overflow-hidden flex flex-col" style={{ backgroundColor: "#111111", color: "#fff" }}>
         <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
           <div className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8" style={{ backgroundColor: "#242424" }}>
             <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[22px] w-auto max-w-full object-contain object-left" />
@@ -104,7 +105,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   // Original layout retained for /vmix-control/switcher and any other callers.
   if (!user) {
     return (
-      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: "#000000" }}>
+      <div className="vmix-flat-palette h-screen flex items-center justify-center" style={{ backgroundColor: "#111111" }}>
         <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl p-8 flex flex-col gap-5" style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
           <div className="flex flex-col items-center gap-2 mb-2">
             <img src={vmixControlLogo} alt="Mix Control" className="h-8" />
@@ -129,7 +130,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#000000" }}>
+    <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #C6F03C20" }}>
         <div className="flex items-center gap-2" />
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
