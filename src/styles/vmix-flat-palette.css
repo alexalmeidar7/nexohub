@@ -162,6 +162,13 @@ body:has(.vmix-flat-palette) [data-radix-dialog-content] button:hover {
 }
 
 /* The page canvas stays #111111; video/canvas signal areas stay black. */
-.vmix-flat-palette main main[style*="#000000"] {
+.vmix-flat-palette main[style*="#000000"] {
   background-color: var(--vmix-flat-page) !important;
+}
+
+
+/* Flat gray section surfaces replace pure-black card backgrounds, while the page canvas remains #111111. */
+.vmix-flat-palette :not(main):not(button):not([role="button"]):not(video):not(canvas):not(iframe)[style*="#000000"],
+.vmix-flat-palette :not(main):not(button):not([role="button"]):not(video):not(canvas):not(iframe)[class*="bg-black"] {
+  background-color: var(--vmix-flat-section) !important;
 }
