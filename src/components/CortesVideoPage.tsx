@@ -126,6 +126,8 @@ export default function CortesVideoPage() {
   const [exportProgress, setExportProgress] = useState(0);
   const [exportStart, setExportStart] = useState(0);
   const [exportEnd, setExportEnd] = useState(60);
+  const [isTimelineDropActive, setIsTimelineDropActive] = useState(false);
+  const timelineTrackRef = useRef<HTMLDivElement>(null);
 
   // Canvas & Preview Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -249,15 +251,13 @@ export default function CortesVideoPage() {
     e.target.value = "";
   };
 
-  // Add asset to timeline
-  const addAssetToTimeline = (asset: MediaAsset) => {
-    // Find first available start time on the media track (or append to end)
+  // Add an asset to the timeline, either at a dropped position or appended after the last clip.
+  const addAssetToTimeline = (asset: MediaAsset, requestedStart?: number) => {
     let nextStart = 0;
-    if (clips.length > 0) {
-      const lastClip = clips.reduce((prev, current) => 
-        (prev.start + prev.duration > current.start + current.duration) ? prev : current
-      );
-      nextStart = lastClip.start + lastClip.duration;
+    if (typeof requestedStart === "number") {
+      nextStart = Math.max(0, requestedStart);
+    } else if (clips.length > 0) {
+      nextStart = clips.reduce((end, clip) => Math.max(end, clip.start + clip.duration), 0);
     }
 
     const newClip: TimelineClip = {
@@ -275,7 +275,39 @@ export default function CortesVideoPage() {
 
     setClips(prev => [...prev, newClip]);
     setSelectedClipId(newClip.id);
+    setSelectedTextId(null);
+    setCurrentTime(nextStart);
     toast.success(`Adicionado à timeline: ${asset.name}`);
+  };
+
+  const handleAssetDragStart = (event: React.DragEvent<HTMLDivElement>, asset: MediaAsset) => {
+    event.dataTransfer.setData("application/x-nexohub-media-asset", asset.id);
+    event.dataTransfer.setData("text/plain", asset.id);
+    event.dataTransfer.effectAllowed = "copy";
+  };
+
+  const handleTimelineDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    setIsTimelineDropActive(true);
+  };
+
+  const handleTimelineDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setIsTimelineDropActive(false);
+    }
+  };
+
+  const handleTimelineDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsTimelineDropActive(false);
+    const assetId = event.dataTransfer.getData("application/x-nexohub-media-asset") || event.dataTransfer.getData("text/plain");
+    const asset = mediaAssets.find(item => item.id === assetId);
+    if (!asset || !timelineTrackRef.current) return;
+
+    const rect = timelineTrackRef.current.getBoundingClientRect();
+    const dropTime = Math.max(0, (event.clientX - rect.left) / zoom);
+    addAssetToTimeline(asset, dropTime);
   };
 
   // Split Clip Action ("Dividir")
@@ -362,7 +394,7 @@ export default function CortesVideoPage() {
   };
 
   // Draw current frame on canvas
-  const renderCanvasFrame = useCallback((time: number) => {
+  const renderCanvasFrame = useCallback((time: number, syncVideo = true, videoSources: Map<string, HTMLVideoElement> = videoElementsRef.current) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -383,12 +415,12 @@ export default function CortesVideoPage() {
     const activeClip = clips.find(c => time >= c.start && time < c.start + c.duration);
     if (activeClip) {
       if (activeClip.type === "video") {
-        const vid = videoElementsRef.current.get(activeClip.url);
-        if (vid && vid.readyState >= 2) {
+        const vid = videoSources.get(activeClip.url);
+        if (vid && vid.readyState >= 2 && !vid.seeking) {
           const clipInternalTime = activeClip.mediaStart + (time - activeClip.start);
-          // Sync video time if not actively playing or slightly off
-          if (Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
-            vid.currentTime = clipInternalTime;
+          // During export, let the source video play continuously; seeking every frame causes flicker.
+          if (syncVideo && Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
+            try { vid.currentTime = clipInternalTime; } catch { /* metadata may still be loading */ }
           }
 
           // Draw video frame letterboxed/fitted
@@ -562,10 +594,16 @@ export default function CortesVideoPage() {
     };
   }, [draggingPlayhead, totalDuration, zoom, renderCanvasFrame]);
 
-  // Export Video (Canvas + Audio to WebM / MP4)
+  // Export a real-time canvas/video composition with a synchronized audio stream.
   const handleExportVideo = async () => {
     if (clips.length === 0) {
       toast.error("Adicione pelo menos um vídeo ou imagem antes de exportar.");
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      toast.error("Canvas indisponível para exportação.");
       return;
     }
 
@@ -573,110 +611,192 @@ export default function CortesVideoPage() {
     setIsExporting(true);
     setExportProgress(0);
 
+    let audioCtx: AudioContext | null = null;
+    let recorder: MediaRecorder | null = null;
+    let exportStream: MediaStream | null = null;
+    let exportVideos = new Map<string, HTMLVideoElement>();
+    let animationId = 0;
+    let finished = false;
+
     try {
-      const canvas = canvasRef.current;
-      if (!canvas) throw new Error("Canvas indisponível");
-
-      // Setup Canvas Stream at 30 FPS
-      const stream = canvas.captureStream(30);
-
-      // Setup Web Audio context for mixing audio tracks from active video clips
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const dest = audioCtx.createMediaStreamDestination();
-      let hasAudio = false;
-
-      // Connect video elements to audio destination
-      videoElementsRef.current.forEach(vid => {
-        try {
-          const source = audioCtx.createMediaElementSource(vid);
-          source.connect(dest);
-          source.connect(audioCtx.destination);
-          hasAudio = true;
-        } catch {}
-      });
-
-      if (hasAudio && dest.stream.getAudioTracks().length > 0) {
-        dest.stream.getAudioTracks().forEach(track => stream.addTrack(track));
+      const normalizedExportStart = Math.max(0, Math.min(exportStart, totalDuration));
+      const normalizedExportEnd = Math.max(normalizedExportStart, Math.min(exportEnd, totalDuration));
+      if (normalizedExportEnd - normalizedExportStart <= 0) {
+        throw new Error("Defina um intervalo de exportação maior que zero.");
       }
 
-      // Check supported MIME types
-      let mimeType = "video/webm;codecs=vp9,opus";
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = "video/webm;codecs=vp8,opus";
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = "video/webm";
-          if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = "video/mp4";
-          }
+      // Dedicated video elements prevent preview playback/seeking from interfering with export.
+      const videoClips = clips.filter(clip => clip.type === "video");
+      const uniqueUrls = [...new Set(videoClips.map(clip => clip.url))];
+      await Promise.all(uniqueUrls.map(url => new Promise<void>((resolve, reject) => {
+        const video = document.createElement("video");
+        video.src = url;
+        video.crossOrigin = "anonymous";
+        video.preload = "auto";
+        video.playsInline = true;
+        video.muted = false;
+        video.addEventListener("loadedmetadata", () => resolve(), { once: true });
+        video.addEventListener("error", () => reject(new Error("Não foi possível carregar um dos vídeos do projeto.")), { once: true });
+        exportVideos.set(url, video);
+        video.load();
+      })));
+
+      // Wait for the first frame of each source to be decoded before starting the recorder.
+      await Promise.all([...exportVideos.values()].map(video => new Promise<void>((resolve) => {
+        if (video.readyState >= 2) { resolve(); return; }
+        const done = () => resolve();
+        video.addEventListener("loadeddata", done, { once: true });
+        video.addEventListener("error", done, { once: true });
+      })));
+
+      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioDestination = audioCtx.createMediaStreamDestination();
+      for (const video of exportVideos.values()) {
+        try {
+          const source = audioCtx.createMediaElementSource(video);
+          source.connect(audioDestination);
+        } catch (error) {
+          console.warn("Não foi possível conectar o áudio de uma mídia:", error);
         }
       }
+      await audioCtx.resume();
 
-      const mp4MimeType = "video/mp4";
-      if (!MediaRecorder.isTypeSupported(mp4MimeType)) {
-        throw new Error("Este navegador não oferece suporte à exportação de vídeo em MP4.");
+      exportStream = canvas.captureStream(30);
+      audioDestination.stream.getAudioTracks().forEach(track => exportStream?.addTrack(track));
+
+      const supportedMimeTypes = [
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm",
+        "video/mp4",
+      ];
+      const mimeType = supportedMimeTypes.find(type => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) {
+        throw new Error("Este navegador não oferece um formato de exportação compatível. Tente usar o Chrome atualizado.");
       }
 
-      const recorder = new MediaRecorder(stream, {
-        mimeType: mp4MimeType,
-        videoBitsPerSecond: 8000000, // 8 Mbps
+      const videoBitrate = selectedAspect.width >= 1920 || selectedAspect.height >= 1920 ? 20000000 : 16000000;
+      recorder = new MediaRecorder(exportStream, {
+        mimeType,
+        videoBitsPerSecond: videoBitrate,
+        audioBitsPerSecond: 192000,
       });
 
       const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mp4MimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${projectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video"}.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-        setIsExporting(false);
-        setExportProgress(100);
-        toast.success("Vídeo exportado e baixado com sucesso!");
-      };
-
-      // Start recording
-      recorder.start(100);
-
-      // Render through the project step by step
+      const duration = normalizedExportEnd - normalizedExportStart;
       const exportFps = 30;
-      const normalizedExportStart = Math.max(0, Math.min(exportStart, totalDuration));
-      const normalizedExportEnd = Math.max(normalizedExportStart, Math.min(exportEnd, totalDuration));
-      const step = 1 / exportFps;
-      const totalSteps = Math.max(1, Math.ceil((normalizedExportEnd - normalizedExportStart) / step));
-      let stepCount = 0;
-      let renderTime = normalizedExportStart;
+      let lastActiveClipId: string | null = null;
+      let startedAt = 0;
 
-      const exportLoop = () => {
-        if (renderTime >= normalizedExportEnd) {
-          renderCanvasFrame(normalizedExportEnd);
-          setCurrentTime(normalizedExportEnd);
+      const stopExport = () => {
+        if (finished) return;
+        finished = true;
+        if (animationId) cancelAnimationFrame(animationId);
+        exportVideos.forEach(video => video.pause());
+        if (recorder && recorder.state !== "inactive") recorder.stop();
+      };
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) chunks.push(event.data);
+      };
+
+      recorder.onerror = (event: Event) => {
+        console.error("MediaRecorder error:", event);
+        toast.error("O navegador encontrou um erro ao codificar o vídeo.");
+        stopExport();
+      };
+
+      recorder.onstop = async () => {
+        try {
+          if (chunks.length === 0) throw new Error("A gravação terminou sem gerar dados de vídeo.");
+          const blob = new Blob(chunks, { type: mimeType });
+          const extension = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+          const safeName = projectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video";
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `${safeName}.${extension}`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.setTimeout(() => URL.revokeObjectURL(url), 60000);
           setExportProgress(100);
-          recorder.stop();
-          return;
+          toast.success(`Vídeo exportado com áudio (${extension.toUpperCase()})!`);
+        } catch (error: any) {
+          console.error("Export finalization error:", error);
+          toast.error("Não foi possível finalizar a exportação: " + (error?.message || "tente novamente."));
+        } finally {
+          exportStream?.getTracks().forEach(track => track.stop());
+          exportVideos.forEach(video => {
+            video.pause();
+            video.removeAttribute("src");
+            video.load();
+          });
+          if (audioCtx && audioCtx.state !== "closed") await audioCtx.close().catch(() => {});
+          setIsExporting(false);
+        }
+      };
+
+      const renderExportFrame = (now: number) => {
+        if (finished) return;
+        const elapsed = Math.min(duration, (now - startedAt) / 1000);
+        const timelineTime = normalizedExportStart + elapsed;
+        const activeClip = clips.find(clip => timelineTime >= clip.start && timelineTime < clip.start + clip.duration);
+
+        // Switch source only when the active clip changes. Continuous playback avoids per-frame seeks/flicker.
+        if (activeClip?.type === "video") {
+          const activeVideo = exportVideos.get(activeClip.url);
+          if (activeClip.id !== lastActiveClipId) {
+            exportVideos.forEach(video => { if (video !== activeVideo) video.pause(); });
+            if (activeVideo) {
+              activeVideo.pause();
+              try { activeVideo.currentTime = activeClip.mediaStart + Math.max(0, timelineTime - activeClip.start); } catch {}
+              const playPromise = activeVideo.play();
+              if (playPromise && typeof playPromise.catch === "function") playPromise.catch(error => {
+                console.warn("Não foi possível reproduzir o áudio/vídeo durante a exportação:", error);
+              });
+            }
+            lastActiveClipId = activeClip.id;
+          } else if (activeVideo && activeVideo.paused && !activeVideo.ended) {
+            activeVideo.play().catch(() => {});
+          }
+        } else {
+          exportVideos.forEach(video => video.pause());
+          lastActiveClipId = activeClip?.id || null;
         }
 
-        renderCanvasFrame(renderTime);
-        setCurrentTime(renderTime);
-        stepCount++;
-        setExportProgress(Math.min(99, Math.round((stepCount / totalSteps) * 100)));
-        renderTime += step;
+        renderCanvasFrame(timelineTime, false, exportVideos);
+        setCurrentTime(timelineTime);
+        setExportProgress(Math.min(99, Math.floor((elapsed / duration) * 100)));
 
-        setTimeout(exportLoop, 1000 / exportFps);
+        if (elapsed >= duration) {
+          stopExport();
+          return;
+        }
+        animationId = requestAnimationFrame(renderExportFrame);
       };
 
-      exportLoop();
-    } catch (err: any) {
-      console.error("Export error:", err);
+      // Prime the canvas before recording, then begin the real-time export clock.
+      renderCanvasFrame(normalizedExportStart, false, exportVideos);
+      setCurrentTime(normalizedExportStart);
+      await new Promise(resolve => requestAnimationFrame(() => resolve(undefined)));
+      recorder.start(1000);
+      startedAt = performance.now();
+      animationId = requestAnimationFrame(renderExportFrame);
+    } catch (error: any) {
+      console.error("Export error:", error);
+      if (recorder && recorder.state !== "inactive") {
+        try { recorder.stop(); } catch {}
+      }
+      exportStream?.getTracks().forEach(track => track.stop());
+      exportVideos.forEach(video => {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      });
+      if (audioCtx && audioCtx.state !== "closed") await audioCtx.close().catch(() => {});
       setIsExporting(false);
-      toast.error("Erro na exportação: " + (err.message || "Tente novamente."));
+      toast.error("Erro na exportação: " + (error?.message || "Tente novamente."));
     }
   };
 
@@ -835,7 +955,11 @@ export default function CortesVideoPage() {
                   mediaAssets.map((asset) => (
                     <div
                       key={asset.id}
-                      className="group relative border border-slate-200 hover:border-blue-400 bg-white rounded-xl p-2 flex items-center gap-3 transition-all cursor-pointer shadow-xs"
+                      draggable
+                      onDragStart={(event) => handleAssetDragStart(event, asset)}
+                      onDragEnd={() => setIsTimelineDropActive(false)}
+                      className="group relative border border-slate-200 hover:border-blue-400 bg-white rounded-xl p-2 flex items-center gap-3 transition-all cursor-grab active:cursor-grabbing shadow-xs"
+                      title="Arraste para a linha do tempo ou clique para adicionar ao final"
                       onClick={() => addAssetToTimeline(asset)}
                     >
                       <div className="w-16 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0 flex items-center justify-center relative">
@@ -1362,7 +1486,13 @@ export default function CortesVideoPage() {
             )}
 
             {/* TRACK 2: VIDEO / IMAGE CLIPS */}
-            <div className="h-20 relative bg-slate-50/50 rounded-xl border border-slate-100 flex items-center">
+            <div
+              ref={timelineTrackRef}
+              onDragOver={handleTimelineDragOver}
+              onDragLeave={handleTimelineDragLeave}
+              onDrop={handleTimelineDrop}
+              className={`h-20 relative rounded-xl border flex items-center transition-colors ${isTimelineDropActive ? "bg-blue-50 border-blue-400 border-dashed ring-2 ring-blue-200" : "bg-slate-50/50 border-slate-100"}`}
+            >
               {clips.length === 0 ? (
                 /* Empty state prompt matching reference screenshot */
                 <button
