@@ -1,0 +1,104 @@
+/* Flat palette scoped exclusively to /vmix-control and /vmix-control/switcher. */
+.vmix-flat-palette {
+  --vmix-flat-on: #0065F9;
+  --vmix-flat-hover: #0042A3;
+  --vmix-flat-button: #0042A3;
+  --vmix-flat-section: #A5A5A5;
+  --vmix-flat-page: #111111;
+  --vmix-flat-text: #FFFFFF;
+  background-color: var(--vmix-flat-page) !important;
+  color: var(--vmix-flat-text) !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* Remove gradients, shadows, glows, blur and decorative borders in this module only. */
+.vmix-flat-palette *,
+.vmix-flat-palette *::before,
+.vmix-flat-palette *::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  animation: none !important;
+}
+
+/* Use a consistent white text/icon color throughout both control routes. */
+.vmix-flat-palette,
+.vmix-flat-palette :is(h1,h2,h3,h4,h5,h6,p,span,label,small,strong,em,li,td,th,a),
+.vmix-flat-palette svg {
+  color: var(--vmix-flat-text) !important;
+}
+
+/* Dark panels become the specified flat section gray. Keep the page canvas dark. */
+.vmix-flat-palette :is(div,section,article,header,footer,aside)[style*="backgroundColor"],
+.vmix-flat-palette :is(div,section,article,header,footer,aside)[style*="background-color"] {
+  background-image: none !important;
+}
+
+/* The shared control workspace uses these dark surface tokens for its section panels. */
+.vmix-flat-palette [style*="#151517"],
+.vmix-flat-palette [style*="#151515"],
+.vmix-flat-palette [style*="#17171b"],
+.vmix-flat-palette [style*="#1a1a1f"],
+.vmix-flat-palette [style*="#1e1e24"],
+.vmix-flat-palette [style*="#1e1e26"],
+.vmix-flat-palette [style*="#111114"],
+.vmix-flat-palette [style*="#0c0c0e"],
+.vmix-flat-palette [style*="#050505"],
+.vmix-flat-palette [style*="#0a0a0a"] {
+  background-color: var(--vmix-flat-section) !important;
+}
+
+/* Buttons are blue by default. Selected/active controls use the brighter blue. */
+.vmix-flat-palette button,
+.vmix-flat-palette [role="button"] {
+  color: var(--vmix-flat-text) !important;
+  background-color: var(--vmix-flat-button) !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  background-image: none !important;
+  transition: none !important;
+}
+
+.vmix-flat-palette button[aria-pressed="true"],
+.vmix-flat-palette button[aria-selected="true"],
+.vmix-flat-palette button[data-state="on"],
+.vmix-flat-palette button[data-state="active"],
+.vmix-flat-palette button[class*="bg-[#C6F03C]"],
+.vmix-flat-palette button[style*="#C6F03C"] {
+  background-color: var(--vmix-flat-on) !important;
+  color: var(--vmix-flat-text) !important;
+}
+
+.vmix-flat-palette button:hover,
+.vmix-flat-palette [role="button"]:hover {
+  background-color: var(--vmix-flat-hover) !important;
+  border: 1px solid var(--vmix-flat-text) !important;
+}
+
+/* Fields remain flat and borderless; section surfaces follow the supplied gray. */
+.vmix-flat-palette input,
+.vmix-flat-palette textarea,
+.vmix-flat-palette select {
+  color: var(--vmix-flat-text) !important;
+  background-color: var(--vmix-flat-section) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline-offset: 0;
+}
+
+/* Keep video/output canvases black so the actual signal remains legible. */
+.vmix-flat-palette video,
+.vmix-flat-palette canvas,
+.vmix-flat-palette iframe {
+  background-color: #000000 !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
