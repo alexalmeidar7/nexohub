@@ -40,16 +40,20 @@
 }
 
 /* The shared control workspace uses these dark surface tokens for its section panels. */
-.vmix-flat-palette [style*="#151517"],
-.vmix-flat-palette [style*="#151515"],
-.vmix-flat-palette [style*="#17171b"],
-.vmix-flat-palette [style*="#1a1a1f"],
-.vmix-flat-palette [style*="#1e1e24"],
-.vmix-flat-palette [style*="#1e1e26"],
-.vmix-flat-palette [style*="#111114"],
-.vmix-flat-palette [style*="#0c0c0e"],
-.vmix-flat-palette [style*="#050505"],
-.vmix-flat-palette [style*="#0a0a0a"] {
+.vmix-flat-palette :not(button):not([role="button"])[style*="#151517"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#151515"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#17171b"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#1a1a1f"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#1e1e24"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#1e1e26"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#111114"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#0c0c0e"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#050505"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#0a0a0a"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#242424"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#222228"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#141414"],
+.vmix-flat-palette :not(button):not([role="button"])[style*="#1a1a1a"] {
   background-color: var(--vmix-flat-section) !important;
 }
 
@@ -101,4 +105,35 @@
   background-color: #000000 !important;
   box-shadow: none !important;
   border: 0 !important;
+}
+
+
+/* Keep modal/dialog UI in the same theme while either vMix route is mounted. */
+body:has(.vmix-flat-palette) [role="dialog"],
+body:has(.vmix-flat-palette) [data-radix-dialog-content] {
+  background-color: var(--vmix-flat-section, #A5A5A5) !important;
+  color: var(--vmix-flat-text, #FFFFFF) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+body:has(.vmix-flat-palette) [role="dialog"] *,
+body:has(.vmix-flat-palette) [data-radix-dialog-content] * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+  border-color: transparent !important;
+}
+body:has(.vmix-flat-palette) [role="dialog"] button,
+body:has(.vmix-flat-palette) [data-radix-dialog-content] button {
+  background-color: #0042A3 !important;
+  color: #FFFFFF !important;
+  border: 1px solid transparent !important;
+}
+body:has(.vmix-flat-palette) [role="dialog"] button:hover,
+body:has(.vmix-flat-palette) [data-radix-dialog-content] button:hover {
+  background-color: #0042A3 !important;
+  border: 1px solid #FFFFFF !important;
 }
