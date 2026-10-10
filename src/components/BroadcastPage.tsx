@@ -1451,6 +1451,18 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     </div>
   );
 
+  const onAirProgram = (() => {
+    const now = getZonedInfo(new Date(), timezone);
+    return allProgramasFull.find((p: any) => {
+      if (p.variavel && p.data_variavel !== now.dateStr) return false;
+      if (!p.variavel && !(p.dias_semana || []).includes(now.dayName)) return false;
+      const start = timeToSeconds(p.horario_inicio);
+      const end = timeToSeconds(p.horario_fim);
+      if (start < 0 || end < 0) return false;
+      return end > start ? now.seconds >= start && now.seconds < end : now.seconds >= start || now.seconds < end;
+    }) || null;
+  })();
+
   return (
     <div
       className="px-3 pt-3 pb-4 h-full min-h-0"
@@ -2012,6 +2024,24 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         {activeTab === "aseguir" && (
           <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
             <SectionHeader n="03" label="A Seguir" color={CYAN} />
+
+            <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <span className="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-800">
+                <span className="relative flex h-2.5 w-2.5">
+                  {onAirProgram && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />}
+                  <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${onAirProgram ? "bg-blue-600" : "bg-slate-300"}`} />
+                </span>
+                NO AR:
+              </span>
+              <span className="min-w-0 flex-1 text-[12px] font-bold text-slate-800">
+                {onAirProgram ? onAirProgram.nome : "Nenhum programa identificado no horário atual"}
+              </span>
+              {onAirProgram && (
+                <span className="shrink-0 text-[10px] font-semibold tabular-nums text-slate-500">
+                  {(onAirProgram.horario_inicio || "").toString().slice(0, 5)} – {(onAirProgram.horario_fim || "").toString().slice(0, 5)}
+                </span>
+              )}
+            </div>
 
             <button type="button" role="switch" aria-checked={!!data.aSeguirEnabled}
               onClick={() => { const nextData = { ...latestDataRef.current, aSeguirEnabled: !data.aSeguirEnabled }; setData(nextData); void handleSave(nextData); }}
