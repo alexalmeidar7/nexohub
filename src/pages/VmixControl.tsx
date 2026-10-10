@@ -131,16 +131,17 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
 
   return (
     <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
-      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #C6F03C20" }}>
-        <div className="flex items-center gap-2" />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <img src={cleanVmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6" />
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#C6F03C99" }}>{user.email}</span>
-          <button onClick={handleLogout} className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C30" }} title="Sair">
-            <LogOut size={15} />
-          </button>
+      <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
+        <div className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8" style={{ backgroundColor: "#242424" }}>
+          <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[17px] w-auto max-w-full object-contain object-left" />
+          {user && (
+            <div className="ml-auto flex items-center gap-3 pl-4">
+              <span className="hidden sm:block max-w-[260px] truncate text-xs font-medium text-white/65">{user.email}</span>
+              <button onClick={handleLogout} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#333333] text-white transition-colors hover:bg-[#444444] active:scale-95" title="Sair" aria-label="Sair da conta">
+                <LogOut size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </header>
       <main className="flex-1 p-6" style={{ backgroundColor: "#000000" }}>
