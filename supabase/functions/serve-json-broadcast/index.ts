@@ -623,6 +623,7 @@ serve(async (req) => {
     // ── A SEGUIR: keep the next scheduled program available throughout the day ──
     const aSeguirEnabled = !!broadcastConfig.aSeguirEnabled;
     const showNextProgram = broadcastConfig.aSeguirShowPrograma !== false;
+    const showNextProgramLogo = broadcastConfig.aSeguirShowLogoPrograma !== false;
     const showNextStart = broadcastConfig.aSeguirShowHorario !== false;
     const showNextPresenter = broadcastConfig.aSeguirShowLocutor !== false;
     const showNextPresenterPhoto = broadcastConfig.aSeguirShowFotoLocutor !== false;
@@ -662,6 +663,14 @@ serve(async (req) => {
 
       if (nextProg) {
         if (showNextProgram) aSeguirNome = nextProg.nome || "";
+        if (showNextProgramLogo) {
+          const logoSource = nextProg.selo || nextProg.logo || nextProg.logo_url || "";
+          if (logoSource) {
+            aSeguirLogo = await ensurePngImageUrl(
+              supabase, logoSource, `broadcast/${dataOwnerId}/${nextProg.id || "programa"}-aseguir-logo.png`, 1080,
+            ) || BLANK_PNG_ASEG;
+          }
+        }
         if (showNextStart) {
           aSeguirHorario = (nextProg.horario_inicio || "").toString().slice(0, 5);
           aSeguirTexto = aSeguirHorario ? `começa às: ${aSeguirHorario}` : "";
