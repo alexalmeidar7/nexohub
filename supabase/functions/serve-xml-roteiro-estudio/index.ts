@@ -84,10 +84,10 @@ Deno.serve(async (req) => {
     });
 
     // Carrega horarios dos programas para fallback
-    const { data: progs } = await sb
-      .from("programas")
-      .select("nome, horario_inicio")
-      .eq("user_id", ownerId);
+    let progs: any[] = [];
+    try {
+      progs = (await withRetry(() => sb.from("programas").select("nome, horario_inicio").eq("user_id", ownerId), 2)) || [];
+    } catch (e) { console.warn("[serve-xml-roteiro-estudio] programas fallback:", String(e)); }
     const progMap = new Map<string, string>();
     (progs || []).forEach((p: any) => { if (p.nome) progMap.set(p.nome, (p.horario_inicio || "").slice(0, 5)); });
 
@@ -183,21 +183,17 @@ Deno.serve(async (req) => {
     }
 
     xml += `</programaExpress>`;
+    lastGood.set(cacheKey, xml);
 
-    return new Response(xml, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-        "CDN-Cache-Control": "no-store",
-        "Vary": "user_id, estudio",
-      },
-    });
+    return new Response(xml, { status: 200, headers: { ...xmlHeaders, "Vary": "user_id, estudio" } });
   } catch (err) {
-    return new Response(`<error>${esc(String(err))}</error>`, {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+    console.error("[serve-xml-roteiro-estudio] db failure, serving fallback:", String(err));
+    const cached = cacheKey ? lastGood.get(cacheKey) : undefined;
+    const body = cached ??
+      `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n  <estudio>${esc(estudioParam)}</estudio>\n  <indisponivel>true</indisponivel>\n</programaExpress>`;
+    return new Response(body, {
+      status: 200,
+      headers: { ...xmlHeaders, "X-Fallback": cached ? "last-good" : "empty" },
     });
   }
 });
