@@ -1735,118 +1735,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
             <SectionHeader n="02" label="Ticker System" color={CYAN} />
 
-            {/* Fonte RSS/XML personalizada */}
-            <div
-              className="p-4 rounded-xl mb-3"
-              style={{
-                backgroundColor: data.tickerRssEnabled ? "rgba(0,85,255,0.06)" : "#f8fafc",
-                border: `1px solid ${data.tickerRssEnabled ? CYAN : NAVY_BORDER}`,
-              }}
-            >
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <div className="min-w-0">
-                  <span className="text-[12px] font-bold text-slate-800 block">Fonte RSS / XML personalizada</span>
-                  <p className="text-[10px] text-slate-500">
-                    Cole a URL de um feed RSS/XML — os títulos alimentam o item "Notícias" do ticker.
-                  </p>
-                </div>
-                <label className="inline-flex items-center gap-2 cursor-pointer shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={data.tickerRssEnabled}
-                    onChange={e => {
-                      const nextData = { ...latestDataRef.current, tickerRssEnabled: e.target.checked };
-                      setData(nextData);
-                      void handleSave(nextData);
-                    }}
-                    style={{ accentColor: CYAN }}
-                  />
-                  <span className="text-[11px] font-medium" style={{ color: data.tickerRssEnabled ? CYAN : "#64748b" }}>
-                    {data.tickerRssEnabled ? "Ligado" : "Desligado"}
-                  </span>
-                </label>
-              </div>
-              <input
-                type="url"
-                value={data.tickerRssUrl}
-                onChange={e => setData({ ...data, tickerRssUrl: e.target.value })}
-                onBlur={onFieldBlur}
-                placeholder="https://exemplo.com/feed.xml"
-                disabled={!data.tickerRssEnabled}
-                className="w-full px-3 py-2 rounded-lg text-[12px]"
-                style={{ ...inputStyle, opacity: data.tickerRssEnabled ? 1 : 0.5 }}
-              />
-
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => handleSave()}
-                  disabled={saving}
-                  className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02] text-white shadow-sm cursor-pointer"
-                  style={{ backgroundColor: "#0055ff", boxShadow: "0 4px 14px rgba(0,85,255,0.25)" }}
-                >
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  Salvar Ticker
-                </button>
-              </div>
-
-              {data.tickerRssEnabled && data.tickerRssUrl && (
-                <div className="mt-3">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-[10px] uppercase tracking-wide font-bold text-slate-500">
-                      Preview do feed
-                    </span>
-                    <div className="flex items-center gap-1.5 text-[10px]">
-                      <span
-                        className="inline-block rounded-full"
-                        style={{
-                          width: 8, height: 8,
-                          backgroundColor:
-                            rssStatus.state === "ok" ? "#22c55e" :
-                            rssStatus.state === "loading" ? "#eab308" :
-                            rssStatus.state === "error" ? "#ef4444" : "#64748b",
-                          boxShadow: rssStatus.state === "loading" ? "0 0 8px #eab308" : undefined,
-                        }}
-                      />
-                      <span className="text-slate-600 font-medium">
-                        {rssStatus.state === "ok" && `${rssStatus.count} títulos${rssStatus.via && rssStatus.via !== "direct" ? ` · via ${rssStatus.via}` : ""}`}
-                        {rssStatus.state === "loading" && "carregando…"}
-                        {rssStatus.state === "error" && "erro"}
-                        {rssStatus.state === "idle" && "aguardando"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {rssStatus.state === "error" && (
-                    <div
-                      className="text-[10.5px] p-2 rounded-md mb-2 bg-red-50 border border-red-200 text-red-700"
-                    >
-                      {rssStatus.message}
-                      <div className="text-[9.5px] mt-1 text-red-600">
-                        Alguns sites (Cloudflare/anti-bot) bloqueiam servidores. Tente um feed alternativo do mesmo portal.
-                      </div>
-                    </div>
-                  )}
-
-                  <div
-                    className="rounded-md p-2 max-h-40 overflow-auto space-y-1 bg-white border border-slate-200"
-                  >
-                    {newsTitles.length === 0 ? (
-                      <div className="text-[10.5px] text-center py-3 text-slate-400">
-                        {rssStatus.state === "loading" ? "Buscando títulos…" : "Nenhum título recebido ainda."}
-                      </div>
-                    ) : (
-                      newsTitles.slice(0, 15).map((t, i) => (
-                        <div key={i} className="flex items-start gap-2 text-[11px] text-slate-700">
-                          <span className="shrink-0 text-[9.5px] font-mono font-bold" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
-                          <span className="min-w-0 truncate">{t}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
+            {/* A configuração RSS/XML avançada foi removida desta tela conforme solicitado. */}
             <div className="space-y-2">
               {([
                 { key: "tickerNews", icon: <Newspaper size={12} />, label: "Notícias", desc: "Títulos das últimas notícias" },
@@ -1857,29 +1746,33 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 const active = data[key];
                 return (
                   <div key={key}>
-                    <label
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={active}
+                      onClick={() => {
+                        const nextData = { ...latestDataRef.current, [key]: !active };
+                        setData(nextData);
+                        void handleSave(nextData);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors"
                       style={{
                         backgroundColor: active ? "rgba(0,85,255,0.06)" : "#ffffff",
                         border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={active}
-                        onChange={e => {
-                          const nextData = { ...latestDataRef.current, [key]: e.target.checked };
-                          setData(nextData);
-                          void handleSave(nextData);
-                        }}
-                        style={{ accentColor: CYAN }}
-                      />
                       <span style={{ color: active ? CYAN : "#64748b" }}>{icon}</span>
                       <div className="min-w-0 flex-1">
                         <span className="text-[12px] font-bold text-slate-800 block">{label}</span>
                         <p className="text-[10px] text-slate-500 truncate">{desc}</p>
                       </div>
-                    </label>
+                      <span className="shrink-0 inline-flex items-center gap-2">
+                        <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: active ? "#0055ff" : "#94a3b8" }}>{active ? "Ligado" : "Desligado"}</span>
+                        <span className="relative h-6 w-11 rounded-full transition-colors" style={{ backgroundColor: active ? "#0055ff" : "#cbd5e1" }}>
+                          <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform" style={{ left: active ? "22px" : "2px" }} />
+                        </span>
+                      </span>
+                    </button>
 
                     {/* Seleção da fonte das notícias (roteiro) */}
                     {key === "tickerNews" && active && (
@@ -1917,29 +1810,33 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
                     {/* QR Code do WhatsApp — logo abaixo de Notícias */}
                     {key === "tickerNews" && whatsappNumber && (
-                      <label
-                        className="mt-2 flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={data.showQrCode}
+                        onClick={() => {
+                          const nextData = { ...latestDataRef.current, showQrCode: !data.showQrCode };
+                          setData(nextData);
+                          void handleSave(nextData);
+                        }}
+                        className="mt-2 w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left"
                         style={{
                           backgroundColor: data.showQrCode ? "rgba(0,85,255,0.06)" : "#ffffff",
                           border: `1px solid ${data.showQrCode ? CYAN : NAVY_BORDER}`,
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={data.showQrCode}
-                          onChange={e => {
-                            const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
-                            setData(nextData);
-                            void handleSave(nextData);
-                          }}
-                          style={{ accentColor: CYAN }}
-                        />
                         <span style={{ color: data.showQrCode ? CYAN : "#64748b" }}><Phone size={12} /></span>
                         <div className="min-w-0 flex-1">
-                          <span className="text-[12px] font-bold text-slate-800 block">QR Code (WhatsApp)</span>
-                          <p className="text-[10px] text-slate-500 truncate">Exibir QR para interação ao vivo</p>
+                          <span className="text-[12px] font-bold text-slate-800 block">Número do WhatsApp</span>
+                          <p className="text-[10px] text-slate-500 truncate">Exibir o QR Code para interação ao vivo</p>
                         </div>
-                      </label>
+                        <span className="shrink-0 inline-flex items-center gap-2">
+                          <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: data.showQrCode ? "#0055ff" : "#94a3b8" }}>{data.showQrCode ? "Ligado" : "Desligado"}</span>
+                          <span className="relative h-6 w-11 rounded-full" style={{ backgroundColor: data.showQrCode ? "#0055ff" : "#cbd5e1" }}>
+                            <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm" style={{ left: data.showQrCode ? "22px" : "2px" }} />
+                          </span>
+                        </span>
+                      </button>
                     )}
 
                     {/* Submenu — seleção de redes sociais */}
@@ -1991,8 +1888,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
               onBlur={onFieldBlur}
               placeholder="Texto adicional (opcional)..."
               rows={3}
-              className="w-full px-3 py-2 rounded-xl text-[12px] resize-none mt-4"
-              style={inputStyle}
+              className="w-full px-3 py-2 rounded-xl text-[12px] resize-none mt-4 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ ...inputStyle, border: `1px solid ${NAVY_BORDER}` }}
             />
 
             <label
