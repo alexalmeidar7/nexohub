@@ -318,3 +318,61 @@ body:has(.vmix-flat-palette) [role="dialog"].vmix-connection-dialog-clean .vmix-
 body:has(.vmix-flat-palette) [role="dialog"].vmix-connection-dialog-clean .vmix-connection-cancel:hover {
   border-color: #FFFFFF !important;
 }
+
+
+/* Refined connection picker: clearer hierarchy, balanced cards, and strictly flat surfaces. */
+.vmix-clean-layout .vmix-connection-group > p {
+  color: #FFFFFF !important;
+  opacity: 0.72;
+  line-height: 1.2;
+  min-height: 14px;
+}
+
+.vmix-clean-layout .vmix-connection-card {
+  min-width: 0;
+  background-color: #0042A3 !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background-color 120ms ease !important;
+}
+
+.vmix-clean-layout .vmix-connection-card:hover {
+  background-color: #0042A3 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.vmix-clean-layout .vmix-connection-card-button {
+  min-width: 0;
+  padding: 20px !important;
+  gap: 18px !important;
+}
+
+.vmix-clean-layout .vmix-connection-icon {
+  background-color: #0065F9 !important;
+  border-radius: 22px !important;
+}
+
+.vmix-clean-layout .vmix-connection-copy {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.vmix-clean-layout .vmix-connection-copy span:last-child {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .vmix-clean-layout .vmix-connection-group {
+    max-width: min(100%, 320px);
+  }
+
+  .vmix-clean-layout .vmix-connection-card-button {
+    padding: 16px !important;
+  }
+}
