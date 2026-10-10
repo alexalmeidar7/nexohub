@@ -8,13 +8,42 @@ const corsHeaders = {
 const esc = (s: string) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
+// Último XML bom por user+estúdio: usado SOMENTE como fallback quando o banco falha.
+const lastGood = new Map<string, string>();
+
+async function withRetry<T>(fn: () => PromiseLike<{ data: T; error: any }>, tries = 3): Promise<T> {
+  let lastErr: any;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const { data, error } = await Promise.race([
+        fn(),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("db timeout")), 6000)),
+      ]);
+      if (!error) return data;
+      lastErr = error;
+    } catch (e) { lastErr = e; }
+    if (i < tries - 1) await new Promise((r) => setTimeout(r, 300 * (i + 1)));
+  }
+  throw lastErr;
+}
+
+const xmlHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/xml; charset=utf-8",
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+  "CDN-Cache-Control": "no-store",
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  let cacheKey = "";
+  let estudioParam = "";
   try {
     const url = new URL(req.url);
     const userId = url.searchParams.get("user_id");
     const estudio = url.searchParams.get("estudio");
+    estudioParam = estudio || "";
 
     if (!userId || !estudio) {
       return new Response("<error>user_id and estudio required</error>", {
@@ -22,21 +51,20 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" },
       });
     }
+    cacheKey = `${userId}|${estudio}`;
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: subUser, error: subError } = await sb.from("sub_users")
-      .select("parent_user_id, ativo").eq("auth_user_id", userId).maybeSingle();
-    if (subError) throw subError;
+    const subUser: any = await withRetry(() => sb.from("sub_users")
+      .select("parent_user_id, ativo").eq("auth_user_id", userId).maybeSingle());
     const ownerId = subUser?.ativo && subUser.parent_user_id ? subUser.parent_user_id : userId;
 
     // Cada feed consulta exclusivamente os roteiros da estação solicitada.
-    const { data: allUserRoteiros, error: queryError } = await sb
+    const allUserRoteiros: any[] = await withRetry(() => sb
       .from("roteiros")
       .select("programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
       .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
-       .limit(200);
-    if (queryError) throw queryError;
+      .limit(200));
 
     const norm = (s: string) =>
       String(s || "")
