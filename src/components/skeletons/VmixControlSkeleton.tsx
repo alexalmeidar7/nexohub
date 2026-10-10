@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import vmixControlLogo from "@/assets/logo-mixcontrol.png";
 import nexoLogo from "@/assets/logo-nxo.png";
 import cleanVmixControlLogo from "@/assets/logo-vmixcontrol-clean.png";
 
@@ -34,7 +33,10 @@ export default function VmixControlSkeleton({ cleanLayout = false }: { cleanLayo
   // Keep the original loading view for /vmix-control/switcher.
   return (
     <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
-      <header className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
+      <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <img src={cleanVmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6 w-auto max-w-full object-contain" />
+        </div>
         <div className="flex items-center gap-2">
           <Skeleton className="w-2 h-2 rounded-full bg-white/10" />
           <div className="flex flex-col items-end gap-1">
