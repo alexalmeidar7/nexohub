@@ -288,6 +288,13 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [manualInsertImageFile, setManualInsertImageFile] = useState<File | null>(null);
   const [manualInsertSaving, setManualInsertSaving] = useState(false);
   const [manualInsertUploading, setManualInsertUploading] = useState(false);
+  const manualInsertImagePreview = useMemo(
+    () => manualInsertImageFile ? URL.createObjectURL(manualInsertImageFile) : "",
+    [manualInsertImageFile],
+  );
+  useEffect(() => () => {
+    if (manualInsertImagePreview) URL.revokeObjectURL(manualInsertImagePreview);
+  }, [manualInsertImagePreview]);
   const [insertingNow, setInsertingNow] = useState(false);
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
@@ -1050,7 +1057,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
         
         await supabase.from("user_settings").update({
-          cenario_config: { ...existing, broadcast: nextData } as any,
+          cenario_config: { ...existing, broadcast: { ...(existing.broadcast || {}), ...nextData } } as any,
         }).eq("user_id", stationUid);
       } catch {}
 
@@ -1590,7 +1597,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 <div className="flex flex-col gap-3">
                   <label className="flex min-h-[170px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-center hover:border-blue-300 hover:bg-blue-50/40">
                     {manualInsertImageFile ? (
-                      <img src={URL.createObjectURL(manualInsertImageFile)} alt="Prévia do insert" className="max-h-36 max-w-full rounded-lg object-contain" />
+                      <img src={manualInsertImagePreview} alt="Prévia do insert" className="max-h-36 max-w-full rounded-lg object-contain" />
                     ) : manualInsertDraft.imageUrl ? (
                       <img src={manualInsertDraft.imageUrl} alt="Insert selecionado" className="max-h-36 max-w-full rounded-lg object-contain" />
                     ) : <ImagePlus size={28} className="text-slate-400" />}
