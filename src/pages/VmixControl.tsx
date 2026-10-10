@@ -54,11 +54,7 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
       <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
         <div
           className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8"
-          style={{
-            background: "rgba(245,245,245,0.92)",
-            border: "1px solid rgba(255,255,255,0.55)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.65)",
-          }}
+          style={{ backgroundColor: "#242424" }}
         >
           <img
             src={vmixControlLogo}
@@ -67,10 +63,10 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
           />
           {user && (
             <div className="ml-auto flex items-center gap-3 pl-4">
-              <span className="hidden sm:block max-w-[260px] truncate text-xs font-semibold text-slate-700">{user.email}</span>
+              <span className="hidden sm:block max-w-[260px] truncate text-xs font-medium text-white/65">{user.email}</span>
               <button
                 onClick={handleLogout}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0055ff] text-white shadow-sm transition hover:bg-[#0047d4] active:scale-95"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#333333] text-white transition-colors hover:bg-[#444444] active:scale-95"
                 title="Sair"
                 aria-label="Sair da conta"
               >
@@ -85,17 +81,13 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
         {!user ? (
           <form
             onSubmit={handleLogin}
-            className="w-full max-w-[380px] min-h-[438px] rounded-[34px] px-8 py-9 sm:px-8 flex flex-col"
-            style={{
-              backgroundColor: "#aaa",
-              color: "#222",
-              boxShadow: "0 18px 55px rgba(0,0,0,0.16)",
-            }}
+            className="w-full max-w-[380px] min-h-[438px] rounded-[28px] px-8 py-9 sm:px-8 flex flex-col"
+            style={{ backgroundColor: "#aaa", color: "#222" }}
           >
             <h1 className="mb-7 text-[18px] font-medium tracking-tight">login de acesso</h1>
 
             {error && (
-              <div className="mb-3 rounded-xl border border-red-900/15 bg-red-100/70 px-3 py-2 text-xs font-medium text-red-800" role="alert">
+              <div className="mb-3 rounded-lg bg-red-100/80 px-3 py-2 text-xs font-medium text-red-800" role="alert">
                 {error}
               </div>
             )}
@@ -109,7 +101,7 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="usuário"
                 aria-label="Usuário ou e-mail"
-                className="h-[51px] w-full rounded-full border border-white/70 bg-white px-5 text-[15px] text-[#222] outline-none transition placeholder:text-[#b8b8b8] focus:border-[#0055ff] focus:ring-2 focus:ring-[#0055ff]/15"
+                className="h-[51px] w-full rounded-full border-0 bg-white px-5 text-[15px] text-[#222] outline-none placeholder:text-[#b8b8b8] focus:ring-2 focus:ring-[#0055ff]/25"
               />
               <input
                 type="password"
@@ -126,13 +118,13 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
             <button
               type="submit"
               disabled={signing}
-              className="mt-3 inline-flex h-[51px] w-fit min-w-[101px] items-center justify-center gap-2 rounded-full bg-[#292929] px-7 text-sm font-semibold text-white transition hover:bg-[#111] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+              className="mt-3 inline-flex h-[51px] w-fit min-w-[101px] items-center justify-center gap-2 rounded-full bg-[#292929] px-7 text-sm font-medium text-white hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60"
             >
               {signing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {signing ? "entrando" : "entrar"}
             </button>
 
-            <div className="mt-auto pt-10 text-[15px] leading-[1.4] tracking-tight text-[#292929]">
+            <div className="mt-auto pt-10 text-[15px] leading-[1.4] text-[#292929]">
               <p className="font-semibold">esqueceu login ou senha?</p>
               <p>fale com o suporte</p>
             </div>
