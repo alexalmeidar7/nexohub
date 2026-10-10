@@ -2454,13 +2454,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
                     setShowStudioSelector(false);
                     connectToVmix();
                   }}
-                  className="w-full py-5 rounded-2xl bg-[#C6F03C] text-black text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_30px_rgba(198,240,60,0.2)]"
+                  className={`vmix-connection-primary w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] ${cleanLayout ? "" : "bg-[#C6F03C] text-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_30px_rgba(198,240,60,0.2)]"}`}
                 >
                   Conectar ao Estúdio
                 </button>
                 <button
                   onClick={() => setShowStudioSelector(false)}
-                  className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors"
+                  className={`vmix-connection-cancel w-full py-5 text-xs font-black uppercase tracking-[0.2em] ${cleanLayout ? "" : "text-white/20 hover:text-white transition-colors"}`}
                 >
                   Cancelar
                 </button>
