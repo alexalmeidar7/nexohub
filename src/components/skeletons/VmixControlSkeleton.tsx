@@ -8,7 +8,7 @@ export default function VmixControlSkeleton() {
       <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0">
         <div
           className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8"
-          style={{ background: "rgba(245,245,245,0.92)", border: "1px solid rgba(255,255,255,0.55)" }}
+          style={{ backgroundColor: "#242424" }}
         >
           <img src={vmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[22px] w-auto max-w-full object-contain object-left" />
         </div>
