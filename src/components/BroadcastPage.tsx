@@ -236,6 +236,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [programaLogo, setProgramaLogo] = useState<string | null>(null);
   const [locutorFoto, setLocutorFoto] = useState<string | null>(null);
   const [locutorNome, setLocutorNome] = useState("");
+  const [locutoresCadastrados, setLocutoresCadastrados] = useState<{ id: string; nome: string }[]>([]);
   const [locutorCargo, setLocutorCargo] = useState("");
   const [locutorInstagram, setLocutorInstagram] = useState("");
   const [programaNome, setProgramaNome] = useState("");
@@ -283,6 +284,29 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   useEffect(() => {
     latestDataRef.current = data;
   }, [data]);
+
+  useEffect(() => {
+    if (!stationUid) {
+      setLocutoresCadastrados([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data: presenters, error } = await supabase
+        .from("apresentadores")
+        .select("id, nome")
+        .eq("user_id", stationUid)
+        .order("nome", { ascending: true });
+      if (!cancelled && !error) {
+        setLocutoresCadastrados((presenters || []).filter((p: any) => !!p.nome));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [stationUid]);
+
+  const tituloDefault = `PARTICIPE DA PROGRAMAÇÃO${whatsappNumber ? ` - WHATSAPP: ${whatsappNumber}` : ""}`;
+
+
 
   // Auto-sync foto/instagram/cargo whenever locutor_override matches a registered apresentador
   useEffect(() => {
@@ -1455,27 +1479,40 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 <input
                   value={data.assunto}
                   onChange={e => setData(prev => ({ ...prev, assunto: e.target.value }))}
-                  className="h-10 px-3 rounded-lg border border-slate-200 text-sm"
-                  placeholder="Digite o assunto do momento"
+                  className="h-10 px-3 rounded-lg border border-slate-200 text-sm font-bold"
+                  placeholder={tituloDefault}
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Trocar nome do locutor (opcional)</span>
-                <input
-                  value={data.locutor_override}
+                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Locutor</span>
+                <select
+                  value={data.locutor_override || locutorNome || ""}
                   onChange={e => setData(prev => ({ ...prev, locutor_override: e.target.value }))}
-                  className="h-10 px-3 rounded-lg border border-slate-200 text-sm"
-                  placeholder="Deixe vazio para usar o locutor do programa"
-                />
+                  className="h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm"
+                >
+                  <option value="">Locutor do programa</option>
+                  {locutoresCadastrados.map((locutor) => (
+                    <option key={locutor.id} value={locutor.nome}>{locutor.nome}</option>
+                  ))}
+                </select>
               </label>
-              <button
-                onClick={() => handleSave({ ...data })}
-                disabled={saving}
-                className="self-end flex items-center gap-2 px-5 h-10 rounded-full text-[11px] font-black uppercase tracking-[0.15em] cursor-pointer"
-                style={{ backgroundColor: CYAN, color: "#fff" }}
-              >
-                <Save size={14} /> Salvar título
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setData(prev => ({ ...prev, assunto: tituloDefault }))}
+                  className="flex items-center justify-center gap-2 px-4 h-10 rounded-full border border-slate-200 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600 hover:bg-slate-50"
+                >
+                  Voltar ao título padrão
+                </button>
+                <button
+                  onClick={() => handleSave({ ...data })}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 h-10 rounded-full text-[11px] font-black uppercase tracking-[0.15em] cursor-pointer"
+                  style={{ backgroundColor: CYAN, color: "#fff" }}
+                >
+                  <Save size={14} /> Salvar título
+                </button>
+              </div>
             </div>
           </div>
         )}
