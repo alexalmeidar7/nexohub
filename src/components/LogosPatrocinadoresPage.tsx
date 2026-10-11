@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { getProgramas } from "./ProgramaForm";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import { getSnapshotLogos, getSnapshotProgramas } from "@/lib/supabaseDatabaseSnapshot";
@@ -240,10 +239,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       let lData: any[] = [];
       let pData: any[] = [];
 
-      // Non-blocking cleanup
-      try {
-        await (supabase.rpc("cleanup_comercial") as any);
-      } catch {}
+      // Maintenance cleanup must not delay the page's data requests.
+      void supabase.rpc("cleanup_comercial").then(({ error }) => {
+        if (error) console.warn("Limpeza comercial adiada:", error.message);
+      }).catch(() => {});
 
       const stationUid = resolveStationUid(targetUserId, effectiveUserId, user) || targetUserId || effectiveUserId || user?.id || "";
       const stationSlug = resolveStationSlug(targetUserId, effectiveUserId, user);
@@ -398,22 +397,26 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         if (stationSlug) saveLocalLogos(stationSlug, lData);
       }
 
-      // Fetch programs fallback
-      try {
-        const fallbackProgs = await getProgramas(targetUserId || undefined, user?.email);
-        if (fallbackProgs && fallbackProgs.length > 0) {
-          fallbackProgs.forEach((fp: any) => {
-            if (!pData.some((p) => (p.id && p.id === fp.id) || normalizeProgName(p.nome) === normalizeProgName(fp.nome))) {
-              pData.push({
-                id: fp.id || fp.nome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
-                nome: fp.nome,
-                estudio: fp.estudio || (fp as any).estudio || "ESTÚDIO FM",
-                horario_inicio: fp.horario_inicio || (fp as any).horarioInicio || "08:00:00",
-              });
-            }
-          });
-        }
-      } catch {}
+      // Import the large legacy program resolver only when the direct query,
+      // XML feeds and snapshots did not provide programs.
+      if (pData.length === 0) {
+        try {
+          const { getProgramas } = await import("./ProgramaForm");
+          const fallbackProgs = await getProgramas(targetUserId || undefined, user?.email);
+          if (fallbackProgs?.length) {
+            fallbackProgs.forEach((fp: any) => {
+              if (!pData.some((p) => (p.id && p.id === fp.id) || normalizeProgName(p.nome) === normalizeProgName(fp.nome))) {
+                pData.push({
+                  id: fp.id || fp.nome.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+                  nome: fp.nome,
+                  estudio: fp.estudio || "ESTÚDIO FM",
+                  horario_inicio: fp.horario_inicio || fp.horarioInicio || "08:00:00",
+                });
+              }
+            });
+          }
+        } catch {}
+      }
 
       // Always merge official programming grid / House Mix programs for this station
       try {
