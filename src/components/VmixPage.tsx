@@ -624,6 +624,24 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [transitionDuration, setTransitionDuration] = useState<number>(() => Number(localStorage.getItem("vmix_transition_duration") || 1000));
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">("controls");
+
+  useEffect(() => {
+    const handleHeaderAction = (event: Event) => {
+      const action = (event as CustomEvent<string>).detail;
+      if (action === "switcher") setActiveTab("controls");
+      if (action === "automation") setActiveTab("scenes");
+      if (action === "back") {
+        setConnected(false);
+        setSelectedConnectionId(null);
+        setVmixUrl("");
+        setStudioName("");
+        setSavedUrl("");
+        navigate("/vmix-control");
+      }
+    };
+    window.addEventListener("vmix-control-header-action", handleHeaderAction);
+    return () => window.removeEventListener("vmix-control-header-action", handleHeaderAction);
+  }, [navigate]);
   const [studioName, setStudioName] = useState("");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
@@ -3457,45 +3475,7 @@ function SwitcherUI({
               </div>
             </div>
 
-            {/* Main Navigation (Aligned right of the logo) */}
-            <div className="flex items-center gap-1">
-              {[
-                { label: "SWITCHER", key: "controls", icon: <Layout size={13} /> },
-                { label: "AUTOMAÇÃO", key: "scenes", icon: <Cpu size={13} /> },
-              ].map(item => (
-                <button
-                  key={item.key}
-                  onClick={() => setActiveTab(item.key)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
-                  style={{
-                    color: activeTab === item.key ? "#000" : "#8a8a8a",
-                    backgroundColor: activeTab === item.key ? "#C6F03C" : "#141414",
-                    border: activeTab === item.key ? "1px solid #C6F03C" : "1px solid #ffffff0d",
-                    boxShadow: activeTab === item.key ? "0 0 16px rgba(198,240,60,0.25)" : "none",
-                  }}
-                >
-                  {item.icon} {item.label}
-                </button>
-              ))}
-
-              <div className="w-px h-4 bg-white/10 mx-2" />
-
-              <button
-                onClick={() => {
-                  setConnected(false);
-                  setSelectedConnectionId(null);
-                  setVmixUrl("");
-                  setStudioName("");
-                  setSavedUrl("");
-                  navigate("/vmix-control");
-                }}
-                className="flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:brightness-125" title="Voltar" aria-label="Voltar"
-                style={{ backgroundColor: "#141414", color: "#C6F03C", border: "1px solid #C6F03C35" }}
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <div className="w-px h-4 bg-white/10 mx-2" />
+            {/* Navigation controls moved to the main logo header in VmixControl. */}
 
               {/* Status Indicator (Now part of the main button group) */}
               <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e]/50 border border-white/5">
