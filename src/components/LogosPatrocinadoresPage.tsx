@@ -260,7 +260,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       let pData: any[] = [];
 
       // Maintenance cleanup must not delay the page's data requests.
-      void supabase.rpc("cleanup_comercial").then(({ error }) => {
+      void Promise.resolve(supabase.rpc("cleanup_comercial")).then(({ error }) => {
         if (error) console.warn("Limpeza comercial adiada:", error.message);
       }).catch(() => {});
 
