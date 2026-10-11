@@ -50,6 +50,19 @@ Deno.serve(async (req) => {
         if (sub?.auth_user_id) userId = sub.auth_user_id;
       }
 
+      // 2b) Fallback: master profile whose email local-part STARTS with the slug
+      // (e.g. "interativafm" → interativafmgynaovivo@gmail.com).
+      if (!userId && !slug.includes("@") && /^[a-z0-9._-]+$/.test(slugLower)) {
+        const { data: starts } = await supabase
+          .from("profiles")
+          .select("user_id, email")
+          .ilike("email", `${slugLower}%@%`)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (starts?.user_id) userId = starts.user_id;
+      }
+
       // 3) Fallback: full email match (slug contains @)
       if (!userId && slug.includes("@")) {
         const { data: byFull } = await supabase
