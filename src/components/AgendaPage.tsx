@@ -1718,8 +1718,14 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     setFormData(targetDateStr ? new Date(targetDateStr + "T12:00:00") : new Date());
     setFormTitulo(evt.youtube_titulo || evt.programa?.nome || evt.descricao || "");
     const linkedProgram = displayProgramas.find(p => String(p.id) === String(evt.programa_id));
-    setFormProgramaId(evt.programa_id || "");
-    setFormEstudioFilter(evt.programa?.estudio || linkedProgram?.estudio || "todos");
+    const linkedStudio = evt.programa?.estudio || linkedProgram?.estudio || "";
+    setFormProgramaId(evt.programa_id ? String(evt.programa_id) : "");
+    setFormEstudioFilter(linkedStudio || "todos");
+    setFormEstudio(linkedStudio);
+    if (linkedProgram) {
+      setFormHorarioGravacao(linkedProgram.horario_inicio?.slice(0, 5) || evt.horario_gravacao || "10:00");
+      setFormHorarioGravacaoFim(linkedProgram.horario_fim?.slice(0, 5) || evt.horario_gravacao_fim || "11:00");
+    }
     setFormLocal(evt.local || "");
     setFormDescricao(evt.descricao || "");
 
@@ -3828,17 +3834,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
 
 
-                  {/* Criar Roteiro Express (apenas se tiver programa selecionado) */}
-                  {formProgramaId && (
-                    <button
-                      type="button"
-                      onClick={handleCreateRoteiroFromEvento}
-                      disabled={creatingRoteiro}
-                      className="w-full h-10 text-xs font-semibold rounded-2xl transition-all border border-blue-200 text-[#0055ff] bg-blue-50/50 hover:bg-blue-50 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {creatingRoteiro ? "Criando…" : (roteiroJaExiste ? "📝 Abrir/editar roteiro já existente" : "📝 Deseja criar/agendar o roteiro desse programa?")}
-                    </button>
-                  )}
+
                 </div>
               )}
             </div>
