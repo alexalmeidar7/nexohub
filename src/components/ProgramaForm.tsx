@@ -2347,7 +2347,6 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
           <div style={{ maxHeight: 460, overflowY: "auto", overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 5 }}>
-              <thead>
                 <tr style={{ background: CYAN, color: "#FFFFFF" }}>
                   {["Programa", "Exibição", "Horário", "Apresentador", "Estúdio", "Status", "Ações"].map((h) => (
                     <th key={h} style={{ padding: "12px 14px", textAlign: h === "Status" || h === "Ações" ? "center" : "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>
