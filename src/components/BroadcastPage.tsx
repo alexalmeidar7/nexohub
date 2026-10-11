@@ -293,6 +293,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [tickerNewsSettingsOpen, setTickerNewsSettingsOpen] = useState(false);
   const [tickerSocialSettingsOpen, setTickerSocialSettingsOpen] = useState(false);
   const [tickerPreviewIndex, setTickerPreviewIndex] = useState(0);
+  const [showOnAirProgram, setShowOnAirProgram] = useState(true);
   const [saving, setSaving] = useState(false);
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
   const [programaLogo, setProgramaLogo] = useState<string | null>(null);
@@ -1055,6 +1056,11 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setShowOnAirProgram(value => !value), 4500);
+    return () => window.clearInterval(timer);
+  }, []);
+
   // Generate XML content
   const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -1570,10 +1576,17 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         <div className={`flex-1 min-h-0 ${activeTab === "preview" ? "overflow-hidden flex items-center justify-center py-2" : "overflow-y-auto pr-1 pb-10"}`}>
 
         {activeTab === "preview" && (
-          <div className="w-full mx-auto flex items-center justify-center py-3 sm:py-5" style={{ maxWidth: "min(1100px, 100%)" }}>
+          <div className="w-full mx-auto flex items-center justify-center py-2 sm:py-3" style={{ maxWidth: "min(1100px, 100%)" }}>
+            <style>{`
+              @keyframes broadcast-ticker-scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+              @keyframes broadcast-info-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+              .broadcast-ticker-track { width: max-content; min-width: 100%; animation: broadcast-ticker-scroll 28s linear infinite; }
+              .broadcast-info-transition { animation: broadcast-info-in .45s ease both; }
+              @media (prefers-reduced-motion: reduce) { .broadcast-ticker-track, .broadcast-info-transition { animation: none !important; } }
+            `}</style>
             <div className="w-full overflow-hidden rounded-[24px] bg-black text-white" style={{ border: "1px solid #1e293b" }}>
-              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-                <div className="relative aspect-video min-h-[220px] md:min-h-[340px] bg-black overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                <div className="relative w-full aspect-video min-h-[200px] md:min-h-0 bg-black overflow-hidden">
                   {videoStreamUrl ? <VideoLivePreview streamUrl={videoStreamUrl} reloadKey={reloadKey} /> : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
                       <div className="h-10 w-10 rounded-full border-[3px] border-blue-500/25 border-t-blue-500 animate-spin" />
@@ -1582,23 +1595,21 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                   )}
                   {videoStreamUrl && <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider"><span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" /> Prévia ao vivo</div>}
                 </div>
-                <div className="flex min-w-0 flex-col gap-5 p-5 sm:p-7 md:p-8">
-                  <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-                    {empresaLogo && <img src={empresaLogo} alt="Logo da emissora" className="h-11 w-11 shrink-0 object-contain" />}
-                    <div className="min-w-0">
-                      <h2 className="truncate text-base sm:text-lg font-extrabold">{programaNome || onAirProgram?.nome || "Programação ao vivo"}</h2>
-                      <p className="mt-1 text-xs font-semibold text-white/60">{onAirProgram?.horario_inicio?.slice(0,5) || ""}{onAirProgram?.horario_fim ? ` – ${onAirProgram.horario_fim.slice(0,5)}` : ""}</p>
+                <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 md:p-6">
+                  {empresaLogo && <div className="flex h-9 items-center justify-start border-b border-white/10 pb-3"><img src={empresaLogo} alt="Logo da emissora" className="h-8 max-w-[150px] object-contain object-left" /></div>}
+                  <div className="min-h-[64px] flex items-center gap-3">
+                    {locutorFoto ? <img src={locutorFoto} alt={displayLocutor} className="h-[68px] w-[68px] shrink-0 rounded-xl object-contain object-bottom" /> : <div className="h-[68px] w-[68px] shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-blue-400"><Mic size={24} /></div>}
+                    <div key={showOnAirProgram ? "program" : "presenter"} className="broadcast-info-transition min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-400">{showOnAirProgram ? "Programa no ar" : "Locutor no ar"}</p>
+                      <p className="mt-1 text-base sm:text-lg font-extrabold leading-tight break-words">{showOnAirProgram ? (onAirProgram?.nome || programaNome || "Programação ao vivo") : displayLocutor}</p>
+                      <p className="mt-1 text-xs font-semibold text-white/55">{showOnAirProgram ? `${onAirProgram?.horario_inicio?.slice(0,5) || ""}${onAirProgram?.horario_fim ? ` – ${onAirProgram.horario_fim.slice(0,5)}` : ""}` : (locutorInstagram ? `@${locutorInstagram.replace(/^@/, "")}` : (locutorCargo || "Apresentador"))}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 min-w-0">
-                    {locutorFoto ? <img src={locutorFoto} alt={displayLocutor} className="h-20 w-20 shrink-0 rounded-xl object-contain object-bottom" /> : <div className="h-20 w-20 shrink-0 flex items-center justify-center text-blue-400"><Mic size={24} /></div>}
-                    <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">Locutor no ar</p><p className="mt-1 break-words text-lg font-extrabold leading-tight">{displayLocutor}</p>{locutorInstagram && <p className="mt-1 truncate text-xs text-blue-300">@{locutorInstagram.replace(/^@/, "")}</p>}</div>
-                  </div>
-                  {data.assunto && <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">Assunto no ar</p><p className="mt-1 text-sm font-bold leading-snug">{data.assunto}</p></div>}
+                  {data.assunto && <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/45">Assunto no ar</p><p className="mt-1 text-xs sm:text-sm font-bold leading-snug break-words">{data.assunto}</p></div>}
                   {data.showQrCode && whatsappNumber && <div className="flex items-center gap-3 rounded-xl border border-white/10 p-3"><div className="h-9 w-9 shrink-0 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-300"><Phone size={17} /></div><div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-wider text-white/45">WhatsApp participação</p><p className="mt-1 text-sm font-bold">{whatsappNumber}</p></div></div>}
-                  {empresaSocials.length > 0 && <div className="flex flex-wrap gap-2">{empresaSocials.slice(0,4).map((social,i)=><span key={social.tipo + i} className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-semibold text-white/70">{social.tipo === "site" ? normalizeSiteDomain(social.valor) : social.valor}</span>)}</div>}
-                  {composedTicker && <div className="overflow-hidden border-t border-white/10 pt-3"><p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-white/45">Ticker</p><div className="overflow-hidden whitespace-nowrap"><p className="text-xs font-semibold text-white/80">{composedTicker}</p></div></div>}
-                  {data.aSeguirEnabled && nextProgramInfo?.next && <div className="mt-auto flex items-start gap-2 border-t border-white/10 pt-3"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500 animate-pulse" /><div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-wider text-blue-400">A seguir ON</p><p className="text-sm font-bold">{nextProgramInfo.next.nome}</p><p className="text-xs text-white/60">{nextProgramInfo.next.horario_inicio?.slice(0,5) || ""}{nextProgramInfo.next.horario_fim ? ` – ${nextProgramInfo.next.horario_fim.slice(0,5)}` : ""}</p></div></div>}
+                  {empresaSocials.length > 0 && <div className="flex flex-wrap gap-1.5">{empresaSocials.slice(0,4).map((social,i)=><span key={social.tipo + i} className="rounded-full bg-white/10 px-2.5 py-1.5 text-[9px] font-semibold text-white/70">{social.tipo === "site" ? normalizeSiteDomain(social.valor) : social.valor}</span>)}</div>}
+                  {composedTicker && <div className="overflow-hidden border-t border-white/10 pt-2"><p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-white/45">Ticker</p><div className="overflow-hidden whitespace-nowrap"><p className="broadcast-ticker-track text-xs font-semibold text-white/80">{composedTicker}　 •　 {composedTicker}</p></div></div>}
+                  {data.aSeguirEnabled && nextProgramInfo?.next && <div className="flex items-start gap-2 border-t border-white/10 pt-2"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500 animate-pulse" /><div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-wider text-blue-400">A seguir ON</p><p className="text-xs sm:text-sm font-bold break-words">{nextProgramInfo.next.nome}</p><p className="text-[11px] text-white/60">{nextProgramInfo.next.horario_inicio?.slice(0,5) || ""}{nextProgramInfo.next.horario_fim ? ` – ${nextProgramInfo.next.horario_fim.slice(0,5)}` : ""}</p></div></div>}
                 </div>
               </div>
             </div>
