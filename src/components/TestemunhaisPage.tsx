@@ -162,7 +162,15 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       setLoading(false);
       return;
     }
-    setLoading(true);
+    const cachedItems = getStoredTestemunhais(ownerId).filter((t: any) =>
+      isPositivaStation || (t.user_id !== POSITIVA_USER_ID && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id))
+    );
+    if (cachedItems.length > 0) {
+      setItems(cachedItems);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
 
     let tList: Testemunhal[] = [];
     let pList: { id: string; nome: string }[] = [];
