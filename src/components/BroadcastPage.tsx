@@ -824,9 +824,23 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         } catch {}
       }
 
-      if (loadedConfig) {
-        setData((prev) => ({ ...defaultBroadcast, ...prev, ...loadedConfig }));
-        setManualInserts(Array.isArray(loadedConfig.manualInserts) ? loadedConfig.manualInserts : []);
+      // Merge the browser's last saved configuration as well: toggles must survive a reload
+      // even if the remote settings record is temporarily stale or sync has not finished.
+      let localBroadcastConfig: any = null;
+      try {
+        const localSaved =
+          localStorage.getItem(`nexohub_broadcast_config_${stationUid}`) ||
+          (userSlug ? localStorage.getItem(`nexohub_broadcast_config_${userSlug}`) : null);
+        if (localSaved) localBroadcastConfig = JSON.parse(localSaved);
+      } catch {}
+
+      if (loadedConfig || localBroadcastConfig) {
+        const mergedConfig = {
+          ...(loadedConfig || {}),
+          ...(localBroadcastConfig || {}),
+        };
+        setData((prev) => ({ ...defaultBroadcast, ...prev, ...mergedConfig }));
+        setManualInserts(Array.isArray(mergedConfig.manualInserts) ? mergedConfig.manualInserts : []);
       }
     })();
   }, [stationUid, userSlug]);
@@ -867,6 +881,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         }
       }
     };
+    // Resolve the on-air program immediately on page load, not only after the first 30 seconds.
+    void refreshActiveProgram();
     const interval = setInterval(refreshActiveProgram, 30000);
     const logoRefreshInterval = setInterval(loadInitialData, 30000);
     return () => {
