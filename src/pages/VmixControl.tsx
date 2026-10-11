@@ -144,10 +144,18 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
           <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[17px] w-auto max-w-full object-contain object-left" />
           {user && (
             <div className="ml-auto flex items-center gap-3 pl-4">
-              <span className="hidden sm:block max-w-[260px] truncate text-xs font-medium text-white/65">{user.email}</span>
-              <button onClick={handleLogout} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#333333] text-white transition-colors hover:bg-[#444444] active:scale-95" title="Sair" aria-label="Sair da conta">
-                <LogOut size={16} />
-              </button>
+              <div className="relative group/account">
+                <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0055ff] text-white text-sm font-bold uppercase transition-colors hover:bg-[#0042A3] focus:outline-none focus:ring-2 focus:ring-[#0065F9]/50" title="Conta do usuário" aria-label="Abrir menu da conta">
+                  {(String(user.user_metadata?.full_name || user.user_metadata?.name || user.email || "U").trim()[0] || "U").toUpperCase()}
+                </button>
+                <div className="invisible opacity-0 group-hover/account:visible group-hover/account:opacity-100 group-focus-within/account:visible group-focus-within/account:opacity-100 absolute right-0 top-full z-50 mt-2 w-64 rounded-xl bg-[#242424] p-4 text-white transition-opacity duration-150">
+                  <p className="truncate text-sm font-semibold">{String(user.user_metadata?.full_name || user.user_metadata?.name || "Usuário")}</p>
+                  <p className="mt-1 truncate text-xs text-white/60">{user.email}</p>
+                  <button onClick={handleLogout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#333333] px-3 py-2 text-sm font-semibold transition-colors hover:bg-[#444444]">
+                    <LogOut size={15} /> Sair
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
