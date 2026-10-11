@@ -105,6 +105,93 @@ export async function prepareSquarePngDataUrl(dataUrl: string, size = 1024): Pro
  * Final framing at 1080×1080 PNG RGBA. Colors, text and details are preserved
  * exactly; only the canvas size and centering change.
  */
+/**
+ * Local flat-white logo preparation: removes the edge-connected background,
+ * converts the remaining artwork to #FFFFFF, and exports transparent 1080 PNG.
+ */
+export async function vectorizeWhiteLogo1080(dataUrl: string): Promise<string> {
+  const img = await loadImage(dataUrl);
+  const size = 1080;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Não foi possível iniciar o ajuste da logo.");
+  ctx.clearRect(0, 0, size, size);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  const padding = size * 0.1;
+  const scale = Math.min((size - padding * 2) / img.width, (size - padding * 2) / img.height);
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  ctx.drawImage(img, Math.round((size - w) / 2), Math.round((size - h) / 2), w, h);
+
+  const image = ctx.getImageData(0, 0, size, size);
+  const px = image.data;
+  const total = size * size;
+  const samples: number[][] = [];
+  for (let x = 0; x < size; x += 8) {
+    for (const y of [0, 1, size - 2, size - 1]) {
+      const i = (y * size + x) * 4;
+      if (px[i + 3] > 200) samples.push([px[i], px[i + 1], px[i + 2]]);
+    }
+  }
+  for (let y = 0; y < size; y += 8) {
+    for (const x of [0, 1, size - 2, size - 1]) {
+      const i = (y * size + x) * 4;
+      if (px[i + 3] > 200) samples.push([px[i], px[i + 1], px[i + 2]]);
+    }
+  }
+  const bins = new Map<string, { count: number; sum: number[] }>();
+  for (const rgb of samples) {
+    const key = rgb.map(v => Math.round(v / 24)).join(",");
+    const item = bins.get(key);
+    if (item) { item.count++; item.sum = item.sum.map((v, i) => v + rgb[i]); }
+    else bins.set(key, { count: 1, sum: [...rgb] });
+  }
+  const dominant = [...bins.values()].sort((a, b) => b.count - a.count)[0];
+  const bg = dominant ? dominant.sum.map(v => v / dominant.count) : [255, 255, 255];
+
+  const visited = new Uint8Array(total);
+  const queue = new Int32Array(total);
+  let head = 0;
+  let tail = 0;
+  const tolerance = 62;
+  const push = (index: number) => {
+    if (index < 0 || index >= total || visited[index]) return;
+    const i = index * 4;
+    if (px[i + 3] < 12) { visited[index] = 1; queue[tail++] = index; return; }
+    const dr = px[i] - bg[0], dg = px[i + 1] - bg[1], db = px[i + 2] - bg[2];
+    if (Math.sqrt(dr * dr + dg * dg + db * db) <= tolerance) {
+      visited[index] = 1;
+      queue[tail++] = index;
+    }
+  };
+  for (let x = 0; x < size; x++) { push(x); push((size - 1) * size + x); }
+  for (let y = 0; y < size; y++) { push(y * size); push(y * size + size - 1); }
+  while (head < tail) {
+    const index = queue[head++];
+    const x = index % size, y = Math.floor(index / size), i = index * 4;
+    if (px[i + 3] > 0) {
+      const dr = px[i] - bg[0], dg = px[i + 1] - bg[1], db = px[i + 2] - bg[2];
+      const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+      px[i + 3] = distance < tolerance - 12 ? 0 : Math.round(px[i + 3] * Math.min(1, (distance - tolerance + 12) / 12));
+    }
+    if (x > 0) push(index - 1);
+    if (x < size - 1) push(index + 1);
+    if (y > 0) push(index - size);
+    if (y < size - 1) push(index + size);
+  }
+  let visible = 0;
+  for (let i = 0; i < px.length; i += 4) {
+    if (px[i + 3] > 0) visible++;
+    px[i] = 255; px[i + 1] = 255; px[i + 2] = 255;
+  }
+  if (visible < 100) throw new Error("Não foi possível separar a logo do fundo. Envie uma imagem com maior contraste ou fundo transparente.");
+  ctx.putImageData(image, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
 export async function normalizeTo1080(dataUrl: string): Promise<string> {
   return await prepareSquarePngDataUrl(dataUrl, 1080);
 }
