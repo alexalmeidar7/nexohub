@@ -361,8 +361,14 @@ export const getRecorrenciaLabel = (rec?: string, dias?: number[]): string => {
     } else if ((!days || !days.length) && rec.startsWith("dias:")) {
       days = rec.slice(5).split(",").map(Number).filter((n) => !isNaN(n));
     }
-    if (days && days.length > 0 && (days.length !== 5 || ![1, 2, 3, 4, 5].every((d) => days!.includes(d)))) {
-      const labels = DIAS_DA_SEMANA.filter((d) => days!.includes(d.id)).map((d) => d.label);
+    if (days && days.length > 0) {
+      const weekOrder = [1, 2, 3, 4, 5, 6, 0];
+      const ordered = weekOrder.filter((id) => days!.includes(id));
+      const labels = ordered.map((id) => DIAS_DA_SEMANA.find((d) => d.id === id)!.label);
+      if (labels.length === 1) return labels[0];
+      const positions = ordered.map((id) => weekOrder.indexOf(id));
+      const isContiguous = positions.every((pos, i) => i === 0 || pos === positions[i - 1] + 1);
+      if (isContiguous) return `${labels[0]} > ${labels[labels.length - 1]}`;
       return labels.join(", ");
     }
     return "Selecione";
