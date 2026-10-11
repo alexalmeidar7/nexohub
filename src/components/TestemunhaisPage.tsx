@@ -8,10 +8,8 @@ import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar, Check, 
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
+import LazyRichTextEditor from "./LazyRichTextEditor";
 import DOMPurify from 'dompurify';
-import { getProgramas } from "./ProgramaForm";
 
 const CYAN = "#0055ff";
 const LIME = "#0055ff";
@@ -112,7 +110,6 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   const formRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [showProgramCombo, setShowProgramCombo] = useState(false);
-  const quillRef = useRef<ReactQuill>(null);
   const [form, setForm] = useState({
     texto: "",
     data_inicio: new Date().toISOString().split("T")[0],
@@ -171,9 +168,9 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     let pList: { id: string; nome: string }[] = [];
 
     try {
-      const [{ data: tData }, progsFromHelper] = await Promise.all([
+      const [{ data: tData }, { data: directPrograms }] = await Promise.all([
         supabase.from("testemunhais").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
-        getProgramas(ownerId, user?.email),
+        supabase.from("programas").select("id, nome").eq("user_id", ownerId).order("nome"),
       ]);
       if (tData) {
         tList = tData.map(t => ({
@@ -181,12 +178,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           texto: t.texto || "",
         })) as Testemunhal[];
       }
-      if (progsFromHelper && progsFromHelper.length > 0) {
-        pList = progsFromHelper.map(p => ({ id: p.id, nome: p.nome }));
-      } else {
-        const { data: pData } = await supabase.from("programas").select("id, nome").eq("user_id", ownerId).order("nome");
-        if (pData) pList = pData;
-      }
+      if (directPrograms?.length) pList = directPrograms;
     } catch (e) {
       console.warn("Error loading testemunhais/programas:", e);
     }
@@ -532,9 +524,8 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           <div>
             <label style={labelStyle}>Texto da Citação</label>
             <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#0055ff] shadow-xs">
-              <ReactQuill
-                ref={quillRef}
-                theme="snow"
+              <LazyRichTextEditor
+                                theme="snow"
                 value={form.texto}
                 onChange={(content) => setForm(current => ({ ...current, texto: content }))}
                 modules={{
