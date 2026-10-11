@@ -47,7 +47,7 @@ import GoogleWeekGrid, { type GridEvent } from "@/components/agenda/GoogleWeekGr
 import AgendaPageSkeleton from "@/components/skeletons/AgendaPageSkeleton";
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
-import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
+import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Sparkles } from "lucide-react";
 import { confirmDialog } from "@/lib/confirmDialog";
 import { getStoredMetadata, DEFAULT_AGENCY_CLIENTS } from "@/components/ClientesPage";
 
