@@ -1586,13 +1586,15 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             `}</style>
             <div className="w-full overflow-hidden rounded-[24px] bg-black text-white" style={{ border: "1px solid #1e293b" }}>
               <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-                <div className="relative w-full min-h-[280px] md:min-h-[360px] self-stretch bg-black overflow-hidden flex items-center justify-center">
-                  {videoStreamUrl ? <VideoLivePreview streamUrl={videoStreamUrl} reloadKey={reloadKey} /> : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
-                      <div className="h-10 w-10 rounded-full border-[3px] border-blue-500/25 border-t-blue-500 animate-spin" />
-                      <span className="text-xs font-semibold text-white/70">Aguardando vídeo ao vivo…</span>
-                    </div>
-                  )}
+                <div className="relative w-full min-h-[280px] md:min-h-[360px] self-stretch bg-black p-3 sm:p-4 md:p-5 flex items-center justify-center">
+                  <div className="relative w-full h-[230px] sm:h-[260px] md:h-[300px] rounded-[18px] overflow-hidden bg-black">
+                    {videoStreamUrl ? <VideoLivePreview streamUrl={videoStreamUrl} reloadKey={reloadKey} /> : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+                        <div className="h-10 w-10 rounded-full border-[3px] border-blue-500/25 border-t-blue-500 animate-spin" />
+                        <span className="text-xs font-semibold text-white/70">Aguardando vídeo ao vivo…</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 md:p-6">
                   {empresaLogo && <div className="flex h-9 items-center justify-start border-b border-white/10 pb-3"><img src={empresaLogo} alt="Logo da emissora" className="h-8 max-w-[150px] object-contain object-left" /></div>}
