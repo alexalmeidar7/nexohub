@@ -2344,8 +2344,9 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
           </div>
 
-          <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
+          <div style={{ maxHeight: 460, overflowY: "auto", overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead style={{ position: "sticky", top: 0, zIndex: 5 }}>
               <thead>
                 <tr style={{ background: CYAN, color: "#FFFFFF" }}>
                   {["Programa", "Exibição", "Horário", "Apresentador", "Estúdio", "Status", "Ações"].map((h) => (
@@ -2356,7 +2357,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                 </tr>
               </thead>
               <tbody>
-                {sortedProgramas.map((p, i) => (
+                {sortedProgramas.slice(0, 6).map((p, i) => (
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
                     <td style={{ padding: "10px 14px", fontWeight: 700 }}>
                       <div className="flex items-center gap-3">
@@ -2435,6 +2436,11 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
               </tbody>
             </table>
           </div>
+          {sortedProgramas.length > 6 && (
+            <p style={{ margin: "10px 2px 0", color: "#64748B", fontSize: 11, textAlign: "right" }}>
+              Mostrando 6 de {sortedProgramas.length} programas · role a lista para ver os demais
+            </p>
+          )}
         </section>
       )}
 
