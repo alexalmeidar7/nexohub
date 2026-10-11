@@ -425,57 +425,6 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
         vMix — Enquete
       </div>
 
-      <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
-        <div className="flex items-center gap-3">
-          <div style={{ width: 44, height: 44, borderRadius: 16, background: "#0055ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Tag size={20} color="#fff" />
-          </div>
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-wider text-[#002132]">
-              Gerenciamento de Enquetes
-            </h2>
-            <p className="text-xs text-slate-400 font-medium">Agendamento e controle de enquetes</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <a
-            href={`/xml/${targetSlug}/enquete.xml`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-11 px-4 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm"
-            title="Abrir feed XML da Enquete no navegador ou vMix"
-          >
-            <ExternalLink size={15} className="text-[#0055ff]" />
-            <span>VER XML</span>
-          </a>
-          <button
-            onClick={handleCopyXml}
-            className="h-11 px-4 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm cursor-pointer"
-            title="Copiar conteúdo XML da enquete ativa para a área de transferência"
-          >
-            <Copy size={15} className="text-[#0055ff]" />
-            <span className="hidden md:inline">COPIAR XML</span>
-          </button>
-          <button
-            onClick={handleDownloadXml}
-            className="h-11 px-4 rounded-full font-bold text-xs uppercase tracking-wider inline-flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#0055ff] border border-slate-200/80 transition shadow-sm cursor-pointer"
-            title="Baixar arquivo enquete.xml atualizado para o computador"
-          >
-            <Download size={15} className="text-[#0055ff]" />
-            <span className="hidden md:inline">BAIXAR XML</span>
-          </button>
-          <button 
-            onClick={() => setShowForm(!showForm)}
-            className={`h-11 px-6 rounded-full font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer ${
-              showForm ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-[#0055ff] hover:bg-[#0047d4] text-white shadow-md hover:shadow-blue-500/20"
-            }`}
-          >
-            {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {showForm ? "Cancelar" : "Nova Enquete"}
-          </button>
-        </div>
-      </div>
-
       {showForm && (
         <div className="animate-in fade-in slide-in-from-top-4 duration-300 p-6 bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
