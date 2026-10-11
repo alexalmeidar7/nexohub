@@ -890,7 +890,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const [guestPermModificar, setGuestPermModificar] = useState(false);
   const [guestPermConvidar, setGuestPermConvidar] = useState(true);
   const [guestPermVerLista, setGuestPermVerLista] = useState(true);
-  const [eventModalTab, setEventModalTab] = useState<"detalhes" | "materiais">("detalhes");
+  const [eventModalTab, setEventModalTab] = useState<"detalhes" | "materiais" | "edicao">("detalhes");
   const [showVideoInput, setShowVideoInput] = useState(false);
   const [guestSearchInput, setGuestSearchInput] = useState("");
   const [selectedEventColor, setSelectedEventColor] = useState("#0055ff");
@@ -3563,7 +3563,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                     eventModalTab === "materiais" ? "text-[#0055ff]" : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  <span>Materiais & Artes</span>
+                  <span>Artes</span>
                   {formArtesUrls.filter(Boolean).length > 0 && (
                     <span className="w-4 h-4 rounded-full bg-blue-100 text-[#0055ff] text-[9px] font-bold flex items-center justify-center">
                       {formArtesUrls.filter(Boolean).length}
@@ -3573,7 +3573,39 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0055ff] rounded-full" />
                   )}
                 </button>
+                <button type="button" onClick={() => setEventModalTab("edicao")} className={`pb-2.5 transition-colors relative cursor-pointer ${eventModalTab === "edicao" ? "text-[#0055ff]" : "text-slate-500 hover:text-slate-800"}`}>
+                  Edição
+                  {eventModalTab === "edicao" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0055ff] rounded-full" />}
+                </button>
               </div>
+
+              {/* Tab Edição */}
+              {eventModalTab === "edicao" && (
+                <div className="space-y-4">
+                  {/* Anotações da Edição */}
+                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#002132]">Anotações para a Produção / Edição</h4>
+                      <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={formEdicaoConcluida}
+                          onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
+                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span>Edição Concluída</span>
+                      </label>
+                    </div>
+                    <Textarea
+                      value={formEdicaoNotas}
+                      onChange={(e) => setFormEdicaoNotas(e.target.value)}
+                      placeholder="Instruções para o editor, cortes, pauta ou observações internas..."
+                      rows={3}
+                      className="bg-white border-slate-200 rounded-xl text-xs"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Tab 1: Detalhes do Evento */}
               {eventModalTab === "detalhes" && (
@@ -3750,12 +3782,13 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                       {[
-                        { label: "16:9 YouTube / TV", slotIdx: 0 },
-                        { label: "1:1 Feed Instagram", slotIdx: 1 },
-                        { label: "9:16 Stories / Reels", slotIdx: 2 },
-                        { label: "Banner Geral", slotIdx: 3 },
+                        { label: "Thumb", slotIdx: 0 },
+                        { label: "Feed", slotIdx: 1 },
+                        { label: "Storie", slotIdx: 2 },
+                        { label: "Insert", slotIdx: 3 },
+                        { label: "Capa de Podcast", slotIdx: 4 },
                       ].map(({ label, slotIdx }) => {
                         const url = formArtesUrls[slotIdx];
                         return (
@@ -3794,28 +3827,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                     </div>
                   </div>
 
-                  {/* Anotações da Edição */}
-                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#002132]">Anotações para a Produção / Edição</h4>
-                      <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={formEdicaoConcluida}
-                          onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
-                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer"
-                        />
-                        <span>Edição Concluída</span>
-                      </label>
-                    </div>
-                    <Textarea
-                      value={formEdicaoNotas}
-                      onChange={(e) => setFormEdicaoNotas(e.target.value)}
-                      placeholder="Instruções para o editor, cortes, pauta ou observações internas..."
-                      rows={3}
-                      className="bg-white border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
+
 
                   {/* Criar Roteiro Express (apenas se tiver programa selecionado) */}
                   {formProgramaId && (
