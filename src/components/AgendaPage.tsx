@@ -1098,6 +1098,12 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     return [];
   }, [availableProgramas, programas, targetUserId, user]);
 
+  const studioOptions = useMemo(() => Array.from(new Set(displayProgramas.map(p => (p.estudio || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR")), [displayProgramas]);
+  const filteredDisplayProgramas = useMemo(() => {
+    if (!formEstudioFilter || formEstudioFilter === "todos") return displayProgramas;
+    return displayProgramas.filter(p => (p.estudio || "").trim().toLocaleLowerCase("pt-BR") === formEstudioFilter.trim().toLocaleLowerCase("pt-BR"));
+  }, [displayProgramas, formEstudioFilter]);
+
   const selectedProgPresenters = useMemo(() => {
     if (!formProgramaId) return [];
     const prog = displayProgramas.find(p => p.id === formProgramaId);
@@ -1711,8 +1717,9 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     const targetDateStr = occurrenceDateStr || evt.data;
     setFormData(targetDateStr ? new Date(targetDateStr + "T12:00:00") : new Date());
     setFormTitulo(evt.youtube_titulo || evt.programa?.nome || evt.descricao || "");
+    const linkedProgram = displayProgramas.find(p => String(p.id) === String(evt.programa_id));
     setFormProgramaId(evt.programa_id || "");
-    setFormEstudioFilter(evt.programa?.estudio || "todos");
+    setFormEstudioFilter(evt.programa?.estudio || linkedProgram?.estudio || "todos");
     setFormLocal(evt.local || "");
     setFormDescricao(evt.descricao || "");
 
@@ -3326,13 +3333,28 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
             {/* Scrollable Form Body */}
             <div className="overflow-y-auto flex-1 p-6 space-y-6">
-              {/* Campo Programa (DropDown com programas cadastrados) - Logo abaixo do título */}
-              <div className="space-y-1.5">
+              {/* Seleção de estúdio e programa vinculados ao evento */}
+              <div className="grid grid-cols-1 sm:grid-cols-[minmax(180px,0.8fr)_minmax(0,2fr)] gap-3">
+              <div className="space-y-1.5 min-w-0">
+                <label className="text-xs font-bold text-slate-700">Estúdio</label>
+                <Select value={formEstudioFilter} onValueChange={(val) => {
+                  setFormEstudioFilter(val);
+                  const current = displayProgramas.find(p => String(p.id) === String(formProgramaId));
+                  if (val !== "todos" && current && (current.estudio || "").trim().toLocaleLowerCase("pt-BR") !== val.trim().toLocaleLowerCase("pt-BR")) setFormProgramaId("");
+                }}>
+                  <SelectTrigger className="h-10 text-xs font-medium bg-slate-50 border-slate-200 rounded-xl w-full"><SelectValue placeholder="Selecione o estúdio" /></SelectTrigger>
+                  <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white max-h-64">
+                    <SelectItem value="todos">Todos os estúdios</SelectItem>
+                    {studioOptions.map(studio => <SelectItem key={studio} value={studio}>{studio}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
                   <span>Programa</span>
                   {formProgramaId && (
                     <span className="text-[10px] font-semibold text-[#0055ff] truncate max-w-[200px]">
-                      {displayProgramas.find(p => p.id === formProgramaId)?.nome}
+                      {displayProgramas.find(p => String(p.id) === String(formProgramaId))?.nome}
                     </span>
                   )}
                 </label>
@@ -3340,7 +3362,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                   value={formProgramaId}
                   onValueChange={(val) => {
                     setFormProgramaId(val);
-                    const prog = displayProgramas.find(p => p.id === val);
+                    const prog = displayProgramas.find(p => String(p.id) === String(val));
                     if (prog) {
                       if (!formTitulo || formTitulo.trim() === "" || displayProgramas.some(p => p.nome === formTitulo)) {
                         setFormTitulo(prog.nome);
@@ -3359,10 +3381,10 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                   }}
                 >
                   <SelectTrigger className="h-10 text-xs font-medium bg-slate-50 border-slate-200 rounded-xl w-full">
-                    <SelectValue placeholder={displayProgramas.length === 0 ? "Nenhum programa cadastrado" : "Selecione o Programa..."} />
+                    <SelectValue placeholder={filteredDisplayProgramas.length === 0 ? "Nenhum programa neste estúdio" : "Selecione o Programa..."} />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border border-slate-100 shadow-xl bg-white max-h-64">
-                    {displayProgramas.map((p) => (
+                    {filteredDisplayProgramas.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         <div className="flex flex-col text-left py-0.5">
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -3383,6 +3405,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              </div>
 
                 {/* Locutores / Apresentadores do programa em círculos com fundo #0055ff (mesma cor do botão Salvar) */}
                 {selectedProgPresenters.length > 0 && (
