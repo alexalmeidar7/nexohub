@@ -22,7 +22,7 @@ import {
   Radio,
 } from "lucide-react";
 import {
-  normalizeTo1080,
+  vectorizeWhiteLogo1080,
   dataUrlToFile,
   uploadToPngDataUrl,
 } from "@/services/logoTransformService";
@@ -141,7 +141,7 @@ export function LogoTransformModal({
         ];
 
         // Processamento local, sem chamada de IA/backend e sem consumo de créditos.
-        const locallyPrepared = await normalizeTo1080(origUrl);
+        const locallyPrepared = await vectorizeWhiteLogo1080(origUrl);
         setProgress(100);
 
         const v1: LogoTransformVersion = {
@@ -186,7 +186,7 @@ export function LogoTransformModal({
       const versionName = `Versão ${nextIndex.toString().padStart(2, "0")}`;
 
       // Novas versões são preparadas localmente; nenhuma chamada de IA é realizada.
-      const locallyPrepared = await normalizeTo1080(originalDataUrl);
+      const locallyPrepared = await vectorizeWhiteLogo1080(originalDataUrl);
       setProgress(100);
 
       const newVersion: LogoTransformVersion = {
@@ -294,7 +294,7 @@ export function LogoTransformModal({
               </DialogTitle>
               <DialogDescription className="text-xs text-blue-200/80 m-0">
                 {step === "preview"
-                  ? "Vetorização Flat Branco #FFFFFF • 1080×1080 • Alpha Transparente"
+                  ? "Logo flat branca #FFFFFF • PNG 1080×1080 • Fundo transparente"
                   : "Vincule a logo aprovada aos programas da emissora"}
               </DialogDescription>
             </div>
@@ -380,11 +380,11 @@ export function LogoTransformModal({
                         {progress < 20
                           ? "Preparando a imagem..."
                           : progress < 70
-                            ? "Vetorizando a logo..."
-                            : "Finalizando transparência..."}
+                            ? "Convertendo para flat branco..."
+                            : "Finalizando PNG transparente..."}
                       </span>
                       <span className="text-[11px] text-slate-400 max-w-xs">
-                        Vetorizando traços e gerando versão branca 1080×1080 com canal Alpha transparente.
+                        Removendo o fundo e convertendo a arte para branco puro com transparência.
                       </span>
                       <div className="h-2 w-full max-w-[220px] overflow-hidden rounded-full bg-slate-700" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Progresso do ajuste da logo">
                         <div
