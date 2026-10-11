@@ -523,13 +523,13 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                       fontSize: 12, fontWeight: 800, lineHeight: 1.25,
                       wordBreak: "break-word",
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-                      color: DARK,
+                      color: isOnAir ? "#FFFFFF" : DARK,
                       paddingRight: 0,
                     }}>{prog.nome || "Sem Nome"}</div>
                     <div style={{
                       fontSize: 10, marginTop: 4, fontWeight: 700,
                       fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                      color: "#64748B",
+                      color: isOnAir ? "rgba(255,255,255,0.78)" : "#64748B",
                       letterSpacing: 0.3,
                     }}>
                       {(prog.horarioInicio || "").slice(0, 5)} — {(prog.horarioFim || "").slice(0, 5)}
@@ -734,13 +734,13 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
   const diaAtual = DIAS_MAP[now.getDay()];
   const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-  // Update currentTimeStr every 30 seconds for real-time needle
+  // Atualiza o relógio a cada segundo para manter a agulha sincronizada
   useEffect(() => {
     const tick = () => {
       const n = new Date();
       setCurrentTimeStr(`${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}:${String(n.getSeconds()).padStart(2, "0")}`);
     };
-    const interval = setInterval(tick, 30000);
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1101,12 +1101,15 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
         const n = new Date();
         const currentMinutes = n.getHours() * 60 + n.getMinutes();
-        const dayFraction = currentMinutes / (24 * 60); // 0..1 across the day
+        const activeRow = tbody.querySelector<HTMLTableRowElement>('tr[data-needle-row="true"]');
+        if (!activeRow) { needle.style.display = "none"; return; }
 
+        // Alinha a agulha à linha real do horário, em vez de distribuir o tempo
+        // proporcionalmente pela altura total (que muda com células mescladas).
         const containerRect = container.getBoundingClientRect();
-        const tbodyRect = tbody.getBoundingClientRect();
-        const tbodyTop = tbodyRect.top - containerRect.top + container.scrollTop;
-        const top = tbodyTop + tbodyRect.height * dayFraction;
+        const rowRect = activeRow.getBoundingClientRect();
+        const fraction = Math.max(0, Math.min(1, currentMinutes % 30 / 30));
+        const top = rowRect.top - containerRect.top + container.scrollTop + rowRect.height * fraction;
 
         needle.style.display = "block";
         needle.style.top = `${top}px`;
