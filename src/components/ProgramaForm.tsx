@@ -451,12 +451,10 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
   return (
     <>
       <style>{`
-        .grade-cell { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
-        .grade-cell:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(10,37,64,0.10); border-color: ${CYAN} !important; }
-        .grade-cell:hover .grade-info-btn { background: ${LIME} !important; color: ${DARK} !important; }
-        .grade-onair-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:${LIME}; box-shadow:0 0 0 3px rgba(198,240,60,0.25); animation: gradePulse 1.4s ease-in-out infinite; margin-right:6px; vertical-align:middle; }
-        @keyframes gradePulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.55; transform:scale(1.35);} }
-        .grade-empty-cell { background: repeating-linear-gradient(135deg, ${CARD_BG} 0 8px, #EEFAFE 8px 16px) !important; }
+        .grade-cell { transition: background-color .15s ease; }
+        .grade-cell:hover { background: #EAF1FF !important; }
+        .grade-onair-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#FFFFFF; margin-right:6px; vertical-align:middle; }
+        .grade-empty-cell { background: #F7F9FC !important; }
       `}</style>
       <tbody>
         {gradeSlots.map((slot, rowIdx) => {
@@ -501,16 +499,10 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                         : zebra ? "#FFFFFF" : "#FAFDFE",
                       verticalAlign: "top",
                       padding: "8px 10px",
-                      borderRadius: 10,
-                      border: isOnAir
-                        ? `2px solid ${CYAN}`
-                        : `1px solid ${CARD_BG}`,
-                      borderLeft: isOnAir
-                        ? `4px solid ${LIME}`
-                        : `4px solid ${CYAN}`,
-                      boxShadow: isOnAir
-                        ? `0 6px 20px rgba(0,191,240,0.35), inset 0 0 0 1px rgba(198,240,60,0.15)`
-                        : `0 1px 2px rgba(10,37,64,0.04)`,
+                      borderRadius: 4,
+                      border: "none",
+                      borderLeft: `3px solid ${CYAN}`,
+                      boxShadow: "none",
                       cursor: "pointer",
                       position: "relative",
                     }}
@@ -519,7 +511,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     {isOnAir && (
                       <div style={{
                         position: "absolute", top: 6, right: 6,
-                        background: LIME, color: DARK,
+                        background: CYAN, color: "#FFFFFF",
                         fontSize: 8, fontWeight: 900, letterSpacing: 1,
                         padding: "2px 6px", borderRadius: 4,
                         textTransform: "uppercase",
@@ -531,13 +523,13 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                       fontSize: 12, fontWeight: 800, lineHeight: 1.25,
                       wordBreak: "break-word",
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-                      color: isOnAir ? "#FFFFFF" : DARK,
-                      paddingRight: isOnAir ? 60 : 0,
+                      color: DARK,
+                      paddingRight: 0,
                     }}>{prog.nome || "Sem Nome"}</div>
                     <div style={{
                       fontSize: 10, marginTop: 4, fontWeight: 700,
                       fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                      color: isOnAir ? CYAN : "rgba(10,37,64,0.55)",
+                      color: "#64748B",
                       letterSpacing: 0.3,
                     }}>
                       {(prog.horarioInicio || "").slice(0, 5)} — {(prog.horarioFim || "").slice(0, 5)}
@@ -549,15 +541,15 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                           display: "flex", alignItems: "center", gap: 6, marginTop: 6,
                         }}>
                           {presenter?.foto ? (
-                            <img src={presenter.foto} alt="" style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover", border: `1.5px solid ${isOnAir ? CYAN : CARD_BG}` }} />
+                            <img src={presenter.foto} alt="" style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover", border: "none" }} />
                           ) : (
-                            <div style={{ width: 18, height: 18, borderRadius: "50%", background: isOnAir ? "rgba(255,255,255,0.15)" : CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800, color: isOnAir ? "#FFFFFF" : DARK }}>
+                            <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800, color: isOnAir ? "#FFFFFF" : DARK }}>
                               {names[0]?.toUpperCase()}
                             </div>
                           )}
                           <div style={{
                             fontSize: 9, fontWeight: 700,
-                            color: isOnAir ? "rgba(255,255,255,0.85)" : "rgba(10,37,64,0.65)",
+                            color: "#475569",
                             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                             flex: 1, minWidth: 0,
                           }}>
@@ -581,8 +573,8 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
 
       {/* Detail popup */}
       {detailProg && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(10,37,64,0.55)", backdropFilter: "blur(4px)" }} onClick={() => setDetailProg(null)}>
-          <div className="rounded-3xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "#FFFFFF", padding: "24px", border: `1px solid ${CARD_BG}`, boxShadow: "0 20px 60px rgba(10,37,64,0.25)" }} onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(15,23,42,0.72)" }} onClick={() => setDetailProg(null)}>
+          <div className="rounded-2xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "#FFFFFF", padding: "24px", border: "none", boxShadow: "none" }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm rounded-full p-1.5" style={{ color: DARK, background: CARD_BG }}>
               <X size={16} />
             </button>
@@ -2487,7 +2479,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
             className="rounded-2xl overflow-auto max-h-[440px] grade-scroll"
             style={{ border: `1px solid ${CARD_BG}`, background: "#FFFFFF", position: "relative" }}
           >
-            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-[2px]">
+            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-y-0.5">
               <thead className="sticky top-0 z-10">
                 <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)` }}>
                   <th style={{ padding: "12px 12px", textAlign: "right", width: 78, fontSize: 9, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
