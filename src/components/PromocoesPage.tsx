@@ -7,8 +7,7 @@ import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Che
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
+import LazyRichTextEditor from "./LazyRichTextEditor";
 import DOMPurify from 'dompurify';
 
 const CYAN = "#0055ff";
@@ -410,7 +409,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <div>
               <label style={labelStyle}>Texto da Promoção</label>
               <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#0055ff]">
-                <ReactQuill
+                <LazyRichTextEditor
                   key={`texto-${editingId || "novo"}`}
                   theme="snow"
                   value={form.texto}
@@ -429,7 +428,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <div>
               <label style={labelStyle}>Oferecimento / Patrocínio</label>
               <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#0055ff]">
-                <ReactQuill
+                <LazyRichTextEditor
                   key={`oferecimento-${editingId || "novo"}`}
                   theme="snow"
                   value={form.oferecimento}
