@@ -172,7 +172,13 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const loadData = async () => {
     if (!ownerId) return;
-    setLoading(true);
+    const cachedItems = getStoredPromos(ownerId).filter(p => p.user_id === ownerId);
+    if (cachedItems.length > 0) {
+      setItems(cachedItems);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     let itemsList: Promocao[] = [];
     let onlineLoaded = false;
     try {
