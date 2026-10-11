@@ -1769,24 +1769,45 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                         target.src = "/default-sponsor-logo.png";
                                       }}
                                     />
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        dragItem.current = logo;
-                                        toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." });
-                                      }}
-                                      className="absolute top-1.5 left-1.5 bg-[#0055ff] hover:bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:scale-110"
-                                      title="Copiar para outro programa"
-                                    >
-                                      <Copy size={11} />
-                                    </button>
-                                    <button
-                                      onClick={() => handleSoftDelete(logo.id)}
-                                      className="absolute top-1.5 right-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:scale-110"
-                                      title="Excluir"
-                                    >
-                                      <Trash2 size={11} />
-                                    </button>
+                                    <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/65 p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          dragItem.current = logo;
+                                          toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." });
+                                        }}
+                                        className="flex flex-col items-center justify-center gap-1 rounded-lg bg-[#0055ff] hover:bg-blue-600 text-white px-2 py-2 text-[9px] font-bold transition-colors"
+                                        title="Copiar para outro programa"
+                                      >
+                                        <Copy size={14} />
+                                        <span>Copiar</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSoftDelete(logo.id);
+                                        }}
+                                        className="flex flex-col items-center justify-center gap-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white px-2 py-2 text-[9px] font-bold transition-colors"
+                                        title="Deletar logo"
+                                      >
+                                        <Trash2 size={14} />
+                                        <span>Deletar</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          startFullEdit(logo);
+                                        }}
+                                        className="flex flex-col items-center justify-center gap-1 rounded-lg bg-white hover:bg-slate-100 text-slate-900 px-2 py-2 text-[9px] font-bold transition-colors"
+                                        title="Ajustar logo"
+                                      >
+                                        <Settings2 size={14} />
+                                        <span>Ajustar logo</span>
+                                      </button>
+                                    </div>
                                   </div>
                                   {logo.nome && (
                                     <p className="text-[11px] font-bold text-[#002132] truncate">
@@ -1800,14 +1821,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                   >
                                     {diasRestantes > 0 ? `${diasRestantes}d restantes` : "Expirando"}
                                   </span>
-                                  <div>
-                                    <button
-                                      onClick={() => startFullEdit(logo)}
-                                      className="text-[10px] font-semibold text-slate-400 hover:text-[#0055ff] inline-flex items-center gap-1 transition-colors cursor-pointer"
-                                    >
-                                      <Pencil size={10} /> Editar
-                                    </button>
-                                  </div>
+
                                 </div>
                               );
                             })}
