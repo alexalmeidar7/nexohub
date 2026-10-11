@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import { CalendarIcon, CalendarDays, Plus, Trash2, MapPin, Users, User, Instagram, Pencil, X, AlertTriangle, History, Star, Video, Bell, AlignLeft, Briefcase, Link as LinkIcon, List, Clock, Eye, Radio, Repeat } from "lucide-react";
+import { CalendarIcon, CalendarDays, Plus, Trash2, MapPin, Users, User, Instagram, Pencil, X, AlertTriangle, History, Star, Video, Bell, AlignLeft, Briefcase, Link as LinkIcon, List, Clock, Eye, Radio, Repeat, ScrollText, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, isSameDay, addMinutes } from "date-fns";
