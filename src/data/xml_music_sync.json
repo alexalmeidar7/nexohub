@@ -1,0 +1,24 @@
+{
+  "interativafm": {
+    "titulo": "BOOM BOOM POW!",
+    "artista": "BLACK EYED PEAS",
+    "duracao": 252,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/16/8c/bf168c92-3c1d-6e8a-e9fa-54d90956b63d/00602527052950.rgb.jpg/600x600bb.jpg",
+    "horario": "23:30",
+    "startTime": 1789961909101,
+    "source": "pasta",
+    "deviceName": "IN - LIVE 2",
+    "updated_at": "2026-10-10T22:25:46.526Z"
+  },
+  "b2f70324-d086-4a5d-a407-cbc4acf98dce": {
+    "titulo": "BOOM BOOM POW!",
+    "artista": "BLACK EYED PEAS",
+    "duracao": 252,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/16/8c/bf168c92-3c1d-6e8a-e9fa-54d90956b63d/00602527052950.rgb.jpg/600x600bb.jpg",
+    "horario": "23:30",
+    "startTime": 1789961909101,
+    "source": "pasta",
+    "deviceName": "IN - LIVE 2",
+    "updated_at": "2026-10-10T22:25:46.526Z"
+  }
+}
