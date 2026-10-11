@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search, Copy, Sparkles } from "lucide-react";
+import { Loader2, Trash2, Plus, Pencil, Check, X, Upload, ChevronDown, RotateCcw, Search, Copy, Settings2 } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1504,10 +1504,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       if (!isProgramSelected) return;
                       clientLogoInputRef.current?.click();
                     }}
-                    className={`group/ajustar w-20 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all select-none shrink-0 ${
+                    className={`group/ajustar h-[72px] min-w-[154px] px-4 rounded-xl flex flex-row gap-2.5 items-center justify-center cursor-pointer transition-colors select-none shrink-0 border ${
                       isProgramSelected
-                        ? "bg-[#0055ff] border-2 border-[#0055ff] text-white shadow-[0_4px_14px_rgba(0,85,255,0.3)] hover:brightness-110 hover:shadow-[0_6px_20px_rgba(0,85,255,0.45)] active:scale-95"
-                        : "bg-[#f8fafc] border-2 border-dashed border-slate-200 text-slate-400 cursor-not-allowed opacity-50 shadow-none"
+                        ? "bg-white border-[#d6e0ed] text-[#0055ff] hover:bg-blue-50"
+                        : "bg-[#f8fafc] border-slate-200 text-slate-400 cursor-not-allowed opacity-50"
                     }`}
                     title={
                       isProgramSelected
@@ -1515,8 +1515,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                         : "Selecione um programa para habilitar o ajuste da logo"
                     }
                   >
-                    <Sparkles size={18} className="transition-transform duration-300 group-hover/ajustar:rotate-12 group-hover/ajustar:scale-125" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide leading-tight text-center mt-1">Ajustar Logo</span>
+                    <Settings2 size={18} />
+                    <span className="text-[11px] font-bold uppercase tracking-wide leading-tight">Ajustar Logo</span>
                     <input
                       ref={clientLogoInputRef}
                       type="file"
