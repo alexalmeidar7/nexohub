@@ -234,7 +234,27 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   }, [user, effectiveUserId]);
 
   const loadData = async (targetUserId = dataUserId || effectiveUserId || user?.id) => {
-    setLoading(true);
+    const stationUid = resolveStationUid(targetUserId, effectiveUserId, user) || targetUserId || effectiveUserId || user?.id || "";
+    const stationSlug = resolveStationSlug(targetUserId, effectiveUserId, user);
+    const cachedMap = new Map<string, Logo>();
+    for (const cacheKey of Array.from(new Set([stationUid, stationSlug, targetUserId, effectiveUserId, user?.id].filter(Boolean) as string[]))) {
+      getLocalLogos(cacheKey).forEach((logo) => cachedMap.set(logo.id, logo));
+    }
+    const cachedLogos = Array.from(cachedMap.values());
+    if (cachedLogos.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 180);
+      const expired = (logo: Logo) => Boolean(logo.data_final && new Date(logo.data_final + "T23:59:59").getTime() < today.getTime());
+      setLogos(cachedLogos.filter((logo) => !logo.excluido && !expired(logo)));
+      setExcludedLogos(cachedLogos.filter((logo) =>
+        (logo.excluido && logo.excluido_at && new Date(logo.excluido_at) > cutoff) || (!logo.excluido && expired(logo))
+      ));
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     try {
       let lData: any[] = [];
       let pData: any[] = [];
@@ -243,9 +263,6 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       void supabase.rpc("cleanup_comercial").then(({ error }) => {
         if (error) console.warn("Limpeza comercial adiada:", error.message);
       }).catch(() => {});
-
-      const stationUid = resolveStationUid(targetUserId, effectiveUserId, user) || targetUserId || effectiveUserId || user?.id || "";
-      const stationSlug = resolveStationSlug(targetUserId, effectiveUserId, user);
 
       // 1. Check database table first
       const dbTargetId = stationUid || targetUserId;
