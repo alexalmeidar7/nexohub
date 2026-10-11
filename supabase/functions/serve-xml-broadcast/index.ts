@@ -1276,7 +1276,7 @@ Deno.serve(async (req) => {
     )}</locutor_foto>`);
     lines.push(`      <horario>${esc(aSeguirHorario)}</horario>`);
     lines.push(`      <texto>${esc(aSeguirTexto)}</texto>`);
-    lines.push(`      <intervalo_atualizacao>${aSeguirRefreshSeconds}</intervalo_atualizacao>`);
+    lines.push(`      <intervalo_atualizacao>60</intervalo_atualizacao>`);
     lines.push(`      <atualizado_em>${esc(new Date().toISOString())}</atualizado_em>`);
     lines.push("    </a_seguir>");
     lines.push("  </dados>");
