@@ -2359,7 +2359,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
                 </tr>
               </thead>
               <tbody>
-                {sortedProgramas.slice(0, 6).map((p, i) => (
+                {sortedProgramas.map((p, i) => (
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
                     <td style={{ padding: "10px 14px", fontWeight: 700 }}>
                       <div className="flex items-center gap-3">
