@@ -3772,6 +3772,17 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                         />
                       </div>
                     </div>
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={handleCreateRoteiroFromEvento}
+                        disabled={creatingRoteiro || !formProgramaId || !formData}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#0055ff] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#0042A3] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {creatingRoteiro ? <Loader2 size={14} className="animate-spin" /> : <ScrollText size={14} />}
+                        {creatingRoteiro ? "Abrindo roteiro..." : roteiroJaExiste ? "Abrir roteiro do programa" : "Criar roteiro do programa"}
+                      </button>
+                    </div>
                 </div>
               )}
 
