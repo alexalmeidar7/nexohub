@@ -10,6 +10,7 @@ import {
   Check,
   RotateCw,
   Sparkles,
+  Settings2,
   Layers,
   AlertCircle,
   Loader2,
@@ -21,7 +22,7 @@ import {
   Radio,
 } from "lucide-react";
 import {
-  transformLogoWithBackend,
+  normalizeTo1080,
   dataUrlToFile,
   uploadToPngDataUrl,
 } from "@/services/logoTransformService";
@@ -139,28 +140,16 @@ export function LogoTransformModal({
           },
         ];
 
-        // Trigger first transformation (version_01)
-        const res = await transformLogoWithBackend({
-          originalDataUrl: origUrl,
-          sessionId: sid,
-          version: "version_01",
-        });
+        // Processamento local, sem chamada de IA/backend e sem consumo de créditos.
+        const locallyPrepared = await normalizeTo1080(origUrl);
         setProgress(100);
-
-        if (res.error) {
-          setTransformFailed(true);
-          setErrorMessage(
-            `Não foi possível ajustar a logo automaticamente: ${res.error}. A imagem enviada foi mantida sem alterações.`
-          );
-        }
-
 
         const v1: LogoTransformVersion = {
           id: "version_01",
-          name: "Versão 01",
-          dataUrl: res.imageBase64,
+          name: "Versão preparada",
+          dataUrl: locallyPrepared,
           status: "ready",
-          isAiGenerated: res.isAiGenerated,
+          isAiGenerated: false,
         };
 
         setVersions([...initialVersionsList, v1]);
@@ -196,29 +185,16 @@ export function LogoTransformModal({
       const versionKey = `version_${nextIndex.toString().padStart(2, "0")}`;
       const versionName = `Versão ${nextIndex.toString().padStart(2, "0")}`;
 
-      // Call backend with ORIGINAL data URL strictly
-      const res = await transformLogoWithBackend({
-        originalDataUrl,
-        sessionId,
-        version: versionKey,
-        isRetry: true,
-      });
+      // Novas versões são preparadas localmente; nenhuma chamada de IA é realizada.
+      const locallyPrepared = await normalizeTo1080(originalDataUrl);
       setProgress(100);
-
-      if (res.error) {
-        setTransformFailed(true);
-        setErrorMessage(
-          `Não foi possível ajustar a logo automaticamente: ${res.error}. A imagem enviada foi mantida sem alterações.`
-        );
-      }
-
 
       const newVersion: LogoTransformVersion = {
         id: versionKey,
         name: versionName,
-        dataUrl: res.imageBase64,
+        dataUrl: locallyPrepared,
         status: "ready",
-        isAiGenerated: res.isAiGenerated,
+        isAiGenerated: false,
       };
 
       setVersions((prev) => [...prev, newVersion]);
