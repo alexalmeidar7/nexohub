@@ -1586,7 +1586,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
             `}</style>
             <div className="w-full overflow-hidden rounded-[24px] bg-black text-white" style={{ border: "1px solid #1e293b" }}>
               <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-                <div className="relative w-full aspect-video min-h-[200px] md:min-h-0 bg-black overflow-hidden">
+                <div className="relative w-full min-h-[280px] md:min-h-[360px] self-stretch bg-black overflow-hidden flex items-center justify-center">
                   {videoStreamUrl ? <VideoLivePreview streamUrl={videoStreamUrl} reloadKey={reloadKey} /> : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
                       <div className="h-10 w-10 rounded-full border-[3px] border-blue-500/25 border-t-blue-500 animate-spin" />
@@ -1598,7 +1598,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                 <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 md:p-6">
                   {empresaLogo && <div className="flex h-9 items-center justify-start border-b border-white/10 pb-3"><img src={empresaLogo} alt="Logo da emissora" className="h-8 max-w-[150px] object-contain object-left" /></div>}
                   <div className="min-h-[64px] flex items-center gap-3">
-                    {locutorFoto ? <img src={locutorFoto} alt={displayLocutor} className="h-[68px] w-[68px] shrink-0 rounded-xl object-contain object-bottom" /> : <div className="h-[68px] w-[68px] shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-blue-400"><Mic size={24} /></div>}
+                    {locutorFoto ? <img src={locutorFoto} alt={displayLocutor} className="h-[68px] w-[68px] shrink-0 rounded-xl object-contain object-bottom bg-white/[0.04]" /> : <div className="h-[68px] w-[68px] shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-blue-400"><Mic size={24} /></div>}
                     <div key={showOnAirProgram ? "program" : "presenter"} className="broadcast-info-transition min-w-0">
                       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-400">{showOnAirProgram ? "Programa no ar" : "Locutor no ar"}</p>
                       <p className="mt-1 text-base sm:text-lg font-extrabold leading-tight break-words">{showOnAirProgram ? (onAirProgram?.nome || programaNome || "Programação ao vivo") : displayLocutor}</p>
@@ -2594,7 +2594,7 @@ function MockupPreview({
                 whiteSpace: "nowrap",
                 paddingLeft: "100%",
                 lineHeight: "28px",
-                animation: `tickerSlide ${Math.max(20, Math.round(composedTicker.length * 0.22))}s linear infinite`,
+                animation: `tickerSlide ${Math.max(35, Math.round(composedTicker.length * 0.45))}s linear infinite`,
               }}
             >
               <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#0A2540", opacity: 1 }}>
