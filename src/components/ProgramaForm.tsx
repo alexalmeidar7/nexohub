@@ -1746,7 +1746,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
   };
 
   return (
-    <div className="animate-fade-in space-y-8 max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="animate-fade-in space-y-8 w-full max-w-none mx-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cadastro de Programas
@@ -2482,18 +2482,18 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
           `}</style>
           <div
             ref={gradeRef}
-            className="rounded-2xl overflow-auto max-h-[440px] grade-scroll"
+            className="rounded-2xl overflow-y-auto max-h-[440px] w-full grade-scroll"
             style={{ border: `1px solid ${CARD_BG}`, background: "#FFFFFF", position: "relative" }}
           >
-            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-y-0.5">
+            <table data-no-row-hover className="w-full table-fixed text-xs border-separate border-spacing-y-0.5" style={{ width: "100%", minWidth: 0, tableLayout: "fixed" }}>
               <thead className="sticky top-0 z-10">
                 <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)` }}>
-                  <th style={{ padding: "12px 12px", textAlign: "right", width: 78, fontSize: 9, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
+                  <th style={{ padding: "10px 6px", textAlign: "right", width: 58, fontSize: 9, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => {
                     const isToday = dia === diaAtual;
                     return (
                       <th key={dia} style={{
-                        padding: "10px 8px", textAlign: "center", fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase",
+                        padding: "10px 3px", textAlign: "center", fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase",
                         color: isToday ? DARK : "#FFFFFF",
                         background: isToday ? LIME : "transparent",
                         borderBottom: isToday ? `3px solid ${DARK}` : "3px solid transparent",
