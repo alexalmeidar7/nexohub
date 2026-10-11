@@ -623,7 +623,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [transitionStyle, setTransitionStyle] = useState<string>(() => localStorage.getItem("vmix_transition_style") || "Fade");
   const [transitionDuration, setTransitionDuration] = useState<number>(() => Number(localStorage.getItem("vmix_transition_duration") || 1000));
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">("controls");
+  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">("scenes");
 
   useEffect(() => {
     const handleHeaderAction = (event: Event) => {
