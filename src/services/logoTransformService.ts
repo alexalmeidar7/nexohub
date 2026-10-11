@@ -130,14 +130,19 @@ export async function vectorizeWhiteLogo1080(dataUrl: string): Promise<string> {
   const px = image.data;
   const total = size * size;
   const samples: number[][] = [];
-  for (let x = 0; x < size; x += 8) {
-    for (const y of [0, 1, size - 2, size - 1]) {
+  const left = Math.max(0, Math.round((size - w) / 2));
+  const top = Math.max(0, Math.round((size - h) / 2));
+  const right = Math.min(size - 1, left + w - 1);
+  const bottom = Math.min(size - 1, top + h - 1);
+  // Sample the edges of the uploaded artwork (not the transparent canvas padding).
+  for (let x = left; x <= right; x += 8) {
+    for (const y of [top, Math.min(bottom, top + 1), Math.max(top, bottom - 1), bottom]) {
       const i = (y * size + x) * 4;
       if (px[i + 3] > 200) samples.push([px[i], px[i + 1], px[i + 2]]);
     }
   }
-  for (let y = 0; y < size; y += 8) {
-    for (const x of [0, 1, size - 2, size - 1]) {
+  for (let y = top; y <= bottom; y += 8) {
+    for (const x of [left, Math.min(right, left + 1), Math.max(left, right - 1), right]) {
       const i = (y * size + x) * 4;
       if (px[i + 3] > 200) samples.push([px[i], px[i + 1], px[i + 2]]);
     }
