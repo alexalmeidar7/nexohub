@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import type { ComponentType } from "react";
 
-type EditorComponent = React.ComponentType<any>;
+type EditorComponent = ComponentType<any>;
 let editorPromise: Promise<EditorComponent> | null = null;
 
 function loadEditor(): Promise<EditorComponent> {
