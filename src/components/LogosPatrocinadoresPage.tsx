@@ -281,15 +281,19 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-logos?user_id=${stationUid}`,
         ];
 
-        for (const url of candidateUrls) {
-          if (lData.length > 0) break;
+        const xmlResponses = await Promise.all(candidateUrls.map(async (url) => {
           try {
             const resXml = await fetch(url, {
               signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined,
             });
-            if (resXml.ok) {
-              const xmlText = await resXml.text();
-              if (xmlText.includes("<programa") && xmlText.includes("<logo")) {
+            return resXml.ok ? await resXml.text() : "";
+          } catch {
+            return "";
+          }
+        }));
+        for (const xmlText of xmlResponses) {
+          if (lData.length > 0) break;
+          if (xmlText.includes("<programa") && xmlText.includes("<logo")) {
                 const progMatches = [...xmlText.matchAll(/<programa id="([^"]+)">([\s\S]*?)<\/programa>/g)];
                 for (const m of progMatches) {
                   const content = m[2];
@@ -330,10 +334,6 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                     }
                   }
                 }
-              }
-            }
-          } catch (err) {
-            // Silently continue to next candidate
           }
         }
       }
