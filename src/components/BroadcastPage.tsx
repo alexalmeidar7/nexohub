@@ -1593,7 +1593,6 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                       <span className="text-xs font-semibold text-white/70">Aguardando vídeo ao vivo…</span>
                     </div>
                   )}
-                  {videoStreamUrl && <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider"><span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" /> Prévia ao vivo</div>}
                 </div>
                 <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5 md:p-6">
                   {empresaLogo && <div className="flex h-9 items-center justify-start border-b border-white/10 pb-3"><img src={empresaLogo} alt="Logo da emissora" className="h-8 max-w-[150px] object-contain object-left" /></div>}
