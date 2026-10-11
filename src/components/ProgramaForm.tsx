@@ -451,9 +451,10 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
   return (
     <>
       <style>{`
-        .grade-cell { transition: background-color .15s ease; }
-        .grade-cell:hover { background: #EAF1FF !important; }
-        .grade-onair-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#FFFFFF; margin-right:6px; vertical-align:middle; }
+        .grade-cell { transition: outline-color .15s ease; outline: 1px solid transparent; outline-offset: -1px; }
+        .grade-cell:hover { outline: 1px solid #0055ff !important; }
+        .grade-onair-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#1685ff; box-shadow: 0 0 0 2px rgba(22,133,255,.18); animation: grade-onair-pulse 1.25s ease-in-out infinite; vertical-align:middle; }
+        @keyframes grade-onair-pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
         .grade-empty-cell { background: #F7F9FC !important; }
       `}</style>
       <tbody>
@@ -509,15 +510,12 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                     onClick={() => setDetailProg(prog)}
                   >
                     {isOnAir && (
-                      <div style={{
-                        position: "absolute", top: 6, right: 6,
-                        background: CYAN, color: "#FFFFFF",
-                        fontSize: 8, fontWeight: 900, letterSpacing: 1,
-                        padding: "2px 6px", borderRadius: 4,
-                        textTransform: "uppercase",
-                      }}>
-                        <span className="grade-onair-dot" />AO VIVO
-                      </div>
+                      <span
+                        className="grade-onair-dot"
+                        title="Programa no ar"
+                        aria-label="Programa no ar"
+                        style={{ position: "absolute", top: 8, right: 8 }}
+                      />
                     )}
                     <div style={{
                       fontSize: 12, fontWeight: 800, lineHeight: 1.25,
@@ -549,7 +547,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
                           )}
                           <div style={{
                             fontSize: 9, fontWeight: 700,
-                            color: "#475569",
+                            color: isOnAir ? "#FFFFFF" : "#475569",
                             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                             flex: 1, minWidth: 0,
                           }}>
