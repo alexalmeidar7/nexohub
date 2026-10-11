@@ -3489,10 +3489,10 @@ function SwitcherUI({
                   setSavedUrl("");
                   navigate("/vmix-control");
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:brightness-125"
+                className="flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:brightness-125" title="Voltar" aria-label="Voltar"
                 style={{ backgroundColor: "#141414", color: "#C6F03C", border: "1px solid #C6F03C35" }}
               >
-                <RefreshCw size={13} /> VOLTAR
+                <ChevronLeft size={16} />
               </button>
 
               <div className="w-px h-4 bg-white/10 mx-2" />
