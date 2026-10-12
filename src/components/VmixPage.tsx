@@ -3109,33 +3109,55 @@ function SwitcherUI({
         duracao: track.duracao,
       });
     };
+    const hasTrackData = (track: any) => !!(track && (track.titulo || track.artista || track.capa));
+    const sameTrack = (a: any, b: any) =>
+      (a?.titulo || "") === (b?.titulo || "") &&
+      (a?.artista || "") === (b?.artista || "") &&
+      (a?.capa || "") === (b?.capa || "") &&
+      Number(a?.duracao || 0) === Number(b?.duracao || 0);
     const readLatestMusic = () => {
-      const playerState = (window as any).__lastPlayerMusicState;
-      const playerTrack = playerState?.currentMusic;
-      if (playerTrack && (playerTrack.titulo || playerTrack.artista || playerTrack.capa)) {
-        applyTrack(playerTrack, playerState.displayArt);
-        return;
-      }
+      // Fonte principal: armazenamento compartilhado escrito pela tela Música no Ar.
+      // Ler novamente a cada evento evita manter __lastPlayerMusicState obsoleto em primeiro plano.
       const storedTrack = musicDataUserIds
         .map((id) => readMusicData(id))
-        .find((track) => !!(track?.titulo || track?.artista || track?.capa));
-      if (storedTrack) applyTrack(storedTrack);
+        .find((track) => hasTrackData(track));
+      if (storedTrack) {
+        setLiveTrackData((previous) => sameTrack(previous, storedTrack) ? previous : {
+          titulo: storedTrack.titulo || "",
+          artista: storedTrack.artista || "",
+          capa: storedTrack.capa || "",
+          duracao: storedTrack.duracao,
+        });
+        return;
+      }
+      // Fallback somente quando ainda não há faixa salva; nunca sobrescreve dados persistidos atuais.
+      const playerState = (window as any).__lastPlayerMusicState;
+      const playerTrack = playerState?.currentMusic;
+      if (hasTrackData(playerTrack)) {
+        const fallback = { ...playerTrack, capa: playerTrack.capa || playerState.displayArt || "" };
+        setLiveTrackData((previous) => sameTrack(previous, fallback) ? previous : fallback);
+      }
     };
     const onPlayerMusic = (event: Event) => {
       const detail = (event as CustomEvent).detail;
-      const track = detail?.currentMusic || detail;
-      if (track) applyTrack(track, detail?.displayArt);
-      else readLatestMusic();
+      // O evento pode chegar antes da gravação no storage; reler em seguida no polling/evento de storage.
+      if (detail?.userId && !musicDataUserIds.includes(detail.userId)) return;
+      readLatestMusic();
+    };
+    const onStoredMusic = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.userId && !musicDataUserIds.includes(detail.userId)) return;
+      readLatestMusic();
     };
     readLatestMusic();
     window.addEventListener("player:music", onPlayerMusic as EventListener);
-    window.addEventListener(MUSIC_DATA_EVENT, readLatestMusic);
+    window.addEventListener(MUSIC_DATA_EVENT, onStoredMusic as EventListener);
     window.addEventListener("storage", readLatestMusic);
     const intervalId = window.setInterval(readLatestMusic, 1000);
     return () => {
       disposed = true;
       window.removeEventListener("player:music", onPlayerMusic as EventListener);
-      window.removeEventListener(MUSIC_DATA_EVENT, readLatestMusic);
+      window.removeEventListener(MUSIC_DATA_EVENT, onStoredMusic as EventListener);
       window.removeEventListener("storage", readLatestMusic);
       window.clearInterval(intervalId);
     };
