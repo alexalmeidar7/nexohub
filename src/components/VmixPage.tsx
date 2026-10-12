@@ -3477,52 +3477,7 @@ function SwitcherUI({
 
             {/* Navigation controls moved to the main logo header in VmixControl. */}
 
-              {/* Status Indicator (Now part of the main button group) */}
-              <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e]/50 border border-white/5">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C] shadow-[0_0_10px_rgba(198,240,60,0.7)]" : "bg-[#555]"}`} />
-                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: connected ? "#C6F03C" : "#777" }}>
-                    {connected ? "STATUS: CONECTADO" : "STATUS: DESCONECTADO"}
-                  </span>
-                </div>
 
-                {connected && (
-                  <>
-                    <div className="w-px h-3 bg-white/10" />
-                    <div className="flex items-center gap-2">
-                      <Activity size={12} className="text-white/20" />
-                      <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
-                        Latência: <span className="text-white/80">18ms</span>
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Digital Clock */}
-              <div className="flex items-center ml-auto pr-2">
-                <div 
-                  className="px-4 py-1.5 rounded-xl bg-black/40 border border-white/5 shadow-inner"
-                  style={{ minWidth: '120px', textAlign: 'center' }}
-                >
-                  <span 
-                    className="text-2xl tracking-widest drop-shadow-[0_0_10px_rgba(198,240,60,0.45)]"
-                    style={{ 
-                      fontFamily: "'Digital-7', monospace",
-                      fontVariantNumeric: "tabular-nums",
-                      color: "#C6F03C"
-                    }}
-                  >
-                    {currentTime.toLocaleTimeString('pt-BR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit', 
-                      second: '2-digit',
-                      hour12: false 
-                    })}
-                  </span>
-                </div>
-
-              </div>
 
             </div>
           </div>
