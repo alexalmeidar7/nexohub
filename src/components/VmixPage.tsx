@@ -2718,10 +2718,6 @@ function AudioMonitorButton({
   const dbColor = averageDb > -5 ? "#fb7185" : averageDb > -14 ? "#fbbf24" : "#5eead4";
   const monitorName = button?.nome || `Áudio · Input ${input}`;
 
-  // Leitura direta do armazenamento usado pela página Música no Ar.
-  // O valor é resolvido no escopo do render imediatamente antes do JSX.
-  const liveTrackData = readMusicData(user?.id);
-
   return (
     <div
       className="group/custom relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_16px_32px_rgba(20,184,166,0.16)]"
@@ -3433,6 +3429,9 @@ function SwitcherUI({
   const statusColor = connStatus === "online" ? "#22c55e" : connStatus === "connecting" ? "#f59e0b" : "#ef4444";
   const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
   const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
+
+  // Lê os dados compartilhados pela página Música no Ar no escopo principal da página.
+  const liveTrackData = readMusicData(user?.id);
 
   const SwitcherStatusPill = ({ compact = false }: { compact?: boolean }) => (
     <div
