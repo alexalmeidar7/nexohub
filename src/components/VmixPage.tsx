@@ -4289,9 +4289,6 @@ function SwitcherUI({
                         return (
                         <div key={studio}>
                           <div className="flex items-center gap-2 mb-3">
-                            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded" style={{ backgroundColor: "rgba(198,240,60,0.12)", color: "#C6F03C", border: "1px solid rgba(198,240,60,0.3)" }}>
-                              {studio}
-                            </span>
                             <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                             <button type="button" aria-label="Rolar presets para a esquerda" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: -360, behavior: "smooth" })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" title="Anterior"><ChevronLeft size={16} /></button>
                             <button type="button" aria-label="Rolar presets para a direita" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: 360, behavior: "smooth" })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" title="Próximo"><ChevronDown size={16} className="-rotate-90" /></button>
@@ -4408,17 +4405,6 @@ function SwitcherUI({
                               </div>
                             )}
 
-                            {prog.estudio && (
-                              <div className="absolute top-1.5 right-1.5 z-[2]">
-                                <span className="text-[6px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded"
-                                  style={{
-                                    backgroundColor: progOnAir ? "rgba(255,255,255,0.22)" : "rgba(198,240,60,0.14)",
-                                    color: progOnAir ? "#fff" : "#C6F03C",
-                                    border: `1px solid ${progOnAir ? "rgba(255,255,255,0.35)" : "rgba(198,240,60,0.35)"}`,
-                                  }}
-                                >{prog.estudio.toLowerCase().includes("fm") ? "FM" : prog.estudio.toLowerCase().includes("podcast") ? "PODCAST" : prog.estudio}</span>
-                              </div>
-                            )}
                             {!isPodcastStudio && remaining !== null && (
                               <div
                                 className="absolute bottom-1.5 right-1.5 z-[3] flex items-center gap-1 rounded-md px-2 py-1 shadow-lg"
