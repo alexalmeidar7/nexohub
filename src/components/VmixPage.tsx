@@ -4426,21 +4426,31 @@ function SwitcherUI({
                               </div>
                             )}
 
-                            {prog.dias_semana && prog.dias_semana.length > 0 && (
-                              <div className="absolute bottom-1.5 left-1.5 flex items-center gap-[2px] z-[1]">
-                                {["dom","seg","ter","qua","qui","sex","sáb"].map((d, i) => {
-                                  const active = prog.dias_semana!.some(ds => {
-                                    const n = ds.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3);
-                                    return n === d;
-                                  });
-                                  return (
-                                    <span key={i} className="text-[5px] font-bold uppercase leading-none px-[2px] py-[1px] rounded-sm"
-                                      style={{ backgroundColor: active ? "rgba(255,255,255,0.15)" : "transparent", color: active ? "#fff" : "#555" }}
-                                    >{d[0].toUpperCase()}</span>
-                                  );
-                                })}
-                              </div>
-                            )}
+                            {prog.dias_semana && prog.dias_semana.length > 0 && (() => {
+                              const normalizeDay = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim().slice(0, 3);
+                              const aliases: Record<string, string> = {
+                                dom: "dom", domingo: "dom", seg: "seg", segunda: "seg", "segunda-feira": "seg",
+                                ter: "ter", terca: "ter", qua: "qua", quarta: "qua", qui: "qui", quinta: "qui",
+                                sex: "sex", sexta: "sex", sab: "sab", sabado: "sab",
+                              };
+                              const selected = new Set(prog.dias_semana!.map(day => aliases[normalizeDay(day)] || normalizeDay(day)));
+                              const week = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+                              const days = week.filter(day => selected.has(day));
+                              const label = days.length === 7
+                                ? "todos os dias"
+                                : days.length === 5 && ["seg", "ter", "qua", "qui", "sex"].every(day => selected.has(day))
+                                  ? "seg/sex"
+                                  : days.length === 6 && ["seg", "ter", "qua", "qui", "sex", "sab"].every(day => selected.has(day))
+                                    ? "seg/sáb"
+                                    : days.length === 2 && selected.has("sab") && selected.has("dom")
+                                      ? "sáb/dom"
+                                      : days.join("/");
+                              return label ? (
+                                <div className="absolute bottom-1.5 left-1.5 z-[1] max-w-[calc(100%-12px)] truncate rounded-sm bg-black/45 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-white/90">
+                                  {label}
+                                </div>
+                              ) : null;
+                            })()}
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 p-2 pt-6 pb-4">
 
                               <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight"
