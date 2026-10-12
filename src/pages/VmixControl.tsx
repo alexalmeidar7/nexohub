@@ -142,8 +142,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
     <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
       <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
         <div className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8" style={{ backgroundColor: "#242424" }}>
-          <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[17px] w-auto max-w-full object-contain object-left" />
-          <div className="ml-6 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("vmix-control-header-action", { detail: "automation" }))} className="flex h-9 items-center gap-2 rounded-lg bg-[#0042A3] px-3 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Automação">
               <Cpu size={14} /> <span>Automação</span>
             </button>
@@ -154,6 +153,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
               <ChevronLeft size={17} />
             </button>
           </div>
+          <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none absolute left-1/2 top-1/2 block h-auto max-h-[19px] w-auto max-w-[38%] -translate-x-1/2 -translate-y-1/2 object-contain" />
           {user && (
             <div className="ml-auto flex items-center gap-3 pl-4">
               <div className="relative group/account">
