@@ -472,7 +472,6 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
-  const musicClientAccount = useMemo(() => user ? (findClientAccountByEmail(user.email || "") || findClientAccountById(user.id)) : null, [user?.id, user?.email]);
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
   const [vmixUser, setVmixUser] = useState("");
@@ -3434,14 +3433,17 @@ function SwitcherUI({
 
   // Segue a mesma identidade de emissora usada em Música no Ar, evitando mostrar uma faixa antiga do usuário errado.
   const musicDataUserIds = useMemo(() => {
+    const clientAccount = user
+      ? (findClientAccountByEmail(user.email || "") || findClientAccountById(user.id))
+      : null;
     const ids = [
-      musicClientAccount && !musicClientAccount.isAdmin ? musicClientAccount.id : null,
-      musicClientAccount?.parentUserId,
-      user?.id && !musicClientAccount?.isAdmin ? user.id : null,
-      musicClientAccount?.isAdmin || !user?.id ? "d17e65af-e407-466f-9b60-b55c43399513" : null,
+      clientAccount && !clientAccount.isAdmin ? clientAccount.id : null,
+      clientAccount?.parentUserId,
+      user?.id && !clientAccount?.isAdmin ? user.id : null,
+      clientAccount?.isAdmin || !user?.id ? "d17e65af-e407-466f-9b60-b55c43399513" : null,
     ].filter(Boolean) as string[];
     return Array.from(new Set(ids));
-  }, [musicClientAccount, user?.id]);
+  }, [user?.id, user?.email]);
   const liveTrackData = musicDataUserIds
     .map((id) => readMusicData(id))
     .find((track) => !!(track?.titulo || track?.artista || track?.capa)) || null;
