@@ -811,6 +811,10 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   }, [monitorIframeMode]);
 
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("vmix-connection-status", { detail: { connected: connected || forcedConnected } }));
+  }, [connected, forcedConnected]);
+
   const effectiveConnected = connected || forcedConnected;
 
   useEffect(() => {
