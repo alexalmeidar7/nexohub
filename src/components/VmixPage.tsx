@@ -4359,7 +4359,7 @@ function SwitcherUI({
                               await runCommandsUnified(cmds as any[], `Preset: ${prog.nome}`);
                             }}
                             >
-                            {(agendaEvento || (isPodcastStudio && startTime)) && (
+                            {!progOnAir && (agendaEvento || startTime) && (
                               <div
                                 className="absolute top-1.5 left-1.5 flex flex-col items-start gap-1 px-2 py-[3px] rounded"
                                 style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
