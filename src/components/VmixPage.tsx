@@ -3519,14 +3519,14 @@ function SwitcherUI({
               <span className="mt-0.5 text-[9px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
             </div>
             <div className="relative z-10 ml-auto flex shrink-0 items-end gap-2 pb-0">
-              <div className="flex h-full flex-col items-center justify-center pb-2">
-                <Mic size={15} />
-                <span className="mt-1 max-w-[80px] truncate text-[8px] font-bold uppercase">{headerCurrentProgram?.apresentador_nome || "LOCUTOR"}</span>
+              <div className="flex h-full min-w-0 flex-col items-end justify-center pb-2 text-right">
+                <Mic size={15} className="ml-auto" />
+                <span className="mt-1 max-w-[132px] whitespace-nowrap text-right text-[8px] font-bold uppercase leading-tight">{headerCurrentProgram?.apresentador_nome || "LOCUTOR"}</span>
               </div>
               {headerCurrentProgram?.apresentador_foto ? (
-                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[68px] w-16 self-end object-contain object-bottom" />
+                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[75px] w-16 self-end object-contain object-bottom opacity-90" />
               ) : (
-                <div className="flex h-[68px] w-16 self-end items-center justify-center bg-black/10"><Mic size={20} /></div>
+                <div className="flex h-[75px] w-16 self-end items-center justify-center"><Mic size={20} /></div>
               )}
             </div>
           </div>
