@@ -4331,7 +4331,7 @@ function SwitcherUI({
 
                           <div
 
-                            className={`group/preset vmix-hover-ring relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.02]${progOnAir ? " vmix-preset-onair ring-2 ring-red-500 animate-pulse" : ""}`}
+                            className={`group/preset vmix-hover-ring relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.02]${progOnAir ? " vmix-preset-onair" : ""}`} style={progOnAir ? { backgroundColor: "#008000", borderColor: "#008000", boxShadow: "none" } : undefined}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
