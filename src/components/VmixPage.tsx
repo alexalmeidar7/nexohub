@@ -4237,17 +4237,9 @@ function SwitcherUI({
                       <button onClick={() => setEditingPresetId("new")} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-colors hover:brightness-110" style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }} title="Criar novo programa">
                         <Plus size={12} /><span className="text-[10px] font-black uppercase tracking-wider">nova automação</span>
                       </button>
-                      <label className="relative inline-flex h-[27px] items-center gap-1.5 rounded-md border border-white/10 bg-[#111116] px-2 transition-colors focus-within:border-[#0066FF]">
-                        <span className="shrink-0 text-[8px] font-bold uppercase tracking-wider text-white/45">Organizar</span>
-                        <span className="relative flex h-full min-w-[116px] items-center">
-                          <select aria-label="Organizar botões dos programas" value={presetSortMode} onChange={(e) => setPresetSortMode(e.target.value as "horario" | "dias" | "alfabetica")} className="h-full w-full cursor-pointer appearance-none rounded-md bg-transparent pl-1.5 pr-5 text-[9px] font-semibold uppercase tracking-wide text-white outline-none">
-                            <option value="horario" className="bg-[#0756c9] text-white">Por horário</option>
-                            <option value="dias" className="bg-[#0756c9] text-white">Por dias da semana</option>
-                            <option value="alfabetica" className="bg-[#0756c9] text-white">Ordem alfabética</option>
-                          </select>
-                          <ChevronDown size={11} className="pointer-events-none absolute right-1 text-white/80" />
-                        </span>
-                      </label>
+                      <span className="text-[9px] font-semibold uppercase tracking-wide text-white/65">
+                        Presets para o dia de hoje: {new Date().toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "")} / {new Date().toLocaleDateString("pt-BR")}
+                      </span>
                     </div>
                   </div>
                   <div className="p-4 space-y-4">
@@ -4273,7 +4265,7 @@ function SwitcherUI({
 
                       const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
                       const studioFilterActive = isStudioScoped(studioName);
-                      const programasEstudio = programas.filter(p => matchesStudio(p.estudio, studioName));
+                      const programasEstudio = programas.filter(p => matchesStudio(p.estudio, studioName) && isProgramForToday(p));
                       const ordered = hasSavedOrder ? programasEstudio : [...programasEstudio].sort((a, b) => {
                         const studioOrder = (s: string | null) => {
                           if (!s) return 2;
@@ -4309,20 +4301,6 @@ function SwitcherUI({
                           const bOnAir = isProgramForToday(b) && isNowInProgram(b);
                           // O programa no ar fica sempre primeiro, independentemente do filtro.
                           if (aOnAir !== bOnAir) return Number(bOnAir) - Number(aOnAir);
-                          if (presetSortMode === "alfabetica") return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
-                          if (presetSortMode === "dias") {
-                            const weekdayOrder = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
-                            const dayIndex = (p: any) => {
-                              const normalize = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim().slice(0, 3);
-                              const aliases: Record<string, string> = { domingo: "dom", segunda: "seg", terca: "ter", quarta: "qua", quinta: "qui", sexta: "sex", sabado: "sab" };
-                              const days = (p.dias_semana || []).map((d: string) => aliases[normalize(d)] || normalize(d));
-                              const indexes = days.map((d: string) => weekdayOrder.indexOf(d)).filter((n: number) => n >= 0);
-                              return indexes.length ? Math.min(...indexes) : 99;
-                            };
-                            const dayDiff = dayIndex(a) - dayIndex(b);
-                            if (dayDiff !== 0) return dayDiff;
-                            return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
-                          }
                           // Ordena apenas a grade válida para o dia atual; programas de outros dias
                           // não entram na sequência horária de hoje. Os anteriores ficam após os próximos.
                           const now = new Date();
