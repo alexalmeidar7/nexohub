@@ -4288,13 +4288,9 @@ function SwitcherUI({
                         });
                         return (
                         <div key={studio}>
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
-                            <button type="button" aria-label="Rolar presets para a esquerda" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: -360, behavior: "smooth" })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" title="Anterior"><ChevronLeft size={16} /></button>
-                            <button type="button" aria-label="Rolar presets para a direita" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: 360, behavior: "smooth" })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" title="Próximo"><ChevronDown size={16} className="-rotate-90" /></button>
-                          </div>
-
-                          <div id={`preset-scroll-${studioKey}`} className="flex gap-2.5 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 [scrollbar-width:thin]">
+                          <div className="relative flex min-w-0 items-center gap-2">
+                            <button type="button" aria-label="Rolar presets para a esquerda" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: -360, behavior: "smooth" })} className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0756c9] text-white hover:bg-[#0967ed]" title="Anterior"><ChevronLeft size={17} /></button>
+                            <div id={`preset-scroll-${studioKey}`} className="flex min-w-0 flex-1 gap-2.5 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {sortedProgs.map((prog) => {
                         const isActive = !isDefaultAutomationActive && activePreset === prog.id;
                         const progOnAir = !isDefaultAutomationActive && isProgramForToday(prog) && isNowInProgram(prog);
@@ -4481,6 +4477,8 @@ function SwitcherUI({
                         );
 
                       })}
+                            </div>
+                            <button type="button" aria-label="Rolar presets para a direita" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: 360, behavior: "smooth" })} className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0756c9] text-white hover:bg-[#0967ed]" title="Próximo"><ChevronDown size={17} className="-rotate-90" /></button>
                           </div>
                         </div>
                       ); });
