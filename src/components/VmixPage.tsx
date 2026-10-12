@@ -4464,15 +4464,18 @@ function SwitcherUI({
                                 )
                               )}
                             </div>
-                            <div
-
-                              className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
-                              style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+                            <button
+                              type="button"
+                              aria-label={`Editar ações do botão ${prog.nome}`}
+                              title="Editar ações do botão"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPresetId(prog.id);
+                              }}
+                              className="absolute bottom-1.5 left-1.5 z-10 flex h-7 w-7 translate-y-1 items-center justify-center rounded-md border border-white/25 bg-black/80 text-white opacity-0 transition-opacity duration-150 group-hover/preset:translate-y-0 group-hover/preset:opacity-100 hover:bg-black"
                             >
-                              <div className="flex items-center gap-1">
-                              </div>
-
-                            </div>
+                              <Wand2 size={13} />
+                            </button>
                           </div>
                           </div>
                         );
