@@ -4285,6 +4285,7 @@ function SwitcherUI({
                         const sortedProgs = [...progs].sort((a, b) => {
                           const aOnAir = isProgramForToday(a) && isNowInProgram(a);
                           const bOnAir = isProgramForToday(b) && isNowInProgram(b);
+                          // O programa no ar fica sempre primeiro, independentemente do filtro.
                           if (aOnAir !== bOnAir) return Number(bOnAir) - Number(aOnAir);
                           if (presetSortMode === "alfabetica") return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
                           if (presetSortMode === "dias") {
@@ -4298,8 +4299,22 @@ function SwitcherUI({
                             };
                             const dayDiff = dayIndex(a) - dayIndex(b);
                             if (dayDiff !== 0) return dayDiff;
+                            return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
                           }
-                          return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
+                          // Orden cíclica da grade: próximos programas primeiro; os que já passaram
+                          // ficam depois, permitindo navegar para trás sem tirar o programa no ar da primeira posição.
+                          const now = new Date();
+                          const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                          const startMinutes = (p: Programa) => {
+                            const [hours, minutes] = String(p.horario_inicio || "00:00").slice(0, 5).split(":").map(Number);
+                            return hours * 60 + minutes;
+                          };
+                          const aStart = startMinutes(a);
+                          const bStart = startMinutes(b);
+                          const aFuture = aStart > currentMinutes;
+                          const bFuture = bStart > currentMinutes;
+                          if (aFuture !== bFuture) return aFuture ? -1 : 1;
+                          return aStart - bStart;
                         });
                         return (
                         <div key={studio}>
