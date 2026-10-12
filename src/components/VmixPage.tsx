@@ -811,22 +811,6 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   }, [monitorIframeMode]);
 
   useEffect(() => {
-    const refreshOnAirMusic = () => setOnAirMusic(readMusicData(user?.id));
-    refreshOnAirMusic();
-    const onMusicUpdate = (event: Event) => {
-      const detail = (event as CustomEvent).detail;
-      if (!detail?.userId || detail.userId === user?.id) refreshOnAirMusic();
-    };
-    window.addEventListener(MUSIC_DATA_EVENT, onMusicUpdate);
-    window.addEventListener("storage", refreshOnAirMusic);
-    const timer = window.setInterval(refreshOnAirMusic, 2000);
-    return () => {
-      window.removeEventListener(MUSIC_DATA_EVENT, onMusicUpdate);
-      window.removeEventListener("storage", refreshOnAirMusic);
-      window.clearInterval(timer);
-    };
-  }, [user?.id]);
-  useEffect(() => {
     const refreshLiveTrackData = () => setLiveTrackData(readMusicData(user?.id));
     refreshLiveTrackData();
     const onMusicDataChanged = (event: Event) => {
