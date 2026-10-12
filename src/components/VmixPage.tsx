@@ -3078,6 +3078,8 @@ function SwitcherUI({
   currentTime
 }: any) {
 
+  const [presetSortMode, setPresetSortMode] = useState<"horario" | "dias" | "alfabetica">("horario");
+
   // Tamanho do texto dos botões personalizados (persistido)
   // Estado da música pertence ao SwitcherUI, que renderiza o quadro NO AR.
   const [liveTrackData, setLiveTrackData] = useState<{ titulo?: string; artista?: string; capa?: string; duracao?: number } | null>(null);
@@ -4204,25 +4206,24 @@ function SwitcherUI({
               <div className="flex flex-col gap-4">
                 {/* Left: Programas Preset */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                    <div className="flex items-center gap-2">
-                      <Radio size={14} style={{ color: "#C6F03C" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>
-                        PRESETS PROGRAMAS
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-
-                      <button
-                        onClick={() => setEditingPresetId("new")}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
-                        title="Criar novo programa"
-                      >
-                        <Plus size={12} />
-                        <span className="text-[10px] font-black uppercase tracking-wider">nova automação</span>
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Radio size={14} style={{ color: "#C6F03C" }} />
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>PRESETS PROGRAMAS</span>
+                      </div>
+                      <button onClick={() => setEditingPresetId("new")} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-colors hover:brightness-110" style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }} title="Criar novo programa">
+                        <Plus size={12} /><span className="text-[10px] font-black uppercase tracking-wider">nova automação</span>
                       </button>
-
+                      <label className="relative flex items-center gap-2 rounded-lg border border-white/10 bg-[#111116] px-3 py-1.5 focus-within:border-[#C6F03C]/60">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-white/45">Organizar</span>
+                        <select aria-label="Organizar botões dos programas" value={presetSortMode} onChange={(e) => setPresetSortMode(e.target.value as "horario" | "dias" | "alfabetica")} className="cursor-pointer appearance-none bg-transparent pr-4 text-[10px] font-bold text-white outline-none">
+                          <option value="horario" className="bg-[#1a1a1f] text-white">Por horário</option>
+                          <option value="dias" className="bg-[#1a1a1f] text-white">Por dias da semana</option>
+                          <option value="alfabetica" className="bg-[#1a1a1f] text-white">Ordem alfabética</option>
+                        </select>
+                        <ChevronDown size={12} className="pointer-events-none absolute right-2 text-[#C6F03C]" />
+                      </label>
                     </div>
                   </div>
                   <div className="p-4 space-y-4">
@@ -4284,7 +4285,21 @@ function SwitcherUI({
                         const sortedProgs = [...progs].sort((a, b) => {
                           const aOnAir = isProgramForToday(a) && isNowInProgram(a);
                           const bOnAir = isProgramForToday(b) && isNowInProgram(b);
-                          return Number(bOnAir) - Number(aOnAir);
+                          if (aOnAir !== bOnAir) return Number(bOnAir) - Number(aOnAir);
+                          if (presetSortMode === "alfabetica") return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
+                          if (presetSortMode === "dias") {
+                            const weekdayOrder = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+                            const dayIndex = (p: any) => {
+                              const normalize = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim().slice(0, 3);
+                              const aliases: Record<string, string> = { domingo: "dom", segunda: "seg", terca: "ter", quarta: "qua", quinta: "qui", sexta: "sex", sabado: "sab" };
+                              const days = (p.dias_semana || []).map((d: string) => aliases[normalize(d)] || normalize(d));
+                              const indexes = days.map((d: string) => weekdayOrder.indexOf(d)).filter((n: number) => n >= 0);
+                              return indexes.length ? Math.min(...indexes) : 99;
+                            };
+                            const dayDiff = dayIndex(a) - dayIndex(b);
+                            if (dayDiff !== 0) return dayDiff;
+                          }
+                          return (a.horario_inicio || "").localeCompare(b.horario_inicio || "");
                         });
                         return (
                         <div key={studio}>
