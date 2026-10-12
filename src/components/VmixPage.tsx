@@ -3570,14 +3570,14 @@ function SwitcherUI({
     <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
-          <div className="relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">
-            {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60" />}
+          <div className="group/previous relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">
+            {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60 transition-opacity duration-200 group-hover/previous:opacity-100" />}
             <div className="relative z-10 min-w-0 pr-8">
               <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">PASSOU</span>
               <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{previousProgram?.nome || "—"}</span>
               <span className="mt-0.5 block text-[9px] font-medium text-white/55 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
             </div>
-            <ArrowLeft size={20} strokeWidth={1.2} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-white/75" />
+            <ArrowLeft size={20} strokeWidth={1.2} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-white/75 transition-transform duration-200 group-hover/previous:-translate-x-1" />
           </div>
           <div className="relative isolate flex min-h-[120px] min-w-0 items-center justify-between gap-3 overflow-hidden px-3 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
             <style>{'@keyframes vmixOnAirEnter { 0% { opacity: 0; transform: translateY(8px); filter: blur(2px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } } @keyframes vmixOnAirBlink { 0%, 45%, 100% { opacity: 1; } 50%, 75% { opacity: .25; } } .vmix-onair-enter { animation: vmixOnAirEnter .55s cubic-bezier(.2,.7,.2,1) both; } .vmix-onair-blink { animation: vmixOnAirBlink 1.15s steps(2, start) infinite; } @keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
@@ -3605,20 +3605,20 @@ function SwitcherUI({
                 <span className="mt-1 max-w-[132px] whitespace-nowrap text-right text-[8px] font-bold uppercase leading-tight">{headerCurrentProgram?.apresentador_nome || "LOCUTOR"}</span>
               </div>
               {headerCurrentProgram?.apresentador_foto ? (
-                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[118px] w-[100px] self-end object-contain object-bottom opacity-90" />
+                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[120px] w-[120px] self-end object-contain object-bottom opacity-90" />
               ) : (
                 <div className="flex h-[118px] w-[100px] self-end items-center justify-center"><Mic size={20} /></div>
               )}
             </div>
           </div>
-          <div className="relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:items-end sm:text-right sm:px-6">
-            {headerNextProgram?.apresentador_foto && <img src={headerNextProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute left-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60" />}
+          <div className="group/next relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:items-end sm:text-right sm:px-6">
+            {headerNextProgram?.apresentador_foto && <img src={headerNextProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute left-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60 transition-opacity duration-200 group-hover/next:opacity-100" />}
             <div className="relative z-10 min-w-0 pl-8">
               <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">A SEGUIR</span>
               <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{headerNextProgram?.nome || "—"}</span>
               <span className="mt-0.5 block text-[9px] font-medium text-white/55 font-mono">{headerNextSchedule || "—"}</span>
             </div>
-            <ArrowRight size={20} strokeWidth={1.2} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-white/75" />
+            <ArrowRight size={20} strokeWidth={1.2} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-white/75 transition-transform duration-200 group-hover/next:translate-x-1" />
           </div>
         </div>
       </div>
