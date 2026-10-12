@@ -4331,12 +4331,12 @@ function SwitcherUI({
 
                           <div
 
-                            className={`group/preset vmix-hover-ring relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.02]${progOnAir ? " vmix-preset-onair" : ""}`} style={progOnAir ? { backgroundColor: "#008000", borderColor: "#008000", boxShadow: "none" } : undefined}
+                            className={`group/preset relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-opacity duration-200 ${progOnAir ? "vmix-preset-onair hover:border-white" : "opacity-60 hover:opacity-100"}`}
                             style={{
                               aspectRatio: "3/2",
-                              backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
-                              border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #dc2626" : "2px solid #333338",
-                              opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
+                              backgroundColor: progOnAir ? "#008000" : "#2a2a30",
+                              border: progOnAir ? "2px solid transparent" : "2px solid #333338",
+                              opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : undefined,
                             }}
                             onClick={async () => {
                               setActivePreset(prog.id);
@@ -4426,7 +4426,7 @@ function SwitcherUI({
                                       ? "sáb/dom"
                                       : days.join("/");
                               return label ? (
-                                <div className="absolute bottom-1.5 left-1.5 z-[1] max-w-[calc(100%-12px)] truncate rounded-sm bg-black/45 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-white/90">
+                                <div className="absolute bottom-1.5 left-1.5 z-[3] max-w-[calc(100%-12px)] truncate rounded-sm bg-black/75 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-white">
                                   {label}
                                 </div>
                               ) : null;
