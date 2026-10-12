@@ -4215,14 +4215,16 @@ function SwitcherUI({
                       <button onClick={() => setEditingPresetId("new")} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-colors hover:brightness-110" style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }} title="Criar novo programa">
                         <Plus size={12} /><span className="text-[10px] font-black uppercase tracking-wider">nova automação</span>
                       </button>
-                      <label className="relative flex items-center gap-2 rounded-lg border border-white/10 bg-[#111116] px-3 py-1.5 focus-within:border-[#C6F03C]/60">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-white/45">Organizar</span>
-                        <select aria-label="Organizar botões dos programas" value={presetSortMode} onChange={(e) => setPresetSortMode(e.target.value as "horario" | "dias" | "alfabetica")} className="cursor-pointer appearance-none bg-transparent pr-4 text-[10px] font-bold text-white outline-none">
-                          <option value="horario" className="bg-[#1a1a1f] text-white">Por horário</option>
-                          <option value="dias" className="bg-[#1a1a1f] text-white">Por dias da semana</option>
-                          <option value="alfabetica" className="bg-[#1a1a1f] text-white">Ordem alfabética</option>
-                        </select>
-                        <ChevronDown size={12} className="pointer-events-none absolute right-2 text-[#C6F03C]" />
+                      <label className="relative inline-flex h-[30px] items-center gap-2 rounded-md border border-white/15 bg-[#111116] px-3 transition-colors focus-within:border-[#0066FF]">
+                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-white/55">Organizar</span>
+                        <span className="relative flex h-full min-w-[154px] items-center">
+                          <select aria-label="Organizar botões dos programas" value={presetSortMode} onChange={(e) => setPresetSortMode(e.target.value as "horario" | "dias" | "alfabetica")} className="h-full w-full cursor-pointer appearance-none rounded-md bg-transparent pl-2 pr-7 text-[10px] font-bold uppercase tracking-wide text-white outline-none focus:bg-[#0066FF]/10">
+                            <option value="horario" className="bg-[#0066FF] text-white">Por horário</option>
+                            <option value="dias" className="bg-[#0066FF] text-white">Por dias da semana</option>
+                            <option value="alfabetica" className="bg-[#0066FF] text-white">Ordem alfabética</option>
+                          </select>
+                          <ChevronDown size={13} className="pointer-events-none absolute right-2 text-white" />
+                        </span>
                       </label>
                     </div>
                   </div>
