@@ -4279,17 +4279,26 @@ function SwitcherUI({
                         if (!groups[key]) groups[key] = [];
                         groups[key].push(p);
                       }
-                      return Object.entries(groups).map(([studio, progs]) => (
+                      return Object.entries(groups).map(([studio, progs]) => {
+                        const studioKey = studio.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                        const sortedProgs = [...progs].sort((a, b) => {
+                          const aOnAir = isProgramForToday(a) && isNowInProgram(a);
+                          const bOnAir = isProgramForToday(b) && isNowInProgram(b);
+                          return Number(bOnAir) - Number(aOnAir);
+                        });
+                        return (
                         <div key={studio}>
                           <div className="flex items-center gap-2 mb-3">
                             <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded" style={{ backgroundColor: "rgba(198,240,60,0.12)", color: "#C6F03C", border: "1px solid rgba(198,240,60,0.3)" }}>
                               {studio}
                             </span>
                             <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
+                            <button type="button" aria-label="Rolar presets para a esquerda" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: -360, behavior: "smooth" })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" title="Anterior"><ChevronLeft size={16} /></button>
+                            <button type="button" aria-label="Rolar presets para a direita" onClick={() => document.getElementById(`preset-scroll-${studioKey}`)?.scrollBy({ left: 360, behavior: "smooth" })} className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10" title="Próximo"><ChevronDown size={16} className="-rotate-90" /></button>
                           </div>
 
-                          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-                      {progs.map((prog) => {
+                          <div id={`preset-scroll-${studioKey}`} className="flex gap-2.5 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 [scrollbar-width:thin]">
+                      {sortedProgs.map((prog) => {
                         const isActive = !isDefaultAutomationActive && activePreset === prog.id;
                         const progOnAir = !isDefaultAutomationActive && isProgramForToday(prog) && isNowInProgram(prog);
                         const startTime = prog.horario_inicio?.slice(0, 5) || "";
@@ -4325,7 +4334,7 @@ function SwitcherUI({
 
                           <div
 
-                            className={`group/preset vmix-hover-ring relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03]${progOnAir ? " vmix-preset-onair ring-2 ring-red-500 animate-pulse" : ""}`}
+                            className={`group/preset vmix-hover-ring relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.02]${progOnAir ? " vmix-preset-onair ring-2 ring-red-500 animate-pulse" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: isActive ? "#dc2626" : progOnAir ? "#dc2626" : "#2a2a30",
@@ -4618,7 +4627,7 @@ function SwitcherUI({
                       })}
                           </div>
                         </div>
-                      ));
+                      ); });
                       })()}
                       {programas.length === 0 && (
                         <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
