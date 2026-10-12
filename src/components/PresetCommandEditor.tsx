@@ -347,40 +347,40 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}>
-      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 20px 60px rgba(0,0,0,0.7)" }}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: "rgba(4,10,22,0.72)", backdropFilter: "blur(6px)" }}>
+      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ backgroundColor: "#F4F7FB", border: "1px solid #D7E0EC", boxShadow: "0 24px 70px rgba(0,0,0,0.42)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #C6F03C20", backgroundColor: "#000000" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #D9E2EF", backgroundColor: "#FFFFFF" }}>
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#C6F03C" }}>
+            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#123A70" }}>
               {programaId === "new" ? "Nova Automação" : (nome || programaNome)}
             </h2>
             <div className="flex items-center gap-1.5">
-              <Clock size={10} style={{ color: "#C6F03C90" }} />
-              <span className="text-[10px] font-mono" style={{ color: "#999", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.5 }}>
+              <Clock size={10} style={{ color: "#4774A8" }} />
+              <span className="text-[10px] font-mono" style={{ color: "#526277", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.65 }}>
                 {programaId === "new" ? (customHorario || "00:00") : programaHorario}
               </span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#C6F03C15", color: "#C6F03C" }}>{commands.length} ação(ões)</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#E8F1FF", color: "#0756C9" }}>{commands.length} ação(ões)</span>
               {estudio && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest" style={{ backgroundColor: "#ffffff08", color: "#777" }}>{estudio}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest" style={{ backgroundColor: "#EDF1F6", color: "#526277" }}>{estudio}</span>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#888" }}>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: "#526277" }}>
             <X size={16} />
           </button>
         </div>
 
         {/* Configurações do Programa */}
-        <div className="px-5 py-4 space-y-4" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #ffffff0a" }}>
+        <div className="px-5 py-4 space-y-4" style={{ backgroundColor: "#F8FAFD", borderBottom: "1px solid #D9E2EF" }}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Nome do Programa</label>
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#123A70" }}>Nome do Programa</label>
             <input
               type="text"
               value={nome}
               onChange={e => setNome(e.target.value)}
               className="text-xs px-3 py-2 rounded-lg outline-none"
-              style={{ backgroundColor: "#141414", border: "1px solid #ffffff14", color: "#eee" }}
+              style={{ backgroundColor: "#FFFFFF", border: "1px solid #CBD5E1", color: "#172B4D" }}
               placeholder="Ex: Manhã Mix, Top 10..."
             />
           </div>
@@ -388,34 +388,34 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Horário de Execução</label>
+              <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#123A70" }}>Horário de Execução</label>
               <div className="flex items-center gap-2">
                 <input
                   type="time"
                   value={customHorario}
                   onChange={e => setCustomHorario(e.target.value)}
                   className="text-xs px-3 py-2 rounded-lg outline-none flex-1"
-                  style={{ backgroundColor: "#141414", border: "1px solid #ffffff14", color: "#eee" }}
+                  style={{ backgroundColor: "#FFFFFF", border: "1px solid #CBD5E1", color: "#172B4D" }}
                 />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Data Específica (Opcional)</label>
+              <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#123A70" }}>Data Específica (Opcional)</label>
               <div className="flex items-center gap-2 relative">
-                <Calendar size={12} className="absolute left-3" style={{ color: "#C6F03C80" }} />
+                <Calendar size={12} className="absolute left-3" style={{ color: "#4774A8" }} />
                 <input
                   type="date"
                   value={dataEspecifica}
                   onChange={e => setDataEspecifica(e.target.value)}
                   className="text-xs pl-9 pr-3 py-2 rounded-lg outline-none w-full"
-                  style={{ backgroundColor: "#141414", border: "1px solid #ffffff14", color: "#eee" }}
+                  style={{ backgroundColor: "#FFFFFF", border: "1px solid #CBD5E1", color: "#172B4D" }}
                 />
               </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Dias da Semana</label>
+            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#123A70" }}>Dias da Semana</label>
             <div className="flex flex-wrap gap-1">
               {DIAS_SEMANA_OPCOES.map(dia => {
                 const active = diasSemana.includes(dia);
@@ -425,9 +425,9 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                     onClick={() => setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia])}
                     className="text-[9px] font-black uppercase px-2 py-1 rounded border transition-all"
                     style={{
-                      backgroundColor: active ? "#C6F03C" : "#1a1a1a",
-                      color: active ? "#000" : "#777",
-                      borderColor: active ? "#C6F03C" : "#ffffff10"
+                      backgroundColor: active ? "#0756C9" : "#FFFFFF",
+                      color: active ? "#FFFFFF" : "#526277",
+                      borderColor: active ? "#0756C9" : "#CBD5E1"
                     }}
                   >
                     {dia.slice(0, 3)}
@@ -440,15 +440,15 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Commands list */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#AAB8CA transparent", backgroundColor: "#F4F7FB" }}>
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="animate-spin" size={20} style={{ color: "#666" }} />
             </div>
           ) : commands.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-xs mb-2" style={{ color: "#666" }}>Nenhuma ação configurada.</p>
-              <p className="text-[10px]" style={{ color: "#555" }}>Clique em "Adicionar Ação" para começar a programar este preset.</p>
+              <p className="text-xs mb-2" style={{ color: "#526277" }}>Nenhuma ação configurada.</p>
+              <p className="text-[10px]" style={{ color: "#6B7C93" }}>Clique em "Adicionar Ação" para começar a programar este preset.</p>
             </div>
           ) : (
             commands.map((cmd, idx) => {
@@ -461,21 +461,21 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               const cmdEnabled = cmd.enabled !== false;
 
               return (
-                <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#222230", border: "1px solid #2a2a38", opacity: cmdEnabled ? 1 : 0.45 }}>
+                <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#FFFFFF", border: "1px solid #D7E0EC", opacity: cmdEnabled ? 1 : 0.55, boxShadow: "0 2px 8px rgba(20,45,80,0.05)" }}>
                   {/* Command header */}
-                  <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#ffffff04", borderBottom: "1px solid #ffffff06" }}>
-                    <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#dc262630" : "#ffffff08", color: idx === 0 ? "#dc2626" : "#888" }}>
+                  <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#EDF3FA", borderBottom: "1px solid #D7E0EC" }}>
+                    <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#FDE8E8" : "#E2E8F0", color: idx === 0 ? "#B91C1C" : "#526277" }}>
                       #{idx}
                     </span>
                     <div className="flex items-center gap-1 flex-1 min-w-0">
-                      <GripVertical size={10} style={{ color: "#444" }} />
-                      <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs, inputMapping)}</span>
+                      <GripVertical size={10} style={{ color: "#8A9AB0" }} />
+                      <span className="text-[10px] font-bold truncate" style={{ color: "#172B4D" }}>{formatCommandPreview(cmd, inputs, inputMapping)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <button onClick={() => moveCommand(idx, -1)} disabled={idx === 0} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#888" }}>
+                      <button onClick={() => moveCommand(idx, -1)} disabled={idx === 0} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#526277" }}>
                         <ChevronUp size={10} />
                       </button>
-                      <button onClick={() => moveCommand(idx, 1)} disabled={idx === commands.length - 1} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#888" }}>
+                      <button onClick={() => moveCommand(idx, 1)} disabled={idx === commands.length - 1} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-20" style={{ color: "#526277" }}>
                         <ChevronDown size={10} />
                       </button>
                       <button onClick={() => removeCommand(cmd.id)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/20 transition-colors" style={{ color: "#f87171" }}>
@@ -500,7 +500,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                         value={cmd.fn}
                         onChange={e => updateCommand(cmd.id, { fn: e.target.value, input: undefined, value: undefined, extraKey: undefined, extraValue: undefined })}
                         className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                        style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                        style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #CBD5E1" }}
                       >
                         {CATEGORIES.map(cat => (
                           <optgroup key={cat} label={cat}>
@@ -520,7 +520,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                           value={cmd.input || ""}
                           onChange={e => updateCommand(cmd.id, { input: e.target.value })}
                           className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                          style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                          style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #CBD5E1" }}
                         >
                           <option value="">— Selecionar Input —</option>
                           {cmd.input && !inputs.some(i => i.key === cmd.input) && inputMapping?.[cmd.input] && (
@@ -546,7 +546,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                             value={cmd.value || "1"}
                             onChange={e => updateCommand(cmd.id, { value: e.target.value })}
                             className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                            style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                            style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #CBD5E1" }}
                           >
                             {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(n => (
                               <option key={n} value={n}>Index {n}</option>
@@ -558,7 +558,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                             value={cmd.value || ""}
                             onChange={e => updateCommand(cmd.id, { value: e.target.value })}
                             className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                            style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                            style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #CBD5E1" }}
                             placeholder="Valor..."
                           />
                         )}
@@ -574,7 +574,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                           value={cmd.extraValue || ""}
                           onChange={e => updateCommand(cmd.id, { extraValue: e.target.value })}
                           className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                          style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                          style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #CBD5E1" }}
                           placeholder={extraLabels.valueLabel + "..."}
                         />
                       </div>
@@ -592,7 +592,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
             <button
               onClick={() => setShowCode(!showCode)}
               className="text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded transition-colors"
-              style={{ color: showCode ? "#000" : "#C6F03C", backgroundColor: showCode ? "#C6F03C" : "#C6F03C15" }}
+              style={{ color: showCode ? "#FFFFFF" : "#0756C9", backgroundColor: showCode ? "#0756C9" : "#E8F1FF", border: "1px solid #C5D9F7" }}
             >
               {showCode ? "Ocultar código" : "Ver / Colar código do script"}
             </button>
@@ -600,25 +600,25 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
           {showCode && (
             <div className="space-y-2">
               {commands.length > 0 && (
-                <pre className="p-3 rounded-lg text-[10px] font-mono overflow-x-auto" style={{ backgroundColor: "#000000", color: "#C6F03C", border: "1px solid #C6F03C25", whiteSpace: "pre-wrap" }}>
+                <pre className="p-3 rounded-lg text-[10px] font-mono overflow-x-auto" style={{ backgroundColor: "#10233F", color: "#DCEBFF", border: "1px solid #C5D5EA", whiteSpace: "pre-wrap" }}>
                   {generateScript()}
                 </pre>
               )}
               <div className="flex flex-col gap-1">
-                <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: "#777" }}>Cole o script aqui para importar ações</label>
+                <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: "#526277" }}>Cole o script aqui para importar ações</label>
                 <textarea
                   value={pasteValue}
                   onChange={e => setPasteValue(e.target.value)}
                   rows={4}
                   className="w-full text-[10px] font-mono px-3 py-2 rounded-lg outline-none resize-none"
-                  style={{ backgroundColor: "#0a0a0a", color: "#ddd", border: "1px solid #ffffff14" }}
+                  style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #CBD5E1" }}
                   placeholder={"CutDirect(guid, -1)\n*SelectIndex(guid, 6)\n*SetText(guid, 2, Texto)"}
                 />
                 <button
                   onClick={() => { parseScript(pasteValue); setPasteValue(""); }}
                   disabled={!pasteValue.trim()}
                   className="self-start flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-30"
-                  style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C35" }}
+                  style={{ backgroundColor: "#E8F1FF", color: "#0756C9", border: "1px solid #C5D9F7" }}
                 >
                   Importar Script
                 </button>
@@ -628,11 +628,11 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 px-5 py-3" style={{ borderTop: "1px solid #C6F03C20", backgroundColor: "#000000" }}>
+        <div className="flex items-center justify-between gap-2 px-5 py-3" style={{ borderTop: "1px solid #D9E2EF", backgroundColor: "#FFFFFF" }}>
           <button
             onClick={addCommand}
             className="flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
-            style={{ backgroundColor: "#1a1a1a", color: "#C6F03C", border: "1px solid #C6F03C35" }}
+            style={{ backgroundColor: "#E8F1FF", color: "#0756C9", border: "1px solid #C5D9F7" }}
           >
             <Plus size={12} />
             Adicionar Ação
@@ -643,7 +643,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                 onClick={runAll}
                 disabled={running}
                 className="flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
-                style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
+                style={{ backgroundColor: "#0756C9", color: "#FFFFFF", border: "1px solid #0756C9" }}
               >
                 {running ? <Loader2 className="animate-spin" size={12} /> : <Play size={12} />}
                 Testar
@@ -660,7 +660,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
             <button
               onClick={onClose}
               className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
-              style={{ color: "#888" }}
+              style={{ color: "#526277" }}
             >
               Fechar
             </button>
