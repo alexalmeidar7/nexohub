@@ -1,73 +1,26 @@
-# Welcome to your Lovable project
+# nexohub
 
-## Project info
+import React, { useState } from 'react'; import { Home, Sun, FileText, Mic2, PlaySquare, ArrowRight, LayoutDashboard } from 'lucide-react'; // --- Tipagens --- type Page = 'dashboard' | 'previsao' | 'noticias' | 'apresentadores' | 'programas'; export default function MasterViewApp() { const [isLoggedIn, setIsLoggedIn] = useState(false); const [currentPage, setCurrentPage] = useState<Page>('dashboard'); // --- Tela de Login --- if (!isLoggedIn) { return ( <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4 font-sans"> <div className="bg-[#a7a1f0] w-full max-w-md rounded-[40px] p-10 shadow-2xl"> <h1 className="text-center text-[#1a1a1a] font-medium tracking-widest mb-8 text-lg"> MASTERVIEW / LOGIN </h1> <div className="space-y-4"> <input type="text" placeholder="usuário" className="w-full bg-white rounded-full px-6 py-4 text-gray-500 outline-none placeholder:text-gray-300" /> <input type="password" placeholder="senha" className="w-full bg-white rounded-full px-6 py-4 text-gray-500 outline-none placeholder:text-gray-300" /> <div className="flex justify-end pt-2"> <button onClick={() => setIsLoggedIn(true)} className="bg-[#d9f96d] hover:bg-[#c8e85a] transition-colors flex items-center gap-3 px-8 py-3 rounded-full font-medium text-[#1a1a1a]" > entrar <ArrowRight size={20} /> </button> </div> </div> </div> <div className="mt-20"> <img src="https://logodownload.org/wp-content/uploads/2021/03/svn-broadcast-logo.png" alt="SVN Broadcast" className="h-8 opacity-90 invert" /> {/* Fallback caso a imagem não carregue */} <span className="text-white font-bold text-2xl tracking-tighter flex items-center gap-1"> svn<span className="text-sm">✦</span>broadcast </span> </div> </div> ); } // --- Layout do Dashboard --- return ( <div className="min-h-screen bg-[#0a0a0a] flex text-white font-sans"> {/* Sidebar Esquerda */} <aside className="w-64 border-r border-white/5 flex flex-col"> <div className="p-6 flex items-center gap-2 text-[#d9f96d]"> <div className="rotate-90 font-black tracking-tighter text-xl border-b-2 border-[#d9f96d]">MASTER</div> <span className="text-xs">✦</span> </div> <nav className="flex-1 mt-4"> <NavItem icon={<Home size={20} />} label="Home" active={currentPage === 'dashboard'} onClick={() => setCurrentPage('dashboard')} /> <NavItem icon={<Sun size={20} />} label="Previsão do tempo" active={currentPage === 'previsao'} onClick={() => setCurrentPage('previsao')} /> <NavItem icon={<FileText size={20} />} label="Notícias" active={currentPage === 'noticias'} onClick={() => setCurrentPage('noticias')} /> <NavItem icon={<Mic2 size={20} />} label="Apresentadores" active={currentPage === 'apresentadores'} onClick={() => setCurrentPage('apresentadores')} /> <NavItem icon={<PlaySquare size={20} />} label="Programas" active={currentPage === 'programas'} onClick={() => setCurrentPage('programas')} /> </nav> <div className="p-6 opacity-50"> <span className="text-xs font-bold italic">svn✦broadcast</span> </div> </aside> {/* Área de Conteúdo Dinâmico */} <main className="flex-1 p-10 relative"> <header className="mb-10"> <h2 className="text-3xl font-light capitalize">{currentPage.replace('dashboard', 'Dashboard Home')}</h2> </header> <section className="bg-white/5 rounded-2xl p-8 border border-white/10 min-h-[400px]"> {currentPage === 'dashboard' && <div className="text-gray-400">Bem-vindo ao MasterView. Selecione uma opção no menu lateral.</div>} {currentPage === 'previsao' && <div>Painel de ajuste meteorológico em tempo real.</div>} {currentPage === 'noticias' && <div>Gestão de feeds e notícias de última hora.</div>} {currentPage === 'apresentadores' && <ApresentadorForm />} {currentPage === 'programas' && <ProgramaForm />} </section> {/* Logo Flutuante no Canto Inferior (conforme Imagem 2) */} <div className="absolute bottom-10 right-10 opacity-80"> <span className="text-white font-bold text-3xl tracking-tighter"> svn<span className="text-lg">✦</span>broadcast </span> </div> </main> </div> ); } // --- Componentes Auxiliares --- function NavItem({ icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) { return ( <button onClick={onClick} className={`w-full flex items-center gap-4 px-6 py-4 transition-all ${ active ? 'text-[#d9f96d] bg-white/5 border-r-2 border-[#d9f96d]' : 'text-gray-400 hover:text-white' }`} > {icon} <span className="text-sm font-medium">{label}</span> </button> ); } function ApresentadorForm() { return ( <div className="max-w-md space-y-4"> <h3 className="text-xl mb-4 text-[#d9f96d]">Novo Apresentador</h3> <input placeholder="Nome Completo" className="w-full bg-[#1a1a1a] border border-white/10 p-3 rounded-lg" /> <input placeholder="Cargo/Especialidade" className="w-full bg-[#1a1a1a] border border-white/10 p-3 rounded-lg" /> <button className="bg-[#d9f96d] text-black px-6 py-2 rounded-lg font-bold">Salvar</button> </div> ); } function ProgramaForm() { return ( <div className="max-w-md space-y-4"> <h3 className="text-xl mb-4 text-[#d9f96d]">Cadastro de Programa</h3> <input placeholder="Nome do Programa" className="w-full bg-[#1a1a1a] border border-white/10 p-3 rounded-lg" /> <select className="w-full bg-[#1a1a1a] border border-white/10 p-3 rounded-lg text-gray-400"> <option>Selecionar Apresentador Responsável</option> <option>Apresentador 1</option> <option>Apresentador 2</option> </select> <button className="bg-[#d9f96d] text-black px-6 py-2 rounded-lg font-bold">Vincular e Criar</button> </div> ); }
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This project was built with [Lovable](https://lovable.dev).
 
-## How can I edit this code?
+**Live app**: https://nexohub.lovable.app
 
-There are several ways of editing your application.
+## Build with Lovable
 
-**Use Lovable**
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/81d2e8f4-39c8-4488-a40e-859152da4c63).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Development
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
