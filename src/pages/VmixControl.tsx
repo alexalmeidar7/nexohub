@@ -21,7 +21,9 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [signing, setSigning] = useState(false);\n  const [headerTime, setHeaderTime] = useState(() => new Date());\n  const [vmixOnline, setVmixOnline] = useState(false);
+  const [signing, setSigning] = useState(false);
+  const [headerTime, setHeaderTime] = useState(() => new Date());
+  const [vmixOnline, setVmixOnline] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -35,7 +37,14 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {\n    const timer = window.setInterval(() => setHeaderTime(new Date()), 1000);\n    const updateStatus = (event: Event) => setVmixOnline(Boolean((event as CustomEvent).detail?.connected));\n    window.addEventListener("vmix-connection-status", updateStatus);\n    return () => { window.clearInterval(timer); window.removeEventListener("vmix-connection-status", updateStatus); };\n  }, []);\n\n  const handleLogin = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const timer = window.setInterval(() => setHeaderTime(new Date()), 1000);
+    const updateStatus = (event: Event) => setVmixOnline(Boolean((event as CustomEvent).detail?.connected));
+    window.addEventListener("vmix-connection-status", updateStatus);
+    return () => { window.clearInterval(timer); window.removeEventListener("vmix-connection-status", updateStatus); };
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSigning(true);
