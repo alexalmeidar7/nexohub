@@ -1758,7 +1758,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                   onMouseDown={() => { dragItem.current = logo; }}
                                   title="Arraste para outro programa para copiar (ou clique e use o botão direito no programa de destino)"
                                 >
-                                  <div className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-black hover:border-[#0055ff]/50 transition-all shadow-sm">
+                                  <div className="relative group rounded-2xl overflow-visible border border-slate-800 bg-black hover:border-[#0055ff]/50 transition-all shadow-sm">
                                     <img
                                       src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
                                       alt={logo.nome}
@@ -1769,44 +1769,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                         target.src = "/default-sponsor-logo.png";
                                       }}
                                     />
-                                    <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/65 p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          dragItem.current = logo;
-                                          toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." });
-                                        }}
-                                        className="flex flex-col items-center justify-center gap-1 rounded-lg bg-[#0055ff] hover:bg-blue-600 text-white px-2 py-2 text-[9px] font-bold transition-colors"
-                                        title="Copiar para outro programa"
-                                      >
-                                        <Copy size={14} />
-                                        <span>Copiar</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSoftDelete(logo.id);
-                                        }}
-                                        className="flex flex-col items-center justify-center gap-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white px-2 py-2 text-[9px] font-bold transition-colors"
-                                        title="Deletar logo"
-                                      >
-                                        <Trash2 size={14} />
-                                        <span>Deletar</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          startFullEdit(logo);
-                                        }}
-                                        className="flex flex-col items-center justify-center gap-1 rounded-lg bg-white hover:bg-slate-100 text-slate-900 px-2 py-2 text-[9px] font-bold transition-colors"
-                                        title="Ajustar logo"
-                                      >
-                                        <Settings2 size={14} />
-                                        <span>Ajustar logo</span>
-                                      </button>
+                                    <div className="absolute left-[calc(100%+8px)] top-0 z-[100] flex w-28 flex-col rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.18)] opacity-0 invisible translate-x-1 group-hover:opacity-100 group-hover:visible group-hover:translate-x-0 group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150">
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); dragItem.current = logo; toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." }); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-semibold text-slate-700 hover:bg-blue-50 hover:text-[#0055ff] transition-colors" title="Copiar para outro programa"><Copy size={13} /><span>Copiar</span></button>
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); handleSoftDelete(logo.id); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Deletar logo"><Trash2 size={13} /><span>Deletar</span></button>
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); startFullEdit(logo); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0055ff] transition-colors" title="Ajustar logo"><Settings2 size={13} /><span>Ajustar logo</span></button>
                                     </div>
                                   </div>
                                   {logo.nome && (
