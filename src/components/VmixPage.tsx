@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { readMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { getZonedNow } from "@/lib/onAirResolver";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -3367,16 +3368,34 @@ function SwitcherUI({
 
   const previousProgram = useMemo(() => {
     const now = new Date();
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const { weekday, hhmm } = getZonedNow();
+    const nowMinutes = Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+    const dayNames = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+    const normalizeDay = (value: string) => (value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+    const matchesDay = (p: Programa, dayIndex: number) => {
+      if (!p.dias_semana || p.dias_semana.length === 0) return true;
+      const short = dayNames[dayIndex];
+      return p.dias_semana.some((d) => {
+        const normalized = normalizeDay(d);
+        return normalized.startsWith(short) || normalized === String(dayIndex);
+      });
+    };
     const candidates = programas
       .filter((p: Programa) => matchesStudio(p.estudio, studioName) && p.horario_inicio && p.horario_fim && p.id !== currentProgram?.id)
       .map((p: Programa) => {
         const [sh, sm] = String(p.horario_inicio).slice(0, 5).split(":").map(Number);
         const [eh, em] = String(p.horario_fim).slice(0, 5).split(":").map(Number);
-        return { p, start: sh * 60 + sm, end: eh * 60 + em };
+        const start = sh * 60 + sm;
+        let end = eh * 60 + em;
+        if (end <= start) end += 1440;
+        return { p, start, end, dayOffset: matchesDay(p, weekday) ? 0 : matchesDay(p, (weekday + 6) % 7) ? -1 : 99 };
       })
-      .filter((item) => item.end <= nowMinutes && item.start <= item.end)
-      .sort((a, b) => b.end - a.end);
+      .filter((item) => {
+        if (item.dayOffset === 99) return false;
+        const end = item.end + item.dayOffset * 1440;
+        return end <= nowMinutes;
+      })
+      .sort((a, b) => (b.end + b.dayOffset * 1440) - (a.end + a.dayOffset * 1440));
     return candidates[0]?.p || null;
   }, [programas, studioName, currentProgram, nowTick]);
 
@@ -3494,13 +3513,13 @@ function SwitcherUI({
   return (
     <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-        <div className="grid min-h-[76px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
+        <div className="grid min-h-[100px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:px-6">
             <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">PASSOU</span>
             <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/80">{previousProgram?.nome || "—"}</span>
             <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
           </div>
-          <div className="relative isolate flex min-w-0 items-stretch justify-between gap-3 overflow-hidden px-3 pt-2 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
+          <div className="relative isolate flex min-h-[100px] min-w-0 items-center justify-between gap-3 overflow-hidden px-3 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
             <style>{'@keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
             <div className="absolute inset-y-0 left-0 z-0 pointer-events-none" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }} />
             <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
@@ -3515,7 +3534,7 @@ function SwitcherUI({
                 <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{liveTrackData?.artista || "Artista não informado"}</div>
               </div>
             </div>
-            <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 flex-col items-center text-center pointer-events-none">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
               <span className="animate-pulse text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
               <span className="mt-1 max-w-[180px] truncate text-[12px] font-black uppercase tracking-[0.08em]">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
               <span className="mt-0.5 text-[9px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
@@ -3526,9 +3545,9 @@ function SwitcherUI({
                 <span className="mt-1 max-w-[132px] whitespace-nowrap text-right text-[8px] font-bold uppercase leading-tight">{headerCurrentProgram?.apresentador_nome || "LOCUTOR"}</span>
               </div>
               {headerCurrentProgram?.apresentador_foto ? (
-                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[75px] w-16 self-end object-contain object-bottom opacity-90" />
+                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[98px] w-[83px] self-end object-contain object-bottom opacity-90" />
               ) : (
-                <div className="flex h-[75px] w-16 self-end items-center justify-center"><Mic size={20} /></div>
+                <div className="flex h-[98px] w-[83px] self-end items-center justify-center"><Mic size={20} /></div>
               )}
             </div>
           </div>
