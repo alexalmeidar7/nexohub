@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useNavigate } from "react-router-dom";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
+import { readMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { confirmDialog } from "@/lib/confirmDialog";
@@ -615,6 +616,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
+  const [onAirMusic, setOnAirMusic] = useState(null as ReturnType<typeof readMusicData>);
   const [reloadingInputs, setReloadingInputs] = useState(false);
   const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
@@ -807,6 +809,22 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     localStorage.setItem("vmix_monitor_iframe", JSON.stringify(monitorIframeMode));
   }, [monitorIframeMode]);
 
+  useEffect(() => {
+    const refreshOnAirMusic = () => setOnAirMusic(readMusicData(user?.id));
+    refreshOnAirMusic();
+    const onMusicUpdate = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (!detail?.userId || detail.userId === user?.id) refreshOnAirMusic();
+    };
+    window.addEventListener(MUSIC_DATA_EVENT, onMusicUpdate);
+    window.addEventListener("storage", refreshOnAirMusic);
+    const timer = window.setInterval(refreshOnAirMusic, 2000);
+    return () => {
+      window.removeEventListener(MUSIC_DATA_EVENT, onMusicUpdate);
+      window.removeEventListener("storage", refreshOnAirMusic);
+      window.clearInterval(timer);
+    };
+  }, [user?.id]);
   const effectiveConnected = connected || forcedConnected;
 
   useEffect(() => {
@@ -3474,12 +3492,14 @@ function SwitcherUI({
             <div className="absolute inset-y-0 left-0 z-0 pointer-events-none" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }} />
             <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
             <div className="relative z-10 flex min-w-0 items-center gap-2 pb-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/15">
-                <Play size={16} fill="currentColor" />
-              </div>
+              {onAirMusic?.capa ? (
+                <img src={onAirMusic.capa} alt="" className="h-[58px] w-[58px] shrink-0 rounded-md object-contain bg-black/20" />
+              ) : (
+                <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-md bg-black/15"><Music2 size={20} /></div>
+              )}
               <div className="min-w-0">
-                <div className="truncate text-[10px] font-black uppercase tracking-wide">{inputs.find((input) => input.key === activeInput || input.number === activeInput)?.title || "MÚSICA NÃO IDENTIFICADA"}</div>
-                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">Artista não informado pelo vMix</div>
+                <div className="truncate text-[10px] font-black uppercase tracking-wide">{onAirMusic?.titulo || "MÚSICA NÃO IDENTIFICADA"}</div>
+                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{onAirMusic?.artista || "Artista não informado"}</div>
               </div>
             </div>
             <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 flex-col items-center text-center pointer-events-none">
@@ -3488,15 +3508,15 @@ function SwitcherUI({
               <span className="mt-0.5 text-[9px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
             </div>
             <div className="relative z-10 ml-auto flex shrink-0 items-end gap-2 pb-0">
-              {headerCurrentProgram?.apresentador_foto ? (
-                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[68px] w-12 self-end rounded-t-lg object-cover object-top" />
-              ) : (
-                <div className="flex h-[68px] w-12 self-end items-center justify-center rounded-t-lg bg-black/15"><Mic size={20} /></div>
-              )}
               <div className="flex h-full flex-col items-center justify-center pb-2">
                 <Mic size={15} />
                 <span className="mt-1 max-w-[80px] truncate text-[8px] font-bold uppercase">{headerCurrentProgram?.apresentador_nome || "LOCUTOR"}</span>
               </div>
+              {headerCurrentProgram?.apresentador_foto ? (
+                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[68px] w-16 self-end object-contain object-bottom" />
+              ) : (
+                <div className="flex h-[68px] w-16 self-end items-center justify-center bg-black/10"><Mic size={20} /></div>
+              )}
             </div>
           </div>
           <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:items-end sm:text-right sm:px-6">
