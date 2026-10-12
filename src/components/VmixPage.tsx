@@ -4810,51 +4810,51 @@ function SwitcherUI({
           if (!open) setAudioMonitorInput("");
         }}
       >
-        <DialogContent className="border-white/10 bg-[#17171b] p-0 text-white sm:max-w-xl overflow-hidden">
-          <DialogHeader className="border-b border-white/10 bg-gradient-to-br from-[#222228] to-[#121214] px-6 py-5">
+        <DialogContent className="overflow-hidden rounded-2xl border border-[#34343C] bg-[#1B1B20] p-0 text-white shadow-2xl sm:max-w-xl">
+          <DialogHeader className="border-b border-[#303039] bg-[#222228] px-6 py-5 text-left">
             <DialogTitle className="text-lg font-black tracking-tight text-white">O que você deseja criar?</DialogTitle>
-            <DialogDescription className="text-xs leading-relaxed text-white/45">
+            <DialogDescription className="text-sm leading-relaxed text-[#C4C4CF]">
               Escolha o tipo de botão que deseja adicionar à sua automação.
             </DialogDescription>
           </DialogHeader>
 
           {!audioMonitorInput ? (
-            <div className="grid gap-3 p-6 sm:grid-cols-2">
+            <div className="grid gap-3 bg-[#17171B] p-5 sm:grid-cols-2">
               <button
                 onClick={() => {
                   setCreationChoiceOpen(false);
                   setEditingCustomButtonId("new");
                 }}
-                className="group rounded-2xl border border-[#C6F03C]/30 bg-[#C6F03C]/10 p-5 text-left transition-all duration-200 hover:-translate-y-1 hover:border-[#C6F03C] hover:bg-[#C6F03C]/15 hover:shadow-[0_18px_35px_rgba(198,240,60,0.12)]"
+                className="group rounded-xl border border-[#3A3A44] bg-[#24242B] p-5 text-left transition-colors duration-200 hover:border-[#0B5CFF] hover:bg-[#292A32] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B5CFF]"
               >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#C6F03C] text-black shadow-lg shadow-[#C6F03C]/20">
-                  <Wand2 size={20} />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#0B5CFF] text-white">
+                  <Wand2 size={21} strokeWidth={2.2} />
                 </div>
-                <p className="text-sm font-black uppercase tracking-wide text-[#C6F03C]">Botão de Comandos</p>
-                <p className="mt-2 text-[11px] leading-relaxed text-white/50">Crie uma macro com os comandos e ações do vMix.</p>
+                <p className="text-sm font-black uppercase tracking-wide text-white">Botão de Comandos</p>
+                <p className="mt-2 text-xs leading-relaxed text-[#D0D0DA]">Crie uma macro com os comandos e ações do vMix.</p>
               </button>
 
               <button
                 onClick={() => setAudioMonitorInput("selecting")}
-                className="group rounded-2xl border border-teal-300/25 bg-teal-300/[0.07] p-5 text-left transition-all duration-200 hover:-translate-y-1 hover:border-teal-300/60 hover:bg-teal-300/[0.11] hover:shadow-[0_18px_35px_rgba(45,212,191,0.1)]"
+                className="group rounded-xl border border-[#3A3A44] bg-[#24242B] p-5 text-left transition-colors duration-200 hover:border-[#0B5CFF] hover:bg-[#292A32] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0B5CFF]"
               >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-teal-300 text-[#071010] shadow-lg shadow-teal-300/20">
-                  <Activity size={20} />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#31D7C5] text-[#102020]">
+                  <Activity size={21} strokeWidth={2.2} />
                 </div>
-                <p className="text-sm font-black uppercase tracking-wide text-teal-200">Monitor de Áudio</p>
-                <p className="mt-2 text-[11px] leading-relaxed text-white/50">Acompanhe o espectro e o nível em dB de um input.</p>
+                <p className="text-sm font-black uppercase tracking-wide text-white">Monitor de Áudio</p>
+                <p className="mt-2 text-xs leading-relaxed text-[#D0D0DA]">Acompanhe o espectro e o nível em dB de um input.</p>
               </button>
             </div>
           ) : (
             <div className="space-y-5 p-6">
               <div>
-                <p className="text-sm font-black text-teal-200">Monitor de Áudio</p>
-                <p className="mt-1 text-[11px] text-white/45">Selecione o input que será acompanhado pelo monitor.</p>
+                <p className="text-sm font-black text-white">Monitor de Áudio</p>
+                <p className="mt-1 text-xs text-[#D0D0DA]">Selecione o input que será acompanhado pelo monitor.</p>
               </div>
               <select
                 value={audioMonitorInput === "selecting" ? "" : audioMonitorInput}
                 onChange={(event) => setAudioMonitorInput(event.target.value || "selecting")}
-                className="w-full rounded-xl border border-white/10 bg-[#0e0e10] px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/15"
+                className="w-full rounded-xl border border-[#555560] bg-[#24242B] px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-[#0B5CFF] focus:ring-2 focus:ring-[#0B5CFF]/30"
               >
                 <option value="">Selecione um input de áudio</option>
                 {inputs.map((input: VmixInput) => (
@@ -4867,14 +4867,14 @@ function SwitcherUI({
                 <button
                   onClick={() => setAudioMonitorInput("")}
                   disabled={creatingAudioMonitor}
-                  className="rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white/50 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
+                  className="rounded-lg border border-[#41414B] px-4 py-2 text-[10px] font-black uppercase tracking-wider text-[#E0E0E8] transition hover:bg-[#303039] hover:text-white disabled:opacity-50"
                 >
                   Voltar
                 </button>
                 <button
                   onClick={createAudioMonitor}
                   disabled={creatingAudioMonitor || audioMonitorInput === "selecting"}
-                  className="flex items-center gap-2 rounded-lg bg-teal-300 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-[#071010] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg bg-[#0B5CFF] px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white transition hover:bg-[#004BDD] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {creatingAudioMonitor ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
                   Criar monitor
