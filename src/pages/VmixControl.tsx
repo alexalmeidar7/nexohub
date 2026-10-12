@@ -162,19 +162,19 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
               <Layout size={14} /> <span>Switcher</span>
             </button>
           </div>
-          <div className="absolute right-[76px] top-1/2 flex -translate-y-1/2 items-center gap-3 text-white/90">
-            <div className="flex items-center gap-1.5" title={headerTime.toLocaleDateString("pt-BR")}>
-              <Clock size={14} className="text-white/70" />
-              <span className="min-w-[48px] text-[13px] font-medium tabular-nums">{headerTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-            </div>
-            <div className="flex items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
-              {vmixOnline ? <Wifi size={14} className="text-emerald-400" /> : <WifiOff size={14} className="text-red-400" />}
-              <span className={`text-[9px] font-bold uppercase tracking-wide ${vmixOnline ? "text-emerald-400" : "text-red-400"}`}>{vmixOnline ? "Conectado" : "Desconectado"}</span>
-            </div>
-          </div>
           <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none absolute left-1/2 top-1/2 block h-auto max-h-[19px] w-auto max-w-[38%] -translate-x-1/2 -translate-y-1/2 translate-y-[2px] object-contain" />
           {user && (
             <div className="ml-auto flex items-center gap-3 pl-4">
+              <div className="flex items-center gap-3 text-white/90">
+                <div className="flex items-center gap-1.5" title={headerTime.toLocaleDateString("pt-BR")}>
+                  <Clock size={14} className="text-white/70" />
+                  <span className="min-w-[48px] text-[13px] font-medium tabular-nums">{headerTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+                </div>
+                <div className="flex items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
+                  {vmixOnline ? <Wifi size={14} className="text-emerald-400" /> : <WifiOff size={14} className="text-red-400" />}
+                  <span className={`text-[9px] font-bold uppercase tracking-wide ${vmixOnline ? "text-emerald-400" : "text-red-400"}`}>{vmixOnline ? "Conectado" : "Desconectado"}</span>
+                </div>
+              </div>
               <div className="relative group/account">
                 <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0055ff] text-white text-sm font-bold uppercase transition-colors hover:bg-[#0042A3] focus:outline-none focus:ring-2 focus:ring-[#0065F9]/50" title="Conta do usuário" aria-label="Abrir menu da conta">
                   {(String(user.user_metadata?.full_name || user.user_metadata?.name || user.email || "U").trim()[0] || "U").toUpperCase()}
