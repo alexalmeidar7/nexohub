@@ -3431,7 +3431,7 @@ function SwitcherUI({
 
 
   return (
-    <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
+    <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         {/* Top Header with Logo, Navigation, and Status */}
