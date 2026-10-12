@@ -3370,7 +3370,7 @@ function SwitcherUI({
       
       return true;
     });
-  }, [programas]);
+  }, [programas, nowTick]);
 
   // Próximo programa da grade (tolerante a acentos/formatos e com wrap para o próximo ciclo)
   const nextProgram = useMemo(() => {
@@ -3398,7 +3398,7 @@ function SwitcherUI({
     if (withStart.length === 0) return null;
     const upcoming = withStart.find((x: any) => x.start > nowMin);
     return (upcoming || withStart[0]).p;
-  }, [programas, currentProgram]);
+  }, [programas, currentProgram, nowTick, studioName]);
 
   // No estúdio PODCAST, o cabeçalho é controlado exclusivamente pelos eventos da Agenda.
   // A duração do evento segue o intervalo cadastrado para o programa correspondente.
@@ -3585,7 +3585,7 @@ function SwitcherUI({
             <ArrowLeft size={20} strokeWidth={1.2} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-white/75 transition-transform duration-200 group-hover/previous:-translate-x-1" />
           </div>
           <div className="relative isolate flex min-h-[120px] min-w-0 items-center justify-between gap-3 overflow-hidden px-3 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
-            <style>{'@keyframes vmixOnAirEnter { 0% { opacity: 0; transform: translateY(8px); filter: blur(2px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } } @keyframes vmixOnAirBlink { 0%, 45%, 100% { opacity: 1; } 50%, 75% { opacity: .25; } } .vmix-onair-enter { animation: vmixOnAirEnter .55s cubic-bezier(.2,.7,.2,1) both; } .vmix-onair-blink { animation: vmixOnAirBlink 1.15s steps(2, start) infinite; } @keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
+            <style>{'@keyframes vmixOnAirEnter { 0% { opacity: 0; transform: translateY(10px) scale(.985); filter: blur(3px); } 100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } } @keyframes vmixOnAirExit { 0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 100% { opacity: 0; transform: translateY(-8px) scale(.99); filter: blur(2px); } } @keyframes vmixOnAirBlink { 0%, 45%, 100% { opacity: 1; } 50%, 75% { opacity: .25; } } .vmix-onair-enter { animation: vmixOnAirEnter .55s cubic-bezier(.2,.7,.2,1) both; } .vmix-onair-blink { animation: vmixOnAirBlink 1.15s steps(2, start) infinite; } @keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
             <div className="absolute inset-y-0 left-0 z-0 pointer-events-none overflow-hidden" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }}>
             <div aria-hidden="true" className="absolute inset-0" style={{
               backgroundImage: "repeating-linear-gradient(90deg, transparent 0 4px, rgba(0,217,255,.95) 4px 6px, transparent 6px 10px), linear-gradient(180deg, transparent 0%, rgba(0,217,255,.22) 0%, rgba(0,217,255,.92) 44%, rgba(255,196,54,.95) 58%, rgba(0,217,255,.72) 72%, transparent 100%)",
