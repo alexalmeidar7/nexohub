@@ -616,6 +616,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
+  // Fonte local da faixa Música no Ar; mantida no mesmo escopo do JSX da página.
   const [onAirMusic, setOnAirMusic] = useState(null as ReturnType<typeof readMusicData>);
   const [reloadingInputs, setReloadingInputs] = useState(false);
   const [reloadFallback, setReloadFallback] = useState<string | null>(null);
