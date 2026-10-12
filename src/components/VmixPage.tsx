@@ -4274,12 +4274,10 @@ function SwitcherUI({
                           </div>
                         );
                       }
-                      const groups: Record<string, typeof ordered> = {};
-                      for (const p of ordered) {
-                        const key = p.estudio || "Sem Estúdio";
-                        if (!groups[key]) groups[key] = [];
-                        groups[key].push(p);
-                      }
+                      // Todos os presets desta faixa pertencem ao Estúdio FM.
+                      // Mantemos uma única faixa horizontal para que nenhum programa
+                      // (inclusive programas especiais como ELEITORAL) caia em outra linha.
+                      const groups: Record<string, typeof ordered> = { "Estúdio FM": [...ordered] };
                       return Object.entries(groups).map(([studio, progs]) => {
                         const studioKey = studio.toLowerCase().replace(/[^a-z0-9]+/g, "-");
                         const sortedProgs = [...progs].sort((a, b) => {
