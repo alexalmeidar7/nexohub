@@ -3587,13 +3587,11 @@ function SwitcherUI({
             <style>{'@keyframes vmixOnAirEnter { 0% { opacity: 0; transform: translateY(8px); filter: blur(2px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } } @keyframes vmixOnAirBlink { 0%, 45%, 100% { opacity: 1; } 50%, 75% { opacity: .25; } } .vmix-onair-enter { animation: vmixOnAirEnter .55s cubic-bezier(.2,.7,.2,1) both; } .vmix-onair-blink { animation: vmixOnAirBlink 1.15s steps(2, start) infinite; } @keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
             <div className="absolute inset-y-0 left-0 z-0 pointer-events-none overflow-hidden" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }}>
             <div aria-hidden="true" className="absolute inset-0" style={{
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 900 120%27 preserveAspectRatio=%27none%27%3E%3Cdefs%3E%3ClinearGradient id=%27wave%27 x1=%270%27 y1=%270%27 x2=%270%27 y2=%271%27%3E%3Cstop offset=%270%25%27 stop-color=%27%2300d9ff%27/%3E%3Cstop offset=%2750%25%27 stop-color=%27%2300c8ff%27/%3E%3Cstop offset=%2768%25%27 stop-color=%27%23ffd04a%27/%3E%3Cstop offset=%27100%25%27 stop-color=%27%2300d9ff%27 stop-opacity=%270.12%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg stroke=%27url(%23wave)%27 stroke-width=%274%27 stroke-linecap=%27round%27 opacity=%270.95%27%3E%3Cpath d=%27M8 60V53 M20 60V42 M32 60V25 M44 60V17 M56 60V31 M68 60V43 M80 60V19 M92 60V8 M104 60V28 M116 60V39 M128 60V15 M140 60V6 M152 60V22 M164 60V35 M176 60V12 M188 60V28 M200 60V44 M212 60V17 M224 60V7 M236 60V24 M248 60V37 M260 60V18 M272 60V10 M284 60V32 M296 60V46 M308 60V23 M320 60V12 M332 60V28 M344 60V42 M356 60V19 M368 60V8 M380 60V25 M392 60V37 M404 60V15 M416 60V5 M428 60V29 M440 60V44 M452 60V22 M464 60V10 M476 60V27 M488 60V39 M500 60V17 M512 60V7 M524 60V24 M536 60V36 M548 60V13 M560 60V4 M572 60V28 M584 60V43 M596 60V21 M608 60V9 M620 60V26 M632 60V38 M644 60V16 M656 60V6 M668 60V23 M680 60V35 M692 60V12 M704 60V4 M716 60V29 M728 60V45 M740 60V20 M752 60V9 M764 60V26 M776 60V38 M788 60V16 M800 60V7 M812 60V24 M824 60V36 M836 60V14 M848 60V5 M860 60V28 M872 60V42 M884 60V19%27/%3E%3C/g%3E%3C/svg%3E")',
-              backgroundSize: "100% 100%",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              maskImage: "linear-gradient(to right, transparent 0%, black 9%, black 88%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 9%, black 88%, transparent 100%)",
-              opacity: 0.82,
+              backgroundImage: "repeating-linear-gradient(90deg, transparent 0 4px, rgba(0,217,255,.95) 4px 6px, transparent 6px 10px), linear-gradient(180deg, transparent 0%, rgba(0,217,255,.22) 0%, rgba(0,217,255,.92) 44%, rgba(255,196,54,.95) 58%, rgba(0,217,255,.72) 72%, transparent 100%)",
+              backgroundBlendMode: "screen",
+              backgroundSize: "100% 100%, 100% 100%",
+              opacity: 0.9,
+              filter: "drop-shadow(0 0 3px rgba(0,200,255,.45))",
             }} />
           </div>
             <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
@@ -4764,7 +4762,7 @@ function SwitcherUI({
                       })}
                       {/* + Criar */}
                       <div
-                        className="relative vmix-hover-ring rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
+                        className="relative vmix-hover-ring w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
                         style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
                         onClick={() => setCreationChoiceOpen(true)}
                       >
