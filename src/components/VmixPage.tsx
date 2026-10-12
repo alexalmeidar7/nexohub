@@ -3367,11 +3367,10 @@ function SwitcherUI({
   }, [podcastAgendaSchedule, nowTick]);
 
   const previousProgram = useMemo(() => {
-    const now = new Date();
     const { weekday, hhmm } = getZonedNow();
     const nowMinutes = Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
     const dayNames = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
-    const normalizeDay = (value: string) => (value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+    const normalizeDay = (value: string) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const matchesDay = (p: Programa, dayIndex: number) => {
       if (!p.dias_semana || p.dias_semana.length === 0) return true;
       const short = dayNames[dayIndex];
@@ -3382,20 +3381,21 @@ function SwitcherUI({
     };
     const candidates = programas
       .filter((p: Programa) => matchesStudio(p.estudio, studioName) && p.horario_inicio && p.horario_fim && p.id !== currentProgram?.id)
-      .map((p: Programa) => {
+      .flatMap((p: Programa) => {
         const [sh, sm] = String(p.horario_inicio).slice(0, 5).split(":").map(Number);
         const [eh, em] = String(p.horario_fim).slice(0, 5).split(":").map(Number);
         const start = sh * 60 + sm;
         let end = eh * 60 + em;
+        if (![sh, sm, eh, em].every(Number.isFinite)) return [];
         if (end <= start) end += 1440;
-        return { p, start, end, dayOffset: matchesDay(p, weekday) ? 0 : matchesDay(p, (weekday + 6) % 7) ? -1 : 99 };
+        return [-1, 0].map((dayOffset) => ({
+          p,
+          absoluteStart: start + dayOffset * 1440,
+          absoluteEnd: end + dayOffset * 1440,
+          dayOffset,
+        })).filter((item) => matchesDay(p, (weekday + item.dayOffset + 7) % 7) && item.absoluteEnd <= nowMinutes);
       })
-      .filter((item) => {
-        if (item.dayOffset === 99) return false;
-        const end = item.end + item.dayOffset * 1440;
-        return end <= nowMinutes;
-      })
-      .sort((a, b) => (b.end + b.dayOffset * 1440) - (a.end + a.dayOffset * 1440));
+      .sort((a, b) => b.absoluteEnd - a.absoluteEnd);
     return candidates[0]?.p || null;
   }, [programas, studioName, currentProgram, nowTick]);
 
@@ -3513,17 +3513,17 @@ function SwitcherUI({
   return (
     <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-        <div className="grid min-h-[100px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
+        <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:px-6">
             <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">PASSOU</span>
             <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/80">{previousProgram?.nome || "—"}</span>
             <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
           </div>
-          <div className="relative isolate flex min-h-[100px] min-w-0 items-center justify-between gap-3 overflow-hidden px-3 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
-            <style>{'@keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
+          <div className="relative isolate flex min-h-[120px] min-w-0 items-center justify-between gap-3 overflow-hidden px-3 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
+            <style>{'@keyframes vmixOnAirEnter { 0% { opacity: 0; transform: translateY(8px); filter: blur(2px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } } @keyframes vmixOnAirBlink { 0%, 45%, 100% { opacity: 1; } 50%, 75% { opacity: .25; } } .vmix-onair-enter { animation: vmixOnAirEnter .55s cubic-bezier(.2,.7,.2,1) both; } .vmix-onair-blink { animation: vmixOnAirBlink 1.15s steps(2, start) infinite; } @keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
             <div className="absolute inset-y-0 left-0 z-0 pointer-events-none" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }} />
             <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
-            <div className="relative z-10 flex min-w-0 items-center gap-2 pb-2">
+            <div key={`track-${liveTrackData?.titulo || ""}-${liveTrackData?.artista || ""}-${liveTrackData?.capa || ""}`} className="vmix-onair-enter relative z-10 flex min-w-0 items-center gap-2">
               {liveTrackData?.capa ? (
                 <img src={liveTrackData?.capa} alt="" className="h-[58px] w-[58px] shrink-0 rounded-md object-cover" />
               ) : (
@@ -3534,20 +3534,20 @@ function SwitcherUI({
                 <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{liveTrackData?.artista || "Artista não informado"}</div>
               </div>
             </div>
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
-              <span className="animate-pulse text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
+            <div key={`program-${headerCurrentProgram?.id || activeTitle}-${headerCurrentSchedule}`} className="vmix-onair-enter absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
+              <span className="vmix-onair-blink text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
               <span className="mt-1 max-w-[180px] truncate text-[12px] font-black uppercase tracking-[0.08em]">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
               <span className="mt-0.5 text-[9px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
             </div>
-            <div className="relative z-10 ml-auto flex shrink-0 items-end gap-2 pb-0">
-              <div className="flex h-full min-w-0 flex-col items-end justify-center pb-2 text-right">
+            <div key={`presenter-${headerCurrentProgram?.apresentador_nome || ""}-${headerCurrentProgram?.apresentador_foto || ""}`} className="vmix-onair-enter relative z-10 ml-auto flex h-full shrink-0 items-center gap-2 pb-0">
+              <div className="flex h-full min-w-0 flex-col items-end justify-center text-right">
                 <Mic size={15} className="ml-auto" />
                 <span className="mt-1 max-w-[132px] whitespace-nowrap text-right text-[8px] font-bold uppercase leading-tight">{headerCurrentProgram?.apresentador_nome || "LOCUTOR"}</span>
               </div>
               {headerCurrentProgram?.apresentador_foto ? (
-                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[98px] w-[83px] self-end object-contain object-bottom opacity-90" />
+                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[118px] w-[100px] self-end object-contain object-bottom opacity-90" />
               ) : (
-                <div className="flex h-[98px] w-[83px] self-end items-center justify-center"><Mic size={20} /></div>
+                <div className="flex h-[118px] w-[100px] self-end items-center justify-center"><Mic size={20} /></div>
               )}
             </div>
           </div>
