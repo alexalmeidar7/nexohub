@@ -3381,6 +3381,19 @@ function SwitcherUI({
       ? `${headerNextProgram.horario_inicio?.slice(0, 5)} - ${headerNextProgram.horario_fim?.slice(0, 5)}`
       : "";
 
+  const currentProgramProgress = useMemo(() => {
+    const start = timeToSeconds(headerCurrentProgram?.horario_inicio);
+    const end = timeToSeconds(headerCurrentProgram?.horario_fim);
+    if (start === null || end === null || !headerCurrentProgram) return 0;
+    const now = new Date(nowTick);
+    const current = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const duration = end > start ? end - start : 86400 - start + end;
+    const elapsed = end > start
+      ? Math.max(0, Math.min(duration, current - start))
+      : Math.max(0, Math.min(duration, current >= start ? current - start : 86400 - start + current));
+    return duration > 0 ? Math.round((elapsed / duration) * 10000) / 100 : 0;
+  }, [headerCurrentProgram, nowTick]);
+
 
 
 
@@ -3454,8 +3467,11 @@ function SwitcherUI({
             <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/80">{previousProgram?.nome || "—"}</span>
             <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
           </div>
-          <div className="relative flex min-w-0 items-stretch justify-between gap-3 px-3 pt-2 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
-            <div className="flex min-w-0 items-center gap-2 pb-2">
+          <div className="relative isolate flex min-w-0 items-stretch justify-between gap-3 overflow-hidden px-3 pt-2 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
+            <style>{'@keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
+            <div className="absolute inset-y-0 left-0 z-0 pointer-events-none" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }} />
+            <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
+            <div className="relative z-10 flex min-w-0 items-center gap-2 pb-2">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/15">
                 <Play size={16} fill="currentColor" />
               </div>
@@ -3464,12 +3480,12 @@ function SwitcherUI({
                 <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">Artista não informado pelo vMix</div>
               </div>
             </div>
-            <div className="absolute left-1/2 top-2 flex -translate-x-1/2 flex-col items-center text-center pointer-events-none">
+            <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 flex-col items-center text-center pointer-events-none">
               <span className="animate-pulse text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
               <span className="mt-1 max-w-[180px] truncate text-[12px] font-black uppercase tracking-[0.08em]">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
               <span className="mt-0.5 text-[9px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
             </div>
-            <div className="ml-auto flex shrink-0 items-end gap-2 pb-0">
+            <div className="relative z-10 ml-auto flex shrink-0 items-end gap-2 pb-0">
               {headerCurrentProgram?.apresentador_foto ? (
                 <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[68px] w-12 self-end rounded-t-lg object-cover object-top" />
               ) : (
