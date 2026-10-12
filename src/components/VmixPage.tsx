@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { readMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { confirmDialog } from "@/lib/confirmDialog";
@@ -471,6 +472,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
+  const musicClientAccount = useMemo(() => user ? (findClientAccountByEmail(user.email || "") || findClientAccountById(user.id)) : null, [user?.id, user?.email]);
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
   const [vmixUser, setVmixUser] = useState("");
@@ -3430,6 +3432,20 @@ function SwitcherUI({
   const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
   const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
 
+  // Segue a mesma identidade de emissora usada em Música no Ar, evitando mostrar uma faixa antiga do usuário errado.
+  const musicDataUserIds = useMemo(() => {
+    const ids = [
+      musicClientAccount && !musicClientAccount.isAdmin ? musicClientAccount.id : null,
+      musicClientAccount?.parentUserId,
+      user?.id && !musicClientAccount?.isAdmin ? user.id : null,
+      musicClientAccount?.isAdmin || !user?.id ? "d17e65af-e407-466f-9b60-b55c43399513" : null,
+    ].filter(Boolean) as string[];
+    return Array.from(new Set(ids));
+  }, [musicClientAccount, user?.id]);
+  const liveTrackData = musicDataUserIds
+    .map((id) => readMusicData(id))
+    .find((track) => !!(track?.titulo || track?.artista || track?.capa)) || null;
+
   const SwitcherStatusPill = ({ compact = false }: { compact?: boolean }) => (
     <div
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
@@ -3487,14 +3503,14 @@ function SwitcherUI({
             <div className="absolute inset-y-0 left-0 z-0 pointer-events-none" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }} />
             <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
             <div className="relative z-10 flex min-w-0 items-center gap-2 pb-2">
-              {readMusicData(user?.id)?.capa ? (
-                <img src={readMusicData(user?.id)?.capa} alt="" className="h-[58px] w-[58px] shrink-0 rounded-md object-contain bg-black/20" />
+              {liveTrackData?.capa ? (
+                <img src={liveTrackData?.capa} alt="" className="h-[58px] w-[58px] shrink-0 rounded-md object-cover" />
               ) : (
-                <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-md bg-black/15"><Music2 size={20} /></div>
+                <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-md"><Music2 size={20} /></div>
               )}
               <div className="min-w-0">
-                <div className="truncate text-[10px] font-black uppercase tracking-wide">{readMusicData(user?.id)?.titulo || "MÚSICA NÃO IDENTIFICADA"}</div>
-                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{readMusicData(user?.id)?.artista || "Artista não informado"}</div>
+                <div className="truncate text-[10px] font-black uppercase tracking-wide">{liveTrackData?.titulo || "MÚSICA NÃO IDENTIFICADA"}</div>
+                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{liveTrackData?.artista || "Artista não informado"}</div>
               </div>
             </div>
             <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 flex-col items-center text-center pointer-events-none">
