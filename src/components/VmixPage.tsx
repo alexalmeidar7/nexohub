@@ -812,7 +812,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
 
 
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent("vmix-connection-status", { detail: { connected: connected || forcedConnected } }));
+    window.dispatchEvent(new CustomEvent("vmix-connection-status", { detail: { connected } }));
   }, [connected, forcedConnected]);
 
   const effectiveConnected = connected || forcedConnected;
