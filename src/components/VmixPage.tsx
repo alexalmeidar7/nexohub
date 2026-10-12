@@ -4129,14 +4129,14 @@ function SwitcherUI({
           return (
             <>
               {/* ── Programas Preset + Botões de Efeitos side by side ── */}
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
+              <div className="flex flex-col gap-4">
                 {/* Left: Programas Preset */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Radio size={14} style={{ color: "#C6F03C" }} />
                       <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>
-                        Automações
+                        PRESETS PROGRAMAS
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
