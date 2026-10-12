@@ -3424,7 +3424,30 @@ function SwitcherUI({
             {endpointLabel}
           </span>
           {connectionRouteLabel && (
-            <span className="text-[8px] font-black uppercase track      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">
+              · {connectionRouteLabel}
+            </span>
+          )}
+        </>
+      )}
+      {connStatus !== "online" && (savedUrl || vmixUrl) && (
+        <button
+          onClick={() => connectToVmix()}
+          disabled={connecting}
+          className="ml-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 hover:brightness-110"
+          style={{ backgroundColor: statusColor, color: "#0a0a0a" }}
+          title="Tentar reconectar ao vMix"
+        >
+          {connStatus === "connecting" ? "…" : "Reconectar"}
+        </button>
+      )}
+    </div>
+  );
+
+
+  return (
+    <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
+      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         <div className="grid min-h-[76px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:px-6">
             <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">PASSOU</span>
@@ -3444,28 +3467,6 @@ function SwitcherUI({
         </div>
       </div>
 
-   <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">A SEGUIR</span>
-                  <span className="text-[11px] font-black uppercase tracking-[0.05em] text-white/90 truncate max-w-[200px] leading-none">
-                    {headerNextProgram?.nome || "—"}
-                  </span>
-                  {headerNextSchedule && (
-                    <span className="text-[9px] font-medium text-white/40 leading-none mt-1 font-mono">
-                      {headerNextSchedule}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation controls moved to the main logo header in VmixControl. */}
-
-
-
-            </div>
-          </div>
-        </div>
-
-        {/* Shortcut Capture Dialog */}
         <Dialog open={!!capturingShortcut} onOpenChange={(open) => !open && setCapturingShortcut(null)}>
           <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-8">
             <div className="flex flex-col items-center text-center space-y-6">
