@@ -162,7 +162,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
               <Layout size={14} /> <span>Switcher</span>
             </button>
           </div>
-          <div className="absolute right-[72px] top-1/2 flex -translate-y-1/2 items-center gap-4 text-white/90">
+          <div className="absolute right-[76px] top-1/2 flex -translate-y-1/2 items-center gap-3 text-white/90">
             <div className="flex items-center gap-1.5" title={headerTime.toLocaleDateString("pt-BR")}>
               <Clock size={14} className="text-white/70" />
               <span className="min-w-[48px] text-[13px] font-medium tabular-nums">{headerTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
