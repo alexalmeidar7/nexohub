@@ -4331,11 +4331,10 @@ function SwitcherUI({
 
                           <div
 
-                            className={`group/preset relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-opacity duration-200 ${progOnAir ? "vmix-preset-onair hover:border-white" : "opacity-60 hover:opacity-100"}`}
+                            className={`group/preset relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer border-2 transition-opacity duration-200 ${progOnAir ? "vmix-preset-onair border-transparent hover:border-white" : "border-[#333338] opacity-60 hover:opacity-100"}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: progOnAir ? "#008000" : "#2a2a30",
-                              border: progOnAir ? "2px solid transparent" : "2px solid #333338",
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : undefined,
                             }}
                             onClick={async () => {
