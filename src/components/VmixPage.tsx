@@ -13,7 +13,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, ChevronLeft, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy
+  ScrollText, ChevronDown, ChevronUp, ChevronLeft, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2
 } from "lucide-react";
 
 import {
@@ -150,7 +150,7 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[] | null;
   estudio: string | null;
-  apresentador_foto?: string | null;
+  apresentador_foto?: string | null;\n  apresentador_nome?: string | null;
 }
 
 /** Normaliza dados legados do banco antes de renderizar a grade do Switcher. */
@@ -164,7 +164,7 @@ const normalizeProgramaRecord = (value: any): Programa => ({
     ? value.dias_semana.filter((day: unknown) => day !== null && day !== undefined).map(String)
     : null,
   estudio: typeof value?.estudio === "string" ? value.estudio : null,
-  apresentador_foto: typeof value?.apresentadores?.foto === "string" ? value.apresentadores.foto : null,
+  apresentador_foto: typeof value?.apresentadores?.foto === "string" ? value.apresentadores.foto : null,\n  apresentador_nome: typeof value?.apresentadores?.nome === "string" ? value.apresentadores.nome : null,
 });
 
 // Helper to detect private/local IPs
@@ -3454,10 +3454,32 @@ function SwitcherUI({
             <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/80">{previousProgram?.nome || "—"}</span>
             <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
           </div>
-          <div className="flex min-w-0 flex-col items-center justify-center rounded-xl px-4 py-3 text-center sm:rounded-none" style={{ backgroundColor: "#007c00" }}>
-            <span className="mb-1 text-[8px] font-black uppercase tracking-[0.22em] text-white/75">NO AR</span>
-            <span className="max-w-full truncate text-[13px] font-black uppercase tracking-[0.08em] text-white">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
-            <span className="mt-1 text-[10px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
+          <div className="relative flex min-w-0 items-stretch justify-between gap-3 px-3 pt-2 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
+            <div className="flex min-w-0 items-center gap-2 pb-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/15">
+                <Play size={16} fill="currentColor" />
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-[10px] font-black uppercase tracking-wide">{inputs.find((input) => input.key === activeInput || input.number === activeInput)?.title || "MÚSICA NÃO IDENTIFICADA"}</div>
+                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">Artista não informado pelo vMix</div>
+              </div>
+            </div>
+            <div className="absolute left-1/2 top-2 flex -translate-x-1/2 flex-col items-center text-center pointer-events-none">
+              <span className="animate-pulse text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
+              <span className="mt-1 max-w-[180px] truncate text-[12px] font-black uppercase tracking-[0.08em]">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
+              <span className="mt-0.5 text-[9px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
+            </div>
+            <div className="ml-auto flex shrink-0 items-end gap-2 pb-0">
+              {headerCurrentProgram?.apresentador_foto ? (
+                <img src={headerCurrentProgram.apresentador_foto} alt={headerCurrentProgram.apresentador_nome || "Locutor no ar"} className="h-[68px] w-12 self-end rounded-t-lg object-cover object-top" />
+              ) : (
+                <div className="flex h-[68px] w-12 self-end items-center justify-center rounded-t-lg bg-black/15"><Mic size={20} /></div>
+              )}
+              <div className="flex h-full flex-col items-center justify-center pb-2">
+                <Mic size={15} />
+                <span className="mt-1 max-w-[80px] truncate text-[8px] font-bold uppercase">{headerCurrentProgram?.apresentador_nome || "LOCUTOR"}</span>
+              </div>
+            </div>
           </div>
           <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:items-end sm:text-right sm:px-6">
             <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">A SEGUIR</span>
