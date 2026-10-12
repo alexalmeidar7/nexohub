@@ -3082,6 +3082,63 @@ function SwitcherUI({
   // Estado da música pertence ao SwitcherUI, que renderiza o quadro NO AR.
   const [liveTrackData, setLiveTrackData] = useState<{ titulo?: string; artista?: string; capa?: string; duracao?: number } | null>(null);
 
+  // A leitura e a atualização ficam no mesmo componente que desenha o quadro NO AR.
+  const musicDataUserIds = useMemo(() => {
+    const clientAccount = user
+      ? (findClientAccountByEmail(user.email || "") || findClientAccountById(user.id))
+      : null;
+    const ids = [
+      clientAccount && !clientAccount.isAdmin ? clientAccount.id : null,
+      clientAccount?.parentUserId,
+      user?.id && !clientAccount?.isAdmin ? user.id : null,
+      clientAccount?.isAdmin || !user?.id ? "d17e65af-e407-466f-9b60-b55c43399513" : null,
+    ].filter(Boolean) as string[];
+    return Array.from(new Set(ids));
+  }, [user?.id, user?.email]);
+
+  useEffect(() => {
+    let disposed = false;
+    const applyTrack = (track: any, displayArt?: string) => {
+      if (disposed || !track || !(track.titulo || track.artista || track.capa || displayArt)) return;
+      setLiveTrackData({
+        titulo: track.titulo || "",
+        artista: track.artista || "",
+        capa: track.capa || displayArt || "",
+        duracao: track.duracao,
+      });
+    };
+    const readLatestMusic = () => {
+      const playerState = (window as any).__lastPlayerMusicState;
+      const playerTrack = playerState?.currentMusic;
+      if (playerTrack && (playerTrack.titulo || playerTrack.artista || playerTrack.capa)) {
+        applyTrack(playerTrack, playerState.displayArt);
+        return;
+      }
+      const storedTrack = musicDataUserIds
+        .map((id) => readMusicData(id))
+        .find((track) => !!(track?.titulo || track?.artista || track?.capa));
+      if (storedTrack) applyTrack(storedTrack);
+    };
+    const onPlayerMusic = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      const track = detail?.currentMusic || detail;
+      if (track) applyTrack(track, detail?.displayArt);
+      else readLatestMusic();
+    };
+    readLatestMusic();
+    window.addEventListener("player:music", onPlayerMusic as EventListener);
+    window.addEventListener(MUSIC_DATA_EVENT, readLatestMusic);
+    window.addEventListener("storage", readLatestMusic);
+    const intervalId = window.setInterval(readLatestMusic, 1000);
+    return () => {
+      disposed = true;
+      window.removeEventListener("player:music", onPlayerMusic as EventListener);
+      window.removeEventListener(MUSIC_DATA_EVENT, readLatestMusic);
+      window.removeEventListener("storage", readLatestMusic);
+      window.clearInterval(intervalId);
+    };
+  }, [musicDataUserIds]);
+
   const [customBtnTextScale, setCustomBtnTextScale] = useState<number>(() => {
     try {
       return Number(localStorage.getItem("vmix_custom_btn_text_scale")) || 1;
@@ -3442,64 +3499,6 @@ function SwitcherUI({
   const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
   const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
 
-  // Segue a mesma identidade de emissora usada em Música no Ar, evitando mostrar uma faixa antiga do usuário errado.
-  const musicDataUserIds = useMemo(() => {
-    const clientAccount = user
-      ? (findClientAccountByEmail(user.email || "") || findClientAccountById(user.id))
-      : null;
-    const ids = [
-      clientAccount && !clientAccount.isAdmin ? clientAccount.id : null,
-      clientAccount?.parentUserId,
-      user?.id && !clientAccount?.isAdmin ? user.id : null,
-      clientAccount?.isAdmin || !user?.id ? "d17e65af-e407-466f-9b60-b55c43399513" : null,
-    ].filter(Boolean) as string[];
-    return Array.from(new Set(ids));
-  }, [user?.id, user?.email]);
-  useEffect(() => {
-    const readLatestMusic = () => {
-      const playerState = (window as any).__lastPlayerMusicState;
-      const playerTrack = playerState?.currentMusic;
-      if (playerTrack && (playerTrack.titulo || playerTrack.artista)) {
-        setLiveTrackData({
-          titulo: playerTrack.titulo || "",
-          artista: playerTrack.artista || "",
-          capa: playerTrack.capa || playerState.displayArt || "",
-          duracao: playerTrack.duracao,
-        });
-        return;
-      }
-      const storedTrack = musicDataUserIds
-        .map((id) => readMusicData(id))
-        .find((track) => !!(track?.titulo || track?.artista || track?.capa)) || null;
-      setLiveTrackData(storedTrack);
-    };
-    const onPlayerMusic = (event: Event) => {
-      const detail = (event as CustomEvent).detail;
-      const track = detail?.currentMusic || detail;
-      if (track && (track.titulo || track.artista)) {
-        setLiveTrackData({
-          titulo: track.titulo || "",
-          artista: track.artista || "",
-          capa: track.capa || detail?.displayArt || "",
-          duracao: track.duracao,
-        });
-      } else {
-        readLatestMusic();
-      }
-    };
-    readLatestMusic();
-    window.addEventListener("player:music", onPlayerMusic as EventListener);
-    window.addEventListener(MUSIC_DATA_EVENT, readLatestMusic);
-    window.addEventListener("storage", readLatestMusic);
-    const intervalId = window.setInterval(readLatestMusic, 1000);
-    return () => {
-      window.removeEventListener("player:music", onPlayerMusic as EventListener);
-      window.removeEventListener(MUSIC_DATA_EVENT, readLatestMusic);
-      window.removeEventListener("storage", readLatestMusic);
-      window.clearInterval(intervalId);
-    };
-  }, [musicDataUserIds]);
-
   const SwitcherStatusPill = ({ compact = false }: { compact?: boolean }) => (
     <div
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
@@ -3548,7 +3547,7 @@ function SwitcherUI({
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">
-            {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-2 bottom-0 z-0 h-[112px] w-[86px] object-contain object-bottom grayscale opacity-60" />}
+            {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60" />}
             <div className="relative z-10 min-w-0 pr-8">
               <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">PASSOU</span>
               <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{previousProgram?.nome || "—"}</span>
@@ -3589,7 +3588,7 @@ function SwitcherUI({
             </div>
           </div>
           <div className="relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:items-end sm:text-right sm:px-6">
-            {headerNextProgram?.apresentador_foto && <img src={headerNextProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute left-2 bottom-0 z-0 h-[112px] w-[86px] object-contain object-bottom grayscale opacity-60" />}
+            {headerNextProgram?.apresentador_foto && <img src={headerNextProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute left-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60" />}
             <div className="relative z-10 min-w-0 pl-8">
               <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">A SEGUIR</span>
               <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{headerNextProgram?.nome || "—"}</span>
