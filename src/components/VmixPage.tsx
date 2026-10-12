@@ -617,7 +617,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
   // Fonte local da faixa Música no Ar; mantida no mesmo escopo do JSX da página.
-  const [onAirMusic, setOnAirMusic] = useState(null as ReturnType<typeof readMusicData>);
+  const [liveTrackData, setLiveTrackData] = useState(null as ReturnType<typeof readMusicData>);
   const [reloadingInputs, setReloadingInputs] = useState(false);
   const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
@@ -824,6 +824,22 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       window.removeEventListener(MUSIC_DATA_EVENT, onMusicUpdate);
       window.removeEventListener("storage", refreshOnAirMusic);
       window.clearInterval(timer);
+    };
+  }, [user?.id]);
+  useEffect(() => {
+    const refreshLiveTrackData = () => setLiveTrackData(readMusicData(user?.id));
+    refreshLiveTrackData();
+    const onMusicDataChanged = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (!detail?.userId || detail.userId === user?.id) refreshLiveTrackData();
+    };
+    window.addEventListener(MUSIC_DATA_EVENT, onMusicDataChanged);
+    window.addEventListener("storage", refreshLiveTrackData);
+    const intervalId = window.setInterval(refreshLiveTrackData, 2000);
+    return () => {
+      window.removeEventListener(MUSIC_DATA_EVENT, onMusicDataChanged);
+      window.removeEventListener("storage", refreshLiveTrackData);
+      window.clearInterval(intervalId);
     };
   }, [user?.id]);
   const effectiveConnected = connected || forcedConnected;
@@ -3493,14 +3509,14 @@ function SwitcherUI({
             <div className="absolute inset-y-0 left-0 z-0 pointer-events-none" style={{ width: currentProgramProgress + "%", backgroundColor: "#006300", transition: "width 1s linear" }} />
             <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
             <div className="relative z-10 flex min-w-0 items-center gap-2 pb-2">
-              {onAirMusic?.capa ? (
-                <img src={onAirMusic.capa} alt="" className="h-[58px] w-[58px] shrink-0 rounded-md object-contain bg-black/20" />
+              {liveTrackData?.capa ? (
+                <img src={liveTrackData.capa} alt="" className="h-[58px] w-[58px] shrink-0 rounded-md object-contain bg-black/20" />
               ) : (
                 <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-md bg-black/15"><Music2 size={20} /></div>
               )}
               <div className="min-w-0">
-                <div className="truncate text-[10px] font-black uppercase tracking-wide">{onAirMusic?.titulo || "MÚSICA NÃO IDENTIFICADA"}</div>
-                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{onAirMusic?.artista || "Artista não informado"}</div>
+                <div className="truncate text-[10px] font-black uppercase tracking-wide">{liveTrackData?.titulo || "MÚSICA NÃO IDENTIFICADA"}</div>
+                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{liveTrackData?.artista || "Artista não informado"}</div>
               </div>
             </div>
             <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 flex-col items-center text-center pointer-events-none">
