@@ -333,6 +333,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
   const [reloadKey, setReloadKey] = useState<number>(() => Date.now());
   const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
   const [nextProgramInfo, setNextProgramInfo] = useState<NextProgramInfo | null>(null);
+  const [, setScheduleClock] = useState<number>(() => Date.now());
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
 
 
@@ -1411,6 +1412,13 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     document.head.appendChild(link);
   }, []);
 
+  // Keep the broadcast preview synchronized with the schedule without a manual refresh.
+  // The schedule is evaluated against the station timezone on every tick.
+  useEffect(() => {
+    const timer = window.setInterval(() => setScheduleClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   // A Seguir countdown
   useEffect(() => {
     if (!user) return;
@@ -1494,6 +1502,48 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       return end > start ? now.seconds >= start && now.seconds < end : now.seconds >= start || now.seconds < end;
     }) || null;
   })();
+
+  // When the schedule changes, refresh the program and presenter details used by the live preview.
+  useEffect(() => {
+    let cancelled = false;
+    const syncOnAirProgram = async () => {
+      if (!onAirProgram) return;
+      setActiveProgramaId(onAirProgram.id || null);
+      setProgramaNome(onAirProgram.nome || "");
+      setProgramaLogo(onAirProgram.selo || null);
+
+      const presenterIds: string[] =
+        Array.isArray(onAirProgram.apresentadores_ids) && onAirProgram.apresentadores_ids.length > 0
+          ? onAirProgram.apresentadores_ids
+          : onAirProgram.apresentador_id
+            ? [onAirProgram.apresentador_id]
+            : [];
+
+      if (presenterIds.length === 0) {
+        setLocutorNome("");
+        setLocutorFoto(null);
+        setLocutorInstagram("");
+        setLocutorCargo("");
+        return;
+      }
+
+      const { data: presenters } = await supabase
+        .from("apresentadores")
+        .select("id, nome, foto, instagram, cargo")
+        .in("id", presenterIds);
+      if (cancelled) return;
+      const presenter = (presenters || []).sort(
+        (a: any, b: any) => presenterIds.indexOf(a.id) - presenterIds.indexOf(b.id),
+      )[0];
+      setLocutorNome(presenter?.nome || "");
+      setLocutorFoto(presenter?.foto || null);
+      setLocutorInstagram(presenter?.instagram || "");
+      setLocutorCargo(presenter?.cargo || "");
+    };
+
+    void syncOnAirProgram();
+    return () => { cancelled = true; };
+  }, [onAirProgram?.id, stationUid]);
 
   return (
     <div
@@ -1600,7 +1650,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
                   {empresaLogo && <div className="flex h-9 items-center justify-start border-b border-white/10 pb-3"><img src={empresaLogo} alt="Logo da emissora" className="h-8 max-w-[150px] object-contain object-left" /></div>}
                   <div className="min-h-[64px] flex items-center gap-3">
                     {locutorFoto ? <img src={locutorFoto} alt={displayLocutor} className="h-[68px] w-[68px] shrink-0 rounded-xl object-contain object-bottom bg-white/[0.04]" /> : <div className="h-[68px] w-[68px] shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-blue-400"><Mic size={24} /></div>}
-                    <div key={showOnAirProgram ? "program" : "presenter"} className="broadcast-info-transition min-w-0">
+                    <div key={showOnAirProgram ? "program" : "presenter"} key={showOnAirProgram ? `program-${onAirProgram?.id || activeProgramaId || "none"}` : `presenter-${displayLocutor}`} className="broadcast-info-transition min-w-0">
                       <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-400">{showOnAirProgram ? "Programa no ar" : "Locutor no ar"}</p>
                       <p className="mt-1 text-base sm:text-lg font-extrabold leading-tight break-words">{showOnAirProgram ? (onAirProgram?.nome || programaNome || "Programação ao vivo") : displayLocutor}</p>
                       <p className="mt-1 text-xs font-semibold text-white/55">{showOnAirProgram ? `${onAirProgram?.horario_inicio?.slice(0,5) || ""}${onAirProgram?.horario_fim ? ` – ${onAirProgram.horario_fim.slice(0,5)}` : ""}` : (locutorInstagram ? `@${locutorInstagram.replace(/^@/, "")}` : (locutorCargo || "Apresentador"))}</p>
