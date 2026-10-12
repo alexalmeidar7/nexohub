@@ -4338,23 +4338,6 @@ function SwitcherUI({
                               border: isActive ? "2px solid #ef4444" : progOnAir ? "2px solid #dc2626" : "2px solid #333338",
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : 1,
                             }}
-                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              if (dragPresetIdx === null) return;
-                              const dragId = programas[dragPresetIdx]?.id;
-                              if (!dragId || dragId === prog.id) { setDragPresetIdx(null); return; }
-                              const arr = [...programas];
-                              const fromIdx = arr.findIndex(p => p.id === dragId);
-                              const toIdx = arr.findIndex(p => p.id === prog.id);
-                              if (fromIdx === -1 || toIdx === -1) { setDragPresetIdx(null); return; }
-                              const [moved] = arr.splice(fromIdx, 1);
-                              arr.splice(toIdx, 0, moved);
-                              setProgramas(arr);
-                              localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id)));
-                              setDragPresetIdx(null);
-                            }}
-                            onDragEnd={() => setDragPresetIdx(null)}
                             onClick={async () => {
                               setActivePreset(prog.id);
                               const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
@@ -4383,17 +4366,14 @@ function SwitcherUI({
                             >
                             {(agendaEvento || startTime) && (
                               <div
-                                draggable
-                                onDragStart={(e) => { e.stopPropagation(); const gi = programas.findIndex(p => p.id === prog.id); setDragPresetIdx(gi); e.dataTransfer.effectAllowed = "move"; }}
-                                className="absolute top-1.5 left-1.5 flex flex-col items-start gap-1 px-2 py-[3px] rounded cursor-grab active:cursor-grabbing"
+                                className="absolute top-1.5 left-1.5 flex flex-col items-start gap-1 px-2 py-[3px] rounded"
                                 style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
-                                title={agendaEvento ? "Horário definido na agenda" : "Arraste para reposicionar"}
+                                title={agendaEvento ? "Horário definido na agenda" : "Horário de início"}
                               >
                                 <div className="flex items-center gap-1">
-                                  <GripVertical size={9} style={{ color: "#666" }} />
                                   <Clock size={11} style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#888" }} />
                                   <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#ddd" }}>
-                                    {agendaEvento ? agendaDataLabel : `${startTime} - ${endTime}`}
+                                    {agendaEvento ? (agendaEvento.horario_gravacao || startTime).slice(0, 5) : startTime}
                                   </span>
                                 </div>
                                 {isPodcastStudio && remaining !== null && (
@@ -4490,129 +4470,6 @@ function SwitcherUI({
                               style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
                             >
                               <div className="flex items-center gap-1">
-                                {(() => { 
-                                  const gi = programas.findIndex(p => p.id === prog.id); 
-                                  return gi > 0 ? (
-                                    <button
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        const arr = [...programas]; 
-                                        [arr[gi - 1], arr[gi]] = [arr[gi], arr[gi - 1]]; 
-                                        setProgramas(arr); 
-                                        localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); 
-                                      }}
-                                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] hover:bg-white/20 transition-colors"
-                                      style={{ color: "#fff" }}
-                                      title="Mover para esquerda"
-                                    ><ChevronDown size={12} className="-rotate-90" /></button>
-                                  ) : <div className="w-6" />; 
-                                })()}
-                                
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
-                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#00BFF0]/40 transition-colors"
-                                  style={{ color: "#fff" }}
-                                  title="Editar ações"
-                                ><Wand2 size={12} /></button>
-
-                                <button
-                                  onClick={async (e) => { 
-                                    e.stopPropagation(); 
-                                    const confirmed = await confirmDialog({
-                                      title: "Duplicar Automação",
-                                      message: `Deseja duplicar a automação "${prog.nome}"?`,
-                                      confirmLabel: "Duplicar",
-                                      destructive: false,
-                                    });
-                                    if (confirmed) {
-                                      try {
-                                        const { data: newProg, error: pError } = await supabase
-                                          .from("programas")
-                                          .insert([{
-                                            nome: `${prog.nome} (Cópia)`,
-                                            horario_inicio: prog.horario_inicio,
-                                            horario_fim: prog.horario_fim,
-                                            dias_semana: prog.dias_semana,
-                                            estudio: prog.estudio,
-                                            ativo: prog.ativo,
-                                            user_id: user?.id
-                                          }])
-                                          .select()
-                                          .single();
-
-                                        if (pError) throw pError;
-
-                                        const { data: commands, error: cError } = await supabase
-                                          .from("preset_commands" as any)
-                                          .select("*")
-                                          .eq("programa_id", prog.id);
-
-                                        if (cError) throw cError;
-
-                                        if (commands && Array.isArray(commands) && commands.length > 0) {
-                                          const newCommands = commands.map((c: any) => ({
-                                            programa_id: newProg.id,
-                                            commands: c.commands,
-                                            custom_horario: c.custom_horario,
-                                            user_id: user?.id
-                                          }));
-                                          const { error: insError } = await supabase.from("preset_commands" as any).insert(newCommands);
-                                          if (insError) throw insError;
-                                        }
-
-                                        setProgramas(prev => [...prev, newProg]);
-                                        toast({ title: "Duplicado", description: "Automação duplicada com sucesso." });
-                                      } catch (err: any) {
-                                        toast({ title: "Erro ao duplicar", description: err.message, variant: "destructive" });
-                                      }
-                                    }
-                                  }}
-                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
-                                  style={{ color: "#fff" }}
-                                  title="Duplicar"
-                                ><Copy size={12} /></button>
-
-                                <button
-                                  onClick={async (e) => { 
-                                    e.stopPropagation(); 
-                                    const confirmed = await confirmDialog({
-                                      title: "Excluir Automação",
-                                      message: `Excluir a automação "${prog.nome}" permanentemente?`,
-                                      confirmLabel: "Excluir",
-                                      destructive: true,
-                                    });
-                                    if (confirmed) {
-                                      const { error } = await supabase.from("programas").delete().eq("id", prog.id);
-                                      if (!error) {
-                                        setProgramas(prev => prev.filter(p => p.id !== prog.id));
-                                        toast({ title: "Excluído", description: "Automação removida com sucesso." });
-                                      } else {
-                                        toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-                                      }
-                                    }
-                                  }}
-                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
-                                  style={{ color: "#ff4d4d" }}
-                                  title="Excluir"
-                                ><Trash2 size={12} /></button>
-
-                                {(() => { 
-                                  const gi = programas.findIndex(p => p.id === prog.id); 
-                                  return gi < programas.length - 1 ? (
-                                    <button
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        const arr = [...programas]; 
-                                        [arr[gi], arr[gi + 1]] = [arr[gi + 1], arr[gi]]; 
-                                        setProgramas(arr); 
-                                        localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); 
-                                      }}
-                                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] hover:bg-white/20 transition-colors"
-                                      style={{ color: "#fff" }}
-                                      title="Mover para direita"
-                                    ><ChevronDown size={12} className="rotate-90" /></button>
-                                  ) : <div className="w-6" />; 
-                                })()}
                               </div>
 
                             </div>
