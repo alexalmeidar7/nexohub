@@ -16,7 +16,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, ChevronLeft, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2
+  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2
 } from "lucide-react";
 
 import {
@@ -618,7 +618,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
-  const [, setMusicRefreshTick] = useState(0);
+  const [liveTrackData, setLiveTrackData] = useState<{ titulo?: string; artista?: string; capa?: string; duracao?: number } | null>(null);
   const [reloadingInputs, setReloadingInputs] = useState(false);
   const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
@@ -811,17 +811,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     localStorage.setItem("vmix_monitor_iframe", JSON.stringify(monitorIframeMode));
   }, [monitorIframeMode]);
 
-  useEffect(() => {
-    const refreshMusicDisplay = () => setMusicRefreshTick((tick) => tick + 1);
-    window.addEventListener(MUSIC_DATA_EVENT, refreshMusicDisplay);
-    window.addEventListener("storage", refreshMusicDisplay);
-    const intervalId = window.setInterval(refreshMusicDisplay, 2000);
-    return () => {
-      window.removeEventListener(MUSIC_DATA_EVENT, refreshMusicDisplay);
-      window.removeEventListener("storage", refreshMusicDisplay);
-      window.clearInterval(intervalId);
-    };
-  }, []);
+
   const effectiveConnected = connected || forcedConnected;
 
   useEffect(() => {
@@ -3463,9 +3453,50 @@ function SwitcherUI({
     ].filter(Boolean) as string[];
     return Array.from(new Set(ids));
   }, [user?.id, user?.email]);
-  const liveTrackData = musicDataUserIds
-    .map((id) => readMusicData(id))
-    .find((track) => !!(track?.titulo || track?.artista || track?.capa)) || null;
+  useEffect(() => {
+    const readLatestMusic = () => {
+      const playerState = (window as any).__lastPlayerMusicState;
+      const playerTrack = playerState?.currentMusic;
+      if (playerTrack && (playerTrack.titulo || playerTrack.artista)) {
+        setLiveTrackData({
+          titulo: playerTrack.titulo || "",
+          artista: playerTrack.artista || "",
+          capa: playerTrack.capa || playerState.displayArt || "",
+          duracao: playerTrack.duracao,
+        });
+        return;
+      }
+      const storedTrack = musicDataUserIds
+        .map((id) => readMusicData(id))
+        .find((track) => !!(track?.titulo || track?.artista || track?.capa)) || null;
+      setLiveTrackData(storedTrack);
+    };
+    const onPlayerMusic = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      const track = detail?.currentMusic || detail;
+      if (track && (track.titulo || track.artista)) {
+        setLiveTrackData({
+          titulo: track.titulo || "",
+          artista: track.artista || "",
+          capa: track.capa || detail?.displayArt || "",
+          duracao: track.duracao,
+        });
+      } else {
+        readLatestMusic();
+      }
+    };
+    readLatestMusic();
+    window.addEventListener("player:music", onPlayerMusic as EventListener);
+    window.addEventListener(MUSIC_DATA_EVENT, readLatestMusic);
+    window.addEventListener("storage", readLatestMusic);
+    const intervalId = window.setInterval(readLatestMusic, 1000);
+    return () => {
+      window.removeEventListener("player:music", onPlayerMusic as EventListener);
+      window.removeEventListener(MUSIC_DATA_EVENT, readLatestMusic);
+      window.removeEventListener("storage", readLatestMusic);
+      window.clearInterval(intervalId);
+    };
+  }, [musicDataUserIds]);
 
   const SwitcherStatusPill = ({ compact = false }: { compact?: boolean }) => (
     <div
@@ -3514,10 +3545,14 @@ function SwitcherUI({
     <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
-          <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:px-6">
-            <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">PASSOU</span>
-            <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/80">{previousProgram?.nome || "—"}</span>
-            <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
+          <div className="relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">
+            {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-2 bottom-0 z-0 h-[112px] w-[86px] object-contain object-bottom grayscale opacity-60" />}
+            <div className="relative z-10 min-w-0 pr-8">
+              <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">PASSOU</span>
+              <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{previousProgram?.nome || "—"}</span>
+              <span className="mt-0.5 block text-[9px] font-medium text-white/55 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
+            </div>
+            <ArrowLeft size={20} strokeWidth={1.2} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-white/75" />
           </div>
           <div className="relative isolate flex min-h-[120px] min-w-0 items-center justify-between gap-3 overflow-hidden px-3 text-white sm:gap-4" style={{ backgroundColor: "#007c00" }}>
             <style>{'@keyframes vmixOnAirEnter { 0% { opacity: 0; transform: translateY(8px); filter: blur(2px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } } @keyframes vmixOnAirBlink { 0%, 45%, 100% { opacity: 1; } 50%, 75% { opacity: .25; } } .vmix-onair-enter { animation: vmixOnAirEnter .55s cubic-bezier(.2,.7,.2,1) both; } .vmix-onair-blink { animation: vmixOnAirBlink 1.15s steps(2, start) infinite; } @keyframes vmixOnAirLightSweep { 0% { transform: translateX(-150%) skewX(-18deg); opacity: 0; } 12% { opacity: .7; } 55% { opacity: .38; } 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; } }'}</style>
@@ -3551,10 +3586,14 @@ function SwitcherUI({
               )}
             </div>
           </div>
-          <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:items-end sm:text-right sm:px-6">
-            <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">A SEGUIR</span>
-            <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/85">{headerNextProgram?.nome || "—"}</span>
-            <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{headerNextSchedule || "—"}</span>
+          <div className="relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:items-end sm:text-right sm:px-6">
+            {headerNextProgram?.apresentador_foto && <img src={headerNextProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute left-2 bottom-0 z-0 h-[112px] w-[86px] object-contain object-bottom grayscale opacity-60" />}
+            <div className="relative z-10 min-w-0 pl-8">
+              <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">A SEGUIR</span>
+              <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{headerNextProgram?.nome || "—"}</span>
+              <span className="mt-0.5 block text-[9px] font-medium text-white/55 font-mono">{headerNextSchedule || "—"}</span>
+            </div>
+            <ArrowRight size={20} strokeWidth={1.2} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-white/75" />
           </div>
         </div>
       </div>
