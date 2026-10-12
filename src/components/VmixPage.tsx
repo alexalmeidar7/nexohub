@@ -4394,14 +4394,15 @@ function SwitcherUI({
                                 }}
                                 title="Tempo restante do programa no ar"
                               >
-                                <span className="relative flex h-1.5 w-1.5">
-                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C6F03C] opacity-70" />
-                                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#C6F03C]" />
-                                </span>
-                                <Clock size={10} style={{ color: "#C6F03C" }} />
-                                <span className="text-[10px] font-black tabular-nums tracking-wide" style={{ color: "#fff" }}>
-                                  {formatCountdown(remaining)}
-                                </span>
+                                {Math.floor(nowTick / 4000) % 2 === 0 ? (
+                                  <span className="text-[10px] font-black tabular-nums tracking-wide" style={{ color: "#fff" }}>
+                                    <Clock size={10} className="mr-1 inline-block" style={{ color: "#C6F03C" }} />{startTime}
+                                  </span>
+                                ) : (
+                                  <span className="text-[9px] font-normal tabular-nums tracking-wide" style={{ color: "#fff" }}>
+                                    termina em: {formatCountdown(remaining)}
+                                  </span>
+                                )}
                               </div>
                             )}
 
