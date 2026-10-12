@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Loader2, Layout, Cpu, ChevronLeft } from "lucide-react";
+import { LogOut, Loader2, Layout, Cpu, ChevronLeft, Clock, Wifi, WifiOff } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
 import vmixControlLogo from "@/assets/logo-mixcontrol.png";
@@ -21,7 +21,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [signing, setSigning] = useState(false);
+  const [signing, setSigning] = useState(false);\n  const [headerTime, setHeaderTime] = useState(() => new Date());\n  const [vmixOnline, setVmixOnline] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -35,7 +35,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  useEffect(() => {\n    const timer = window.setInterval(() => setHeaderTime(new Date()), 1000);\n    const updateStatus = (event: Event) => setVmixOnline(Boolean((event as CustomEvent).detail?.connected));\n    window.addEventListener("vmix-connection-status", updateStatus);\n    return () => { window.clearInterval(timer); window.removeEventListener("vmix-connection-status", updateStatus); };\n  }, []);\n\n  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSigning(true);
@@ -152,6 +152,16 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
             <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("vmix-control-header-action", { detail: "switcher" }))} className="flex h-9 items-center gap-2 rounded-lg bg-[#0065F9] px-3 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0042A3]" title="Switcher">
               <Layout size={14} /> <span>Switcher</span>
             </button>
+          </div>
+          <div className="absolute right-[72px] top-1/2 flex -translate-y-1/2 items-center gap-4 text-white/90">
+            <div className="flex items-center gap-1.5" title={headerTime.toLocaleDateString("pt-BR")}>
+              <Clock size={14} className="text-white/70" />
+              <span className="min-w-[48px] text-[13px] font-medium tabular-nums">{headerTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+            </div>
+            <div className="flex items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
+              {vmixOnline ? <Wifi size={14} className="text-emerald-400" /> : <WifiOff size={14} className="text-red-400" />}
+              <span className={`text-[9px] font-bold uppercase tracking-wide ${vmixOnline ? "text-emerald-400" : "text-red-400"}`}>{vmixOnline ? "Conectado" : "Desconectado"}</span>
+            </div>
           </div>
           <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none absolute left-1/2 top-1/2 block h-auto max-h-[19px] w-auto max-w-[38%] -translate-x-1/2 -translate-y-1/2 translate-y-[2px] object-contain" />
           {user && (
