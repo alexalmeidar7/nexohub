@@ -150,7 +150,8 @@ interface Programa {
   horario_fim: string;
   dias_semana: string[] | null;
   estudio: string | null;
-  apresentador_foto?: string | null;\n  apresentador_nome?: string | null;
+  apresentador_foto?: string | null;
+  apresentador_nome?: string | null;
 }
 
 /** Normaliza dados legados do banco antes de renderizar a grade do Switcher. */
@@ -164,7 +165,8 @@ const normalizeProgramaRecord = (value: any): Programa => ({
     ? value.dias_semana.filter((day: unknown) => day !== null && day !== undefined).map(String)
     : null,
   estudio: typeof value?.estudio === "string" ? value.estudio : null,
-  apresentador_foto: typeof value?.apresentadores?.foto === "string" ? value.apresentadores.foto : null,\n  apresentador_nome: typeof value?.apresentadores?.nome === "string" ? value.apresentadores.nome : null,
+  apresentador_foto: typeof value?.apresentadores?.foto === "string" ? value.apresentadores.foto : null,
+  apresentador_nome: typeof value?.apresentadores?.nome === "string" ? value.apresentadores.nome : null,
 });
 
 // Helper to detect private/local IPs
