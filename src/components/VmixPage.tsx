@@ -4316,10 +4316,16 @@ function SwitcherUI({
                       const groups: Record<string, typeof ordered> = { "Estúdio FM": [...ordered] };
                       return Object.entries(groups).map(([studio, progs]) => {
                         const studioKey = studio.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-                        const sortedProgs = [...progs].sort((a, b) => {
-                          const aOnAir = isProgramForToday(a) && isNowInProgram(a);
-                          const bOnAir = isProgramForToday(b) && isNowInProgram(b);
-                          // O programa no ar fica sempre primeiro, independentemente do filtro.
+                        // Só pode existir um preset visualmente ativo: prioriza a seleção feita pelo operador;
+                      // sem seleção manual, usa o primeiro programa válido da grade que cobre o horário atual.
+                      const scheduledActiveProgram = progs.find((p) => isProgramForToday(p) && isNowInProgram(p));
+                      const selectedProgramExists = activePreset && progs.some((p) => p.id === activePreset);
+                      const activeProgramId = selectedProgramExists ? activePreset : scheduledActiveProgram?.id ?? null;
+
+                      const sortedProgs = [...progs].sort((a, b) => {
+                          const aOnAir = a.id === activeProgramId;
+                          const bOnAir = b.id === activeProgramId;
+                          // O único programa ativo fica sempre no primeiro botão do scroll.
                           if (aOnAir !== bOnAir) return Number(bOnAir) - Number(aOnAir);
                           // Ordena apenas a grade válida para o dia atual; programas de outros dias
                           // não entram na sequência horária de hoje. Os anteriores ficam após os próximos.
@@ -4357,7 +4363,7 @@ function SwitcherUI({
                             <div id={`preset-scroll-${studioKey}`} className="flex min-w-0 flex-1 gap-2.5 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {sortedProgs.map((prog) => {
                         const isActive = !isDefaultAutomationActive && activePreset === prog.id;
-                        const progOnAir = !isDefaultAutomationActive && isProgramForToday(prog) && isNowInProgram(prog);
+                        const progOnAir = !isDefaultAutomationActive && prog.id === activeProgramId;
                         const startTime = prog.horario_inicio?.slice(0, 5) || "";
                         const endTime = prog.horario_fim?.slice(0, 5) || "";
                         const agendaEvento = isPodcastStudio ? eventoPorPrograma[prog.id] : undefined;
@@ -4399,6 +4405,9 @@ function SwitcherUI({
                             }}
                             onClick={async () => {
                               setActivePreset(prog.id);
+                              // A ordenação coloca este programa na primeira posição; zera a rolagem para mantê-lo visível.
+                              const presetScroller = document.getElementById("preset-scroll-" + studioKey);
+                              if (presetScroller) presetScroller.scrollTo({ left: 0, behavior: "smooth" });
                               const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
                                 .select("commands")
                                 .eq("user_id", user?.id)
