@@ -618,7 +618,6 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
-  const [liveTrackData, setLiveTrackData] = useState<{ titulo?: string; artista?: string; capa?: string; duracao?: number } | null>(null);
   const [reloadingInputs, setReloadingInputs] = useState(false);
   const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
@@ -3080,6 +3079,9 @@ function SwitcherUI({
 }: any) {
 
   // Tamanho do texto dos botões personalizados (persistido)
+  // Estado da música pertence ao SwitcherUI, que renderiza o quadro NO AR.
+  const [liveTrackData, setLiveTrackData] = useState<{ titulo?: string; artista?: string; capa?: string; duracao?: number } | null>(null);
+
   const [customBtnTextScale, setCustomBtnTextScale] = useState<number>(() => {
     try {
       return Number(localStorage.getItem("vmix_custom_btn_text_scale")) || 1;
