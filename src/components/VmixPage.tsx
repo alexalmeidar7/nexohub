@@ -3349,6 +3349,21 @@ function SwitcherUI({
     return podcastAgendaSchedule.find((item) => item.startMs > now) || null;
   }, [podcastAgendaSchedule, nowTick]);
 
+  const previousProgram = useMemo(() => {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const candidates = programas
+      .filter((p: Programa) => matchesStudio(p.estudio, studioName) && p.horario_inicio && p.horario_fim && p.id !== currentProgram?.id)
+      .map((p: Programa) => {
+        const [sh, sm] = String(p.horario_inicio).slice(0, 5).split(":").map(Number);
+        const [eh, em] = String(p.horario_fim).slice(0, 5).split(":").map(Number);
+        return { p, start: sh * 60 + sm, end: eh * 60 + em };
+      })
+      .filter((item) => item.end <= nowMinutes && item.start <= item.end)
+      .sort((a, b) => b.end - a.end);
+    return candidates[0]?.p || null;
+  }, [programas, studioName, currentProgram, nowTick]);
+
   const headerCurrentProgram = isPodcastStudio ? podcastCurrentAgenda?.programa || null : currentProgram;
   const headerNextProgram = isPodcastStudio ? podcastNextAgenda?.programa || null : nextProgram;
   const headerCurrentSchedule = isPodcastStudio
@@ -3409,60 +3424,27 @@ function SwitcherUI({
             {endpointLabel}
           </span>
           {connectionRouteLabel && (
-            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">
-              · {connectionRouteLabel}
-            </span>
-          )}
-        </>
-      )}
-      {connStatus !== "online" && (savedUrl || vmixUrl) && (
-        <button
-          onClick={() => connectToVmix()}
-          disabled={connecting}
-          className="ml-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 hover:brightness-110"
-          style={{ backgroundColor: statusColor, color: "#0a0a0a" }}
-          title="Tentar reconectar ao vMix"
-        >
-          {connStatus === "connecting" ? "…" : "Reconectar"}
-        </button>
-      )}
-    </div>
-  );
+            <span className="text-[8px] font-black uppercase track      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
+        <div className="grid min-h-[76px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
+          <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:px-6">
+            <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">PASSOU</span>
+            <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/80">{previousProgram?.nome || "—"}</span>
+            <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{previousProgram ? `${previousProgram.horario_inicio?.slice(0,5) || "--:--"} - ${previousProgram.horario_fim?.slice(0,5) || "--:--"}` : "—"}</span>
+          </div>
+          <div className="flex min-w-0 flex-col items-center justify-center rounded-xl px-4 py-3 text-center sm:rounded-none" style={{ backgroundColor: "#007c00" }}>
+            <span className="mb-1 text-[8px] font-black uppercase tracking-[0.22em] text-white/75">NO AR</span>
+            <span className="max-w-full truncate text-[13px] font-black uppercase tracking-[0.08em] text-white">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
+            <span className="mt-1 text-[10px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
+          </div>
+          <div className="flex min-w-0 flex-col justify-center px-4 py-2 sm:items-end sm:text-right sm:px-6">
+            <span className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-white/40">A SEGUIR</span>
+            <span className="truncate text-[11px] font-black uppercase tracking-wide text-white/85">{headerNextProgram?.nome || "—"}</span>
+            <span className="mt-0.5 text-[9px] font-medium text-white/45 font-mono">{headerNextSchedule || "—"}</span>
+          </div>
+        </div>
+      </div>
 
-
-  return (
-    <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
-      {/* ── Operator Header ── */}
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-        {/* Top Header with Logo, Navigation, and Status */}
-        <div className="relative flex items-center justify-between gap-4 p-4 pl-8" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
-          <div className="flex items-center gap-8">
-            {/* Logo and On Air indicator */}
-            <div className="flex items-center gap-6">
-              {/* Logo removed as requested */}
-              
-              <div className="flex items-stretch gap-3">
-                <div className="flex flex-col justify-center">
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-[#C6F03C] animate-pulse shadow-[0_0_10px_rgba(198,240,60,0.7)]' : 'bg-white/20'}`} />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
-                        {headerCurrentProgram?.nome || (isPodcastStudio ? "sem evento no momento" : activeTitle)}
-                      </span>
-                      {headerCurrentSchedule && (
-                        <span className="text-[9px] font-medium text-white/40 leading-none mt-0.5">
-                          {headerCurrentSchedule}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="w-px self-stretch bg-white/10" />
-
-                <div className="flex flex-col justify-center min-w-[180px]">
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">A SEGUIR</span>
+   <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">A SEGUIR</span>
                   <span className="text-[11px] font-black uppercase tracking-[0.05em] text-white/90 truncate max-w-[200px] leading-none">
                     {headerNextProgram?.nome || "—"}
                   </span>
