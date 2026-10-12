@@ -616,8 +616,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
-  // Fonte local da faixa Música no Ar; mantida no mesmo escopo do JSX da página.
-  const [liveTrackData, setLiveTrackData] = useState(null as ReturnType<typeof readMusicData>);
+  const [, setMusicRefreshTick] = useState(0);
   const [reloadingInputs, setReloadingInputs] = useState(false);
   const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
@@ -811,21 +810,16 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   }, [monitorIframeMode]);
 
   useEffect(() => {
-    const refreshLiveTrackData = () => setLiveTrackData(readMusicData(user?.id));
-    refreshLiveTrackData();
-    const onMusicDataChanged = (event: Event) => {
-      const detail = (event as CustomEvent).detail;
-      if (!detail?.userId || detail.userId === user?.id) refreshLiveTrackData();
-    };
-    window.addEventListener(MUSIC_DATA_EVENT, onMusicDataChanged);
-    window.addEventListener("storage", refreshLiveTrackData);
-    const intervalId = window.setInterval(refreshLiveTrackData, 2000);
+    const refreshMusicDisplay = () => setMusicRefreshTick((tick) => tick + 1);
+    window.addEventListener(MUSIC_DATA_EVENT, refreshMusicDisplay);
+    window.addEventListener("storage", refreshMusicDisplay);
+    const intervalId = window.setInterval(refreshMusicDisplay, 2000);
     return () => {
-      window.removeEventListener(MUSIC_DATA_EVENT, onMusicDataChanged);
-      window.removeEventListener("storage", refreshLiveTrackData);
+      window.removeEventListener(MUSIC_DATA_EVENT, refreshMusicDisplay);
+      window.removeEventListener("storage", refreshMusicDisplay);
       window.clearInterval(intervalId);
     };
-  }, [user?.id]);
+  }, []);
   const effectiveConnected = connected || forcedConnected;
 
   useEffect(() => {
@@ -2723,6 +2717,10 @@ function AudioMonitorButton({
   const averageDb = Math.round((db + rightDb) / 2);
   const dbColor = averageDb > -5 ? "#fb7185" : averageDb > -14 ? "#fbbf24" : "#5eead4";
   const monitorName = button?.nome || `Áudio · Input ${input}`;
+
+  // Leitura direta do armazenamento usado pela página Música no Ar.
+  // O valor é resolvido no escopo do render imediatamente antes do JSX.
+  const liveTrackData = readMusicData(user?.id);
 
   return (
     <div
