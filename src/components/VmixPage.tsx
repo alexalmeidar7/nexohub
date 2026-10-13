@@ -3597,9 +3597,11 @@ function SwitcherUI({
               ) : (
                 <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-md"><Music2 size={20} /></div>
               )}
-              <div className="min-w-0">
-                <div className="truncate text-[10px] font-black uppercase tracking-wide">{liveTrackData?.titulo || "MÚSICA NÃO IDENTIFICADA"}</div>
-                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75">{liveTrackData?.artista || "Artista não informado"}</div>
+              <div className="min-w-0 w-[clamp(110px,24%,220px)] max-w-[220px] flex-[0_1_220px]">
+                <div className="text-[10px] font-black uppercase tracking-wide leading-tight break-words" style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden", overflowWrap: "anywhere", maxHeight: "2.5em" }} title={liveTrackData?.titulo || "MÚSICA NÃO IDENTIFICADA"}>
+                  {liveTrackData?.titulo || "MÚSICA NÃO IDENTIFICADA"}
+                </div>
+                <div className="mt-0.5 truncate text-[8px] font-medium text-white/75" title={liveTrackData?.artista || "Artista não informado"}>{liveTrackData?.artista || "Artista não informado"}</div>
               </div>
             </div>
             <div key={`program-${headerCurrentProgram?.id || activeTitle}-${headerCurrentSchedule}`} className="vmix-onair-enter absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
