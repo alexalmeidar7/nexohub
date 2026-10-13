@@ -1660,10 +1660,11 @@ export default function CenarioTela() {
                   <div style={{
                     position: "absolute",
                     top: `calc(${vhToPx(3.5)}${vu} - 2px)`,
-                    right: `${vhToPx(4)}${vu}`,
+                    left: "50%",
+                    transform: "translateX(-50%)",
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "flex-end",
+                    alignItems: "center",
                     gap: `${vhToPx(2)}${vu}`,
                     zIndex: 15,
                   }}>
@@ -1684,8 +1685,8 @@ export default function CenarioTela() {
                             display: "flex",
                             alignItems: "stretch",
                             position: "relative",
-                            width: `${vhToPx(14)}${vu}`,
-                            height: `${vhToPx(14)}${vu}`
+                            width: `${vhToPx(18.2)}${vu}`,
+                            height: `${vhToPx(18.2)}${vu}`
                           }}>
                             {/* BOX DO LOCUTOR: quadrado 1:1 (always on top) */}
                             <div style={{
