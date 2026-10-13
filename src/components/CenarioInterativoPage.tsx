@@ -3183,7 +3183,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                       <RotateCw size={15} />
                     </button>
                   </div>
-                </div>,
+                </div>
+              </>,
               document.getElementById("cenario-preview-toolbar")!
             )}
 
