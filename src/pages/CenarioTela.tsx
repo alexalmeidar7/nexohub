@@ -1618,35 +1618,26 @@ export default function CenarioTela() {
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "transparent", color: "#fff", overflow: "hidden" }}>
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
-                   {/* ── Relógio Digital (Top Left) ── */}
-                   {(() => {
-                     const h = currentTime.getHours().toString().padStart(2, "0");
-                     const m = currentTime.getMinutes().toString().padStart(2, "0");
-                     const s = currentTime.getSeconds().toString().padStart(2, "0");
-                     return (
-                        <div style={{
-                          position: "absolute",
-                          top: `${vhToPx(3.5)}${vu}`,
-                          left: `${vhToPx(4)}${vu}`,
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                          color: "#fff",
-                          zIndex: 20,
-                          textShadow: "0 2px 10px rgba(0,0,0,0.5)",
-                          width: 'max-content'
-                        }}>
-                         <div style={{ fontSize: `${vhToPx(3.5)}${vu}`, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>
-                           {h}:{m}<span style={{ opacity: 0.6, fontSize: "0.7em", marginLeft: "2px" }}>{s}</span>
+                   {/* ── Relógio, data e clima atual centralizados no topo ── */}
+                   <div style={{ position: "absolute", top: vhToPx(3.2), left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: "#fff", zIndex: 20, textShadow: "0 2px 10px rgba(0,0,0,0.45)", width: vhToPx(38), pointerEvents: "none" }}>
+                     <div style={{ fontSize: vhToPx(2.7), fontWeight: 400, lineHeight: 1.05, letterSpacing: "0.01em", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+                       {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                     </div>
+                     <div style={{ fontSize: vhToPx(1.05), fontWeight: 400, lineHeight: 1.25, marginTop: vhToPx(0.45), whiteSpace: "nowrap" }}>
+                       {currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, (c) => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, (c) => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}
+                     </div>
+                     {liveWeather && (
+                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: vhToPx(0.8), gap: vhToPx(0.25) }}>
+                         <div style={{ width: vhToPx(4.4), height: vhToPx(4.4), display: "flex", alignItems: "center", justifyContent: "center" }}>
+                           <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} forceDay />
                          </div>
-                         <div style={{ fontSize: `${vhToPx(1.2)}${vu}`, fontWeight: 600, opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px" }}>
-                           {currentTime.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", year: "2-digit" })}
+                         <div style={{ fontSize: vhToPx(2.3), fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
+                         <div style={{ fontSize: vhToPx(0.85), fontWeight: 400, lineHeight: 1.25, opacity: 0.9, whiteSpace: "nowrap" }}>
+                           Chuva {liveWeather.daily?.[0]?.precip ?? 0}% · Umidade {liveWeather.current.humidity}%
                          </div>
                        </div>
-                      );
-                    })()}
-
-
+                     )}
+                   </div>
                   {/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
                      <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
