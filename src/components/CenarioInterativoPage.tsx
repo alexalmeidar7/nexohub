@@ -3454,14 +3454,15 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                    <div style={{ fontSize: `${pvh(2.3)}px`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
                                    <WeatherIcon code={liveWeather.current.code} size={pvh(4.4)} forceDay />
                                  </div>
-                                 <div style={{ position: "relative", width: "100%", height: `${pvh(2.2)}px`, marginTop: `${pvh(0.35)}px`, fontSize: `${pvh(1.05)}px`, fontWeight: 500, lineHeight: 1.2 }}>
-                                   <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px`, animation: "cenarioWeatherInfo 12s infinite" }}><CloudRain size={pvh(1.35)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
-                                   <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px`, animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-8s" }}><Droplets size={pvh(1.35)} /> <span>{liveWeather.current.humidity}%</span></div>
-                                   {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px`, animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-4s" }}><CloudRain size={pvh(1.35)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
+                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${pvh(0.45)}px`, width: "100%", marginTop: `${pvh(0.45)}px`, fontSize: `${pvh(1.05)}px`, fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                                   <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><CloudRain size={pvh(1.25)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
+                                   <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><Droplets size={pvh(1.25)} /> <span>{liveWeather.current.humidity}%</span></div>
+                                   {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><CloudRain size={pvh(1.25)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
+                                 </div>
                                  </div>
                                </div>
                              )}
-                             <style>{`@keyframes cenarioWeatherInfo { 0%, 30% { opacity: 1; transform: translateY(0); } 33%, 96% { opacity: 0; transform: translateY(-20%); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
+                             
 {/* ── BOTTOM-RIGHT: "A seguir" ── */}
                              {nextProgram && (
                                <div style={{ position: "absolute", bottom: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
@@ -3559,7 +3560,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                      {showMusic && !isNoPlayback && musicData?.capa && (
                                        <div style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1, pointerEvents: "none", overflow: "visible", animation: "vinylReveal 30s linear infinite" }}>
                                          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, #242424 0%, #111 42%, #292929 43%, #080808 47%, #202020 48%, #050505 58%, #202020 59%, #080808 63%, #1b1b1b 64%, #050505 100%)", boxShadow: "0 5px 12px rgba(0,0,0,0.45)", animation: "vinylSpin 3s linear infinite", willChange: "transform" }}>
-                                           <div style={{ position: "absolute", width: "34%", height: "34%", left: "33%", top: "33%", borderRadius: "50%", overflow: "hidden", background: "#333", border: "2px solid rgba(255,255,255,0.16)" }}><img src={artistBgUrl || musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+                                           <div style={{ position: "absolute", inset: "8%", borderRadius: "50%", background: "repeating-conic-gradient(from 0deg, rgba(255,255,255,0.12) 0deg, rgba(255,255,255,0.02) 3deg, transparent 6deg, rgba(0,0,0,0.18) 8deg)", opacity: 0.55 }} />
+                                           <div style={{ position: "absolute", width: "34%", height: "34%", left: "33%", top: "33%", borderRadius: "50%", overflow: "hidden", background: "#333", border: "2px solid rgba(255,255,255,0.16)" }}><img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
                                            <div style={{ position: "absolute", left: "49%", top: "49%", width: "2%", height: "2%", borderRadius: "50%", background: "#ddd", boxShadow: "0 0 0 1px #111" }} />
                                          </div>
                                        </div>
