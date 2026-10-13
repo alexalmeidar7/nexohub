@@ -461,10 +461,10 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               const cmdEnabled = cmd.enabled !== false;
 
               return (
-                <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#FFFFFF", border: "1px solid #CBD5E1", opacity: cmdEnabled ? 1 : 0.7, boxShadow: "0 2px 8px rgba(20,45,80,0.05)" }}>
+                <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#161619", border: "1px solid #34343d", opacity: cmdEnabled ? 1 : 0.7, boxShadow: "none" }}>
                   {/* Command header */}
-                  <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#E4ECF6", borderBottom: "1px solid #C5D3E4", color: "#172B4D" }}>
-                    <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#FDE8E8" : "#E2E8F0", color: idx === 0 ? "#B91C1C" : "#526277" }}>
+                  <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#161619", borderBottom: "1px solid #34343d", color: "#F3F4F6" }}>
+                    <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#3f1d1d" : "#29292f", color: idx === 0 ? "#fca5a5" : "#D4D4D8" }}>
                       #{idx}
                     </span>
                     <div className="flex items-center gap-1 flex-1 min-w-0">
