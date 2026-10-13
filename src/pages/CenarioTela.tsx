@@ -1751,7 +1751,7 @@ export default function CenarioTela() {
                               </div>
                             </div>
 
-                            {                            {/* Vinil: aparece após 10s e fica visível por 20s, atrás da capa */}
+                            {/* Vinil: aparece após 10s e fica visível por 20s, atrás da capa */}
                             {showMusic && !isNoPlayback && musicData?.capa && (
                               <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", animation: "vinylReveal 30s linear infinite" }}>
                                 <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, #242424 0%, #111 42%, #292929 43%, #080808 47%, #202020 48%, #050505 58%, #202020 59%, #080808 63%, #1b1b1b 64%, #050505 100%)", boxShadow: "0 5px 12px rgba(0,0,0,0.45)", animation: "vinylSpin 3s linear infinite" }}>
@@ -1761,7 +1761,7 @@ export default function CenarioTela() {
                               </div>
                             )}
                             <style>{"@keyframes vinylReveal { 0%, 33.32% { transform: translateX(0); opacity: 0; } 33.33% { opacity: 1; } 40% { transform: translateX(55%); opacity: 1; } 96% { transform: translateX(55%); opacity: 1; } 100% { transform: translateX(0); opacity: 0; } } @keyframes vinylSpin { to { transform: rotate(360deg); } }"}</style>
-/* ── BOX CAPA: music album art ── */}
+{/* ── BOX CAPA: music album art ── */}
                             <div
                               style={{
                                 width: "100%",
