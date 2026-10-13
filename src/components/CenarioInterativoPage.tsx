@@ -1895,9 +1895,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
           {/* ── LEFT: Configuration ── */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <Settings size={16} style={{ color: mutedText }} />
-              <span className="text-sm font-semibold">Configuração</span>
+            <div className="flex items-center justify-end min-h-5 mb-2">
               <div className="flex items-center gap-2 ml-auto">
                 {saving && <span className="text-[10px] animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
                 {!saving && savedFlash && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
@@ -1905,18 +1903,18 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="w-full grid grid-cols-6 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-                <TabsTrigger value="home" className="text-xs gap-1 data-[state=active]:shadow-sm"><Home size={14} /> Home</TabsTrigger>
-                <TabsTrigger value="weather" className="text-xs gap-1 data-[state=active]:shadow-sm"><CloudSun size={14} /> Tempo</TabsTrigger>
-                <TabsTrigger value="traffic" className="text-xs gap-1 data-[state=active]:shadow-sm"><Car size={14} /> Trânsito</TabsTrigger>
-                <TabsTrigger value="currency" className="text-xs gap-1 data-[state=active]:shadow-sm"><DollarSign size={14} /> Cotação</TabsTrigger>
-                <TabsTrigger value="enquete" className="text-xs gap-1 data-[state=active]:shadow-sm relative">
-                  <Tag size={14} /> Enquete
+              <TabsList className="w-full grid grid-cols-6 gap-1 p-1 mb-4 rounded-xl" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+                <TabsTrigger value="home" title="Home" aria-label="Home" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><Home size={16} /></TabsTrigger>
+                <TabsTrigger value="weather" title="Tempo" aria-label="Tempo" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><CloudSun size={16} /></TabsTrigger>
+                <TabsTrigger value="traffic" title="Trânsito" aria-label="Trânsito" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><Car size={16} /></TabsTrigger>
+                <TabsTrigger value="currency" title="Cotação" aria-label="Cotação" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><DollarSign size={16} /></TabsTrigger>
+                <TabsTrigger value="enquete" title="Enquete" aria-label="Enquete" className="h-9 w-full p-0 justify-center rounded-lg text-xs relative transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm">
+                  <Tag size={16} />
                   {enquetes.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" title="Enquetes disponíveis" />
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse" title="Enquetes disponíveis" />
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
+                <TabsTrigger value="chat" title="Chat" aria-label="Chat" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><MessageCircle size={16} /></TabsTrigger>
               </TabsList>
 
               {/* ═══ Home ═══ */}
