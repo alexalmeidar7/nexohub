@@ -3459,7 +3459,6 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><Droplets size={pvh(1.25)} /> <span>{liveWeather.current.humidity}%</span></div>
                                    {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${pvh(0.6)}px` }}><CloudRain size={pvh(1.25)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
                                  </div>
-                                 </div>
                                </div>
                              )}
                              
