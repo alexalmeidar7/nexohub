@@ -499,7 +499,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                       <select
                         value={cmd.fn}
                         onChange={e => updateCommand(cmd.id, { fn: e.target.value, input: undefined, value: undefined, extraKey: undefined, extraValue: undefined })}
-                        className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                        className="w-full text-[10px] px-2.5 py-1.5 rounded-lg outline-none"
                         style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", opacity: 1 }}
                       >
                         {CATEGORIES.map(cat => (
@@ -519,7 +519,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                         <select
                           value={cmd.input || ""}
                           onChange={e => updateCommand(cmd.id, { input: e.target.value })}
-                          className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                          className="w-full text-[10px] px-2.5 py-1.5 rounded-lg outline-none"
                           style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", opacity: 1 }}
                         >
                           <option value="">— Selecionar Input —</option>
@@ -545,7 +545,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                           <select
                             value={cmd.value || "1"}
                             onChange={e => updateCommand(cmd.id, { value: e.target.value })}
-                            className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                            className="w-full text-[10px] px-2.5 py-1.5 rounded-lg outline-none"
                             style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", opacity: 1 }}
                           >
                             {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(n => (
@@ -557,7 +557,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                             type="text"
                             value={cmd.value || ""}
                             onChange={e => updateCommand(cmd.id, { value: e.target.value })}
-                            className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                            className="w-full text-[10px] px-2.5 py-1.5 rounded-lg outline-none"
                             style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", opacity: 1 }}
                             placeholder="Valor..."
                           />
@@ -573,7 +573,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                           type="text"
                           value={cmd.extraValue || ""}
                           onChange={e => updateCommand(cmd.id, { extraValue: e.target.value })}
-                          className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
+                          className="w-full text-[10px] px-2.5 py-1.5 rounded-lg outline-none"
                           style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", opacity: 1 }}
                           placeholder={extraLabels.valueLabel + "..."}
                         />
