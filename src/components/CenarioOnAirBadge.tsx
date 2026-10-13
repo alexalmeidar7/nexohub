@@ -175,34 +175,11 @@ export default function CenarioOnAirBadge({ effectiveUserId }: { effectiveUserId
     return null;
   }
 
+  if (!currentProgram) return null;
+
   return (
-    <div
-      className="inline-flex items-center gap-2 px-3 py-2 rounded-full border max-w-full min-w-0"
-      style={{
-        background: "color-mix(in srgb, var(--layout-page-text, #0d0446) 3%, var(--layout-page-bg, #ffffff))",
-        borderColor: "color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
-      }}
-      aria-live="polite"
-      aria-label={currentProgram ? `No ar: ${currentProgram.nome}${currentProgram.apresentador ? `, apresentado por ${currentProgram.apresentador}` : ""}` : "Nenhum programa detectado no Estúdio FM"}
-    >
-      {currentProgram ? (
-        <>
-          <span className="relative flex h-2.5 w-2.5 shrink-0" aria-label="No ar">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-          </span>
-          <span
-            key={showPresenter && currentProgram.apresentador ? "presenter" : "program"}
-            className="text-xs font-semibold text-[#0A2540] dark:text-white truncate max-w-[260px] animate-in fade-in duration-300"
-          >
-            {showPresenter && currentProgram.apresentador ? currentProgram.apresentador : currentProgram.nome}
-          </span>
-        </>
-      ) : (
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Nenhum programa detectado no Estúdio FM
-        </span>
-      )}
-    </div>
-  );
+    <span className="relative inline-flex h-2.5 w-2.5 shrink-0" title="Programa no ar" aria-label="Programa no ar">
+      <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+    </span>
 }
