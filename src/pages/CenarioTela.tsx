@@ -1446,7 +1446,7 @@ export default function CenarioTela() {
                       src={artistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)", transform: "scale(1.08)", transformOrigin: "center center", animation: artistVisible ? "artistBackgroundPan 18s ease-in-out infinite alternate" : "none", transition: "opacity 900ms ease-in-out", willChange: "transform, opacity" }}
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)", transform: "scale(1.16)", transformOrigin: "center center", animation: artistVisible ? "artistBackgroundPan 10s ease-in-out infinite alternate" : "none", transition: "opacity 900ms ease-in-out", willChange: "transform, opacity" }}
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
