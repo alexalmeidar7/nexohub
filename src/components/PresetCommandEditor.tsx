@@ -348,11 +348,11 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: "rgba(4,10,22,0.72)", backdropFilter: "blur(6px)" }}>
-      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ backgroundColor: "#FFFFFF", border: "1px solid #CBD5E1", boxShadow: "0 24px 70px rgba(0,0,0,0.42)" }}>
+      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ backgroundColor: "#1f1f24", border: "1px solid #34343d", boxShadow: "0 24px 70px rgba(0,0,0,0.42)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #D9E2EF", backgroundColor: "#FFFFFF", color: "#172B4D" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #34343d", backgroundColor: "#1f1f24", color: "#FFFFFF" }}>
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#102A4C", opacity: 1 }}>
+            <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#F3F4F6", opacity: 1 }}>
               {programaId === "new" ? "Nova Automação" : (nome || programaNome)}
             </h2>
             <div className="flex items-center gap-1.5">
@@ -372,7 +372,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Configurações do Programa */}
-        <div className="px-5 py-4 space-y-4" style={{ backgroundColor: "#F1F5FA", borderBottom: "1px solid #D9E2EF", color: "#172B4D" }}>
+        <div className="px-5 py-4 space-y-4" style={{ backgroundColor: "#1f1f24", borderBottom: "1px solid #34343d", color: "#FFFFFF" }}>
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#102A4C", opacity: 1 }}>Nome do Programa</label>
             <input
@@ -440,15 +440,15 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Commands list */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#AAB8CA transparent", backgroundColor: "#F4F7FB" }}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#55555f transparent", backgroundColor: "#1f1f24" }}>
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="animate-spin" size={20} style={{ color: "#334155" }} />
             </div>
           ) : commands.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-xs mb-2" style={{ color: "#334155" }}>Nenhuma ação configurada.</p>
-              <p className="text-[10px]" style={{ color: "#475569" }}>Clique em "Adicionar Ação" para começar a programar este preset.</p>
+              <p className="text-xs mb-2" style={{ color: "#E5E7EB" }}>Nenhuma ação configurada.</p>
+              <p className="text-[10px]" style={{ color: "#A1A1AA" }}>Clique em "Adicionar Ação" para começar a programar este preset.</p>
             </div>
           ) : (
             commands.map((cmd, idx) => {
@@ -628,7 +628,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 px-5 py-3" style={{ borderTop: "1px solid #D9E2EF", backgroundColor: "#FFFFFF" }}>
+        <div className="flex items-center justify-between gap-2 px-5 py-3" style={{ borderTop: "1px solid #34343d", backgroundColor: "#1f1f24" }}>
           <button
             onClick={addCommand}
             className="flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
