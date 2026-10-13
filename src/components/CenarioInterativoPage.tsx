@@ -3392,11 +3392,12 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                               let thumbVisible: boolean;
                               let artistVisible: boolean;
                               if (altMode) {
-                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist && !!config.home.showArtistImage && !isNoPlayback; }
-                                else { artistVisible = hasArtist && !!config.home.showArtistImage && !isNoPlayback; thumbVisible = !artistVisible && hasThumb; }
+                                // O Preview deve refletir o fundo do artista ativo nas telas externas.
+                                artistVisible = hasArtist && !!config.home.showArtistImage && !isNoPlayback;
+                                thumbVisible = !artistVisible && hasThumb && altBgPhase === "thumb";
                               } else {
                                 thumbVisible = bgType === "thumb" && hasThumb;
-                                artistVisible = hasArtist && !!config.home.showArtistImage;
+                                artistVisible = hasArtist && !!config.home.showArtistImage && !isNoPlayback;
                               }
                               return (
                                 <>
