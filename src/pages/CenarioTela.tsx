@@ -108,8 +108,7 @@ async function fetchLiveStocks(): Promise<LiveStock[]> {
     const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, { headers: { "Content-Type": "application/json" } });
     if (!res.ok) throw new Error("fetch-stocks failed");
     const data = await res.json();
-  <style>{"@keyframes artistBackgroundPan { 0% { transform: scale(1.08) translateX(-1.8%); } 100% { transform: scale(1.08) translateX(1.8%); } }"}</style>
-    return (data.stocks || []) as LiveStock[];
+      return (data.stocks || []) as LiveStock[];
   } catch { return []; }
 }
 
@@ -1880,6 +1879,7 @@ export default function CenarioTela() {
                     </div>
 
                    <style>{`
+                    @keyframes artistBackgroundPan { 0% { transform: scale(1.08) translateX(-1.8%); } 100% { transform: scale(1.08) translateX(1.8%); } }
                     @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } 
                      @keyframes presenter-enter { 0% { opacity: 0; transform: translateX(-50%) translateY(15%) scale(0.9); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
                      @keyframes cenario-page-enter { 0% { opacity: 0; transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
