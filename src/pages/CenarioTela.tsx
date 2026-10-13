@@ -393,6 +393,7 @@ export default function CenarioTela() {
 
   /* ─── Fetch artist background from Deezer (like Player audio) ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
+  const isNoPlayback = [musicData?.titulo, musicData?.artista].some(value => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("sem reproducao"));
   const isBreakTrack = (() => {
     const titulo = (musicData?.titulo || "").toLowerCase();
     const artista = (musicData?.artista || "").toLowerCase();
@@ -400,7 +401,7 @@ export default function CenarioTela() {
   })();
   const isJornalistico = currentProgram?.tipo_programa?.toLowerCase() === "jornalístico" || currentProgram?.tipo_programa?.toLowerCase() === "jornalistico";
   useEffect(() => {
-    if (isBreakTrack || isJornalistico) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
+    if (isBreakTrack || isJornalistico || isNoPlayback) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
     if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
@@ -423,7 +424,7 @@ export default function CenarioTela() {
       } catch { if (!cancelled) setArtistBgUrl(null); }
     })();
     return () => { cancelled = true; };
-  }, [musicData?.artista, isBreakTrack, isJornalistico]);
+  }, [musicData?.artista, isBreakTrack, isJornalistico, isNoPlayback]);
 
   /* ─── Screen Rotation ─── */
   const [screenRotation, setScreenRotation] = useState(0);
