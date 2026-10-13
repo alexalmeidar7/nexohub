@@ -56,7 +56,7 @@ export default function CenariosPage({ effectiveUserId }: { effectiveUserId?: st
           })}
         </div>
 
-        <div id="cenario-preview-toolbar" className="flex items-center gap-2 ml-auto flex-wrap" />
+        <div id="cenario-preview-toolbar" className="flex items-center gap-2 flex-wrap" />
       </div>
 
       <Suspense
