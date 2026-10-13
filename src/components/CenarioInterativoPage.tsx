@@ -3643,8 +3643,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                );
                              })()}
                              {/* Barra premium: trilho translúcido e preenchimento luminoso */}
-                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: `${pvh(2.6)}px`, right: `${pvh(2.6)}px`, height: `${pvh(0.8)}px`, background: "rgba(255,255,255,0.22)", zIndex: 15, overflow: "hidden", borderRadius: "999px", boxShadow: "0 1px 8px rgba(0,0,0,0.28)", backdropFilter: "blur(6px)" }}>
-                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "999px", background: config.home.colorProgressBar || "var(--layout-accent-color, #fff)", boxShadow: "0 0 8px rgba(255,255,255,0.45)", transition: "width 1s linear", position: "relative" }}><div style={{ position: "absolute", right: 0, top: "50%", width: `${pvh(1.3)}px`, height: `${pvh(1.3)}px`, borderRadius: "50%", background: "#fff", boxShadow: "0 0 0 2px rgba(255,255,255,0.22), 0 0 10px rgba(255,255,255,0.8)", transform: "translate(25%, -50%)" }} /></div>
+                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: `${pvh(2.6)}px`, right: `${pvh(2.6)}px`, height: `${pvh(0.32)}px`, background: "rgba(255,255,255,0.42)", zIndex: 15, overflow: "hidden", borderRadius: "999px" }}>
+                               <div style={{ width: `${progressPct}%`, height: "100%", background: config.home.colorProgressBar || "#fff", transition: "width 1s linear" }} />
                              </div>
                              <style>{`
                                @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
