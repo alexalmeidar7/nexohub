@@ -1847,8 +1847,8 @@ export default function CenarioTelaFull() {
                       );
                     })()}
                     {/* Barra premium: trilho translúcido e preenchimento luminoso */}
-                    <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: `${vhToPx(2.6)}${vu}`, right: `${vhToPx(2.6)}${vu}`, height: `${vhToPx(0.8)}${vu}`, background: "rgba(255,255,255,0.22)", zIndex: 15, overflow: "hidden", borderRadius: "999px", boxShadow: "0 1px 8px rgba(0,0,0,0.28)", backdropFilter: "blur(6px)" }}>
-                      <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "999px", background: accentColor, boxShadow: "0 0 8px rgba(255,255,255,0.45)", transition: "width 1s linear", position: "relative" }}><div style={{ position: "absolute", right: 0, top: "50%", width: `${vhToPx(1.3)}${vu}`, height: `${vhToPx(1.3)}${vu}`, borderRadius: "50%", background: "#fff", boxShadow: "0 0 0 2px rgba(255,255,255,0.22), 0 0 10px rgba(255,255,255,0.8)", transform: "translate(25%, -50%)" }} /></div>
+                    <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: `${vhToPx(2.6)}${vu}`, right: `${vhToPx(2.6)}${vu}`, height: `${vhToPx(0.32)}${vu}`, background: "rgba(255,255,255,0.42)", zIndex: 15, overflow: "hidden", borderRadius: "999px" }}>
+                      <div style={{ width: `${progressPct}%`, height: "100%", background: accentColor, transition: "width 1s linear" }} />
                     </div>
 
                    <style>{`
