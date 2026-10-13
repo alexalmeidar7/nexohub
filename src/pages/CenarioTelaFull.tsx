@@ -1745,7 +1745,7 @@ export default function CenarioTelaFull() {
                               </div>
                             )}
                             <style>{"@keyframes vinylReveal { 0%, 33.32% { transform: translateX(0); opacity: 0; visibility: hidden; } 33.33% { transform: translateX(55%); opacity: 1; visibility: visible; } 96.66% { transform: translateX(55%); opacity: 1; visibility: visible; } 96.67%, 100% { transform: translateX(0); opacity: 0; visibility: hidden; } } @keyframes vinylSpin { to { transform: rotate(360deg); } }"}</style>
-/* ── BOX CAPA: music album art ── */}
+{/* ── BOX CAPA: music album art ── */}
                             <div
                               style={{
                                 width: "100%",
@@ -1754,7 +1754,6 @@ export default function CenarioTelaFull() {
                                 overflow: "hidden",
                                 flexShrink: 0,
                                 zIndex: 2,
-                                overflow: "visible",
                                 opacity: showMusic && currentPhase === "music" ? 1 : 0,
                                 visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
                                 transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
