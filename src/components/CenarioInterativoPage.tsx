@@ -3423,7 +3423,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                     <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
                                   )}
                                   {artistBgUrl && (
-                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transformOrigin: "center center", animation: artistVisible ? "artistBackgroundPan 18s ease-in-out infinite alternate" : "none", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
+                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transform: artistVisible ? "scale(1.14)" : "scale(1.08)", transformOrigin: "center center", animation: artistVisible ? "artistBackgroundPan 10s ease-in-out infinite alternate" : "none", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
                                   )}
                                   {config.home.artistOverlayEnabled && (
                                     <div 
