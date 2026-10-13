@@ -1636,7 +1636,6 @@ export default function CenarioTela() {
                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}` }}><Droplets size={vhToPx(1.25)} /> <span>{liveWeather.current.humidity}%</span></div>
                          {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}` }}><CloudRain size={vhToPx(1.25)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
                        </div>
-                       </div>
                      </div>
                    )}
                    
