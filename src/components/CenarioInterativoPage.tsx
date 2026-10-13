@@ -3124,7 +3124,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
           </div>
 
           {/* ── RIGHT: 9:16 Preview ── */}
-          <div className="lg:flex-1 flex flex-col min-w-0" style={{ minHeight: 0 }}>
+          <div className="lg:flex-1 flex flex-col min-w-0 -mt-10" style={{ minHeight: 0 }}>
             {typeof document !== "undefined" && document.getElementById("cenario-preview-toolbar") && createPortal(
               <>
                 <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -3190,7 +3190,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
               </div>
             )}
 
-            <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[500px] -mt-5 pt-0 min-h-0 overflow-hidden bg-transparent rounded-none relative">
+            <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[530px] -mt-5 pt-0 min-h-0 overflow-hidden bg-transparent rounded-none relative">
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
