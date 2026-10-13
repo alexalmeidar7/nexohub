@@ -658,7 +658,6 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [capturingShortcut, setCapturingShortcut] = useState<string | null>(null);
    const [activePreset, setActivePreset] = useState<string | null>(null);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
-  const [allPresetsOpen, setAllPresetsOpen] = useState(false);
   const [dragPresetIdx, setDragPresetIdx] = useState<number | null>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [dragCustomButtonId, setDragCustomButtonId] = useState<string | null>(null);
@@ -3084,6 +3083,7 @@ function SwitcherUI({
 }: any) {
 
   const [presetSortMode, setPresetSortMode] = useState<"horario" | "dias" | "alfabetica">("horario");
+  const [allPresetsOpen, setAllPresetsOpen] = useState(false);
 
   // Tamanho do texto dos botões personalizados (persistido)
   // Estado da música pertence ao SwitcherUI, que renderiza o quadro NO AR.
