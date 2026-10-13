@@ -1476,7 +1476,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                         return (
                           <div
                             key={r.id}
-                            className="flex-shrink-0 flex flex-col gap-2 transition-all hover:-translate-y-0.5"
+                            className="group flex-shrink-0 flex flex-col gap-2 transition-colors duration-150"
                             style={{
                               ...MONT,
                               minWidth: 196,
@@ -1486,6 +1486,12 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                               background: "#FFFFFF",
                               border: `2px solid ${isAuto ? "#8b5cf6" : CYAN}`,
                               boxShadow: "0 2px 10px rgba(10, 37, 64, 0.06)",
+                            }}
+                            onMouseEnter={(event) => {
+                              event.currentTarget.style.backgroundColor = "#EEF4FF";
+                            }}
+                            onMouseLeave={(event) => {
+                              event.currentTarget.style.backgroundColor = "#FFFFFF";
                             }}
                           >
                             <div className="flex items-start gap-1.5">
