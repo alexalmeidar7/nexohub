@@ -1787,17 +1787,17 @@ export default function CenarioTela() {
                           {musicData && showMusic && (
                             <div style={{
                               marginTop: `${vhToPx(1)}${vu}`,
-                              textAlign: "right",
+                              textAlign: "center",
                               width: "100%",
                               opacity: currentPhase === "music" ? 1 : 0,
                               transform: `translateY(${currentPhase === "music" ? 0 : vhToPx(1) + vu})`,
                               transition: "opacity 0.4s ease, transform 0.4s ease",
                               visibility: currentPhase === "music" ? "visible" : "hidden"
                             }}>
-                              <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.3)}${vu}`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                              <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.7)}${vu}`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                                 {musicData.titulo}
                               </div>
-                              <div style={{ fontWeight: 700, fontSize: `${vhToPx(1)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.2)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                              <div style={{ fontWeight: 400, fontSize: `${vhToPx(1)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.2)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                                 {musicData.artista}
                               </div>
                             </div>
