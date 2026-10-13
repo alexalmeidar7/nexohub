@@ -1831,17 +1831,17 @@ export default function CenarioTelaFull() {
                       </div>
                     )}
 
-                                        {/* Identificação do programa no ar: foto recortada no canto inferior esquerdo */}
+                                                            {/* Foto do locutor ampliada 40%, ancorada na base; identificação sobre a foto */}
                     {currentProgram && (() => {
                       const fotos = currentProgram.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
                       const foto = fotos[presenterIdx % (fotos.length || 1)];
                       return (
-                        <div style={{ position: "absolute", left: `${vhToPx(2.6)}${vu}`, bottom: `${vhToPx(0.5)}${vu}`, width: `${vhToPx(19)}${vu}`, height: `${vhToPx(17)}${vu}`, zIndex: 14, pointerEvents: "none" }}>
+                        <div style={{ position: "absolute", left: "${vhToPx(2.6)}${vu}", bottom: 0, width: "${vhToPx(26.6)}${vu}", height: "${vhToPx(23.8)}${vu}", zIndex: 14, pointerEvents: "none" }}>
                           {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "linear-gradient(to top, #000 58%, transparent 100%)", maskImage: "linear-gradient(to top, #000 58%, transparent 100%)" }} />}
-                          <div style={{ position: "absolute", left: 0, bottom: `${vhToPx(17.2)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: `${vhToPx(0.25)}${vu}`, maxWidth: `${vhToPx(34)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
-                            <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 600, color: accentColor, letterSpacing: "0.04em" }}>no ar</span>
-                            <span style={{ fontSize: `${vhToPx(1.65)}${vu}`, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
-                            <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
+                          <div style={{ position: "absolute", left: 0, bottom: "${vhToPx(15.2)}${vu}", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "${vhToPx(0.25)}${vu}", maxWidth: "${vhToPx(34)}${vu}", textShadow: "0 2px 8px rgba(0,0,0,0.8)", zIndex: 16 }}>
+                            <span style={{ fontSize: "${vhToPx(1)}${vu}", fontWeight: 600, color: accentColor, letterSpacing: "0.04em" }}>no ar</span>
+                            <span style={{ fontSize: "${vhToPx(1.65)}${vu}", fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
+                            <span style={{ fontSize: "${vhToPx(1)}${vu}", fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
                           </div>
                         </div>
                       );
