@@ -1921,8 +1921,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
               </TabsList>
 
               {/* ═══ Home ═══ */}
-              <TabsContent value="home" className="space-y-5 animate-in fade-in-50 duration-500">
-                <div className="flex flex-col gap-5">
+              <TabsContent value="home" className="space-y-4 animate-in fade-in-50 duration-500">
+                <div className="flex flex-col gap-4">
                   {/* Visibilidade das Capas — recolhida por padrão e expansível */}
                   <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
                     <button
