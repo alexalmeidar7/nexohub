@@ -1737,8 +1737,8 @@ export default function CenarioTelaFull() {
 
                             {/* Vinil: aparece após 10s e fica visível por 20s, atrás da capa */}
                             {showMusic && !isNoPlayback && musicData?.capa && (
-                              <div style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1, pointerEvents: "none", overflow: "visible", animation: "vinylReveal 30s linear -12s infinite" }}>
-                                <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, #242424 0%, #111 42%, #292929 43%, #080808 47%, #202020 48%, #050505 58%, #202020 59%, #080808 63%, #1b1b1b 64%, #050505 100%)", boxShadow: "0 5px 12px rgba(0,0,0,0.45)", animation: "vinylSpin 2.4s linear infinite", willChange: "transform" }}>
+                              <div style={{ position: "absolute", left: "42%", top: 0, width: "100%", height: "100%", zIndex: 1, pointerEvents: "none", overflow: "visible", opacity: 1 }}>
+                                <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, #343434 0%, #151515 38%, #555 39%, #080808 42%, #292929 44%, #050505 57%, #383838 59%, #090909 63%, #252525 65%, #050505 100%)", border: "2px solid rgba(255,255,255,0.42)", boxShadow: "0 0 0 2px rgba(0,0,0,0.65), 0 5px 16px rgba(0,0,0,0.65)", animation: "vinylSpin 2.4s linear infinite", willChange: "transform" }}>
                                   <div style={{ position: "absolute", inset: "8%", borderRadius: "50%", background: "repeating-conic-gradient(from 0deg, rgba(255,255,255,0.12) 0deg, rgba(255,255,255,0.02) 3deg, transparent 6deg, rgba(0,0,0,0.18) 8deg)", opacity: 0.55 }} />
                                   <div style={{ position: "absolute", inset: "3%", borderRadius: "50%", background: "conic-gradient(from 18deg, transparent 0deg, rgba(255,255,255,0.42) 12deg, rgba(255,255,255,0.08) 26deg, transparent 42deg, transparent 155deg, rgba(255,255,255,0.16) 178deg, transparent 205deg, transparent 360deg)", opacity: 0.8 }} />
                                   <div style={{ position: "absolute", width: "34%", height: "34%", left: "33%", top: "33%", borderRadius: "50%", overflow: "hidden", background: "#333", border: "2px solid rgba(255,255,255,0.16)" }}><img src={musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
@@ -1746,7 +1746,7 @@ export default function CenarioTelaFull() {
                                 </div>
                               </div>
                             )}
-                            <style>{"@keyframes vinylReveal { 0%, 33.32% { transform: translateX(0); opacity: 0; } 33.33% { transform: translateX(0); opacity: 1; } 40% { transform: translateX(55%); opacity: 1; } 90% { transform: translateX(55%); opacity: 1; } 96.67% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(0); opacity: 0; } } @keyframes vinylSpin { to { transform: rotate(360deg); } }"}</style>
+                            <style>{"@keyframes vinylSpin { to { transform: rotate(360deg); } }"}</style>
 {/* ── BOX CAPA: music album art ── */}
                             <div
                               style={{
