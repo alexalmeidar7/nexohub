@@ -3128,10 +3128,6 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
             {typeof document !== "undefined" && document.getElementById("cenario-preview-toolbar") && createPortal(
               <>
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Eye size={16} style={{ color: mutedText }} />
-                    <span className="text-sm font-semibold whitespace-nowrap">Preview</span>
-                  </div>
                   <div className="flex items-center gap-1.5">
                     {externalConnected && (
                       <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
@@ -3174,9 +3170,6 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                         </div>
                       </div>
                     </div>
-                    <button type="button" title={`Rotacionar 90° (atual: ${externalRotation}°)`} aria-label="Rotacionar 90°" aria-pressed={externalRotation !== 0} onClick={() => setExternalRotation(prev => { const val = (prev + 90) % 360; cenarioBcRef.current?.postMessage({ type: "rotate", angle: val }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } }); return val; })} className="h-9 w-9 rounded-full flex items-center justify-center transition-all" style={{ background: "var(--layout-accent-color, #0055ff)", color: "var(--layout-accent-color-foreground, #fff)" }}>
-                      <RotateCw size={15} />
-                    </button>
                   </div>
                 </div>
               </>,
