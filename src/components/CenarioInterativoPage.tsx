@@ -3127,7 +3127,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
           <div className="lg:flex-1 flex flex-col min-w-0 -mt-10" style={{ minHeight: 0 }}>
             {typeof document !== "undefined" && document.getElementById("cenario-preview-toolbar") && createPortal(
               <>
-                <div className="flex flex-wrap items-center gap-2 mb-4">
+                <div className="flex flex-wrap items-center gap-2 mb-4 h-9">
                   <div className="flex items-center gap-1.5">
                     {externalConnected && (
                       <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
@@ -3136,12 +3136,12 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 ml-auto">
+                  <div className="flex items-center gap-2">
                     <div className="relative group">
                       <button type="button" title="Cenário vertical 9:16" aria-label="Opções do cenário 9:16" className="h-9 w-10 rounded-lg flex items-center justify-center transition-colors" style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}>
                         <Smartphone size={18} />
                       </button>
-                      <div className="absolute right-0 top-full pt-2 hidden group-hover:block group-focus-within:block z-50 min-w-[210px]">
+                      <div className="absolute left-full top-0 pl-2 hidden group-hover:block group-focus-within:block z-50 min-w-[210px]">
                         <div className="rounded-xl bg-white p-1.5 shadow-lg border border-slate-200 text-slate-700">
                           <button type="button" onClick={() => setExternalRotation(prev => { const val = (prev + 90) % 360; cenarioBcRef.current?.postMessage({ type: "rotate", angle: val }); rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } }); return val; })} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-[var(--layout-accent-color,#0055ff)] hover:text-white">
                             <RotateCw size={15} /> Rotacionar 90°
