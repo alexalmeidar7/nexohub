@@ -1820,7 +1820,7 @@ export default function CenarioTela() {
                     </div>
                     {/* ── Sponsor logos (centered below locutor + capa boxes) ── */}
                     {sponsorLogos.length > 0 && (
-                      <div style={{ position: "absolute", bottom: `${vhToPx(9)}${vu}`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
+                      <div style={{ position: "absolute", bottom: `${vhToPx(5)}${vu}`, left: "50%", transform: "translateX(-50%)", zIndex: 10 }}>
                         <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: `${vhToPx(23.4)}${vu}` }}>
                           {sponsorLogos.map((l: any, i: number) => l.logo_url && (
                             <img
@@ -1834,7 +1834,7 @@ export default function CenarioTela() {
                               }}
                               style={{
                                 position: "absolute",
-                                maxWidth: `${vhToPx(39)}${vu}`, maxHeight: `${vhToPx(21.5)}${vu}`,
+                                maxWidth: `${vhToPx(33.15)}${vu}`, maxHeight: `${vhToPx(18.275)}${vu}`,
                                 objectFit: "contain",
                                 opacity: i === sponsorIdx ? 1 : 0,
                                 transform: i === sponsorIdx ? "scale(1)" : "scale(0.9)",
