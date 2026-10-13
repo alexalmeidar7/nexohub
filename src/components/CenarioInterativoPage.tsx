@@ -3448,27 +3448,27 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                             })()}
                             
 
-                             {/* ── TOP-CENTER: Clock, date and current weather ── */}
-                             <div style={{ position: "absolute", top: pvh(3.2), left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.45)", width: pvh(38), pointerEvents: "none" }}>
-                               <div style={{ fontSize: pvh(2.7), fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: config.home.colorClock || "#fff", whiteSpace: "nowrap" }}>
-                                 {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                               </div>
-                               <div style={{ fontSize: pvh(1.05), fontWeight: 400, lineHeight: 1.25, color: config.home.colorDate || "#fff", marginTop: pvh(0.45), whiteSpace: "nowrap" }}>
-                                 {currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, (c) => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, (c) => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}
-                               </div>
-                               {liveWeather && (
-                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: pvh(0.8), gap: pvh(0.25) }}>
-                                   <div style={{ width: pvh(4.4), height: pvh(4.4), display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                     <WeatherIcon code={liveWeather.current.code} size={pvh(4.4)} forceDay />
-                                   </div>
-                                   <div style={{ fontSize: pvh(2.3), fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
-                                   <div style={{ fontSize: pvh(0.85), fontWeight: 400, lineHeight: 1.25, opacity: 0.9, whiteSpace: "nowrap" }}>
-                                     Chuva {liveWeather.daily?.[0]?.precip ?? 0}% · Umidade {liveWeather.current.humidity}%
-                                   </div>
-                                 </div>
-                               )}
+                                                          {/* Relógio e data no canto superior esquerdo */}
+                             <div style={{ position: "absolute", top: "${pvh(3.2)}px", left: "${pvh(3.2)}px", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.45)", pointerEvents: "none" }}>
+                               <div style={{ fontSize: "${pvh(2.7)}px", fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: config.home.colorClock || "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
+                               <div style={{ fontSize: "${pvh(1.05)}px", fontWeight: 400, lineHeight: 1.25, marginTop: "${pvh(0.45)}px", color: config.home.colorDate || "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, c => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, c => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}</div>
                              </div>
-                             {/* ── BOTTOM-RIGHT: "A seguir" ── */}
+                             {/* Condição atual no canto superior direito; indicadores alternam a cada 4 segundos */}
+                             {liveWeather && (
+                               <div style={{ position: "absolute", top: "${pvh(2.5)}px", right: "${pvh(3.2)}px", zIndex: 20, width: "${pvh(20)}px", display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
+                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${pvh(0.7)}px" }}>
+                                   <div style={{ fontSize: "${pvh(2.3)}px", fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
+                                   <WeatherIcon code={liveWeather.current.code} size={pvh(4.4)} forceDay />
+                                 </div>
+                                 <div style={{ position: "relative", width: "100%", height: "${pvh(2.2)}px", marginTop: "${pvh(0.35)}px", fontSize: "${pvh(1.05)}px", fontWeight: 500, lineHeight: 1.2 }}>
+                                   <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${pvh(0.6)}px", animation: "cenarioWeatherInfo 12s infinite" }}><CloudRain size={pvh(1.35)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
+                                   <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${pvh(0.6)}px", animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-8s" }}><Droplets size={pvh(1.35)} /> <span>{liveWeather.current.humidity}%</span></div>
+                                   {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${pvh(0.6)}px", animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-4s" }}><CloudRain size={pvh(1.35)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
+                                 </div>
+                               </div>
+                             )}
+                             <style>{`@keyframes cenarioWeatherInfo { 0%, 30% { opacity: 1; transform: translateY(0); } 33%, 96% { opacity: 0; transform: translateY(-20%); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
+{/* ── BOTTOM-RIGHT: "A seguir" ── */}
                              {nextProgram && (
                                <div style={{ position: "absolute", bottom: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
                                   <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: config.home.colorASeguirLabel || "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>
