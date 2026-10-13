@@ -1613,7 +1613,7 @@ export default function CenarioTelaFull() {
                      <div style={{ position: "absolute", top: `${vhToPx(2.5)}${vu}`, right: `${vhToPx(3.2)}${vu}`, zIndex: 20, width: `${vhToPx(20)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.7)}${vu}` }}>
                          <div style={{ fontSize: `${vhToPx(2.3)}${vu}`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
-                         <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} forceDay />
+                         <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} />
                        </div>
                        <div style={{ position: "relative", width: "100%", height: `${vhToPx(2.2)}${vu}`, marginTop: `${vhToPx(0.35)}${vu}`, fontSize: `${vhToPx(1.05)}${vu}`, fontWeight: 500, lineHeight: 1.2 }}>
                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}`, animation: "cenarioWeatherInfo 12s infinite" }}><CloudRain size={vhToPx(1.35)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
@@ -1626,8 +1626,8 @@ export default function CenarioTelaFull() {
 {/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
                      <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
-                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
-                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: "#fff" }}>{nextProgram.nome}</div>
+                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: config.home.colorASeguirLabel || accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
+                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome}</div>
                        <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
                    )}
@@ -1929,7 +1929,7 @@ export default function CenarioTelaFull() {
                           <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box cenario-delay-2" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
                             <div className="flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
                               <div style={{ width: `${vhToPx(12)}${vu}`, height: `${vhToPx(12)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
-                                <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
+                                <WeatherIcon code={liveWeather.current.code} size={250} />
                               </div>
                               <div className="flex flex-col">
                                 <div className="font-black" style={{ fontSize: `${vhToPx(8)}${vu}`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,1)" }}>{liveWeather.current.temp}°</div>
@@ -1998,7 +1998,7 @@ export default function CenarioTelaFull() {
                                       justifyContent: "center",
                                       filter: `drop-shadow(0 6px 16px ${accentColor}55) drop-shadow(0 2px 4px rgba(0,0,0,0.5))`,
                                     }}>
-                                      <WeatherIcon code={d.code} size={140} forceDay />
+                                      <WeatherIcon code={d.code} size={140} />
                                     </div>
 
                                     <div className="flex items-center justify-center flex-nowrap" style={{ gap: `${vhToPx(0.5)}${vu}`, whiteSpace: "nowrap", width: "100%", letterSpacing: "-0.03em", height: "min(3.4vh, 30cqi)", lineHeight: 1 }}>
