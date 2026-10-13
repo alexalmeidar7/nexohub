@@ -3480,18 +3480,19 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                  <div style={{
                                    position: "absolute",
                                    top: `calc(${pvh(4)}px - 2px)`,
-                                   right: `${pvh(5)}px`,
+                                   left: "50%",
+                                   transform: "translateX(-50%)",
                                    display: "flex",
                                    flexDirection: "column",
-                                   alignItems: "flex-end",
+                                   alignItems: "center",
                                    zIndex: 15,
                                  }}>
                                    <div style={{
                                      display: "flex",
                                      alignItems: "stretch",
                                      position: "relative",
-                                     width: `${pvh(14)}px`,
-                                     height: `${pvh(14)}px`
+                                     width: `${pvh(18.2)}px`,
+                                     height: `${pvh(18.2)}px`
                                    }}>
                                      {/* ── BOX DO LOCUTOR: quadrado 1:1 ── */}
                                      <div style={{
