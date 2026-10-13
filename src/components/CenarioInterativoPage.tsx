@@ -1970,33 +1970,6 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                     </style>
                     <div id="cenario-bg-configs" className="space-y-4">
                     </div>
-                    <div className="px-1 py-1 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1 rounded bg-black/5">
-                          <Palette size={14} className="opacity-60" />
-                        </div>
-                        <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-60">Configuração do Fundo</h4>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 text-[9px] uppercase font-bold opacity-60 hover:opacity-100"
-                          onClick={() => setOpenSections({})}
-                        >
-                          Fechar Tudo
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 text-[9px] uppercase font-bold opacity-60 hover:opacity-100"
-                          onClick={() => setOpenSections({ static: true, gradient: true, thumb: true, artist: true, alternate: true })}
-                        >
-                          Abrir Tudo
-                        </Button>
-                      </div>
-                    </div>
-
                     <div className="grid grid-cols-1 gap-4">
                       {/* 1 - Fundo Estático */}
                       <div className={`flex flex-col gap-3 p-4 rounded-xl border-2 transition-all ${config.bgType === 'static' ? 'bg-[var(--layout-accent-color)]/10 border-[var(--layout-accent-color)]/60' : 'bg-white/40 border-[var(--layout-accent-color)]/60'}`}>
