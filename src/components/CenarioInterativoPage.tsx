@@ -1944,14 +1944,6 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                             className="data-[state=checked]:bg-[var(--layout-accent-color)]"
                           />
                         </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa do Programa</Label>
-                          <Switch
-                            checked={config.home.showProgramThumb !== false}
-                            onCheckedChange={v => updateHome({ showProgramThumb: v })}
-                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                          />
-                        </div>
                       </div>
                     )}
                   </div>
