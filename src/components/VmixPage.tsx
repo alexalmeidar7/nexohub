@@ -1723,14 +1723,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
 
             console.log(`[local-scheduler] Executing preset for "${prog.nome}" at ${timeKey}`);
             addLog(`[Agendador] Preset "${prog.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
-            for (const cmd of cmds) {
-              const fn = cmd.fn || "";
-              const input = cmd.input || "";
-              const extraValue = cmd.extraValue;
-              const value = extraValue ? (cmd.value ? `${cmd.value},${extraValue}` : extraValue) : (cmd.value || "");
-              if (fn) await sendCommand(fn, input || undefined, value || undefined);
-              await new Promise((r) => setTimeout(r, 400));
-            }
+            // Execute through the same command pipeline used by a manual preset click,
+            // so input mapping, command normalization and LAN/cloud routing are preserved.
+            await runCommandsUnified(cmds, `Preset agendado: ${prog.nome}`);
           }
         }
       } catch (err) {
