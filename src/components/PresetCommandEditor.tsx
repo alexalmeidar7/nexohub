@@ -654,17 +654,10 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               onClick={saveCommands}
               disabled={saving}
               className="flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
-              style={{ backgroundColor: "#008000", color: "#FFFFFF", border: "1px solid #008000" }}
+              style={{ backgroundColor: "#006300", color: "#FFFFFF", border: "1px solid #006300" }}
             >
               {saving ? <Loader2 className="animate-spin" size={12} /> : null}
               Salvar
-            </button>
-            <button
-              onClick={onClose}
-              className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
-              style={{ color: "#334155" }}
-            >
-              Fechar
             </button>
           </div>
         </div>
