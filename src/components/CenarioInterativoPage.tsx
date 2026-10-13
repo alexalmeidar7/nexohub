@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play, Maximize2, Tag } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import AnimatedWeatherLayout from "./AnimatedWeatherLayout";
@@ -1891,8 +1892,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
         vMix — CENÁRIO INTERATIVO
       </div>
 
-      <div className="rounded-2xl overflow-hidden bg-[#D6F4FB] border border-[#00BFF0]/30">
-        <div className="p-5 flex flex-col lg:flex-row gap-6" style={{ color: textColor }}>
+      <div className="overflow-visible bg-transparent border-0">
+        <div className="p-0 flex flex-col lg:flex-row gap-6" style={{ color: textColor }}>
 
 
           {/* ── LEFT: Configuration ── */}
@@ -3129,80 +3130,85 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
           {/* ── RIGHT: 9:16 Preview ── */}
           <div className="lg:flex-1 flex flex-col min-w-0" style={{ minHeight: 0 }}>
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <div className="flex items-center gap-2">
-                <Eye size={16} style={{ color: mutedText }} />
-                <span className="text-sm font-semibold whitespace-nowrap">PREVIEW CENÁRIO</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {externalConnected && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
-                    <Wifi size={10} style={{ color: "#4ade80" }} />
-                    <span className="text-[10px] font-semibold" style={{ color: "#4ade80" }}>Online</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2 ml-auto">
-                <button
-                  type="button"
-                  title="CENÁRIO 1"
-                  aria-label="CENÁRIO 1"
-                  onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                  className="h-9 px-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-80 shadow-sm"
-                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
-                >
-                  <ExternalLink size={15} />
-                  <span className="text-xs font-bold whitespace-nowrap">CENÁRIO 1</span>
-                </button>
-                <button
-                  type="button"
-                  title="CENÁRIO 2"
-                  aria-label="CENÁRIO 2"
-                  aria-pressed={isFullWindowOpen}
-                  onClick={() => {
-                    if (fullWindowRef.current && !fullWindowRef.current.closed) {
-                      fullWindowRef.current.focus();
-                      return;
-                    }
-                    const w = window.open(`/cenario-tela-full?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank");
-                    if (w) {
-                      fullWindowRef.current = w;
-                      setIsFullWindowOpen(true);
-                    }
-                  }}
-                  className={`h-9 px-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm ${isFullWindowOpen ? "" : "hover:opacity-80"}`}
-                  style={{
-                    background: isFullWindowOpen ? "var(--layout-accent-color, #00BFF0)" : "var(--layout-header-bg, #0d0446)",
-                    color: isFullWindowOpen ? "var(--layout-accent-color-foreground, #0d0446)" : "var(--layout-header-text, #fff)",
-                  }}
-                >
-                  <Maximize2 size={15} />
-                  <span className="text-xs font-bold whitespace-nowrap">CENÁRIO 2</span>
-                </button>
-                <button
-                  type="button"
-                  title={`Rotacionar 90° (atual: ${externalRotation}°)`}
-                  aria-label="Rotacionar 90°"
-                  aria-pressed={externalRotation !== 0}
-                  onClick={() => {
-                    setExternalRotation(prev => {
-                      const val = (prev + 90) % 360;
-                      cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
-                      rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
-                      return val;
-                    });
-                  }}
-                  className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm ${externalRotation !== 0 ? "" : "hover:opacity-80"}`}
-                  style={{
-                    background: externalRotation !== 0 ? "var(--layout-accent-color, #00BFF0)" : "var(--layout-header-bg, #0d0446)",
-                    color: externalRotation !== 0 ? "var(--layout-accent-color-foreground, #0d0446)" : "var(--layout-header-text, #fff)",
-                  }}
-                >
-                  <RotateCw size={15} />
-                </button>
-              </div>
-
-            </div>
+            {typeof document !== "undefined" && document.getElementById("cenario-preview-toolbar") && createPortal(
+              <>
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                              <div className="flex items-center gap-2">
+                                <Eye size={16} style={{ color: mutedText }} />
+                                <span className="text-sm font-semibold whitespace-nowrap">PREVIEW CENÁRIO</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {externalConnected && (
+                                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)" }}>
+                                    <Wifi size={10} style={{ color: "#4ade80" }} />
+                                    <span className="text-[10px] font-semibold" style={{ color: "#4ade80" }}>Online</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 ml-auto">
+                                <button
+                                  type="button"
+                                  title="CENÁRIO 1"
+                                  aria-label="CENÁRIO 1"
+                                  onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
+                                  className="h-9 px-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-80 shadow-sm"
+                                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                                >
+                                  <ExternalLink size={15} />
+                                  <span className="text-xs font-bold whitespace-nowrap">CENÁRIO 1</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  title="CENÁRIO 2"
+                                  aria-label="CENÁRIO 2"
+                                  aria-pressed={isFullWindowOpen}
+                                  onClick={() => {
+                                    if (fullWindowRef.current && !fullWindowRef.current.closed) {
+                                      fullWindowRef.current.focus();
+                                      return;
+                                    }
+                                    const w = window.open(`/cenario-tela-full?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank");
+                                    if (w) {
+                                      fullWindowRef.current = w;
+                                      setIsFullWindowOpen(true);
+                                    }
+                                  }}
+                                  className={`h-9 px-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm ${isFullWindowOpen ? "" : "hover:opacity-80"}`}
+                                  style={{
+                                    background: isFullWindowOpen ? "var(--layout-accent-color, #00BFF0)" : "var(--layout-header-bg, #0d0446)",
+                                    color: isFullWindowOpen ? "var(--layout-accent-color-foreground, #0d0446)" : "var(--layout-header-text, #fff)",
+                                  }}
+                                >
+                                  <Maximize2 size={15} />
+                                  <span className="text-xs font-bold whitespace-nowrap">CENÁRIO 2</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  title={`Rotacionar 90° (atual: ${externalRotation}°)`}
+                                  aria-label="Rotacionar 90°"
+                                  aria-pressed={externalRotation !== 0}
+                                  onClick={() => {
+                                    setExternalRotation(prev => {
+                                      const val = (prev + 90) % 360;
+                                      cenarioBcRef.current?.postMessage({ type: "rotate", angle: val });
+                                      rtDrawChannelRef.current?.send({ type: "broadcast", event: "rotate", payload: { angle: val } });
+                                      return val;
+                                    });
+                                  }}
+                                  className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm ${externalRotation !== 0 ? "" : "hover:opacity-80"}`}
+                                  style={{
+                                    background: externalRotation !== 0 ? "var(--layout-accent-color, #00BFF0)" : "var(--layout-header-bg, #0d0446)",
+                                    color: externalRotation !== 0 ? "var(--layout-accent-color-foreground, #0d0446)" : "var(--layout-header-text, #fff)",
+                                  }}
+                                >
+                                  <RotateCw size={15} />
+                                </button>
+                              </div>
+                
+                            </div>
+              </>,
+              document.getElementById("cenario-preview-toolbar")!
+            )}
 
             {/* "Telas Conectadas" notification */}
             {showConnectedMsg && (
