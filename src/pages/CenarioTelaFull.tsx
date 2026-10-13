@@ -1735,7 +1735,17 @@ export default function CenarioTelaFull() {
                               </div>
                             </div>
 
-                            {/* ── BOX CAPA: music album art ── */}
+                            {                            {/* Vinil: aparece após 10s e fica visível por 20s, atrás da capa */}
+                            {showMusic && !isNoPlayback && musicData?.capa && (
+                              <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", animation: "vinylReveal 30s linear infinite" }}>
+                                <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, #242424 0%, #111 42%, #292929 43%, #080808 47%, #202020 48%, #050505 58%, #202020 59%, #080808 63%, #1b1b1b 64%, #050505 100%)", boxShadow: "0 5px 12px rgba(0,0,0,0.45)", animation: "vinylSpin 3s linear infinite" }}>
+                                  <div style={{ position: "absolute", width: "34%", height: "34%", left: "33%", top: "33%", borderRadius: "50%", overflow: "hidden", background: "#333", border: "2px solid rgba(255,255,255,0.16)" }}><img src={artistBgUrl || musicData.capa} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+                                  <div style={{ position: "absolute", left: "49%", top: "49%", width: "2%", height: "2%", borderRadius: "50%", background: "#ddd", boxShadow: "0 0 0 1px #111" }} />
+                                </div>
+                              </div>
+                            )}
+                            <style>{"@keyframes vinylReveal { 0%, 33.32% { transform: translateX(0); opacity: 0; } 33.33% { opacity: 1; } 40% { transform: translateX(55%); opacity: 1; } 96% { transform: translateX(55%); opacity: 1; } 100% { transform: translateX(0); opacity: 0; } } @keyframes vinylSpin { to { transform: rotate(360deg); } }"}</style>
+/* ── BOX CAPA: music album art ── */}
                             <div
                               style={{
                                 width: "100%",
@@ -1743,7 +1753,7 @@ export default function CenarioTelaFull() {
                                 borderRadius: `${vhToPx(2)}${vu}`,
                                 overflow: "hidden",
                                 flexShrink: 0,
-                                zIndex: 1,
+                                zIndex: 2,
                                 opacity: showMusic && currentPhase === "music" ? 1 : 0,
                                 visibility: showMusic && currentPhase === "music" ? "visible" : "hidden",
                                 transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
