@@ -1629,7 +1629,7 @@ export default function CenarioTela() {
                      <div style={{ position: "absolute", top: `${vhToPx(2.5)}${vu}`, right: `${vhToPx(3.2)}${vu}`, zIndex: 20, width: `${vhToPx(20)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.7)}${vu}` }}>
                          <div style={{ fontSize: `${vhToPx(2.3)}${vu}`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
-                         <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} forceDay />
+                         <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} />
                        </div>
                        <div style={{ position: "relative", width: "100%", height: `${vhToPx(2.2)}${vu}`, marginTop: `${vhToPx(0.35)}${vu}`, fontSize: `${vhToPx(1.05)}${vu}`, fontWeight: 500, lineHeight: 1.2 }}>
                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}`, animation: "cenarioWeatherInfo 12s infinite" }}><CloudRain size={vhToPx(1.35)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
@@ -1642,8 +1642,8 @@ export default function CenarioTela() {
 {/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
                      <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
-                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
-                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: "#fff" }}>{nextProgram.nome}</div>
+                       <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: config.home.colorASeguirLabel || accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
+                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome}</div>
                        <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
                    )}
@@ -1992,7 +1992,7 @@ export default function CenarioTela() {
                                   animate={{ y: [0, -vhToPx(1), 0] }}
                                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                                 >
-                                  <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
+                                  <WeatherIcon code={liveWeather.current.code} size={250} />
                                 </motion.div>
                               </div>
                               <div className="text-right">
@@ -2039,7 +2039,7 @@ export default function CenarioTela() {
                                   <span className="text-[2.5vh] font-bold text-white/80 w-[15vh]">{wk}, {dayNum}</span>
                                   <div className="flex items-center gap-[2vh]">
                                     <div className="p-[1vh] bg-white/5 rounded-[1.5vh]" style={{ width: '6vh', height: '6vh' }}>
-                                      <WeatherIcon code={d.code} size={60} forceDay />
+                                      <WeatherIcon code={d.code} size={60} />
                                     </div>
                                     <div className="flex flex-col">
                                       <span className="text-[1.4vh] font-black text-[#00BFF0] uppercase flex items-center gap-1">
