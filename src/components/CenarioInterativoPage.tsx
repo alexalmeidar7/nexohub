@@ -361,7 +361,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     cenario1: true,
-    cenario2: true
+    cenario2: true,
+    visibilityCovers: false,
+    cores: true
   });
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   
@@ -1903,7 +1905,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="w-full grid grid-cols-6 gap-1 p-1 mb-4 rounded-xl" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <TabsList className="w-full grid grid-cols-7 gap-1 p-1 mb-4 rounded-xl" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
                 <TabsTrigger value="home" title="Home" aria-label="Home" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><Home size={16} /></TabsTrigger>
                 <TabsTrigger value="weather" title="Tempo" aria-label="Tempo" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><CloudSun size={16} /></TabsTrigger>
                 <TabsTrigger value="traffic" title="Trânsito" aria-label="Trânsito" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><Car size={16} /></TabsTrigger>
@@ -1915,198 +1917,46 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="chat" title="Chat" aria-label="Chat" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><MessageCircle size={16} /></TabsTrigger>
+                <TabsTrigger value="colors" title="Configuração de cores" aria-label="Configuração de cores" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><Settings size={16} /></TabsTrigger>
               </TabsList>
 
               {/* ═══ Home ═══ */}
               <TabsContent value="home" className="space-y-5 animate-in fade-in-50 duration-500">
                 <div className="flex flex-col gap-5">
-                  {/* Cores dos Elementos do Preview */}
-                  {(() => {
-                    const colorFields: { key: keyof HomeConfig; label: string; def: string }[] = [
-                      { key: "colorButtonBgOff", label: "Fundo do botão desligado (inativo)", def: "rgba(0,0,0,0.8)" },
-                      { key: "colorButtonBgOn",  label: "Fundo do botão ativo",             def: "rgba(0,191,240,0.85)" },
-                      { key: "colorButtonOff",   label: "Ícone do botão desligado (inativo)", def: "rgba(255,255,255,0.7)" },
-                      { key: "colorButtonOn",    label: "Ícone do botão ativo",             def: "#FFFFFF" },
-                      { key: "colorClock",       label: "Texto — Hora",                   def: "#FFFFFF" },
-                      { key: "colorDate",        label: "Texto — Data",                   def: "#00BFF0" },
-                      { key: "colorMusicName",   label: "Texto — Nome da música",         def: "#FFFFFF" },
-                      { key: "colorMusicTitle",  label: "Texto — Título da música",       def: "#00BFF0" },
-                      { key: "colorASeguirLabel", label: 'Texto — "a seguir"',            def: "#00BFF0" },
-                      { key: "colorNextProgram",  label: "Texto — Programa a seguir",        def: "#FFFFFF" },
-                      { key: "colorProgressBar",  label: "Barra de progresso do programa",   def: "#00BFF0" },
-                    ];
-                    const normalizeHex = (v: string) => {
-                      const s = v?.trim?.() || "";
-                      if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
-                      if (/^#[0-9a-fA-F]{3}$/.test(s)) return ("#" + s.slice(1).split("").map(c => c + c).join("")).toUpperCase();
-                      const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
-                      if (m) {
-                        const toHex = (n: string) => Math.max(0, Math.min(255, parseInt(n, 10))).toString(16).padStart(2, "0");
-                        return ("#" + toHex(m[1]) + toHex(m[2]) + toHex(m[3])).toUpperCase();
-                      }
-                      return null;
-                    };
-
-                    // WCAG 2.1 relative luminance + contrast ratio
-                    const hexToRgb = (hex: string): [number, number, number] | null => {
-                      const n = normalizeHex(hex);
-                      if (!n) return null;
-                      return [parseInt(n.slice(1,3),16), parseInt(n.slice(3,5),16), parseInt(n.slice(5,7),16)];
-                    };
-                    const relLum = (rgb: [number,number,number]) => {
-                      const c = rgb.map(v => {
-                        const s = v/255;
-                        return s <= 0.03928 ? s/12.92 : Math.pow((s+0.055)/1.055, 2.4);
-                      });
-                      return 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2];
-                    };
-                    const contrastRatio = (a: string, b: string): number | null => {
-                      const ra = hexToRgb(a); const rb = hexToRgb(b);
-                      if (!ra || !rb) return null;
-                      const la = relLum(ra); const lb = relLum(rb);
-                      const light = Math.max(la, lb); const dark = Math.min(la, lb);
-                      return (light + 0.05) / (dark + 0.05);
-                    };
-                    const pairFor = (key: string) => {
-                      if (key === "colorButtonBgOff") return { color: config.home.colorButtonOff || "rgba(255,255,255,0.7)", label: "vs ícone" };
-                      if (key === "colorButtonBgOn") return { color: config.home.colorButtonOn || "#FFFFFF", label: "vs ícone" };
-                      if (key === "colorButtonOff") return { color: config.home.colorButtonBgOff || "rgba(0,0,0,0.8)", label: "vs fundo" };
-                      if (key === "colorButtonOn") return { color: config.home.colorButtonBgOn || "rgba(0,191,240,0.85)", label: "vs fundo" };
-                      return { color: "#FFFFFF", label: "vs branco" };
-                    };
-                    const wcagBadge = (bg: string, key: string) => {
-                      const p = pairFor(key);
-                      const r = contrastRatio(bg, p.color);
-                      if (r == null) return null;
-                      const val = r.toFixed(2);
-                      const passAAA = r >= 7;
-                      const passAA = r >= 4.5;
-                      const passAA_lg = r >= 3;
-                      const level = passAAA ? "AAA" : passAA ? "AA" : passAA_lg ? "AA Large" : "Falha";
-                      const color = passAA ? "#0a7d3a" : passAA_lg ? "#a66200" : "#b42318";
-                      const bgc = passAA ? "#dcfce7" : passAA_lg ? "#fef3c7" : "#fee2e2";
-                      return (
-                        <div className="mt-1 flex items-center gap-1 flex-wrap">
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold" style={{ background: bgc, color }}>
-                            {val}:1 · {level}
-                          </span>
-                          <span className="text-[8px] uppercase font-bold opacity-50">{p.label}</span>
-                        </div>
-                      );
-                    };
-
-
-                    return (
-                      <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 flex-1 text-left"
-                            onClick={() => setOpenSections(prev => ({ ...prev, cores: !prev.cores }))}
-                          >
-                            <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
-                              <Palette size={16} />
-                            </div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider">Cores dos Elementos</h4>
-                            {openSections.cores ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
-                          </button>
-                          <div className="ml-auto flex items-center gap-2 pl-4 border-l border-black/5">
-                            {!saving && savedFlash && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">✓ Cores salvas</span>
-                            )}
-                            <button
-                              type="button"
-                              disabled={saving}
-                              onClick={async () => {
-                                if (saveTimeout.current) { clearTimeout(saveTimeout.current); saveTimeout.current = null; }
-                                if (pendingSaveRef.current) {
-                                  await pendingSaveRef.current();
-                                } else {
-                                  const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab, _screenRotation: externalRotation };
-                                  rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config: configWithTabs } });
-                                  setSavedFlash(true);
-                                  if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
-                                  savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
-                                }
-                              }}
-                              className="h-7 px-3 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--layout-accent-color)] text-white hover:opacity-90 disabled:opacity-50 shadow-sm"
-                            >
-                              {saving ? "Salvando…" : "Salvar cores"}
-                            </button>
-                          </div>
-                        </div>
-                        {openSections.cores && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5 animate-in fade-in slide-in-from-top-2 duration-300">
-                            {colorFields.map(f => {
-                              const current = (config.home[f.key] as string) || f.def;
-                              const displayHex = normalizeHex(current) || normalizeHex(f.def) || "#000000";
-                              return (
-                                <div key={f.key as string} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 border border-black/5">
-                                  <div className="relative shrink-0" style={{ width: 30, height: 30 }}>
-                                    <div
-                                      className="w-full h-full rounded-md border-2 border-white shadow"
-                                      style={{ background: current }}
-                                    />
-                                    <input
-                                      type="color"
-                                      value={displayHex}
-                                      onChange={e => updateHome({ [f.key]: e.target.value.toUpperCase() } as Partial<HomeConfig>)}
-                                      className="absolute inset-0 opacity-0 cursor-pointer"
-                                      aria-label={f.label}
-                                    />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <Label className="text-[10px] font-bold uppercase opacity-70 block leading-tight truncate">{f.label}</Label>
-                                    <input
-                                      type="text"
-                                      value={current}
-                                      onChange={e => updateHome({ [f.key]: e.target.value } as Partial<HomeConfig>)}
-                                      onBlur={e => {
-                                        const n = normalizeHex(e.target.value);
-                                        if (n) updateHome({ [f.key]: n } as Partial<HomeConfig>);
-                                      }}
-                                      placeholder="#RRGGBB ou rgb(r,g,b)"
-                                      className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
-                                    />
-                                    {wcagBadge(current, f.key as string)}
-                                  </div>
-                                </div>
-                              );
-                            })}
-
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Visibilidade das Capas — movido para fora do box "Programa no ar" */}
-
+                  {/* Visibilidade das Capas — recolhida por padrão e expansível */}
                   <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
-                    <div className="flex items-center gap-2 mb-1">
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-2 text-left"
+                      aria-expanded={!!openSections.visibilityCovers}
+                      onClick={() => setOpenSections(prev => ({ ...prev, visibilityCovers: !prev.visibilityCovers }))}
+                    >
                       <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
                         <Eye size={16} />
                       </div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider">Visibilidade das Capas</h4>
-                    </div>
-                    <div className="space-y-2 pt-1 border-t border-black/5">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa da Música</Label>
-                        <Switch 
-                          checked={config.home.showMusicCover !== false} 
-                          onCheckedChange={v => updateHome({ showMusicCover: v })}
-                          className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                        />
+                      <h4 className="text-xs font-bold uppercase tracking-wider flex-1">Visibilidade das Capas</h4>
+                      {openSections.visibilityCovers ? <ChevronUp size={14} className="opacity-50" /> : <ChevronDown size={14} className="opacity-50" />}
+                    </button>
+                    {openSections.visibilityCovers && (
+                      <div className="space-y-2 pt-3 border-t border-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa da Música</Label>
+                          <Switch
+                            checked={config.home.showMusicCover !== false}
+                            onCheckedChange={v => updateHome({ showMusicCover: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa do Programa</Label>
+                          <Switch
+                            checked={config.home.showProgramThumb !== false}
+                            onCheckedChange={v => updateHome({ showProgramThumb: v })}
+                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa do Programa</Label>
-                        <Switch 
-                          checked={config.home.showProgramThumb !== false} 
-                          onCheckedChange={v => updateHome({ showProgramThumb: v })}
-                          className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Configurações Visuais de Fundo */}
@@ -3137,6 +2987,170 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                   </div>
                 )}
               </TabsContent>
+              <TabsContent value="colors" className="space-y-5 animate-in fade-in-50 duration-300">
+                <div className="flex flex-col gap-5">
+                                    {/* Cores dos Elementos do Preview */}
+                                    {(() => {
+                                      const colorFields: { key: keyof HomeConfig; label: string; def: string }[] = [
+                                        { key: "colorButtonBgOff", label: "Fundo do botão desligado (inativo)", def: "rgba(0,0,0,0.8)" },
+                                        { key: "colorButtonBgOn",  label: "Fundo do botão ativo",             def: "rgba(0,191,240,0.85)" },
+                                        { key: "colorButtonOff",   label: "Ícone do botão desligado (inativo)", def: "rgba(255,255,255,0.7)" },
+                                        { key: "colorButtonOn",    label: "Ícone do botão ativo",             def: "#FFFFFF" },
+                                        { key: "colorClock",       label: "Texto — Hora",                   def: "#FFFFFF" },
+                                        { key: "colorDate",        label: "Texto — Data",                   def: "#00BFF0" },
+                                        { key: "colorMusicName",   label: "Texto — Nome da música",         def: "#FFFFFF" },
+                                        { key: "colorMusicTitle",  label: "Texto — Título da música",       def: "#00BFF0" },
+                                        { key: "colorASeguirLabel", label: 'Texto — "a seguir"',            def: "#00BFF0" },
+                                        { key: "colorNextProgram",  label: "Texto — Programa a seguir",        def: "#FFFFFF" },
+                                        { key: "colorProgressBar",  label: "Barra de progresso do programa",   def: "#00BFF0" },
+                                      ];
+                                      const normalizeHex = (v: string) => {
+                                        const s = v?.trim?.() || "";
+                                        if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
+                                        if (/^#[0-9a-fA-F]{3}$/.test(s)) return ("#" + s.slice(1).split("").map(c => c + c).join("")).toUpperCase();
+                                        const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+                                        if (m) {
+                                          const toHex = (n: string) => Math.max(0, Math.min(255, parseInt(n, 10))).toString(16).padStart(2, "0");
+                                          return ("#" + toHex(m[1]) + toHex(m[2]) + toHex(m[3])).toUpperCase();
+                                        }
+                                        return null;
+                                      };
+                  
+                                      // WCAG 2.1 relative luminance + contrast ratio
+                                      const hexToRgb = (hex: string): [number, number, number] | null => {
+                                        const n = normalizeHex(hex);
+                                        if (!n) return null;
+                                        return [parseInt(n.slice(1,3),16), parseInt(n.slice(3,5),16), parseInt(n.slice(5,7),16)];
+                                      };
+                                      const relLum = (rgb: [number,number,number]) => {
+                                        const c = rgb.map(v => {
+                                          const s = v/255;
+                                          return s <= 0.03928 ? s/12.92 : Math.pow((s+0.055)/1.055, 2.4);
+                                        });
+                                        return 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2];
+                                      };
+                                      const contrastRatio = (a: string, b: string): number | null => {
+                                        const ra = hexToRgb(a); const rb = hexToRgb(b);
+                                        if (!ra || !rb) return null;
+                                        const la = relLum(ra); const lb = relLum(rb);
+                                        const light = Math.max(la, lb); const dark = Math.min(la, lb);
+                                        return (light + 0.05) / (dark + 0.05);
+                                      };
+                                      const pairFor = (key: string) => {
+                                        if (key === "colorButtonBgOff") return { color: config.home.colorButtonOff || "rgba(255,255,255,0.7)", label: "vs ícone" };
+                                        if (key === "colorButtonBgOn") return { color: config.home.colorButtonOn || "#FFFFFF", label: "vs ícone" };
+                                        if (key === "colorButtonOff") return { color: config.home.colorButtonBgOff || "rgba(0,0,0,0.8)", label: "vs fundo" };
+                                        if (key === "colorButtonOn") return { color: config.home.colorButtonBgOn || "rgba(0,191,240,0.85)", label: "vs fundo" };
+                                        return { color: "#FFFFFF", label: "vs branco" };
+                                      };
+                                      const wcagBadge = (bg: string, key: string) => {
+                                        const p = pairFor(key);
+                                        const r = contrastRatio(bg, p.color);
+                                        if (r == null) return null;
+                                        const val = r.toFixed(2);
+                                        const passAAA = r >= 7;
+                                        const passAA = r >= 4.5;
+                                        const passAA_lg = r >= 3;
+                                        const level = passAAA ? "AAA" : passAA ? "AA" : passAA_lg ? "AA Large" : "Falha";
+                                        const color = passAA ? "#0a7d3a" : passAA_lg ? "#a66200" : "#b42318";
+                                        const bgc = passAA ? "#dcfce7" : passAA_lg ? "#fef3c7" : "#fee2e2";
+                                        return (
+                                          <div className="mt-1 flex items-center gap-1 flex-wrap">
+                                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold" style={{ background: bgc, color }}>
+                                              {val}:1 · {level}
+                                            </span>
+                                            <span className="text-[8px] uppercase font-bold opacity-50">{p.label}</span>
+                                          </div>
+                                        );
+                                      };
+                  
+                  
+                                      return (
+                                        <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
+                                          <div className="flex items-center justify-between">
+                                            <button
+                                              type="button"
+                                              className="flex items-center gap-2 flex-1 text-left"
+                                              onClick={() => setOpenSections(prev => ({ ...prev, cores: !prev.cores }))}
+                                            >
+                                              <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                                                <Palette size={16} />
+                                              </div>
+                                              <h4 className="text-xs font-bold uppercase tracking-wider">Cores dos Elementos</h4>
+                                              {openSections.cores ? <ChevronUp size={14} className="opacity-40 ml-auto" /> : <ChevronDown size={14} className="opacity-40 ml-auto" />}
+                                            </button>
+                                            <div className="ml-auto flex items-center gap-2 pl-4 border-l border-black/5">
+                                              {!saving && savedFlash && (
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">✓ Cores salvas</span>
+                                              )}
+                                              <button
+                                                type="button"
+                                                disabled={saving}
+                                                onClick={async () => {
+                                                  if (saveTimeout.current) { clearTimeout(saveTimeout.current); saveTimeout.current = null; }
+                                                  if (pendingSaveRef.current) {
+                                                    await pendingSaveRef.current();
+                                                  } else {
+                                                    const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab, _screenRotation: externalRotation };
+                                                    rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config: configWithTabs } });
+                                                    setSavedFlash(true);
+                                                    if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
+                                                    savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+                                                  }
+                                                }}
+                                                className="h-7 px-3 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--layout-accent-color)] text-white hover:opacity-90 disabled:opacity-50 shadow-sm"
+                                              >
+                                                {saving ? "Salvando…" : "Salvar cores"}
+                                              </button>
+                                            </div>
+                                          </div>
+                                          {openSections.cores && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5 animate-in fade-in slide-in-from-top-2 duration-300">
+                                              {colorFields.map(f => {
+                                                const current = (config.home[f.key] as string) || f.def;
+                                                const displayHex = normalizeHex(current) || normalizeHex(f.def) || "#000000";
+                                                return (
+                                                  <div key={f.key as string} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 border border-black/5">
+                                                    <div className="relative shrink-0" style={{ width: 30, height: 30 }}>
+                                                      <div
+                                                        className="w-full h-full rounded-md border-2 border-white shadow"
+                                                        style={{ background: current }}
+                                                      />
+                                                      <input
+                                                        type="color"
+                                                        value={displayHex}
+                                                        onChange={e => updateHome({ [f.key]: e.target.value.toUpperCase() } as Partial<HomeConfig>)}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                        aria-label={f.label}
+                                                      />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <Label className="text-[10px] font-bold uppercase opacity-70 block leading-tight truncate">{f.label}</Label>
+                                                      <input
+                                                        type="text"
+                                                        value={current}
+                                                        onChange={e => updateHome({ [f.key]: e.target.value } as Partial<HomeConfig>)}
+                                                        onBlur={e => {
+                                                          const n = normalizeHex(e.target.value);
+                                                          if (n) updateHome({ [f.key]: n } as Partial<HomeConfig>);
+                                                        }}
+                                                        placeholder="#RRGGBB ou rgb(r,g,b)"
+                                                        className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
+                                                      />
+                                                      {wcagBadge(current, f.key as string)}
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                  
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
+                </div>
+              </TabsContent>
+
             </Tabs>
           </div>
 
