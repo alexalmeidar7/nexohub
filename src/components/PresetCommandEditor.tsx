@@ -360,9 +360,9 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               <span className="text-[10px] font-mono" style={{ color: "#334155", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.65 }}>
                 {programaId === "new" ? (customHorario || "00:00") : programaHorario}
               </span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#E8F1FF", color: "#0756C9" }}>{commands.length} ação(ões)</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#101013", color: "#E5E7EB", border: "1px solid #34343d" }}>{commands.length} ação(ões)</span>
               {estudio && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest" style={{ backgroundColor: "#EDF1F6", color: "#334155" }}>{estudio}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest" style={{ backgroundColor: "#101013", color: "#E5E7EB", border: "1px solid #34343d" }}>{estudio}</span>
               )}
             </div>
           </div>
@@ -650,13 +650,15 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               </button>
             )}
 
-            <Button variant="save"
+            <button
               onClick={saveCommands}
               disabled={saving}
+              className="flex items-center gap-1.5 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
+              style={{ backgroundColor: "#008000", color: "#FFFFFF", border: "1px solid #008000" }}
             >
               {saving ? <Loader2 className="animate-spin" size={12} /> : null}
               Salvar
-            </Button>
+            </button>
             <button
               onClick={onClose}
               className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
