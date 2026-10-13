@@ -3627,9 +3627,24 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                </div>
                              )}
 
-                             {/* Progress bar — premium animated */}
-                             <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: `${pvh(2.6)}px`, right: `${pvh(2.6)}px`, height: `${pvh(0.5)}px`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${pvh(0.3)}px` }}>
-                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `${pvh(0.3)}px`, background: config.home.colorProgressBar ? `linear-gradient(90deg, ${config.home.colorProgressBar}, rgba(255,255,255,0.5), ${config.home.colorProgressBar})` : "linear-gradient(90deg, var(--layout-accent-color, #444), rgba(255,255,255,0.5), var(--layout-accent-color, #444))", backgroundSize: "200% 100%", animation: "shimmerProgress 2s linear infinite", transition: "width 1s linear", boxShadow: config.home.colorProgressBar ? `0 0 6px ${config.home.colorProgressBar}, 0 0 14px rgba(255,255,255,0.15)` : "0 0 6px var(--layout-accent-color, #444), 0 0 14px rgba(255,255,255,0.15)" }} />
+                                                          {/* Identificação do programa no ar: foto recortada no canto inferior esquerdo */}
+                             {currentProgram && (() => {
+                               const fotos = currentProgram.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                               const foto = fotos[presenterIdx % (fotos.length || 1)];
+                               return (
+                                 <div style={{ position: "absolute", left: "${pvh(2.6)}px", bottom: "${pvh(0.5)}px", width: "${pvh(19)}px", height: "${pvh(17)}px", zIndex: 14, pointerEvents: "none" }}>
+                                   {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "linear-gradient(to top, #000 58%, transparent 100%)", maskImage: "linear-gradient(to top, #000 58%, transparent 100%)" }} />}
+                                   <div style={{ position: "absolute", left: 0, bottom: "${pvh(17.2)}px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "${pvh(0.25)}px", maxWidth: "${pvh(34)}px", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
+                                     <span style={{ fontSize: "${pvh(1)}px", fontWeight: 600, color: config.home.colorASeguirLabel || "var(--layout-accent-color, #fff)", letterSpacing: "0.04em" }}>no ar</span>
+                                     <span style={{ fontSize: "${pvh(1.65)}px", fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
+                                     <span style={{ fontSize: "${pvh(1)}px", fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
+                                   </div>
+                                 </div>
+                               );
+                             })()}
+                             {/* Barra premium: trilho translúcido e preenchimento luminoso */}
+                             <div style={{ position: "absolute", bottom: "${pvh(2)}px", left: "${pvh(2.6)}px", right: "${pvh(2.6)}px", height: "${pvh(0.8)}px", background: "rgba(255,255,255,0.22)", zIndex: 15, overflow: "hidden", borderRadius: "999px", boxShadow: "0 1px 8px rgba(0,0,0,0.28)", backdropFilter: "blur(6px)" }}>
+                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "999px", background: config.home.colorProgressBar || "var(--layout-accent-color, #fff)", boxShadow: "0 0 8px rgba(255,255,255,0.45)", transition: "width 1s linear", position: "relative" }}><div style={{ position: "absolute", right: 0, top: "50%", width: "${pvh(1.3)}px", height: "${pvh(1.3)}px", borderRadius: "50%", background: "#fff", boxShadow: "0 0 0 2px rgba(255,255,255,0.22), 0 0 10px rgba(255,255,255,0.8)", transform: "translate(25%, -50%)" }} /></div>
                              </div>
                              <style>{`
                                @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
