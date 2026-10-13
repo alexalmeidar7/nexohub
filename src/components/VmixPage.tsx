@@ -3083,7 +3083,7 @@ function SwitcherUI({
 }: any) {
 
   const [presetSortMode, setPresetSortMode] = useState<"horario" | "dias" | "alfabetica">("horario");
-  const [allPresetsOpen, setAllPresetsOpen] = useState(false);
+  const [isAllPresetsDialogOpen, setIsAllPresetsDialogOpen] = useState(false);
 
   // Tamanho do texto dos botões personalizados (persistido)
   // Estado da música pertence ao SwitcherUI, que renderiza o quadro NO AR.
@@ -4256,7 +4256,7 @@ function SwitcherUI({
                     </div>
                     <button
                       type="button"
-                      onClick={() => setAllPresetsOpen(true)}
+                      onClick={() => setIsAllPresetsDialogOpen(true)}
                       className="flex items-center gap-2 rounded-md border border-white/15 bg-[#26262D] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white transition-colors hover:border-[#0756C9] hover:bg-[#0756C9]"
                       title="Editar todos os presets, de todos os dias e estúdios"
                     >
@@ -4821,7 +4821,7 @@ function SwitcherUI({
           />
         );
       })()}
-      <Dialog open={allPresetsOpen} onOpenChange={setAllPresetsOpen}>
+      <Dialog open={isAllPresetsDialogOpen} onOpenChange={setIsAllPresetsDialogOpen}>
         <DialogContent className="max-h-[85vh] overflow-hidden rounded-xl border border-[#34343C] bg-[#1B1B20] p-0 text-white sm:max-w-4xl">
           <DialogHeader className="border-b border-[#303039] bg-[#222228] px-5 py-4 text-left">
             <DialogTitle className="text-base font-black uppercase tracking-wide text-white">Editar todos os presets</DialogTitle>
@@ -4846,7 +4846,7 @@ function SwitcherUI({
                   type="button"
                   aria-label={`Editar ações de ${prog.nome}`}
                   title={`Editar ações de ${prog.nome}`}
-                  onClick={() => { setAllPresetsOpen(false); setEditingPresetId(prog.id); }}
+                  onClick={() => { setIsAllPresetsDialogOpen(false); setEditingPresetId(prog.id); }}
                   className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-[#0756C9] text-white opacity-100 transition-colors hover:bg-[#0967ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <Pencil size={13} />
@@ -4856,7 +4856,7 @@ function SwitcherUI({
             {programas.length === 0 && <p className="col-span-full py-10 text-center text-sm text-[#C4C4CF]">Nenhum preset cadastrado.</p>}
           </div>
           <div className="flex justify-end border-t border-[#303039] bg-[#222228] px-5 py-3">
-            <button type="button" onClick={() => setAllPresetsOpen(false)} className="rounded-md bg-[#0756C9] px-4 py-2 text-[10px] font-black uppercase tracking-wide text-white hover:bg-[#0967ED]">Fechar</button>
+            <button type="button" onClick={() => setIsAllPresetsDialogOpen(false)} className="rounded-md bg-[#0756C9] px-4 py-2 text-[10px] font-black uppercase tracking-wide text-white hover:bg-[#0967ED]">Fechar</button>
           </div>
         </DialogContent>
       </Dialog>
