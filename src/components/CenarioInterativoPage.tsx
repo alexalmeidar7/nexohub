@@ -3448,17 +3448,26 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                             })()}
                             
 
-                             {/* ── TOP-LEFT: Clock + date ── */}
-                             <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20 }}>
-                               <div className="font-black" style={{ fontSize: `${pvh(4.2)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: config.home.colorClock || "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em", width: 'max-content' }}>
+                             {/* ── TOP-CENTER: Clock, date and current weather ── */}
+                             <div style={{ position: "absolute", top: pvh(3.2), left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.45)", width: pvh(38), pointerEvents: "none" }}>
+                               <div style={{ fontSize: pvh(2.7), fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: config.home.colorClock || "#fff", whiteSpace: "nowrap" }}>
                                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                </div>
-                               <div className="font-semibold text-left" style={{ fontSize: `${pvh(1.15)}px`, color: config.home.colorDate || "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
-                                 {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                               <div style={{ fontSize: pvh(1.05), fontWeight: 400, lineHeight: 1.25, color: config.home.colorDate || "#fff", marginTop: pvh(0.45), whiteSpace: "nowrap" }}>
+                                 {currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, (c) => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, (c) => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}
                                </div>
+                               {liveWeather && (
+                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: pvh(0.8), gap: pvh(0.25) }}>
+                                   <div style={{ width: pvh(4.4), height: pvh(4.4), display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                     <WeatherIcon code={liveWeather.current.code} size={pvh(4.4)} forceDay />
+                                   </div>
+                                   <div style={{ fontSize: pvh(2.3), fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
+                                   <div style={{ fontSize: pvh(0.85), fontWeight: 400, lineHeight: 1.25, opacity: 0.9, whiteSpace: "nowrap" }}>
+                                     Chuva {liveWeather.daily?.[0]?.precip ?? 0}% · Umidade {liveWeather.current.humidity}%
+                                   </div>
+                                 </div>
+                               )}
                              </div>
-
-
                              {/* ── BOTTOM-RIGHT: "A seguir" ── */}
                              {nextProgram && (
                                <div style={{ position: "absolute", bottom: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
