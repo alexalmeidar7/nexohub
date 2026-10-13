@@ -1627,7 +1627,7 @@ export default function CenarioTelaFull() {
                   {nextProgram && (
                      <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
                        <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: config.home.colorASeguirLabel || accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
-                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(2.2)}${vu}`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome}</div>
+                       <div style={{ fontWeight: 700, fontSize: `${vhToPx(1.65)}${vu}`, lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.4)", maxWidth: `${vhToPx(22)}${vu}`, color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome.length > 12 ? `${nextProgram.nome.slice(0, 12)}...` : nextProgram.nome}</div>
                        <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
                    )}
