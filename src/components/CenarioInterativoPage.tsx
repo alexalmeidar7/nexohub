@@ -1000,13 +1000,14 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
   /* ─── Fetch artist background from Deezer ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
+  const isNoPlayback = [musicData?.titulo, musicData?.artista].some(value => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("sem reproducao"));
   const isBreakTrack = (() => {
     const titulo = (musicData?.titulo || "").toLowerCase();
     const artista = (musicData?.artista || "").toLowerCase();
     return exceptionWordsList.some(w => titulo === w || artista === w || titulo.includes(w) || artista.includes(w));
   })();
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
+    if (isBreakTrack || isNoPlayback) { setArtistBgUrl(null); setPrevArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
     if (!artist || artist === "Desconhecido") { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
@@ -1027,7 +1028,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
       } catch { if (!cancelled) setArtistBgUrl(null); }
     })();
     return () => { cancelled = true; };
-  }, [musicData?.artista, isBreakTrack]);
+  }, [musicData?.artista, isBreakTrack, isNoPlayback]);
 
   /* ─── Clock tick ─── */
   useEffect(() => {
@@ -3399,8 +3400,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                               let thumbVisible: boolean;
                               let artistVisible: boolean;
                               if (altMode) {
-                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist && !!config.home.showArtistImage; }
-                                else { artistVisible = hasArtist && !!config.home.showArtistImage; thumbVisible = !artistVisible && hasThumb; }
+                                if (altBgPhase === "thumb") { thumbVisible = hasThumb; artistVisible = !hasThumb && hasArtist && !!config.home.showArtistImage && !isNoPlayback; }
+                                else { artistVisible = hasArtist && !!config.home.showArtistImage && !isNoPlayback; thumbVisible = !artistVisible && hasThumb; }
                               } else {
                                 thumbVisible = bgType === "thumb" && hasThumb;
                                 artistVisible = hasArtist && !!config.home.showArtistImage;
