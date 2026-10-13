@@ -20,7 +20,6 @@ export default function CenarioOnAirBadge({ effectiveUserId }: { effectiveUserId
   const { user } = useAuth();
   const [currentProgram, setCurrentProgram] = useState<CurrentProgramInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showPresenter, setShowPresenter] = useState(false);
 
   const fetchOnAir = useCallback(async () => {
     try {
@@ -162,15 +161,6 @@ export default function CenarioOnAirBadge({ effectiveUserId }: { effectiveUserId
     return () => clearInterval(interval);
   }, [fetchOnAir]);
 
-  // Alterna o texto entre programa e apresentador a cada 4 segundos.
-  useEffect(() => {
-    setShowPresenter(false);
-    const interval = setInterval(() => {
-      setShowPresenter(current => !current);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [currentProgram?.id, currentProgram?.nome, currentProgram?.apresentador]);
-
   if (loading) {
     return null;
   }
@@ -182,4 +172,5 @@ export default function CenarioOnAirBadge({ effectiveUserId }: { effectiveUserId
       <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
       <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
     </span>
+  );
 }
