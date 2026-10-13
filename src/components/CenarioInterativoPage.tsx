@@ -3488,9 +3488,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                return (
                                  <div style={{
                                    position: "absolute",
-                                   top: `calc(${pvh(4)}px - 2px)`,
+                                   top: "50%",
                                    left: "50%",
-                                   transform: "translateX(-50%)",
+                                   transform: "translate(-50%, -50%)",
                                    display: "flex",
                                    flexDirection: "column",
                                    alignItems: "center",
@@ -3520,8 +3520,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                        gap: `${pvh(0.6)}px`,
                                        zIndex: 2,
                                        flexShrink: 0,
-                                       opacity: showProgram && currentPhase === "program" ? 1 : 0,
-                                       visibility: showProgram && currentPhase === "program" ? "visible" : "hidden",
+                                       display: "none",
+                                       opacity: 0,
+                                       visibility: "hidden",
                                        transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
                                        transform: `scale(${currentPhase === "program" ? 1 : 0.9}) rotate(${currentPhase === "program" ? 0 : -5}deg)`,
                                        position: "absolute",
