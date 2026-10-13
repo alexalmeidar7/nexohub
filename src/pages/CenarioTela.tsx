@@ -1619,21 +1619,21 @@ export default function CenarioTela() {
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
                                       {/* Relógio e data no canto superior esquerdo */}
-                   <div style={{ position: "absolute", top: "${vhToPx(3.2)}${vu}", left: "${vhToPx(3.2)}${vu}", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.45)", pointerEvents: "none" }}>
-                     <div style={{ fontSize: "${vhToPx(2.7)}${vu}", fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
-                     <div style={{ fontSize: "${vhToPx(1.05)}${vu}", fontWeight: 400, lineHeight: 1.25, marginTop: "${vhToPx(0.45)}${vu}", color: "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, c => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, c => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}</div>
+                   <div style={{ position: "absolute", top: `${vhToPx(3.2)}${vu}`, left: `${vhToPx(3.2)}${vu}`, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.45)", pointerEvents: "none" }}>
+                     <div style={{ fontSize: `${vhToPx(2.7)}${vu}`, fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
+                     <div style={{ fontSize: `${vhToPx(1.05)}${vu}`, fontWeight: 400, lineHeight: 1.25, marginTop: `${vhToPx(0.45)}${vu}`, color: "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, c => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, c => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}</div>
                    </div>
                    {/* Condição atual no canto superior direito; indicadores alternam a cada 4 segundos */}
                    {liveWeather && (
-                     <div style={{ position: "absolute", top: "${vhToPx(2.5)}${vu}", right: "${vhToPx(3.2)}${vu}", zIndex: 20, width: "${vhToPx(20)}${vu}", display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
-                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.7)}${vu}" }}>
-                         <div style={{ fontSize: "${vhToPx(2.3)}${vu}", fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
+                     <div style={{ position: "absolute", top: `${vhToPx(2.5)}${vu}`, right: `${vhToPx(3.2)}${vu}`, zIndex: 20, width: `${vhToPx(20)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
+                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.7)}${vu}` }}>
+                         <div style={{ fontSize: `${vhToPx(2.3)}${vu}`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
                          <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} forceDay />
                        </div>
-                       <div style={{ position: "relative", width: "100%", height: "${vhToPx(2.2)}${vu}", marginTop: "${vhToPx(0.35)}${vu}", fontSize: "${vhToPx(1.05)}${vu}", fontWeight: 500, lineHeight: 1.2 }}>
-                         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.6)}${vu}", animation: "cenarioWeatherInfo 12s infinite" }}><CloudRain size={vhToPx(1.35)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
-                         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.6)}${vu}", animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-8s" }}><Droplets size={vhToPx(1.35)} /> <span>{liveWeather.current.humidity}%</span></div>
-                         {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.6)}${vu}", animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-4s" }}><CloudRain size={vhToPx(1.35)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
+                       <div style={{ position: "relative", width: "100%", height: `${vhToPx(2.2)}${vu}`, marginTop: `${vhToPx(0.35)}${vu}`, fontSize: `${vhToPx(1.05)}${vu}`, fontWeight: 500, lineHeight: 1.2 }}>
+                         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}`, animation: "cenarioWeatherInfo 12s infinite" }}><CloudRain size={vhToPx(1.35)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
+                         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}`, animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-8s" }}><Droplets size={vhToPx(1.35)} /> <span>{liveWeather.current.humidity}%</span></div>
+                         {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}`, animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-4s" }}><CloudRain size={vhToPx(1.35)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
                        </div>
                      </div>
                    )}
@@ -1852,12 +1852,12 @@ export default function CenarioTela() {
                       const fotos = currentProgram.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
                       const foto = fotos[presenterIdx % (fotos.length || 1)];
                       return (
-                        <div style={{ position: "absolute", left: "${vhToPx(2.6)}${vu}", bottom: 0, width: "${vhToPx(26.6)}${vu}", height: "${vhToPx(23.8)}${vu}", zIndex: 14, pointerEvents: "none" }}>
+                        <div style={{ position: "absolute", left: `${vhToPx(2.6)}${vu}`, bottom: 0, width: `${vhToPx(26.6)}${vu}`, height: `${vhToPx(23.8)}${vu}`, zIndex: 14, pointerEvents: "none" }}>
                           {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "linear-gradient(to top, #000 58%, transparent 100%)", maskImage: "linear-gradient(to top, #000 58%, transparent 100%)" }} />}
-                          <div style={{ position: "absolute", left: 0, bottom: "${vhToPx(15.2)}${vu}", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "${vhToPx(0.25)}${vu}", maxWidth: "${vhToPx(34)}${vu}", textShadow: "0 2px 8px rgba(0,0,0,0.8)", zIndex: 16 }}>
-                            <span style={{ fontSize: "${vhToPx(1)}${vu}", fontWeight: 600, color: accentColor, letterSpacing: "0.04em" }}>no ar</span>
-                            <span style={{ fontSize: "${vhToPx(1.65)}${vu}", fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
-                            <span style={{ fontSize: "${vhToPx(1)}${vu}", fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
+                          <div style={{ position: "absolute", left: 0, bottom: `${vhToPx(15.2)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: `${vhToPx(0.25)}${vu}`, maxWidth: `${vhToPx(34)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.8)", zIndex: 16 }}>
+                            <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 600, color: accentColor, letterSpacing: "0.04em" }}>no ar</span>
+                            <span style={{ fontSize: `${vhToPx(1.65)}${vu}`, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
+                            <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
                           </div>
                         </div>
                       );
