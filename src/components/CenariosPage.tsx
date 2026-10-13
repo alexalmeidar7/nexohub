@@ -3,7 +3,6 @@ import { MonitorPlay, Tv } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { lazyRetry } from "@/lib/lazyRetry";
 
-import CenarioOnAirBadge from "./CenarioOnAirBadge";
 
 const CenarioInterativoPage = lazyRetry(() => import("./CenarioInterativoPage"));
 const CenariosEstudioPage = lazyRetry(() => import("./CenariosEstudioTabs"));
@@ -57,8 +56,6 @@ export default function CenariosPage({ effectiveUserId }: { effectiveUserId?: st
           })}
         </div>
 
-        {/* Informação do programa no ar — ao lado do botão Cenários Estúdio */}
-        <CenarioOnAirBadge effectiveUserId={effectiveUserId} />
         <div id="cenario-preview-toolbar" className="flex items-center gap-2 ml-auto flex-wrap" />
       </div>
 
