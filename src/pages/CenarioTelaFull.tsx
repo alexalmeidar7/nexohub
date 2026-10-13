@@ -1482,8 +1482,8 @@ export default function CenarioTelaFull() {
             const btnIconOff = config.home.colorButtonOff || "rgba(255,255,255,0.7)";
             const btnIconOn = config.home.colorButtonOn || "#FFFFFF";
             return (
-              <div className="flex-shrink-0 flex items-center relative" style={{ width: "5%", zIndex: 10, pointerEvents: "none" }}>
-                <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: `${sidebarPad} 0`, marginLeft: "-1px" }}>
+              <div className="absolute flex items-center relative" style={{ left: 0, top: "28%", width: "5%", zIndex: 10, pointerEvents: "none" }}>
+                <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: 0, marginLeft: 0 }}>
                   <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? btnBgOn : btnBgOff, border: "none", color: activeTab === "home" ? btnIconOn : btnIconOff, textShadow: "0 1px 3px rgba(0,0,0,0.5)", transition: "background 0.3s ease, color 0.3s ease" }}>
                     <Home style={{ width: iconSize, height: iconSize }} />
                   </button>
