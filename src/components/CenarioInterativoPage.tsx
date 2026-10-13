@@ -3468,7 +3468,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                   <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: config.home.colorASeguirLabel || "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>
                                     <span style={{ color: config.home.colorASeguirLabel || "var(--layout-accent-color)" }}>a seguir</span>
                                   </div>
-                                  <div className="font-bold" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome}</div>
+                                  <div className="font-bold" style={{ fontSize: `${pvh(1.65)}px`, lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.4)", color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome.length > 12 ? `${nextProgram.nome.slice(0, 12)}...` : nextProgram.nome}</div>
                                   <div className="font-medium" style={{ fontSize: `${pvh(0.9)}px`, color: config.home.colorNextProgram || "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                                </div>
                              )}
