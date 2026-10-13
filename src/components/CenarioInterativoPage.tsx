@@ -3472,7 +3472,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
                              {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA (Top Right) ── */}
                              {(() => {
-                               const showProgram = config.home.showProgramThumb !== false;
+                               const showProgram = false; // A capa do programa no ar foi removida; exibir somente a capa da música.
                                const showMusic = !!musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false;
                                const currentPhase = (showProgram && showMusic) ? (Math.floor(currentTime.getTime() / 8000) % 2 === 0 ? "program" : "music") : (showProgram ? "program" : "music");
                                
