@@ -1853,7 +1853,7 @@ export default function CenarioTela() {
                       const foto = fotos[presenterIdx % (fotos.length || 1)];
                       return (
                         <div style={{ position: "absolute", left: `${vhToPx(2.6)}${vu}`, bottom: 0, width: `${vhToPx(26.6)}${vu}`, height: `${vhToPx(23.8)}${vu}`, zIndex: 14, pointerEvents: "none" }}>
-                          {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "linear-gradient(to top, #000 58%, transparent 100%)", maskImage: "linear-gradient(to top, #000 58%, transparent 100%)" }} />}
+                          {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "none", maskImage: "none" }} />}
                           <div style={{ position: "absolute", left: 0, bottom: `${vhToPx(3.5)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: `${vhToPx(0.25)}${vu}`, maxWidth: `${vhToPx(34)}${vu}`, textAlign: "left", textShadow: "0 2px 8px rgba(0,0,0,0.8)", zIndex: 16 }}>
                           <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 600, color: accentColor, letterSpacing: "0.04em" }}>no ar</span>
                           <span style={{ fontSize: `${vhToPx(1.65)}${vu}`, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
