@@ -1602,27 +1602,27 @@ export default function CenarioTelaFull() {
                 <div className="absolute" style={{ top: 0, left: 0, right: 0, bottom: 0, background: "transparent", color: "#fff", overflow: "hidden" }}>
                   {/* Background already rendered as a full-canvas layer behind sidebar */}
 
-                   {/* ── Relógio, data e clima atual centralizados no topo ── */}
-                   <div style={{ position: "absolute", top: vhToPx(3.2), left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: "#fff", zIndex: 20, textShadow: "0 2px 10px rgba(0,0,0,0.45)", width: vhToPx(38), pointerEvents: "none" }}>
-                     <div style={{ fontSize: vhToPx(2.7), fontWeight: 400, lineHeight: 1.05, letterSpacing: "0.01em", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
-                       {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                     </div>
-                     <div style={{ fontSize: vhToPx(1.05), fontWeight: 400, lineHeight: 1.25, marginTop: vhToPx(0.45), whiteSpace: "nowrap" }}>
-                       {currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, (c) => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, (c) => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}
-                     </div>
-                     {liveWeather && (
-                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: vhToPx(0.8), gap: vhToPx(0.25) }}>
-                         <div style={{ width: vhToPx(4.4), height: vhToPx(4.4), display: "flex", alignItems: "center", justifyContent: "center" }}>
-                           <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} forceDay />
-                         </div>
-                         <div style={{ fontSize: vhToPx(2.3), fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
-                         <div style={{ fontSize: vhToPx(0.85), fontWeight: 400, lineHeight: 1.25, opacity: 0.9, whiteSpace: "nowrap" }}>
-                           Chuva {liveWeather.daily?.[0]?.precip ?? 0}% · Umidade {liveWeather.current.humidity}%
-                         </div>
-                       </div>
-                     )}
+                                      {/* Relógio e data no canto superior esquerdo */}
+                   <div style={{ position: "absolute", top: "${vhToPx(3.2)}${vu}", left: "${vhToPx(3.2)}${vu}", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.45)", pointerEvents: "none" }}>
+                     <div style={{ fontSize: "${vhToPx(2.7)}${vu}", fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
+                     <div style={{ fontSize: "${vhToPx(1.05)}${vu}", fontWeight: 400, lineHeight: 1.25, marginTop: "${vhToPx(0.45)}${vu}", color: "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, c => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, c => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}</div>
                    </div>
-                  {/* BOTTOM-RIGHT: "A seguir" */}
+                   {/* Condição atual no canto superior direito; indicadores alternam a cada 4 segundos */}
+                   {liveWeather && (
+                     <div style={{ position: "absolute", top: "${vhToPx(2.5)}${vu}", right: "${vhToPx(3.2)}${vu}", zIndex: 20, width: "${vhToPx(20)}${vu}", display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
+                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.7)}${vu}" }}>
+                         <div style={{ fontSize: "${vhToPx(2.3)}${vu}", fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
+                         <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} forceDay />
+                       </div>
+                       <div style={{ position: "relative", width: "100%", height: "${vhToPx(2.2)}${vu}", marginTop: "${vhToPx(0.35)}${vu}", fontSize: "${vhToPx(1.05)}${vu}", fontWeight: 500, lineHeight: 1.2 }}>
+                         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.6)}${vu}", animation: "cenarioWeatherInfo 12s infinite" }}><CloudRain size={vhToPx(1.35)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
+                         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.6)}${vu}", animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-8s" }}><Droplets size={vhToPx(1.35)} /> <span>{liveWeather.current.humidity}%</span></div>
+                         {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "${vhToPx(0.6)}${vu}", animation: "cenarioWeatherInfo 12s infinite", animationDelay: "-4s" }}><CloudRain size={vhToPx(1.35)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
+                       </div>
+                     </div>
+                   )}
+                   <style>{`@keyframes cenarioWeatherInfo { 0%, 30% { opacity: 1; transform: translateY(0); } 33%, 96% { opacity: 0; transform: translateY(-20%); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
+{/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
                      <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, right: `${vhToPx(4)}${vu}`, zIndex: 20, textAlign: "right" }}>
                        <div style={{ fontWeight: 600, fontSize: `${vhToPx(1.1)}${vu}`, color: accentColor, marginBottom: `${vhToPx(0.5)}${vu}` }}>a seguir</div>
