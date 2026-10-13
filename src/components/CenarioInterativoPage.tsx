@@ -3597,17 +3597,17 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                    {musicData && showMusic && (
                                      <div style={{
                                        marginTop: `${pvh(1)}px`,
-                                       textAlign: "right",
+                                       textAlign: "center",
                                        width: "100%",
                                        opacity: currentPhase === "music" ? 1 : 0,
                                        transform: `translateY(${currentPhase === "music" ? 0 : pvh(1)}px)`,
                                        transition: "opacity 0.8s ease, transform 0.8s ease",
                                        visibility: currentPhase === "music" ? "visible" : "hidden"
                                       }}>
-                                       <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, color: config.home.colorMusicName || "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                                       <div className="font-extrabold" style={{ fontSize: `${pvh(1.7)}px`, color: config.home.colorMusicName || "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                                          {musicData.titulo}
                                        </div>
-                                       <div className="font-bold" style={{ fontSize: `${pvh(1)}px`, color: config.home.colorMusicTitle || "var(--layout-accent-color, #4ade80)", marginTop: `${pvh(0.2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                                       <div className="font-normal" style={{ fontSize: `${pvh(1)}px`, color: config.home.colorMusicTitle || "var(--layout-accent-color, #4ade80)", marginTop: `${pvh(0.2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                                          {musicData.artista}
                                        </div>
                                      </div>
