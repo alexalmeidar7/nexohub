@@ -1898,12 +1898,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
           {/* ── LEFT: Configuration ── */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-end min-h-5 mb-2">
-              <div className="flex items-center gap-2 ml-auto">
-                {saving && <span className="text-[10px] animate-pulse" style={{ color: mutedText }}>Salvando...</span>}
-                {!saving && savedFlash && <span className="text-[10px]" style={{ color: mutedText }}>✓ Salvo</span>}
-              </div>
-            </div>
+            <div className="h-0" aria-hidden="true" />
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="w-full grid grid-cols-7 gap-1 p-1 mb-4 rounded-xl" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
@@ -3202,7 +3197,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
               </div>
             )}
 
-            <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[560px] -mt-3 pt-0 min-h-0 overflow-hidden bg-transparent rounded-none relative">
+            <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[500px] -mt-5 pt-0 min-h-0 overflow-hidden bg-transparent rounded-none relative">
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
