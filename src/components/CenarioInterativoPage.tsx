@@ -3301,8 +3301,8 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                       const btnBg = (active: boolean) => active ? (config.home.colorButtonBgOn || "rgba(0,191,240,0.85)") : (config.home.colorButtonBgOff || "rgba(0,0,0,0.8)");
                       const btnIcon = (active: boolean) => active ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)");
                       return (
-                        <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
-                          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: `${sPad} 0`, marginLeft: "-1px" }}>
+                        <div className="absolute flex items-center relative" style={{ left: 0, top: "28%", width: "8%", zIndex: 10, pointerEvents: "none" }}>
+                          <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: 0, marginLeft: 0 }}>
                             <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "home"), border: "none", color: btnIcon(activeTab === "home"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Home style={{ width: iS, height: iS }} />
                             </button>
