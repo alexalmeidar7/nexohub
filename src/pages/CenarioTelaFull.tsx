@@ -91,6 +91,7 @@ async function fetchLiveStocks(): Promise<LiveStock[]> {
     const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, { headers: { "Content-Type": "application/json" } });
     if (!res.ok) throw new Error("fetch-stocks failed");
     const data = await res.json();
+  <style>{"@keyframes artistBackgroundPan { 0% { transform: scale(1.08) translateX(-1.8%); } 100% { transform: scale(1.08) translateX(1.8%); } }"}</style>
     return (data.stocks || []) as LiveStock[];
   } catch { return []; }
 }
