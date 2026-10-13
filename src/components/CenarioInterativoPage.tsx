@@ -3423,7 +3423,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                     <img src={prevArtistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} />
                                   )}
                                   {artistBgUrl && (
-                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
+                                    <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2)", transformOrigin: "center center", animation: artistVisible ? "artistBackgroundPan 28s ease-in-out infinite alternate" : "none", transition: "opacity 1.2s ease-in-out" }} onLoad={() => setArtistBgReady(true)} />
                                   )}
                                   {config.home.artistOverlayEnabled && (
                                     <div 
@@ -3473,6 +3473,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                </div>
                              )}
 
+                             <style>{"@keyframes artistBackgroundPan { 0% { transform: scale(1.08) translateX(-1.8%); } 100% { transform: scale(1.08) translateX(1.8%); } }"}</style>
                              {/* ── WRAPPER: BOX DO LOCUTOR + BOX CAPA (Top Right) ── */}
                              {(() => {
                                const showProgram = false; // A capa do programa no ar foi removida; exibir somente a capa da música.
