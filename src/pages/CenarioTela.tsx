@@ -1847,9 +1847,24 @@ export default function CenarioTela() {
                       </div>
                     )}
 
-                    {/* Progress bar — premium animated */}
-                    <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: `${vhToPx(2.6)}${vu}`, right: `${vhToPx(2.6)}${vu}`, height: `${vhToPx(0.5)}${vu}`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${vhToPx(0.3)}${vu}` }}>
-                      <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `${vhToPx(0.3)}${vu}`, background: `linear-gradient(90deg, ${accentColor}, rgba(255,255,255,0.5), ${accentColor})`, backgroundSize: "200% 100%", animation: "shimmerProgress 2s linear infinite", transition: "width 1s linear", boxShadow: `0 0 6px ${accentColor}, 0 0 14px rgba(255,255,255,0.15)` }} />
+                                        {/* Identificação do programa no ar: foto recortada no canto inferior esquerdo */}
+                    {currentProgram && (() => {
+                      const fotos = currentProgram.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+                      const foto = fotos[presenterIdx % (fotos.length || 1)];
+                      return (
+                        <div style={{ position: "absolute", left: "${vhToPx(2.6)}${vu}", bottom: "${vhToPx(0.5)}${vu}", width: "${vhToPx(19)}${vu}", height: "${vhToPx(17)}${vu}", zIndex: 14, pointerEvents: "none" }}>
+                          {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "linear-gradient(to top, #000 58%, transparent 100%)", maskImage: "linear-gradient(to top, #000 58%, transparent 100%)" }} />}
+                          <div style={{ position: "absolute", left: 0, bottom: "${vhToPx(17.2)}${vu}", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "${vhToPx(0.25)}${vu}", maxWidth: "${vhToPx(34)}${vu}", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>
+                            <span style={{ fontSize: "${vhToPx(1)}${vu}", fontWeight: 600, color: accentColor, letterSpacing: "0.04em" }}>no ar</span>
+                            <span style={{ fontSize: "${vhToPx(1.65)}${vu}", fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
+                            <span style={{ fontSize: "${vhToPx(1)}${vu}", fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {/* Barra premium: trilho translúcido e preenchimento luminoso */}
+                    <div style={{ position: "absolute", bottom: "${vhToPx(2)}${vu}", left: "${vhToPx(2.6)}${vu}", right: "${vhToPx(2.6)}${vu}", height: "${vhToPx(0.8)}${vu}", background: "rgba(255,255,255,0.22)", zIndex: 15, overflow: "hidden", borderRadius: "999px", boxShadow: "0 1px 8px rgba(0,0,0,0.28)", backdropFilter: "blur(6px)" }}>
+                      <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: "999px", background: accentColor, boxShadow: "0 0 8px rgba(255,255,255,0.45)", transition: "width 1s linear", position: "relative" }}><div style={{ position: "absolute", right: 0, top: "50%", width: "${vhToPx(1.3)}${vu}", height: "${vhToPx(1.3)}${vu}", borderRadius: "50%", background: "#fff", boxShadow: "0 0 0 2px rgba(255,255,255,0.22), 0 0 10px rgba(255,255,255,0.8)", transform: "translate(25%, -50%)" }} /></div>
                     </div>
 
                    <style>{`
