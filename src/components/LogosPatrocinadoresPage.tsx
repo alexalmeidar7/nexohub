@@ -269,9 +269,17 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       let dbLogosOk = false;
       if (dbTargetId) {
         try {
+          // Never let an unresponsive database request keep the sponsor-logos window
+          // waiting indefinitely. Abort these first-pass queries and continue through
+          // the existing XML/local-cache fallback paths when the connection stalls.
+          const queryTimeout = typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+            ? AbortSignal.timeout(5000)
+            : undefined;
           const [resL, resP] = await Promise.all([
-            supabase.from("logos_patrocinadores").select("*").eq("user_id", dbTargetId).order("created_at", { ascending: false }),
-            supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", dbTargetId).eq("ativo", true),
+            supabase.from("logos_patrocinadores").select("*").eq("user_id", dbTargetId).order("created_at", { ascending: false })
+              .abortSignal(queryTimeout as AbortSignal),
+            supabase.from("programas").select("id, nome, estudio, horario_inicio").eq("user_id", dbTargetId).eq("ativo", true)
+              .abortSignal(queryTimeout as AbortSignal),
           ]);
           if (!resL.error && Array.isArray(resL.data)) dbLogosOk = true;
           if (resL.data && resL.data.length > 0) lData = resL.data;
