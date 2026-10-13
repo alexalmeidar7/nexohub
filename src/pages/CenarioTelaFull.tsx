@@ -1779,10 +1779,10 @@ export default function CenarioTelaFull() {
                               transition: "opacity 0.4s ease, transform 0.4s ease",
                               visibility: currentPhase === "music" ? "visible" : "hidden"
                             }}>
-                              <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.7)}${vu}`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                              <div style={{ fontWeight: 800, fontSize: `${vhToPx(1.7)}${vu}`, color: config.home.colorMusicName || "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                                 {musicData.titulo}
                               </div>
-                              <div style={{ fontWeight: 400, fontSize: `${vhToPx(1)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.2)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                              <div style={{ fontWeight: 400, fontSize: `${vhToPx(1)}${vu}`, color: config.home.colorMusicTitle || accentColor, marginTop: `${vhToPx(0.2)}${vu}`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                                 {musicData.artista}
                               </div>
                             </div>
@@ -1840,7 +1840,7 @@ export default function CenarioTelaFull() {
                         <div style={{ position: "absolute", left: `${vhToPx(2.6)}${vu}`, bottom: 0, width: `${vhToPx(26.6)}${vu}`, height: `${vhToPx(23.8)}${vu}`, zIndex: 14, pointerEvents: "none" }}>
                           {foto && <img src={foto} alt="" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom left", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.35))", WebkitMaskImage: "none", maskImage: "none" }} />}
                           <div style={{ position: "absolute", left: 0, bottom: `${vhToPx(3.5)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: `${vhToPx(0.25)}${vu}`, maxWidth: `${vhToPx(34)}${vu}`, textAlign: "left", textShadow: "0 2px 8px rgba(0,0,0,0.8)", zIndex: 16 }}>
-                          <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 600, color: accentColor, letterSpacing: "0.04em" }}>no ar</span>
+                          <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 600, color: config.home.colorASeguirLabel || accentColor, letterSpacing: "0.04em" }}>no ar</span>
                           <span style={{ fontSize: `${vhToPx(1.65)}${vu}`, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>{currentProgram.nome}</span>
                           <span style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 500, color: "#fff", opacity: 0.9, lineHeight: 1.1 }}>{currentProgram.apresentador || ""}</span>
                           </div>
@@ -1849,7 +1849,7 @@ export default function CenarioTelaFull() {
                     })()}
                     {/* Barra premium: trilho translúcido e preenchimento luminoso */}
                     <div style={{ position: "absolute", bottom: `${vhToPx(2)}${vu}`, left: `${vhToPx(2.6)}${vu}`, right: `${vhToPx(2.6)}${vu}`, height: `${vhToPx(0.32)}${vu}`, background: "rgba(255,255,255,0.42)", zIndex: 15, overflow: "hidden", borderRadius: "999px" }}>
-                      <div style={{ width: `${progressPct}%`, height: "100%", background: accentColor, transition: "width 1s linear" }} />
+                      <div style={{ width: `${progressPct}%`, height: "100%", background: config.home.colorProgressBar || accentColor, transition: "width 1s linear" }} />
                     </div>
 
                    <style>{`
