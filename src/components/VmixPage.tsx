@@ -4435,7 +4435,7 @@ function SwitcherUI({
                       const todayStr = daysMap[day];
                       const currentTimeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-                      const normalizeDay = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
+                      const normalizeDay = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
                       const isProgramForToday = (p: Programa) => {
                         if (!p.dias_semana || p.dias_semana.length === 0) return true;
                         return p.dias_semana.some(ds => normalizeDay(ds) === todayStr);
