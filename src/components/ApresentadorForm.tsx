@@ -243,7 +243,9 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   const [searchNome, setSearchNome] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [loadingList, setLoadingList] = useState(true);
+  const [loadingList, setLoadingList] = useState(false);
+  const [listVisible, setListVisible] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(25);
   const [catOpen, setCatOpen] = useState(false);
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
@@ -274,12 +276,30 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       const list = await getApresentadores(targetUserId || user?.id, user?.email);
       list.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
       setApresentadores(list);
+      setVisibleCount(Math.min(25, list.length));
     } finally {
       setLoadingList(false);
     }
   };
 
-  useEffect(() => { load(); }, [targetUserId, user?.email]);
+  // Prioriza a primeira pintura do formulário; a lista começa a carregar depois.
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      setListVisible(true);
+      void load();
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [targetUserId, user?.email]);
+
+  // Reinicia a janela de renderização ao pesquisar ou filtrar.
+  useEffect(() => {
+    setVisibleCount(25);
+  }, [filterCategoria, searchNome]);
 
   const showFoto = categoria === "Apresentador" || categoria === "Jornalista";
 
@@ -627,10 +647,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   // Field foi movido para fora do componente (ver FieldRow abaixo) para evitar
   // remontagem a cada render, o que fazia o foco sair dos inputs/combos.
 
-  if (loadingList && apresentadores.length === 0) {
-    return <ModulePageSkeleton variant="form" />;
-  }
-
   return (
     <div className="animate-fade-in space-y-8 max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
@@ -887,7 +903,8 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         </div>
       </section>
 
-      {/* LIST CARD */}
+      {/* LIST CARD: aparece depois que o formulário já foi renderizado */}
+      {listVisible && (
       <section
         style={{
           background: "#FFFFFF",
@@ -946,6 +963,12 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         ) : (
           <div
             className="nexo-table-scroll relative"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+                setVisibleCount(current => Math.min(current + 25, filtered.length));
+              }
+            }}
             style={{
               overflowX: "auto",
               overflowY: "auto",
@@ -981,7 +1004,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((a, idx) => {
+                {filtered.slice(0, visibleCount).map((a, idx) => {
                   const resolved = resolveParticipanteCategoria(a);
                   const cat = a.categoria || resolved.categoria;
                   const displayCargo = a.cargo && a.cargo !== cat ? a.cargo : (cat === "Convidado" ? "—" : a.cargo || "—");
@@ -1078,7 +1101,19 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
             </table>
           </div>
         )}
+        {!loadingList && filtered.length > visibleCount && (
+          <div className="flex justify-center pt-4">
+            <button
+              type="button"
+              onClick={() => setVisibleCount(current => Math.min(current + 25, filtered.length))}
+              className="h-10 px-5 rounded-full bg-slate-50 hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-[#0055ff] font-bold text-xs uppercase tracking-wider transition-colors"
+            >
+              Carregar mais ({filtered.length - visibleCount} restantes)
+            </button>
+          </div>
+        )}
       </section>
+      )}
 
       {/* Import Confirmation Popup */}
       {importRows && (
