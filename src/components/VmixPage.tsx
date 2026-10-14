@@ -1691,7 +1691,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       addLog(batchLabel, "error", `Servidor falhou: ${err?.message || "desconhecido"} → fallback local`, "server");
       let allSucceeded = true;
       for (const cmd of normalized) {
-        const succeeded = await sendCommand(cmd.fn, cmd.input, cmd.value);
+        const succeeded = await sendCommand(cmd.fn, cmd.input, cmd.value, silent);
         if (!succeeded) allSucceeded = false;
         await new Promise((r) => setTimeout(r, 400));
       }
@@ -1699,7 +1699,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       else addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
       return allSucceeded;
     }
-  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId]);
+  }, [normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId, silentRefresh]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
