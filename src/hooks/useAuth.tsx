@@ -354,6 +354,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           void supabase.auth.refreshSession().then(({ data, error }) => {
             if (!mounted) return;
             if (data?.session && !error) { void updateAuth(data.session); return; }
+            const refreshError = String(error?.message || "").toLowerCase();
+            const isTransientRefreshFailure = /network|fetch|timeout|timed out|temporar|offline|connection|failed to connect|load failed|abort/.test(refreshError);
+            if (error && isTransientRefreshFailure) {
+              // Falha de rede não deve expulsar o operador do switcher; mantém a última sessão conhecida.
+              console.warn("Auth: falha temporária de rede ao renovar sessão; mantendo sessão atual.", error.message);
+              return;
+            }
             console.warn("Auth: sessão inválida, exigindo novo login.");
             purgeStoredAuth();
             lastGoodSessionRef.current = null;
