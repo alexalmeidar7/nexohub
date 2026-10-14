@@ -4854,7 +4854,7 @@ function SwitcherUI({
                         return (
                           <div
                             key={btn.id}
-                            className={`group/custom relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden transition-all duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer hover:scale-[1.03]" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
+                            className={`group/custom relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: btnColor,
@@ -4959,7 +4959,7 @@ function SwitcherUI({
                       })}
                       {/* + Criar */}
                       <div
-                        className="relative vmix-hover-ring w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.03] flex items-center justify-center"
+                        className="relative vmix-hover-ring w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden cursor-pointer transition-colors duration-200 flex items-center justify-center"
                         style={{ aspectRatio: "3/2", backgroundColor: "#1e1e26", border: "2px dashed #333338" }}
                         onClick={() => setCreationChoiceOpen(true)}
                       >
