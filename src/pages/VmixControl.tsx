@@ -3,7 +3,7 @@ import { clearSignOutFlag } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Layout, Cpu, ChevronLeft, Clock, Wifi, WifiOff } from "lucide-react";
 const VmixPage = React.lazy(() => import("@/components/VmixPage"));
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/useAuth";
 import vmixControlLogo from "@/assets/logo-mixcontrol.png";
 import cleanVmixControlLogo from "@/assets/logo-vmixcontrol-clean.png";
 import nexoLogo from "@/assets/logo-nxo.png";
@@ -16,8 +16,7 @@ type VmixControlProps = {
 };
 
 export default function VmixControl({ forcedConnected = false, cleanLayout = false }: VmixControlProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,17 +24,6 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   const [headerTime, setHeaderTime] = useState(() => new Date());
   const [vmixOnline, setVmixOnline] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setHeaderTime(new Date()), 1000);
@@ -56,7 +44,6 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setUser(null);
   };
 
   if (loading) return <VmixControlSkeleton cleanLayout={cleanLayout} />;
