@@ -1012,6 +1012,30 @@ export default function CortesVideoPage() {
       const webmBlob = await recordedBlobPromise;
       videoElementsRef.current.forEach(video => video.pause());
       if (webmBlob.size === 0) throw new Error("A captura terminou vazia. Tente novamente.");
+      let mp4Blob: Blob;
+      const renderApiUrl = (import.meta.env.VITE_VIDEO_RENDER_API_URL as string | undefined)?.trim();
+      if (renderApiUrl) {
+        setExportProgress(66);
+        setExportPhase("Enviando vídeo para o render no servidor…");
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        if (!accessToken) throw new Error("Sua sessão expirou. Entre novamente para renderizar no servidor.");
+        const formData = new FormData();
+        formData.append("video", webmBlob, "nexohub-render.webm");
+        setExportPhase("Codificando MP4 no servidor…");
+        const response = await fetch(`${renderApiUrl.replace(/\\/+$/, "")}/render`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formData,
+        });
+        if (!response.ok) {
+          const responseText = await response.text().catch(() => "");
+          let message = responseText;
+          try { message = JSON.parse(responseText)?.error || responseText; } catch {}
+          throw new Error(message || `O servidor de render respondeu com HTTP ${response.status}.`);
+        }
+        mp4Blob = await response.blob();
+      } else {
       setExportProgress(66);
       setExportPhase("Codificando MP4 (H.264 + AAC)…");
 
@@ -1082,13 +1106,15 @@ export default function CortesVideoPage() {
         outputName,
       ]);
       const outputData = await ffmpeg.readFile(outputName);
-      const mp4Blob = new Blob([outputData], { type: "video/mp4" });
-      if (mp4Blob.size < 1024) throw new Error("O arquivo MP4 gerado ficou vazio ou incompleto.");
+      mp4Blob = new Blob([outputData], { type: "video/mp4" });
       await Promise.all([
         ffmpeg.deleteFile(inputName).catch(() => undefined),
         ffmpeg.deleteFile(outputName).catch(() => undefined),
       ]);
 
+
+      }
+      if (mp4Blob.size < 1024) throw new Error("O arquivo MP4 gerado ficou vazio ou incompleto.");
       setExportPhase("Preparando download…");
       setExportProgress(100);
       const url = URL.createObjectURL(mp4Blob);
