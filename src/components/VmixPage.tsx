@@ -1663,8 +1663,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
         if (!succeeded) allSucceeded = false;
         await new Promise((r) => setTimeout(r, 400));
       }
-      if (allSucceeded && !silent) toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
-      else addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
+      if (allSucceeded) {
+        if (!silent) toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
+      } else {
+        addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
+      }
       return allSucceeded;
     }
 
@@ -1695,8 +1698,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
         if (!succeeded) allSucceeded = false;
         await new Promise((r) => setTimeout(r, 400));
       }
-      if (allSucceeded && !silent) toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
-      else addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
+      if (allSucceeded) {
+        if (!silent) toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
+      } else {
+        addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
+      }
       return allSucceeded;
     }
   }, [normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId, silentRefresh]);
