@@ -27,7 +27,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import { fetchStationDatabaseData, preloadAllStationsDatabase, getStationDatabaseSync } from "@/lib/stationDatabaseService";
-import { getApresentadores } from "./ApresentadorForm";
+
 import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
 
 
@@ -44,7 +44,7 @@ const OnAirWidget = lazyRetry(() => import("./OnAirWidget"));
 const UpcomingEventsWidget = lazyRetry(() => import("./UpcomingEventsWidget"));
 
 const MusicaNoAr = lazyRetry(() => import("./MusicaNoAr"));
-import AgendaPage from "./AgendaPage";
+const AgendaPage = lazyRetry(() => import("./AgendaPage"));
 const MusicWidget = lazyRetry(() => import("./MusicWidget"));
 const XmlLinkRow = lazyRetry(() => import("./XmlLinkRow"));
 const ConfiguracoesPage = lazyRetry(() => import("./ConfiguracoesPage"));
@@ -772,6 +772,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           foto = (ap as any)?.foto || null;
         }
         if (!foto) {
+          const { getApresentadores } = await import("./ApresentadorForm");
           const aps = await getApresentadores(uid, user?.email);
           const resCurrent = resolvePresenterForProgram(current, aps, uid || user?.email);
           foto = resCurrent?.foto || null;
@@ -788,6 +789,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           apFoto = (ap as any)?.foto || null;
         }
         if (!apFoto || !apNome) {
+          const { getApresentadores } = await import("./ApresentadorForm");
           const aps = await getApresentadores(uid, user?.email);
           const resNext = resolvePresenterForProgram(next, aps, uid || user?.email);
           if (!apNome) apNome = resNext?.nome || "";
