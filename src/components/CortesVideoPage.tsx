@@ -195,6 +195,7 @@ export default function CortesVideoPage() {
   // Trimming & Dragging state
   const [draggingPlayhead, setDraggingPlayhead] = useState(false);
   const [trimmingClip, setTrimmingClip] = useState<{ id: string; edge: "start" | "end"; initialX: number; initialTime: number; initialDur: number; initialMediaStart: number } | null>(null);
+  const [draggingClip, setDraggingClip] = useState<{ id: string; initialX: number; initialStart: number } | null>(null);
 
   // Export State
   const [isExporting, setIsExporting] = useState(false);
@@ -801,6 +802,28 @@ export default function CortesVideoPage() {
         }));
         return;
       }
+      if (draggingClip) {
+        const deltaSeconds = (e.clientX - draggingClip.initialX) / zoom;
+        setClips(prev => {
+          const moving = prev.find(clip => clip.id === draggingClip.id);
+          if (!moving) return prev;
+          let nextStart = Math.max(0, draggingClip.initialStart + deltaSeconds);
+          // Snap the moving clip to nearby clip edges so cut segments can be joined cleanly.
+          const snapDistance = 0.28;
+          const movingEnd = nextStart + moving.duration;
+          for (const other of prev) {
+            if (other.id === moving.id) continue;
+            const candidates = [
+              { distance: Math.abs(nextStart - (other.start + other.duration)), value: other.start + other.duration },
+              { distance: Math.abs(movingEnd - other.start), value: other.start - moving.duration },
+            ];
+            const nearest = candidates.sort((a, b) => a.distance - b.distance)[0];
+            if (nearest && nearest.distance <= snapDistance) nextStart = Math.max(0, nearest.value);
+          }
+          return prev.map(clip => clip.id === moving.id ? { ...clip, start: nextStart } : clip);
+        });
+        return;
+      }
       if (draggingPlayhead && timelineRulerRef.current) {
         const rect = timelineRulerRef.current.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
@@ -813,6 +836,7 @@ export default function CortesVideoPage() {
     const handleMouseUp = () => {
       if (draggingPlayhead) setDraggingPlayhead(false);
       if (trimmingClip) setTrimmingClip(null);
+      if (draggingClip) setDraggingClip(null);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -821,7 +845,7 @@ export default function CortesVideoPage() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [draggingPlayhead, trimmingClip, totalDuration, contentDuration, zoom, renderCanvasFrame]);
+  }, [draggingPlayhead, trimmingClip, draggingClip, totalDuration, contentDuration, zoom, renderCanvasFrame]);
 
   // Export Video (Canvas + Audio to WebM / MP4)
   const handleExportVideo = async (confirmedName?: string) => {
@@ -1919,12 +1943,20 @@ export default function CortesVideoPage() {
                   return (
                     <div
                       key={clip.id}
+                      onMouseDown={(event) => {
+                        if (event.button !== 0) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setSelectedClipId(clip.id);
+                        setSelectedTextId(null);
+                        setDraggingClip({ id: clip.id, initialX: event.clientX, initialStart: clip.start });
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedClipId(clip.id);
                         setSelectedTextId(null);
                       }}
-                      className={`absolute h-16 rounded-xl overflow-hidden cursor-pointer transition-all select-none group ${isSelected ? "ring-3 ring-blue-500 z-20 shadow-lg" : "ring-1 ring-black/10 hover:ring-slate-400 z-10"}`}
+                      className={`absolute h-16 rounded-xl overflow-hidden cursor-grab active:cursor-grabbing transition-all select-none group ${isSelected ? "ring-3 ring-blue-500 z-20 shadow-lg" : "ring-1 ring-black/10 hover:ring-slate-400 z-10"}`}
                       style={{
                         left: `${left}px`,
                         width: `${width}px`,
