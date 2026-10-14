@@ -22,13 +22,20 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   const [signing, setSigning] = useState(false);
   const [headerTime, setHeaderTime] = useState(() => new Date());
   const [vmixOnline, setVmixOnline] = useState(false);
+  const [headerStudioName, setHeaderStudioName] = useState("");
 
 
   useEffect(() => {
     const timer = window.setInterval(() => setHeaderTime(new Date()), 1000);
     const updateStatus = (event: Event) => setVmixOnline(Boolean((event as CustomEvent).detail?.connected));
+    const updateStudio = (event: Event) => setHeaderStudioName(String((event as CustomEvent).detail?.studioName || "").trim());
     window.addEventListener("vmix-connection-status", updateStatus);
-    return () => { window.clearInterval(timer); window.removeEventListener("vmix-connection-status", updateStatus); };
+    window.addEventListener("vmix-studio-name", updateStudio);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("vmix-connection-status", updateStatus);
+      window.removeEventListener("vmix-studio-name", updateStudio);
+    };
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -156,6 +163,14 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
                   <Clock size={14} className="text-white/70" />
                   <span className="min-w-[48px] text-[13px] font-medium tabular-nums">{headerTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
                 </div>
+                {headerStudioName && (
+                  <span
+                    className="whitespace-nowrap rounded-md bg-white/[0.06] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white/75"
+                    title="Estúdio selecionado para o controle vMix"
+                  >
+                    ESTÚDIO: {headerStudioName}
+                  </span>
+                )}
                 <div className="flex items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
                   {vmixOnline ? <Wifi size={14} className="text-emerald-400" /> : <WifiOff size={14} className="text-red-400" />}
                   <span className={`text-[9px] font-bold uppercase tracking-wide ${vmixOnline ? "text-emerald-400" : "text-red-400"}`}>{vmixOnline ? "Conectado" : "Desconectado"}</span>
