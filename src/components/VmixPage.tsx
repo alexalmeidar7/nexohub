@@ -3600,7 +3600,8 @@ function SwitcherUI({
 
     return eventos
       .map((evento) => {
-        const programa = evento.programa_id ? programaPorId.get(evento.programa_id) : undefined;
+        const resolvedProgramId = resolveAgendaEventoProgramaId(evento, [...programaPorId.values()]);
+        const programa = resolvedProgramId ? programaPorId.get(resolvedProgramId) : undefined;
         const startMs = eventoStartMs(evento);
         if (!programa || startMs === null) return null;
 
