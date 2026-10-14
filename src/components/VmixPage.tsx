@@ -649,6 +649,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     return () => window.removeEventListener("vmix-control-header-action", handleHeaderAction);
   }, [navigate]);
   const [studioName, setStudioName] = useState("");
+
+  // Mantém o nome do estúdio selecionado sincronizado com o cabeçalho global.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("vmix-studio-name", { detail: { studioName } }));
+  }, [studioName]);
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
     try {
