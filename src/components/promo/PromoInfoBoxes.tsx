@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, Map as MapIcon, Navigation } from "lucide-react";
 import {
-  Cloud, CloudRain, Sun, CloudSnow, CloudLightning, Wind,
+  Cloud, CloudRain, Sun, Moon, CloudMoon, Droplets, CloudSnow, CloudLightning, Wind,
   ChevronLeft, ChevronRight, Star, MapPin, Settings, Car,
   TrendingUp, TrendingDown, RefreshCcw, Loader2, DollarSign, Sparkles,
   Minimize2, Maximize2,
@@ -122,7 +122,7 @@ function collapsedCardStyle(base: React.CSSProperties): React.CSSProperties {
 
 // ================= WEATHER =================
 
-function weatherIcon(code: number, size = 26) {
+function weatherIcon(code: number, isDay = true, size = 26) {
   const c = code;
   const cls = { color: PROMO_TEXT } as React.CSSProperties;
   
@@ -132,6 +132,8 @@ function weatherIcon(code: number, size = 26) {
     className: "animate-pulse-gentle"
   };
 
+  if ((c === 0 || c === 1) && !isDay) return <Moon {...iconProps} style={{ ...cls, color: "#DCE7FF" }} />;
+  if (c === 2 && !isDay) return <CloudMoon {...iconProps} style={{ ...cls, color: "#DCE7FF" }} />;
   if (c === 0 || c === 1) return <Sun {...iconProps} style={{ ...cls, color: "#FFD700" }} />;
   if (c <= 3) return <Cloud {...iconProps} />;
   if (c === 45 || c === 48) return <Wind {...iconProps} />;
@@ -164,6 +166,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [dayIdx, setDayIdx] = useState(0);
+  const [metricIdx, setMetricIdx] = useState(0);
 
   useEffect(() => {
     if (effectiveLat == null || effectiveLon == null) return;
@@ -189,7 +192,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
       if (!loaded && !cancel) {
         try {
           const res = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${effectiveLat}&longitude=${effectiveLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=6`
+            `https://api.open-meteo.com/v1/forecast?latitude=${effectiveLat}&longitude=${effectiveLon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=6`
           );
           if (res.ok) {
             const json = await res.json();
@@ -206,12 +209,17 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
     };
 
     fetchIt();
-    const iv = setInterval(fetchIt, 15 * 60 * 1000);
+    const iv = setInterval(fetchIt, 5 * 60 * 1000);
     return () => {
       cancel = true;
       clearInterval(iv);
     };
   }, [effectiveLat, effectiveLon]);
+
+  useEffect(() => {
+    const iv = window.setInterval(() => setMetricIdx((v) => (v + 1) % 3), 5000);
+    return () => window.clearInterval(iv);
+  }, []);
 
   const daily = data?.daily;
   const days = daily?.time || [];
@@ -227,6 +235,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
     ? data?.current?.temperature_2m
     : (daily && (daily.temperature_2m_max[idx] + daily.temperature_2m_min[idx]) / 2);
   const code = isToday ? data?.current?.weather_code : daily?.weather_code?.[idx];
+  const isDay = isToday ? data?.current?.is_day !== 0 : true;
   const rain = daily?.precipitation_probability_max?.[idx] ?? 0;
   const humidity = isToday ? data?.current?.relative_humidity_2m : null;
   const tmax = daily?.temperature_2m_max?.[idx];
@@ -253,7 +262,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-md">
-                    {weatherIcon(code ?? 0, 32)}
+                    {weatherIcon(code ?? 0, isDay, 32)}
                   </div>
                   <div>
                     <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, letterSpacing: -1 }}>
@@ -281,32 +290,33 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5 mt-auto">
-                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center">
-                  <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Chuva</span>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-blue-400">
-                    <CloudRain size={9} /> {rain}%
-                  </div>
+              <div
+                className={`mt-auto h-[38px] rounded-xl px-3 flex items-center justify-between transition-colors duration-300 ${metricIdx === 1 && humidity != null && humidity < 30 ? "bg-[#8B0000]/70" : "bg-white/5"}`}
+                aria-live="polite"
+              >
+                <div className="flex items-center gap-2 min-w-0" key={metricIdx} style={{ animation: "promo-weather-swap 320ms ease both" }}>
+                  {metricIdx === 0 ? (
+                    <CloudRain size={15} className="text-sky-300 shrink-0" />
+                  ) : metricIdx === 1 ? (
+                    <Droplets size={15} className="text-cyan-200 shrink-0" />
+                  ) : (
+                    <Navigation size={15} className="text-lime-200 shrink-0 rotate-[135deg]" />
+                  )}
+                  <span className="text-[9px] uppercase font-bold tracking-wider opacity-60">
+                    {metricIdx === 0 ? "Chuva" : metricIdx === 1 ? "Umidade" : "Vento"}
+                  </span>
                 </div>
-                
-                {humidity != null && (
-                  <div 
-                    className={`rounded-lg p-1.5 flex flex-col items-center justify-center transition-all duration-500 ${humidity < 30 ? 'bg-[#8B0000] animate-pulse' : 'bg-white/5'}`}
-                  >
-                    <span className={`text-[8px] uppercase font-bold mb-0.5 ${humidity < 30 ? 'text-white/60' : 'opacity-40'}`}>Umidade</span>
-                    <div 
-                      className="flex items-center gap-1 text-[10px] font-bold text-white"
-                    >
-                      <Wind size={9} /> {humidity}%
-                    </div>
-                  </div>
-                )}
-
-                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center">
-                  <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Vento</span>
-                  <div className="flex items-center gap-1 text-[10px] font-bold">
-                    <Navigation size={9} className="rotate-[135deg]" /> {data?.current?.wind_speed_10m ?? 0} <span className="text-[7px] opacity-60">km/h</span>
-                  </div>
+                <div className="text-sm font-extrabold tabular-nums" key={`metric-value-${metricIdx}`} style={{ animation: "promo-weather-swap 320ms ease both" }}>
+                  {metricIdx === 0
+                    ? `${rain}%`
+                    : metricIdx === 1
+                      ? (humidity != null ? `${humidity}%` : "—")
+                      : `${Math.round(data?.current?.wind_speed_10m ?? 0)} km/h`}
+                </div>
+                <div className="flex items-center gap-1 shrink-0" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="rounded-full transition-all duration-300" style={{ width: i === metricIdx ? 10 : 3, height: 3, background: i === metricIdx ? PROMO_BORDER : "rgba(255,255,255,0.25)" }} />
+                  ))}
                 </div>
               </div>
 
@@ -340,7 +350,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
           ) : (
             <div className="flex items-center gap-3 flex-1 min-h-0">
               <div className="shrink-0 flex items-center justify-center" style={{ width: 56, height: 56 }}>
-                {weatherIcon(code ?? 0, 48)}
+                {weatherIcon(code ?? 0, true, 48)}
               </div>
 
               <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -674,6 +684,10 @@ function DatasBox({ userId }: { userId?: string | null }) {
       ))}
 
       <style>{`
+        @keyframes promo-weather-swap {
+          from { opacity: 0; transform: translateY(5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         @keyframes promo-weather-blink {
           to { visibility: hidden; }
         }
