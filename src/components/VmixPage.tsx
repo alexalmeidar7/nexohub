@@ -3364,7 +3364,7 @@ function SwitcherUI({
       if (!matchesStudio(programa.estudio, studioName)) return false;
       if (!programa.dias_semana || programa.dias_semana.length === 0) return true;
       return programa.dias_semana.some((day: string) => {
-        const normalized = String(day || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
+        const normalized = String(day || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
         return normalized === today || normalized === String(now.getDay());
       });
     });
@@ -3400,7 +3400,7 @@ function SwitcherUI({
       if (!matchesStudio(programa.estudio, studioName)) return false;
       if (!programa.dias_semana || programa.dias_semana.length === 0) return true;
       return programa.dias_semana.some((day: string) => {
-        const normalized = String(day || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
+        const normalized = String(day || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
         return normalized === dayNames[now.getDay()] || normalized === String(now.getDay());
       });
     });
@@ -4473,7 +4473,7 @@ function SwitcherUI({
                           if (!aToday && !bToday) {
                             const weekdayOrder = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
                             const dayIndex = (p: Programa) => {
-                              const normalize = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim().slice(0, 3);
+                              const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().slice(0, 3);
                               const aliases: Record<string, string> = { domingo: "dom", segunda: "seg", terca: "ter", quarta: "qua", quinta: "qui", sexta: "sex", sabado: "sab" };
                               const days = ((p as any).dias_semana || []).map((d: string) => aliases[normalize(d)] || normalize(d));
                               const indexes = days.map((d: string) => weekdayOrder.indexOf(d)).filter((n: number) => n >= 0);
@@ -4589,7 +4589,7 @@ function SwitcherUI({
                             )}
 
                             {prog.dias_semana && prog.dias_semana.length > 0 && (() => {
-                              const normalizeDay = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim().slice(0, 3);
+                              const normalizeDay = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().slice(0, 3);
                               const aliases: Record<string, string> = {
                                 dom: "dom", domingo: "dom", seg: "seg", segunda: "seg", "segunda-feira": "seg",
                                 ter: "ter", terca: "ter", qua: "qua", quarta: "qua", qui: "qui", quinta: "qui",
