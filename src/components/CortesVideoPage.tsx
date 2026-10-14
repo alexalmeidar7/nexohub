@@ -3,7 +3,7 @@ import {
   Scissors, Play, Pause, RotateCcw, RotateCw, Download, Upload,
   Type, Video, Image as ImageIcon, Sliders, Settings, Search, Folder,
   ChevronDown, ZoomIn, ZoomOut, Maximize2, Trash2, Plus, Volume2,
-  Sparkles, Check, X, AlertCircle, Loader2, HardDrive, AudioLines
+  Sparkles, Check, X, AlertCircle, Loader2, HardDrive
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -418,7 +418,7 @@ export default function CortesVideoPage() {
         const tempUrl = URL.createObjectURL(file);
         let metadata: { duration: number; width: number; height: number; thumbnail?: string; waveform?: number[] };
         try {
-          metadata = await new Promise((resolve, reject) => {
+          metadata = await new Promise<{ duration: number; width: number; height: number; thumbnail?: string; waveform?: number[] }>((resolve, reject) => {
             const video = document.createElement("video");
             video.preload = "metadata";
             video.muted = true;
@@ -796,6 +796,10 @@ export default function CortesVideoPage() {
 
   // Export Video (Canvas + Audio to WebM / MP4)
   const handleExportVideo = async (confirmedName?: string) => {
+    if (clips.length === 0) {
+      toast.error("Adicione pelo menos um vídeo ou imagem antes de exportar.");
+      return;
+    }
     if (!confirmedName) {
       setExportNameDraft(projectName === "Project Name" ? "" : projectName);
       setIsNameDialogOpen(true);
@@ -809,10 +813,6 @@ export default function CortesVideoPage() {
     }
     setProjectName(exportProjectName);
     setIsNameDialogOpen(false);
-    if (clips.length === 0) {
-      toast.error("Adicione pelo menos um vídeo ou imagem antes de exportar.");
-      return;
-    }
 
     const normalizedExportStart = Math.max(0, Math.min(exportStart, contentDuration));
     const normalizedExportEnd = Math.max(0, Math.min(exportEnd, contentDuration));
