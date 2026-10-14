@@ -145,9 +145,30 @@ const PRESET_COMMANDS = [
   { value: "CutDirect", label: "CutDirect", desc: "Corta diretamente para o input", category: "Transição", params: ["input"] },
   { value: "Cut", label: "Cut", desc: "Corta para o input no Preview", category: "Transição", params: ["input"] },
   { value: "Fade", label: "Fade", desc: "Transição suave para o input", category: "Transição", params: ["input", "value"] },
+  { value: "Merge", label: "Merge", desc: "Transição Merge", category: "Transição", params: ["input", "value"] },
+  { value: "Wipe", label: "Wipe", desc: "Transição Wipe", category: "Transição", params: ["input", "value"] },
+  { value: "Zoom", label: "Zoom", desc: "Transição Zoom", category: "Transição", params: ["input", "value"] },
+  { value: "Slide", label: "Slide", desc: "Transição Slide", category: "Transição", params: ["input", "value"] },
+  { value: "Stinger1", label: "Stinger1", desc: "Executa a transição Stinger 1", category: "Transição", params: ["input"] },
+  { value: "Stinger2", label: "Stinger2", desc: "Executa a transição Stinger 2", category: "Transição", params: ["input"] },
+  { value: "Stinger3", label: "Stinger3", desc: "Executa a transição Stinger 3", category: "Transição", params: ["input"] },
+  { value: "Stinger4", label: "Stinger4", desc: "Executa a transição Stinger 4", category: "Transição", params: ["input"] },
+  { value: "Stinger5", label: "Stinger5", desc: "Executa a transição Stinger 5 (vMix 29+)", category: "Transição", params: ["input"] },
+  { value: "Stinger6", label: "Stinger6", desc: "Executa a transição Stinger 6 (vMix 29+)", category: "Transição", params: ["input"] },
+  { value: "Stinger7", label: "Stinger7", desc: "Executa a transição Stinger 7 (vMix 29+)", category: "Transição", params: ["input"] },
+  { value: "Stinger8", label: "Stinger8", desc: "Executa a transição Stinger 8 (vMix 29+)", category: "Transição", params: ["input"] },
+  { value: "StingerX", label: "StingerX", desc: "Comando StingerX recebido por bloco de código", category: "Transição", params: ["input"] },
+  { value: "StringerX", label: "StringerX", desc: "Compatibilidade com blocos que usam a grafia StringerX", category: "Transição", params: ["input"] },
   { value: "FadeToBlack", label: "FadeToBlack", desc: "Transição para tela preta", category: "Transição", params: [] },
   { value: "PreviewInput", label: "PreviewInput", desc: "Envia input para o Preview", category: "Input", params: ["input"] },
   { value: "SelectIndex", label: "SelectIndex", desc: "Seleciona um índice no input", category: "Input", params: ["input", "value"] },
+  { value: "Play", label: "Play", desc: "Inicia/reinicia a reprodução do input", category: "Input", params: ["input"] },
+  { value: "Pause", label: "Pause", desc: "Pausa a reprodução do input", category: "Input", params: ["input"] },
+  { value: "Restart", label: "Restart", desc: "Reinicia a reprodução do input", category: "Input", params: ["input"] },
+  { value: "NextItem", label: "NextItem", desc: "Avança para o próximo item", category: "Input", params: ["input"] },
+  { value: "PreviousItem", label: "PreviousItem", desc: "Volta ao item anterior", category: "Input", params: ["input"] },
+  { value: "SetPosition", label: "SetPosition", desc: "Define posição em milissegundos", category: "Input", params: ["input", "value"] },
+  { value: "SetCountdown", label: "SetCountdown", desc: "Define contagem regressiva (HH:MM:SS)", category: "Input", params: ["input", "value"] },
   { value: "SetMultiViewOverlay", label: "SetMultiViewOverlay", desc: "Define overlay no MultiView", category: "Overlay", params: ["input", "value", "extra"] },
   { value: "MultiViewOverlayOn", label: "MultiViewOverlayOn", desc: "Liga overlay do MultiView (index 1-10)", category: "Overlay", params: ["input", "value"] },
   { value: "MultiViewOverlayOff", label: "MultiViewOverlayOff", desc: "Desliga overlay do MultiView (index 1-10)", category: "Overlay", params: ["input", "value"] },
@@ -161,11 +182,31 @@ const PRESET_COMMANDS = [
   { value: "OverlayInput3Off", label: "Overlay 3 OFF", desc: "Desativa Overlay 3", category: "Overlay", params: [] },
   { value: "OverlayInput4", label: "Overlay 4 ON", desc: "Ativa Overlay 4", category: "Overlay", params: ["input"] },
   { value: "OverlayInput4Off", label: "Overlay 4 OFF", desc: "Desativa Overlay 4", category: "Overlay", params: [] },
+  { value: "OverlayInput1In", label: "Overlay 1 IN", desc: "Anima entrada do Overlay 1", category: "Overlay", params: ["input"] },
+  { value: "OverlayInput1Out", label: "Overlay 1 OUT", desc: "Anima saída do Overlay 1", category: "Overlay", params: [] },
+  { value: "OverlayInput2In", label: "Overlay 2 IN", desc: "Anima entrada do Overlay 2", category: "Overlay", params: ["input"] },
+  { value: "OverlayInput2Out", label: "Overlay 2 OUT", desc: "Anima saída do Overlay 2", category: "Overlay", params: [] },
+  { value: "OverlayInput3In", label: "Overlay 3 IN", desc: "Anima entrada do Overlay 3", category: "Overlay", params: ["input"] },
+  { value: "OverlayInput3Out", label: "Overlay 3 OUT", desc: "Anima saída do Overlay 3", category: "Overlay", params: [] },
+  { value: "OverlayInput4In", label: "Overlay 4 IN", desc: "Anima entrada do Overlay 4", category: "Overlay", params: ["input"] },
+  { value: "OverlayInput4Out", label: "Overlay 4 OUT", desc: "Anima saída do Overlay 4", category: "Overlay", params: [] },
   { value: "AudioOn", label: "AudioOn", desc: "Liga áudio do input", category: "Áudio", params: ["input"] },
   { value: "AudioOff", label: "AudioOff", desc: "Desliga áudio do input", category: "Áudio", params: ["input"] },
+  { value: "Audio", label: "Audio", desc: "Alterna mute do áudio do input", category: "Áudio", params: ["input"] },
+  { value: "AudioAuto", label: "AudioAuto", desc: "Alterna áudio automático", category: "Áudio", params: ["input"] },
+  { value: "AudioBusOn", label: "AudioBusOn", desc: "Ativa barramento de áudio (M, A–G)", category: "Áudio", params: ["input", "value"] },
+  { value: "AudioBusOff", label: "AudioBusOff", desc: "Desativa barramento de áudio (M, A–G)", category: "Áudio", params: ["input", "value"] },
   { value: "SetVolume", label: "SetVolume", desc: "Define volume (0-100)", category: "Áudio", params: ["input", "value"] },
   { value: "StartStreaming", label: "StartStreaming", desc: "Inicia streaming (0, 1 ou 2)", category: "Streaming", params: ["value"] },
   { value: "StopStreaming", label: "StopStreaming", desc: "Para streaming (0, 1 ou 2)", category: "Streaming", params: ["value"] },
+  { value: "StartExternal", label: "StartExternal", desc: "Inicia saída externa", category: "Streaming", params: [] },
+  { value: "StopExternal", label: "StopExternal", desc: "Para saída externa", category: "Streaming", params: [] },
+  { value: "SetDynamicValue1", label: "SetDynamicValue1", desc: "Define valor dinâmico 1", category: "Geral", params: ["value"] },
+  { value: "SetDynamicValue2", label: "SetDynamicValue2", desc: "Define valor dinâmico 2", category: "Geral", params: ["value"] },
+  { value: "SetDynamicValue3", label: "SetDynamicValue3", desc: "Define valor dinâmico 3", category: "Geral", params: ["value"] },
+  { value: "SetDynamicValue4", label: "SetDynamicValue4", desc: "Define valor dinâmico 4", category: "Geral", params: ["value"] },
+  { value: "KeyPress", label: "KeyPress", desc: "Envia tecla para janela ativa", category: "Geral", params: ["value"] },
+  { value: "SendKeys", label: "SendKeys", desc: "Envia teclas para janela ativa", category: "Geral", params: ["value"] },
   { value: "StartRecording", label: "StartRecording", desc: "Inicia gravação", category: "Gravação", params: [] },
   { value: "StopRecording", label: "StopRecording", desc: "Para gravação", category: "Gravação", params: [] },
   { value: "StartPlayList", label: "StartPlayList", desc: "Inicia a playlist configurada no vMix", category: "Playlist", params: [] },
@@ -407,26 +448,63 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   };
 
   const parseScript = (text: string) => {
-    const lines = text.trim().split("\n").filter(l => l.trim());
-    const parsed: PresetCommand[] = lines.map(line => {
-      const parts = line.trim().split(/\s+/);
-      const fn = parts[0] || "CutDirect";
-      const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
-      for (let i = 1; i < parts.length; i++) {
-        const [k, ...v] = parts[i].split("=");
-        const val = v.join("=");
-        if (k === "input") cmd.input = val;
-        else if (k === "value") cmd.value = val;
-        else if (k === "extraKey") cmd.extraKey = val;
-        else if (k === "extra") cmd.extraValue = val;
+    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    const parsed: PresetCommand[] = [];
+
+    for (const rawLine of lines) {
+      // Aceita linhas numeradas/exportadas, como "#0 : Stinger1(GUID,)".
+      const line = rawLine.replace(/^#?\d+\s*[:.)-]\s*/, "").trim();
+      if (!line) continue;
+
+      // Formato vMix: Function=Stinger1&Input=GUID&Value=...
+      if (/^Function\s*=/i.test(line)) {
+        const params = new URLSearchParams(line.replace(/\s*&\s*/g, "&"));
+        const fn = params.get("Function") || "";
+        if (!fn) continue;
+        const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
+        cmd.input = params.get("Input") || params.get("SelectedInput") || "";
+        cmd.value = params.get("Value") || params.get("Duration") || "";
+        parsed.push(cmd);
+        continue;
       }
-      return cmd;
-    });
+
+      // Formato de exportação por chamada: Function(arg1, arg2, ...).
+      const call = line.match(/^([\w.-]+)\s*\((.*?)(?:\))?\s*[,;]?\s*$/);
+      if (call) {
+        let fn = call[1];
+        const args = call[2].split(",").map(value => value.trim().replace(/^(['"])(.*)\1$/, "$2"));
+        const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
+        if (args[0]) cmd.input = args[0];
+        if (args[1]) cmd.value = args[1];
+        if (args[2]) cmd.extraValue = args.slice(2).join(",");
+        parsed.push(cmd);
+        continue;
+      }
+
+      const parts = line.split(/\s+/);
+      let fn = parts.shift() || "";
+      if (!fn) continue;
+      const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
+      for (const part of parts) {
+        const separator = part.indexOf("=");
+        if (separator < 1) continue;
+        const key = part.slice(0, separator).toLowerCase();
+        const value = part.slice(separator + 1);
+        if (key === "input" || key === "selectedinput") cmd.input = value;
+        else if (key === "value" || key === "duration" || key === "mix") cmd.value = value;
+        else if (key === "extrakey" || key === "selectedname" || key === "selectedindex") cmd.extraKey = value;
+        else if (key === "extra") cmd.extraValue = value;
+      }
+      parsed.push(cmd);
+    }
+
     if (parsed.length > 0) {
-      setCommands(parsed);
+      setCommands(prev => [...prev, ...parsed]);
       setPasteValue("");
       setShowCode(false);
       toast({ title: "Código importado", description: `${parsed.length} ação(ões) carregada(s).` });
+    } else {
+      toast({ title: "Nenhum comando reconhecido", description: "Cole comandos no formato Function(Input), Function input=... ou Function=...&Input=....", variant: "destructive" });
     }
   };
 
