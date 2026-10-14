@@ -3354,6 +3354,84 @@ function SwitcherUI({
       || isDefaultName(customButtons.find((button: any) => button.id === activeCustomButton)?.nome);
   }, [isPodcastStudio, programas, customButtons, activePreset, activeCustomButton]);
 
+  // Deriva o programa previsto no ar a partir da grade atual do estúdio selecionado.
+  const scheduledProgramForAutomation = useMemo(() => {
+    const now = new Date(nowTick);
+    const dayNames = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+    const today = dayNames[now.getDay()];
+    const minute = now.getHours() * 60 + now.getMinutes();
+    const todaysPrograms = (programas || []).filter((programa: Programa) => {
+      if (!matchesStudio(programa.estudio, studioName)) return false;
+      if (!programa.dias_semana || programa.dias_semana.length === 0) return true;
+      return programa.dias_semana.some((day: string) => {
+        const normalized = String(day || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
+        return normalized === today || normalized === String(now.getDay());
+      });
+    });
+    return todaysPrograms.find((programa: Programa) => {
+      if (!programa.horario_inicio || !programa.horario_fim) return false;
+      const [sh, sm] = String(programa.horario_inicio).slice(0, 5).split(":").map(Number);
+      const [eh, em] = String(programa.horario_fim).slice(0, 5).split(":").map(Number);
+      if (![sh, sm, eh, em].every(Number.isFinite)) return false;
+      const start = sh * 60 + sm;
+      const end = eh * 60 + em;
+      return end > start ? minute >= start && minute < end : minute >= start || minute < end;
+    }) || null;
+  }, [programas, studioName, nowTick]);
+
+  // A seleção manual vale até a grade avançar para outro programa previsto.
+  const previousScheduledProgramIdRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const nextScheduledId = scheduledProgramForAutomation?.id || null;
+    const previousScheduledId = previousScheduledProgramIdRef.current;
+    previousScheduledProgramIdRef.current = nextScheduledId;
+    if (previousScheduledId !== undefined && nextScheduledId && previousScheduledId !== nextScheduledId) {
+      setActivePreset((current: string | null) => current && current !== nextScheduledId ? null : current);
+    }
+  }, [scheduledProgramForAutomation?.id, setActivePreset]);
+
+  // O preset destacado em verde também dispara suas ações automaticamente, uma única vez por programa/dia.
+  const lastAutoPresetKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!connected || !savedUrl || !user?.id || isDefaultAutomationActive) return;
+    const now = new Date(nowTick);
+    const dayNames = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+    const todayPrograms = (programas || []).filter((programa: Programa) => {
+      if (!matchesStudio(programa.estudio, studioName)) return false;
+      if (!programa.dias_semana || programa.dias_semana.length === 0) return true;
+      return programa.dias_semana.some((day: string) => {
+        const normalized = String(day || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
+        return normalized === dayNames[now.getDay()] || normalized === String(now.getDay());
+      });
+    });
+    const selected = activePreset ? todayPrograms.find((programa: Programa) => programa.id === activePreset) : null;
+    const activeProgram = selected || scheduledProgramForAutomation;
+    if (!activeProgram) return;
+    const dayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    const executionKey = `${user.id}:${studioName || "default"}:${dayKey}:${activeProgram.id}`;
+    if (lastAutoPresetKeyRef.current === executionKey) return;
+    lastAutoPresetKeyRef.current = executionKey;
+    void (async () => {
+      try {
+        const { data: presetData, error } = await (supabase.from("preset_commands" as any) as any)
+          .select("commands")
+          .eq("user_id", user.id)
+          .eq("programa_id", activeProgram.id)
+          .maybeSingle();
+        if (error) throw error;
+        const commands = Array.isArray(presetData?.commands) && presetData.commands.length > 0
+          ? [...presetData.commands]
+          : [{ fn: "ScriptStart", input: activeProgram.nome }];
+        const presenterName = (activeProgram as any).apresentadores?.nome;
+        if (presenterName) commands.push({ fn: "SetText", input: "TITULO APRESENTADOR", value: presenterName, label: "Apresentador Automático" });
+        await runCommandsUnified(commands, `Preset NO AR: ${activeProgram.nome}`);
+      } catch (error) {
+        if (lastAutoPresetKeyRef.current === executionKey) lastAutoPresetKeyRef.current = null;
+        console.error("[vmix-switcher] Falha ao preparar ações do preset no ar:", error);
+      }
+    })();
+  }, [connected, savedUrl, user?.id, studioName, programas, activePreset, nowTick, isDefaultAutomationActive, scheduledProgramForAutomation, runCommandsUnified]);
+
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
 
@@ -4460,33 +4538,11 @@ function SwitcherUI({
                               outlineOffset: progOnAir ? "5px" : undefined,
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : undefined,
                             }}
-                            onClick={async () => {
+                            onClick={() => {
                               setActivePreset(prog.id);
-                              // A ordenação coloca este programa na primeira posição; zera a rolagem para mantê-lo visível.
+                              // As ações são enviadas pelo efeito quando o preset assume o status NO AR.
                               const presetScroller = document.getElementById("preset-scroll-" + studioKey);
                               if (presetScroller) presetScroller.scrollTo({ left: 0, behavior: "smooth" });
-                              const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
-                                .select("commands")
-                                .eq("user_id", user?.id)
-                                .eq("programa_id", prog.id)
-                                .maybeSingle();
-                              
-                              let cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
-                                ? [...presetData.commands]
-                                : [{ fn: "ScriptStart", input: prog.nome }];
-
-                              // Always carry the current presenter's name to vMix Titler if available
-                              const apresentadorNome = (prog as any).apresentadores?.nome;
-                              if (apresentadorNome) {
-                                cmds.push({
-                                  fn: "SetText",
-                                  input: "TITULO APRESENTADOR", // Assumed titler input name in vMix
-                                  value: apresentadorNome,
-                                  label: "Apresentador Automático"
-                                });
-                              }
-
-                              await runCommandsUnified(cmds as any[], `Preset: ${prog.nome}`);
                             }}
                             >
                             {!progOnAir && (agendaEvento || startTime) && (
