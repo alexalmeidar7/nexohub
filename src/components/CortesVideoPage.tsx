@@ -1979,17 +1979,18 @@ export default function CortesVideoPage() {
             </div>
 
             {/* TRACK 3: AUDIO WAVEFORM */}
-            <div className="h-10 relative rounded-lg border border-slate-100 bg-slate-50/70 overflow-hidden">
-              <div className="absolute left-2 top-1 text-[8px] uppercase tracking-wider font-bold text-slate-400 z-10 pointer-events-none">Áudio</div>
+            <div className="h-16 relative rounded-lg border border-emerald-200 bg-emerald-50/80 overflow-hidden">
+              <div className="absolute left-2 top-1 text-[9px] uppercase tracking-wider font-extrabold text-emerald-800 z-10 pointer-events-none bg-emerald-50/90 px-1 rounded">Áudio</div>
+              <div className="absolute left-0 right-0 top-1/2 border-t border-emerald-300/60 pointer-events-none" />
               {clips.filter(clip => clip.type === "video").map(clip => {
                 const left = clip.start * zoom;
                 const width = clip.duration * zoom;
                 const peaks = clip.waveform || [];
                 return (
-                  <div key={`wave-${clip.id}`} className="absolute top-0 bottom-0 overflow-hidden flex items-center gap-px px-1 opacity-95" style={{ left: `${left}px`, width: `${Math.max(2, width)}px` }} title={peaks.length ? "Forma de onda do áudio" : "Forma de onda indisponível para este codec"}>
+                  <div key={`wave-${clip.id}`} className="absolute top-0 bottom-0 overflow-hidden flex items-center gap-[2px] px-1 pt-2 opacity-100" style={{ left: `${left}px`, width: `${Math.max(2, width)}px` }} title={peaks.length ? "Forma de onda do áudio" : "Forma de onda indisponível para este codec"}>
                     {peaks.length ? peaks.map((peak, index) => (
-                      <span key={index} className="flex-1 min-w-[1px] rounded-full bg-emerald-500/85" style={{ height: `${Math.max(2, peak * 34)}px`, minWidth: "1px" }} />
-                    )) : <span className="text-[8px] text-slate-400 ml-12">{clip.name} · áudio não analisado</span>}
+                      <span key={index} className="flex-1 min-w-[2px] rounded-full bg-emerald-600 shadow-[0_0_1px_rgba(5,150,105,0.35)]" style={{ height: `${Math.max(4, peak * 48)}px`, minWidth: "2px" }} />
+                    )) : <span className="text-[9px] font-medium text-emerald-800 ml-12">Forma de onda indisponível para este vídeo</span>}
                   </div>
                 );
               })}
