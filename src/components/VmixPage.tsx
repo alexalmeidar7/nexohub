@@ -2704,7 +2704,7 @@ const isLiveEvento = (tipo?: string | null) => {
 };
 
 const isRecordingEvento = (tipo?: string | null) =>
-  (tipo || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").includes("gravacao");
+  (tipo || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("gravacao");
 
 const eventoEndMs = (evento: AgendaEventoLite, programa?: any) => {
   const startMs = eventoStartMs(evento);
