@@ -188,56 +188,52 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
       return;
     }
     
+    // Este editor configura comandos e o horário personalizado dos comandos.
+    // Em programas existentes, customHorario NÃO é o horário de início da grade do programa.
     const time = customHorario || "00:00:00";
-    
-    // Conflit validation
+
     setSaving(true);
     try {
-      const { data: conflictProgs, error: conflictErr } = await supabase
-        .from("programas")
-        .select("id, nome, estudio, horario_inicio, dias_semana, data_variavel")
-        .eq("user_id", userId)
-        .eq("estudio", estudio)
-        .eq("horario_inicio", time.length === 5 ? `${time}:00` : time)
-        .neq("id", programaId === "new" ? "00000000-0000-0000-0000-000000000000" : programaId); // Evita comparar com si mesmo
+      // A validação de conflito só se aplica ao criar um programa novo.
+      // Ao editar comandos de um programa existente, não compare nem altere horario_inicio.
+      if (programaId === "new" && customHorario) {
+        const { data: conflictProgs, error: conflictErr } = await supabase
+          .from("programas")
+          .select("id, nome, estudio, horario_inicio, dias_semana, data_variavel")
+          .eq("user_id", userId)
+          .eq("estudio", estudio)
+          .eq("horario_inicio", time.length === 5 ? `${time}:00` : time);
 
-      if (conflictErr) throw conflictErr;
+        if (conflictErr) throw conflictErr;
 
-      // Check if there is a real overlap in days or specific date
-      const hasConflict = conflictProgs?.some(p => {
-        // Se ambos têm data específica e é a mesma
-        if (dataEspecifica && p.data_variavel === dataEspecifica) return true;
-        
-        // Se um tem data específica e o outro não, mas o dia da semana coincide
-        if (dataEspecifica && !p.data_variavel) {
-          const dateObj = new Date(dataEspecifica + "T12:00:00");
-          const dayName = DIAS_SEMANA_OPCOES[dateObj.getDay()];
-          if (p.dias_semana?.includes(dayName)) return true;
-        }
-
-        if (!dataEspecifica && p.data_variavel) {
-          const dateObj = new Date(p.data_variavel + "T12:00:00");
-          const dayName = DIAS_SEMANA_OPCOES[dateObj.getDay()];
-          if (diasSemana.includes(dayName)) return true;
-        }
-
-        // Se ambos usam dias da semana, verificar interseção
-        if (!dataEspecifica && !p.data_variavel) {
-          return diasSemana.some(d => p.dias_semana?.includes(d));
-        }
-
-        return false;
-      });
-
-      if (hasConflict) {
-        const conflict = conflictProgs!.find(() => true);
-        toast({ 
-          title: "Conflito de Agendamento", 
-          description: `Já existe o programa "${conflict?.nome}" agendado para este horário no ${estudio}.`, 
-          variant: "destructive" 
+        const hasConflict = conflictProgs?.some(p => {
+          if (dataEspecifica && p.data_variavel === dataEspecifica) return true;
+          if (dataEspecifica && !p.data_variavel) {
+            const dateObj = new Date(dataEspecifica + "T12:00:00");
+            const dayName = DIAS_SEMANA_OPCOES[dateObj.getDay()];
+            if (p.dias_semana?.includes(dayName)) return true;
+          }
+          if (!dataEspecifica && p.data_variavel) {
+            const dateObj = new Date(p.data_variavel + "T12:00:00");
+            const dayName = DIAS_SEMANA_OPCOES[dateObj.getDay()];
+            if (diasSemana.includes(dayName)) return true;
+          }
+          if (!dataEspecifica && !p.data_variavel) {
+            return diasSemana.some(d => p.dias_semana?.includes(d));
+          }
+          return false;
         });
-        setSaving(false);
-        return;
+
+        if (hasConflict) {
+          const conflict = conflictProgs!.find(() => true);
+          toast({
+            title: "Conflito de Agendamento",
+            description: `Já existe o programa "${conflict?.nome}" agendado para este horário no ${estudio}.`,
+            variant: "destructive"
+          });
+          setSaving(false);
+          return;
+        }
       }
 
       let currentProgId = programaId;
@@ -267,16 +263,18 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         currentProgId = newProg.id;
       } else {
         // Atualizar dados básicos se programa já existe
-        await supabase
+        // Não atualizar horario_inicio aqui: ele pertence ao Cadastro de Programas.
+        // customHorario é salvo em preset_commands.custom_horario e não pode sobrescrever a grade.
+        const { error: updateProgramError } = await supabase
           .from("programas")
           .update({
             nome: nome.trim(),
             estudio,
             dias_semana: diasSemana,
             data_variavel: dataEspecifica || null,
-            horario_inicio: time,
           })
           .eq("id", programaId);
+        if (updateProgramError) throw updateProgramError;
       }
 
       const payload: any = { commands, custom_horario: customHorario || null };
