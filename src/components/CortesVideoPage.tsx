@@ -947,7 +947,7 @@ export default function CortesVideoPage() {
               </button>
 
               <div className="text-[11px] text-slate-400 text-center font-medium">
-                Arraste vídeos ou imagens aqui (.mp4, .mov, .png, .jpg)
+                Clique em uma mídia para adicionar ou arraste-a até a timeline
               </div>
 
               {/* Media Asset List */}
@@ -961,8 +961,14 @@ export default function CortesVideoPage() {
                   mediaAssets.map((asset) => (
                     <div
                       key={asset.id}
-                      className="group relative border border-slate-200 hover:border-blue-400 bg-white rounded-xl p-2 flex items-center gap-3 transition-all cursor-pointer shadow-xs"
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData("application/x-nexohub-media", asset.id);
+                        event.dataTransfer.effectAllowed = "copy";
+                      }}
+                      className="group relative border border-slate-200 hover:border-blue-400 bg-white rounded-xl p-2 flex items-center gap-3 transition-all cursor-grab active:cursor-grabbing shadow-xs"
                       onClick={() => addAssetToTimeline(asset)}
+                      title="Clique para adicionar à timeline ou arraste para a faixa"
                     >
                       <div className="w-16 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0 flex items-center justify-center relative">
                         {asset.thumbnail ? (
@@ -1515,7 +1521,21 @@ export default function CortesVideoPage() {
             )}
 
             {/* TRACK 2: VIDEO / IMAGE CLIPS */}
-            <div className="h-20 relative bg-slate-50/50 rounded-xl border border-slate-100 flex items-center">
+            <div
+              className="h-20 relative bg-slate-50/50 rounded-xl border border-slate-100 flex items-center transition-colors"
+              onDragOver={(event) => {
+                if (event.dataTransfer.types.includes("application/x-nexohub-media")) {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "copy";
+                }
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                const assetId = event.dataTransfer.getData("application/x-nexohub-media");
+                const asset = mediaAssets.find(item => item.id === assetId);
+                if (asset) addAssetToTimeline(asset);
+              }}
+            >
               {clips.length === 0 ? (
                 /* Empty state prompt matching reference screenshot */
                 <button
