@@ -3106,11 +3106,11 @@ function useAgendaPodcastTriggers({
     };
 
     for (const [programaId, ev] of Object.entries(eventoPorPrograma)) {
-      if (!confirmed.has(ev.id) || firedRef.current.has(ev.id)) continue;
+      if (firedRef.current.has(ev.id)) continue;
       const startMs = eventoStartMs(ev);
       if (startMs === null) continue;
-      const fireAt = isLiveEvento(ev.tipo_evento) ? startMs : startMs - 3600_000;
-      if (now >= fireAt && now < fireAt + 120_000) {
+      // Tanto gravação quanto live disparam no horário exato definido na Agenda.
+      if (now >= startMs && now < startMs + 120_000) {
         const prog = podcastProgramas.find((p: any) => p.id === programaId);
         if (prog) void fire(ev, prog);
       }
