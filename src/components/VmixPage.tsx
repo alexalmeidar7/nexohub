@@ -3144,7 +3144,8 @@ function useAgendaPodcastTriggers({
     const now = new Date();
 
     for (const button of customButtons) {
-      if (!hasStartStreamingCommand(button)) continue;
+      if (!hasStartStreamingCommand(button) && !isLiveAutomationButton(button)) continue;
+      if (!Array.isArray(button.commands) || button.commands.length === 0) continue;
       const programaId = resolveButtonProgramaId(button, podcastProgramas);
       if (!programaId) continue;
       const programa = podcastProgramas.find((item: any) => item.id === programaId);
