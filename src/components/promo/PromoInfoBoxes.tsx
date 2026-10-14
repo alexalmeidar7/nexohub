@@ -301,17 +301,17 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
               >
                 <div className="flex items-center gap-2 min-w-0" key={metricIdx} style={{ animation: "promo-weather-swap 320ms ease both" }}>
                   {metricIdx === 0 ? (
-                    <CloudRain size={15} className="text-sky-300 shrink-0" />
+                    <CloudRain size={13} className="text-sky-300 shrink-0" />
                   ) : metricIdx === 1 ? (
-                    <Droplets size={15} className="text-cyan-200 shrink-0" />
+                    <Droplets size={13} className="text-cyan-200 shrink-0" />
                   ) : (
-                    <Navigation size={15} className="text-lime-200 shrink-0 rotate-[135deg]" />
+                    <Navigation size={13} className="text-lime-200 shrink-0 rotate-[135deg]" />
                   )}
-                  <span className="text-[9px] uppercase font-bold tracking-wider opacity-60">
+                  <span className="text-[10px] uppercase font-semibold tracking-wider opacity-60">
                     {metricIdx === 0 ? "Chuva" : metricIdx === 1 ? "Umidade" : "Vento"}
                   </span>
                 </div>
-                <div className="text-sm font-extrabold tabular-nums" key={`metric-value-${metricIdx}`} style={{ animation: "promo-weather-swap 320ms ease both" }}>
+                <div className="text-[10px] font-bold tabular-nums" key={`metric-value-${metricIdx}`} style={{ animation: "promo-weather-swap 320ms ease both" }}>
                   {metricIdx === 0
                     ? `${rain}%`
                     : metricIdx === 1
