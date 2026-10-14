@@ -2682,6 +2682,7 @@ interface AgendaEventoLite {
   horario_gravacao_fim: string | null;
   tipo_evento: string | null;
   descricao: string | null;
+  status?: string | null;
 }
 
 /** Impede que registros antigos ou parcialmente preenchidos da Agenda derrubem o Switcher. */
@@ -2695,6 +2696,7 @@ const normalizeAgendaEvento = (value: any): AgendaEventoLite | null => {
     horario_gravacao_fim: typeof value.horario_gravacao_fim === "string" ? value.horario_gravacao_fim : null,
     tipo_evento: typeof value.tipo_evento === "string" ? value.tipo_evento : null,
     descricao: typeof value.descricao === "string" ? value.descricao : null,
+    status: typeof value.status === "string" ? value.status : null,
   };
 };
 
@@ -2981,7 +2983,7 @@ function useAgendaPodcastTriggers({
     const hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
     const { data } = await supabase
       .from("agenda_eventos")
-      .select("id, programa_id, data, horario_gravacao, horario_gravacao_fim, tipo_evento, descricao")
+      .select("id, programa_id, data, horario_gravacao, horario_gravacao_fim, tipo_evento, descricao, status")
       .eq("user_id", user.id)
       .gte("data", hoje)
       .order("data", { ascending: true });
@@ -2989,7 +2991,8 @@ function useAgendaPodcastTriggers({
       setEventos(
         data
           .map(normalizeAgendaEvento)
-          .filter((evento): evento is AgendaEventoLite => evento !== null),
+          .filter((evento): evento is AgendaEventoLite => evento !== null)
+          .filter((evento) => !["cancelado", "concluido", "concluído"].includes((evento.status || "").toLowerCase())),
       );
     }
   }, [user, isPodcastStudio]);
