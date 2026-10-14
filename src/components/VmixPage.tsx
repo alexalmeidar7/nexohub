@@ -3457,10 +3457,25 @@ function SwitcherUI({
       });
     });
     const selected = activePreset ? todayPrograms.find((programa: Programa) => programa.id === activePreset) : null;
-    const activeProgram = selected || scheduledProgramForAutomation;
+    const nowMs = now.getTime();
+    const activePodcastEvent = isPodcastStudio
+      ? Object.values(eventoPorPrograma).find((evento) => {
+          const programaId = resolveAgendaEventoProgramaId(evento, podcastProgramas);
+          const programa = podcastProgramas.find((item: any) => item.id === programaId);
+          const startMs = eventoStartMs(evento);
+          const endMs = eventoEndMs(evento, programa);
+          return !!programa && startMs !== null && endMs !== null && startMs <= nowMs && nowMs < endMs
+            && (isLiveEvento(evento.tipo_evento) || isRecordingEvento(evento.tipo_evento));
+        })
+      : undefined;
+    const activeProgram = isPodcastStudio
+      ? activePodcastEvent
+        ? podcastProgramas.find((programa: any) => programa.id === resolveAgendaEventoProgramaId(activePodcastEvent, podcastProgramas))
+        : null
+      : selected || scheduledProgramForAutomation;
     if (!activeProgram) return;
     const dayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-    const executionKey = `${user.id}:${studioName || "default"}:${dayKey}:${activeProgram.id}`;
+    const executionKey = `${user.id}:${studioName || "default"}:${dayKey}:${isPodcastStudio ? activePodcastEvent?.id : activeProgram.id}`;
     if (lastAutoPresetKeyRef.current === executionKey) return;
     lastAutoPresetKeyRef.current = executionKey;
     void (async () => {
@@ -3489,7 +3504,7 @@ function SwitcherUI({
         console.error("[vmix-switcher] Falha ao preparar ações do preset no ar:", error);
       }
     })();
-  }, [connected, savedUrl, user?.id, studioName, programas, activePreset, nowTick, isDefaultAutomationActive, scheduledProgramForAutomation, runCommandsUnified]);
+  }, [connected, savedUrl, user?.id, studioName, programas, activePreset, nowTick, isDefaultAutomationActive, scheduledProgramForAutomation, runCommandsUnified, isPodcastStudio, eventoPorPrograma]);
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
