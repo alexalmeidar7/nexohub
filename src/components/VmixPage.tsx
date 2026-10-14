@@ -2732,50 +2732,6 @@ const eventoEndMs = (evento: AgendaEventoLite, programa?: any) => {
 const isLiveAutomationButton = (button: { nome?: string | null }) =>
   /\blive\b|ao\s*vivo/i.test(button.nome || "");
 
-/** Resolve a janela do programa pela grade semanal, incluindo programas que atravessam a meia-noite. */
-const getProgramGridWindow = (programa: any, now = new Date()) => {
-  const startText = String(programa?.horario_inicio || "").slice(0, 5);
-  const endText = String(programa?.horario_fim || "").slice(0, 5);
-  const parseMinutes = (value: string) => {
-    const match = /^(\\d{1,2}):(\\d{2})$/.exec(value);
-    if (!match) return null;
-    const hours = Number(match[1]);
-    const minutes = Number(match[2]);
-    return hours <= 23 && minutes <= 59 ? hours * 60 + minutes : null;
-  };
-  const startMinutes = parseMinutes(startText);
-  const endMinutes = parseMinutes(endText);
-  if (startMinutes === null || endMinutes === null || startMinutes === endMinutes) return null;
-
-  const dayIndexByName: Record<string, number> = {
-    dom: 0, domingo: 0, seg: 1, segunda: 1, ter: 2, terca: 2,
-    qua: 3, quarta: 3, qui: 4, quinta: 4, sex: 5, sexta: 5,
-    sab: 6, sabado: 6,
-  };
-  const scheduledDays = Array.isArray(programa?.dias_semana)
-    ? programa.dias_semana.map((value: unknown) => String(value).toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim())
-    : [];
-  const dayIsScheduled = (date: Date) => {
-    if (scheduledDays.length === 0) return true;
-    return scheduledDays.some((day: string) => {
-      const key = day.replace(/-feira/g, "").replace(/\\./g, "").trim();
-      const index = dayIndexByName[key] ?? dayIndexByName[key.slice(0, 3)];
-      return index === date.getDay() || key === String(date.getDay());
-    });
-  };
-
-  for (const offset of [0, -1]) {
-    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset, 0, 0, 0, 0);
-    if (!dayIsScheduled(startDate)) continue;
-    const startMs = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), Math.floor(startMinutes / 60), startMinutes % 60, 0, 0).getTime();
-    const endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), Math.floor(endMinutes / 60), endMinutes % 60, 0, 0);
-    if (endMinutes <= startMinutes) endDate.setDate(endDate.getDate() + 1);
-    const endMs = endDate.getTime();
-    if (startMs <= now.getTime() && now.getTime() < endMs) return { startMs, endMs, startText, endText, active: true };
-  }
-  return { startMs: null, endMs: null, startText, endText, active: false };
-};
-
 /** Aceita formatos atuais e legados do widget de monitor de áudio. */
 const getAudioMonitorInput = (button: any): string | null => {
   const monitorTypes = ["audio_monitor", "audio-monitor", "audio", "audio_spectrum", "audio-spectrum", "audio_meter", "audio-meter"];
