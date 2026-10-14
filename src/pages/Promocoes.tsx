@@ -12,7 +12,7 @@ import { resolvePresenterForProgram, resolveSafePresenterPhoto } from "@/lib/onA
 import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users, MessageSquareQuote } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
-import { getApresentadores } from "@/components/ApresentadorForm";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, Legend } from "recharts";
@@ -974,7 +974,12 @@ export default function PromocoesKiosk() {
 
       let aprs: any[] = [];
       try {
-        aprs = edgeAprs.length > 0 ? edgeAprs : await getApresentadores();
+        if (edgeAprs.length > 0) {
+          aprs = edgeAprs;
+        } else {
+          const { getApresentadores } = await import("@/components/ApresentadorForm");
+          aprs = await getApresentadores();
+        }
       } catch {}
       if ((!aprs || aprs.length === 0) && !localUid) {
         aprs = DEFAULT_POSITIVA_APRESENTADORES;
