@@ -2732,6 +2732,50 @@ const eventoEndMs = (evento: AgendaEventoLite, programa?: any) => {
 const isLiveAutomationButton = (button: { nome?: string | null }) =>
   /\blive\b|ao\s*vivo/i.test(button.nome || "");
 
+/** Resolve a janela do programa pela grade semanal, incluindo programas que atravessam a meia-noite. */
+const getProgramGridWindow = (programa: any, now = new Date()) => {
+  const startText = String(programa?.horario_inicio || "").slice(0, 5);
+  const endText = String(programa?.horario_fim || "").slice(0, 5);
+  const parseMinutes = (value: string) => {
+    const match = /^(\\d{1,2}):(\\d{2})$/.exec(value);
+    if (!match) return null;
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    return hours <= 23 && minutes <= 59 ? hours * 60 + minutes : null;
+  };
+  const startMinutes = parseMinutes(startText);
+  const endMinutes = parseMinutes(endText);
+  if (startMinutes === null || endMinutes === null || startMinutes === endMinutes) return null;
+
+  const dayIndexByName: Record<string, number> = {
+    dom: 0, domingo: 0, seg: 1, segunda: 1, ter: 2, terca: 2,
+    qua: 3, quarta: 3, qui: 4, quinta: 4, sex: 5, sexta: 5,
+    sab: 6, sabado: 6,
+  };
+  const scheduledDays = Array.isArray(programa?.dias_semana)
+    ? programa.dias_semana.map((value: unknown) => String(value).toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim())
+    : [];
+  const dayIsScheduled = (date: Date) => {
+    if (scheduledDays.length === 0) return true;
+    return scheduledDays.some((day: string) => {
+      const key = day.replace(/-feira/g, "").replace(/\\./g, "").trim();
+      const index = dayIndexByName[key] ?? dayIndexByName[key.slice(0, 3)];
+      return index === date.getDay() || key === String(date.getDay());
+    });
+  };
+
+  for (const offset of [0, -1]) {
+    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset, 0, 0, 0, 0);
+    if (!dayIsScheduled(startDate)) continue;
+    const startMs = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), Math.floor(startMinutes / 60), startMinutes % 60, 0, 0).getTime();
+    const endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), Math.floor(endMinutes / 60), endMinutes % 60, 0, 0);
+    if (endMinutes <= startMinutes) endDate.setDate(endDate.getDate() + 1);
+    const endMs = endDate.getTime();
+    if (startMs <= now.getTime() && now.getTime() < endMs) return { startMs, endMs, startText, endText, active: true };
+  }
+  return { startMs: null, endMs: null, startText, endText, active: false };
+};
+
 /** Aceita formatos atuais e legados do widget de monitor de áudio. */
 const getAudioMonitorInput = (button: any): string | null => {
   const monitorTypes = ["audio_monitor", "audio-monitor", "audio", "audio_spectrum", "audio-spectrum", "audio_meter", "audio-meter"];
@@ -3093,36 +3137,47 @@ function useAgendaPodcastTriggers({
 
   // Os presets do PODCAST são disparados pelo efeito central do Switcher apenas durante o intervalo ativo da Agenda.
 
-  // StartStreaming no PODCAST é isolado dos demais fluxos: somente um evento AO VIVO,
-  // com o mesmo programa vinculado ao botão, pode autorizar seu disparo.
+  // Os botões personalizados LIVE do PODCAST seguem a grade semanal do programa vinculado,
+  // não a Agenda. A Agenda continua controlando exclusivamente os presets de programa.
   useEffect(() => {
     if (!isPodcastStudio || !user) return;
-    const now = Date.now();
+    const now = new Date();
 
-    for (const [programaId, evento] of Object.entries(eventoPorPrograma)) {
-      if (!isLiveEvento(evento.tipo_evento)) continue;
-      const startMs = eventoStartMs(evento);
-      if (startMs === null || now < startMs || now >= startMs + 120_000) continue;
+    for (const button of customButtons) {
+      if (!hasStartStreamingCommand(button)) continue;
+      const programaId = resolveButtonProgramaId(button, podcastProgramas);
+      if (!programaId) continue;
+      const programa = podcastProgramas.find((item: any) => item.id === programaId);
+      if (!programa) continue;
 
-      const buttons = customButtons.filter((button: any) =>
-        resolveButtonProgramaId(button, podcastProgramas) === programaId &&
-        hasStartStreamingCommand(button) &&
-        Array.isArray(button?.commands) && button.commands.length > 0,
+      const startText = String(programa.horario_inicio || "").slice(0, 5);
+      const [hours, minutes] = startText.split(":").map(Number);
+      if (!Number.isFinite(hours) || !Number.isFinite(minutes)) continue;
+
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0, 0);
+      const startDay = now.getDay();
+      const scheduledDays = Array.isArray(programa.dias_semana) ? programa.dias_semana : [];
+      const dayNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+      const normalizedDays = scheduledDays.map((value: unknown) =>
+        String(value).toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/-feira/g, "").trim()
       );
+      const dayMatches = normalizedDays.length === 0 || normalizedDays.some((day: string) =>
+        day === String(startDay) || day.startsWith(dayNames[startDay].slice(0, 3)) || day.startsWith(dayNames[startDay])
+      );
+      const elapsed = now.getTime() - todayStart.getTime();
+      if (!dayMatches || elapsed < 0 || elapsed >= 120_000) continue;
 
-      for (const button of buttons) {
-        const executionId = `${evento.id}:${button.id}`;
-        if (streamingFiredRef.current.has(executionId)) continue;
-        streamingFiredRef.current.add(executionId);
-        saveIdSet(streamingFiredKey, streamingFiredRef.current);
-        void runCommandsUnified(button.commands as any[], `Agenda AO VIVO: ${button.nome}`);
-        toast({
-          title: "Streaming AO VIVO disparado",
-          description: `${button.nome} — ${evento.data} ${(evento.horario_gravacao || "--:--").slice(0, 5)}`,
-        });
-      }
+      const executionId = `grid:${programaId}:${todayStart.toISOString().slice(0, 10)}:${button.id}`;
+      if (streamingFiredRef.current.has(executionId)) continue;
+      streamingFiredRef.current.add(executionId);
+      saveIdSet(streamingFiredKey, streamingFiredRef.current);
+      void runCommandsUnified(button.commands as any[], `Grade de programação: ${button.nome}`);
+      toast({
+        title: "Streaming programado pela grade",
+        description: `${button.nome} — ${dayNames[startDay]} às ${startText}`,
+      });
     }
-  }, [tick, eventoPorPrograma, isPodcastStudio, user, customButtons, runCommandsUnified, toast, streamingFiredKey]);
+  }, [tick, isPodcastStudio, user, customButtons, podcastProgramas, runCommandsUnified, toast, streamingFiredKey]);
 
   return { isPodcastStudio, eventos, eventoPorPrograma, liveEventoPorPrograma, confirmed, confirmarEvento, rejeitarEvento, agendaTick: tick };
 }
@@ -4825,15 +4880,16 @@ function SwitcherUI({
                         const isAgendaLiveButton = isPodcastStudio && Boolean(linkedProgramaId) && (
                           hasStartStreamingCommand(btn) || isLiveAutomationButton(btn)
                         );
-                        const liveEvento = isAgendaLiveButton && linkedProgramaId
-                          ? liveEventoPorPrograma[linkedProgramaId]
+                        const linkedProgram = isAgendaLiveButton
+                          ? programas.find((programa: Programa) => programa.id === linkedProgramaId)
                           : undefined;
-                        const isLiveButtonEnabled = !isAgendaLiveButton || Boolean(liveEvento);
+                        const liveGridWindow = linkedProgram ? getProgramGridWindow(linkedProgram, new Date(nowTick)) : null;
+                        const isLiveButtonEnabled = !isAgendaLiveButton || Boolean(liveGridWindow?.active);
                         const hasSchedule = isAgendaLiveButton
-                          ? Boolean(liveEvento)
+                          ? Boolean(linkedProgram?.horario_inicio && linkedProgram?.horario_fim)
                           : btn.horario && btn.dias_semana?.length > 0;
-                        const liveScheduleLabel = liveEvento
-                          ? `${liveEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(liveEvento.horario_gravacao || "--:--").slice(0, 5)}`
+                        const liveScheduleLabel = linkedProgram
+                          ? `${(linkedProgram.dias_semana || []).join("/") || "Todos os dias"} · ${String(linkedProgram.horario_inicio || "--:--").slice(0, 5)}–${String(linkedProgram.horario_fim || "--:--").slice(0, 5)}`
                           : "";
                         // Cor padronizada (mesmo visual do botão "+ novo botão")
                         const btnColor = isLiveButtonEnabled ? "#C6F03C" : "#36363d";
@@ -4851,8 +4907,8 @@ function SwitcherUI({
                             }}
                             title={isAgendaLiveButton
                               ? isLiveButtonEnabled
-                                ? `AO VIVO agendado: ${liveScheduleLabel}. O disparo será automático pela Agenda.`
-                                : "Desabilitado: não há evento AO VIVO deste programa salvo na Agenda."
+                                ? `Programa ativo na grade: ${liveScheduleLabel}. O disparo automático segue o dia e horário da grade.`
+                                : `Fora do horário do programa cadastrado na grade: ${liveScheduleLabel}.`
                               : undefined} 
                             draggable
                             onDragStart={(e) => {
@@ -4871,10 +4927,10 @@ function SwitcherUI({
                             onClick={async () => {
                               if (isAgendaLiveButton) {
                                 toast({
-                                  title: isLiveButtonEnabled ? "Botão armado pela Agenda" : "Botão desabilitado",
+                                  title: isLiveButtonEnabled ? "Botão LIVE ativo pela grade" : "Botão LIVE fora do horário",
                                   description: isLiveButtonEnabled
-                                    ? `O StartStreaming será disparado automaticamente em ${liveScheduleLabel}.`
-                                    : "Cadastre um evento AO VIVO para o programa vinculado a este botão.",
+                                    ? `O comando será disparado conforme o dia e horário do programa: ${liveScheduleLabel}.`
+                                    : `A execução seguirá a grade cadastrada: ${liveScheduleLabel}.`,
                                   variant: isLiveButtonEnabled ? "default" : "destructive",
                                 });
                                 return;
@@ -4894,7 +4950,7 @@ function SwitcherUI({
                             {isAgendaLiveButton && !isLiveButtonEnabled && (
                               <div className="absolute top-1 left-1 right-1 flex items-center justify-center gap-1 px-1.5 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.42)", zIndex: 2 }}>
                                 <Lock size={10} style={{ color: "#a1a1aa" }} />
-                                <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: "#c4c4cc" }}>Sem AO VIVO na agenda</span>
+                                <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: "#c4c4cc" }}>Fora do horário da grade</span>
                               </div>
                             )}
                             {btn.dias_semana && btn.dias_semana.length > 0 && (
