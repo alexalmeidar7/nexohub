@@ -1,9 +1,8 @@
 import React, { useState, useEffect, Suspense } from "react";
-import { clearSignOutFlag } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Layout, Cpu, ChevronLeft, Clock, Wifi, WifiOff } from "lucide-react";
 const VmixPage = React.lazy(() => import("@/components/VmixPage"));
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, clearSignOutFlag } from "@/hooks/useAuth";
 import vmixControlLogo from "@/assets/logo-mixcontrol.png";
 import cleanVmixControlLogo from "@/assets/logo-vmixcontrol-clean.png";
 import nexoLogo from "@/assets/logo-nxo.png";
@@ -16,7 +15,7 @@ type VmixControlProps = {
 };
 
 export default function VmixControl({ forcedConnected = false, cleanLayout = false }: VmixControlProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -43,7 +42,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
   };
 
   if (loading) return <VmixControlSkeleton cleanLayout={cleanLayout} />;
