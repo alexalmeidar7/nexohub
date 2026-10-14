@@ -2679,6 +2679,7 @@ interface AgendaEventoLite {
   programa_id: string | null;
   data: string;
   horario_gravacao: string | null;
+  horario_gravacao_fim: string | null;
   tipo_evento: string | null;
   descricao: string | null;
 }
@@ -2691,6 +2692,7 @@ const normalizeAgendaEvento = (value: any): AgendaEventoLite | null => {
     programa_id: value.programa_id === null || value.programa_id === undefined ? null : String(value.programa_id),
     data: value.data,
     horario_gravacao: typeof value.horario_gravacao === "string" ? value.horario_gravacao : null,
+    horario_gravacao_fim: typeof value.horario_gravacao_fim === "string" ? value.horario_gravacao_fim : null,
     tipo_evento: typeof value.tipo_evento === "string" ? value.tipo_evento : null,
     descricao: typeof value.descricao === "string" ? value.descricao : null,
   };
@@ -2699,6 +2701,25 @@ const normalizeAgendaEvento = (value: any): AgendaEventoLite | null => {
 const isLiveEvento = (tipo?: string | null) => {
   const t = (tipo || "").toLowerCase();
   return t.includes("live") || t.includes("ao vivo") || t.includes("vivo");
+};
+
+const isRecordingEvento = (tipo?: string | null) =>
+  (tipo || "").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").includes("gravacao");
+
+const eventoEndMs = (evento: AgendaEventoLite, programa?: any) => {
+  const startMs = eventoStartMs(evento);
+  if (startMs === null) return null;
+  const endTime = (evento.horario_gravacao_fim || "").slice(0, 5);
+  if (endTime) {
+    const end = Date.parse(`${evento.data}T${endTime}:00-03:00`);
+    if (!Number.isNaN(end)) return end <= startMs ? end + 86400_000 : end;
+  }
+  const start = timeToSeconds(programa?.horario_inicio);
+  const finish = timeToSeconds(programa?.horario_fim);
+  const duration = start !== null && finish !== null
+    ? (finish > start ? finish - start : 86400 - start + finish)
+    : 3600;
+  return startMs + duration * 1000;
 };
 
 const isLiveAutomationButton = (button: { nome?: string | null }) =>
@@ -2960,7 +2981,7 @@ function useAgendaPodcastTriggers({
     const hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
     const { data } = await supabase
       .from("agenda_eventos")
-      .select("id, programa_id, data, horario_gravacao, tipo_evento, descricao")
+      .select("id, programa_id, data, horario_gravacao, horario_gravacao_fim, tipo_evento, descricao")
       .eq("user_id", user.id)
       .gte("data", hoje)
       .order("data", { ascending: true });
@@ -3026,12 +3047,7 @@ function useAgendaPodcastTriggers({
         const programaId = resolveAgendaEventoProgramaId(ev, podcastProgramas);
         const programa = podcastProgramas.find((p: any) => p.id === programaId);
         const ms = eventoStartMs(ev);
-        const start = timeToSeconds(programa?.horario_inicio);
-        const end = timeToSeconds(programa?.horario_fim);
-        const duration = start !== null && end !== null
-          ? (end > start ? end - start : 86400 - start + end) * 1000
-          : 3600_000;
-        return { ev, programaId, ms, endMs: ms === null ? null : ms + duration };
+        return { ev, programaId, ms, endMs: eventoEndMs(ev, programa) };
       })
       .filter(item => item.programaId && validIds.has(item.programaId) && isLiveEvento(item.ev.tipo_evento) && !rejected.has(item.ev.id))
       .filter(item => item.ms !== null && item.endMs !== null && (item.ms as number) <= tick && tick < (item.endMs as number))
@@ -3588,17 +3604,14 @@ function SwitcherUI({
         const startMs = eventoStartMs(evento);
         if (!programa || startMs === null) return null;
 
-        const startSeconds = timeToSeconds(programa.horario_inicio);
-        const endSeconds = timeToSeconds(programa.horario_fim);
-        const durationSeconds = startSeconds !== null && endSeconds !== null
-          ? (endSeconds > startSeconds ? endSeconds - startSeconds : 86400 - startSeconds + endSeconds)
-          : 3600;
+        const endMs = eventoEndMs(evento, programa);
+        if (endMs === null || (!isLiveEvento(evento.tipo_evento) && !isRecordingEvento(evento.tipo_evento))) return null;
 
         return {
           evento,
           programa,
           startMs,
-          endMs: startMs + durationSeconds * 1000,
+          endMs,
         };
       })
       .filter((item): item is { evento: AgendaEventoLite; programa: Programa; startMs: number; endMs: number } => item !== null)
