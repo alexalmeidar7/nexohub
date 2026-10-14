@@ -1565,13 +1565,20 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
 
   useEffect(() => {
     if (!savedUrl) return;
-    
     const pollInterval = connected ? 5000 : 20000;
-    const id = setInterval(() => {
-      silentRefresh();
+    const id = window.setInterval(() => {
+      if (navigator.onLine) void silentRefresh();
     }, pollInterval);
-    
-    return () => clearInterval(id);
+    const refreshWhenAvailable = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) void silentRefresh();
+    };
+    window.addEventListener("online", refreshWhenAvailable);
+    document.addEventListener("visibilitychange", refreshWhenAvailable);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("online", refreshWhenAvailable);
+      document.removeEventListener("visibilitychange", refreshWhenAvailable);
+    };
   }, [connected, savedUrl, silentRefresh]);
 
   // Reconecta em segundo plano se esta conexão já havia sido estabelecida.
