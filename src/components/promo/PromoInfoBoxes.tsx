@@ -235,7 +235,10 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
     ? data?.current?.temperature_2m
     : (daily && (daily.temperature_2m_max[idx] + daily.temperature_2m_min[idx]) / 2);
   const code = isToday ? data?.current?.weather_code : daily?.weather_code?.[idx];
-  const isDay = isToday ? data?.current?.is_day !== 0 : true;
+  const currentHour = Number(String(data?.current?.time || "").slice(11, 13));
+  const isDay = isToday
+    ? (data?.current?.is_day != null ? Number(data.current.is_day) === 1 : currentHour >= 6 && currentHour < 18)
+    : true;
   const rain = daily?.precipitation_probability_max?.[idx] ?? 0;
   const humidity = isToday ? data?.current?.relative_humidity_2m : null;
   const tmax = daily?.temperature_2m_max?.[idx];
