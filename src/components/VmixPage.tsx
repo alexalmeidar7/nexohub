@@ -3026,9 +3026,13 @@ function useAgendaPodcastTriggers({
     if (!isPodcastStudio) return map;
     const validIds = new Set(podcastProgramas.map((p: any) => p.id));
     const candidates = eventos
-      .map(ev => ({ ev, programaId: resolveAgendaEventoProgramaId(ev, podcastProgramas), ms: eventoStartMs(ev) }))
+      .map(ev => {
+        const programaId = resolveAgendaEventoProgramaId(ev, podcastProgramas);
+        const programa = podcastProgramas.find((p: any) => p.id === programaId);
+        return { ev, programaId, ms: eventoStartMs(ev), endMs: eventoEndMs(ev, programa) };
+      })
       .filter(item => item.programaId && validIds.has(item.programaId) && !rejected.has(item.ev.id))
-      .filter(item => item.ms !== null && (item.ms as number) + 3600_000 > tick)
+      .filter(item => item.ms !== null && item.endMs !== null && (item.endMs as number) > tick)
       .sort((a, b) => (a.ms as number) - (b.ms as number));
     for (const { ev, programaId } of candidates) {
       if (!map[programaId as string]) map[programaId as string] = ev;
