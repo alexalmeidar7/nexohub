@@ -4580,13 +4580,12 @@ function SwitcherUI({
                             >
                             {!progOnAir && (agendaEvento || startTime) && (
                               <div
-                                className="absolute top-1.5 left-1.5 flex flex-col items-start gap-1 px-2 py-[3px] rounded"
-                                style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 2 }}
+                                className="absolute top-1.5 left-1.5 z-[2] flex flex-col items-start gap-1"
                                 title={agendaEvento ? "Horário definido na agenda" : "Horário de início"}
                               >
                                 <div className="flex items-center gap-1">
                                   <Clock size={11} style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#888" }} />
-                                  <span className="text-[11px] font-black tabular-nums leading-none" style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#ddd" }}>
+                                  <span className="text-[11px] font-normal tabular-nums leading-none" style={{ color: agendaEvento ? "#C6F03C" : progOnAir ? "#fff" : "#ddd" }}>
                                     {agendaEvento ? (agendaEvento.horario_gravacao || startTime).slice(0, 5) : startTime}
                                   </span>
                                 </div>
@@ -4601,16 +4600,11 @@ function SwitcherUI({
 
                             {!isPodcastStudio && remaining !== null && (
                               <div
-                                className="absolute top-1.5 left-1.5 z-[3] flex items-center gap-1 rounded-md px-2 py-1 shadow-lg"
-                                style={{
-                                  background: "linear-gradient(135deg, rgba(15,15,18,0.94), rgba(38,38,44,0.94))",
-                                  border: "1px solid rgba(255,255,255,0.32)",
-                                  boxShadow: "0 4px 14px rgba(0,0,0,0.38)",
-                                }}
+                                className="absolute top-1.5 left-1.5 z-[3] flex items-center gap-1"
                                 title="Tempo restante do programa no ar"
                               >
                                 {Math.floor(nowTick / 4000) % 2 === 0 ? (
-                                  <span className="text-[10px] font-black tabular-nums tracking-wide" style={{ color: "#fff" }}>
+                                  <span className="text-[10px] font-normal tabular-nums tracking-wide" style={{ color: "#fff" }}>
                                     <Clock size={10} className="mr-1 inline-block" style={{ color: "#C6F03C" }} />{startTime}
                                   </span>
                                 ) : (
@@ -4641,7 +4635,7 @@ function SwitcherUI({
                                       ? "sáb/dom"
                                       : days.join("/");
                               return label ? (
-                                <div className="absolute bottom-1.5 left-1.5 z-[3] max-w-[calc(100%-12px)] truncate rounded-sm bg-black/75 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-white">
+                                <div className="absolute bottom-1.5 left-1.5 z-[3] max-w-[calc(100%-12px)] truncate text-[8px] font-normal uppercase tracking-wide text-white/80">
                                   {label}
                                 </div>
                               ) : null;
