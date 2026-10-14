@@ -4467,7 +4467,12 @@ function SwitcherUI({
 
                       const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
                       const studioFilterActive = isStudioScoped(studioName);
-                      const programasEstudio = programas.filter(p => matchesStudio(p.estudio, studioName) && isProgramForToday(p));
+                      // No PODCAST, listar todos os programas vinculados ao estúdio, mesmo
+                      // quando não pertencem ao dia de hoje. A Agenda controla somente
+                      // quando cada preset fica ativo, não se o botão deve existir.
+                      const programasEstudio = programas.filter(p =>
+                        matchesStudio(p.estudio, studioName) && (isPodcastStudio || isProgramForToday(p))
+                      );
                       const ordered = hasSavedOrder ? programasEstudio : [...programasEstudio].sort((a, b) => {
                         const studioOrder = (s: string | null) => {
                           if (!s) return 2;
