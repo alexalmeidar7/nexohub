@@ -868,6 +868,39 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     }
   }, [user, loadProgramas]);
 
+  // Mantém a grade sincronizada sem recarregar a página.
+  // Realtime atende as alterações normais; a consulta periódica cobre eventos perdidos.
+  useEffect(() => {
+    if (!user?.id) return;
+    let disposed = false;
+    let debounceTimer: number | undefined;
+    const refresh = () => {
+      if (disposed || document.visibilityState === "hidden") return;
+      void loadProgramas();
+    };
+    const channel = supabase
+      .channel(`vmix-program-grid-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${user.id}` },
+        () => {
+          if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
+          debounceTimer = window.setTimeout(refresh, 250);
+        },
+      )
+      .subscribe();
+    const pollId = window.setInterval(refresh, 15000);
+    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      disposed = true;
+      if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
+      window.clearInterval(pollId);
+      document.removeEventListener("visibilitychange", onVisible);
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, loadProgramas]);
+
   // Estúdios únicos cadastrados na Grade de Programação
   const estudiosDisponiveis = useMemo(
     () => Array.from(new Set(programas.map(p => (p.estudio || "").trim()).filter(Boolean))).sort(),
