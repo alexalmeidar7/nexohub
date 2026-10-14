@@ -1494,11 +1494,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
 
-      toast({ title: "Erro de conexão", description: `${message}${hint}`, variant: "destructive" });
+      if (!isAutoConnect) toast({ title: "Erro de conexão", description: `${message}${hint}`, variant: "destructive" });
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, selectedConnectionId, persistActiveConnection]);
+  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, selectedConnectionId, persistActiveConnection, user?.id, setConnected, setConnecting, setActiveTab]);
 
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
@@ -1511,18 +1511,18 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       const vmixState = parseVmixXml(xmlText);
       applyVmixState(vmixState);
       persistVmixSnapshot(vmixState);
-      // Reset fail counter and ensure status is connected on success
-      if (!connected) setConnected(true);
+      // Uma resposta válida restaura o estado online sem recarregar a página.
+      setConnected(true);
       silentFailCountRef.current = 0;
     } catch {
-      // Only disconnect after 3 consecutive failures
+      // Pequenas oscilações não derrubam a conexão imediatamente.
       silentFailCountRef.current += 1;
       if (silentFailCountRef.current >= 3) {
         setConnected(false);
         silentFailCountRef.current = 0;
       }
     }
-  }, [savedUrl, vmixFetch, applyVmixState, persistVmixSnapshot]);
+  }, [savedUrl, vmixFetch, applyVmixState, persistVmixSnapshot, setConnected]);
 
   // Update input mapping whenever inputs change
   useEffect(() => {
@@ -1570,6 +1570,21 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     
     return () => clearInterval(id);
   }, [connected, savedUrl, silentRefresh]);
+
+  // Reconecta em segundo plano se esta conexão já havia sido estabelecida.
+  // Não navega, não recarrega a página e não exibe alertas repetidos durante a tentativa.
+  useEffect(() => {
+    if (!user?.id || !savedUrl || !selectedConnectionId || connected || connecting) return;
+    let shouldReconnect = false;
+    try {
+      shouldReconnect = localStorage.getItem(`vmix_last_connected_${user.id}`) === selectedConnectionId;
+    } catch { /* armazenamento pode estar indisponível em navegadores incorporados */ }
+    if (!shouldReconnect) return;
+    const retryId = window.setTimeout(() => {
+      void connectToVmixRef.current?.(true);
+    }, 4000);
+    return () => window.clearTimeout(retryId);
+  }, [user?.id, savedUrl, selectedConnectionId, connected, connecting]);
 
   const resolveInputKey = useCallback((inputKey: string | undefined): string | undefined => {
     if (!inputKey || !inputKey.includes("-")) return inputKey;
