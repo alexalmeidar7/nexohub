@@ -246,8 +246,16 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
 
   return (
     <div style={cardStyle}>
-      <div style={titleStyle}>
-        <Cloud size={11} /> Previsão do Tempo
+      <div style={{ ...titleStyle, justifyContent: "space-between", minWidth: 0 }}>
+        <span className="flex items-center gap-1.5 min-w-0">
+          <Cloud size={11} /> Previsão do Tempo
+        </span>
+        {effectiveCity && (
+          <span className="flex items-center gap-1 min-w-0" style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.3, color: PROMO_TEXT, textTransform: "none", whiteSpace: "nowrap" }}>
+            <MapPin size={9} style={{ opacity: 0.75, flexShrink: 0 }} />
+            <span className="truncate">{effectiveCity}</span>
+          </span>
+        )}
       </div>
 
       {!effectiveCity ? (
@@ -278,17 +286,11 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5" style={{ fontSize: 8, fontWeight: 700, color: PROMO_TEXT }}>
-                    <MapPin size={8} className="mr-1 opacity-70" />
-                    {effectiveCity}
-                  </div>
-                  <div className="mt-1 flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-2" style={{ fontSize: 9, fontWeight: 700 }}>
-                      <span className="text-blue-400">Min {Math.round(tmin ?? 0)}°</span>
-                      <span className="opacity-20">|</span>
-                      <span className="text-orange-400">Max {Math.round(tmax ?? 0)}°</span>
-                    </div>
+                <div className="flex items-stretch gap-2.5 ml-1">
+                  <div aria-hidden="true" style={{ width: 1, alignSelf: "stretch", minHeight: 34, background: "rgba(255,255,255,0.22)" }} />
+                  <div className="flex flex-col justify-center gap-1" style={{ fontSize: 9, lineHeight: 1.15, fontWeight: 700, color: "#FFFFFF", whiteSpace: "nowrap" }}>
+                    <span>Min {tmin != null ? Math.round(tmin) : "—"}°</span>
+                    <span>Max {tmax != null ? Math.round(tmax) : "—"}°</span>
                   </div>
                 </div>
               </div>
