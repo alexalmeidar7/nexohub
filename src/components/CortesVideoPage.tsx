@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Scissors, Play, Pause, RotateCcw, RotateCw, Download, Upload,
-  Type, Video, Image as ImageIcon, Sliders, Settings, Search,
+  Type, Video, Image as ImageIcon, Sliders, Settings, Search, Folder,
   ChevronDown, ZoomIn, ZoomOut, Maximize2, Trash2, Plus, Volume2,
-  Sparkles, Check, X, AlertCircle, Loader2
+  Sparkles, Check, X, AlertCircle, Loader2, HardDrive, AudioLines
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import { fetchFile } from "@ffmpeg/util";
 
 // Aspect Ratio Presets
 interface AspectPreset {
@@ -38,7 +40,11 @@ interface MediaAsset {
   width: number;
   height: number;
   thumbnail?: string;
+  waveform?: number[];
   file?: File;
+  storagePath?: string;
+  sizeBytes?: number;
+  persisted?: boolean;
 }
 
 // Timeline Media Clip
@@ -53,6 +59,7 @@ interface TimelineClip {
   mediaStart: number;  // offset inside source media
   color: string;
   thumbnail?: string;
+  waveform?: number[];
 }
 
 // Text Overlay
@@ -80,6 +87,48 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${ms}`;
 }
 
+const VIDEO_LIBRARY_LIMIT = 50 * 1024 * 1024;
+const VIDEO_LIBRARY_BUCKET = "video-editor-media";
+
+async function extractWaveform(file: File, sampleCount = 96): Promise<number[]> {
+  const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContextCtor) throw new Error("Web Audio indisponível");
+  const context: AudioContext = new AudioContextCtor();
+  try {
+    const decoded = await context.decodeAudioData(await file.arrayBuffer());
+    const channel = decoded.getChannelData(0);
+    const samplesPerBucket = Math.max(1, Math.floor(channel.length / sampleCount));
+    const peaks: number[] = [];
+    for (let bucket = 0; bucket < sampleCount; bucket++) {
+      const start = bucket * samplesPerBucket;
+      const end = Math.min(channel.length, start + samplesPerBucket);
+      let peak = 0;
+      for (let i = start; i < end; i += 8) peak = Math.max(peak, Math.abs(channel[i] || 0));
+      peaks.push(Math.max(0.04, Math.min(1, peak)));
+    }
+    return peaks;
+  } finally {
+    void context.close().catch(() => {});
+  }
+}
+
+async function fetchFFmpegAsset(url: string, mimeType: string): Promise<string> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 45000);
+  try {
+    const response = await fetch(url, { signal: controller.signal, cache: "force-cache" });
+    if (!response.ok) throw new Error(`Não foi possível baixar o codificador (HTTP ${response.status}).`);
+    const buffer = await response.arrayBuffer();
+    if (!buffer.byteLength) throw new Error("O arquivo do codificador veio vazio.");
+    return URL.createObjectURL(new Blob([buffer], { type: mimeType }));
+  } catch (error: any) {
+    if (error?.name === "AbortError") throw new Error("O download do codificador excedeu 45 segundos. Verifique a conexão e tente novamente.");
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 const CLIP_COLORS = [
   "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4"
 ];
@@ -95,6 +144,8 @@ const FONT_OPTIONS = [
 ];
 
 export default function CortesVideoPage() {
+  const { user } = useAuth();
+
   // Project settings
   const [projectName, setProjectName] = useState("Project Name");
   const [isEditingName, setIsEditingName] = useState(false);
@@ -104,11 +155,16 @@ export default function CortesVideoPage() {
   const [bgColor, setBgColor] = useState("#000000");
 
   // Navigation / Sidebar
-  const [activeTab, setActiveTab] = useState<"video" | "texto" | "ajustes">("video");
+  const [activeTab, setActiveTab] = useState<"video" | "texto" | "ajustes" | "biblioteca">("video");
 
   // Media Library
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
+  const [libraryUsageBytes, setLibraryUsageBytes] = useState(0);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [isUploadingLibrary, setIsUploadingLibrary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
 
   // Timeline State
   const [clips, setClips] = useState<TimelineClip[]>([]);
@@ -127,13 +183,15 @@ export default function CortesVideoPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportPhase, setExportPhase] = useState("");
+  const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
+  const [exportNameDraft, setExportNameDraft] = useState("");
   const exportingRef = useRef(false);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioDestinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const audioSourcesRef = useRef<Map<string, MediaElementAudioSourceNode>>(new Map());
   const [exportStart, setExportStart] = useState(0);
-  const [exportEnd, setExportEnd] = useState(60);
+  const [exportEnd, setExportEnd] = useState(0);
 
   // Canvas & Preview Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -144,24 +202,64 @@ export default function CortesVideoPage() {
   const animationFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(Date.now());
 
-  // Compute total duration of the timeline
-  const totalDuration = useMemo(() => {
-    let maxTime = 60; // minimum ruler 60s
-    clips.forEach(c => {
-      const end = c.start + c.duration;
-      if (end > maxTime) maxTime = end;
-    });
-    textOverlays.forEach(t => {
-      const end = t.start + t.duration;
-      if (end > maxTime) maxTime = end;
-    });
-    return Math.ceil(maxTime / 6) * 6; // snap to 6-second increments for ruler
+  // Real content duration is separate from the ruler's minimum display width.
+  const contentDuration = useMemo(() => {
+    let maxTime = 0;
+    clips.forEach(clip => { maxTime = Math.max(maxTime, clip.start + clip.duration); });
+    textOverlays.forEach(item => { maxTime = Math.max(maxTime, item.start + item.duration); });
+    return maxTime;
   }, [clips, textOverlays]);
 
+  const totalDuration = useMemo(() => {
+    return Math.ceil(Math.max(60, contentDuration) / 6) * 6;
+  }, [contentDuration]);
+
   useEffect(() => {
-    setExportStart(prev => Math.min(Math.max(0, prev), totalDuration));
-    setExportEnd(prev => prev === 60 ? totalDuration : Math.min(Math.max(0, prev), totalDuration));
-  }, [totalDuration]);
+    setExportStart(prev => Math.min(Math.max(0, prev), contentDuration));
+    setExportEnd(prev => prev === 0 ? contentDuration : Math.min(Math.max(0, prev), contentDuration));
+  }, [contentDuration]);
+
+  // Load this user's saved video library from private Supabase Storage.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadLibrary() {
+      if (!user?.id) {
+        setLibraryAssets([]);
+        setLibraryUsageBytes(0);
+        return;
+      }
+      setLibraryLoading(true);
+      try {
+        const { data, error } = await (supabase.from("video_editor_assets" as any) as any)
+          .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+        if (error) throw error;
+        const rows = data || [];
+        const hydrated: MediaAsset[] = await Promise.all(rows.map(async (row: any) => {
+          const { data: signed, error: signedError } = await supabase.storage
+            .from(VIDEO_LIBRARY_BUCKET).createSignedUrl(row.storage_path, 7 * 24 * 60 * 60);
+          if (signedError || !signed?.signedUrl) throw signedError || new Error("Não foi possível abrir um vídeo salvo.");
+          return {
+            id: row.id, type: "video" as const, name: row.name, url: signed.signedUrl,
+            duration: Number(row.duration) || 10, width: Number(row.width) || 1920,
+            height: Number(row.height) || 1080, thumbnail: row.thumbnail || undefined,
+            waveform: Array.isArray(row.waveform) ? row.waveform.map(Number) : undefined,
+            storagePath: row.storage_path, sizeBytes: Number(row.size_bytes) || 0, persisted: true,
+          };
+        }));
+        if (!cancelled) {
+          setLibraryAssets(hydrated);
+          setLibraryUsageBytes(rows.reduce((sum: number, row: any) => sum + (Number(row.size_bytes) || 0), 0));
+        }
+      } catch (error: any) {
+        console.error("Falha ao carregar biblioteca de vídeos:", error);
+        if (!cancelled) toast.error("Não foi possível carregar a biblioteca salva: " + (error?.message || "verifique sua conexão."));
+      } finally {
+        if (!cancelled) setLibraryLoading(false);
+      }
+    }
+    void loadLibrary();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   // Pre-load / maintain HTML5 video elements for clips
   useEffect(() => {
@@ -229,6 +327,10 @@ export default function CortesVideoPage() {
             };
 
             setMediaAssets(prev => [newAsset, ...prev]);
+            void extractWaveform(file).then(waveform => {
+              setMediaAssets(prev => prev.map(asset => asset.id === id ? { ...asset, waveform } : asset));
+              setClips(prev => prev.map(clip => clip.mediaId === id ? { ...clip, waveform } : clip));
+            }).catch(() => { /* some video codecs cannot be decoded by Web Audio */ });
             toast.success(`Vídeo importado: ${file.name}`);
           };
         };
@@ -279,11 +381,131 @@ export default function CortesVideoPage() {
       mediaStart: 0,
       color: CLIP_COLORS[clips.length % CLIP_COLORS.length],
       thumbnail: asset.thumbnail,
+      waveform: asset.waveform,
     };
 
     setClips(prev => [...prev, newClip]);
     setSelectedClipId(newClip.id);
     toast.success(`Adicionado à timeline: ${asset.name}`);
+  };
+
+  const handleLibraryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!files.length) return;
+    if (!user?.id) {
+      toast.error("Entre na sua conta para salvar vídeos na biblioteca.");
+      return;
+    }
+    const videos = files.filter(file => file.type.startsWith("video/"));
+    if (videos.length !== files.length) toast.error("A biblioteca aceita apenas arquivos de vídeo.");
+    if (!videos.length) return;
+    const incomingBytes = videos.reduce((sum, file) => sum + file.size, 0);
+    if (incomingBytes + libraryUsageBytes > VIDEO_LIBRARY_LIMIT) {
+      const remaining = Math.max(0, VIDEO_LIBRARY_LIMIT - libraryUsageBytes);
+      toast.error(`Limite de 50 MB por usuário. Espaço restante: ${(remaining / (1024 * 1024)).toFixed(1)} MB.`);
+      return;
+    }
+
+    setIsUploadingLibrary(true);
+    let addedBytes = 0;
+    try {
+      for (const file of videos) {
+        if (libraryUsageBytes + addedBytes + file.size > VIDEO_LIBRARY_LIMIT) {
+          toast.error(`O vídeo "${file.name}" ultrapassa o limite restante de 50 MB.`);
+          continue;
+        }
+        const tempUrl = URL.createObjectURL(file);
+        let metadata: { duration: number; width: number; height: number; thumbnail?: string; waveform?: number[] };
+        try {
+          metadata = await new Promise((resolve, reject) => {
+            const video = document.createElement("video");
+            video.preload = "metadata";
+            video.muted = true;
+            video.src = tempUrl;
+            video.onloadedmetadata = async () => {
+              const result: any = { duration: Number.isFinite(video.duration) ? video.duration : 10, width: video.videoWidth || 1920, height: video.videoHeight || 1080 };
+              try {
+                video.currentTime = Math.min(0.5, result.duration / 2);
+                await new Promise<void>(done => { video.onseeked = () => done(); video.onerror = () => done(); });
+                const thumb = document.createElement("canvas");
+                thumb.width = 160; thumb.height = 90;
+                thumb.getContext("2d")?.drawImage(video, 0, 0, 160, 90);
+                result.thumbnail = thumb.toDataURL("image/jpeg", 0.65);
+              } catch {}
+              try { result.waveform = await extractWaveform(file); } catch {}
+              resolve(result);
+            };
+            video.onerror = () => reject(new Error(`Não foi possível ler os metadados de ${file.name}.`));
+          });
+        } finally {
+          URL.revokeObjectURL(tempUrl);
+        }
+
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120) || "video.mp4";
+        const storagePath = `${user.id}/${crypto.randomUUID()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage.from(VIDEO_LIBRARY_BUCKET).upload(storagePath, file, {
+          upsert: false, contentType: file.type, cacheControl: "3600",
+        });
+        if (uploadError) throw uploadError;
+
+        const { data: signed, error: signedError } = await supabase.storage.from(VIDEO_LIBRARY_BUCKET)
+          .createSignedUrl(storagePath, 7 * 24 * 60 * 60);
+        if (signedError || !signed?.signedUrl) {
+          await supabase.storage.from(VIDEO_LIBRARY_BUCKET).remove([storagePath]);
+          throw signedError || new Error("Não foi possível criar o link do vídeo.");
+        }
+
+        const { data: row, error: insertError } = await (supabase.from("video_editor_assets" as any) as any)
+          .insert({
+            user_id: user.id, name: file.name, storage_path: storagePath, size_bytes: file.size,
+            duration: metadata.duration, width: metadata.width, height: metadata.height,
+            thumbnail: metadata.thumbnail || null, waveform: metadata.waveform || null,
+          }).select("*").single();
+        if (insertError) {
+          await supabase.storage.from(VIDEO_LIBRARY_BUCKET).remove([storagePath]);
+          throw insertError;
+        }
+        const asset: MediaAsset = {
+          id: row.id, type: "video", name: row.name, url: signed.signedUrl, duration: metadata.duration,
+          width: metadata.width, height: metadata.height, thumbnail: metadata.thumbnail,
+          waveform: metadata.waveform, storagePath, sizeBytes: file.size, persisted: true,
+        };
+        setLibraryAssets(prev => [asset, ...prev]);
+        addedBytes += file.size;
+      }
+      if (addedBytes > 0) {
+        setLibraryUsageBytes(prev => prev + addedBytes);
+        toast.success("Vídeo(s) salvo(s) na sua biblioteca.");
+      }
+    } catch (error: any) {
+      console.error("Falha ao salvar vídeo:", error);
+      toast.error("Falha ao salvar na biblioteca: " + (error?.message || "tente novamente."));
+    } finally {
+      setIsUploadingLibrary(false);
+    }
+  };
+
+  const handleDeleteLibraryAsset = async (asset: MediaAsset) => {
+    if (!user?.id || !asset.storagePath) return;
+    const confirmed = window.confirm(`Excluir "${asset.name}" da biblioteca? Os clipes já adicionados à timeline não serão removidos automaticamente.`);
+    if (!confirmed) return;
+    const { error: rowError } = await (supabase.from("video_editor_assets" as any) as any)
+      .delete().eq("id", asset.id).eq("user_id", user.id);
+    if (rowError) {
+      toast.error("Não foi possível excluir o registro: " + rowError.message);
+      return;
+    }
+    const { error: storageError } = await supabase.storage.from(VIDEO_LIBRARY_BUCKET).remove([asset.storagePath]);
+    if (storageError) console.warn("Arquivo removido do catálogo, mas a limpeza do Storage falhou:", storageError);
+    setLibraryAssets(prev => prev.filter(item => item.id !== asset.id));
+    setLibraryUsageBytes(prev => Math.max(0, prev - (asset.sizeBytes || 0)));
+    toast.success("Vídeo removido da biblioteca.");
+  };
+
+  const addLibraryAssetToTimeline = (asset: MediaAsset) => {
+    addAssetToTimeline(asset);
+    setActiveTab("video");
   };
 
   // Split Clip Action ("Dividir")
@@ -573,14 +795,27 @@ export default function CortesVideoPage() {
   }, [draggingPlayhead, totalDuration, zoom, renderCanvasFrame]);
 
   // Export Video (Canvas + Audio to WebM / MP4)
-  const handleExportVideo = async () => {
+  const handleExportVideo = async (confirmedName?: string) => {
+    if (!confirmedName) {
+      setExportNameDraft(projectName === "Project Name" ? "" : projectName);
+      setIsNameDialogOpen(true);
+      return;
+    }
+    const exportProjectName = confirmedName.trim();
+    if (!exportProjectName) {
+      toast.error("Digite um nome para o projeto antes de renderizar.");
+      setIsNameDialogOpen(true);
+      return;
+    }
+    setProjectName(exportProjectName);
+    setIsNameDialogOpen(false);
     if (clips.length === 0) {
       toast.error("Adicione pelo menos um vídeo ou imagem antes de exportar.");
       return;
     }
 
-    const normalizedExportStart = Math.max(0, Math.min(exportStart, totalDuration));
-    const normalizedExportEnd = Math.max(0, Math.min(exportEnd, totalDuration));
+    const normalizedExportStart = Math.max(0, Math.min(exportStart, contentDuration));
+    const normalizedExportEnd = Math.max(0, Math.min(exportEnd, contentDuration));
     if (normalizedExportEnd <= normalizedExportStart) {
       toast.error("O fim da exportação precisa ser maior que o início.");
       return;
@@ -734,11 +969,20 @@ export default function CortesVideoPage() {
           setExportProgress(Math.min(98, 66 + Math.round(Math.max(0, Math.min(1, progress)) * 32)));
         });
         const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
-        const [coreURL, wasmURL] = await Promise.all([
-          toBlobURL(`${coreBase}/ffmpeg-core.js`, "text/javascript"),
-          toBlobURL(`${coreBase}/ffmpeg-core.wasm`, "application/wasm"),
+        setExportPhase("Baixando codificador FFmpeg (1/2)…");
+        setExportProgress(67);
+        const coreURL = await fetchFFmpegAsset(`${coreBase}/ffmpeg-core.js`, "text/javascript");
+        setExportPhase("Baixando codificador FFmpeg (2/2)…");
+        setExportProgress(68);
+        const wasmURL = await fetchFFmpegAsset(`${coreBase}/ffmpeg-core.wasm`, "application/wasm");
+        setExportPhase("Inicializando codificador…");
+        setExportProgress(69);
+        await Promise.race([
+          ffmpeg.load({ coreURL, wasmURL }),
+          new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("O FFmpeg não iniciou em 60 segundos. Recarregue a página e tente novamente.")), 60000)),
         ]);
-        await ffmpeg.load({ coreURL, wasmURL });
+        URL.revokeObjectURL(coreURL);
+        URL.revokeObjectURL(wasmURL);
         ffmpegRef.current = ffmpeg;
       }
 
@@ -776,7 +1020,7 @@ export default function CortesVideoPage() {
       const url = URL.createObjectURL(mp4Blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${projectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video"}.mp4`;
+      link.download = `${exportProjectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video"}.mp4`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -785,6 +1029,7 @@ export default function CortesVideoPage() {
     } catch (err: any) {
       console.error("Export error:", err);
       toast.error("Falha no render: " + (err?.message || "Verifique a conexão e tente novamente."));
+      setExportProgress(0);
     } finally {
       if (renderTimer) clearTimeout(renderTimer);
       if (recorder?.state === "recording") {
@@ -919,6 +1164,16 @@ export default function CortesVideoPage() {
             <Sliders className="w-5 h-5" />
             <span className="text-[10px]">Ajustes</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("biblioteca")}
+            className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all w-12 ${activeTab === "biblioteca" ? "bg-slate-100 text-blue-600 font-bold" : "text-slate-400 hover:text-slate-700"}`}
+            title="Biblioteca de vídeos salvos"
+          >
+            <Folder className="w-5 h-5" />
+            <span className="text-[10px]">Biblioteca</span>
+          </button>
         </nav>
 
         {/* Left Drawer / Tool Panel */}
@@ -926,7 +1181,18 @@ export default function CortesVideoPage() {
           {/* ── TAB: VÍDEO / MÍDIA ── */}
           {activeTab === "video" && (
             <div className="p-4 flex flex-col gap-4 flex-1">
-              <h3 className="text-base font-bold text-slate-800">Vídeo</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-800">Vídeo</h3>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors"
+                  title="Carregar vídeos ou imagens"
+                  aria-label="Carregar vídeos ou imagens"
+                >
+                  <Upload className="w-4 h-4" />
+                </button>
+              </div>
 
               {/* Carregar Mídia - Paleta Nexo azul/branca */}
               <input
@@ -937,14 +1203,7 @@ export default function CortesVideoPage() {
                 className="hidden"
                 onChange={handleFileUpload}
               />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 px-4 rounded-xl bg-[#0055ff] hover:bg-[#0047d4] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:brightness-110 active:scale-98 cursor-pointer"
-              >
-                <Upload className="w-4 h-4 text-white stroke-[2.5]" />
-                <span>Carregar</span>
-              </button>
+
 
               <div className="text-[11px] text-slate-400 text-center font-medium">
                 Clique em uma mídia para adicionar ou arraste-a até a timeline
@@ -1007,6 +1266,67 @@ export default function CortesVideoPage() {
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ── TAB: BIBLIOTECA PERSISTENTE ── */}
+          {activeTab === "biblioteca" && (
+            <div className="p-4 flex flex-col gap-3 flex-1 min-h-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-slate-800">Biblioteca</h3>
+                  <p className="text-[10px] text-slate-500">Vídeos salvos na sua conta</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => libraryInputRef.current?.click()}
+                  disabled={isUploadingLibrary || !user?.id}
+                  className="w-9 h-9 shrink-0 rounded-lg bg-[#0055ff] text-white flex items-center justify-center hover:bg-[#0047d4] disabled:opacity-50"
+                  title="Salvar vídeo na biblioteca"
+                  aria-label="Salvar vídeo na biblioteca"
+                >
+                  {isUploadingLibrary ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                </button>
+                <input ref={libraryInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleLibraryUpload} />
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-3">
+                <div className="flex items-center justify-between text-[10px] font-semibold text-slate-600 mb-2">
+                  <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> Espaço utilizado</span>
+                  <span>{(libraryUsageBytes / (1024 * 1024)).toFixed(1)} / 50 MB</span>
+                </div>
+                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${libraryUsageBytes >= VIDEO_LIBRARY_LIMIT ? "bg-red-500" : "bg-blue-600"}`} style={{ width: `${Math.min(100, (libraryUsageBytes / VIDEO_LIBRARY_LIMIT) * 100)}%` }} />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">Os arquivos ficam salvos na nuvem e podem ser reutilizados em novas edições.</p>
+              </div>
+
+              {!user?.id ? (
+                <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-500">Entre na sua conta para usar a biblioteca persistente.</div>
+              ) : libraryLoading ? (
+                <div className="py-8 flex items-center justify-center text-slate-400 gap-2 text-xs"><Loader2 className="w-4 h-4 animate-spin" /> Carregando vídeos salvos…</div>
+              ) : libraryAssets.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 p-5 flex flex-col items-center text-center gap-2 text-slate-400">
+                  <Folder className="w-8 h-8 opacity-40" />
+                  <span className="text-xs">Sua biblioteca ainda está vazia.</span>
+                  <span className="text-[10px]">Use o botão + para salvar vídeos de até 50 MB no total.</span>
+                </div>
+              ) : (
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2">
+                  {libraryAssets.map(asset => (
+                    <div key={asset.id} className="border border-slate-200 rounded-xl p-2 flex items-center gap-2 group hover:border-blue-300">
+                      {asset.thumbnail ? <img src={asset.thumbnail} alt="" className="w-14 h-10 object-cover rounded bg-slate-100 shrink-0" /> : <Video className="w-7 h-7 text-blue-500 shrink-0" />}
+                      <button type="button" onClick={() => addLibraryAssetToTimeline(asset)} className="min-w-0 flex-1 text-left" title="Adicionar à timeline">
+                        <span className="block text-[11px] font-bold text-slate-700 truncate">{asset.name}</span>
+                        <span className="block text-[10px] text-slate-400">{(Math.max(0, asset.sizeBytes || 0) / (1024 * 1024)).toFixed(1)} MB · {formatTime(asset.duration)}</span>
+                      </button>
+                      <button type="button" onClick={() => void handleDeleteLibraryAsset(asset)} className="w-7 h-7 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center" title="Excluir da biblioteca" aria-label={`Excluir ${asset.name}`}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1376,15 +1696,20 @@ export default function CortesVideoPage() {
 
             <div className="flex items-center gap-2 ml-3 pl-3 border-l border-slate-200">
               <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <button type="button" onClick={() => {
+                  const next = Math.max(0, Math.min(currentTime, Math.max(0, contentDuration - 0.1)));
+                  setExportStart(next);
+                  if (exportEnd <= next) setExportEnd(Math.min(contentDuration, next + 1));
+                }} className="rounded bg-blue-50 px-1.5 py-1 text-blue-700 hover:bg-blue-100" title="Marcar entrada na posição atual">I</button>
                 Início
                 <input
                   type="number"
                   min={0}
-                  max={Math.max(0, exportEnd)}
+                  max={Math.max(0, contentDuration)}
                   step={0.1}
                   value={exportStart}
                   onChange={(e) => {
-                    const value = Math.max(0, Math.min(Number(e.target.value) || 0, exportEnd));
+                    const value = Math.max(0, Math.min(Number(e.target.value) || 0, contentDuration));
                     setExportStart(value);
                   }}
                   className="w-16 rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-mono font-normal text-slate-700 outline-none focus:border-blue-500"
@@ -1392,15 +1717,20 @@ export default function CortesVideoPage() {
                 />
               </label>
               <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <button type="button" onClick={() => {
+                  const next = Math.max(exportStart + 0.1, Math.min(currentTime, contentDuration));
+                  setExportEnd(next);
+                  if (exportStart >= next) setExportStart(0);
+                }} className="rounded bg-blue-50 px-1.5 py-1 text-blue-700 hover:bg-blue-100" title="Marcar saída na posição atual">O</button>
                 Fim
                 <input
                   type="number"
                   min={Math.max(0, exportStart)}
-                  max={totalDuration}
+                  max={contentDuration}
                   step={0.1}
                   value={exportEnd}
                   onChange={(e) => {
-                    const value = Math.max(exportStart, Math.min(Number(e.target.value) || 0, totalDuration));
+                    const value = Math.max(exportStart, Math.min(Number(e.target.value) || 0, contentDuration));
                     setExportEnd(value);
                   }}
                   className="w-16 rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-mono font-normal text-slate-700 outline-none focus:border-blue-500"
@@ -1456,6 +1786,7 @@ export default function CortesVideoPage() {
             className="h-6 border-b border-slate-200 bg-slate-50/80 relative cursor-pointer select-none shrink-0"
             style={{ width: `${totalDuration * zoom + 120}px` }}
           >
+            <div className="absolute top-0 bottom-0 bg-blue-100/70 border-l border-r border-blue-300 pointer-events-none" style={{ left: `${exportStart * zoom}px`, width: `${Math.max(0, exportEnd - exportStart) * zoom}px` }} title="Intervalo de renderização In/Out" />
             {Array.from({ length: Math.ceil(totalDuration / 6) + 1 }).map((_, i) => {
               const sec = i * 6;
               const left = sec * zoom;
@@ -1601,9 +1932,45 @@ export default function CortesVideoPage() {
                 })
               )}
             </div>
+
+            {/* TRACK 3: AUDIO WAVEFORM */}
+            <div className="h-7 relative rounded-lg border border-slate-100 bg-slate-50/70 overflow-hidden">
+              <div className="absolute left-2 top-1 text-[8px] uppercase tracking-wider font-bold text-slate-400 z-10 pointer-events-none">Áudio</div>
+              {clips.filter(clip => clip.type === "video").map(clip => {
+                const left = clip.start * zoom;
+                const width = clip.duration * zoom;
+                const peaks = clip.waveform || [];
+                return (
+                  <div key={`wave-${clip.id}`} className="absolute top-0 bottom-0 overflow-hidden flex items-center gap-px px-1 opacity-90" style={{ left: `${left}px`, width: `${Math.max(2, width)}px` }} title={peaks.length ? "Forma de onda do áudio" : "Forma de onda indisponível para este codec"}>
+                    {peaks.length ? peaks.map((peak, index) => (
+                      <span key={index} className="flex-1 min-w-[1px] rounded-full bg-emerald-500/80" style={{ height: `${Math.max(2, peak * 20)}px` }} />
+                    )) : <span className="text-[8px] text-slate-400 ml-12">{clip.name} · áudio não analisado</span>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </footer>
+
+      {isNameDialogOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="render-name-title">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-5">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Video className="w-5 h-5" /></div>
+              <div>
+                <h2 id="render-name-title" className="text-base font-extrabold text-slate-900">Nomeie seu projeto</h2>
+                <p className="text-xs text-slate-500 mt-1">Esse nome será usado no arquivo MP4 exportado.</p>
+              </div>
+            </div>
+            <input autoFocus value={exportNameDraft} onChange={event => setExportNameDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void handleExportVideo(exportNameDraft); if (event.key === "Escape") setIsNameDialogOpen(false); }} placeholder="Ex.: Chamada programa da manhã" maxLength={100} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <button type="button" onClick={() => setIsNameDialogOpen(false)} className="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100">Cancelar</button>
+              <button type="button" disabled={!exportNameDraft.trim()} onClick={() => void handleExportVideo(exportNameDraft)} className="rounded-xl px-4 py-2 text-xs font-bold bg-[#0055ff] text-white hover:bg-[#0047d4] disabled:opacity-40 flex items-center gap-2"><Download className="w-3.5 h-3.5" /> Renderizar MP4</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
