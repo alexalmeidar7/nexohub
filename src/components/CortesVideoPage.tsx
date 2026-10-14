@@ -1024,22 +1024,40 @@ export default function CortesVideoPage() {
         ffmpeg.on("progress", ({ progress }) => {
           setExportProgress(Math.min(98, 66 + Math.round(Math.max(0, Math.min(1, progress)) * 32)));
         });
-        const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
-        setExportPhase("Baixando codificador FFmpeg (1/2)…");
-        setExportProgress(67);
-        const coreURL = await fetchFFmpegAsset(`${coreBase}/ffmpeg-core.js`, "text/javascript");
-        setExportPhase("Baixando codificador FFmpeg (2/2)…");
-        setExportProgress(68);
-        const wasmURL = await fetchFFmpegAsset(`${coreBase}/ffmpeg-core.wasm`, "application/wasm");
-        setExportPhase("Inicializando codificador…");
-        setExportProgress(69);
-        await Promise.race([
-          ffmpeg.load({ coreURL, wasmURL }),
-          new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("O FFmpeg não iniciou em 60 segundos. Recarregue a página e tente novamente.")), 60000)),
-        ]);
-        URL.revokeObjectURL(coreURL);
-        URL.revokeObjectURL(wasmURL);
-        ffmpegRef.current = ffmpeg;
+        // Keep the FFmpeg core version aligned with @ffmpeg/ffmpeg 0.12.10
+        // installed in package.json. A mismatched core can leave load() waiting forever.
+        const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+        let coreURL: string | null = null;
+        let wasmURL: string | null = null;
+        let loadTimeout: ReturnType<typeof window.setTimeout> | null = null;
+        try {
+          setExportPhase("Baixando codificador FFmpeg (1/2)…");
+          setExportProgress(67);
+          coreURL = await fetchFFmpegAsset(`${coreBase}/ffmpeg-core.js`, "text/javascript");
+          setExportPhase("Baixando codificador FFmpeg (2/2)…");
+          setExportProgress(68);
+          wasmURL = await fetchFFmpegAsset(`${coreBase}/ffmpeg-core.wasm`, "application/wasm");
+          setExportPhase("Inicializando codificador…");
+          setExportProgress(69);
+          await Promise.race([
+            ffmpeg.load({ coreURL, wasmURL }),
+            new Promise<never>((_, reject) => {
+              loadTimeout = window.setTimeout(
+                () => reject(new Error("O FFmpeg não conseguiu iniciar. O navegador pode estar bloqueando Worker/WASM ou a rede pode estar impedindo o carregamento. Atualize a prévia e tente novamente; se persistir, precisamos verificar o console do navegador.")),
+                90000,
+              );
+            }),
+          ]);
+          ffmpegRef.current = ffmpeg;
+        } catch (loadError) {
+          // A timed-out worker must be terminated before a new export attempt.
+          try { ffmpeg.terminate(); } catch {}
+          throw loadError;
+        } finally {
+          if (loadTimeout) window.clearTimeout(loadTimeout);
+          if (coreURL) URL.revokeObjectURL(coreURL);
+          if (wasmURL) URL.revokeObjectURL(wasmURL);
+        }
       }
 
       const ffmpeg = ffmpegRef.current;
