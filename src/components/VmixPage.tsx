@@ -3435,6 +3435,7 @@ function SwitcherUI({
     });
     const selected = activePreset ? todayPrograms.find((programa: Programa) => programa.id === activePreset) : null;
     const nowMs = now.getTime();
+    const podcastProgramas = (programas || []).filter((programa: Programa) => matchesStudio(programa.estudio, studioName));
     const activePodcastEvent = isPodcastStudio
       ? Object.values(eventoPorPrograma).find((evento) => {
           const programaId = resolveAgendaEventoProgramaId(evento, podcastProgramas);
