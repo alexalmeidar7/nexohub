@@ -670,7 +670,7 @@ export default function PromocoesKiosk() {
         setStreamCfg({
           audioUrl: (empresa as any).audio_stream_api_url || empresa.audioUrl || "",
           audioXpath: (empresa as any).audio_stream_xpath || empresa.audioXpath || "",
-          videoUrl: (empresa as any).video_stream_api_url || empresa.videoUrl || "",
+          videoUrl: (empresa as any).video_stream_api_url || (empresa as any).videoStreamApiUrl || empresa.videoUrl || "",
           videoXpath: (empresa as any).video_stream_xpath || empresa.videoXpath || "",
         });
       }
@@ -1073,45 +1073,29 @@ export default function PromocoesKiosk() {
     return () => { cancelled = true; clearInterval(iv); };
   }, [audienceUserId, streamCfg.audioUrl, streamCfg.audioXpath]);
 
+  // Busca espectadores de vídeo usando a URL cadastrada em Configurações.
+  // A Edge Function faz a leitura no servidor (evita bloqueio CORS) e tenta
+  // detectar automaticamente o campo de espectadores da resposta Logicahost.
   useEffect(() => {
-    if (!streamCfg.videoUrl || !streamCfg.videoXpath) { setVideoCount(null); return; }
+    const url = streamCfg.videoUrl?.trim();
+    if (!url) { setVideoCount(null); return; }
     let cancelled = false;
-    const extract = (text: string, rawPath: string): number | null => {
-      const path = rawPath.replace(/^\/+/, "").split("/").map(s => s.trim()).filter(Boolean);
-      if (!path.length) return null;
-      const trimmed = text.trim();
-      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-        try {
-          let cur: any = JSON.parse(trimmed);
-          for (const k of path) { if (cur == null) return null; if (Array.isArray(cur)) cur = cur[0]; cur = cur?.[k]; }
-          if (Array.isArray(cur)) cur = cur[0];
-          const n = typeof cur === "string" ? parseInt(cur, 10) : Number(cur);
-          return Number.isFinite(n) ? n : null;
-        } catch { /* fallthrough */ }
-      }
-      let scope = trimmed;
-      for (const tag of path) {
-        const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
-        const m = scope.match(re);
-        if (!m) return null;
-        scope = m[1];
-      }
-      const inner = scope.replace(/<[^>]+>/g, "").trim();
-      const n = parseInt(inner, 10);
-      return Number.isFinite(n) ? n : null;
-    };
     const tick = async () => {
       try {
-        const r = await fetch(streamCfg.videoUrl, { cache: "no-store" });
-        const text = (await r.text()).trim();
-        const n = extract(text, streamCfg.videoXpath);
-        if (!cancelled) setVideoCount(typeof n === "number" ? n : null);
-      } catch { if (!cancelled) setVideoCount(null); }
+        const body: Record<string, unknown> = { userId: audienceUserId, urls: [url] };
+        if (streamCfg.videoXpath?.trim()) body.xpath = streamCfg.videoXpath.trim();
+        const { data, error } = await supabase.functions.invoke("count-stream-listeners", { body });
+        if (cancelled) return;
+        const n = !error && (data as any)?.ok ? (data as any).listeners : null;
+        setVideoCount(typeof n === "number" && Number.isFinite(n) ? n : null);
+      } catch {
+        if (!cancelled) setVideoCount(null);
+      }
     };
     tick();
     const iv = setInterval(tick, 30000);
     return () => { cancelled = true; clearInterval(iv); };
-  }, [streamCfg.videoUrl, streamCfg.videoXpath]);
+  }, [audienceUserId, streamCfg.videoUrl, streamCfg.videoXpath]);
 
   // Rastreia o pico de audiência do dia
   useEffect(() => {
@@ -1821,9 +1805,9 @@ export default function PromocoesKiosk() {
           const videoWins = hasData && v > a;
           const confettiColors = [telaPromoConfig.btn_color_a, telaPromoConfig.btn_color_b, telaPromoConfig.card_border_color, telaPromoConfig.btn_text_color];
           return (
-            <div className="w-full px-2 -mt-2 flex items-center gap-2">
+            <div className="w-full px-2 -mt-2">
               <div
-                className="relative flex-1 min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+                className="relative w-full min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
                 style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 18, "#0a0a0a") }}
                 title="Audiência ao vivo: áudio × vídeo"
               >
@@ -1900,72 +1884,7 @@ export default function PromocoesKiosk() {
                   </div>
                 </div>
               </div>
-              {/* Total de espectadores + Tooltip com pico do dia */}
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      onClick={() => setAudienceDetailsOpen(true)}
-                      className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-pointer hover:brightness-110 transition"
-                      style={{
-                        background: promoDarkGradient,
-                        color: telaPromoConfig.btn_text_color,
-                      }}
-                    >
-                      <Users size={14} />
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-black text-sm leading-none tabular-nums">{hasData ? total.toLocaleString("pt-BR") : "—"}</span>
-                        <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Total</span>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    className="border-0 p-0 overflow-hidden"
-                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}
-                  >
-                    {peakAudience ? (() => {
-                      const d = new Date(peakAudience.timestamp);
-                      const dataStr = d.toLocaleDateString("pt-BR");
-                      const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-                      return (
-                        <div className="min-w-[220px]">
-                          <div className="flex items-center gap-2 px-3 py-2" style={{ background: promoAccentGradient }}>
-                            <Trophy size={16} style={{ color: telaPromoConfig.btn_text_color }} />
-                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: telaPromoConfig.btn_text_color }}>Melhor audiência do dia</span>
-                          </div>
-                          <div className="px-3 py-2.5 space-y-1.5">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-2xl font-black tabular-nums leading-none" style={{ color: telaPromoConfig.btn_text_color }}>{peakAudience.total.toLocaleString("pt-BR")}</span>
-                              <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
-                            </div>
-                            <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
-                            <div className="text-[11px] opacity-90"><span className="opacity-60">Locutor:</span> <span className="font-semibold">{peakAudience.locutor}</span></div>
-                            <div className="text-[11px] opacity-90 flex items-center gap-2 pt-0.5">
-                              <span><span className="opacity-60">Data:</span> {dataStr}</span>
-                              <span><span className="opacity-60">Hora:</span> {horaStr}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setAudienceDetailsOpen(true)}
-                              className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all hover:brightness-110"
-                              style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color }}
-                            >
-                              Ver detalhes
-                            </button>
 
-                          </div>
-                        </div>
-                      );
-                    })() : (
-                      <div className="px-3 py-2.5 flex items-center gap-2 min-w-[200px]">
-                        <Trophy size={14} style={{ color: telaPromoConfig.btn_color_b }} />
-                        <span className="text-[11px] opacity-80">Aguardando primeira medição do dia…</span>
-                      </div>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           );
         })()}
