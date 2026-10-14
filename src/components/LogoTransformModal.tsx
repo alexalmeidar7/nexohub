@@ -22,7 +22,7 @@ import {
   Radio,
 } from "lucide-react";
 import {
-  vectorizeWhiteLogo1080,
+  transformLogoWithBackend,
   dataUrlToFile,
   uploadToPngDataUrl,
 } from "@/services/logoTransformService";
@@ -140,16 +140,25 @@ export function LogoTransformModal({
           },
         ];
 
-        // Processamento local, sem chamada de IA/backend e sem consumo de créditos.
-        const locallyPrepared = await vectorizeWhiteLogo1080(origUrl);
+        // Processamento pela API oficial da OpenAI via Edge Function própria.
+        // Não usa o gateway de IA nem os créditos da Lovable.
+        setProgress(24);
+        const transformed = await transformLogoWithBackend({
+          originalDataUrl: origUrl,
+          sessionId: sid,
+          version: "version_01",
+        });
+        if (!transformed.success || !transformed.imageBase64) {
+          throw new Error(transformed.error || "Não foi possível ajustar a logo pela API da OpenAI.");
+        }
         setProgress(100);
 
         const v1: LogoTransformVersion = {
           id: "version_01",
           name: "Versão preparada",
-          dataUrl: locallyPrepared,
+          dataUrl: transformed.imageBase64,
           status: "ready",
-          isAiGenerated: false,
+          isAiGenerated: true,
         };
 
         setVersions([...initialVersionsList, v1]);
@@ -185,16 +194,25 @@ export function LogoTransformModal({
       const versionKey = `version_${nextIndex.toString().padStart(2, "0")}`;
       const versionName = `Versão ${nextIndex.toString().padStart(2, "0")}`;
 
-      // Novas versões são preparadas localmente; nenhuma chamada de IA é realizada.
-      const locallyPrepared = await vectorizeWhiteLogo1080(originalDataUrl);
+      // Nova tentativa usa novamente a imagem ORIGINAL pela API oficial da OpenAI.
+      // Não usa o gateway de IA nem os créditos da Lovable.
+      const transformed = await transformLogoWithBackend({
+        originalDataUrl,
+        sessionId,
+        version: versionKey,
+        isRetry: true,
+      });
+      if (!transformed.success || !transformed.imageBase64) {
+        throw new Error(transformed.error || "Não foi possível gerar outra opção pela API da OpenAI.");
+      }
       setProgress(100);
 
       const newVersion: LogoTransformVersion = {
         id: versionKey,
         name: versionName,
-        dataUrl: locallyPrepared,
+        dataUrl: transformed.imageBase64,
         status: "ready",
-        isAiGenerated: false,
+        isAiGenerated: true,
       };
 
       setVersions((prev) => [...prev, newVersion]);
