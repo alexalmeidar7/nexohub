@@ -3079,43 +3079,7 @@ function useAgendaPodcastTriggers({
     toast({ title: "Evento desconsiderado", description: "Buscando o próximo evento agendado." });
   }, [rejectedKey, confirmedKey, toast]);
 
-  // ── Gatilho automático ──
-  useEffect(() => {
-    if (!isPodcastStudio || !user) return;
-    const now = Date.now();
-
-    const fire = async (ev: AgendaEventoLite, prog: any) => {
-      firedRef.current.add(ev.id);
-      saveIdSet(firedKey, firedRef.current);
-      const live = isLiveEvento(ev.tipo_evento);
-
-      const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
-        .select("commands")
-        .eq("user_id", user.id)
-        .eq("programa_id", prog.id)
-        .maybeSingle();
-      const cmds = Array.isArray(presetData?.commands) && presetData.commands.length > 0
-        ? presetData.commands
-        : [{ fn: "ScriptStart", input: prog.nome }];
-      await runCommandsUnified(cmds as any[], `Agenda: ${prog.nome}`);
-
-      toast({
-        title: live ? "Automação AO VIVO disparada" : "Automação disparada",
-        description: `${prog.nome} — evento ${ev.data} ${(ev.horario_gravacao || "").slice(0, 5)}`,
-      });
-    };
-
-    for (const [programaId, ev] of Object.entries(eventoPorPrograma)) {
-      if (firedRef.current.has(ev.id)) continue;
-      const startMs = eventoStartMs(ev);
-      if (startMs === null) continue;
-      // Tanto gravação quanto live disparam no horário exato definido na Agenda.
-      if (now >= startMs && now < startMs + 120_000) {
-        const prog = podcastProgramas.find((p: any) => p.id === programaId);
-        if (prog) void fire(ev, prog);
-      }
-    }
-  }, [tick, confirmed, eventoPorPrograma, isPodcastStudio, user, podcastProgramas, runCommandsUnified, toast, firedKey]);
+  // Os presets do PODCAST são disparados pelo efeito central do Switcher apenas durante o intervalo ativo da Agenda.
 
   // StartStreaming no PODCAST é isolado dos demais fluxos: somente um evento AO VIVO,
   // com o mesmo programa vinculado ao botão, pode autorizar seu disparo.
