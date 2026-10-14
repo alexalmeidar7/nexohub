@@ -124,20 +124,26 @@ async function extractWaveform(file: File, sampleCount = 320): Promise<number[]>
 }
 
 async function fetchFFmpegAsset(url: string, mimeType: string): Promise<string> {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 45000);
-  try {
-    const response = await fetch(url, { signal: controller.signal, cache: "force-cache" });
-    if (!response.ok) throw new Error(`Não foi possível baixar o codificador (HTTP ${response.status}).`);
-    const buffer = await response.arrayBuffer();
-    if (!buffer.byteLength) throw new Error("O arquivo do codificador veio vazio.");
-    return URL.createObjectURL(new Blob([buffer], { type: mimeType }));
-  } catch (error: any) {
-    if (error?.name === "AbortError") throw new Error("O download do codificador excedeu 45 segundos. Verifique a conexão e tente novamente.");
-    throw error;
-  } finally {
-    window.clearTimeout(timeout);
+  const alternateUrl = url.replace("https://cdn.jsdelivr.net/npm/", "https://unpkg.com/");
+  let lastError: unknown;
+  for (const candidate of [...new Set([url, alternateUrl])]) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 60000);
+    try {
+      const response = await fetch(candidate, { signal: controller.signal, cache: "force-cache" });
+      if (!response.ok) throw new Error(`HTTP ${response.status} ao baixar ${candidate.includes("unpkg.com") ? "o servidor alternativo" : "o codificador"}.`);
+      const buffer = await response.arrayBuffer();
+      if (!buffer.byteLength) throw new Error("O arquivo do codificador veio vazio.");
+      return URL.createObjectURL(new Blob([buffer], { type: mimeType }));
+    } catch (error: any) {
+      lastError = error;
+      if (error?.name === "AbortError") lastError = new Error("O download do codificador excedeu 60 segundos.");
+      console.warn("Falha ao baixar recurso FFmpeg:", candidate, lastError);
+    } finally {
+      window.clearTimeout(timeout);
+    }
   }
+  throw new Error(`Não foi possível baixar o FFmpeg dos dois servidores. ${lastError instanceof Error ? lastError.message : "Verifique a conexão, bloqueadores e permissões de rede."}`);
 }
 
 const CLIP_COLORS = [
@@ -988,6 +994,9 @@ export default function CortesVideoPage() {
       // Load FFmpeg only when needed. The core is fetched as blobs to satisfy worker/CORS rules.
       if (!ffmpegRef.current) {
         const ffmpeg = new FFmpeg();
+        ffmpeg.on("log", ({ message }) => {
+          console.info("[NexoHub FFmpeg]", message);
+        });
         ffmpeg.on("progress", ({ progress }) => {
           setExportProgress(Math.min(98, 66 + Math.round(Math.max(0, Math.min(1, progress)) * 32)));
         });
@@ -1050,8 +1059,9 @@ export default function CortesVideoPage() {
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       toast.success("Render concluído! MP4 H.264, vídeo 5 Mbps e áudio AAC 96 kbps.");
     } catch (err: any) {
-      console.error("Export error:", err);
-      toast.error("Falha no render: " + (err?.message || "Verifique a conexão e tente novamente."));
+      console.error("Export error during phase:", exportPhase, err);
+      const details = err?.message || "Erro sem detalhes. Abra o console do navegador para ver o log do FFmpeg.";
+      toast.error(`Falha no render — ${exportPhase || "preparação"}: ${details}`, { duration: 12000 });
       setExportProgress(0);
     } finally {
       if (renderTimer) clearTimeout(renderTimer);
