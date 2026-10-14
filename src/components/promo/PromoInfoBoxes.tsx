@@ -311,32 +311,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
                 </div>
               </div>
 
-              {/* Navigation Arrows for Today view */}
-              <div className="flex items-center justify-between mt-auto pt-1">
-                <button
-                  type="button"
-                  onClick={() => setDayIdx((v) => Math.max(0, v - 1))}
-                  disabled={idx === 0}
-                  className="w-5 h-5 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-                  style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: idx === 0 ? 0.35 : 1 }}
-                >
-                  <ChevronLeft size={11} />
-                </button>
 
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: PROMO_MUTED }}>
-                  {label}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => setDayIdx((v) => Math.min((days.length || 1) - 1, v + 1))}
-                  disabled={idx >= days.length - 1}
-                  className="w-5 h-5 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-                  style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: idx >= days.length - 1 ? 0.35 : 1 }}
-                >
-                  <ChevronRight size={11} />
-                </button>
-              </div>
             </div>
           ) : (
             <div className="flex items-center gap-3 flex-1 min-h-0">
