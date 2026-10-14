@@ -157,6 +157,8 @@ const PRESET_COMMANDS = [
   { value: "Stinger6", label: "Stinger6", desc: "Executa a transição Stinger 6 (vMix 29+)", category: "Transição", params: ["input"] },
   { value: "Stinger7", label: "Stinger7", desc: "Executa a transição Stinger 7 (vMix 29+)", category: "Transição", params: ["input"] },
   { value: "Stinger8", label: "Stinger8", desc: "Executa a transição Stinger 8 (vMix 29+)", category: "Transição", params: ["input"] },
+  { value: "StingerX", label: "StingerX", desc: "Comando StingerX recebido por bloco de código", category: "Transição", params: ["input"] },
+  { value: "StringerX", label: "StringerX", desc: "Compatibilidade com blocos que usam a grafia StringerX", category: "Transição", params: ["input"] },
   { value: "FadeToBlack", label: "FadeToBlack", desc: "Transição para tela preta", category: "Transição", params: [] },
   { value: "PreviewInput", label: "PreviewInput", desc: "Envia input para o Preview", category: "Input", params: ["input"] },
   { value: "SelectIndex", label: "SelectIndex", desc: "Seleciona um índice no input", category: "Input", params: ["input", "value"] },
@@ -467,12 +469,10 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       }
 
       // Formato de exportação por chamada: Function(arg1, arg2, ...).
-      const call = line.match(/^([\w.-]+)\s*\((.*)\)\s*[,;]?\s*$/);
+      const call = line.match(/^([\w.-]+)\s*\((.*?)(?:\))?\s*[,;]?\s*$/);
       if (call) {
         let fn = call[1];
         const args = call[2].split(",").map(value => value.trim().replace(/^(['"])(.*)\1$/, "$2"));
-        // Aceita a grafia alternativa usada em alguns blocos copiados.
-        if (/^stringerx$/i.test(fn)) fn = "StingerX";
         const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
         if (args[0]) cmd.input = args[0];
         if (args[1]) cmd.value = args[1];
@@ -484,7 +484,6 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       const parts = line.split(/\s+/);
       let fn = parts.shift() || "";
       if (!fn) continue;
-      if (/^stringerx$/i.test(fn)) fn = "StingerX";
       const cmd: PresetCommand = { id: crypto.randomUUID(), fn };
       for (const part of parts) {
         const separator = part.indexOf("=");
