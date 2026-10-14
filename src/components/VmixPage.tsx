@@ -4431,21 +4431,21 @@ function SwitcherUI({
                     {(() => {
                       const now = new Date();
                       const day = now.getDay();
-                      const daysMap = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+                      const daysMap = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
                       const todayStr = daysMap[day];
                       const currentTimeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
+                      const normalizeDay = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[-.,]/g, "").trim().slice(0, 3);
                       const isProgramForToday = (p: Programa) => {
                         if (!p.dias_semana || p.dias_semana.length === 0) return true;
-                        return p.dias_semana.some(ds => {
-                          const n = ds.toLowerCase().replace(/[-.,]/g, "").trim().slice(0, 3);
-                          return n === todayStr;
-                        });
+                        return p.dias_semana.some(ds => normalizeDay(ds) === todayStr);
                       };
 
                       const isNowInProgram = (p: Programa) => {
                         if (!p.horario_inicio || !p.horario_fim) return false;
-                        return currentTimeStr >= p.horario_inicio.slice(0, 5) && currentTimeStr <= p.horario_fim.slice(0, 5);
+                        const start = p.horario_inicio.slice(0, 5);
+                        const end = p.horario_fim.slice(0, 5);
+                        return start < end ? currentTimeStr >= start && currentTimeStr < end : currentTimeStr >= start || currentTimeStr < end;
                       };
 
                       const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
