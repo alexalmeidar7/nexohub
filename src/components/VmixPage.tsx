@@ -649,6 +649,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     return () => window.removeEventListener("vmix-control-header-action", handleHeaderAction);
   }, [navigate]);
   const [studioName, setStudioName] = useState("");
+
+  // Mantém o nome do estúdio selecionado sincronizado com o cabeçalho global.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("vmix-studio-name", { detail: { studioName } }));
+  }, [studioName]);
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
     try {
@@ -2679,8 +2684,10 @@ interface AgendaEventoLite {
   programa_id: string | null;
   data: string;
   horario_gravacao: string | null;
+  horario_gravacao_fim: string | null;
   tipo_evento: string | null;
   descricao: string | null;
+  status?: string | null;
 }
 
 /** Impede que registros antigos ou parcialmente preenchidos da Agenda derrubem o Switcher. */
@@ -2691,14 +2698,35 @@ const normalizeAgendaEvento = (value: any): AgendaEventoLite | null => {
     programa_id: value.programa_id === null || value.programa_id === undefined ? null : String(value.programa_id),
     data: value.data,
     horario_gravacao: typeof value.horario_gravacao === "string" ? value.horario_gravacao : null,
+    horario_gravacao_fim: typeof value.horario_gravacao_fim === "string" ? value.horario_gravacao_fim : null,
     tipo_evento: typeof value.tipo_evento === "string" ? value.tipo_evento : null,
     descricao: typeof value.descricao === "string" ? value.descricao : null,
+    status: typeof value.status === "string" ? value.status : null,
   };
 };
 
 const isLiveEvento = (tipo?: string | null) => {
   const t = (tipo || "").toLowerCase();
   return t.includes("live") || t.includes("ao vivo") || t.includes("vivo");
+};
+
+const isRecordingEvento = (tipo?: string | null) =>
+  (tipo || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("gravacao");
+
+const eventoEndMs = (evento: AgendaEventoLite, programa?: any) => {
+  const startMs = eventoStartMs(evento);
+  if (startMs === null) return null;
+  const endTime = (evento.horario_gravacao_fim || "").slice(0, 5);
+  if (endTime) {
+    const end = Date.parse(`${evento.data}T${endTime}:00-03:00`);
+    if (!Number.isNaN(end)) return end <= startMs ? end + 86400_000 : end;
+  }
+  const start = timeToSeconds(programa?.horario_inicio);
+  const finish = timeToSeconds(programa?.horario_fim);
+  const duration = start !== null && finish !== null
+    ? (finish > start ? finish - start : 86400 - start + finish)
+    : 3600;
+  return startMs + duration * 1000;
 };
 
 const isLiveAutomationButton = (button: { nome?: string | null }) =>
@@ -2960,7 +2988,7 @@ function useAgendaPodcastTriggers({
     const hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
     const { data } = await supabase
       .from("agenda_eventos")
-      .select("id, programa_id, data, horario_gravacao, tipo_evento, descricao")
+      .select("id, programa_id, data, horario_gravacao, horario_gravacao_fim, tipo_evento, descricao, status")
       .eq("user_id", user.id)
       .gte("data", hoje)
       .order("data", { ascending: true });
@@ -2968,7 +2996,8 @@ function useAgendaPodcastTriggers({
       setEventos(
         data
           .map(normalizeAgendaEvento)
-          .filter((evento): evento is AgendaEventoLite => evento !== null),
+          .filter((evento): evento is AgendaEventoLite => evento !== null)
+          .filter((evento) => !["cancelado", "concluido", "concluído"].includes((evento.status || "").toLowerCase())),
       );
     }
   }, [user, isPodcastStudio]);
@@ -3005,9 +3034,13 @@ function useAgendaPodcastTriggers({
     if (!isPodcastStudio) return map;
     const validIds = new Set(podcastProgramas.map((p: any) => p.id));
     const candidates = eventos
-      .map(ev => ({ ev, programaId: resolveAgendaEventoProgramaId(ev, podcastProgramas), ms: eventoStartMs(ev) }))
+      .map(ev => {
+        const programaId = resolveAgendaEventoProgramaId(ev, podcastProgramas);
+        const programa = podcastProgramas.find((p: any) => p.id === programaId);
+        return { ev, programaId, ms: eventoStartMs(ev), endMs: eventoEndMs(ev, programa) };
+      })
       .filter(item => item.programaId && validIds.has(item.programaId) && !rejected.has(item.ev.id))
-      .filter(item => item.ms !== null && (item.ms as number) + 3600_000 > tick)
+      .filter(item => item.ms !== null && item.endMs !== null && (item.endMs as number) > tick)
       .sort((a, b) => (a.ms as number) - (b.ms as number));
     for (const { ev, programaId } of candidates) {
       if (!map[programaId as string]) map[programaId as string] = ev;
@@ -3022,9 +3055,14 @@ function useAgendaPodcastTriggers({
 
     const validIds = new Set(podcastProgramas.map((p: any) => p.id));
     const candidates = eventos
-      .map(ev => ({ ev, programaId: resolveAgendaEventoProgramaId(ev, podcastProgramas), ms: eventoStartMs(ev) }))
+      .map(ev => {
+        const programaId = resolveAgendaEventoProgramaId(ev, podcastProgramas);
+        const programa = podcastProgramas.find((p: any) => p.id === programaId);
+        const ms = eventoStartMs(ev);
+        return { ev, programaId, ms, endMs: eventoEndMs(ev, programa) };
+      })
       .filter(item => item.programaId && validIds.has(item.programaId) && isLiveEvento(item.ev.tipo_evento) && !rejected.has(item.ev.id))
-      .filter(item => item.ms !== null && (item.ms as number) + 3600_000 > tick)
+      .filter(item => item.ms !== null && item.endMs !== null && (item.ms as number) <= tick && tick < (item.endMs as number))
       .sort((a, b) => (a.ms as number) - (b.ms as number));
 
     for (const { ev, programaId } of candidates) {
@@ -3053,43 +3091,7 @@ function useAgendaPodcastTriggers({
     toast({ title: "Evento desconsiderado", description: "Buscando o próximo evento agendado." });
   }, [rejectedKey, confirmedKey, toast]);
 
-  // ── Gatilho automático ──
-  useEffect(() => {
-    if (!isPodcastStudio || !user) return;
-    const now = Date.now();
-
-    const fire = async (ev: AgendaEventoLite, prog: any) => {
-      firedRef.current.add(ev.id);
-      saveIdSet(firedKey, firedRef.current);
-      const live = isLiveEvento(ev.tipo_evento);
-
-      const { data: presetData } = await (supabase.from("preset_commands" as any) as any)
-        .select("commands")
-        .eq("user_id", user.id)
-        .eq("programa_id", prog.id)
-        .maybeSingle();
-      const cmds = Array.isArray(presetData?.commands) && presetData.commands.length > 0
-        ? presetData.commands
-        : [{ fn: "ScriptStart", input: prog.nome }];
-      await runCommandsUnified(cmds as any[], `Agenda: ${prog.nome}`);
-
-      toast({
-        title: live ? "Automação AO VIVO disparada" : "Automação disparada",
-        description: `${prog.nome} — evento ${ev.data} ${(ev.horario_gravacao || "").slice(0, 5)}`,
-      });
-    };
-
-    for (const [programaId, ev] of Object.entries(eventoPorPrograma)) {
-      if (!confirmed.has(ev.id) || firedRef.current.has(ev.id)) continue;
-      const startMs = eventoStartMs(ev);
-      if (startMs === null) continue;
-      const fireAt = isLiveEvento(ev.tipo_evento) ? startMs : startMs - 3600_000;
-      if (now >= fireAt && now < fireAt + 120_000) {
-        const prog = podcastProgramas.find((p: any) => p.id === programaId);
-        if (prog) void fire(ev, prog);
-      }
-    }
-  }, [tick, confirmed, eventoPorPrograma, isPodcastStudio, user, podcastProgramas, runCommandsUnified, toast, firedKey]);
+  // Os presets do PODCAST são disparados pelo efeito central do Switcher apenas durante o intervalo ativo da Agenda.
 
   // StartStreaming no PODCAST é isolado dos demais fluxos: somente um evento AO VIVO,
   // com o mesmo programa vinculado ao botão, pode autorizar seu disparo.
@@ -3431,10 +3433,25 @@ function SwitcherUI({
       });
     });
     const selected = activePreset ? todayPrograms.find((programa: Programa) => programa.id === activePreset) : null;
-    const activeProgram = selected || scheduledProgramForAutomation;
+    const nowMs = now.getTime();
+    const activePodcastEvent = isPodcastStudio
+      ? Object.values(eventoPorPrograma).find((evento) => {
+          const programaId = resolveAgendaEventoProgramaId(evento, podcastProgramas);
+          const programa = podcastProgramas.find((item: any) => item.id === programaId);
+          const startMs = eventoStartMs(evento);
+          const endMs = eventoEndMs(evento, programa);
+          return !!programa && startMs !== null && endMs !== null && startMs <= nowMs && nowMs < endMs
+            && (isLiveEvento(evento.tipo_evento) || isRecordingEvento(evento.tipo_evento));
+        })
+      : undefined;
+    const activeProgram = isPodcastStudio
+      ? activePodcastEvent
+        ? podcastProgramas.find((programa: any) => programa.id === resolveAgendaEventoProgramaId(activePodcastEvent, podcastProgramas))
+        : null
+      : selected || scheduledProgramForAutomation;
     if (!activeProgram) return;
     const dayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-    const executionKey = `${user.id}:${studioName || "default"}:${dayKey}:${activeProgram.id}`;
+    const executionKey = `${user.id}:${studioName || "default"}:${dayKey}:${isPodcastStudio ? activePodcastEvent?.id : activeProgram.id}`;
     if (lastAutoPresetKeyRef.current === executionKey) return;
     lastAutoPresetKeyRef.current = executionKey;
     void (async () => {
@@ -3463,7 +3480,7 @@ function SwitcherUI({
         console.error("[vmix-switcher] Falha ao preparar ações do preset no ar:", error);
       }
     })();
-  }, [connected, savedUrl, user?.id, studioName, programas, activePreset, nowTick, isDefaultAutomationActive, scheduledProgramForAutomation, runCommandsUnified]);
+  }, [connected, savedUrl, user?.id, studioName, programas, activePreset, nowTick, isDefaultAutomationActive, scheduledProgramForAutomation, runCommandsUnified, isPodcastStudio, eventoPorPrograma]);
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
@@ -3574,21 +3591,19 @@ function SwitcherUI({
 
     return eventos
       .map((evento) => {
-        const programa = evento.programa_id ? programaPorId.get(evento.programa_id) : undefined;
+        const resolvedProgramId = resolveAgendaEventoProgramaId(evento, [...programaPorId.values()]);
+        const programa = resolvedProgramId ? programaPorId.get(resolvedProgramId) : undefined;
         const startMs = eventoStartMs(evento);
         if (!programa || startMs === null) return null;
 
-        const startSeconds = timeToSeconds(programa.horario_inicio);
-        const endSeconds = timeToSeconds(programa.horario_fim);
-        const durationSeconds = startSeconds !== null && endSeconds !== null
-          ? (endSeconds > startSeconds ? endSeconds - startSeconds : 86400 - startSeconds + endSeconds)
-          : 3600;
+        const endMs = eventoEndMs(evento, programa);
+        if (endMs === null || (!isLiveEvento(evento.tipo_evento) && !isRecordingEvento(evento.tipo_evento))) return null;
 
         return {
           evento,
           programa,
           startMs,
-          endMs: startMs + durationSeconds * 1000,
+          endMs,
         };
       })
       .filter((item): item is { evento: AgendaEventoLite; programa: Programa; startMs: number; endMs: number } => item !== null)
@@ -3638,6 +3653,8 @@ function SwitcherUI({
     return candidates[0]?.p || null;
   }, [programas, studioName, currentProgram, nowTick]);
 
+  // No PODCAST, o quadro central representa exclusivamente um evento da Agenda
+  // cujo dia/horário esteja ativo agora; a grade normal do programa não ativa o quadro.
   const headerCurrentProgram = isPodcastStudio ? podcastCurrentAgenda?.programa || null : currentProgram;
   const headerNextProgram = isPodcastStudio ? podcastNextAgenda?.programa || null : nextProgram;
   const headerCurrentSchedule = isPodcastStudio
@@ -3758,7 +3775,7 @@ function SwitcherUI({
             }} />
           </div>
             <div className="absolute inset-y-0 left-0 z-0 w-[22%] pointer-events-none overflow-hidden" style={{ animation: "vmixOnAirLightSweep 4.8s ease-in-out infinite", background: "linear-gradient(90deg, transparent, rgba(190,255,190,0.08) 25%, rgba(230,255,230,0.42) 50%, rgba(190,255,190,0.08) 75%, transparent)", filter: "blur(2px)" }} />
-            <div key={`track-${liveTrackData?.titulo || ""}-${liveTrackData?.artista || ""}-${liveTrackData?.capa || ""}`} className="vmix-onair-enter relative z-10 flex min-w-0 items-center gap-2">
+            {!isPodcastStudio && <div key={`track-${liveTrackData?.titulo || ""}-${liveTrackData?.artista || ""}-${liveTrackData?.capa || ""}`} className="vmix-onair-enter relative z-10 flex min-w-0 items-center gap-2">
               {liveTrackData?.capa ? (
                 <img src={liveTrackData?.capa} alt="" className="h-[58px] w-[58px] shrink-0 rounded-md object-cover" />
               ) : (
@@ -3770,7 +3787,7 @@ function SwitcherUI({
                 </div>
                 <div className="mt-0.5 truncate text-[8px] font-medium text-white/75" title={liveTrackData?.artista || "Artista não informado"}>{liveTrackData?.artista || "Artista não informado"}</div>
               </div>
-            </div>
+            </div>}
             <div key={`program-${headerCurrentProgram?.id || activeTitle}-${headerCurrentSchedule}`} className="vmix-onair-enter absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
               <span style={{ opacity: onAirBlinkOn ? 1 : 0.08, transition: "opacity 80ms linear" }} className="text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
               <span className="mt-1 max-w-[180px] truncate text-[12px] font-black uppercase tracking-[0.08em]">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
@@ -4450,7 +4467,12 @@ function SwitcherUI({
 
                       const hasSavedOrder = (() => { try { return JSON.parse(localStorage.getItem("vmix_preset_order") || "[]").length > 0; } catch { return false; } })();
                       const studioFilterActive = isStudioScoped(studioName);
-                      const programasEstudio = programas.filter(p => matchesStudio(p.estudio, studioName) && isProgramForToday(p));
+                      // No PODCAST, listar todos os programas vinculados ao estúdio, mesmo
+                      // quando não pertencem ao dia de hoje. A Agenda controla somente
+                      // quando cada preset fica ativo, não se o botão deve existir.
+                      const programasEstudio = programas.filter(p =>
+                        matchesStudio(p.estudio, studioName) && (isPodcastStudio || isProgramForToday(p))
+                      );
                       const ordered = hasSavedOrder ? programasEstudio : [...programasEstudio].sort((a, b) => {
                         const studioOrder = (s: string | null) => {
                           if (!s) return 2;
@@ -4485,7 +4507,9 @@ function SwitcherUI({
                       // sem seleção manual, usa o primeiro programa válido da grade que cobre o horário atual.
                       const scheduledActiveProgram = progs.find((p) => isProgramForToday(p) && isNowInProgram(p));
                       const selectedProgramExists = activePreset && progs.some((p) => p.id === activePreset);
-                      const activeProgramId = selectedProgramExists ? activePreset : scheduledActiveProgram?.id ?? null;
+                      const activeProgramId = isPodcastStudio
+                        ? (podcastCurrentAgenda && progs.some((p) => p.id === podcastCurrentAgenda.programa.id) ? podcastCurrentAgenda.programa.id : null)
+                        : selectedProgramExists ? activePreset : scheduledActiveProgram?.id ?? null;
 
                       const sortedProgs = [...progs].sort((a, b) => {
                           const aOnAir = a.id === activeProgramId;
@@ -4572,6 +4596,10 @@ function SwitcherUI({
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : undefined,
                             }}
                             onClick={() => {
+                              if (isPodcastStudio && (!podcastCurrentAgenda || podcastCurrentAgenda.programa.id !== prog.id)) {
+                                toast({ title: "Preset bloqueado pela Agenda", description: "No estúdio PODCAST, o preset só pode ser acionado durante o evento agendado para este programa.", variant: "destructive" });
+                                return;
+                              }
                               setActivePreset(prog.id);
                               // As ações são enviadas pelo efeito quando o preset assume o status NO AR.
                               const presetScroller = document.getElementById("preset-scroll-" + studioKey);
