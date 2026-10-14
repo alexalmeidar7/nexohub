@@ -394,7 +394,9 @@ export default function CortesVideoPage() {
         if (vid && vid.readyState >= 2) {
           const clipInternalTime = activeClip.mediaStart + (time - activeClip.start);
           // Sync video time if not actively playing or slightly off
-          if (Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
+          // During export the source video must play continuously so its audio remains
+          // synchronized; the export loop performs larger seeks only at clip boundaries.
+          if (!isExporting && Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
             vid.currentTime = clipInternalTime;
           }
 
@@ -478,7 +480,7 @@ export default function CortesVideoPage() {
         ctx.restore();
       }
     });
-  }, [selectedAspect, bgColor, clips, textOverlays]);
+  }, [selectedAspect, bgColor, clips, textOverlays, isExporting]);
 
   // Main playback loop
   useEffect(() => {
@@ -718,6 +720,7 @@ export default function CortesVideoPage() {
       });
 
       const webmBlob = await recordedBlobPromise;
+      videoElementsRef.current.forEach(video => video.pause());
       if (webmBlob.size === 0) throw new Error("A captura terminou vazia. Tente novamente.");
       setExportProgress(66);
       setExportPhase("Codificando MP4 (H.264 + AAC)…");
@@ -800,7 +803,7 @@ export default function CortesVideoPage() {
   return (
     <div className="h-full w-full flex flex-col overflow-hidden bg-[#f8fafc] text-slate-900 select-none">
       {/* ════════ TOP HEADER BAR (Matching reference image) ════════ */}
-      <header className="h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between shrink-0 z-20">
+      <header className="relative h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between shrink-0 z-20">
         {/* Left: Project Name & Undo/Redo */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
