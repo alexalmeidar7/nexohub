@@ -1029,7 +1029,7 @@ export default function CortesVideoPage() {
         const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
         let coreURL: string | null = null;
         let wasmURL: string | null = null;
-        let loadTimeout: ReturnType<typeof window.setTimeout> | null = null;
+        let loadTimeout: number | null = null;
         try {
           setExportPhase("Baixando codificador FFmpeg (1/2)…");
           setExportProgress(67);
@@ -1082,7 +1082,7 @@ export default function CortesVideoPage() {
         outputName,
       ]);
       const outputData = await ffmpeg.readFile(outputName);
-      const mp4Blob = new Blob([outputData], { type: "video/mp4" });
+      const mp4Blob = new Blob([outputData as unknown as BlobPart], { type: "video/mp4" });
       if (mp4Blob.size < 1024) throw new Error("O arquivo MP4 gerado ficou vazio ou incompleto.");
       await Promise.all([
         ffmpeg.deleteFile(inputName).catch(() => undefined),
