@@ -90,7 +90,7 @@ function formatTime(seconds: number): string {
 const VIDEO_LIBRARY_LIMIT = 50 * 1024 * 1024;
 const VIDEO_LIBRARY_BUCKET = "video-editor-media";
 
-async function extractWaveform(file: File, sampleCount = 96): Promise<number[]> {
+async function extractWaveform(file: File, sampleCount = 320): Promise<number[]> {
   const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
   if (!AudioContextCtor) throw new Error("Web Audio indisponível");
   const context: AudioContext = new AudioContextCtor();
@@ -103,8 +103,19 @@ async function extractWaveform(file: File, sampleCount = 96): Promise<number[]> 
       const start = bucket * samplesPerBucket;
       const end = Math.min(channel.length, start + samplesPerBucket);
       let peak = 0;
-      for (let i = start; i < end; i += 8) peak = Math.max(peak, Math.abs(channel[i] || 0));
-      peaks.push(Math.max(0.04, Math.min(1, peak)));
+      let sumSquares = 0;
+      let count = 0;
+      for (let i = start; i < end; i++) {
+        const sample = channel[i] || 0;
+        const absolute = Math.abs(sample);
+        if (absolute > peak) peak = absolute;
+        sumSquares += sample * sample;
+        count++;
+      }
+      const rms = count ? Math.sqrt(sumSquares / count) : 0;
+      // Blend transient peaks with average loudness so the waveform shows quiet details too.
+      const detailedLevel = Math.max(rms * 1.45, peak * 0.62);
+      peaks.push(Math.max(0.015, Math.min(1, detailedLevel)));
     }
     return peaks;
   } finally {
@@ -623,47 +634,38 @@ export default function CortesVideoPage() {
             vid.currentTime = clipInternalTime;
           }
 
-          // Draw video frame letterboxed/fitted
-          const vidAspect = (vid.videoWidth || 16) / (vid.videoHeight || 9);
-          const canvasAspect = width / height;
-          let drawW = width;
-          let drawH = height;
-          let drawX = 0;
-          let drawY = 0;
-
-          if (vidAspect > canvasAspect) {
-            drawW = width;
-            drawH = width / vidAspect;
-            drawY = (height - drawH) / 2;
-          } else {
-            drawH = height;
-            drawW = height * vidAspect;
-            drawX = (width - drawW) / 2;
-          }
-
+          // Fill the selected canvas like Premiere's "Scale to Fill":
+          // scale by height/width as needed and crop overflow instead of shrinking the whole frame.
+          const sourceWidth = vid.videoWidth || width;
+          const sourceHeight = vid.videoHeight || height;
+          const scale = Math.max(width / sourceWidth, height / sourceHeight);
+          const drawW = sourceWidth * scale;
+          const drawH = sourceHeight * scale;
+          const drawX = (width - drawW) / 2;
+          const drawY = (height - drawH) / 2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, width, height);
+          ctx.clip();
           ctx.drawImage(vid, drawX, drawY, drawW, drawH);
+          ctx.restore();
         }
       } else if (activeClip.type === "image") {
         const img = imageElementsRef.current.get(activeClip.url);
         if (img && img.complete) {
-          const imgAspect = img.naturalWidth / img.naturalHeight;
-          const canvasAspect = width / height;
-          let drawW = width;
-          let drawH = height;
-          let drawX = 0;
-          let drawY = 0;
-
-          if (imgAspect > canvasAspect) {
-            drawW = width;
-            drawH = width / imgAspect;
-            drawY = (height - drawH) / 2;
-          } else {
-            drawH = height;
-            drawW = height * imgAspect;
-            drawX = (width - drawW) / 2;
-          }
-
+          const sourceWidth = img.naturalWidth || width;
+          const sourceHeight = img.naturalHeight || height;
+          const scale = Math.max(width / sourceWidth, height / sourceHeight);
+          const drawW = sourceWidth * scale;
+          const drawH = sourceHeight * scale;
+          const drawX = (width - drawW) / 2;
+          const drawY = (height - drawH) / 2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, width, height);
+          ctx.clip();
           ctx.drawImage(img, drawX, drawY, drawW, drawH);
+          ctx.restore();
         }
       }
     }
@@ -773,6 +775,26 @@ export default function CortesVideoPage() {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      if (trimmingClip) {
+        const deltaSeconds = (e.clientX - trimmingClip.initialX) / zoom;
+        setClips(prev => prev.map(clip => {
+          if (clip.id !== trimmingClip.id) return clip;
+          if (trimmingClip.edge === "end") {
+            const nextDuration = Math.max(0.2, Math.min(contentDuration + Math.max(0, deltaSeconds), trimmingClip.initialDur + deltaSeconds));
+            return { ...clip, duration: nextDuration };
+          }
+          const originalEnd = trimmingClip.initialTime + trimmingClip.initialDur;
+          const nextStart = Math.max(0, Math.min(originalEnd - 0.2, trimmingClip.initialTime + deltaSeconds));
+          const shift = nextStart - trimmingClip.initialTime;
+          return {
+            ...clip,
+            start: nextStart,
+            duration: Math.max(0.2, originalEnd - nextStart),
+            mediaStart: Math.max(0, trimmingClip.initialMediaStart + shift),
+          };
+        }));
+        return;
+      }
       if (draggingPlayhead && timelineRulerRef.current) {
         const rect = timelineRulerRef.current.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
@@ -784,6 +806,7 @@ export default function CortesVideoPage() {
 
     const handleMouseUp = () => {
       if (draggingPlayhead) setDraggingPlayhead(false);
+      if (trimmingClip) setTrimmingClip(null);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -792,7 +815,7 @@ export default function CortesVideoPage() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [draggingPlayhead, totalDuration, zoom, renderCanvasFrame]);
+  }, [draggingPlayhead, trimmingClip, totalDuration, contentDuration, zoom, renderCanvasFrame]);
 
   // Export Video (Canvas + Audio to WebM / MP4)
   const handleExportVideo = async (confirmedName?: string) => {
@@ -1106,7 +1129,7 @@ export default function CortesVideoPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={handleExportVideo}
+            onClick={() => { void handleExportVideo(); }}
             disabled={isExporting}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0055ff] hover:bg-[#0047d4] transition-all shadow-sm active:scale-95 disabled:opacity-50"
           >
@@ -1900,9 +1923,15 @@ export default function CortesVideoPage() {
                     >
                       {/* Left Trim Handle */}
                       <div
-                        className="absolute left-0 top-0 bottom-0 w-2.5 bg-black/20 hover:bg-black/50 cursor-ew-resize z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Ajustar início"
-                      />
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setSelectedClipId(clip.id);
+                          setTrimmingClip({ id: clip.id, edge: "start", initialX: event.clientX, initialTime: clip.start, initialDur: clip.duration, initialMediaStart: clip.mediaStart });
+                        }}
+                        className="absolute left-0 top-0 bottom-0 w-3 bg-black/25 hover:bg-black/60 cursor-ew-resize z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Segure e arraste para ajustar o início"
+                      ><span className="w-0.5 h-5 rounded-full bg-white/90" /></div>
 
                       {/* Clip Content Thumbnail & Name */}
                       <div className="w-full h-full p-2 flex items-center gap-2 text-white relative">
@@ -1924,9 +1953,15 @@ export default function CortesVideoPage() {
 
                       {/* Right Trim Handle */}
                       <div
-                        className="absolute right-0 top-0 bottom-0 w-2.5 bg-black/20 hover:bg-black/50 cursor-ew-resize z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Ajustar fim"
-                      />
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setSelectedClipId(clip.id);
+                          setTrimmingClip({ id: clip.id, edge: "end", initialX: event.clientX, initialTime: clip.start, initialDur: clip.duration, initialMediaStart: clip.mediaStart });
+                        }}
+                        className="absolute right-0 top-0 bottom-0 w-3 bg-black/25 hover:bg-black/60 cursor-ew-resize z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Segure e arraste para ajustar o fim"
+                      ><span className="w-0.5 h-5 rounded-full bg-white/90" /></div>
                     </div>
                   );
                 })
@@ -1934,16 +1969,16 @@ export default function CortesVideoPage() {
             </div>
 
             {/* TRACK 3: AUDIO WAVEFORM */}
-            <div className="h-7 relative rounded-lg border border-slate-100 bg-slate-50/70 overflow-hidden">
+            <div className="h-10 relative rounded-lg border border-slate-100 bg-slate-50/70 overflow-hidden">
               <div className="absolute left-2 top-1 text-[8px] uppercase tracking-wider font-bold text-slate-400 z-10 pointer-events-none">Áudio</div>
               {clips.filter(clip => clip.type === "video").map(clip => {
                 const left = clip.start * zoom;
                 const width = clip.duration * zoom;
                 const peaks = clip.waveform || [];
                 return (
-                  <div key={`wave-${clip.id}`} className="absolute top-0 bottom-0 overflow-hidden flex items-center gap-px px-1 opacity-90" style={{ left: `${left}px`, width: `${Math.max(2, width)}px` }} title={peaks.length ? "Forma de onda do áudio" : "Forma de onda indisponível para este codec"}>
+                  <div key={`wave-${clip.id}`} className="absolute top-0 bottom-0 overflow-hidden flex items-center gap-px px-1 opacity-95" style={{ left: `${left}px`, width: `${Math.max(2, width)}px` }} title={peaks.length ? "Forma de onda do áudio" : "Forma de onda indisponível para este codec"}>
                     {peaks.length ? peaks.map((peak, index) => (
-                      <span key={index} className="flex-1 min-w-[1px] rounded-full bg-emerald-500/80" style={{ height: `${Math.max(2, peak * 20)}px` }} />
+                      <span key={index} className="flex-1 min-w-[1px] rounded-full bg-emerald-500/85" style={{ height: `${Math.max(2, peak * 34)}px`, minWidth: "1px" }} />
                     )) : <span className="text-[8px] text-slate-400 ml-12">{clip.name} · áudio não analisado</span>}
                   </div>
                 );
