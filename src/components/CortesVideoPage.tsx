@@ -6,6 +6,8 @@ import {
   Sparkles, Check, X, AlertCircle, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
 // Aspect Ratio Presets
 interface AspectPreset {
@@ -124,6 +126,11 @@ export default function CortesVideoPage() {
   // Export State
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
+  const [exportPhase, setExportPhase] = useState("");
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioDestinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+  const audioSourcesRef = useRef<Map<string, MediaElementAudioSourceNode>>(new Map());
   const [exportStart, setExportStart] = useState(0);
   const [exportEnd, setExportEnd] = useState(60);
 
@@ -569,114 +576,221 @@ export default function CortesVideoPage() {
       return;
     }
 
+    const normalizedExportStart = Math.max(0, Math.min(exportStart, totalDuration));
+    const normalizedExportEnd = Math.max(0, Math.min(exportEnd, totalDuration));
+    if (normalizedExportEnd <= normalizedExportStart) {
+      toast.error("O fim da exportação precisa ser maior que o início.");
+      return;
+    }
+    if (!canvasRef.current || typeof MediaRecorder === "undefined") {
+      toast.error("Este navegador não oferece suporte à captura necessária para renderizar.");
+      return;
+    }
+
     setIsPlaying(false);
     setIsExporting(true);
     setExportProgress(0);
+    setExportPhase("Preparando projeto…");
+
+    let captureStream: MediaStream | null = null;
+    let recorder: MediaRecorder | null = null;
+    let renderTimer: ReturnType<typeof setTimeout> | null = null;
 
     try {
       const canvas = canvasRef.current;
-      if (!canvas) throw new Error("Canvas indisponível");
+      const exportFps = 30;
+      const step = 1 / exportFps;
+      const totalSteps = Math.max(1, Math.ceil((normalizedExportEnd - normalizedExportStart) * exportFps));
 
-      // Setup Canvas Stream at 30 FPS
-      const stream = canvas.captureStream(30);
-
-      // Setup Web Audio context for mixing audio tracks from active video clips
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const dest = audioCtx.createMediaStreamDestination();
-      let hasAudio = false;
-
-      // Connect video elements to audio destination
-      videoElementsRef.current.forEach(vid => {
-        try {
-          const source = audioCtx.createMediaElementSource(vid);
-          source.connect(dest);
-          source.connect(audioCtx.destination);
-          hasAudio = true;
-        } catch {}
-      });
-
-      if (hasAudio && dest.stream.getAudioTracks().length > 0) {
-        dest.stream.getAudioTracks().forEach(track => stream.addTrack(track));
+      // Prepare a persistent Web Audio graph. MediaElementAudioSourceNode can only
+      // be created once for each HTMLMediaElement, so reuse the same nodes between exports.
+      const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextCtor) throw new Error("O navegador não oferece suporte ao áudio do render.");
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContextCtor();
+        audioDestinationRef.current = audioContextRef.current.createMediaStreamDestination();
       }
+      const audioCtx = audioContextRef.current;
+      const audioDestination = audioDestinationRef.current;
+      if (!audioDestination) throw new Error("Não foi possível preparar a trilha de áudio.");
+      await audioCtx.resume();
 
-      // Check supported MIME types
-      let mimeType = "video/webm;codecs=vp9,opus";
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = "video/webm;codecs=vp8,opus";
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = "video/webm";
-          if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = "video/mp4";
+      for (const clip of clips) {
+        if (clip.type !== "video") continue;
+        let video = videoElementsRef.current.get(clip.url);
+        if (!video) {
+          video = document.createElement("video");
+          video.src = clip.url;
+          video.crossOrigin = "anonymous";
+          video.preload = "auto";
+          video.playsInline = true;
+          videoElementsRef.current.set(clip.url, video);
+        }
+        if (video.readyState < 1) {
+          await new Promise<void>((resolve, reject) => {
+            const timeout = window.setTimeout(() => reject(new Error(`Tempo esgotado ao carregar o vídeo: ${clip.name}`)), 15000);
+            video!.addEventListener("loadedmetadata", () => { window.clearTimeout(timeout); resolve(); }, { once: true });
+            video!.addEventListener("error", () => { window.clearTimeout(timeout); reject(new Error(`Não foi possível ler o vídeo: ${clip.name}`)); }, { once: true });
+            video!.load();
+          });
+        }
+        if (!audioSourcesRef.current.has(clip.url)) {
+          try {
+            const source = audioCtx.createMediaElementSource(video);
+            source.connect(audioDestination);
+            source.connect(audioCtx.destination);
+            audioSourcesRef.current.set(clip.url, source);
+          } catch (error) {
+            console.warn("Não foi possível conectar o áudio de", clip.name, error);
           }
         }
       }
 
-      const mp4MimeType = "video/mp4";
-      if (!MediaRecorder.isTypeSupported(mp4MimeType)) {
-        throw new Error("Este navegador não oferece suporte à exportação de vídeo em MP4.");
-      }
-
-      const recorder = new MediaRecorder(stream, {
-        mimeType: mp4MimeType,
-        videoBitsPerSecond: 8000000, // 8 Mbps
+      // Record a broadly supported intermediate format, then encode a real MP4 with
+      // fixed H.264/AAC settings. MediaRecorder MP4 support is inconsistent by browser.
+      const webmType = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"]
+        .find(type => MediaRecorder.isTypeSupported(type));
+      if (!webmType) throw new Error("Este navegador não consegue gerar o arquivo intermediário para renderização.");
+      captureStream = canvas.captureStream(exportFps);
+      audioDestination.stream.getAudioTracks().forEach(track => captureStream!.addTrack(track));
+      recorder = new MediaRecorder(captureStream, {
+        mimeType: webmType,
+        videoBitsPerSecond: 5_000_000,
+        audioBitsPerSecond: 96_000,
       });
 
       const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
+      recorder.ondataavailable = event => {
+        if (event.data && event.data.size > 0) chunks.push(event.data);
       };
 
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mp4MimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${projectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video"}.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const recordedBlobPromise = new Promise<Blob>((resolve, reject) => {
+        recorder!.addEventListener("stop", () => resolve(new Blob(chunks, { type: webmType })), { once: true });
+        recorder!.addEventListener("error", () => reject(new Error("O navegador interrompeu a captura do vídeo.")), { once: true });
+      });
 
-        setIsExporting(false);
-        setExportProgress(100);
-        toast.success("Vídeo exportado e baixado com sucesso!");
-      };
+      setExportPhase("Renderizando vídeo e áudio…");
+      recorder.start(250);
 
-      // Start recording
-      recorder.start(100);
-
-      // Render through the project step by step
-      const exportFps = 30;
-      const normalizedExportStart = Math.max(0, Math.min(exportStart, totalDuration));
-      const normalizedExportEnd = Math.max(normalizedExportStart, Math.min(exportEnd, totalDuration));
-      const step = 1 / exportFps;
-      const totalSteps = Math.max(1, Math.ceil((normalizedExportEnd - normalizedExportStart) / step));
       let stepCount = 0;
       let renderTime = normalizedExportStart;
+      await new Promise<void>((resolve, reject) => {
+        const tick = async () => {
+          try {
+            if (renderTime >= normalizedExportEnd) {
+              renderCanvasFrame(normalizedExportEnd);
+              setCurrentTime(normalizedExportEnd);
+              // Allow the last canvas frame to reach MediaRecorder before stopping.
+              renderTimer = setTimeout(() => {
+                if (recorder?.state === "recording") recorder.stop();
+                resolve();
+              }, 180);
+              return;
+            }
 
-      const exportLoop = () => {
-        if (renderTime >= normalizedExportEnd) {
-          renderCanvasFrame(normalizedExportEnd);
-          setCurrentTime(normalizedExportEnd);
-          setExportProgress(100);
-          recorder.stop();
-          return;
-        }
+            const activeClip = clips.find(clip => renderTime >= clip.start && renderTime < clip.start + clip.duration);
+            for (const [url, video] of videoElementsRef.current.entries()) {
+              const active = !!activeClip && activeClip.type === "video" && activeClip.url === url;
+              if (!active) {
+                if (!video.paused) video.pause();
+                continue;
+              }
+              const expectedTime = activeClip!.mediaStart + (renderTime - activeClip!.start);
+              if (Math.abs(video.currentTime - expectedTime) > 0.35) {
+                video.currentTime = Math.min(expectedTime, Math.max(0, (video.duration || expectedTime) - 0.03));
+              }
+              if (video.paused) {
+                try { await video.play(); } catch { /* frame rendering can continue even if autoplay is blocked */ }
+              }
+            }
 
-        renderCanvasFrame(renderTime);
-        setCurrentTime(renderTime);
-        stepCount++;
-        setExportProgress(Math.min(99, Math.round((stepCount / totalSteps) * 100)));
-        renderTime += step;
+            renderCanvasFrame(renderTime);
+            setCurrentTime(renderTime);
+            stepCount++;
+            setExportProgress(Math.min(64, Math.round((stepCount / totalSteps) * 64)));
+            renderTime = Math.min(normalizedExportEnd, renderTime + step);
+            renderTimer = setTimeout(tick, 1000 / exportFps);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        void tick();
+      });
 
-        setTimeout(exportLoop, 1000 / exportFps);
-      };
+      const webmBlob = await recordedBlobPromise;
+      if (webmBlob.size === 0) throw new Error("A captura terminou vazia. Tente novamente.");
+      setExportProgress(66);
+      setExportPhase("Codificando MP4 (H.264 + AAC)…");
 
-      exportLoop();
+      // Load FFmpeg only when needed. The core is fetched as blobs to satisfy worker/CORS rules.
+      if (!ffmpegRef.current) {
+        const ffmpeg = new FFmpeg();
+        ffmpeg.on("progress", ({ progress }) => {
+          setExportProgress(Math.min(98, 66 + Math.round(Math.max(0, Math.min(1, progress)) * 32)));
+        });
+        const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
+        const [coreURL, wasmURL] = await Promise.all([
+          toBlobURL(`${coreBase}/ffmpeg-core.js`, "text/javascript"),
+          toBlobURL(`${coreBase}/ffmpeg-core.wasm`, "application/wasm"),
+        ]);
+        await ffmpeg.load({ coreURL, wasmURL });
+        ffmpegRef.current = ffmpeg;
+      }
+
+      const ffmpeg = ffmpegRef.current;
+      const inputName = `nexohub-render-${Date.now()}.webm`;
+      const outputName = `nexohub-render-${Date.now()}.mp4`;
+      await ffmpeg.writeFile(inputName, await fetchFile(webmBlob));
+      await ffmpeg.exec([
+        "-i", inputName,
+        "-map", "0:v:0",
+        "-map", "0:a?",
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-b:v", "5000k",
+        "-maxrate", "5000k",
+        "-bufsize", "10000k",
+        "-pix_fmt", "yuv420p",
+        "-r", "30",
+        "-c:a", "aac",
+        "-b:a", "96k",
+        "-ar", "48000",
+        "-movflags", "+faststart",
+        outputName,
+      ]);
+      const outputData = await ffmpeg.readFile(outputName);
+      const mp4Blob = new Blob([outputData], { type: "video/mp4" });
+      if (mp4Blob.size < 1024) throw new Error("O arquivo MP4 gerado ficou vazio ou incompleto.");
+      await Promise.all([
+        ffmpeg.deleteFile(inputName).catch(() => undefined),
+        ffmpeg.deleteFile(outputName).catch(() => undefined),
+      ]);
+
+      setExportPhase("Preparando download…");
+      setExportProgress(100);
+      const url = URL.createObjectURL(mp4Blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${projectName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "corte_video"}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast.success("Render concluído! MP4 H.264, vídeo 5 Mbps e áudio AAC 96 kbps.");
     } catch (err: any) {
       console.error("Export error:", err);
+      toast.error("Falha no render: " + (err?.message || "Verifique a conexão e tente novamente."));
+    } finally {
+      if (renderTimer) clearTimeout(renderTimer);
+      if (recorder?.state === "recording") {
+        try { recorder.stop(); } catch { /* already stopped */ }
+      }
+      captureStream?.getTracks().forEach(track => track.stop());
+      videoElementsRef.current.forEach(video => video.pause());
+      setIsPlaying(false);
       setIsExporting(false);
-      toast.error("Erro na exportação: " + (err.message || "Tente novamente."));
+      setExportPhase("");
+      // Keep 100% only on successful completion; a failed render resets for a clean retry.
     }
   };
 
@@ -748,16 +862,22 @@ export default function CortesVideoPage() {
             {isExporting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Exportando... {exportProgress}%</span>
+                <span>{exportPhase || "Renderizando…"} {exportProgress}%</span>
               </>
             ) : (
               <>
                 <Download className="w-4 h-4" />
-                <span>Exportar Vídeo</span>
+                <span>Exportar MP4</span>
               </>
             )}
           </button>
         </div>
+        {isExporting && (
+          <div className="absolute left-0 right-0 bottom-0 h-[2px] bg-blue-100 overflow-hidden" aria-live="polite">
+            <div className="h-full bg-[#0055ff] transition-all duration-200" style={{ width: `${exportProgress}%` }} />
+            <span className="sr-only">{exportPhase} {exportProgress}%</span>
+          </div>
+        )}
       </header>
 
       {/* ════════ MAIN WORKSPACE (Sidebar + Canvas Player) ════════ */}
@@ -1050,6 +1170,33 @@ export default function CortesVideoPage() {
                 <div className="text-xs text-slate-500">
                   {selectedAspect.name} ({selectedAspect.width} x {selectedAspect.height} px)
                 </div>
+              </div>
+
+              <div className="border-t border-slate-200 pt-3 space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-2">Formato de exportação</label>
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Video className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-extrabold text-slate-800">MP4 · H.264</div>
+                      <div className="text-[10px] text-slate-500">Compatível com redes sociais e players</div>
+                    </div>
+                    <Check className="w-4 h-4 text-blue-600 ml-auto shrink-0" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 p-2.5">
+                    <div className="text-[10px] text-slate-500 mb-1">Bitrate de vídeo</div>
+                    <div className="text-sm font-extrabold text-slate-800">5 Mbps</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 p-2.5">
+                    <div className="text-[10px] text-slate-500 mb-1">Bitrate de áudio</div>
+                    <div className="text-sm font-extrabold text-slate-800">96 kbps</div>
+                  </div>
+                </div>
+                <p className="text-[10px] leading-relaxed text-slate-500">O render grava a prévia em tempo real e converte o arquivo para MP4 antes do download. Mantenha esta aba aberta até o término.</p>
               </div>
             </div>
           )}
