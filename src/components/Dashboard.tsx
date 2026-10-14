@@ -420,7 +420,27 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const layoutColors = useLayoutColors();
   
   useEffect(() => {
-    preloadAllStationsDatabase();
+    // Evita competir com o carregamento inicial: aquece o cache quando o navegador estiver ocioso.
+    let fallbackTimer: number | undefined;
+    let idleHandle: number | undefined;
+    const browserWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    const preload = () => {
+      void preloadAllStationsDatabase().catch((error) => {
+        console.warn("[Dashboard] Preload de emissoras falhou:", error);
+      });
+    };
+    if (browserWindow.requestIdleCallback) {
+      idleHandle = browserWindow.requestIdleCallback(preload, { timeout: 8000 });
+    } else {
+      fallbackTimer = window.setTimeout(preload, 3000);
+    }
+    return () => {
+      if (idleHandle !== undefined) browserWindow.cancelIdleCallback?.(idleHandle);
+      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+    };
   }, []);
   
   // Lista de páginas que suportam minimização (Expandida para quase todos os módulos)
