@@ -43,11 +43,25 @@ function loadImage(src: string): Promise<HTMLImageElement> {
  */
 export async function pdfToPngDataUrl(file: File): Promise<string> {
   const pdfjs: any = await import("pdfjs-dist");
-  const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-
   const buffer = await file.arrayBuffer();
-  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+
+  // Carrega o worker da mesma versão do pdfjs-dist diretamente do CDN para
+  // evitar falhas em hosts que publicam o bundle, mas não o asset com hash.
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.worker.min.mjs";
+
+  let pdf: any;
+  try {
+    pdf = await pdfjs.getDocument({ data: buffer }).promise;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "";
+    throw new Error(
+      detail
+        ? `Não foi possível carregar o leitor de PDF. Verifique a conexão e tente novamente. (${detail})`
+        : "Não foi possível carregar o leitor de PDF. Verifique a conexão e tente novamente."
+    );
+  }
+
   const page = await pdf.getPage(1);
   const viewport = page.getViewport({ scale: 1 });
   const scale = Math.min(4, Math.max(1, 1400 / Math.max(viewport.width, viewport.height)));
