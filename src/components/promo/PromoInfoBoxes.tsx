@@ -329,12 +329,6 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
                 <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 1 }}>💧 {rain}%</div>
               </div>
 
-              <div style={{ textAlign: "right" }} className="shrink-0">
-                <div style={{ fontSize: 10, fontWeight: 700, color: PROMO_TEXT, opacity: 0.9 }} className="truncate max-w-[100px]">
-                  <MapPin size={9} className="inline -mt-0.5 mr-0.5" />
-                  {weatherCity}
-                </div>
-              </div>
             </div>
           )}
 
