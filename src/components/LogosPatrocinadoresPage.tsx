@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useMemo, useLayoutEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { getClientHouseMixProgramsSync } from "@/lib/houseMixProgramasService";
 import { getSnapshotLogos, getSnapshotProgramas } from "@/lib/supabaseDatabaseSnapshot";
-import { LogoTransformModal } from "./LogoTransformModal";
+import { lazyRetry } from "@/lib/lazyRetry";
+const LogoTransformModal = lazyRetry(() => import("./LogoTransformModal").then((module) => ({ default: module.LogoTransformModal })));
 import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
 
 interface Logo {
@@ -1894,18 +1895,21 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       )}
 
       {/* Modal de Transformação Automática com IA */}
-      <LogoTransformModal
-        isOpen={transformModalOpen}
-        onClose={() => {
-          setTransformModalOpen(false);
-          setClientSelectedFile(null);
-        }}
-        initialFile={clientSelectedFile}
-        programas={programas}
-        defaultExpirationDate={dataFinal || defaultExpiration}
-        preselectedProgramIds={editingFullId ? [programaId] : programaIds}
-        onApproveAndSave={handleApproveAndSaveAiLogo}
-      />
-    </div>
+      {transformModalOpen && (
+        <Suspense fallback={null}>
+          <LogoTransformModal
+            isOpen={transformModalOpen}
+            onClose={() => {
+              setTransformModalOpen(false);
+              setClientSelectedFile(null);
+            }}
+            initialFile={clientSelectedFile}
+            programas={programas}
+            defaultExpirationDate={dataFinal || defaultExpiration}
+            preselectedProgramIds={editingFullId ? [programaId] : programaIds}
+            onApproveAndSave={handleApproveAndSaveAiLogo}
+          />
+        </Suspense>
+      )}    </div>
   );
 }
