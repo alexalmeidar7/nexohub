@@ -15,7 +15,13 @@ try {
     purgeStaleLayoutKeys();
     localStorage.setItem(LAYOUT_VERSION_KEY, LAYOUT_VERSION);
     const RELOAD_FLAG = "__layout_version_reloaded_" + LAYOUT_VERSION;
-    if (stored && !sessionStorage.getItem(RELOAD_FLAG)) {
+    // A tela crítica do switcher nunca deve recarregar sozinha.
+    // As demais páginas mantêm a recuperação de cache já existente.
+    if (
+      stored &&
+      window.location.pathname !== "/vmix-control/switcher" &&
+      !sessionStorage.getItem(RELOAD_FLAG)
+    ) {
       sessionStorage.setItem(RELOAD_FLAG, "1");
       window.location.reload();
     }
@@ -54,7 +60,9 @@ const shouldReloadForChunkError = (errorText: string, source?: string) => {
 
 window.addEventListener("vite:preloadError", (event) => {
   event.preventDefault();
-  recoverFromChunkFailure();
+  if (window.location.pathname !== "/vmix-control/switcher") {
+    recoverFromChunkFailure();
+  }
 });
 
 window.addEventListener("error", (event) => {
@@ -62,7 +70,9 @@ window.addEventListener("error", (event) => {
   const source = String(event.filename || "");
   if (shouldReloadForChunkError(message, source)) {
     event.preventDefault();
-    recoverFromChunkFailure();
+    if (window.location.pathname !== "/vmix-control/switcher") {
+      recoverFromChunkFailure();
+    }
   }
 });
 
@@ -70,7 +80,9 @@ window.addEventListener("unhandledrejection", (event) => {
   const reason = String((event.reason as Error | string | undefined) ?? "");
   if (shouldReloadForChunkError(reason)) {
     event.preventDefault();
-    recoverFromChunkFailure();
+    if (window.location.pathname !== "/vmix-control/switcher") {
+      recoverFromChunkFailure();
+    }
   }
 });
 
