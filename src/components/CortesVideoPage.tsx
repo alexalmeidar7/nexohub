@@ -127,6 +127,7 @@ export default function CortesVideoPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportPhase, setExportPhase] = useState("");
+  const exportingRef = useRef(false);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioDestinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
@@ -396,7 +397,7 @@ export default function CortesVideoPage() {
           // Sync video time if not actively playing or slightly off
           // During export the source video must play continuously so its audio remains
           // synchronized; the export loop performs larger seeks only at clip boundaries.
-          if (!isExporting && Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
+          if (!exportingRef.current && Math.abs(vid.currentTime - clipInternalTime) > 0.15) {
             vid.currentTime = clipInternalTime;
           }
 
@@ -480,7 +481,7 @@ export default function CortesVideoPage() {
         ctx.restore();
       }
     });
-  }, [selectedAspect, bgColor, clips, textOverlays, isExporting]);
+  }, [selectedAspect, bgColor, clips, textOverlays]);
 
   // Main playback loop
   useEffect(() => {
@@ -589,6 +590,7 @@ export default function CortesVideoPage() {
       return;
     }
 
+    exportingRef.current = true;
     setIsPlaying(false);
     setIsExporting(true);
     setExportProgress(0);
@@ -791,6 +793,7 @@ export default function CortesVideoPage() {
       captureStream?.getTracks().forEach(track => track.stop());
       videoElementsRef.current.forEach(video => video.pause());
       setIsPlaying(false);
+      exportingRef.current = false;
       setIsExporting(false);
       setExportPhase("");
       // Keep 100% only on successful completion; a failed render resets for a clean retry.
