@@ -1605,7 +1605,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     return inputKey;
   }, [inputs, inputMapping]);
 
-  const sendCommand = async (fn: string, input?: string, value?: string): Promise<boolean> => {
+  const sendCommand = async (fn: string, input?: string, value?: string, silent = false): Promise<boolean> => {
     if (!savedUrl) return false;
 
     const effectiveInput = resolveInputKey(input);
@@ -1625,7 +1625,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       return true;
     } catch (err: any) {
       addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
-      toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
+      if (!silent) toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
       return false;
     }
   };
@@ -1643,7 +1643,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     }).filter((cmd) => cmd.fn);
   }, []);
 
-  const runCommandsUnified = useCallback(async (cmds: any[], label: string): Promise<boolean> => {
+  const runCommandsUnified = useCallback(async (cmds: any[], label: string, silent = false): Promise<boolean> => {
     const normalized = normalizeCommands(cmds).map(cmd => ({
       ...cmd,
       input: resolveInputKey(cmd.input)
@@ -1659,11 +1659,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       addLog(batchLabel, "pending", "Enviando direto (LAN)...", "local");
       let allSucceeded = true;
       for (const cmd of normalized) {
-        const succeeded = await sendCommand(cmd.fn, cmd.input, cmd.value);
+        const succeeded = await sendCommand(cmd.fn, cmd.input, cmd.value, silent);
         if (!succeeded) allSucceeded = false;
         await new Promise((r) => setTimeout(r, 400));
       }
-      if (allSucceeded) toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
+      if (allSucceeded && !silent) toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
       else addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
       return allSucceeded;
     }
@@ -1683,8 +1683,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       }
 
       addLog(batchLabel, "ok", "Executado no servidor", "server");
-      setTimeout(() => connectToVmix(), 300);
-      toast({ title: label, description: `${normalized.length} ação(ões) executada(s) no servidor.` });
+      // Atualiza o estado sem chamar connectToVmix, que pode navegar para outra rota.
+      setTimeout(() => silentRefresh(), 300);
+      if (!silent) toast({ title: label, description: `${normalized.length} ação(ões) executada(s) no servidor.` });
       return true;
     } catch (err: any) {
       addLog(batchLabel, "error", `Servidor falhou: ${err?.message || "desconhecido"} → fallback local`, "server");
@@ -1694,7 +1695,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
         if (!succeeded) allSucceeded = false;
         await new Promise((r) => setTimeout(r, 400));
       }
-      if (allSucceeded) toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
+      if (allSucceeded && !silent) toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
       else addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
       return allSucceeded;
     }
@@ -3436,7 +3437,7 @@ function SwitcherUI({
           : [{ fn: "ScriptStart", input: activeProgram.nome }];
         const presenterName = (activeProgram as any).apresentadores?.nome;
         if (presenterName) commands.push({ fn: "SetText", input: "TITULO APRESENTADOR", value: presenterName, label: "Apresentador Automático" });
-        const sent = await runCommandsUnified(commands, `Preset NO AR: ${activeProgram.nome}`);
+        const sent = await runCommandsUnified(commands, `Preset NO AR: ${activeProgram.nome}`, true);
         if (!sent) {
           window.setTimeout(() => {
             if (lastAutoPresetKeyRef.current === executionKey) lastAutoPresetKeyRef.current = null;
