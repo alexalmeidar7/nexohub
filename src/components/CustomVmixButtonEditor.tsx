@@ -820,8 +820,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                             <select
                               value={cmd.input || ""}
                               onChange={e => updateCommand(cmd.id, { input: e.target.value })}
-                              className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                              style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                              className="w-full min-h-10 text-[11px] px-3.5 py-2.5 rounded-xl outline-none transition-colors focus:border-[#0065F9] focus:ring-2 focus:ring-[#0065F9]/20"
+                              style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46", colorScheme: "dark" }}
                             >
                               <option value="">— Selecionar Input —</option>
                               {cmd.input && !inputs.some(i => i.key === cmd.input) && inputMapping?.[cmd.input] && (
@@ -845,8 +845,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                               <select
                                 value={cmd.value ?? "0"}
                                 onChange={e => updateCommand(cmd.id, { value: e.target.value })}
-                                className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                                style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                                className="w-full min-h-10 text-[11px] px-3.5 py-2.5 rounded-xl outline-none transition-colors focus:border-[#0065F9] focus:ring-2 focus:ring-[#0065F9]/20"
+                                style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46", colorScheme: "dark" }}
                               >
                                 <option value="0">Streaming 0</option>
                                 <option value="1">Streaming 1</option>
@@ -856,8 +856,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                               <select
                                 value={cmd.value || "1"}
                                 onChange={e => updateCommand(cmd.id, { value: e.target.value })}
-                                className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                                style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                                className="w-full min-h-10 text-[11px] px-3.5 py-2.5 rounded-xl outline-none transition-colors focus:border-[#0065F9] focus:ring-2 focus:ring-[#0065F9]/20"
+                                style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46", colorScheme: "dark" }}
                               >
                                 {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(n => (
                                   <option key={n} value={n}>Index {n}</option>
@@ -868,8 +868,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                                 type="text"
                                 value={cmd.value || ""}
                                 onChange={e => updateCommand(cmd.id, { value: e.target.value })}
-                                className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                                style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                                className="w-full min-h-10 text-[11px] px-3.5 py-2.5 rounded-xl outline-none transition-colors focus:border-[#0065F9] focus:ring-2 focus:ring-[#0065F9]/20"
+                                style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46", colorScheme: "dark" }}
                                 placeholder="Valor..."
                               />
                             )}
@@ -883,8 +883,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                               type="text"
                               value={cmd.extraValue || ""}
                               onChange={e => updateCommand(cmd.id, { extraValue: e.target.value })}
-                              className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                              style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                              className="w-full min-h-10 text-[11px] px-3.5 py-2.5 rounded-xl outline-none transition-colors focus:border-[#0065F9] focus:ring-2 focus:ring-[#0065F9]/20"
+                              style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46", colorScheme: "dark" }}
                               placeholder={extraLabels.valueLabel + "..."}
                             />
                           </div>
