@@ -1219,6 +1219,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
           if (!response.ok && response.status === 401) {
             throw new Error("Autenticação vMix falhou (401). Verifique usuário/senha do Web Controller.");
           }
+          if (!response.ok) {
+            throw new Error(`vMix respondeu com HTTP ${response.status} ao executar a solicitação.`);
+          }
           directBaseUrlRef.current = baseUrl;
           if (baseUrl !== configuredBaseUrl && !loopbackFallbackNotifiedRef.current) {
             loopbackFallbackNotifiedRef.current = true;
@@ -1675,8 +1678,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
         ? (res.data as { results: Array<{ ok: boolean }> }).results
         : null;
 
-      if (results && results.length > 0 && results.some((r) => !r?.ok)) {
-        throw new Error("Uma ou mais ações não foram confirmadas pelo servidor.");
+      if (results && results.length > 0 && !results.some((r) => r?.ok)) {
+        throw new Error("SERVER_COULD_NOT_REACH_VMIX");
       }
 
       addLog(batchLabel, "ok", "Executado no servidor", "server");
