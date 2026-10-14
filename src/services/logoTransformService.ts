@@ -43,11 +43,38 @@ function loadImage(src: string): Promise<HTMLImageElement> {
  */
 export async function pdfToPngDataUrl(file: File): Promise<string> {
   const pdfjs: any = await import("pdfjs-dist");
-  const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-
+  const localWorkerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
   const buffer = await file.arrayBuffer();
-  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+
+  // Alguns deploys/hosts ficam com o bundle da aplicação atualizado, mas sem o
+  // asset com hash do worker PDF. Tenta primeiro o worker empacotado e usa o
+  // worker da mesma versão publicada no npm/CDN como fallback.
+  const workerSources = [
+    localWorkerSrc,
+    "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/build/pdf.worker.min.mjs",
+  ];
+  let pdf: any = null;
+  let lastWorkerError: unknown = null;
+
+  for (const workerSrc of workerSources) {
+    try {
+      pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+      pdf = await pdfjs.getDocument({ data: buffer.slice(0) }).promise;
+      break;
+    } catch (error) {
+      lastWorkerError = error;
+    }
+  }
+
+  if (!pdf) {
+    const detail = lastWorkerError instanceof Error ? lastWorkerError.message : "";
+    throw new Error(
+      detail
+        ? `Não foi possível carregar o leitor de PDF. Verifique a conexão e tente novamente. (${detail})`
+        : "Não foi possível carregar o leitor de PDF. Verifique a conexão e tente novamente."
+    );
+  }
+
   const page = await pdf.getPage(1);
   const viewport = page.getViewport({ scale: 1 });
   const scale = Math.min(4, Math.max(1, 1400 / Math.max(viewport.width, viewport.height)));
