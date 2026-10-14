@@ -481,11 +481,6 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const directBaseUrlRef = useRef<string | null>(null);
   const loopbackFallbackNotifiedRef = useRef(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [onAirBlinkOn, setOnAirBlinkOn] = useState(true);
-  useEffect(() => {
-    const blinkTimer = window.setInterval(() => setOnAirBlinkOn(value => !value), 500);
-    return () => window.clearInterval(blinkTimer);
-  }, []);
 
 
   useEffect(() => {
@@ -3082,6 +3077,12 @@ function SwitcherUI({
   navigate,
   currentTime
 }: any) {
+
+  const [onAirBlinkOn, setOnAirBlinkOn] = useState(true);
+  useEffect(() => {
+    const blinkTimer = window.setInterval(() => setOnAirBlinkOn(value => !value), 500);
+    return () => window.clearInterval(blinkTimer);
+  }, []);
 
   const [presetSortMode, setPresetSortMode] = useState<"horario" | "dias" | "alfabetica">("horario");
   const [isAllPresetsDialogOpen, setIsAllPresetsDialogOpen] = useState(false);
