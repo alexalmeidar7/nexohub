@@ -270,58 +270,44 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
         <>
           {idx === 0 ? (
             <div className="flex flex-col gap-3 flex-1">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-md">
+              <div className="flex items-stretch gap-3 flex-1 min-h-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-md shrink-0">
                     {weatherIcon(code ?? 0, isDay, 32)}
                   </div>
-                  <div>
-                    <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, letterSpacing: -1 }}>
+                  <div className="min-w-0">
+                    <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, letterSpacing: -1, whiteSpace: "nowrap" }}>
                       {temp != null ? Math.round(temp) : "—"}
                       <span className="text-[12px] font-bold opacity-60 ml-0.5">°C</span>
                     </div>
-                    <div style={{ fontSize: 10, color: PROMO_MUTED, fontWeight: 600, marginTop: 1 }}>
+                    <div className="truncate" style={{ fontSize: 10, color: PROMO_MUTED, fontWeight: 600, marginTop: 2 }}>
                       {weatherLabel(code ?? 0)}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1" style={{ fontSize: 8, color: PROMO_MUTED, fontWeight: 700, whiteSpace: "nowrap" }}>
+                      <span>Min {tmin != null ? Math.round(tmin) : "—"}°</span>
+                      <span>Max {tmax != null ? Math.round(tmax) : "—"}°</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-stretch gap-2.5 ml-1">
-                  <div aria-hidden="true" style={{ width: 1, alignSelf: "stretch", minHeight: 34, background: "rgba(255,255,255,0.22)" }} />
-                  <div className="flex flex-col justify-center gap-1" style={{ fontSize: 9, lineHeight: 1.15, fontWeight: 700, color: "#FFFFFF", whiteSpace: "nowrap" }}>
-                    <span>Min {tmin != null ? Math.round(tmin) : "—"}°</span>
-                    <span>Max {tmax != null ? Math.round(tmax) : "—"}°</span>
-                  </div>
-                </div>
-              </div>
+                <div aria-hidden="true" style={{ width: 1, flexShrink: 0, alignSelf: "stretch", background: "rgba(255,255,255,0.22)" }} />
 
-              <div
-                className={`mt-auto h-[38px] rounded-xl px-3 flex items-center justify-between transition-colors duration-300 ${metricIdx === 1 && humidity != null && humidity < 30 ? "bg-[#8B0000]/70" : "bg-white/5"}`}
-                aria-live="polite"
-              >
-                <div className="flex items-center gap-2 min-w-0" key={metricIdx} style={{ animation: "promo-weather-swap 320ms ease both" }}>
-                  {metricIdx === 0 ? (
-                    <CloudRain size={13} className="text-sky-300 shrink-0" />
-                  ) : metricIdx === 1 ? (
-                    <Droplets size={13} className="text-cyan-200 shrink-0" />
-                  ) : (
-                    <Navigation size={13} className="text-lime-200 shrink-0 rotate-[135deg]" />
-                  )}
-                  <span className="text-[10px] uppercase font-semibold tracking-wider opacity-60">
-                    {metricIdx === 0 ? "Chuva" : metricIdx === 1 ? "Umidade" : "Vento"}
-                  </span>
-                </div>
-                <div className="text-[10px] font-bold tabular-nums" key={`metric-value-${metricIdx}`} style={{ animation: "promo-weather-swap 320ms ease both" }}>
-                  {metricIdx === 0
-                    ? `${rain}%`
-                    : metricIdx === 1
-                      ? (humidity != null ? `${humidity}%` : "—")
-                      : `${Math.round(data?.current?.wind_speed_10m ?? 0)} km/h`}
-                </div>
-                <div className="flex items-center gap-1 shrink-0" aria-hidden="true">
-                  {[0, 1, 2].map((i) => (
-                    <span key={i} className="rounded-full transition-all duration-300" style={{ width: i === metricIdx ? 10 : 3, height: 3, background: i === metricIdx ? PROMO_BORDER : "rgba(255,255,255,0.25)" }} />
-                  ))}
+                <div className="flex flex-col justify-center gap-2 shrink-0 pr-1" style={{ minWidth: 88 }}>
+                  <div className="flex items-center gap-2" title="Probabilidade de chuva">
+                    <CloudRain size={12} className="text-sky-300 shrink-0" />
+                    <span className="text-[9px] font-semibold opacity-70">Chuva</span>
+                    <span className="ml-auto text-[10px] font-bold tabular-nums">{rain}%</span>
+                  </div>
+                  <div className="flex items-center gap-2" title="Umidade do ar">
+                    <Droplets size={12} className="text-cyan-200 shrink-0" />
+                    <span className="text-[9px] font-semibold opacity-70">Umidade</span>
+                    <span className="ml-auto text-[10px] font-bold tabular-nums">{humidity != null ? `${humidity}%` : "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2" title="Velocidade do vento">
+                    <Navigation size={12} className="text-lime-200 shrink-0 rotate-[135deg]" />
+                    <span className="text-[9px] font-semibold opacity-70">Vento</span>
+                    <span className="ml-auto text-[10px] font-bold tabular-nums">{Math.round(data?.current?.wind_speed_10m ?? 0)} km/h</span>
+                  </div>
                 </div>
               </div>
 
