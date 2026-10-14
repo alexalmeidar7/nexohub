@@ -1602,8 +1602,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     return inputKey;
   }, [inputs, inputMapping]);
 
-  const sendCommand = async (fn: string, input?: string, value?: string) => {
-    if (!savedUrl) return;
+  const sendCommand = async (fn: string, input?: string, value?: string): Promise<boolean> => {
+    if (!savedUrl) return false;
 
     const effectiveInput = resolveInputKey(input);
 
@@ -1619,9 +1619,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       
       // Refresh state after command
       setTimeout(() => silentRefresh(), 300);
+      return true;
     } catch (err: any) {
       addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
+      return false;
     }
   };
 
@@ -1638,13 +1640,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     }).filter((cmd) => cmd.fn);
   }, []);
 
-  const runCommandsUnified = useCallback(async (cmds: any[], label: string) => {
+  const runCommandsUnified = useCallback(async (cmds: any[], label: string): Promise<boolean> => {
     const normalized = normalizeCommands(cmds).map(cmd => ({
       ...cmd,
       input: resolveInputKey(cmd.input)
     }));
     
-    if (!normalized.length) return;
+    if (!normalized.length) return false;
 
     const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
 
@@ -1652,12 +1654,15 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     // Send directly from the browser to vMix.
     if (savedUrl && isPrivateIp(savedUrl)) {
       addLog(batchLabel, "pending", "Enviando direto (LAN)...", "local");
+      let allSucceeded = true;
       for (const cmd of normalized) {
-        await sendCommand(cmd.fn, cmd.input, cmd.value);
+        const succeeded = await sendCommand(cmd.fn, cmd.input, cmd.value);
+        if (!succeeded) allSucceeded = false;
         await new Promise((r) => setTimeout(r, 400));
       }
-      toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
-      return;
+      if (allSucceeded) toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
+      else addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
+      return allSucceeded;
     }
 
     addLog(batchLabel, "pending", "Enviando via servidor...", "server");
@@ -1667,24 +1672,28 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       if (res.error) throw res.error;
 
       const results = Array.isArray((res.data as { results?: Array<{ ok?: boolean }> } | null)?.results)
-        ? (res.data as { results: Array<{ ok?: boolean }> }).results
+        ? (res.data as { results: Array<{ ok: boolean }> }).results
         : null;
 
-      if (results && results.length > 0 && !results.some((r) => r?.ok)) {
-        throw new Error("SERVER_COULD_NOT_REACH_VMIX");
+      if (results && results.length > 0 && results.some((r) => !r?.ok)) {
+        throw new Error("Uma ou mais ações não foram confirmadas pelo servidor.");
       }
 
       addLog(batchLabel, "ok", "Executado no servidor", "server");
       setTimeout(() => connectToVmix(), 300);
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) no servidor.` });
-      return;
+      return true;
     } catch (err: any) {
       addLog(batchLabel, "error", `Servidor falhou: ${err?.message || "desconhecido"} → fallback local`, "server");
+      let allSucceeded = true;
       for (const cmd of normalized) {
-        await sendCommand(cmd.fn, cmd.input, cmd.value);
+        const succeeded = await sendCommand(cmd.fn, cmd.input, cmd.value);
+        if (!succeeded) allSucceeded = false;
         await new Promise((r) => setTimeout(r, 400));
       }
-      toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
+      if (allSucceeded) toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
+      else addLog(batchLabel, "error", "Uma ou mais ações falharam; a automação tentará novamente.", "local");
+      return allSucceeded;
     }
   }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId]);
 
@@ -3424,9 +3433,16 @@ function SwitcherUI({
           : [{ fn: "ScriptStart", input: activeProgram.nome }];
         const presenterName = (activeProgram as any).apresentadores?.nome;
         if (presenterName) commands.push({ fn: "SetText", input: "TITULO APRESENTADOR", value: presenterName, label: "Apresentador Automático" });
-        await runCommandsUnified(commands, `Preset NO AR: ${activeProgram.nome}`);
+        const sent = await runCommandsUnified(commands, `Preset NO AR: ${activeProgram.nome}`);
+        if (!sent) {
+          window.setTimeout(() => {
+            if (lastAutoPresetKeyRef.current === executionKey) lastAutoPresetKeyRef.current = null;
+          }, 5000);
+        }
       } catch (error) {
-        if (lastAutoPresetKeyRef.current === executionKey) lastAutoPresetKeyRef.current = null;
+        window.setTimeout(() => {
+          if (lastAutoPresetKeyRef.current === executionKey) lastAutoPresetKeyRef.current = null;
+        }, 5000);
         console.error("[vmix-switcher] Falha ao preparar ações do preset no ar:", error);
       }
     })();
