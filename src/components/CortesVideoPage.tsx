@@ -1023,7 +1023,7 @@ export default function CortesVideoPage() {
         const formData = new FormData();
         formData.append("video", webmBlob, "nexohub-render.webm");
         setExportPhase("Codificando MP4 no servidor…");
-        const response = await fetch(`${renderApiUrl.replace(/\\/+$/, "")}/render`, {
+        const response = await fetch(`${renderApiUrl.replace(/\/+$/, "")}/render`, {
           method: "POST",
           headers: { Authorization: `Bearer ${accessToken}` },
           body: formData,
