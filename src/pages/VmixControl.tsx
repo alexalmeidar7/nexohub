@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Layout, Cpu, ChevronLeft, Clock, Wifi, WifiOff } from "lucide-react";
-import VmixPage from "@/components/VmixPage";
+import { lazyRetry } from "@/lib/lazyRetry";
+const VmixPage = lazyRetry(() => import("@/components/VmixPage"));
 import type { User } from "@supabase/supabase-js";
 import vmixControlLogo from "@/assets/logo-mixcontrol.png";
 import cleanVmixControlLogo from "@/assets/logo-vmixcontrol-clean.png";
@@ -108,7 +109,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
             </form>
           ) : (
             <div className="w-full h-full min-h-[480px]" style={{ color: "#fff" }}>
-              <VmixPage forcedConnected={forcedConnected} cleanLayout />
+              <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} cleanLayout /></Suspense>
             </div>
           )}
         </main>
@@ -192,7 +193,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
         </div>
       </header>
       <main className="flex-1 p-6" style={{ backgroundColor: "#000000" }}>
-        <VmixPage forcedConnected={forcedConnected} />
+        <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} /></Suspense>
       </main>
     </div>
   );
