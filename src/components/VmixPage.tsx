@@ -481,6 +481,12 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const directBaseUrlRef = useRef<string | null>(null);
   const loopbackFallbackNotifiedRef = useRef(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [onAirBlinkOn, setOnAirBlinkOn] = useState(true);
+  useEffect(() => {
+    const blinkTimer = window.setInterval(() => setOnAirBlinkOn(value => !value), 500);
+    return () => window.clearInterval(blinkTimer);
+  }, []);
+
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -3606,7 +3612,7 @@ function SwitcherUI({
               </div>
             </div>
             <div key={`program-${headerCurrentProgram?.id || activeTitle}-${headerCurrentSchedule}`} className="vmix-onair-enter absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
-              <span style={{ animation: "vmixOnAirBlink .65s steps(2, end) infinite", willChange: "opacity" }} className="text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
+              <span style={{ opacity: onAirBlinkOn ? 1 : 0.08, transition: "opacity 80ms linear" }} className="text-[8px] font-black uppercase tracking-[0.22em] text-white">NO AR</span>
               <span className="mt-1 max-w-[180px] truncate text-[12px] font-black uppercase tracking-[0.08em]">{headerCurrentProgram?.nome || (isPodcastStudio ? "SEM EVENTO NO MOMENTO" : activeTitle)}</span>
               <span className="mt-0.5 text-[9px] font-semibold text-white/85 font-mono">{headerCurrentSchedule || "—"}</span>
             </div>
@@ -4401,8 +4407,8 @@ function SwitcherUI({
                               aspectRatio: "3/2",
                               backgroundColor: progOnAir ? "#008000" : "#2a2a30",
                               outline: progOnAir ? "2px solid #FFFFFF" : "none",
+                              outlineColor: progOnAir ? (onAirBlinkOn ? "#FFFFFF" : "rgba(255,255,255,0.08)") : undefined,
                               outlineOffset: progOnAir ? "5px" : undefined,
-                              animation: progOnAir ? "vmixPresetBorderBlink .9s steps(2, end) infinite" : "none",
                               opacity: dragPresetIdx !== null && programas[dragPresetIdx]?.id === prog.id ? 0.4 : undefined,
                             }}
                             onClick={async () => {
