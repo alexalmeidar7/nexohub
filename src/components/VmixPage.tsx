@@ -3268,24 +3268,28 @@ function SwitcherUI({
   const [creationChoiceOpen, setCreationChoiceOpen] = useState(false);
   const [creatingAudioMonitor, setCreatingAudioMonitor] = useState(false);
   const [audioMonitorInput, setAudioMonitorInput] = useState("");
+  const [audioMonitorName, setAudioMonitorName] = useState("");
+  const [audioCreateOpen, setAudioCreateOpen] = useState(false);
   const [editingAudioMonitor, setEditingAudioMonitor] = useState<any | null>(null);
   const [editingAudioMonitorInput, setEditingAudioMonitorInput] = useState("");
   const [savingAudioMonitor, setSavingAudioMonitor] = useState(false);
 
   const createAudioMonitor = async () => {
-    if (!user || !audioMonitorInput) return;
+    if (!user || !audioMonitorInput || !audioMonitorName.trim()) return;
     const selectedInput = inputs.find((input: VmixInput) => input.number === audioMonitorInput);
     setCreatingAudioMonitor(true);
     try {
       const { error } = await (supabase.from("custom_vmix_buttons" as any) as any).insert({
         user_id: user.id,
         estudio: studioName || null,
-        nome: `Áudio · ${selectedInput?.title || `Input ${audioMonitorInput}`}`,
+        nome: audioMonitorName.trim(),
         commands: [{ fn: "AudioMonitor", input: audioMonitorInput }],
       });
       if (error) throw error;
       await loadCustomButtons();
       setAudioMonitorInput("");
+      setAudioMonitorName("");
+      setAudioCreateOpen(false);
       setCreationChoiceOpen(false);
       toast({ title: "Monitor de áudio criado", description: `Input ${audioMonitorInput} adicionado aos botões personalizados.` });
     } catch (error: any) {
@@ -4992,30 +4996,14 @@ function SwitcherUI({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setAudioMonitorInput("selecting")}
+                                onClick={() => { setAudioMonitorInput(""); setAudioMonitorName(""); setAudioCreateOpen(true); setCreationChoiceOpen(false); }}
                                 className="flex min-h-[42px] items-center gap-1.5 rounded-lg border border-white/10 bg-gradient-to-br from-[#0756C9] to-[#063780] p-1.5 text-left text-white transition-all hover:-translate-y-0.5 hover:border-[#4B91FF] hover:brightness-110"
                               >
                                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#0065F9] text-white"><Activity size={13} /></span>
                                 <span className="min-w-0 text-[9px] font-black uppercase leading-tight">Áudio</span>
                               </button>
                             </div>
-                            {audioMonitorInput && audioMonitorInput !== "" && (
-                              <div className="mt-1 rounded-xl border border-white/10 bg-[#17171f] p-3 shadow-xl">
-                                <label className="mb-2 block text-[9px] font-bold uppercase tracking-wider text-[#c4c4cf]">Input de áudio</label>
-                                <select
-                                  value={audioMonitorInput === "selecting" ? "" : audioMonitorInput}
-                                  onChange={event => setAudioMonitorInput(event.target.value || "selecting")}
-                                  className="w-full rounded-lg border border-[#41414B] bg-[#24242B] px-3 py-2 text-xs font-semibold text-white outline-none focus:border-[#0B5CFF]"
-                                >
-                                  <option value="">Selecione um input</option>
-                                  {inputs.map((input: VmixInput) => <option key={input.key || input.number} value={input.number}>{input.number} — {input.title}</option>)}
-                                </select>
-                                <div className="mt-2 flex justify-end gap-2">
-                                  <button type="button" onClick={() => setAudioMonitorInput("")} className="rounded-md px-3 py-1.5 text-[9px] font-bold text-[#c4c4cf] hover:bg-white/10">Voltar</button>
-                                  <button type="button" onClick={createAudioMonitor} disabled={creatingAudioMonitor || audioMonitorInput === "selecting"} className="rounded-md bg-[#0756C9] px-3 py-1.5 text-[9px] font-black text-white hover:bg-[#0967ED] disabled:opacity-40">{creatingAudioMonitor ? "Criando..." : "Criar áudio"}</button>
-                                </div>
-                              </div>
-                            )}
+
                           </div>
                         )}
                         <button
@@ -5099,6 +5087,43 @@ function SwitcherUI({
           <div className="flex justify-end border-t border-[#303039] bg-[#222228] px-5 py-3">
             <button type="button" onClick={() => setIsAllPresetsDialogOpen(false)} className="rounded-md bg-[#0756C9] px-4 py-2 text-[10px] font-black uppercase tracking-wide text-white hover:bg-[#0967ED]">Fechar</button>
           </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={audioCreateOpen} onOpenChange={(open) => { setAudioCreateOpen(open); if (!open) { setAudioMonitorInput(""); setAudioMonitorName(""); } }}>
+        <DialogContent className="overflow-hidden border border-white/10 bg-[#17171b] p-0 text-white shadow-2xl sm:max-w-md">
+          <DialogHeader className="border-b border-white/10 bg-gradient-to-br from-[#222228] to-[#121214] px-6 py-5">
+            <DialogTitle className="text-lg font-black tracking-tight">Novo monitor de áudio</DialogTitle>
+            <DialogDescription className="text-xs leading-relaxed text-white/50">Defina o nome do botão e selecione o input do vMix que deseja acompanhar.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 p-6">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-white/55">Nome do botão</label>
+              <input
+                autoFocus
+                value={audioMonitorName}
+                onChange={(event) => setAudioMonitorName(event.target.value)}
+                placeholder="Ex.: Áudio do estúdio"
+                className="h-10 w-full rounded-lg border border-[#3A3A46] bg-[#0e0e10] px-3 text-sm text-white outline-none transition focus:border-[#0756C9] focus:ring-2 focus:ring-[#0756C9]/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-white/55">Input de áudio do vMix</label>
+              <select
+                value={audioMonitorInput}
+                onChange={(event) => setAudioMonitorInput(event.target.value)}
+                className="h-10 w-full rounded-lg border border-[#3A3A46] bg-[#0e0e10] px-3 text-sm text-white outline-none transition focus:border-[#0756C9] focus:ring-2 focus:ring-[#0756C9]/20 [color-scheme:dark]"
+              >
+                <option value="">Selecione um input</option>
+                {inputs.map((input: VmixInput) => <option key={input.key || input.number} value={input.number}>{input.number} — {input.title}</option>)}
+              </select>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 border-t border-white/10 bg-[#202026] px-6 py-4 sm:justify-end">
+            <button type="button" onClick={() => setAudioCreateOpen(false)} disabled={creatingAudioMonitor} className="rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white/55 transition hover:bg-white/5 hover:text-white disabled:opacity-50">Fechar</button>
+            <button type="button" onClick={createAudioMonitor} disabled={creatingAudioMonitor || !audioMonitorName.trim() || !audioMonitorInput} className="flex items-center gap-2 rounded-lg bg-[#0756C9] px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white transition hover:bg-[#0967ED] disabled:cursor-not-allowed disabled:opacity-40">
+              {creatingAudioMonitor ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Salvar
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={!!editingAudioMonitor} onOpenChange={(open) => !open && setEditingAudioMonitor(null)}>
