@@ -66,6 +66,9 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   const [draws, setDraws] = useState<AnyRow[]>([]);
   const [blitzes, setBlitzes] = useState<AnyRow[]>([]);
   const [promos, setPromos] = useState<AnyRow[]>([]);
+  const [sponsorLogos, setSponsorLogos] = useState<AnyRow[]>([]);
+  const [programCatalog, setProgramCatalog] = useState<AnyRow[]>([]);
+  const [commercialAudience, setCommercialAudience] = useState<AnyRow[]>([]);
   const [vmixEvents, setVmixEvents] = useState<AnyRow[]>([]);
   const [vmixUnavailable, setVmixUnavailable] = useState(false);
   const [audienceDate, setAudienceDate] = useState(todayISO);
@@ -78,12 +81,15 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   const load = async (manual = false) => {
     if (!userId) { setLoading(false); return; }
     if (manual) setRefreshing(true); else setLoading(true);
-    const [p, d, b, c, v] = await Promise.all([
+    const [p, d, b, c, v, logos, programRows, audienceHistory] = await Promise.all([
       supabase.from("sorteio_premios").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").eq("user_id", userId).order("data_sorteio", { ascending: false }),
       supabase.from("blitz_promocionais").select("*").eq("user_id", userId).order("dia", { ascending: false }),
       supabase.from("promocoes").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
       (supabase.from("vmix_button_interactions" as any).select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1000) as any),
+      supabase.from("logos_patrocinadores").select("*").eq("user_id", userId).eq("excluido", false).order("created_at", { ascending: false }),
+      supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId),
+      supabase.from("audiencia_historico").select("created_at, programa, audio, video").eq("user_id", userId).order("created_at", { ascending: false }).limit(5000),
     ]);
     const localPrizes = readLocal("premios", userId);
     const localDraws = readLocal("sorteios", userId);
@@ -93,6 +99,9 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
     setDraws(d.data?.length ? d.data as AnyRow[] : localDraws);
     setBlitzes(b.data?.length ? b.data as AnyRow[] : localBlitz);
     setPromos(c.data?.length ? c.data as AnyRow[] : localPromos);
+    setSponsorLogos((logos.data || []) as AnyRow[]);
+    setProgramCatalog((programRows.data || []) as AnyRow[]);
+    setCommercialAudience((audienceHistory.data || []) as AnyRow[]);
     setVmixEvents(v.data || []);
     setVmixUnavailable(Boolean(v.error));
     setLoading(false);
@@ -373,7 +382,36 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
                   </div>;
                 })()}
 
-                {active === "comercial" && (activePromos.length ? <div className="grid gap-3 md:grid-cols-2">{filtered(activePromos, ["nome", "texto", "oferecimento"]).map(p => <article key={p.id} className="overflow-hidden rounded-2xl border border-slate-200"><div className="flex items-center gap-3 p-4">{p.imagem_url ? <img src={p.imagem_url} alt={p.nome || "Promoção"} className="h-16 w-16 rounded-xl object-cover" loading="lazy" /> : <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Tag size={22} /></div>}<div className="min-w-0 flex-1"><div className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Promoção ativa</div><h3 className="mt-1 truncate text-sm font-black text-slate-900">{p.nome || "Promoção sem nome"}</h3><p className="mt-1 text-[10px] text-slate-500">{p.oferecimento || "Sem patrocinador informado"}</p></div></div><div className="border-t border-slate-100 px-4 py-3"><p className="text-xs leading-relaxed text-slate-600">{String(p.texto || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim() || "Sem descrição."}</p><div className="mt-3 flex items-center gap-3 text-[10px] text-slate-400"><span className="inline-flex items-center gap-1"><CalendarDays size={12} />{dateOnly(p.data_inicio)} – {dateOnly(p.data_fim)}</span></div></div></article>)}</div> : <TableEmpty text="Não há promoções ativas hoje." />)}
+                {active === "comercial" && (() => {
+                  const today = todayISO();
+                  const allPromos = filtered(promos, ["nome", "texto", "oferecimento"]).slice().sort((a, b) => String(b.data_inicio || "").localeCompare(String(a.data_inicio || "")));
+                  const getPromoStatus = (p: AnyRow) => p.ativo === false ? "Inativa" : p.data_inicio && p.data_inicio > today ? "Agendada" : p.data_fim && p.data_fim < today ? "Encerrada" : "Ativa";
+                  const daysLeft = (value: string) => {
+                    if (!value) return null;
+                    const end = new Date(`${value.slice(0, 10)}T00:00:00`);
+                    const now = new Date(`${today}T00:00:00`);
+                    return Math.ceil((end.getTime() - now.getTime()) / 86400000);
+                  };
+                  const logoRows = filtered(sponsorLogos, ["nome", "programa_nome", "logo_url"]).map(logo => {
+                    const linkedProgram = programCatalog.find(p => p.id === logo.programa_id);
+                    const programName = String(logo.programa_nome || linkedProgram?.nome || "");
+                    const samples = commercialAudience.filter(a => String(a.programa || "").trim().toLocaleLowerCase("pt-BR") === programName.trim().toLocaleLowerCase("pt-BR"));
+                    const peakAudio = samples.reduce((max, row) => Math.max(max, Number(row.audio) || 0), 0);
+                    const peakVideo = samples.reduce((max, row) => Math.max(max, Number(row.video) || 0), 0);
+                    const peakTotal = samples.reduce((max, row) => Math.max(max, (Number(row.audio) || 0) + (Number(row.video) || 0)), 0);
+                    return { ...logo, programName, peakAudio, peakVideo, peakTotal, samples: samples.length, remaining: daysLeft(String(logo.data_final || "")) };
+                  });
+                  return <div className="space-y-6">
+                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3"><div><h3 className="text-xs font-black uppercase tracking-wide text-slate-800">Promoções</h3><p className="mt-1 text-[10px] text-slate-400">Nome, período de veiculação e status</p></div><span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-700">{allPromos.length} registro(s)</span></div>
+                      {allPromos.length ? <div className="max-h-[300px] overflow-auto"><table className="w-full"><thead className="sticky top-0 z-10 bg-slate-50"><tr><Th>Nome da promoção</Th><Th>Dia inicial</Th><Th>Dia final</Th><Th>Status</Th></tr></thead><tbody>{allPromos.map(p => { const status = getPromoStatus(p); const good = status === "Ativa"; return <tr key={p.id} className="border-t border-slate-100"><Td className="font-bold text-slate-900">{p.nome || "Promoção sem nome"}</Td><Td>{dateOnly(p.data_inicio)}</Td><Td>{dateOnly(p.data_fim)}</Td><Td><span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${good ? "bg-emerald-50 text-emerald-700" : status === "Agendada" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"}`}>{status}</span></Td></tr>; })}</tbody></table></div> : <TableEmpty text="Nenhuma promoção cadastrada." />}
+                    </section>
+                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3"><div><h3 className="text-xs font-black uppercase tracking-wide text-slate-800">Logos</h3><p className="mt-1 text-[10px] text-slate-400">Validade e audiência do programa vinculado</p></div><span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-700">{logoRows.length} registro(s)</span></div>
+                      {logoRows.length ? <div className="max-h-[420px] overflow-auto"><table className="w-full"><thead className="sticky top-0 z-10 bg-slate-50"><tr><Th>Nome do arquivo</Th><Th>Data de inclusão</Th><Th>Data de vencimento</Th><Th>Dias a vencer</Th><Th>Programa vinculado</Th><Th>Audiência no horário do programa</Th></tr></thead><tbody>{logoRows.map(logo => { const r = logo.remaining; return <tr key={logo.id} className="border-t border-slate-100"><Td><div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><ImageIcon size={15} /></div><div className="min-w-0"><div className="max-w-[180px] truncate font-bold text-slate-900">{logo.nome || "Logo sem nome"}</div><div className="max-w-[180px] truncate text-[9px] text-slate-400">{logo.programName || "Sem programa vinculado"}</div></div></div></Td><Td>{dateOnly(logo.created_at)}</Td><Td>{dateOnly(logo.data_final)}</Td><Td><span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${r !== null && r < 0 ? "bg-rose-50 text-rose-700" : r !== null && r <= 7 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>{r === null ? "—" : r < 0 ? `Vencida há ${Math.abs(r)} dia(s)` : r === 0 ? "Vence hoje" : `${r} dia(s)`}</span></Td><Td>{logo.programName || "—"}</Td><Td>{logo.samples ? <div><div className="font-black text-slate-900">{logo.peakTotal.toLocaleString("pt-BR")} total</div><div className="mt-1 text-[9px] text-slate-500">Áudio {logo.peakAudio.toLocaleString("pt-BR")} · Vídeo {logo.peakVideo.toLocaleString("pt-BR")}</div><div className="mt-1 text-[9px] text-slate-400">Pico registrado em {logo.samples} leitura(s)</div></div> : <span className="text-[10px] text-slate-400">Sem histórico de audiência</span>}</Td></tr>; })}</tbody></table></div> : <TableEmpty text="Nenhuma logo de patrocinador cadastrada." />}
+                    </section>
+                  </div>;
+                })()}
 
                 {active === "audiencia" && (
                   <div className="space-y-5">
