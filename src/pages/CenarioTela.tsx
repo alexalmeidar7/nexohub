@@ -177,7 +177,8 @@ export default function CenarioTela() {
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "home";
-    return new URLSearchParams(window.location.search).get("tab") || "home";
+    const requestedTab = new URLSearchParams(window.location.search).get("tab") || "home";
+    return requestedTab === "colors" ? "home" : requestedTab;
   });
 
   const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
@@ -675,7 +676,7 @@ export default function CenarioTela() {
       if (parsed && typeof parsed === "object") {
         const { _activeTab, _weatherSubTab, _currencySubTab, _screenRotation, ...rest } = parsed;
         setConfig(prev => ({ ...prev, ...rest }));
-        if (_activeTab) setActiveTab(_activeTab);
+        if (_activeTab) setActiveTab(_activeTab === "colors" ? "home" : _activeTab);
         if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
         if (_currencySubTab) setCurrencySubTab(_currencySubTab);
         if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
@@ -700,14 +701,14 @@ export default function CenarioTela() {
       // Only apply tab/rotation from initial load, never from realtime updates
       // Tab changes arrive via explicit "tab-change" broadcast events instead
       if (!fromRealtime) {
-        if (_activeTab) setActiveTab(_activeTab);
+        if (_activeTab) setActiveTab(_activeTab === "colors" ? "home" : _activeTab);
         if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
         if (_currencySubTab) setCurrencySubTab(_currencySubTab);
         if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
       }
       if (fromRealtime) setLastSyncTime(new Date());
       try {
-        localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify({ ...merged, _activeTab, _weatherSubTab, _currencySubTab, _screenRotation }));
+        localStorage.setItem("cenario_interativo_config_cache_v1", JSON.stringify({ ...merged, _activeTab: _activeTab === "colors" ? "home" : _activeTab, _weatherSubTab, _currencySubTab, _screenRotation }));
       } catch { /* silent */ }
     };
 
@@ -1265,7 +1266,7 @@ export default function CenarioTela() {
         bc.postMessage({ type: "pong" });
       }
       if (ev.data?.type === "tab-change") {
-        const newTab = ev.data.tab;
+        const newTab = ev.data.tab === "colors" ? "home" : ev.data.tab;
         const newSubTab = ev.data.subTab;
         const newCurrencySubTab = ev.data.currencySubTab;
         
@@ -1282,7 +1283,7 @@ export default function CenarioTela() {
         setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
       }
       if (ev.data?.type === "full-state") {
-        const newTab = ev.data.tab;
+        const newTab = ev.data.tab === "colors" ? "home" : ev.data.tab;
         const newSubTab = ev.data.subTab;
         const newCurrencySubTab = ev.data.currencySubTab;
 
