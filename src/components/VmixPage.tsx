@@ -2813,7 +2813,7 @@ function AudioMonitorButton({
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
         <span className="truncate text-[7px] font-black uppercase tracking-wider text-white">Monitor de áudio</span>
       </div>
-      <p className="mt-1 truncate px-2 text-[8px] font-black uppercase text-white" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
+
       <div className="absolute inset-x-2 bottom-2 top-[39px] flex items-stretch gap-3">
         <div className="flex w-[18px] shrink-0 items-stretch gap-[3px]">
           {channelMeters.map(channel => {
