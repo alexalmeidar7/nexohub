@@ -267,6 +267,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [horario, setHorario] = useState("");
   const [shortcut, setShortcut] = useState("");
   const [iconKey, setIconKey] = useState("");
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [programaId, setProgramaId] = useState("");
   const [programasPodcast, setProgramasPodcast] = useState<ProgramaOption[]>([]);
   const [commands, setCommands] = useState<PresetCommand[]>([]);
@@ -609,32 +610,63 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 </div>
               )}
 
-              {/* Icon picker */}
+              {/* Seletor compacto de ícone: a biblioteca abre somente quando solicitada. */}
               <div className="flex flex-col gap-2">
                 <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
                   <Sparkles size={10} /> Ícone do Botão
                 </label>
-                <div className="grid grid-cols-10 gap-1.5 p-2.5 rounded-lg max-h-32 overflow-y-auto" style={{ backgroundColor: "#12121a", border: "1px solid #2a2a38" }}>
-                  {Object.entries(ICON_LIBRARY).map(([key, Icon]) => {
-                    const active = iconKey === key;
-                    return (
-                      <button
-                        key={key}
-                        title={key}
-                        onClick={() => setIconKey(active ? "" : key)}
-                        className="aspect-square rounded-lg flex items-center justify-center transition-all hover:scale-105"
-                        style={{
-                          backgroundColor: active ? `${color}22` : "#ffffff06",
-                          border: active ? `1px solid ${color}` : "1px solid transparent",
-                          color: active ? color : "#888",
-                        }}
-                      >
-                        <Icon size={14} />
-                      </button>
-                    );
-                  })}
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={iconPickerOpen}
+                    onClick={() => setIconPickerOpen(open => !open)}
+                    className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:border-[#397ff5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0065F9]"
+                    style={{ backgroundColor: "#12121a", border: "1px solid #343440", color: "#e5e7eb" }}
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${color}22`, color }}>
+                      {iconKey && ICON_LIBRARY[iconKey] ? React.createElement(ICON_LIBRARY[iconKey], { size: 18 }) : <Sparkles size={18} />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[11px] font-bold">{iconKey || "Escolher ícone"}</span>
+                      <span className="mt-0.5 block text-[9px] text-[#858594]">Selecione o símbolo que representará este botão</span>
+                    </span>
+                    <ChevronDown size={15} className={`shrink-0 transition-transform ${iconPickerOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {iconPickerOpen && (
+                    <div role="dialog" aria-label="Escolher ícone do botão" className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl p-3 shadow-2xl" style={{ backgroundColor: "#17171f", border: "1px solid #3a3a48" }}>
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#c4c4cf]">Escolha um ícone</span>
+                        <button type="button" onClick={() => setIconPickerOpen(false)} className="rounded-md px-2 py-1 text-[10px] text-[#a5a5b5] hover:bg-white/10">Fechar</button>
+                      </div>
+                      <div className="grid max-h-44 grid-cols-6 gap-2 overflow-y-auto sm:grid-cols-8">
+                        {Object.entries(ICON_LIBRARY).map(([key, Icon]) => {
+                          const active = iconKey === key;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              title={key}
+                              aria-label={key}
+                              aria-pressed={active}
+                              onClick={() => { setIconKey(key); setIconPickerOpen(false); }}
+                              className="flex aspect-square items-center justify-center rounded-lg transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0065F9]"
+                              style={{ backgroundColor: active ? `${color}26` : "#ffffff08", border: active ? `1px solid ${color}` : "1px solid #ffffff0d", color: active ? color : "#c4c4cf" }}
+                            >
+                              <Icon size={17} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {iconKey && (
+                        <button type="button" onClick={() => { setIconKey(""); setIconPickerOpen(false); }} className="mt-2 rounded-md px-2 py-1.5 text-[10px] text-[#b8c0cc] hover:bg-white/10">
+                          Remover ícone selecionado
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <span className="text-[8px]" style={{ color: "#555" }}>Sem seleção, o ícone é sugerido pelo nome do botão.</span>
+                <span className="text-[8px]" style={{ color: "#777" }}>O ícone escolhido será exibido no botão do switcher.</span>
               </div>
 
 
