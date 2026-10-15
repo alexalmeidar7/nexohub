@@ -1711,7 +1711,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                   <BlitzPage effectiveUserId={effectiveUserId} />
                 </div>
               )}
-              {currentPage === "relatorios" && (
+              {isAdmin && currentPage === "relatorios" && (
                 <Suspense fallback={<ModulePageSkeleton variant="table" />}>
                   <RelatoriosPage effectiveUserId={effectiveUserId} />
                 </Suspense>
@@ -2112,6 +2112,28 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           >
             <Suspense fallback={<ModulePageSkeleton variant="table" />}>
               <SorteiosPage effectiveUserId={effectiveUserId} />
+            </Suspense>
+          </HouseMixWindow>
+        )}
+
+        {/* House Mix Window Mode - Relatórios */}
+        {!isAdmin && (currentPage === "relatorios" || (minimizedModules.includes("relatorios") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – RELATÓRIOS"
+            wide
+            isOpen={currentPage === "relatorios"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "relatorios"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => prev.includes("relatorios") ? prev : [...prev, "relatorios"]);
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+              <RelatoriosPage effectiveUserId={effectiveUserId} />
             </Suspense>
           </HouseMixWindow>
         )}
