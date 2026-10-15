@@ -2766,37 +2766,28 @@ function AudioMonitorButton({
   textScale,
   onEdit,
   onDelete,
+  levels,
 }: {
   button: any;
   input: string;
   textScale: number;
   onEdit: () => void;
   onDelete: () => void;
+  levels?: { left: number; right: number; available: boolean; updatedAt: number };
 }) {
-  // Prévia visual dos medidores L/R. A fonte de áudio real do vMix ainda será integrada.
-  const [leftLevel, setLeftLevel] = useState(0.38);
-  const [rightLevel, setRightLevel] = useState(0.32);
+  // Usa exclusivamente os valores reais da API do vMix; nunca simula níveis.
+  const leftLevel = levels?.available ? levels.left : 0;
+  const rightLevel = levels?.available ? levels.right : 0;
 
-  useEffect(() => {
-    let frame = 0;
-    let lastUpdate = 0;
-    const animate = (time: number) => {
-      if (time - lastUpdate > 90) {
-        lastUpdate = time;
-        setLeftLevel(previous => Math.max(0.04, Math.min(1, previous + (Math.random() - 0.47) * 0.2 + Math.sin(time / 180) * 0.08)));
-        setRightLevel(previous => Math.max(0.04, Math.min(1, previous + (Math.random() - 0.52) * 0.2 + Math.sin(time / 205 + 0.7) * 0.07)));
-      }
-      frame = requestAnimationFrame(animate);
-    };
-
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
-  const dbFor = (level: number) => Math.round(-60 + level * 60);
+  const dbFor = (level: number) => level <= 0 ? "-∞" : (20 * Math.log10(level)).toFixed(0);
   const meterColor = (segment: number, total: number) => {
     const ratio = segment / total;
-    return ratio > 0.88 ? "#ef2028" : ratio > 0.72 ? "#ffe600" : "#00e83b";
+    return ratio >= 0.88 ? "#ef2028" : ratio >= 0.68 ? "#ffe600" : "#00e83b";
+  };
+  const activeSegmentsFor = (amplitude: number) => {
+    if (amplitude <= 0) return 0;
+    const db = 20 * Math.log10(amplitude);
+    return Math.max(0, Math.min(12, Math.ceil(((db + 60) / 60) * 12)));
   };
   const monitorName = button?.nome || `Áudio · Input ${input}`;
 
@@ -2809,7 +2800,7 @@ function AudioMonitorButton({
       <div className="flex items-start justify-between gap-2 px-2 pt-2">
         <div className="min-w-0">
           <div className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#00e83b]" />
+            <span className={`h-1.5 w-1.5 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
             <span className="text-[7px] font-black uppercase tracking-wider text-white">Monitor de áudio</span>
           </div>
           <p className="mt-1 truncate text-[9px] font-black uppercase text-white" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
@@ -2822,7 +2813,7 @@ function AudioMonitorButton({
           ].map(channel => (
             <div key={channel.label} className="flex flex-col items-center gap-0.5">
               <span className="text-[7px] font-black text-white">{channel.label}</span>
-              <span className="text-[6px] font-bold tabular-nums text-white/70">{dbFor(channel.level)} dB</span>
+              <span className="text-[6px] font-bold tabular-nums text-white/70">{levels?.available ? `${dbFor(channel.level)} dB` : "— dB"}</span>
             </div>
           ))}
         </div>
@@ -2833,7 +2824,7 @@ function AudioMonitorButton({
           { label: "R", level: rightLevel },
         ].map(channel => {
           const totalSegments = 12;
-          const activeSegments = Math.round(channel.level * totalSegments);
+          const activeSegments = levels?.available ? activeSegmentsFor(channel.level) : 0;
           return (
             <div key={channel.label} className="flex min-w-0 flex-1 flex-col-reverse gap-[2px] rounded-sm bg-[#17181b] p-[2px]">
               {Array.from({ length: totalSegments }, (_, index) => {
@@ -2846,6 +2837,7 @@ function AudioMonitorButton({
         })}
       </div>
       <div className="absolute bottom-0.5 left-0 right-0 flex justify-around text-[5px] font-bold text-white/45"><span>L · LEFT</span><span>R · RIGHT</span></div>
+      {!levels?.available && <div className="absolute inset-x-0 bottom-4 text-center text-[5px] font-bold uppercase tracking-wide text-amber-300">Aguardando nível real do vMix</div>}
       <div className="absolute bottom-1 right-1 z-20 flex items-center gap-1 opacity-0 transition-all group-hover/custom:opacity-100">
         <button onClick={(event) => { event.stopPropagation(); onEdit(); }} className="flex h-5 w-5 items-center justify-center rounded bg-black/60 text-white hover:bg-white/15" title="Alterar input monitorado"><Wand2 size={10} /></button>
         <button onClick={(event) => { event.stopPropagation(); onDelete(); }} className="flex h-5 w-5 items-center justify-center rounded bg-black/60 text-red-300 hover:bg-red-500/25" title="Excluir monitor de áudio"><Trash2 size={10} /></button>
@@ -3269,6 +3261,65 @@ function SwitcherUI({
   const [editingAudioMonitor, setEditingAudioMonitor] = useState<any | null>(null);
   const [editingAudioMonitorInput, setEditingAudioMonitorInput] = useState("");
   const [savingAudioMonitor, setSavingAudioMonitor] = useState(false);
+  const [audioMeterLevels, setAudioMeterLevels] = useState<Record<string, { left: number; right: number; available: boolean; updatedAt: number }>>({});
+
+  // Lê os medidores reais meterF1 (Left) e meterF2 (Right) da API XML do vMix.
+  // A consulta só roda quando há monitores de áudio e a conexão com o vMix está ativa.
+  useEffect(() => {
+    const monitoredInputs = Array.from(new Set(
+      (customButtons || [])
+        .map((button: any) => getAudioMonitorInput(button))
+        .filter((value): value is string => Boolean(value)),
+    ));
+    if (!connected || !savedUrl || monitoredInputs.length === 0) return;
+
+    let stopped = false;
+    let timer: number | undefined;
+    let requestInFlight = false;
+
+    const readMeters = async () => {
+      if (stopped || requestInFlight) return;
+      requestInFlight = true;
+      try {
+        const xmlText = await vmixFetch("/api/");
+        if (stopped) return;
+        const xml = new DOMParser().parseFromString(normalizeVmixXmlText(xmlText), "text/xml");
+        if (xml.getElementsByTagName("parsererror").length) return;
+
+        const next: Record<string, { left: number; right: number; available: boolean; updatedAt: number }> = {};
+        for (const inputNumber of monitoredInputs) {
+          const inputNode = Array.from(xml.getElementsByTagName("input")).find((node) =>
+            node.getAttribute("number") === inputNumber ||
+            node.getAttribute("key") === inputNumber ||
+            node.getAttribute("guid") === inputNumber
+          );
+          const leftRaw = inputNode?.getAttribute("meterF1");
+          const rightRaw = inputNode?.getAttribute("meterF2");
+          const left = leftRaw !== null && leftRaw.trim() !== "" ? Number(leftRaw) : NaN;
+          const right = rightRaw !== null && rightRaw.trim() !== "" ? Number(rightRaw) : NaN;
+          const available = Number.isFinite(left) && Number.isFinite(right);
+          next[inputNumber] = {
+            left: available ? Math.max(0, Math.min(1, left)) : 0,
+            right: available ? Math.max(0, Math.min(1, right)) : 0,
+            available,
+            updatedAt: Date.now(),
+          };
+        }
+        setAudioMeterLevels(previous => ({ ...previous, ...next }));
+      } catch {
+        // Falhas transitórias não derrubam o switcher; a próxima consulta tenta novamente.
+      } finally {
+        requestInFlight = false;
+        if (!stopped) timer = window.setTimeout(readMeters, 150);
+      }
+    };
+
+    void readMeters();
+    return () => {
+      stopped = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [connected, savedUrl, customButtons, vmixFetch]);
 
   const createAudioMonitor = async () => {
     if (!user || !audioMonitorInput || !audioMonitorName.trim()) return;
@@ -4823,6 +4874,7 @@ function SwitcherUI({
                               button={btn}
                               input={audioMonitorInput}
                               textScale={customBtnTextScale}
+                              levels={audioMeterLevels[audioMonitorInput]}
                               onEdit={() => openAudioMonitorEditor(btn)}
                               onDelete={() => deleteAudioMonitor(btn)}
                             />
