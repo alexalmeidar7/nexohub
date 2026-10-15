@@ -2802,8 +2802,8 @@ function AudioMonitorButton({
 
   return (
     <div
-      className="group/custom relative overflow-hidden rounded-lg transition-all duration-200 hover:brightness-110"
-      style={{ aspectRatio: "3/2", background: "#08090b", border: "1px solid #292a2e" }}
+      className="group/custom relative w-[180px] min-w-[180px] shrink-0 overflow-hidden rounded-lg transition-all duration-200 hover:brightness-110"
+      style={{ width: 180, minWidth: 180, aspectRatio: "3/2", background: "#08090b", border: "1px solid #292a2e", boxSizing: "border-box" }}
       title={`Monitor estéreo L/R do Input ${input}`}
     >
       <div className="flex items-start justify-between gap-2 px-2 pt-2">
