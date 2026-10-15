@@ -44,7 +44,7 @@ export default function HouseMixWindow({
     if (!isOpen) return;
 
     const calcDefaultPos = () => {
-      const winWidth = wide ? window.innerWidth * 0.94 : Math.min(1240, window.innerWidth * 0.94);
+      const winWidth = Math.min(1600, window.innerWidth * 0.94);
       const defaultX = Math.max(10, (window.innerWidth - winWidth) / 2);
       const defaultY = 138; // sits comfortably below the HouseMix header & date pill
       setPosition((prev) => prev ?? { x: defaultX, y: defaultY });
@@ -108,7 +108,7 @@ export default function HouseMixWindow({
   return (
     <div
       ref={windowRef}
-      className={`fixed z-40 flex flex-col w-[94vw] ${wide ? "max-w-none" : "max-w-[1240px]"} h-[calc(100vh-250px)] max-h-[740px] min-h-[440px] rounded-2xl border-2 border-[#0055ff] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.55),0_0_30px_rgba(0,85,255,0.2)] overflow-hidden transition-shadow ${
+      className={`fixed z-40 flex flex-col w-[94vw] max-w-[1600px] h-[calc(100vh-250px)] max-h-[740px] min-h-[440px] rounded-2xl border-2 border-[#0055ff] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.55),0_0_30px_rgba(0,85,255,0.2)] overflow-hidden transition-shadow ${
         isDragging ? "shadow-[0_30px_70px_-10px_rgba(0,0,0,0.65),0_0_40px_rgba(0,85,255,0.35)]" : ""
       }`}
       style={{
