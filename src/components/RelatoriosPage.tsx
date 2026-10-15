@@ -94,7 +94,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   useEffect(() => { void load(); }, [userId]);
 
   const prizeById = useMemo(() => new Map(prizes.map(p => [p.id, p])), [prizes]);
-  const filtered = <T extends AnyRow>(rows: T[], fields: string[]) => {
+  const filtered = <T extends AnyRow,>(rows: T[], fields: string[]) => {
     const q = search.trim().toLocaleLowerCase("pt-BR");
     if (!q) return rows;
     return rows.filter(row => fields.some(field => String(row[field] ?? "").toLocaleLowerCase("pt-BR").includes(q)));
