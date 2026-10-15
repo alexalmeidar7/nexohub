@@ -44,7 +44,7 @@ export default function HouseMixWindow({
     if (!isOpen) return;
 
     const calcDefaultPos = () => {
-      const winWidth = Math.min(1240, window.innerWidth * 0.94);
+      const winWidth = wide ? window.innerWidth * 0.94 : Math.min(1240, window.innerWidth * 0.94);
       const defaultX = Math.max(10, (window.innerWidth - winWidth) / 2);
       const defaultY = 138; // sits comfortably below the HouseMix header & date pill
       setPosition((prev) => prev ?? { x: defaultX, y: defaultY });
@@ -53,7 +53,7 @@ export default function HouseMixWindow({
     calcDefaultPos();
     window.addEventListener("resize", calcDefaultPos);
     return () => window.removeEventListener("resize", calcDefaultPos);
-  }, [isOpen]);
+  }, [isOpen, wide]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     // Exclude button clicks from initiating drag
