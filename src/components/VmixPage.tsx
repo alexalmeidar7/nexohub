@@ -5201,20 +5201,22 @@ function SwitcherUI({
         </div>
       )}
       <Dialog open={!!editingAudioMonitor} onOpenChange={(open) => !open && setEditingAudioMonitor(null)}>
-        <DialogContent className="border-white/10 bg-[#17171b] p-0 text-white sm:max-w-md overflow-hidden">
-          <DialogHeader className="border-b border-white/10 bg-gradient-to-br from-[#222228] to-[#121214] px-6 py-5">
-            <DialogTitle className="text-lg font-black tracking-tight text-teal-200">Editar Monitor de Áudio</DialogTitle>
-            <DialogDescription className="text-xs leading-relaxed text-white/45">
-              Para manter este monitor simples, altere apenas o input acompanhado.
+        <DialogContent className="max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 bg-[#19191f] p-0 text-white shadow-2xl sm:max-w-2xl">
+          <DialogHeader className="border-b border-white/10 bg-[#19191f] px-6 py-5 text-left">
+            <DialogTitle className="text-base font-black uppercase tracking-wide text-white">Editar Monitor de Áudio</DialogTitle>
+            <DialogDescription className="text-xs leading-relaxed text-white/55">
+              Selecione o input do vMix que este monitor deve acompanhar.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 p-6">
-            <div>
-              <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-white/45">Input monitorado</label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-white/80">
+                <Activity size={12} /> Input monitorado
+              </label>
               <select
                 value={editingAudioMonitorInput}
                 onChange={(event) => setEditingAudioMonitorInput(event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#0e0e10] px-4 py-3 text-sm font-semibold text-white outline-none transition focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/15"
+                className="h-11 w-full rounded-xl border border-white/20 bg-[#19191f] px-4 text-sm font-semibold text-white outline-none transition focus:border-[#0756C9] focus:ring-2 focus:ring-[#0756C9]/30 [color-scheme:dark]"
               >
                 <option value="">Selecione um input de áudio</option>
                 {inputs.map((input: VmixInput) => (
@@ -5223,23 +5225,24 @@ function SwitcherUI({
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="flex justify-between gap-2 border-t border-white/10 pt-4">
-              <button
-                onClick={() => deleteAudioMonitor(editingAudioMonitor)}
-                disabled={savingAudioMonitor}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-50"
-              >
-                <Trash2 size={13} /> Excluir
-              </button>
-              <div className="flex gap-2">
-                <button onClick={() => setEditingAudioMonitor(null)} disabled={savingAudioMonitor} className="rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white/50 transition hover:bg-white/5 hover:text-white disabled:opacity-50">Cancelar</button>
-                <button onClick={saveAudioMonitorInput} disabled={savingAudioMonitor || !editingAudioMonitorInput} className="flex items-center gap-2 rounded-lg bg-teal-300 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-[#071010] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50">
-                  {savingAudioMonitor ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Salvar input
-                </button>
-              </div>
+              <p className="text-[10px] text-white/40">O monitor continuará exibindo os níveis reais dos canais Left e Right.</p>
             </div>
           </div>
+          <DialogFooter className="flex-row items-center justify-between gap-3 border-t border-white/10 bg-[#19191f] px-6 py-4 sm:justify-between">
+            <button
+              onClick={() => deleteAudioMonitor(editingAudioMonitor)}
+              disabled={savingAudioMonitor}
+              className="flex h-9 items-center gap-2 rounded-lg bg-[#0756C9] px-4 text-[10px] font-black uppercase tracking-wide text-white transition hover:bg-[#0967ED] disabled:opacity-50"
+            >
+              <Trash2 size={13} /> Excluir
+            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setEditingAudioMonitor(null)} disabled={savingAudioMonitor} className="h-9 rounded-lg border border-white/20 px-4 text-[10px] font-black uppercase tracking-wide text-white/80 transition hover:bg-white/5 disabled:opacity-50">Cancelar</button>
+              <button onClick={saveAudioMonitorInput} disabled={savingAudioMonitor || !editingAudioMonitorInput} className="flex h-9 items-center gap-2 rounded-lg bg-[#0756C9] px-4 text-[10px] font-black uppercase tracking-wide text-white transition hover:bg-[#0967ED] disabled:cursor-not-allowed disabled:opacity-50">
+                {savingAudioMonitor ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Salvar input
+              </button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
