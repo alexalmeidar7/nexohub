@@ -1711,7 +1711,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                 </div>
               )}
               {currentPage === "relatorios" && (
-                <Suspense fallback={<ModulePageSkeleton variant="default" />}>
+                <Suspense fallback={<ModulePageSkeleton variant="table" />}>
                   <RelatoriosPage effectiveUserId={effectiveUserId} />
                 </Suspense>
               )}
