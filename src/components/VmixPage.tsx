@@ -2832,7 +2832,6 @@ function AudioMonitorButton({
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 border-l border-white/10 pl-2">
           <div className="min-w-0">
-            <p className="text-[6px] font-bold uppercase tracking-wider text-white/40">Input ${input}</p>
             <p className="truncate text-[9px] font-black uppercase leading-tight text-white" title={inputName || `Input ${input}`}>{inputName || `Input ${input}`}</p>
           </div>
           <div className="grid grid-cols-2 gap-1">
