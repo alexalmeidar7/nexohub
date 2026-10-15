@@ -2764,6 +2764,7 @@ const getAudioMonitorInput = (button: any): string | null => {
 function AudioMonitorButton({
   button,
   input,
+  inputName,
   textScale,
   onEdit,
   onDelete,
@@ -2771,6 +2772,7 @@ function AudioMonitorButton({
 }: {
   button: any;
   input: string;
+  inputName?: string;
   textScale: number;
   onEdit: () => void;
   onDelete: () => void;
@@ -2779,8 +2781,13 @@ function AudioMonitorButton({
   // Usa exclusivamente os valores reais da API do vMix; nunca simula níveis.
   const leftLevel = levels?.available ? levels.left : 0;
   const rightLevel = levels?.available ? levels.right : 0;
-
-  const dbFor = (level: number) => level <= 0 ? "-∞" : (20 * Math.log10(level)).toFixed(0);
+  const dbValue = (level: number) => level <= 0 ? Number.NEGATIVE_INFINITY : 20 * Math.log10(level);
+  const dbFor = (level: number) => Number.isFinite(dbValue(level)) ? dbValue(level).toFixed(0) : "-∞";
+  const averageDb = levels?.available
+    ? (Number.isFinite(dbValue(leftLevel)) && Number.isFinite(dbValue(rightLevel))
+      ? ((dbValue(leftLevel) + dbValue(rightLevel)) / 2).toFixed(1)
+      : "-∞")
+    : "—";
   const meterColor = (segment: number, total: number) => {
     const ratio = segment / total;
     return ratio >= 0.88 ? "#ef2028" : ratio >= 0.68 ? "#ffe600" : "#00e83b";
@@ -2791,6 +2798,10 @@ function AudioMonitorButton({
     return Math.max(0, Math.min(12, Math.ceil(((db + 60) / 60) * 12)));
   };
   const monitorName = button?.nome || `Áudio · Input ${input}`;
+  const channelMeters = [
+    { label: "L", level: leftLevel },
+    { label: "R", level: rightLevel },
+  ];
 
   return (
     <div
@@ -2798,47 +2809,49 @@ function AudioMonitorButton({
       style={{ width: 180, minWidth: 180, aspectRatio: "3/2", background: "#08090b", border: "1px solid #292a2e", boxSizing: "border-box" }}
       title={`Monitor estéreo L/R do Input ${input}`}
     >
-      <div className="flex items-start justify-between gap-2 px-2 pt-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1">
-            <span className={`h-1.5 w-1.5 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
-            <span className="text-[7px] font-black uppercase tracking-wider text-white">Monitor de áudio</span>
+      <div className="flex items-center gap-1.5 px-2 pt-2">
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
+        <span className="truncate text-[7px] font-black uppercase tracking-wider text-white">Monitor de áudio</span>
+      </div>
+      <p className="mt-1 truncate px-2 text-[8px] font-black uppercase text-white" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
+      <div className="absolute inset-x-2 bottom-2 top-[39px] flex items-stretch gap-3">
+        <div className="flex w-[18px] shrink-0 items-stretch gap-[3px]">
+          {channelMeters.map(channel => {
+            const totalSegments = 12;
+            const activeSegments = levels?.available ? activeSegmentsFor(channel.level) : 0;
+            return (
+              <div key={channel.label} className="flex min-w-0 flex-1 flex-col-reverse gap-[2px] rounded-sm bg-[#17181b] p-[1px]">
+                {Array.from({ length: totalSegments }, (_, index) => {
+                  const active = index < activeSegments;
+                  const color = meterColor(index, totalSegments);
+                  return <div key={index} className="min-h-0 flex-1" style={{ backgroundColor: active ? color : "#242529", boxShadow: active ? `0 0 4px ${color}55` : "none" }} />;
+                })}
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 border-l border-white/10 pl-2">
+          <div className="min-w-0">
+            <p className="text-[6px] font-bold uppercase tracking-wider text-white/40">Input ${input}</p>
+            <p className="truncate text-[9px] font-black uppercase leading-tight text-white" title={inputName || `Input ${input}`}>{inputName || `Input ${input}`}</p>
           </div>
-          <p className="mt-1 truncate text-[9px] font-black uppercase text-white" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
-          <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-white/60">INPUT {input}</p>
-        </div>
-        <div className="flex gap-1.5">
-          {[
-            { label: "L", level: leftLevel },
-            { label: "R", level: rightLevel },
-          ].map(channel => (
-            <div key={channel.label} className="flex flex-col items-center gap-0.5">
-              <span className="text-[7px] font-black text-white">{channel.label}</span>
-              <span className="text-[6px] font-bold tabular-nums text-white/70">{levels?.available ? `${dbFor(channel.level)} dB` : "— dB"}</span>
+          <div className="grid grid-cols-2 gap-1">
+            <div className="rounded bg-white/[0.04] px-1.5 py-1">
+              <p className="text-[6px] font-black text-white/45">L · LEFT</p>
+              <p className="text-[10px] font-black tabular-nums text-[#00e83b]">{levels?.available ? `${dbFor(leftLevel)} dB` : "— dB"}</p>
             </div>
-          ))}
+            <div className="rounded bg-white/[0.04] px-1.5 py-1">
+              <p className="text-[6px] font-black text-white/45">R · RIGHT</p>
+              <p className="text-[10px] font-black tabular-nums text-[#00e83b]">{levels?.available ? `${dbFor(rightLevel)} dB` : "— dB"}</p>
+            </div>
+          </div>
+          <div className="rounded bg-[#00e83b]/[0.08] px-1.5 py-1">
+            <p className="text-[6px] font-black uppercase tracking-wide text-white/45">Média L/R</p>
+            <p className="text-[11px] font-black tabular-nums text-white">{averageDb} dB</p>
+          </div>
+          {!levels?.available && <p className="text-[6px] font-bold uppercase leading-tight text-amber-300">Aguardando nível real do vMix</p>}
         </div>
       </div>
-      <div className="absolute inset-x-2 bottom-2 top-[39px] flex items-stretch justify-center gap-2">
-        {[
-          { label: "L", level: leftLevel },
-          { label: "R", level: rightLevel },
-        ].map(channel => {
-          const totalSegments = 12;
-          const activeSegments = levels?.available ? activeSegmentsFor(channel.level) : 0;
-          return (
-            <div key={channel.label} className="flex min-w-0 flex-1 flex-col-reverse gap-[2px] rounded-sm bg-[#17181b] p-[2px]">
-              {Array.from({ length: totalSegments }, (_, index) => {
-                const active = index < activeSegments;
-                const color = meterColor(index, totalSegments);
-                return <div key={index} className="min-h-0 flex-1" style={{ backgroundColor: active ? color : "#242529", boxShadow: active ? `0 0 4px ${color}55` : "none" }} />;
-              })}
-            </div>
-          );
-        })}
-      </div>
-      <div className="absolute bottom-0.5 left-0 right-0 flex justify-around text-[5px] font-bold text-white/45"><span>L · LEFT</span><span>R · RIGHT</span></div>
-      {!levels?.available && <div className="absolute inset-x-0 bottom-4 text-center text-[5px] font-bold uppercase tracking-wide text-amber-300">Aguardando nível real do vMix</div>}
       <div className="absolute bottom-1 right-1 z-20 flex items-center gap-1 opacity-0 transition-all group-hover/custom:opacity-100">
         <button onClick={(event) => { event.stopPropagation(); onEdit(); }} className="flex h-5 w-5 items-center justify-center rounded bg-black/60 text-white hover:bg-white/15" title="Alterar input monitorado"><Wand2 size={10} /></button>
         <button onClick={(event) => { event.stopPropagation(); onDelete(); }} className="flex h-5 w-5 items-center justify-center rounded bg-black/60 text-red-300 hover:bg-red-500/25" title="Excluir monitor de áudio"><Trash2 size={10} /></button>
@@ -4874,6 +4887,7 @@ function SwitcherUI({
                               key={btn.id}
                               button={btn}
                               input={audioMonitorInput}
+                              inputName={inputs.find((vmixInput: VmixInput) => vmixInput.number === audioMonitorInput)?.title}
                               textScale={customBtnTextScale}
                               levels={audioMeterLevels[audioMonitorInput]}
                               onEdit={() => openAudioMonitorEditor(btn)}
