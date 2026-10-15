@@ -93,3 +93,6 @@ verify_jwt = false
 [functions.serve-xml-geral]
 verify_jwt = false
 
+
+[functions.collect-audience]
+verify_jwt = false
