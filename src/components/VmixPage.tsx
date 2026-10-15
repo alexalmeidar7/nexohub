@@ -2773,86 +2773,71 @@ function AudioMonitorButton({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const [levels, setLevels] = useState<number[]>(() => Array.from({ length: 28 }, (_, index) => 0.16 + (index % 5) * 0.035));
-  const [peaks, setPeaks] = useState<number[]>(() => Array(28).fill(0.18));
-  const [db, setDb] = useState(-28);
-  const [rightDb, setRightDb] = useState(-31);
-
+  // Visual de medição estéreo (L/R). A fonte de níveis reais do vMix ainda precisa
+  // ser conectada; estes valores são apenas uma prévia visual, não uma leitura real.
+  const [leftLevel, setLeftLevel] = useState(0.38);
+  const [rightLevel, setRightLevel] = useState(0.32);
   useEffect(() => {
     let frame = 0;
     let lastUpdate = 0;
     const animate = (time: number) => {
-      if (time - lastUpdate > 78) {
+      if (time - lastUpdate > 90) {
         lastUpdate = time;
-        setLevels((previous) => {
-          const next = previous.map((value, index) => {
-            const wave = Math.sin(time / 235 + index * 0.74) * 0.18;
-            const rhythm = Math.sin(time / 660 + index * 0.31) * 0.14;
-            const random = Math.random() * 0.28;
-            const frequencyShape = index < 7 ? 0.22 : index < 18 ? 0.12 : 0.02;
-            const target = Math.max(0.08, Math.min(0.98, 0.26 + wave + rhythm + random + frequencyShape));
-            return value + (target - value) * 0.58;
-          });
-          const currentPeak = Math.max(...next);
-          const leftLevel = Math.round(-48 + currentPeak * 43);
-          setDb(leftLevel);
-          setRightDb(Math.max(-48, Math.min(-1, leftLevel + Math.round(Math.sin(time / 320) * 3 - 1))));
-          setPeaks((previousPeaks) => previousPeaks.map((peak, index) => Math.max(next[index], peak - 0.035)));
-          return next;
-        });
+        setLeftLevel(previous => Math.max(0.04, Math.min(1, previous + (Math.random() - 0.47) * 0.2 + Math.sin(time / 180) * 0.08)));
+        setRightLevel(previous => Math.max(0.04, Math.min(1, previous + (Math.random() - 0.52) * 0.2 + Math.sin(time / 205 + 0.7) * 0.07)));
       }
       frame = requestAnimationFrame(animate);
     };
     frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
-  const averageDb = Math.round((db + rightDb) / 2);
-  const dbColor = averageDb > -5 ? "#fb7185" : averageDb > -14 ? "#fbbf24" : "#5eead4";
-  const monitorName = button?.nome || `Áudio · Input ${input}`;
-
-  return (
+    return (
     <div
-      className="group/custom relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_16px_32px_rgba(20,184,166,0.16)]"
-      style={{ aspectRatio: "3/2", background: "radial-gradient(circle at 17% 115%, rgba(20,184,166,0.2), transparent 42%), linear-gradient(145deg, #11181a, #070a0b)", border: "1px solid rgba(94,234,212,0.26)" }}
-      title={`Monitor de áudio do Input ${input}`}
+      className="group/custom relative overflow-hidden rounded-lg transition-all duration-200 hover:brightness-110"
+      style={{ aspectRatio: "3/2", background: "#08090b", border: "1px solid #292a2e" }}
+      title={`Monitor estéreo L/R do Input ${input}`}
     >
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.045) 50%, transparent 64%)" }} />
-      <div className="relative z-10 flex items-start justify-between px-2.5 pt-2">
+      <div className="flex items-start justify-between gap-2 px-2 pt-2">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-300 opacity-60" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-teal-300 shadow-[0_0_9px_rgba(94,234,212,0.9)]" /></span>
-            <span className="text-[7px] font-black uppercase tracking-[0.16em] text-teal-200/75">Monitor de áudio</span>
+          <div className="flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00e83b]" />
+            <span className="text-[7px] font-black uppercase tracking-wider text-white">Monitor de áudio</span>
           </div>
-          <p className="mt-1 truncate text-[9px] font-black uppercase tracking-wide text-white/95" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
-          <p className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.16em] text-white/35">Input {input}</p>
+          <p className="mt-1 truncate text-[9px] font-black uppercase text-white" style={{ fontSize: `${Math.max(8, 8.5 * textScale)}px` }}>{monitorName}</p>
+          <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wide text-white/60">INPUT {input}</p>
         </div>
-        <div className="rounded-md px-2 py-1.5 text-center" style={{ backgroundColor: `${dbColor}16`, border: `1px solid ${dbColor}55`, boxShadow: `0 0 14px ${dbColor}18` }}>
-          <span className="block text-[6px] font-black tracking-[0.14em] text-white/45">MÉDIA L/R</span>
-          <span className="mt-0.5 block text-[15px] font-black leading-none tabular-nums" style={{ color: dbColor }}>{averageDb}</span>
-          <span className="mt-1 block text-center text-[5px] font-black tracking-[0.16em]" style={{ color: dbColor }}>dBFS</span>
-        </div>
-      </div>
-
-      <div className="absolute bottom-2.5 left-2.5 right-2.5 top-[48px] overflow-hidden rounded-md border border-white/[0.07] bg-black/35 px-1.5 pb-1.5 pt-1" style={{ boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)" }}>
-        <div className="pointer-events-none absolute inset-x-0 top-1 z-10 flex justify-between px-1 text-[5px] font-black tracking-wider text-white/25"><span>-6</span><span>-18</span><span>-36</span></div>
-        <div className="pointer-events-none absolute inset-0 opacity-30" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)", backgroundSize: "100% 33.33%" }} />
-        <div className="relative flex h-full items-end gap-[2px]">
-          {levels.map((level, index) => {
-            const color = level > 0.78 ? "#fb7185" : level > 0.57 ? "#fbbf24" : "#5eead4";
-            return (
-              <div key={index} className="relative flex h-full flex-1 items-end">
-                <div className="w-full rounded-t-sm transition-[height] duration-75" style={{ height: `${Math.max(8, level * 100)}%`, background: `linear-gradient(to top, ${color}85, ${color})`, boxShadow: `0 0 8px ${color}70` }} />
-                <span className="absolute left-0 w-full rounded-full" style={{ bottom: `${Math.max(4, peaks[index] * 100)}%`, height: "1px", backgroundColor: "rgba(255,255,255,0.9)", boxShadow: `0 0 5px ${color}` }} />
-              </div>
-            );
-          })}
+        <div className="flex gap-1.5">
+          {[
+            { label: "L", level: leftLevel },
+            { label: "R", level: rightLevel },
+          ].map(channel => (
+            <div key={channel.label} className="flex flex-col items-center gap-0.5">
+              <span className="text-[7px] font-black text-white">{channel.label}</span>
+              <span className="text-[6px] font-bold tabular-nums text-white/70">{dbFor(channel.level)} dB</span>
+            </div>
+          ))}
         </div>
       </div>
-
-      <div className="absolute bottom-1.5 right-1.5 z-20 flex items-center gap-1 opacity-0 transition-all group-hover/custom:opacity-100">
-        <button onClick={(event) => { event.stopPropagation(); onEdit(); }} className="flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-white/15" style={{ color: "#ccfbf1" }} title="Alterar input monitorado"><Wand2 size={10} /></button>
-        <button onClick={(event) => { event.stopPropagation(); onDelete(); }} className="flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-red-500/25" style={{ color: "#fda4af" }} title="Excluir monitor de áudio"><Trash2 size={10} /></button>
+      <div className="absolute inset-x-2 bottom-2 top-[39px] flex items-stretch justify-center gap-2">
+        {[
+          { label: "L", level: leftLevel },
+          { label: "R", level: rightLevel },
+        ].map(channel => {
+          const totalSegments = 12;
+          const activeSegments = Math.round(channel.level * totalSegments);
+          return (
+            <div key={channel.label} className="flex min-w-0 flex-1 flex-col-reverse gap-[2px] rounded-sm bg-[#17181b] p-[2px]">
+              {Array.from({ length: totalSegments }, (_, index) => {
+                const active = index < activeSegments;
+                const color = meterColor(index, totalSegments);
+                return <div key={index} className="min-h-0 flex-1" style={{ backgroundColor: active ? color : "#242529", boxShadow: active ? `0 0 4px ${color}55` : "none" }} />;
+              })}
+            </div>
+          );
+        })}
+      </div>
+      <div className="absolute bottom-0.5 left-0 right-0 flex justify-around text-[5px] font-bold text-white/45"><span>L · LEFT</span><span>R · RIGHT</span></div>
+      <div className="absolute bottom-1 right-1 z-20 flex items-center gap-1 opacity-0 transition-all group-hover/custom:opacity-100">
+        <button onClick={(event) => { event.stopPropagation(); onEdit(); }} className="flex h-5 w-5 items-center justify-center rounded bg-black/60 text-white hover:bg-white/15" title="Alterar input monitorado"><Wand2 size={10} /></button>
+        <button onClick={(event) => { event.stopPropagation(); onDelete(); }} className="flex h-5 w-5 items-center justify-center rounded bg-black/60 text-red-300 hover:bg-red-500/25" title="Excluir monitor de áudio"><Trash2 size={10} /></button>
       </div>
     </div>
   );
