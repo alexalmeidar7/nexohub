@@ -730,18 +730,22 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="flex items-center gap-2 pt-2">
-                <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Ações do Botão</span>
-                <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
-                <button
-                  onClick={() => { setShowCode(!showCode); if (!showCode) setPasteValue(""); }}
-                  className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded transition-all hover:bg-white/10"
-                  style={{ color: "#8b5cf6" }}
-                >
-                  <Code size={10} />
-                  {showCode ? "Fechar Código" : "Colar Código"}
-                </button>
+              {/* Ações do botão e acesso para colar código */}
+              <div className="flex flex-col gap-2 pt-2">
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => { setShowCode(!showCode); if (!showCode) setPasteValue(""); }}
+                    className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded transition-all hover:bg-white/10"
+                    style={{ color: "#8b5cf6" }}
+                  >
+                    <Code size={10} />
+                    {showCode ? "Fechar Código" : "Colar Código"}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Ações do Botão</span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
+                </div>
               </div>
 
               {/* Code paste section */}
