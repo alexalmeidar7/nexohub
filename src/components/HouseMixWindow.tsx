@@ -9,6 +9,7 @@ interface HouseMixWindowProps {
   onMinimize: () => void;
   children: React.ReactNode;
   bodyClassName?: string;
+  wide?: boolean;
 }
 
 export default function HouseMixWindow({
@@ -18,6 +19,7 @@ export default function HouseMixWindow({
   onMinimize,
   children,
   bodyClassName,
+  wide = false,
 }: HouseMixWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
@@ -106,7 +108,7 @@ export default function HouseMixWindow({
   return (
     <div
       ref={windowRef}
-      className={`fixed z-40 flex flex-col w-[94vw] max-w-[1240px] h-[calc(100vh-250px)] max-h-[740px] min-h-[440px] rounded-2xl border-2 border-[#0055ff] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.55),0_0_30px_rgba(0,85,255,0.2)] overflow-hidden transition-shadow ${
+      className={`fixed z-40 flex flex-col w-[94vw] ${wide ? "max-w-none" : "max-w-[1240px]"} h-[calc(100vh-250px)] max-h-[740px] min-h-[440px] rounded-2xl border-2 border-[#0055ff] bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.55),0_0_30px_rgba(0,85,255,0.2)] overflow-hidden transition-shadow ${
         isDragging ? "shadow-[0_30px_70px_-10px_rgba(0,0,0,0.65),0_0_40px_rgba(0,85,255,0.35)]" : ""
       }`}
       style={{
