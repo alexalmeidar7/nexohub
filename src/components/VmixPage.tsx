@@ -4980,22 +4980,22 @@ function SwitcherUI({
                       {/* + Criar */}
                       <div className="relative w-[180px] min-w-[180px] shrink-0" style={{ aspectRatio: "3/2" }}>
                         {creationChoiceOpen && (
-                          <div className="absolute left-full top-1/2 z-[80] ml-3 w-[150px] -translate-y-1/2">
+                          <div className="absolute left-full top-1/2 z-[80] ml-2 w-[118px] -translate-y-1/2">
                             <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
                               <button
                                 type="button"
                                 onClick={() => { setCreationChoiceOpen(false); setAudioMonitorInput(""); setEditingCustomButtonId("new"); }}
-                                className="flex min-h-[54px] items-center gap-2 rounded-lg border border-white/10 bg-gradient-to-br from-[#0756C9] to-[#063780] p-2 text-left text-white transition-all hover:-translate-y-0.5 hover:border-[#4B91FF] hover:brightness-110"
+                                className="flex min-h-[42px] items-center gap-1.5 rounded-lg border border-white/10 bg-gradient-to-br from-[#0756C9] to-[#063780] p-1.5 text-left text-white transition-all hover:-translate-y-0.5 hover:border-[#4B91FF] hover:brightness-110"
                               >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0065F9]"><Wand2 size={15} /></span>
-                                <span className="min-w-0 text-[9px] font-black uppercase leading-tight">Botão de Comando</span>
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#0065F9]"><Wand2 size={13} /></span>
+                                <span className="min-w-0 text-[8px] font-black uppercase leading-tight">Comando</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setAudioMonitorInput("selecting")}
-                                className="flex min-h-[72px] items-center gap-2 rounded-lg border border-white/10 bg-gradient-to-br from-[#0756C9] to-[#063780] p-3 text-left text-white transition-all hover:-translate-y-0.5 hover:border-[#4B91FF] hover:brightness-110"
+                                className="flex min-h-[42px] items-center gap-1.5 rounded-lg border border-white/10 bg-gradient-to-br from-[#0756C9] to-[#063780] p-1.5 text-left text-white transition-all hover:-translate-y-0.5 hover:border-[#4B91FF] hover:brightness-110"
                               >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0065F9] text-white"><Activity size={15} /></span>
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#0065F9] text-white"><Activity size={13} /></span>
                                 <span className="min-w-0 text-[9px] font-black uppercase leading-tight">Áudio</span>
                               </button>
                             </div>
