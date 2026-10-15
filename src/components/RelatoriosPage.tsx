@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart3, Gift, History, Truck, Siren, Tag, MonitorPlay, Search,
   CalendarDays, Clock3, RefreshCw, Loader2, AlertCircle, Package,
-  CheckCircle2, CircleX, UserRound, Image as ImageIcon, Trophy, Headphones, Video
+  CheckCircle2, CircleX, UserRound, Image as ImageIcon, Trophy, Headphones, Video, Radio
 } from "lucide-react";
 
 type ReportKey = "estoque" | "sorteios" | "entregas" | "blitz" | "comercial" | "vmix" | "audiencia";
@@ -73,6 +73,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   const [audienceRows, setAudienceRows] = useState<AnyRow[]>([]);
   const [audienceLoading, setAudienceLoading] = useState(false);
   const [audienceUnavailable, setAudienceUnavailable] = useState(false);
+  const [liveAudience, setLiveAudience] = useState<{ program: string; audio: number | null; video: number | null; updatedAt: string; configured: boolean } | null>(null);
 
   const load = async (manual = false) => {
     if (!userId) { setLoading(false); return; }
@@ -99,6 +100,122 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   };
 
   useEffect(() => { void load(); }, [userId]);
+
+  useEffect(() => {
+    if (active !== "audiencia" || !userId) return;
+    let cancelled = false;
+    let interval: ReturnType<typeof setInterval> | undefined;
+    let logInterval: ReturnType<typeof setInterval> | undefined;
+    let config: AnyRow | null = null;
+    let programs: AnyRow[] = [];
+    let latestAudio: number | null = null;
+    let latestVideo: number | null = null;
+    let currentProgram = "Programa não identificado";
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const getCurrentProgram = () => {
+      const now = new Date();
+      const day = dayNames[now.getDay()];
+      const hhmm = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
+      const matching = programs.filter(p => {
+        if (p.ativo === false) return false;
+        const days = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+        const start = String(p.horario_inicio || "").slice(0, 5);
+        const end = String(p.horario_fim || "").slice(0, 5);
+        if (!days.includes(day) || !start || !end) return false;
+        return start <= end ? hhmm >= start && hhmm < end : hhmm >= start || hhmm < end;
+      });
+      return matching[0]?.nome || "Programa não identificado";
+    };
+    const saveSnapshot = async () => {
+      if (cancelled || !config) return;
+      currentProgram = getCurrentProgram();
+      if (latestAudio === null && latestVideo === null) return;
+      const { error } = await supabase.from("audiencia_historico").insert({
+        user_id: userId,
+        programa: currentProgram,
+        audio: latestAudio ?? 0,
+        video: latestVideo ?? 0,
+        youtube: 0,
+      } as any);
+      if (error) console.warn("Não foi possível registrar histórico de audiência:", error.message);
+    };
+    const poll = async () => {
+      if (!config) return;
+      currentProgram = getCurrentProgram();
+      const normalizeSources = (key: "audio" | "video") => {
+        const arr = Array.isArray(config?.[key === "audio" ? "audio_sources" : "video_sources"])
+          ? config[key === "audio" ? "audio_sources" : "video_sources"] as AnyRow[] : [];
+        const primaryUrl = String(config?.[key === "audio" ? "audio_stream_api_url" : "video_stream_api_url"] || "").trim();
+        const primaryXpath = String(config?.[key === "audio" ? "audio_stream_xpath" : "video_stream_xpath"] || "").trim();
+        const sources = [{ url: primaryUrl, xpath: primaryXpath }, ...arr.map(s => ({ url: String(s?.url || "").trim(), xpath: String(s?.xpath || "").trim() }))].filter(s => s.url);
+        return sources.filter((s, i, all) => all.findIndex(x => x.url === s.url) === i);
+      };
+      const audioSources = normalizeSources("audio");
+      const videoSources = normalizeSources("video");
+      const countAudio = async () => {
+        if (!audioSources.length) return null;
+        const results = await Promise.all(audioSources.map(async source => {
+          try {
+            const body: AnyRow = { userId, urls: [source.url] };
+            if (source.xpath) body.xpath = source.xpath;
+            const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+            return (data as any)?.ok && typeof (data as any).listeners === "number" ? (data as any).listeners as number : null;
+          } catch { return null; }
+        }));
+        return results.some(n => n !== null) ? results.reduce<number>((sum, n) => sum + (n ?? 0), 0) : null;
+      };
+      const countVideo = async () => {
+        if (!videoSources.length) return null;
+        const results = await Promise.all(videoSources.map(async source => {
+          try {
+            const body: AnyRow = { userId, urls: [source.url] };
+            if (source.xpath) body.xpath = source.xpath;
+            const { data } = await supabase.functions.invoke("count-video-viewers", { body });
+            return (data as any)?.ok && typeof (data as any).viewers === "number" ? (data as any).viewers as number : null;
+          } catch { return null; }
+        }));
+        return results.some(n => n !== null) ? results.reduce<number>((sum, n) => sum + (n ?? 0), 0) : null;
+      };
+      const [audio, video] = await Promise.all([countAudio(), countVideo()]);
+      if (cancelled) return;
+      if (audio !== null) latestAudio = audio;
+      if (video !== null) latestVideo = video;
+      const now = new Date().toISOString();
+      setLiveAudience({
+        program: currentProgram,
+        audio: latestAudio,
+        video: latestVideo,
+        updatedAt: now,
+        configured: audioSources.length > 0 || videoSources.length > 0,
+      });
+    };
+    const initialize = async () => {
+      const [{ data: configData, error: configError }, { data: programData }] = await Promise.all([
+        supabase.from("empresa_config").select("audio_stream_api_url, audio_stream_xpath, video_stream_api_url, video_stream_xpath, audio_sources, video_sources").eq("user_id", userId as any).maybeSingle(),
+        supabase.from("programas").select("nome, dias_semana, horario_inicio, horario_fim, ativo").eq("user_id", userId as any),
+      ]);
+      if (cancelled) return;
+      config = configData as AnyRow | null;
+      programs = (programData || []) as AnyRow[];
+      if (configError) {
+        setAudienceUnavailable(true);
+        setLiveAudience(null);
+        return;
+      }
+      await poll();
+      if (cancelled) return;
+      interval = setInterval(() => { void poll(); }, 30_000);
+      logInterval = setInterval(() => { void saveSnapshot(); }, 5 * 60_000);
+      // Registra uma primeira amostra assim que as fontes retornam contadores.
+      await saveSnapshot();
+    };
+    void initialize();
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+      if (logInterval) clearInterval(logInterval);
+    };
+  }, [active, userId]);
 
   useEffect(() => {
     if (active !== "audiencia" || !userId) return;
@@ -260,6 +377,17 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
 
                 {active === "audiencia" && (
                   <div className="space-y-5">
+                    <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-4">
+                      <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700"><Radio size={15} /> Audiência ao vivo · programa no ar</div>
+                      {liveAudience ? <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                        <div className="min-w-0 flex-1"><div className="text-lg font-black text-slate-900">{liveAudience.program}</div><div className="mt-1 text-[10px] text-slate-500">{liveAudience.configured ? `Atualizado às ${new Date(liveAudience.updatedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · atualização automática a cada 30 segundos` : "Cadastre as URLs dos streamings de áudio e/ou vídeo em Configurações para iniciar a leitura."}</div></div>
+                        <div className="grid grid-cols-3 gap-2 lg:min-w-[390px]">
+                          <div className="rounded-xl border border-white bg-white px-3 py-2"><div className="text-[9px] font-bold uppercase text-slate-400">Áudio</div><div className="mt-1 text-xl font-black text-blue-700">{liveAudience.audio === null ? "—" : liveAudience.audio.toLocaleString("pt-BR")}</div></div>
+                          <div className="rounded-xl border border-white bg-white px-3 py-2"><div className="text-[9px] font-bold uppercase text-slate-400">Vídeo</div><div className="mt-1 text-xl font-black text-violet-700">{liveAudience.video === null ? "—" : liveAudience.video.toLocaleString("pt-BR")}</div></div>
+                          <div className="rounded-xl border border-white bg-white px-3 py-2"><div className="text-[9px] font-bold uppercase text-slate-400">Total</div><div className="mt-1 text-xl font-black text-emerald-700">{liveAudience.audio === null && liveAudience.video === null ? "—" : ((liveAudience.audio || 0) + (liveAudience.video || 0)).toLocaleString("pt-BR")}</div></div>
+                        </div>
+                      </div> : <div className="text-xs text-slate-500"><Loader2 size={14} className="mr-2 inline animate-spin" />Conectando aos streamings cadastrados...</div>}
+                    </div>
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-stretch">
                       <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <label htmlFor="audience-report-date" className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500"><CalendarDays size={14} className="text-blue-600" /> Selecionar dia</label>
