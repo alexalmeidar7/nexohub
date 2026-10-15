@@ -431,7 +431,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
                       <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <label htmlFor="audience-report-date" className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500"><CalendarDays size={14} className="text-blue-600" /> Selecionar dia</label>
                         <input id="audience-report-date" type="date" value={audienceDate} max={todayISO()} onChange={e => setAudienceDate(e.target.value)} className="h-11 w-full max-w-xs rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-                        <p className="mt-2 text-[10px] text-slate-400">A tabela mostra o maior número de espectadores registrado por programa no dia selecionado.</p>
+                        <p className="mt-2 text-[10px] text-slate-400">Mostra o pico de audiência de cada programa no dia selecionado, sem repetir cada alteração do streaming.</p>
                       </div>
                       <div className="w-full rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4 xl:max-w-[390px]">
                         <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-amber-700"><Trophy size={15} /> Top 3 programas por audiência</div>
@@ -449,15 +449,15 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
                       : audienceUnavailable ? <TableEmpty text="Não foi possível carregar a audiência. Verifique a conexão com o banco de dados." />
                       : audienceRows.length ? <div className="max-h-[440px] overflow-auto rounded-xl border border-slate-100">
                         <table className="w-full">
-                          <thead className="sticky top-0 z-10 bg-slate-50"><tr><Th>Horário</Th><Th>Dia</Th><Th>Programa</Th><Th><span className="inline-flex items-center gap-1"><Headphones size={12} /> Audiência áudio streaming</span></Th><Th><span className="inline-flex items-center gap-1"><Video size={12} /> Audiência vídeo streaming</span></Th><Th>Total (áudio + vídeo)</Th></tr></thead>
-                          <tbody>{audienceRows.map((row, index) => {
+                          <thead className="sticky top-0 z-10 bg-slate-50"><tr><Th>Última leitura</Th><Th>Dia</Th><Th>Programa</Th><Th><span className="inline-flex items-center gap-1"><Headphones size={12} /> Pico de audiência áudio</span></Th><Th><span className="inline-flex items-center gap-1"><Video size={12} /> Pico de audiência vídeo</span></Th><Th>Pico total (áudio + vídeo)</Th></tr></thead>
+                          <tbody>{audienceByProgram.map((row, index) => {
                             const audio = Math.max(0, Number(row.audio) || 0);
                             const video = Math.max(0, Number(row.video) || 0);
                             const total = audio + video;
                             return <tr key={`${row.created_at}-${index}`} className="border-t border-slate-100">
                               <Td><span className="font-bold text-slate-700">{row.created_at ? new Date(row.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></Td>
                               <Td>{dateOnly(audienceDate)}</Td>
-                              <Td className="font-bold text-slate-900">{row.programa || "Programa não identificado"}</Td>
+                              <Td className="font-bold text-slate-900">{row.program}</Td>
                               <Td>{audio.toLocaleString("pt-BR")}</Td>
                               <Td>{video.toLocaleString("pt-BR")}</Td>
                               <Td><span className="inline-flex min-w-16 items-center justify-center rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700">{total.toLocaleString("pt-BR")}</span></Td>
