@@ -9,7 +9,7 @@ import { findCurrentProgram } from "@/components/OnAirWidget";
 import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { getSnapshotTable } from "@/lib/supabaseDatabaseSnapshot";
 import { resolvePresenterForProgram, resolveSafePresenterPhoto } from "@/lib/onAirPresenterResolver";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users, MessageSquareQuote } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users, MessageSquareQuote, Keyboard } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 
@@ -442,6 +442,42 @@ export default function PromocoesKiosk() {
   const [audienceChartLoading, setAudienceChartLoading] = useState(false);
   // Logos oficiais dos programas (tabela logos_patrocinadores) para os botões de citação.
   const [programLogos, setProgramLogos] = useState<Record<string, string>>({});
+  const [customButtonShortcuts, setCustomButtonShortcuts] = useState<Array<{ id: string; nome: string; shortcut: string; estudio?: string | null }>>([]);
+  const [shortcutsPopoverOpen, setShortcutsPopoverOpen] = useState(false);
+
+  // Busca os atalhos cadastrados em /vmix-control/switcher para esta emissora.
+  useEffect(() => {
+    if (!audienceUserId) {
+      setCustomButtonShortcuts([]);
+      return;
+    }
+    let cancelled = false;
+    const loadShortcuts = async () => {
+      const { data, error } = await (supabase.from("custom_vmix_buttons" as any) as any)
+        .select("id, nome, shortcut, estudio")
+        .eq("user_id", audienceUserId)
+        .order("created_at", { ascending: true });
+      if (cancelled || error) return;
+      const rows = (Array.isArray(data) ? data : [])
+        .filter((item: any) => typeof item.shortcut === "string" && item.shortcut.trim())
+        .map((item: any) => ({
+          id: String(item.id),
+          nome: String(item.nome || "Botão personalizado"),
+          shortcut: String(item.shortcut).trim(),
+          estudio: item.estudio || null,
+        }));
+      setCustomButtonShortcuts(rows);
+    };
+    void loadShortcuts();
+    const channel = supabase
+      .channel(`locutor-vmix-shortcuts-${audienceUserId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "custom_vmix_buttons", filter: `user_id=eq.${audienceUserId}` }, () => { void loadShortcuts(); })
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
+  }, [audienceUserId]);
 
   const isPositivaUser = useMemo(() => {
     // 1. URL slug (ex.: /positivafm/locutor ou /positiva/locutor)
@@ -1767,25 +1803,58 @@ export default function PromocoesKiosk() {
         />
 
         {/* Citações disponíveis nos programas cadastrados para esta emissora. */}
-        {filteredPrograms.length > 0 && (
-          <nav aria-label="Citações dos programas" className="w-full flex flex-wrap items-center gap-2 -mt-3">
-            {filteredPrograms.map((programa) => {
-              const isOnAir = !!onAirProgram && normalizeProgramName(onAirProgram.nome) === normalizeProgramName(programa.nome);
-              return (
-                <Button
-                  key={programa.id}
-                  type="button"
-                  variant="glass"
-                  title={`Citação: ${programa.nome}`}
-                  aria-label={`Abrir citação de ${programa.nome}`}
-                  onClick={() => { setSelectedProgram(programa); stopAutoScroll(); }}
-                  className={`h-14 w-14 sm:h-16 sm:w-16 rounded-lg p-1.5 border-0 shadow-none promo-flat-btn focus-visible:ring-2 ${isOnAir ? "citation-on-air" : ""}`}
-                  style={{ background: telaPromoConfig.btn_color_b, color: "var(--promo-text)" }}
-                >
-                  <img src={getProgramLogo(programa)} alt="" className="w-full h-full object-contain" />
-                </Button>
-              );
-            })}
+        {(filteredPrograms.length > 0 || true) && (
+          <nav aria-label="Citações e atalhos personalizados" className="w-full flex items-start justify-between gap-3 -mt-3">
+            <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
+              {filteredPrograms.map((programa) => {
+                const isOnAir = !!onAirProgram && normalizeProgramName(onAirProgram.nome) === normalizeProgramName(programa.nome);
+                const logo = getProgramLogo(programa);
+                return (
+                  <Button
+                    key={programa.id}
+                    type="button"
+                    variant="glass"
+                    title={`Citação: ${programa.nome}`}
+                    aria-label={`Abrir citação de ${programa.nome}`}
+                    onClick={() => { setSelectedProgram(programa); stopAutoScroll(); }}
+                    className={`h-14 w-14 sm:h-16 sm:w-16 rounded-lg p-1.5 border-0 shadow-none promo-flat-btn focus-visible:ring-2 ${isOnAir ? "citation-on-air" : ""}`}
+                    style={{ background: telaPromoConfig.btn_color_b, color: "var(--promo-text)" }}
+                  >
+                    {logo && <img src={logo} alt="" className="w-full h-full object-contain" />}
+                  </Button>
+                );
+              })}
+            </div>
+            <div className="relative shrink-0">
+              <Button
+                type="button"
+                aria-label="Mostrar atalhos dos botões personalizados"
+                title="Atalhos dos botões personalizados"
+                aria-expanded={shortcutsPopoverOpen}
+                onClick={() => setShortcutsPopoverOpen((open) => !open)}
+                className="h-14 w-14 sm:h-16 sm:w-16 rounded-lg border-0 shadow-none focus-visible:ring-2 focus-visible:ring-white/70"
+                style={{ background: "#30343b", color: "#ffffff" }}
+              >
+                <Keyboard className="h-6 w-6" />
+              </Button>
+              {shortcutsPopoverOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-32px)] rounded-xl border border-white/10 bg-[#20242b] p-3 text-white shadow-2xl">
+                  <div className="mb-2 text-xs font-bold uppercase tracking-wide text-white/80">Atalhos personalizados</div>
+                  {customButtonShortcuts.length > 0 ? (
+                    <div className="max-h-56 space-y-2 overflow-y-auto">
+                      {customButtonShortcuts.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between gap-3 text-xs">
+                          <span className="min-w-0 truncate text-white/90">{item.nome}</span>
+                          <kbd className="shrink-0 rounded-md border border-white/20 bg-white/10 px-2 py-1 font-mono text-[11px] text-white">{item.shortcut}</kbd>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs leading-relaxed text-white/65">Nenhum atalho cadastrado nos botões personalizados do Switcher.</p>
+                  )}
+                </div>
+              )}
+            </div>
           </nav>
         )}
 
