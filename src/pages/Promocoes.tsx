@@ -576,8 +576,15 @@ export default function PromocoesKiosk() {
   // no próprio programa. Capa e thumb são artes promocionais e não devem
   // ser usadas como fallback visual nesses botões.
   const getProgramLogo = useCallback((programa: ProgramaGrade): string => {
-    return resolveSafeProgramSelo(programa.selo);
-  }, []);
+    // Prioriza a logo cadastrada especificamente para o programa.
+    // Nunca usa capa/thumb como fallback: se não houver logo ou selo válido,
+    // o botão fica sem imagem em vez de exibir uma thumbnail promocional.
+    const registeredLogo =
+      (programa.id ? programLogos[programa.id] : "") ||
+      programLogos[`n:${normalizeProgramName(programa.nome)}`] ||
+      "";
+    return resolveSafeProgramSelo(registeredLogo) || resolveSafeProgramSelo(programa.selo);
+  }, [programLogos]);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
