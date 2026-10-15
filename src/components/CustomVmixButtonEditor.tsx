@@ -676,13 +676,13 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 {/* Data específica */}
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
-                    <Calendar size={10} /> Data Específica
+                    <Calendar size={10} color="#ffffff" /> Data Específica
                   </label>
                   <input
                     type="date"
                     value={dataEspecifica}
                     onChange={e => setDataEspecifica(e.target.value)}
-                    className="w-full min-w-0 text-xs px-2.5 py-2 rounded-lg outline-none"
+                    className="h-[34px] w-full min-w-0 box-border text-xs px-2.5 py-2 rounded-lg outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
                     style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                   />
                   <span className="text-[8px]" style={{ color: "#555" }}>Opcional: dia único</span>
@@ -691,13 +691,13 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 {/* Horário */}
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
-                    <Clock size={10} /> Horário
+                    <Clock size={10} color="#ffffff" /> Horário
                   </label>
                   <input
                     type="time"
                     value={horario}
                     onChange={e => setHorario(e.target.value)}
-                    className="w-full min-w-0 text-xs px-2 py-2 rounded-lg outline-none"
+                    className="h-[34px] w-full min-w-0 box-border text-xs px-2.5 py-2 rounded-lg outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
                     style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                   />
                   <span className="text-[8px]" style={{ color: "#555" }}>Opcional</span>
