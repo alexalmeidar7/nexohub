@@ -966,12 +966,6 @@ export default function HouseMixHeader({
 
           {/* Right: Bots, Audio Player, Intercom, Bell, Settings, Profile & Clock */}
           <div className={`flex items-center ${isIntercomEnabled ? "gap-1.5 xl:gap-2" : "gap-2"} shrink-0`} onMouseEnter={handleDirectItemHover}>
-            {/* Bots Status Icon */}
-            {showBots && (
-              <div className="shrink-0">
-                <BotsStatusBox />
-              </div>
-            )}
             {/* Live Audio Stream Player button */}
             {playerState.hasChannel && (
               <Tooltip>
@@ -1126,6 +1120,11 @@ export default function HouseMixHeader({
         {/* Date Pill Row + Breadcrumb + User Email */}
         <div className="flex items-center justify-between gap-3 pl-1 pr-6">
           <div className="flex items-center gap-3 min-w-0">
+            {showBots && (
+              <div className="shrink-0 flex items-center">
+                <BotsStatusBox />
+              </div>
+            )}
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <button
