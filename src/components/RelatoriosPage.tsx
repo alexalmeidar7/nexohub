@@ -69,6 +69,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   const [vmixEvents, setVmixEvents] = useState<AnyRow[]>([]);
   const [vmixUnavailable, setVmixUnavailable] = useState(false);
   const [audienceDate, setAudienceDate] = useState(todayISO);
+  const [blitzDate, setBlitzDate] = useState("");
   const [audienceRows, setAudienceRows] = useState<AnyRow[]>([]);
   const [audienceLoading, setAudienceLoading] = useState(false);
   const [audienceUnavailable, setAudienceUnavailable] = useState(false);
@@ -234,7 +235,26 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
 
                 {active === "entregas" && (deliveredDraws.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{filtered(deliveredDraws, ["nome_ganhador", "apresentador_nome", "programa_nome"]).map(d => <article key={d.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white"><div className="flex h-36 items-center justify-center bg-slate-100">{d.foto_entrega_url ? <img src={d.foto_entrega_url} alt={d.nome_ganhador || "Foto do ganhador"} className="h-full w-full object-cover" loading="lazy" onError={e => { const img = e.currentTarget; img.onerror = null; img.style.display = "none"; const fallback = img.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = "flex"; }} /> : null}<div className={`h-full w-full flex-col items-center justify-center gap-2 text-slate-400 ${d.foto_entrega_url ? "hidden" : "flex"}`}><ImageIcon size={30} /><span className="text-[10px]">Sem imagem disponível</span></div></div><div className="p-4"><div className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Data da entrega</div><div className="mt-1 text-xs font-bold text-slate-800">{dateTime(d.data_entrega || d.data_sorteio)}</div><div className="mt-3 flex items-center gap-2 text-sm font-black text-slate-900"><UserRound size={15} className="text-blue-600" />{d.nome_ganhador || "Ganhador não informado"}</div><div className="mt-1 text-[10px] text-slate-500">{prizeById.get(d.premio_id)?.nome || "Prêmio"}</div></div></article>)}</div> : <TableEmpty text="Nenhuma entrega de prêmio registrada." />)}
 
-                {active === "blitz" && (() => { const rows = filtered(blitzes.filter(b => b.realizada === true), ["cliente", "equipe", "observacoes"]); return rows.length ? <div className="overflow-x-auto rounded-xl border border-slate-100"><table className="w-full"><thead className="bg-slate-50"><tr><Th>Dia</Th><Th>Cliente / ação</Th><Th>Hora inicial</Th><Th>Hora final</Th><Th>Equipe</Th></tr></thead><tbody>{rows.map(b => <tr key={b.id} className="border-t border-slate-100"><Td>{dateOnly(b.dia)}</Td><Td className="font-bold text-slate-900">{b.cliente || "Blitz"}</Td><Td><span className="inline-flex items-center gap-1"><Clock3 size={12} className="text-blue-500" />{timeOnly(b.horario)}</span></Td><Td>{timeOnly(b.horario_fim)}</Td><Td>{b.equipe || "—"}</Td></tr>)}</tbody></table></div> : <TableEmpty text="Nenhuma blitz realizada encontrada." />; })()}
+                {active === "blitz" && (() => {
+                  const completed = blitzes.filter(b => b.realizada === true && (!blitzDate || String(b.dia || "").slice(0, 10) === blitzDate));
+                  const rows = filtered(completed, ["cliente", "equipe", "observacoes"]);
+                  return <div className="space-y-3">
+                    <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div>
+                        <label htmlFor="blitz-report-date" className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500"><CalendarDays size={14} className="text-blue-600" /> Filtrar blitz por dia</label>
+                        <input id="blitz-report-date" type="date" value={blitzDate} max={todayISO()} onChange={e => setBlitzDate(e.target.value)} className="h-10 w-full min-w-[210px] rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                      </div>
+                      <button type="button" onClick={() => setBlitzDate("")} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:border-blue-300 hover:text-blue-700">Todas as datas</button>
+                      <span className="text-[10px] font-semibold text-slate-400">{rows.length} registro(s)</span>
+                    </div>
+                    {rows.length ? <div className="max-h-[340px] overflow-auto rounded-xl border border-slate-100">
+                      <table className="w-full">
+                        <thead className="sticky top-0 z-10 bg-slate-50"><tr><Th>Dia</Th><Th>Cliente / ação</Th><Th>Hora inicial</Th><Th>Hora final</Th><Th>Equipe</Th></tr></thead>
+                        <tbody>{rows.map(b => <tr key={b.id} className="border-t border-slate-100"><Td>{dateOnly(b.dia)}</Td><Td className="font-bold text-slate-900">{b.cliente || "Blitz"}</Td><Td><span className="inline-flex items-center gap-1"><Clock3 size={12} className="text-blue-500" />{timeOnly(b.horario)}</span></Td><Td>{timeOnly(b.horario_fim)}</Td><Td>{b.equipe || "—"}</Td></tr>)}</tbody>
+                      </table>
+                    </div> : <TableEmpty text={blitzDate ? "Nenhuma blitz realizada encontrada para esse dia." : "Nenhuma blitz realizada encontrada."} />}
+                  </div>;
+                })()}
 
                 {active === "comercial" && (activePromos.length ? <div className="grid gap-3 md:grid-cols-2">{filtered(activePromos, ["nome", "texto", "oferecimento"]).map(p => <article key={p.id} className="overflow-hidden rounded-2xl border border-slate-200"><div className="flex items-center gap-3 p-4">{p.imagem_url ? <img src={p.imagem_url} alt={p.nome || "Promoção"} className="h-16 w-16 rounded-xl object-cover" loading="lazy" /> : <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Tag size={22} /></div>}<div className="min-w-0 flex-1"><div className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Promoção ativa</div><h3 className="mt-1 truncate text-sm font-black text-slate-900">{p.nome || "Promoção sem nome"}</h3><p className="mt-1 text-[10px] text-slate-500">{p.oferecimento || "Sem patrocinador informado"}</p></div></div><div className="border-t border-slate-100 px-4 py-3"><p className="text-xs leading-relaxed text-slate-600">{String(p.texto || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim() || "Sem descrição."}</p><div className="mt-3 flex items-center gap-3 text-[10px] text-slate-400"><span className="inline-flex items-center gap-1"><CalendarDays size={12} />{dateOnly(p.data_inicio)} – {dateOnly(p.data_fim)}</span></div></div></article>)}</div> : <TableEmpty text="Não há promoções ativas hoje." />)}
 
