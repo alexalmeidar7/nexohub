@@ -713,13 +713,16 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                       const active = diasSemana.includes(dia);
                       return (
                         <button
+                          type="button"
                           key={dia}
+                          aria-pressed={active}
                           onClick={() => toggleDia(dia)}
-                          className="text-[9px] font-bold px-1.5 py-1 rounded transition-all"
+                          className="text-[9px] font-bold px-1.5 py-1 rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA]"
                           style={{
-                            backgroundColor: active ? "#3b82f620" : "#ffffff08",
-                            color: active ? "#3b82f6" : "#666",
-                            border: active ? "1px solid #3b82f640" : "1px solid transparent",
+                            backgroundColor: active ? "#0756C9" : "#ffffff08",
+                            color: active ? "#ffffff" : "#a1a1aa",
+                            border: active ? "1px solid #60A5FA" : "1px solid #ffffff12",
+                            boxShadow: active ? "0 0 0 1px #0756C944" : "none",
                           }}
                         >
                           {dia.slice(0, 3)}
