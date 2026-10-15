@@ -845,8 +845,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                           <select
                             value={cmd.fn}
                             onChange={e => updateCommand(cmd.id, { fn: e.target.value, input: undefined, value: undefined, extraKey: undefined, extraValue: undefined })}
-                            className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
-                            style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                            className="h-[34px] w-full min-w-0 box-border text-[11px] px-2.5 py-2 rounded-lg outline-none transition-colors focus:border-[#0065F9] focus:ring-2 focus:ring-[#0065F9]/20 [color-scheme:dark]"
+                            style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46", colorScheme: "dark" }}
                           >
                             {/*
                               Funções importadas que não fazem parte do catálogo padrão
