@@ -35,6 +35,7 @@ import { resolvePresenterForProgram } from "@/lib/onAirPresenterResolver";
 const ApresentadorForm = lazyRetry(() => import("./ApresentadorForm"));
 const OuvintesPage = lazyRetry(() => import("./OuvintesPage"));
 const SorteiosPage = lazyRetry(() => import("./SorteiosPage"));
+const RelatoriosPage = lazyRetry(() => import("./RelatoriosPage"));
 const BlitzPage = lazyRetry(() => import("./BlitzPage"));
 const ProgramaForm = lazyRetry(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazyRetry(() => import("./PrevisaoTempo"));
@@ -102,7 +103,7 @@ import HouseMixHeader from "./HouseMixHeader";
 import HouseMixWindow from "./HouseMixWindow";
 import ServerClock from "./ServerClock";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup" | "relatorios";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -359,6 +360,7 @@ const pageTitle: Record<Page, string> = {
   housemix: "Gestão do Produto House Mix",
   produtos: "Produtos",
   backup: "Ferramentas — Backup / Importar",
+  relatorios: "Relatórios",
 };
 
 const HOUSEMIX_MODULE_DISPLAY_NAMES: Partial<Record<Page, string>> = {
@@ -512,6 +514,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     "previsao",
     "sorteios",
     "blitz",
+    "relatorios",
     "noticias",
     "musica",
     "agenda",
@@ -1706,6 +1709,11 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
                 <div style={{ display: currentPage === "blitz" ? "block" : "none" }}>
                   <BlitzPage effectiveUserId={effectiveUserId} />
                 </div>
+              )}
+              {currentPage === "relatorios" && (
+                <Suspense fallback={<ModulePageSkeleton variant="default" />}>
+                  <RelatoriosPage effectiveUserId={effectiveUserId} />
+                </Suspense>
               )}
               {isAdmin && (currentPage === "noticias" || (minimizedModules.includes("noticias") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "noticias" ? "block" : "none" }}>
