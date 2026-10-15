@@ -536,15 +536,12 @@ export default function PromocoesKiosk() {
     return () => { cancelled = true; };
   }, [audienceUserId]);
 
+  // Nos botões de Citações, exibir exclusivamente o selo/logo cadastrado
+  // no próprio programa. Capa e thumb são artes promocionais e não devem
+  // ser usadas como fallback visual nesses botões.
   const getProgramLogo = useCallback((programa: ProgramaGrade): string => {
-    const byId = programLogos[programa.id];
-    if (byId) return byId;
-    for (const id of programa.mergedIds || []) {
-      const url = programLogos[id];
-      if (url) return url;
-    }
-    return programLogos[`n:${normalizeProgramName(programa.nome)}`] || programa.selo;
-  }, [programLogos]);
+    return resolveSafeProgramSelo(programa.selo);
+  }, []);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
