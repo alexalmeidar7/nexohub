@@ -114,7 +114,6 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
     if (active !== "audiencia" || !userId) return;
     let cancelled = false;
     let interval: ReturnType<typeof setInterval> | undefined;
-    let logInterval: ReturnType<typeof setInterval> | undefined;
     let config: AnyRow | null = null;
     let programs: AnyRow[] = [];
     let latestAudio: number | null = null;
@@ -134,19 +133,6 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
         return start <= end ? hhmm >= start && hhmm < end : hhmm >= start || hhmm < end;
       });
       return matching[0]?.nome || "Programa não identificado";
-    };
-    const saveSnapshot = async () => {
-      if (cancelled || !config) return;
-      currentProgram = getCurrentProgram();
-      if (latestAudio === null && latestVideo === null) return;
-      const { error } = await supabase.from("audiencia_historico").insert({
-        user_id: userId,
-        programa: currentProgram,
-        audio: latestAudio ?? 0,
-        video: latestVideo ?? 0,
-        youtube: 0,
-      } as any);
-      if (error) console.warn("Não foi possível registrar histórico de audiência:", error.message);
     };
     const poll = async () => {
       if (!config) return;
@@ -214,17 +200,26 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       await poll();
       if (cancelled) return;
       interval = setInterval(() => { void poll(); }, 30_000);
-      logInterval = setInterval(() => { void saveSnapshot(); }, 5 * 60_000);
-      // Registra uma primeira amostra assim que as fontes retornam contadores.
-      await saveSnapshot();
     };
     void initialize();
     return () => {
       cancelled = true;
       if (interval) clearInterval(interval);
-      if (logInterval) clearInterval(logInterval);
     };
-  }, [active, userId, audienceDate]);
+  }, [active, userId]);
+
+  useEffect(() => {
+    let lastDay = todayISO();
+    const timer = setInterval(() => {
+      const today = todayISO();
+      if (today !== lastDay) {
+        const previousDay = lastDay;
+        setAudienceDate(current => current === previousDay ? today : current);
+        lastDay = today;
+      }
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (active !== "audiencia" || !userId) return;
@@ -446,16 +441,22 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
 
                     {audienceLoading ? <div className="flex items-center justify-center gap-2 py-12 text-xs text-slate-500"><Loader2 size={16} className="animate-spin" /> Carregando audiência do dia...</div>
                       : audienceUnavailable ? <TableEmpty text="Não foi possível carregar a audiência. Verifique a conexão com o banco de dados." />
-                      : audienceByProgram.length ? <div className="overflow-x-auto rounded-xl border border-slate-100">
+                      : audienceRows.length ? <div className="max-h-[440px] overflow-auto rounded-xl border border-slate-100">
                         <table className="w-full">
-                          <thead className="bg-slate-50"><tr><Th>Dia</Th><Th>Programa</Th><Th><span className="inline-flex items-center gap-1"><Headphones size={12} /> Audiência áudio streaming</span></Th><Th><span className="inline-flex items-center gap-1"><Video size={12} /> Audiência vídeo streaming</span></Th><Th>Total (áudio + vídeo)</Th></tr></thead>
-                          <tbody>{audienceByProgram.map(program => <tr key={program.program} className="border-t border-slate-100">
-                            <Td>{dateOnly(audienceDate)}</Td>
-                            <Td className="font-bold text-slate-900">{program.program}</Td>
-                            <Td>{program.audio.toLocaleString("pt-BR")}</Td>
-                            <Td>{program.video.toLocaleString("pt-BR")}</Td>
-                            <Td><span className="inline-flex min-w-16 items-center justify-center rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700">{program.total.toLocaleString("pt-BR")}</span></Td>
-                          </tr>)}</tbody>
+                          <thead className="sticky top-0 z-10 bg-slate-50"><tr><Th>Horário</Th><Th>Dia</Th><Th>Programa</Th><Th><span className="inline-flex items-center gap-1"><Headphones size={12} /> Audiência áudio streaming</span></Th><Th><span className="inline-flex items-center gap-1"><Video size={12} /> Audiência vídeo streaming</span></Th><Th>Total (áudio + vídeo)</Th></tr></thead>
+                          <tbody>{audienceRows.map((row, index) => {
+                            const audio = Math.max(0, Number(row.audio) || 0);
+                            const video = Math.max(0, Number(row.video) || 0);
+                            const total = audio + video;
+                            return <tr key={`${row.created_at}-${index}`} className="border-t border-slate-100">
+                              <Td><span className="font-bold text-slate-700">{row.created_at ? new Date(row.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}</span></Td>
+                              <Td>{dateOnly(audienceDate)}</Td>
+                              <Td className="font-bold text-slate-900">{row.programa || "Programa não identificado"}</Td>
+                              <Td>{audio.toLocaleString("pt-BR")}</Td>
+                              <Td>{video.toLocaleString("pt-BR")}</Td>
+                              <Td><span className="inline-flex min-w-16 items-center justify-center rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700">{total.toLocaleString("pt-BR")}</span></Td>
+                            </tr>;
+                          })}</tbody>
                         </table>
                       </div> : <TableEmpty text="Nenhum registro de audiência encontrado para o dia selecionado." />}
                   </div>
