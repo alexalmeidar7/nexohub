@@ -57,6 +57,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   const { user } = useAuth();
   const userId = effectiveUserId || user?.id || "";
   const [active, setActive] = useState<ReportKey>("estoque");
+  const [prizesMenuOpen, setPrizesMenuOpen] = useState(true);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -142,7 +143,27 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
           <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
             <p className="px-3 pb-2 pt-3 text-[9px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Escolha um relatório</p>
             <nav className="space-y-1">
-              {REPORTS.map(report => {
+              <button
+                onClick={() => setPrizesMenuOpen(value => !value)}
+                aria-expanded={prizesMenuOpen}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${["sorteios", "entregas", "estoque"].includes(active) ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+              >
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${["sorteios", "entregas", "estoque"].includes(active) ? "bg-white/15" : "bg-slate-100 text-blue-600"}`}><Gift size={17} /></span>
+                <span className="min-w-0 flex-1"><span className="block text-[11px] font-extrabold uppercase">Sorteios de Prêmios</span><span className={`mt-1 block text-[9px] leading-snug ${["sorteios", "entregas", "estoque"].includes(active) ? "text-blue-100" : "text-slate-400"}`}>Sorteios, entregas e controle de estoque</span></span>
+                <span className="text-xs font-bold">{prizesMenuOpen ? "−" : "+"}</span>
+              </button>
+              {prizesMenuOpen && <div className="ml-4 space-y-1 border-l-2 border-slate-100 pl-3 py-1">
+                {REPORTS.filter(report => ["sorteios", "entregas", "estoque"].includes(report.key)).map(report => {
+                  const ItemIcon = report.icon;
+                  const selected = active === report.key;
+                  const label = report.key === "sorteios" ? "Sorteios realizados" : report.key === "entregas" ? "Entregas" : "Estoque de prêmios";
+                  return <button key={report.key} onClick={() => { setActive(report.key); setSearch(""); }} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left transition ${selected ? "bg-blue-50 text-blue-700 ring-1 ring-blue-100" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
+                    <ItemIcon size={15} />
+                    <span className="text-[10px] font-extrabold uppercase">{label}</span>
+                  </button>;
+                })}
+              </div>}
+              {REPORTS.filter(report => ["blitz", "comercial", "vmix"].includes(report.key)).map(report => {
                 const ItemIcon = report.icon;
                 const selected = active === report.key;
                 return <button key={report.key} onClick={() => { setActive(report.key); setSearch(""); }} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${selected ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}>
