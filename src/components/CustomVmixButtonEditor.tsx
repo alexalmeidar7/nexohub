@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createElement } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -625,7 +625,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                     style={{ backgroundColor: "#12121a", border: "1px solid #343440", color: "#e5e7eb" }}
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${color}22`, color }}>
-                      {iconKey && ICON_LIBRARY[iconKey] ? React.createElement(ICON_LIBRARY[iconKey], { size: 18 }) : <Sparkles size={18} />}
+                      {iconKey && ICON_LIBRARY[iconKey] ? createElement(ICON_LIBRARY[iconKey], { size: 18 }) : <Sparkles size={18} />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[11px] font-bold">{iconKey || "Escolher ícone"}</span>
