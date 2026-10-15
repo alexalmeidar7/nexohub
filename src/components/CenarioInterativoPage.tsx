@@ -580,7 +580,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
       
       // Prevent infinite loop by checking if the tab actually changed
         if (payload.config._activeTab && payload.config._activeTab !== activeTabRef.current) {
-          setActiveTab(payload.config._activeTab);
+          const sceneTab = payload.config._activeTab === "colors" ? "home" : payload.config._activeTab;
+          setActiveTab(sceneTab);
+          setPanelTab(sceneTab);
         }
         
         if (payload.config._weatherSubTab && payload.config._weatherSubTab !== weatherSubTabRef.current) {
@@ -1377,13 +1379,14 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
         const savedConfig = (data as any).cenario_config as any;
         finalConfig = { ...defaultConfig, ...savedConfig };
-        if (savedConfig._activeTab) finalActiveTab = savedConfig._activeTab;
+        if (savedConfig._activeTab) finalActiveTab = savedConfig._activeTab === "colors" ? "home" : savedConfig._activeTab;
         if (savedConfig._weatherSubTab) finalWeatherTab = savedConfig._weatherSubTab;
         if (savedConfig._currencySubTab) finalCurrencyTab = savedConfig._currencySubTab;
         if (typeof savedConfig._screenRotation === "number") finalRotation = savedConfig._screenRotation;
         
         setConfig(finalConfig);
         setActiveTab(finalActiveTab);
+        setPanelTab(finalActiveTab);
         setWeatherSubTab(finalWeatherTab);
         setCurrencySubTab(finalCurrencyTab);
         setExternalRotation(finalRotation);
