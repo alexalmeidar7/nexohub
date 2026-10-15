@@ -972,15 +972,15 @@ export default function HouseMixHeader({
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
-                    className="w-9 h-9 shrink-0 rounded-full bg-[#0055ff] hover:bg-[#0042cc] text-white flex items-center justify-center transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:scale-105 active:scale-95 cursor-pointer"
+                    className="w-8 h-8 shrink-0 rounded-full bg-[#0055ff] hover:bg-[#0042cc] text-white flex items-center justify-center transition-all shadow-[0_3px_10px_rgba(0,85,255,0.2)] hover:scale-105 active:scale-95 cursor-pointer"
                     aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
                   >
                     {playerState.isLoading ? (
-                      <Loader2 size={16} className="animate-spin text-white" />
+                      <Loader2 size={14} className="animate-spin text-white" />
                     ) : playerState.isPlaying ? (
-                      <Pause size={16} className="text-white" />
+                      <Pause size={14} className="text-white" />
                     ) : (
-                      <Play size={16} className="text-white ml-0.5" />
+                      <Play size={14} className="text-white ml-0.5" />
                     )}
                   </button>
                 </TooltipTrigger>
@@ -996,14 +996,14 @@ export default function HouseMixHeader({
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setIntercomMenuOpen((prev) => !prev)}
-                    className={`relative w-9 h-9 shrink-0 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:scale-105 active:scale-95 ${
+                    className={`relative w-8 h-8 shrink-0 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-[0_3px_10px_rgba(0,85,255,0.2)] hover:scale-105 active:scale-95 ${
                       intercomMenuOpen || intercomState.talking || intercomState.receiving
                         ? "bg-[#0042cc] ring-2 ring-[#00dbff]/60 text-white"
                         : "bg-[#0055ff] hover:bg-[#0042cc] text-white"
                     }`}
                     title="Intercomunicador"
                   >
-                    <Radio className="w-4 h-4 text-white" />
+                    <Radio className="w-3.5 h-3.5 text-white" />
                     {(intercomState.talking || intercomState.receiving) && (
                       <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#10b981] border-2 border-white animate-pulse" />
                     )}
@@ -1066,7 +1066,7 @@ export default function HouseMixHeader({
                       : "Chatbot & Atendimento"
                   }
                 >
-                  <Bell className="w-4 h-4 text-white" />
+                  <Bell className="w-3.5 h-3.5 text-white" />
                   {unreadChatbotCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white shadow leading-none">
                       {unreadChatbotCount > 99 ? "99+" : unreadChatbotCount}
@@ -1085,12 +1085,12 @@ export default function HouseMixHeader({
                 <button
                   onMouseEnter={() => prefetchPage("configuracoes")}
                   onClick={() => onNavigate(currentPage === "configuracoes" ? "dashboard" : "configuracoes")}
-                  className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:scale-105 active:scale-95 cursor-pointer ${
+                  className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center transition-all shadow-[0_3px_10px_rgba(0,85,255,0.2)] hover:scale-105 active:scale-95 cursor-pointer ${
                     currentPage === "configuracoes" ? "bg-[#002680] ring-2 ring-white text-white font-bold" : "bg-[#0055ff] hover:bg-[#0042cc] text-white"
                   }`}
                   title="Configurações da Empresa"
                 >
-                  <Settings className="w-4 h-4 text-white" />
+                  <Settings className="w-3.5 h-3.5 text-white" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
@@ -1101,10 +1101,10 @@ export default function HouseMixHeader({
               <TooltipTrigger asChild>
                 <button
                   onClick={onLogout}
-                  className="w-9 h-9 shrink-0 rounded-full bg-[#0055ff] hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-[0_4px_14px_rgba(0,85,255,0.25)] hover:scale-105 active:scale-95 cursor-pointer"
+                  className="w-8 h-8 shrink-0 rounded-full bg-[#0055ff] hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-[0_3px_10px_rgba(0,85,255,0.2)] hover:scale-105 active:scale-95 cursor-pointer"
                   title="Sair da Conta"
                 >
-                  <LogOut className="w-4 h-4 text-white" />
+                  <LogOut className="w-3.5 h-3.5 text-white" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom"><p className="text-xs">Sair</p></TooltipContent>
