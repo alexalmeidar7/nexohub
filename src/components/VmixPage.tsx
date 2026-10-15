@@ -4892,6 +4892,26 @@ function SwitcherUI({
                                 return;
                               }
                               setActiveCustomButton(btn.id);
+                              // Registra a utilização para o relatório de locutores sem bloquear o comando do vMix.
+                              const trackingProgram = linkedProgramaId
+                                ? programas.find((programa: Programa) => programa.id === linkedProgramaId)
+                                : undefined;
+                              if (user?.id) {
+                                void (supabase.from("vmix_button_interactions" as any) as any)
+                                  .insert({
+                                    user_id: user.id,
+                                    locutor_nome: trackingProgram?.apresentador_nome || (user as any)?.user_metadata?.full_name || user.email || null,
+                                    user_email: user.email || null,
+                                    studio_name: studioName || null,
+                                    button_id: String(btn.id),
+                                    button_name: String(btn.nome || "Botão personalizado"),
+                                    program_name: trackingProgram?.nome || null,
+                                  })
+                                  .then(({ error }: any) => {
+                                    if (error) console.warn("Não foi possível registrar o clique do botão vMix:", error.message);
+                                  })
+                                  .catch(() => {});
+                              }
                               if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
                                 await runCommandsUnified(btn.commands as any[], `Efeito: ${btn.nome}`);
                               }
