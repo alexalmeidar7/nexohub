@@ -5,7 +5,7 @@ import {
   Music, Layers, LogOut, Check, ArrowRight,
   User, Mail, X, Loader2, Building2,
   FileText, Gift, Siren, Tag, MonitorPlay, Film, Mic2, Globe, CalendarDays, Home,
-  Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, Play, Pause, ExternalLink,
+  Scissors, ShoppingCart, MessageSquareQuote, HelpCircle, Swords, Play, Pause, ExternalLink, BarChart3,
   Mic, Headphones
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
@@ -275,6 +275,7 @@ export default function HouseMixHeader({
 
   const isPageVisible = (pageKey: string) => {
     if (!allowedPages) return true;
+    if (pageKey === "relatorios") return true;
     if (
       pageKey === "programas" ||
       pageKey === "apresentadores" ||
@@ -908,6 +909,23 @@ export default function HouseMixHeader({
                       </div>
                     )}
                   </div>
+                ),
+              },
+              {
+                id: "relatorios",
+                visible: (!isIntercomEnabled || menuShift > 0) && isPageVisible("relatorios"),
+                node: (
+                  <button
+                    onClick={() => handleNavigate("relatorios")}
+                    onMouseEnter={() => { handleDirectItemHover(); prefetchPage("relatorios"); }}
+                    title="Relatórios"
+                    className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      currentPage === "relatorios" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
+                    }`}
+                  >
+                    <BarChart3 size={13} />
+                    <span>relatórios</span>
+                  </button>
                 ),
               },
             ]
