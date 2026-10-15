@@ -453,7 +453,12 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
 
     for (const rawLine of lines) {
       // Aceita linhas numeradas/exportadas, como "#0 : Stinger1(GUID,)".
-      const line = rawLine.replace(/^#?\d+\s*[:.)-]\s*/, "").trim();
+      // Remove marcadores visuais de exportações/copiar-colar (*, #0 :, etc.)
+      // sem alterar o nome real da função ou os argumentos do comando.
+      const line = rawLine
+        .replace(/^#?\d+\s*[:.)-]\s*/, "")
+        .replace(/^\*+\s*/, "")
+        .trim();
       if (!line) continue;
 
       // Formato vMix: Function=Stinger1&Input=GUID&Value=...
@@ -804,6 +809,15 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                             className="w-full text-[11px] px-2.5 py-1.5 rounded-lg outline-none"
                             style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                           >
+                            {/*
+                              Funções importadas que não fazem parte do catálogo padrão
+                              precisam continuar visíveis no seletor; caso contrário, o
+                              navegador mostra visualmente a primeira opção (CutDirect),
+                              embora o comando salvo seja outro.
+                            */}
+                            {!PRESET_COMMANDS.some(c => c.value === cmd.fn) && (
+                              <option value={cmd.fn}>{cmd.fn} — função importada</option>
+                            )}
                             {CATEGORIES.map(cat => (
                               <optgroup key={cat} label={cat}>
                                 {PRESET_COMMANDS.filter(c => c.category === cat).map(c => (
