@@ -5246,14 +5246,14 @@ function SwitcherUI({
         </div>
       )}
       <Dialog open={!!editingAudioMonitor} onOpenChange={(open) => !open && setEditingAudioMonitor(null)}>
-        <DialogContent className="max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 bg-[#19191f] p-0 text-white shadow-2xl sm:max-w-2xl">
-          <DialogHeader className="border-b border-white/10 bg-[#19191f] px-6 py-5 text-left">
+        <DialogContent className="max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 p-0 text-white shadow-2xl sm:max-w-3xl" style={{ backgroundColor: "#19191f", borderColor: "#303039" }}>
+          <DialogHeader className="border-b px-6 py-5 text-left" style={{ backgroundColor: "#19191f", borderColor: "#ffffff12" }}>
             <DialogTitle className="text-base font-black uppercase tracking-wide text-white">Editar Monitor de Áudio</DialogTitle>
             <DialogDescription className="text-xs leading-relaxed text-white/55">
               Selecione o input do vMix que este monitor deve acompanhar.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-5 p-6">
+          <div className="max-h-[65vh] space-y-5 overflow-y-auto p-6" style={{ backgroundColor: "#19191f", scrollbarWidth: "thin", scrollbarColor: "#383842 transparent" }}>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-white/80">
                 <Activity size={12} /> Input monitorado
@@ -5261,7 +5261,7 @@ function SwitcherUI({
               <select
                 value={editingAudioMonitorInput}
                 onChange={(event) => setEditingAudioMonitorInput(event.target.value)}
-                className="h-11 w-full rounded-xl border border-white/20 bg-[#19191f] px-4 text-sm font-semibold text-white outline-none transition focus:border-[#0756C9] focus:ring-2 focus:ring-[#0756C9]/30 [color-scheme:dark]"
+                className="h-11 w-full rounded-xl border px-4 text-sm font-semibold outline-none transition focus:border-[#0756C9] focus:ring-2 focus:ring-[#0756C9]/30 [color-scheme:dark]" style={{ backgroundColor: "#19191f", borderColor: "#41414b", color: "#f5f5f7" }}
               >
                 <option value="">Selecione um input de áudio</option>
                 {inputs.map((input: VmixInput) => (
@@ -5362,7 +5362,7 @@ function SwitcherUI({
               </div>
             </div>
           </div>
-          <DialogFooter className="flex-row items-center justify-between gap-3 border-t border-white/10 bg-[#19191f] px-6 py-4 sm:justify-between">
+          <DialogFooter className="flex-row items-center justify-between gap-3 border-t px-6 py-4 sm:justify-between" style={{ backgroundColor: "#19191f", borderColor: "#ffffff12" }}>
             <button
               onClick={() => deleteAudioMonitor(editingAudioMonitor)}
               disabled={savingAudioMonitor}
