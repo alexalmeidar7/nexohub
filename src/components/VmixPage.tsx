@@ -5089,43 +5089,55 @@ function SwitcherUI({
           </div>
         </DialogContent>
       </Dialog>
-      <Dialog open={audioCreateOpen} onOpenChange={(open) => { setAudioCreateOpen(open); if (!open) { setAudioMonitorInput(""); setAudioMonitorName(""); } }}>
-        <DialogContent className="overflow-hidden border border-white/10 bg-[#17171b] p-0 text-white shadow-2xl sm:max-w-md">
-          <DialogHeader className="border-b border-white/10 bg-gradient-to-br from-[#222228] to-[#121214] px-6 py-5">
-            <DialogTitle className="text-lg font-black tracking-tight">Novo monitor de áudio</DialogTitle>
-            <DialogDescription className="text-xs leading-relaxed text-white/50">Defina o nome do botão e selecione o input do vMix que deseja acompanhar.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 p-6">
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-wider text-white/55">Nome do botão</label>
-              <input
-                autoFocus
-                value={audioMonitorName}
-                onChange={(event) => setAudioMonitorName(event.target.value)}
-                placeholder="Ex.: Áudio do estúdio"
-                className="h-10 w-full rounded-lg border border-[#3A3A46] bg-[#0e0e10] px-3 text-sm text-white outline-none transition focus:border-[#0756C9] focus:ring-2 focus:ring-[#0756C9]/20"
-              />
+      {audioCreateOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }} onMouseDown={(event) => { if (event.target === event.currentTarget && !creatingAudioMonitor) setAudioCreateOpen(false); }}>
+          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl" style={{ backgroundColor: "#1a1a22", border: "1px solid #333", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #ffffff0a", background: "linear-gradient(135deg, #1e1e28, #22222c)" }}>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>Novo monitor de áudio</h2>
+                <span className="rounded px-1.5 py-0.5 text-[9px]" style={{ backgroundColor: "#ffffff08", color: "#888" }}>Analisador de espectro</span>
+              </div>
+              <button type="button" onClick={() => setAudioCreateOpen(false)} disabled={creatingAudioMonitor} className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-white/10 disabled:opacity-40" style={{ color: "#aaa" }} aria-label="Fechar">
+                <XCircle size={16} />
+              </button>
             </div>
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-wider text-white/55">Input de áudio do vMix</label>
-              <select
-                value={audioMonitorInput}
-                onChange={(event) => setAudioMonitorInput(event.target.value)}
-                className="h-10 w-full rounded-lg border border-[#3A3A46] bg-[#0e0e10] px-3 text-sm text-white outline-none transition focus:border-[#0756C9] focus:ring-2 focus:ring-[#0756C9]/20 [color-scheme:dark]"
-              >
-                <option value="">Selecione um input</option>
-                {inputs.map((input: VmixInput) => <option key={input.key || input.number} value={input.number}>{input.number} — {input.title}</option>)}
-              </select>
+            <div className="flex-1 space-y-5 overflow-y-auto p-6" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto]">
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest" style={{ color: "#aaa" }}>Nome do botão</label>
+                  <input
+                    autoFocus
+                    value={audioMonitorName}
+                    onChange={(event) => setAudioMonitorName(event.target.value)}
+                    placeholder="Ex.: Áudio do estúdio"
+                    className="w-full rounded-lg px-3.5 py-2.5 text-xs outline-none"
+                    style={{ backgroundColor: "#181820", color: "#eee", border: "1px solid #41414b" }}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 sm:w-64">
+                  <label className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest" style={{ color: "#aaa" }}>Input de áudio do vMix</label>
+                  <select
+                    value={audioMonitorInput}
+                    onChange={(event) => setAudioMonitorInput(event.target.value)}
+                    className="w-full rounded-lg px-3.5 py-2.5 text-xs outline-none [color-scheme:dark]"
+                    style={{ backgroundColor: "#181820", color: "#eee", border: "1px solid #41414b" }}
+                  >
+                    <option value="">Selecione um input</option>
+                    {inputs.map((input: VmixInput) => <option key={input.key || input.number} value={input.number}>{input.number} — {input.title}</option>)}
+                  </select>
+                </div>
+              </div>
+              <p className="text-[10px] leading-relaxed" style={{ color: "#777" }}>O botão criado exibirá o monitor visual associado ao input selecionado.</p>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-3" style={{ borderTop: "1px solid #ffffff0a", backgroundColor: "#ffffff03" }}>
+              <button type="button" onClick={() => setAudioCreateOpen(false)} disabled={creatingAudioMonitor} className="rounded-lg px-3 py-1.5 text-[10px] font-bold transition-colors hover:bg-white/5 disabled:opacity-40" style={{ color: "#aaa" }}>Fechar</button>
+              <button type="button" onClick={createAudioMonitor} disabled={creatingAudioMonitor || !audioMonitorName.trim() || !audioMonitorInput} className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white transition-all hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-40" style={{ backgroundColor: "var(--layout-accent-color, #0756C9)" }}>
+                {creatingAudioMonitor ? <Loader2 className="animate-spin" size={12} /> : <CheckCircle size={12} />} Salvar
+              </button>
             </div>
           </div>
-          <DialogFooter className="gap-2 border-t border-white/10 bg-[#202026] px-6 py-4 sm:justify-end">
-            <button type="button" onClick={() => setAudioCreateOpen(false)} disabled={creatingAudioMonitor} className="rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white/55 transition hover:bg-white/5 hover:text-white disabled:opacity-50">Fechar</button>
-            <button type="button" onClick={createAudioMonitor} disabled={creatingAudioMonitor || !audioMonitorName.trim() || !audioMonitorInput} className="flex items-center gap-2 rounded-lg bg-[#0756C9] px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white transition hover:bg-[#0967ED] disabled:cursor-not-allowed disabled:opacity-40">
-              {creatingAudioMonitor ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Salvar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
       <Dialog open={!!editingAudioMonitor} onOpenChange={(open) => !open && setEditingAudioMonitor(null)}>
         <DialogContent className="border-white/10 bg-[#17171b] p-0 text-white sm:max-w-md overflow-hidden">
           <DialogHeader className="border-b border-white/10 bg-gradient-to-br from-[#222228] to-[#121214] px-6 py-5">
