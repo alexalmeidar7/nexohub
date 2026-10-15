@@ -9,6 +9,7 @@ const PREFETCH_MAP: Record<string, () => Promise<unknown>> = {
   apresentadores: () => import("@/components/ApresentadorForm"),
   ouvintes: () => import("@/components/OuvintesPage"),
   sorteios: () => import("@/components/SorteiosPage"),
+  relatorios: () => import("@/components/RelatoriosPage"),
   blitz: () => import("@/components/BlitzPage"),
   programas: () => import("@/components/ProgramaForm"),
   previsao: () => import("@/components/PrevisaoTempo"),
