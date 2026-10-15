@@ -2773,10 +2773,10 @@ function AudioMonitorButton({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  // Visual de medição estéreo (L/R). A fonte de níveis reais do vMix ainda precisa
-  // ser conectada; estes valores são apenas uma prévia visual, não uma leitura real.
+  // Prévia visual dos medidores L/R. A fonte de áudio real do vMix ainda será integrada.
   const [leftLevel, setLeftLevel] = useState(0.38);
   const [rightLevel, setRightLevel] = useState(0.32);
+
   useEffect(() => {
     let frame = 0;
     let lastUpdate = 0;
@@ -2788,8 +2788,19 @@ function AudioMonitorButton({
       }
       frame = requestAnimationFrame(animate);
     };
+
     frame = requestAnimationFrame(animate);
-    return (
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const dbFor = (level: number) => Math.round(-60 + level * 60);
+  const meterColor = (segment: number, total: number) => {
+    const ratio = segment / total;
+    return ratio > 0.88 ? "#ef2028" : ratio > 0.72 ? "#ffe600" : "#00e83b";
+  };
+  const monitorName = button?.nome || `Áudio · Input ${input}`;
+
+  return (
     <div
       className="group/custom relative overflow-hidden rounded-lg transition-all duration-200 hover:brightness-110"
       style={{ aspectRatio: "3/2", background: "#08090b", border: "1px solid #292a2e" }}
