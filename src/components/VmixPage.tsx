@@ -2582,6 +2582,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       previewInput={previewInput}
       connectionMode={connectionMode}
       savedUrl={savedUrl}
+      vmixFetch={vmixFetch}
       vmixUser={vmixUser}
       vmixPass={vmixPass}
       connecting={connecting}
@@ -3119,7 +3120,7 @@ function useAgendaPodcastTriggers({
 // Actual Switcher UI (used when effectiveConnected)
 
 function SwitcherUI({ 
-  inputs, activeInput, previewInput, connectionMode, savedUrl, vmixUser, vmixPass,
+  inputs, activeInput, previewInput, connectionMode, savedUrl, vmixFetch, vmixUser, vmixPass,
   connecting, connected, logoMixControl, studioName, selectedConnectionId,
   activeTab, setActiveTab, streaming, recording, overlays,
   setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
