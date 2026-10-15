@@ -195,7 +195,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
         supabase.from("programas").select("nome, dias_semana, horario_inicio, horario_fim, ativo").eq("user_id", userId as any),
       ]);
       if (cancelled) return;
-      config = configData as AnyRow | null;
+      config = (configData || {}) as AnyRow;
       programs = (programData || []) as AnyRow[];
       if (configError) {
         setAudienceUnavailable(true);
@@ -215,7 +215,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       if (interval) clearInterval(interval);
       if (logInterval) clearInterval(logInterval);
     };
-  }, [active, userId]);
+  }, [active, userId, audienceDate]);
 
   useEffect(() => {
     if (active !== "audiencia" || !userId) return;
