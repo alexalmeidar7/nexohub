@@ -3273,7 +3273,12 @@ function SwitcherUI({
   const [audioCreateOpen, setAudioCreateOpen] = useState(false);
   const [editingAudioMonitor, setEditingAudioMonitor] = useState<any | null>(null);
   const [editingAudioMonitorInput, setEditingAudioMonitorInput] = useState("");
+  const [audioThresholdEnabled, setAudioThresholdEnabled] = useState(false);
+  const [audioThresholdDb, setAudioThresholdDb] = useState(-10);
+  const [audioThresholdActionInput, setAudioThresholdActionInput] = useState("");
   const [savingAudioMonitor, setSavingAudioMonitor] = useState(false);
+  const audioThresholdLatchRef = useRef<Record<string, boolean>>({});
+  const audioThresholdInitializedRef = useRef<Record<string, boolean>>({});
   const [audioMeterLevels, setAudioMeterLevels] = useState<Record<string, { left: number; right: number; available: boolean; updatedAt: number }>>({});
 
   // Lê os medidores reais meterF1 (Left) e meterF2 (Right) da API XML do vMix.
@@ -3319,6 +3324,36 @@ function SwitcherUI({
           };
         }
         setAudioMeterLevels(previous => ({ ...previous, ...next }));
+
+        // Gatilho por nível: dispara apenas na subida do limite e rearma quando o áudio cai 3 dB.
+        for (const button of customButtons || []) {
+          const monitoredInput = getAudioMonitorInput(button);
+          if (!monitoredInput || !next[monitoredInput]?.available) continue;
+          const monitorCommand = Array.isArray(button.commands)
+            ? button.commands.find((command: any) => command?.fn === "AudioMonitor")
+            : null;
+          if (!monitorCommand?.thresholdEnabled || !monitorCommand?.thresholdActionInput) continue;
+
+          const meter = next[monitoredInput];
+          const leftDb = meter.left > 0 ? 20 * Math.log10(meter.left) : -60;
+          const rightDb = meter.right > 0 ? 20 * Math.log10(meter.right) : -60;
+          const averageDb = (leftDb + rightDb) / 2;
+          const threshold = Number(monitorCommand.thresholdDb ?? -10);
+          const key = String(button.id);
+          if (!audioThresholdInitializedRef.current[key]) {
+            audioThresholdLatchRef.current[key] = averageDb >= threshold;
+            audioThresholdInitializedRef.current[key] = true;
+            continue;
+          }
+          if (averageDb < threshold - 3) {
+            audioThresholdLatchRef.current[key] = false;
+            continue;
+          }
+          if (averageDb >= threshold && !audioThresholdLatchRef.current[key]) {
+            audioThresholdLatchRef.current[key] = true;
+            void runCommandsUnified([{ fn: "Cut", input: String(monitorCommand.thresholdActionInput) }], `Gatilho de áudio: ${button.nome || monitoredInput}`, true);
+          }
+        }
       } catch {
         // Falhas transitórias não derrubam o switcher; a próxima consulta tenta novamente.
       } finally {
@@ -3332,7 +3367,7 @@ function SwitcherUI({
       stopped = true;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [connected, savedUrl, customButtons, vmixFetch]);
+  }, [connected, savedUrl, customButtons, vmixFetch, runCommandsUnified]);
 
   const createAudioMonitor = async () => {
     if (!user || !audioMonitorInput || !audioMonitorName.trim()) return;
@@ -3362,6 +3397,10 @@ function SwitcherUI({
   const openAudioMonitorEditor = (button: any) => {
     setEditingAudioMonitor(button);
     setEditingAudioMonitorInput(getAudioMonitorInput(button) === "—" ? "" : getAudioMonitorInput(button) || "");
+    const monitorCommand = Array.isArray(button?.commands) ? button.commands.find((command: any) => command?.fn === "AudioMonitor") : null;
+    setAudioThresholdEnabled(monitorCommand?.thresholdEnabled === true);
+    setAudioThresholdDb(Number.isFinite(Number(monitorCommand?.thresholdDb)) ? Number(monitorCommand.thresholdDb) : -10);
+    setAudioThresholdActionInput(monitorCommand?.thresholdActionInput ? String(monitorCommand.thresholdActionInput) : "");
   };
 
   const saveAudioMonitorInput = async () => {
@@ -3371,9 +3410,15 @@ function SwitcherUI({
     try {
       const commands = Array.isArray(editingAudioMonitor.commands) ? editingAudioMonitor.commands : [];
       const hasAudioMonitorCommand = commands.some((command: any) => command?.fn === "AudioMonitor");
+      const thresholdSettings = {
+        thresholdEnabled: audioThresholdEnabled,
+        thresholdDb: audioThresholdDb,
+        thresholdActionFn: "Cut",
+        thresholdActionInput: audioThresholdActionInput,
+      };
       const updatedCommands = hasAudioMonitorCommand
-        ? commands.map((command: any) => command?.fn === "AudioMonitor" ? { ...command, input: editingAudioMonitorInput } : command)
-        : [{ fn: "AudioMonitor", input: editingAudioMonitorInput }];
+        ? commands.map((command: any) => command?.fn === "AudioMonitor" ? { ...command, input: editingAudioMonitorInput, ...thresholdSettings } : command)
+        : [{ fn: "AudioMonitor", input: editingAudioMonitorInput, ...thresholdSettings }];
       const { error } = await (supabase.from("custom_vmix_buttons" as any) as any)
         .update({
           nome: `Áudio · ${selectedInput?.title || `Input ${editingAudioMonitorInput}`}`,
@@ -5227,6 +5272,95 @@ function SwitcherUI({
               </select>
               <p className="text-[10px] text-white/40">O monitor continuará exibindo os níveis reais dos canais Left e Right.</p>
             </div>
+
+            <div className="border-t border-white/15 pt-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-white">Acionamento por nível de áudio</p>
+                  <p className="mt-1 text-[10px] leading-relaxed text-white/45">Execute uma ação quando a média L/R atingir o limite configurado.</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={audioThresholdEnabled}
+                  onClick={() => setAudioThresholdEnabled(value => !value)}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${audioThresholdEnabled ? "bg-[#0756C9]" : "bg-white/20"}`}
+                  title={audioThresholdEnabled ? "Desativar acionamento automático" : "Ativar acionamento automático"}
+                >
+                  <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${audioThresholdEnabled ? "left-6" : "left-1"}`} />
+                </button>
+              </div>
+
+              <div className={`mt-4 space-y-4 transition-opacity ${audioThresholdEnabled ? "opacity-100" : "pointer-events-none opacity-40"}`}>
+                <div className="rounded-xl border border-white/10 bg-[#101014] p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-white/65">Nível médio L/R em tempo real</span>
+                    <span className="text-sm font-black tabular-nums text-white">
+                      {(() => {
+                        const meter = audioMeterLevels[editingAudioMonitorInput];
+                        if (!meter?.available) return "— dB";
+                        const leftDb = meter.left > 0 ? 20 * Math.log10(meter.left) : -60;
+                        const rightDb = meter.right > 0 ? 20 * Math.log10(meter.right) : -60;
+                        return `${((leftDb + rightDb) / 2).toFixed(1)} dB`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex h-3 gap-[2px] overflow-hidden rounded-sm bg-white/5 p-[1px]">
+                    {Array.from({ length: 36 }, (_, index) => {
+                      const meter = audioMeterLevels[editingAudioMonitorInput];
+                      const average = meter?.available
+                        ? (((meter.left > 0 ? 20 * Math.log10(meter.left) : -60) + (meter.right > 0 ? 20 * Math.log10(meter.right) : -60)) / 2)
+                        : -60;
+                      const activeCount = Math.max(0, Math.min(36, Math.ceil(((average + 60) / 60) * 36)));
+                      const ratio = index / 36;
+                      const color = ratio >= 0.88 ? "#ef2028" : ratio >= 0.68 ? "#ffe600" : "#00e83b";
+                      return <span key={index} className="min-w-0 flex-1 rounded-[1px]" style={{ backgroundColor: index < activeCount ? color : "#292a30" }} />;
+                    })}
+                  </div>
+                  <div className="mt-1 flex justify-between text-[8px] font-bold text-white/30"><span>-60 dB</span><span>0 dB</span></div>
+                  {!audioMeterLevels[editingAudioMonitorInput]?.available && <p className="mt-2 text-[9px] text-amber-300">Aguardando leitura real do vMix para este input.</p>}
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-[#101014] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <label htmlFor="audio-threshold-slider" className="text-[9px] font-black uppercase tracking-wider text-white/65">Disparar quando atingir</label>
+                    <span className="text-sm font-black tabular-nums text-[#65a8ff]">{audioThresholdDb} dB</span>
+                  </div>
+                  <input
+                    id="audio-threshold-slider"
+                    type="range"
+                    min={-60}
+                    max={0}
+                    step={1}
+                    value={audioThresholdDb}
+                    onChange={(event) => setAudioThresholdDb(Number(event.target.value))}
+                    className="mt-3 h-2 w-full cursor-pointer accent-[#0756C9]"
+                  />
+                  <div className="flex justify-between text-[8px] font-bold text-white/30"><span>-60 dB</span><span>-30 dB</span><span>0 dB</span></div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[9px] font-black uppercase tracking-wider text-white/65">Ação ao atingir o limite</label>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-white/10 bg-[#101014] px-3 py-2">
+                      <p className="text-[8px] font-bold uppercase text-white/35">Comando</p>
+                      <p className="mt-1 text-xs font-bold text-white">Cortar (Cut)</p>
+                    </div>
+                    <select
+                      value={audioThresholdActionInput}
+                      onChange={(event) => setAudioThresholdActionInput(event.target.value)}
+                      className="h-10 w-full rounded-lg border border-white/20 bg-[#19191f] px-3 text-xs font-semibold text-white outline-none focus:border-[#0756C9] [color-scheme:dark]"
+                    >
+                      <option value="">Selecione a câmera/input de destino</option>
+                      {inputs.map((input: VmixInput) => (
+                        <option key={input.key || input.number} value={input.number}>{input.number} — {input.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-[9px] leading-relaxed text-white/40">O comando dispara uma vez ao cruzar o limite e rearma quando o nível cair pelo menos 3 dB abaixo dele.</p>
+                </div>
+              </div>
+            </div>
           </div>
           <DialogFooter className="flex-row items-center justify-between gap-3 border-t border-white/10 bg-[#19191f] px-6 py-4 sm:justify-between">
             <button
@@ -5238,7 +5372,7 @@ function SwitcherUI({
             </button>
             <div className="flex gap-2">
               <button onClick={() => setEditingAudioMonitor(null)} disabled={savingAudioMonitor} className="h-9 rounded-lg border border-white/20 px-4 text-[10px] font-black uppercase tracking-wide text-white/80 transition hover:bg-white/5 disabled:opacity-50">Cancelar</button>
-              <button onClick={saveAudioMonitorInput} disabled={savingAudioMonitor || !editingAudioMonitorInput} className="flex h-9 items-center gap-2 rounded-lg bg-[#0756C9] px-4 text-[10px] font-black uppercase tracking-wide text-white transition hover:bg-[#0967ED] disabled:cursor-not-allowed disabled:opacity-50">
+              <button onClick={saveAudioMonitorInput} disabled={savingAudioMonitor || !editingAudioMonitorInput || (audioThresholdEnabled && !audioThresholdActionInput)} className="flex h-9 items-center gap-2 rounded-lg bg-[#0756C9] px-4 text-[10px] font-black uppercase tracking-wide text-white transition hover:bg-[#0967ED] disabled:cursor-not-allowed disabled:opacity-50">
                 {savingAudioMonitor ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Salvar input
               </button>
             </div>
