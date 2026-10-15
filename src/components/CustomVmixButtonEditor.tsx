@@ -773,7 +773,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                       onChange={e => setPasteValue(e.target.value)}
                       rows={4}
                       className="w-full text-[10px] px-2.5 py-2 rounded-lg outline-none font-mono"
-                      style={{ backgroundColor: "#0a0a12", color: "#ccc", border: "1px solid #333", resize: "vertical" }}
+                      style={{ backgroundColor: "#ffffff", color: "#4b5563", border: "1px solid #d1d5db", resize: "vertical" }}
                       placeholder={"CutDirect input=abc123\nFade input=xyz value=1000\nOverlayInput1 input=abc"}
                     />
                     <button
