@@ -4980,8 +4980,8 @@ function SwitcherUI({
                       {/* + Criar */}
                       <div className="relative w-[180px] min-w-[180px] shrink-0" style={{ aspectRatio: "3/2" }}>
                         {creationChoiceOpen && (
-                          <div className="absolute bottom-[calc(100%-20px)] left-1/2 z-[80] w-[min(360px,85vw)] -translate-x-1/2 pb-2">
-                            <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
+                          <div className="absolute left-full top-1/2 z-[80] ml-3 w-[190px] -translate-y-1/2">
+                            <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
                               <button
                                 type="button"
                                 onClick={() => { setCreationChoiceOpen(false); setAudioMonitorInput(""); setEditingCustomButtonId("new"); }}
