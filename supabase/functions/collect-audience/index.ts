@@ -23,6 +23,23 @@ function localParts(date: Date, timeZone: string) {
   return { weekday, hhmm: `${get("hour").padStart(2, "0")}:${get("minute").padStart(2, "0")}` };
 }
 
+function localDayStartIso(now: Date, timeZone: string): string {
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(now);
+  const part = (type: string) => dateParts.find(p => p.type === type)?.value || "0";
+  const year = Number(part("year")), month = Number(part("month")), day = Number(part("day"));
+  const targetLocalMidnight = Date.UTC(year, month - 1, day);
+  const guess = new Date(targetLocalMidnight);
+  const localAtGuess = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+  }).formatToParts(guess);
+  const get = (type: string) => Number(localAtGuess.find(p => p.type === type)?.value || "0");
+  const representedLocal = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return new Date(targetLocalMidnight + targetLocalMidnight - representedLocal).toISOString();
+}
+
 function programOnAir(programs: Row[], now: Date, timeZone: string): string {
   const { weekday, hhmm } = localParts(now, timeZone);
   const matches = programs.filter(p => {
@@ -127,13 +144,46 @@ Deno.serve(async (req: Request) => {
       const video = videoValues.some(n => n !== null) ? videoValues.reduce<number>((sum, n) => sum + (n ?? 0), 0) : null;
       if (audio === null && video === null) { skipped++; continue; }
 
-      const insertResponse = await fetch(`${base}/rest/v1/audiencia_historico`, {
-        method: "POST",
-        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json", Prefer: "return=minimal" },
-        body: JSON.stringify({ user_id: userId, programa: program, audio: audio ?? 0, video: video ?? 0, youtube: 0, created_at: now.toISOString() }),
+      // Keep one row per program per local calendar day. During the show, update
+      // the row with the peak concurrent audience instead of creating a row
+      // every time the streaming count changes.
+      const dayStart = localDayStartIso(now, timezone);
+      const existingUrl = new URL(`${base}/rest/v1/audiencia_historico`);
+      existingUrl.searchParams.set("select", "id,audio,video,created_at");
+      existingUrl.searchParams.set("user_id", `eq.${userId}`);
+      existingUrl.searchParams.set("programa", `eq.${program}`);
+      existingUrl.searchParams.set("created_at", `gte.${dayStart}`);
+      existingUrl.searchParams.set("order", "created_at.asc");
+      existingUrl.searchParams.set("limit", "1");
+      const existingResponse = await fetch(existingUrl, {
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
       });
-      if (insertResponse.ok) recorded++;
-      else { skipped++; failures.push(`${userId}: insert ${insertResponse.status}`); }
+      if (!existingResponse.ok) {
+        skipped++;
+        failures.push(`${userId}: lookup ${existingResponse.status}`);
+        continue;
+      }
+      const existingRows: Row[] = await existingResponse.json();
+      const existing = existingRows[0];
+      const payload = {
+        audio: Math.max(Number(existing?.audio) || 0, audio ?? 0),
+        video: Math.max(Number(existing?.video) || 0, video ?? 0),
+      };
+      const saveUrl = existing
+        ? `${base}/rest/v1/audiencia_historico?id=eq.${encodeURIComponent(String(existing.id))}`
+        : `${base}/rest/v1/audiencia_historico`;
+      const saveResponse = await fetch(saveUrl, {
+        method: existing ? "PATCH" : "POST",
+        headers: {
+          apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,
+          "Content-Type": "application/json", Prefer: "return=minimal",
+        },
+        body: JSON.stringify(existing ? payload : {
+          user_id: userId, programa: program, ...payload, youtube: 0, created_at: now.toISOString(),
+        }),
+      });
+      if (saveResponse.ok) recorded++;
+      else { skipped++; failures.push(`${userId}: save ${saveResponse.status}`); }
     }
 
     return new Response(JSON.stringify({ ok: true, checked: configs.length, recorded, skipped, failures: failures.slice(0, 10), at: now.toISOString() }), {
