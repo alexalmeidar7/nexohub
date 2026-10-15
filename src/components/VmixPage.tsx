@@ -5247,7 +5247,7 @@ function SwitcherUI({
       )}
       <Dialog open={!!editingAudioMonitor} onOpenChange={(open) => !open && setEditingAudioMonitor(null)}>
         <DialogContent className="max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 p-0 text-white shadow-2xl sm:max-w-3xl" style={{ backgroundColor: "#19191f", borderColor: "#303039" }}>
-          <DialogHeader className="border-b px-6 py-5 text-left" style={{ backgroundColor: "#19191f", borderColor: "#ffffff12" }}>
+          <DialogHeader className="px-6 py-5 text-left" style={{ backgroundColor: "#19191f", borderColor: "transparent" }}>
             <DialogTitle className="text-base font-black uppercase tracking-wide text-white">Editar Monitor de Áudio</DialogTitle>
             <DialogDescription className="text-xs leading-relaxed text-white/55">
               Selecione o input do vMix que este monitor deve acompanhar.
@@ -5273,7 +5273,7 @@ function SwitcherUI({
               <p className="text-[10px] text-white/40">O monitor continuará exibindo os níveis reais dos canais Left e Right.</p>
             </div>
 
-            <div className="border-t border-white/15 pt-5">
+            <div className="pt-1">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-wider text-white">Acionamento por nível de áudio</p>
@@ -5362,7 +5362,7 @@ function SwitcherUI({
               </div>
             </div>
           </div>
-          <DialogFooter className="flex-row items-center justify-between gap-3 border-t px-6 py-4 sm:justify-between" style={{ backgroundColor: "#19191f", borderColor: "#ffffff12" }}>
+          <DialogFooter className="flex-row items-center justify-between gap-3 px-6 py-4 sm:justify-between" style={{ backgroundColor: "#19191f", borderColor: "transparent" }}>
             <button
               onClick={() => deleteAudioMonitor(editingAudioMonitor)}
               disabled={savingAudioMonitor}
