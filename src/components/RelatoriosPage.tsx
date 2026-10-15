@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart3, Gift, History, Truck, Siren, Tag, MonitorPlay, Search,
   CalendarDays, Clock3, RefreshCw, Loader2, AlertCircle, Package,
-  CheckCircle2, CircleX, UserRound, Image as ImageIcon
+  CheckCircle2, CircleX, UserRound, Image as ImageIcon, Trophy, Headphones, Video
 } from "lucide-react";
 
-type ReportKey = "estoque" | "sorteios" | "entregas" | "blitz" | "comercial" | "vmix";
+type ReportKey = "estoque" | "sorteios" | "entregas" | "blitz" | "comercial" | "vmix" | "audiencia";
 type AnyRow = Record<string, any>;
 
 const REPORTS: { key: ReportKey; label: string; description: string; icon: typeof Gift }[] = [
@@ -17,6 +17,7 @@ const REPORTS: { key: ReportKey; label: string; description: string; icon: typeo
   { key: "blitz", label: "Blitz", description: "Ações realizadas e seus horários", icon: Siren },
   { key: "comercial", label: "Comercial", description: "Promoções ativas no período", icon: Tag },
   { key: "vmix", label: "vMix", description: "Uso dos botões personalizados por locutor", icon: MonitorPlay },
+  { key: "audiencia", label: "Audiência", description: "Audiência de áudio e vídeo por programa", icon: BarChart3 },
 ];
 
 const localKey = (name: string, userId: string) => `nexohub_${name}_${userId}`;
@@ -67,6 +68,10 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   const [promos, setPromos] = useState<AnyRow[]>([]);
   const [vmixEvents, setVmixEvents] = useState<AnyRow[]>([]);
   const [vmixUnavailable, setVmixUnavailable] = useState(false);
+  const [audienceDate, setAudienceDate] = useState(todayISO);
+  const [audienceRows, setAudienceRows] = useState<AnyRow[]>([]);
+  const [audienceLoading, setAudienceLoading] = useState(false);
+  const [audienceUnavailable, setAudienceUnavailable] = useState(false);
 
   const load = async (manual = false) => {
     if (!userId) { setLoading(false); return; }
@@ -93,6 +98,30 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   };
 
   useEffect(() => { void load(); }, [userId]);
+
+  useEffect(() => {
+    if (active !== "audiencia" || !userId) return;
+    let cancelled = false;
+    const loadAudience = async () => {
+      setAudienceLoading(true);
+      setAudienceUnavailable(false);
+      const start = new Date(`${audienceDate}T00:00:00`);
+      const end = new Date(`${audienceDate}T23:59:59.999`);
+      const { data, error } = await supabase
+        .from("audiencia_historico")
+        .select("created_at, programa, audio, video")
+        .eq("user_id", userId as any)
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString())
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      setAudienceRows((data || []) as AnyRow[]);
+      setAudienceUnavailable(Boolean(error));
+      setAudienceLoading(false);
+    };
+    void loadAudience();
+    return () => { cancelled = true; };
+  }, [active, audienceDate, userId]);
 
   const prizeById = useMemo(() => new Map(prizes.map(p => [p.id, p])), [prizes]);
   const filtered = <T extends AnyRow,>(rows: T[], fields: string[]) => {
@@ -121,6 +150,23 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
     });
     return Array.from(totals.values()).sort((a, b) => b.clicks - a.clicks);
   }, [vmixEvents]);
+
+  const audienceByProgram = useMemo(() => {
+    const groups = new Map<string, { program: string; audio: number; video: number; lastSeen: string }>();
+    for (const row of audienceRows) {
+      const program = String(row.programa || "").trim() || "Programa não identificado";
+      const audio = Math.max(0, Number(row.audio) || 0);
+      const video = Math.max(0, Number(row.video) || 0);
+      const current = groups.get(program) || { program, audio: 0, video: 0, lastSeen: "" };
+      current.audio = Math.max(current.audio, audio);
+      current.video = Math.max(current.video, video);
+      if (row.created_at && row.created_at > current.lastSeen) current.lastSeen = row.created_at;
+      groups.set(program, current);
+    }
+    return Array.from(groups.values()).map(row => ({ ...row, total: row.audio + row.video }))
+      .sort((a, b) => b.total - a.total || a.program.localeCompare(b.program, "pt-BR"));
+  }, [audienceRows]);
+  const topAudiencePrograms = audienceByProgram.slice(0, 3);
 
   const activeReport = REPORTS.find(r => r.key === active)!;
   const Icon = activeReport.icon;
@@ -163,7 +209,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
                   </button>;
                 })}
               </div>}
-              {REPORTS.filter(report => ["blitz", "comercial", "vmix"].includes(report.key)).map(report => {
+              {REPORTS.filter(report => ["blitz", "comercial", "vmix", "audiencia"].includes(report.key)).map(report => {
                 const ItemIcon = report.icon;
                 const selected = active === report.key;
                 return <button key={report.key} onClick={() => { setActive(report.key); setSearch(""); }} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${selected ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}>
@@ -191,6 +237,43 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
                 {active === "blitz" && (() => { const rows = filtered(blitzes.filter(b => b.realizada === true), ["cliente", "equipe", "observacoes"]); return rows.length ? <div className="overflow-x-auto rounded-xl border border-slate-100"><table className="w-full"><thead className="bg-slate-50"><tr><Th>Dia</Th><Th>Cliente / ação</Th><Th>Hora inicial</Th><Th>Hora final</Th><Th>Equipe</Th></tr></thead><tbody>{rows.map(b => <tr key={b.id} className="border-t border-slate-100"><Td>{dateOnly(b.dia)}</Td><Td className="font-bold text-slate-900">{b.cliente || "Blitz"}</Td><Td><span className="inline-flex items-center gap-1"><Clock3 size={12} className="text-blue-500" />{timeOnly(b.horario)}</span></Td><Td>{timeOnly(b.horario_fim)}</Td><Td>{b.equipe || "—"}</Td></tr>)}</tbody></table></div> : <TableEmpty text="Nenhuma blitz realizada encontrada." />; })()}
 
                 {active === "comercial" && (activePromos.length ? <div className="grid gap-3 md:grid-cols-2">{filtered(activePromos, ["nome", "texto", "oferecimento"]).map(p => <article key={p.id} className="overflow-hidden rounded-2xl border border-slate-200"><div className="flex items-center gap-3 p-4">{p.imagem_url ? <img src={p.imagem_url} alt={p.nome || "Promoção"} className="h-16 w-16 rounded-xl object-cover" loading="lazy" /> : <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Tag size={22} /></div>}<div className="min-w-0 flex-1"><div className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Promoção ativa</div><h3 className="mt-1 truncate text-sm font-black text-slate-900">{p.nome || "Promoção sem nome"}</h3><p className="mt-1 text-[10px] text-slate-500">{p.oferecimento || "Sem patrocinador informado"}</p></div></div><div className="border-t border-slate-100 px-4 py-3"><p className="text-xs leading-relaxed text-slate-600">{String(p.texto || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim() || "Sem descrição."}</p><div className="mt-3 flex items-center gap-3 text-[10px] text-slate-400"><span className="inline-flex items-center gap-1"><CalendarDays size={12} />{dateOnly(p.data_inicio)} – {dateOnly(p.data_fim)}</span></div></div></article>)}</div> : <TableEmpty text="Não há promoções ativas hoje." />)}
+
+                {active === "audiencia" && (
+                  <div className="space-y-5">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-stretch">
+                      <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <label htmlFor="audience-report-date" className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-500"><CalendarDays size={14} className="text-blue-600" /> Selecionar dia</label>
+                        <input id="audience-report-date" type="date" value={audienceDate} max={todayISO()} onChange={e => setAudienceDate(e.target.value)} className="h-11 w-full max-w-xs rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                        <p className="mt-2 text-[10px] text-slate-400">A tabela mostra o maior número de espectadores registrado por programa no dia selecionado.</p>
+                      </div>
+                      <div className="w-full rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4 xl:max-w-[390px]">
+                        <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-amber-700"><Trophy size={15} /> Top 3 programas por audiência</div>
+                        {audienceLoading ? <div className="py-5 text-xs text-slate-400">Carregando audiência...</div> : topAudiencePrograms.length ? <div className="space-y-2">
+                          {topAudiencePrograms.map((program, index) => <div key={program.program} className="flex items-center gap-3 rounded-xl border border-amber-100/80 bg-white px-3 py-2.5">
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black ${index === 0 ? "bg-amber-400 text-amber-950" : index === 1 ? "bg-slate-200 text-slate-700" : "bg-orange-100 text-orange-700"}`}>{index + 1}º</div>
+                            <div className="min-w-0 flex-1"><div className="truncate text-xs font-extrabold text-slate-800">{program.program}</div><div className="mt-1 text-[9px] text-slate-400">Áudio {program.audio.toLocaleString("pt-BR")} · Vídeo {program.video.toLocaleString("pt-BR")}</div></div>
+                            <div className="text-right"><div className="text-lg font-black text-amber-700">{program.total.toLocaleString("pt-BR")}</div><div className="text-[8px] font-bold uppercase text-amber-600">total</div></div>
+                          </div>)}
+                        </div> : <p className="py-5 text-xs text-slate-400">Sem dados para montar o Top 3 neste dia.</p>}
+                      </div>
+                    </div>
+
+                    {audienceLoading ? <div className="flex items-center justify-center gap-2 py-12 text-xs text-slate-500"><Loader2 size={16} className="animate-spin" /> Carregando audiência do dia...</div>
+                      : audienceUnavailable ? <TableEmpty text="Não foi possível carregar a audiência. Verifique a conexão com o banco de dados." />
+                      : audienceByProgram.length ? <div className="overflow-x-auto rounded-xl border border-slate-100">
+                        <table className="w-full">
+                          <thead className="bg-slate-50"><tr><Th>Dia</Th><Th>Programa</Th><Th><span className="inline-flex items-center gap-1"><Headphones size={12} /> Audiência áudio streaming</span></Th><Th><span className="inline-flex items-center gap-1"><Video size={12} /> Audiência vídeo streaming</span></Th><Th>Total (áudio + vídeo)</Th></tr></thead>
+                          <tbody>{audienceByProgram.map(program => <tr key={program.program} className="border-t border-slate-100">
+                            <Td>{dateOnly(audienceDate)}</Td>
+                            <Td className="font-bold text-slate-900">{program.program}</Td>
+                            <Td>{program.audio.toLocaleString("pt-BR")}</Td>
+                            <Td>{program.video.toLocaleString("pt-BR")}</Td>
+                            <Td><span className="inline-flex min-w-16 items-center justify-center rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700">{program.total.toLocaleString("pt-BR")}</span></Td>
+                          </tr>)}</tbody>
+                        </table>
+                      </div> : <TableEmpty text="Nenhum registro de audiência encontrado para o dia selecionado." />}
+                  </div>
+                )}
 
                 {active === "vmix" && (vmixEvents.length ? <><div className="mb-4 grid gap-3 sm:grid-cols-3"><div className="rounded-xl bg-blue-50 p-4"><div className="text-[10px] font-bold uppercase text-blue-500">Cliques registrados</div><div className="mt-1 text-2xl font-black text-blue-700">{vmixEvents.length}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-[10px] font-bold uppercase text-slate-400">Locutores identificados</div><div className="mt-1 text-2xl font-black text-slate-800">{new Set(vmixEvents.map(e => e.locutor_nome || e.apresentador_nome).filter(Boolean)).size}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-[10px] font-bold uppercase text-slate-400">Botões diferentes</div><div className="mt-1 text-2xl font-black text-slate-800">{new Set(vmixEvents.map(e => e.button_id).filter(Boolean)).size}</div></div></div>{vmixRanking.length > 0 && <div className="mb-4 overflow-hidden rounded-xl border border-slate-100"><div className="border-b border-slate-100 bg-slate-50 px-4 py-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-600">Ranking de utilização por locutor</div><div className="divide-y divide-slate-100">{vmixRanking.map((item, index) => <div key={item.name} className="flex items-center gap-3 px-4 py-3"><div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black ${index === 0 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"}`}>{index + 1}º</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold text-slate-800">{item.name}</div><div className="mt-1 text-[10px] text-slate-400">{item.buttons.size} botão(ões) diferentes · último clique {dateTime(item.lastClick)}</div></div><div className="text-right"><div className="text-lg font-black text-blue-700">{item.clicks}</div><div className="text-[9px] font-bold uppercase text-slate-400">cliques</div></div></div>)}</div></div>}<div className="overflow-x-auto rounded-xl border border-slate-100"><table className="w-full"><thead className="bg-slate-50"><tr><Th>Data / hora</Th><Th>Locutor</Th><Th>Estúdio</Th><Th>Botão acionado</Th><Th>Programa</Th></tr></thead><tbody>{filtered(vmixEvents, ["locutor_nome", "apresentador_nome", "studio_name", "button_name", "program_name"]).map(e => <tr key={e.id} className="border-t border-slate-100"><Td>{dateTime(e.created_at)}</Td><Td className="font-bold">{e.locutor_nome || e.apresentador_nome || e.user_email || "—"}</Td><Td>{e.studio_name || "—"}</Td><Td>{e.button_name || "Botão personalizado"}</Td><Td>{e.program_name || "—"}</Td></tr>)}</tbody></table></div></> : <TableEmpty text={vmixUnavailable ? "O registro de cliques do vMix ainda não está disponível no banco de dados. Após habilitar a tabela de interações, os próximos cliques aparecerão aqui." : "Ainda não há cliques de botões personalizados registrados."} />)}
               </>
