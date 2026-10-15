@@ -113,12 +113,18 @@ Deno.serve(async (req: Request) => {
       const audioResults = await Promise.all(audioSources.map(source => countSource(base, serviceKey, "count-stream-listeners", { userId, urls: [source.url], ...(source.xpath ? { xpath: source.xpath } : {}) }, "listeners")));
       const videoResults = await Promise.all(videoSources.map(source => countSource(base, serviceKey, "count-video-viewers", {
         userId, urls: [source.url], ...(source.xpath ? { xpath: source.xpath } : {}),
-        ...(config.youtube ? { youtubeUrl: config.youtube } : {}),
-        ...(config.youtube_api_key ? { youtubeApiKey: config.youtube_api_key } : {}),
-        ...(config.youtube_channel_id ? { youtubeChannelId: config.youtube_channel_id } : {}),
       }, "viewers")));
+      const youtubeCount = config.youtube || config.youtube_channel_id
+        ? await countSource(base, serviceKey, "count-video-viewers", {
+            userId, urls: [],
+            ...(config.youtube ? { youtubeUrl: config.youtube } : {}),
+            ...(config.youtube_api_key ? { youtubeApiKey: config.youtube_api_key } : {}),
+            ...(config.youtube_channel_id ? { youtubeChannelId: config.youtube_channel_id } : {}),
+          }, "viewers")
+        : null;
       const audio = audioResults.some(n => n !== null) ? audioResults.reduce<number>((sum, n) => sum + (n ?? 0), 0) : null;
-      const video = videoResults.some(n => n !== null) ? videoResults.reduce<number>((sum, n) => sum + (n ?? 0), 0) : null;
+      const videoValues = [...videoResults, youtubeCount];
+      const video = videoValues.some(n => n !== null) ? videoValues.reduce<number>((sum, n) => sum + (n ?? 0), 0) : null;
       if (audio === null && video === null) { skipped++; continue; }
 
       const insertResponse = await fetch(`${base}/rest/v1/audiencia_historico`, {
