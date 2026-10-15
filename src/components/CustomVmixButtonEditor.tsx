@@ -671,10 +671,40 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
 
 
 
-              {/* Schedule row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Days */}
-                <div className="flex flex-col gap-1.5">
+              {/* Agenda: data, horário e dias na mesma linha */}
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(170px,1.15fr)_minmax(112px,0.72fr)_minmax(220px,1.4fr)]">
+                {/* Data específica */}
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+                    <Calendar size={10} /> Data Específica
+                  </label>
+                  <input
+                    type="date"
+                    value={dataEspecifica}
+                    onChange={e => setDataEspecifica(e.target.value)}
+                    className="w-full min-w-0 text-xs px-2.5 py-2 rounded-lg outline-none"
+                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                  />
+                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional: dia único</span>
+                </div>
+
+                {/* Horário */}
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+                    <Clock size={10} /> Horário
+                  </label>
+                  <input
+                    type="time"
+                    value={horario}
+                    onChange={e => setHorario(e.target.value)}
+                    className="w-full min-w-0 text-xs px-2 py-2 rounded-lg outline-none"
+                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
+                  />
+                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional</span>
+                </div>
+
+                {/* Dias da semana */}
+                <div className="flex min-w-0 flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
                     <Clock size={10} /> Dias da Semana
                   </label>
@@ -685,7 +715,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                         <button
                           key={dia}
                           onClick={() => toggleDia(dia)}
-                          className="text-[9px] font-bold px-2 py-1 rounded transition-all"
+                          className="text-[9px] font-bold px-1.5 py-1 rounded transition-all"
                           style={{
                             backgroundColor: active ? "#3b82f620" : "#ffffff08",
                             color: active ? "#3b82f6" : "#666",
@@ -697,36 +727,6 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                       );
                     })}
                   </div>
-                </div>
-
-                {/* Specific Date */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
-                    <Calendar size={10} /> Data Específica
-                  </label>
-                  <input
-                    type="date"
-                    value={dataEspecifica}
-                    onChange={e => setDataEspecifica(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-lg outline-none"
-                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
-                  />
-                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional: use para um dia único</span>
-                </div>
-
-                {/* Time */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
-                    <Clock size={10} /> Horário
-                  </label>
-                  <input
-                    type="time"
-                    value={horario}
-                    onChange={e => setHorario(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-lg outline-none"
-                    style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
-                  />
-                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional: horário de referência</span>
                 </div>
               </div>
 
