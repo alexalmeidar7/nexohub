@@ -1803,8 +1803,7 @@ export default function PromocoesKiosk() {
         />
 
         {/* Citações disponíveis nos programas cadastrados para esta emissora. */}
-        {(filteredPrograms.length > 0 || true) && (
-          <nav aria-label="Citações e atalhos personalizados" className="w-full flex items-start justify-between gap-3 -mt-3">
+        <nav aria-label="Citações e atalhos personalizados" className="w-full flex items-start justify-between gap-3 -mt-3">
             <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
               {filteredPrograms.map((programa) => {
                 const isOnAir = !!onAirProgram && normalizeProgramName(onAirProgram.nome) === normalizeProgramName(programa.nome);
@@ -1855,8 +1854,7 @@ export default function PromocoesKiosk() {
                 </div>
               )}
             </div>
-          </nav>
-        )}
+        </nav>
 
         {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) - oculta para usuário Positiva */}
         {!isPositivaUser && (() => {
