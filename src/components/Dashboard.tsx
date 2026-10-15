@@ -1257,6 +1257,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
       currentPage !== "broadcast" &&
       currentPage !== "cenario" &&
       currentPage !== "vmix" &&
+      currentPage !== "relatorios" &&
       !isAdmin &&
       !isModuleEnabled(currentPage)
     ) {
