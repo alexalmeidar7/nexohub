@@ -5066,8 +5066,8 @@ function SwitcherUI({
           if (!open) setAudioMonitorInput("");
         }}
       >
-        <DialogContent className="overflow-hidden rounded-2xl border border-[#34343C] bg-[#1F1F24] p-0 text-white shadow-none sm:max-w-xl">
-          <DialogHeader className="bg-[#1F1F24] px-6 py-5 text-left">
+        <DialogContent className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#17171D] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:max-w-xl [&>button]:z-20 [&>button]:rounded-full [&>button]:bg-[#0756C9] [&>button]:text-white [&>button]:opacity-100">
+          <DialogHeader className="border-0 bg-transparent px-6 pb-4 pt-6 text-left [border-bottom:0!important] after:hidden before:hidden">
             <DialogTitle className="text-lg font-black tracking-tight text-white">O que você deseja criar?</DialogTitle>
             <DialogDescription className="text-sm leading-relaxed text-[#C4C4CF]">
               Escolha o tipo de botão que deseja adicionar à sua automação.
@@ -5075,13 +5075,13 @@ function SwitcherUI({
           </DialogHeader>
 
           {!audioMonitorInput ? (
-            <div className="grid gap-3 bg-[#1F1F24] px-5 pb-5 pt-2 sm:grid-cols-2">
+            <div className="grid gap-3 bg-transparent px-5 pb-6 pt-1 sm:grid-cols-2">
               <button
                 onClick={() => {
                   setCreationChoiceOpen(false);
                   setEditingCustomButtonId("new");
                 }}
-                className="group min-h-[154px] rounded-2xl border border-transparent bg-[#0042A3] p-5 text-left transition-colors duration-200 hover:border-[#0065F9] hover:bg-[#0065F9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0065F9] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F1F24]"
+                className="group min-h-[154px] rounded-2xl border border-white/10 bg-gradient-to-br from-[#0647A5] to-[#073783] p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3B82F6] hover:from-[#0756C9] hover:to-[#0647A5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0065F9] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17171D]"
               >
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0065F9] text-white transition-transform duration-200 group-hover:scale-105">
                   <Wand2 size={21} strokeWidth={2.2} />
@@ -5092,7 +5092,7 @@ function SwitcherUI({
 
               <button
                 onClick={() => setAudioMonitorInput("selecting")}
-                className="group min-h-[154px] rounded-2xl border border-transparent bg-[#0042A3] p-5 text-left transition-colors duration-200 hover:border-[#0065F9] hover:bg-[#0065F9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0065F9] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F1F24]"
+                className="group min-h-[154px] rounded-2xl border border-white/10 bg-gradient-to-br from-[#0647A5] to-[#073783] p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3B82F6] hover:from-[#0756C9] hover:to-[#0647A5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0065F9] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17171D]"
               >
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#31D7C5] text-[#102020] transition-transform duration-200 group-hover:scale-105">
                   <Activity size={21} strokeWidth={2.2} />
