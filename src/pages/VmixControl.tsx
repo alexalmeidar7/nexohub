@@ -15,6 +15,7 @@ type VmixControlProps = {
 };
 
 export default function VmixControl({ forcedConnected = false, cleanLayout = false }: VmixControlProps) {
+  const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(new URLSearchParams(window.location.search).get("buttonPreview") || "");
   const { user, loading, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -142,7 +143,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
 
   return (
     <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
-      <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
+      {!isButtonDevicePreview && <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
         <div className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8" style={{ backgroundColor: "#242424" }}>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("vmix-control-header-action", { detail: "back" }))} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0042A3] text-white transition-colors hover:bg-[#0065F9]" title="Voltar" aria-label="Voltar">
@@ -191,8 +192,8 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
             </div>
           )}
         </div>
-      </header>
-      <main className="flex-1 p-6" style={{ backgroundColor: "#000000" }}>
+      </header>}
+      <main className={`flex-1 ${isButtonDevicePreview ? "p-0" : "p-6"}`} style={{ backgroundColor: "#000000" }}>
         <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} /></Suspense>
       </main>
     </div>
