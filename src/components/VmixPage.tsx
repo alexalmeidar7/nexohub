@@ -3404,7 +3404,7 @@ function SwitcherUI({
           const left = leftRaw !== null && leftRaw.trim() !== "" ? Number(leftRaw) : NaN;
           const right = rightRaw !== null && rightRaw.trim() !== "" ? Number(rightRaw) : NaN;
           const available = Number.isFinite(left) && Number.isFinite(right);
-          next[inputNumber] = {
+          next[String(inputNumber)] = {
             left: available ? Math.max(0, Math.min(1, left)) : 0,
             right: available ? Math.max(0, Math.min(1, right)) : 0,
             available,
