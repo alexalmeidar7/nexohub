@@ -5086,12 +5086,6 @@ function SwitcherUI({
                                 ? `Evento AO VIVO ativo na Agenda: ${liveScheduleLabel}. Os comandos seguem a janela deste evento.`
                                 : `Desabilitado: não existe evento AO VIVO ativo deste programa na Agenda.`
                               : undefined} 
-                            draggable
-                            onDragStart={(e) => {
-                              setDragCustomButtonId(btn.id);
-                              e.dataTransfer.setData("text/vmix-custom-button", btn.id);
-                              e.dataTransfer.effectAllowed = "move";
-                            }}
                             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
                             onDrop={(e) => {
                               e.preventDefault();
@@ -5112,7 +5106,6 @@ function SwitcherUI({
                               setDragCustomButtonId(null);
                               setDragCustomCategory(null);
                             }}
-                            onDragEnd={() => setDragCustomButtonId(null)}
                             onClick={async () => {
                               if (isAgendaLiveButton) {
                                 toast({
@@ -5196,12 +5189,31 @@ function SwitcherUI({
                               >{btn.nome}</span>
                             </div>
 
-                            <GripVertical
-                              size={12}
-                              className="absolute bottom-1.5 right-1.5 opacity-35 group-hover/custom:opacity-80 transition-opacity cursor-grab"
-                              style={{ color: textColor }}
-                              aria-label="Arraste para reorganizar"
-                            />
+                            <div
+                              draggable
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Arrastar ${btn.nome} para outra categoria ou reorganizar`}
+                              title="Arraste daqui para mover ou reorganizar este botão"
+                              onClick={(e) => e.stopPropagation()}
+                              onDragStart={(e) => {
+                                e.stopPropagation();
+                                setDragCustomButtonId(btn.id);
+                                e.dataTransfer.setData("text/vmix-custom-button", btn.id);
+                                e.dataTransfer.effectAllowed = "move";
+                              }}
+                              onDragEnd={(e) => {
+                                e.stopPropagation();
+                                setDragCustomButtonId(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") e.preventDefault();
+                              }}
+                              className="absolute left-1.5 top-1.5 z-10 flex h-5 w-5 cursor-grab items-center justify-center rounded bg-black/25 opacity-70 transition-opacity hover:opacity-100 active:cursor-grabbing"
+                              style={{ color: textColor, touchAction: "none" }}
+                            >
+                              <GripVertical size={12} />
+                            </div>
 
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
