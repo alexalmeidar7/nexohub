@@ -5004,29 +5004,36 @@ function SwitcherUI({
                     </div>
                   </div>
                   <div className="p-5 space-y-4">
-                    <div className="grid w-full grid-cols-7 items-start gap-3 pb-2">
-                      {[...customButtons]
-                        .filter((btn: any) => customButtonCategoryFilter === "TODOS" || String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() === customButtonCategoryFilter)
-                        .sort((a: any, b: any) => {
-                          const getCategory = (button: any) => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
-                          const categoryNames = Array.from(new Set(customButtons.map((button: any) => getCategory(button))));
-                          const ordered = [...customButtonCategoryOrder, ...categoryNames.filter(category => !customButtonCategoryOrder.includes(category))];
-                          const categoryDiff = ordered.indexOf(getCategory(a)) - ordered.indexOf(getCategory(b));
-                          if (categoryDiff !== 0) return categoryDiff;
-                          const savedOrderKey = user ? `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}` : "";
-                          try {
-                            const savedButtonOrder = JSON.parse(localStorage.getItem(savedOrderKey) || "[]") as string[];
-                            const ai = savedButtonOrder.indexOf(a.id), bi = savedButtonOrder.indexOf(b.id);
-                            if (ai >= 0 || bi >= 0) return (ai < 0 ? Number.MAX_SAFE_INTEGER : ai) - (bi < 0 ? Number.MAX_SAFE_INTEGER : bi);
-                          } catch { /* mantém ordem atual */ }
-                          return 0;
-                        })
-                        .map((btn: any, buttonIndex, sortedButtons) => {
-                        const buttonCategory = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
-                        const previousCategory = buttonIndex > 0 ? String(sortedButtons[buttonIndex - 1].category || sortedButtons[buttonIndex - 1].commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS" : null;
-                        const showCategoryHeader = buttonCategory !== previousCategory;
-                        const categoryHeader = showCategoryHeader ? <div key={"category-" + buttonCategory} draggable onDragStart={(event) => { event.dataTransfer.setData("text/vmix-custom-category", buttonCategory); event.dataTransfer.effectAllowed = "move"; setDragCustomCategory(buttonCategory); }} onDragEnd={() => setDragCustomCategory(null)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); const draggedCategory = event.dataTransfer.getData("text/vmix-custom-category") || dragCustomCategory; const draggedButton = event.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId; if (draggedCategory) reorderCustomCategory(draggedCategory, buttonCategory); else if (draggedButton) assignCustomButtonCategory(draggedButton, buttonCategory); setDragCustomCategory(null); setDragCustomButtonId(null); }} className={`col-span-7 flex items-center gap-2 pt-2 pb-0.5 cursor-grab rounded ${dragCustomCategory === buttonCategory ? "opacity-50" : ""}`} title="Arraste para reorganizar categorias ou solte um botão aqui para movê-lo para esta categoria"><span className="text-[9px] font-black uppercase tracking-widest text-white/60">{buttonCategory}</span><div className="h-px flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span></div> : null;
-                        const audioMonitorInput = getAudioMonitorInput(btn);
+                    <div className="flex w-full flex-wrap items-start gap-3 pb-2">
+                      {(() => {
+                        const getCategory = (button: any) => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                        const categoryNames = Array.from(new Set(customButtons.map((button: any) => getCategory(button))));
+                        const orderedCategories = [...customButtonCategoryOrder, ...categoryNames.filter(category => !customButtonCategoryOrder.includes(category))];
+                        const savedOrderKey = user ? `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}` : "";
+                        let savedButtonOrder: string[] = [];
+                        try { savedButtonOrder = JSON.parse(localStorage.getItem(savedOrderKey) || "[]") as string[]; } catch { /* mantém ordem atual */ }
+                        return orderedCategories
+                          .filter(category => categoryNames.includes(category))
+                          .filter(category => customButtonCategoryFilter === "TODOS" || category === customButtonCategoryFilter)
+                          .map((categoryName) => {
+                            const categoryButtons = customButtons
+                              .filter((button: any) => getCategory(button) === categoryName)
+                              .sort((a: any, b: any) => {
+                                const ai = savedButtonOrder.indexOf(a.id), bi = savedButtonOrder.indexOf(b.id);
+                                if (ai >= 0 || bi >= 0) return (ai < 0 ? Number.MAX_SAFE_INTEGER : ai) - (bi < 0 ? Number.MAX_SAFE_INTEGER : bi);
+                                return 0;
+                              });
+                            return (
+                              <div key={"category-group-" + categoryName} className="flex shrink-0 flex-col gap-2 rounded-lg"
+                                style={{ width: "max-content", maxWidth: "100%" }}>
+                                <div draggable onDragStart={(event) => { event.dataTransfer.setData("text/vmix-custom-category", categoryName); event.dataTransfer.effectAllowed = "move"; setDragCustomCategory(categoryName); }} onDragEnd={() => setDragCustomCategory(null)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); const draggedCategory = event.dataTransfer.getData("text/vmix-custom-category") || dragCustomCategory; const draggedButton = event.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId; if (draggedCategory) reorderCustomCategory(draggedCategory, categoryName); else if (draggedButton) assignCustomButtonCategory(draggedButton, categoryName); setDragCustomCategory(null); setDragCustomButtonId(null); }}
+                                  className={`flex items-center gap-2 cursor-grab rounded pt-2 pb-0.5 ${dragCustomCategory === categoryName ? "opacity-50" : ""}`}
+                                  title="Arraste para reorganizar categorias ou solte um botão aqui para mover para esta categoria">
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">{categoryName}</span>
+                                  <div className="h-px min-w-[18px] flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span>
+                                </div>
+                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, 6)}, minmax(0, 171px))`, maxWidth: "100%" }}>
+                                  {categoryButtons.map((btn: any, buttonIndex, sortedButtons) => {                        const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
                           return (
                             <>
@@ -5068,10 +5075,7 @@ function SwitcherUI({
                         const btnColor = isLiveButtonEnabled ? savedColor : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
                         const isBrightButtonColor = ["#BFFF00", "#FF6900", "#C6F03C"].includes(btnColor.toUpperCase());
-                        const textColor = isLiveButtonEnabled ? (isBrightButtonColor ? "#000000" : "#FFFFFF") : "#85858d";
-                        return (
-                          <>
-                          {categoryHeader}
+                        const textColor = isLiveButtonEnabled ? (isBrightButtonColor ? "#000000" : "#FFFFFF") : "#85858d"; return (
                           <div
                             key={btn.id}
                             className={`group/custom relative w-full min-w-0 rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
@@ -5218,11 +5222,12 @@ function SwitcherUI({
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
                               <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
-                            </div>
-                          </div>
-                          </>
-                        );
-                      })}
+                            </div>\n                          </div>\n                        );                                  })}
+                                </div>
+                              </div>
+                            );
+                          });
+                      })()}
                       {/* + Criar */}
                       <div ref={creationChoiceRef} className="relative w-full min-w-0" style={{ aspectRatio: "3/2" }}>
                         {creationChoiceOpen && (
