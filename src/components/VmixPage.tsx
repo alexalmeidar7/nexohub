@@ -5001,12 +5001,25 @@ function SwitcherUI({
                     <div className="grid w-full grid-cols-7 items-start gap-3 pb-2">
                       {[...customButtons]
                         .filter((btn: any) => customButtonCategoryFilter === "TODOS" || String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() === customButtonCategoryFilter)
-                        .sort((a: any, b: any) => String(a.category || a.commands?.[0]?._buttonCategory || "OUTROS").localeCompare(String(b.category || b.commands?.[0]?._buttonCategory || "OUTROS")))
+                        .sort((a: any, b: any) => {
+                          const getCategory = (button: any) => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                          const categoryNames = Array.from(new Set(customButtons.map((button: any) => getCategory(button))));
+                          const ordered = [...customButtonCategoryOrder, ...categoryNames.filter(category => !customButtonCategoryOrder.includes(category))];
+                          const categoryDiff = ordered.indexOf(getCategory(a)) - ordered.indexOf(getCategory(b));
+                          if (categoryDiff !== 0) return categoryDiff;
+                          const savedOrderKey = user ? `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}` : "";
+                          try {
+                            const savedButtonOrder = JSON.parse(localStorage.getItem(savedOrderKey) || "[]") as string[];
+                            const ai = savedButtonOrder.indexOf(a.id), bi = savedButtonOrder.indexOf(b.id);
+                            if (ai >= 0 || bi >= 0) return (ai < 0 ? Number.MAX_SAFE_INTEGER : ai) - (bi < 0 ? Number.MAX_SAFE_INTEGER : bi);
+                          } catch { /* mantém ordem atual */ }
+                          return 0;
+                        })
                         .map((btn: any, buttonIndex, sortedButtons) => {
                         const buttonCategory = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
                         const previousCategory = buttonIndex > 0 ? String(sortedButtons[buttonIndex - 1].category || sortedButtons[buttonIndex - 1].commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS" : null;
                         const showCategoryHeader = buttonCategory !== previousCategory;
-                        const categoryHeader = showCategoryHeader ? <div key={"category-" + buttonCategory} className="col-span-7 flex items-center gap-2 pt-2 pb-0.5"><span className="text-[9px] font-black uppercase tracking-widest text-white/60">{buttonCategory}</span><div className="h-px flex-1 bg-white/10" /></div> : null;
+                        const categoryHeader = showCategoryHeader ? <div key={"category-" + buttonCategory} draggable onDragStart={(event) => { event.dataTransfer.setData("text/vmix-custom-category", buttonCategory); event.dataTransfer.effectAllowed = "move"; setDragCustomCategory(buttonCategory); }} onDragEnd={() => setDragCustomCategory(null)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); const draggedCategory = event.dataTransfer.getData("text/vmix-custom-category") || dragCustomCategory; const draggedButton = event.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId; if (draggedCategory) reorderCustomCategory(draggedCategory, buttonCategory); else if (draggedButton) assignCustomButtonCategory(draggedButton, buttonCategory); setDragCustomCategory(null); setDragCustomButtonId(null); }} className={`col-span-7 flex items-center gap-2 pt-2 pb-0.5 cursor-grab rounded ${dragCustomCategory === buttonCategory ? "opacity-50" : ""}`} title="Arraste para reorganizar categorias ou solte um botão aqui para movê-lo para esta categoria"><span className="text-[9px] font-black uppercase tracking-widest text-white/60">{buttonCategory}</span><div className="h-px flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span></div> : null;
                         const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
                           return (
@@ -5076,9 +5089,22 @@ function SwitcherUI({
                             onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
                             onDrop={(e) => {
                               e.preventDefault();
-                              const draggedId = e.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId;
-                              if (draggedId) reorderCustomButton(draggedId, btn.id);
+                              const draggedCategory = e.dataTransfer.getData("text/vmix-custom-category") || dragCustomCategory;
+                              if (draggedCategory) {
+                                const targetCategory = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                                reorderCustomCategory(draggedCategory, targetCategory);
+                              } else {
+                                const draggedId = e.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId;
+                                if (draggedId) {
+                                  const draggedButton = customButtons.find((button: any) => button.id === draggedId);
+                                  const draggedCategoryName = String(draggedButton?.category || draggedButton?.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                                  const targetCategoryName = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                                  if (draggedCategoryName !== targetCategoryName) assignCustomButtonCategory(draggedId, targetCategoryName);
+                                  else reorderCustomButton(draggedId, btn.id);
+                                }
+                              }
                               setDragCustomButtonId(null);
+                              setDragCustomCategory(null);
                             }}
                             onDragEnd={() => setDragCustomButtonId(null)}
                             onClick={async () => {
