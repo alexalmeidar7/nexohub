@@ -4387,7 +4387,6 @@ function SwitcherUI({
                               </div>
                             </div>
                           </div>
-                          </>
                         );
                       })}
                     </div>
