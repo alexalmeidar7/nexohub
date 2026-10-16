@@ -25,6 +25,17 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   const [headerTime, setHeaderTime] = useState(() => new Date());
   const [vmixOnline, setVmixOnline] = useState(false);
   const [headerStudioName, setHeaderStudioName] = useState("");
+  const [showBridgePairing, setShowBridgePairing] = useState(false);
+  const [bridgePairingCode, setBridgePairingCode] = useState("");
+  const [bridgePairingError, setBridgePairingError] = useState("");
+  const [bridgePairingLoading, setBridgePairingLoading] = useState(false);
+  const createBridgePairing = async () => {
+    setBridgePairingLoading(true); setBridgePairingError(""); setBridgePairingCode(""); setShowBridgePairing(true);
+    const { data, error } = await supabase.functions.invoke("vmix-bridge-pairing");
+    setBridgePairingLoading(false);
+    if (error || !data?.pairingCode) { setBridgePairingError(error?.message || "Não foi possível gerar o código. Verifique se as funções do Bridge foram publicadas."); return; }
+    setBridgePairingCode(data.pairingCode);
+  };
 
 
   useEffect(() => {
@@ -159,6 +170,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
               <Layout size={14} /> <span>Switcher</span>
             </button>
           </div>
+          <button type="button" onClick={createBridgePairing} className="ml-3 inline-flex items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
           <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none absolute left-1/2 top-1/2 block h-auto max-h-[19px] w-auto max-w-[38%] -translate-x-1/2 -translate-y-1/2 translate-y-[2px] object-contain" />
           {user && (
             <div className="ml-auto flex items-center gap-3 pl-4">
@@ -196,6 +208,25 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
           )}
         </div>
       </header>
+      {showBridgePairing && !isButtonDevicePreview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true" aria-labelledby="bridge-pairing-title">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#19191f] p-6 text-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div><h2 id="bridge-pairing-title" className="text-lg font-bold">Ponte remota NexoHub</h2><p className="mt-2 text-sm text-white/65">Gere um código temporário para vincular o computador onde o vMix está instalado.</p></div>
+              <button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-full bg-white/10 px-3 py-1" aria-label="Fechar">✕</button>
+            </div>
+            {bridgePairingLoading ? <p className="mt-6 text-sm text-white/70">Gerando código seguro...</p> : null}
+            {bridgePairingError ? <p className="mt-5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{bridgePairingError}</p> : null}
+            {bridgePairingCode ? <div className="mt-5 rounded-xl bg-black/40 p-4">
+              <p className="text-xs uppercase tracking-widest text-white/50">Código válido por 10 minutos</p>
+              <p className="my-3 break-all font-mono text-lg font-bold tracking-wider">{bridgePairingCode}</p>
+              <button type="button" onClick={() => navigator.clipboard.writeText(bridgePairingCode)} className="rounded-lg bg-[#0055ff] px-4 py-2 text-sm font-semibold">Copiar código</button>
+            </div> : null}
+            <p className="mt-5 text-xs leading-relaxed text-white/50">Use o código no NexoHub Bridge do computador do estúdio. Não compartilhe o token gerado após o pareamento.</p>
+            <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={createBridgePairing} disabled={bridgePairingLoading} className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold disabled:opacity-50">Gerar novo código</button><button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-lg bg-[#0055ff] px-4 py-2 text-sm font-semibold">Fechar</button></div>
+          </div>
+        </div>
+      )}
       <main className={`flex-1 ${isButtonDevicePreview ? "p-0" : "p-6"}`} style={{ backgroundColor: "#000000" }}>
         <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} /></Suspense>
       </main>
