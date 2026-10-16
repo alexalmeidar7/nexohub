@@ -5128,6 +5128,7 @@ function SwitcherUI({
                               <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
                             </div>
                           </div>
+                          </>
                         );
                       })}
                       {/* + Criar */}
