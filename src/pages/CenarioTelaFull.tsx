@@ -155,6 +155,10 @@ type PublicCenarioPayload = {
 
 const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
+const VALID_SCENE_TABS = new Set(["home", "weather", "traffic", "currency", "chat", "enquete"]);
+const normalizeSceneTab = (tab: unknown, fallback = "home") =>
+  typeof tab === "string" && VALID_SCENE_TABS.has(tab) ? tab : fallback;
+
 export default function CenarioTelaFull() {
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
@@ -172,7 +176,7 @@ export default function CenarioTelaFull() {
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "home";
-    return new URLSearchParams(window.location.search).get("tab") || "home";
+    return normalizeSceneTab(new URLSearchParams(window.location.search).get("tab"));
   });
 
   const [currentChatMessageIdx, setCurrentChatMessageIdx] = useState(0);
@@ -509,7 +513,7 @@ export default function CenarioTelaFull() {
       }).on("broadcast", { event: "zoom-change" }, ({ payload }: any) => {
         if (payload && typeof payload.zoom === "number") setSatelliteZoom(payload.zoom);
       }).on("broadcast", { event: "tab-change" }, ({ payload }: any) => {
-        if (payload?.tab) setActiveTab(payload.tab);
+        if (payload?.tab) setActiveTab(normalizeSceneTab(payload.tab, activeTab));
         if (payload?.subTab) setWeatherSubTab(payload.subTab);
         if (payload?.currencySubTab) setCurrencySubTab(payload.currencySubTab);
       }).on("broadcast", { event: "rotate" }, ({ payload }: any) => {
@@ -670,7 +674,7 @@ export default function CenarioTelaFull() {
       if (parsed && typeof parsed === "object") {
         const { _activeTab, _weatherSubTab, _currencySubTab, _screenRotation, ...rest } = parsed;
         setConfig(prev => ({ ...prev, ...rest }));
-        if (_activeTab) setActiveTab(_activeTab);
+        if (_activeTab) setActiveTab(normalizeSceneTab(_activeTab));
         if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
         if (_currencySubTab) setCurrencySubTab(_currencySubTab);
         if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
@@ -695,7 +699,7 @@ export default function CenarioTelaFull() {
       // Only apply tab/rotation from initial load, never from realtime updates
       // Tab changes arrive via explicit "tab-change" broadcast events instead
       if (!fromRealtime) {
-        if (_activeTab) setActiveTab(_activeTab);
+        if (_activeTab) setActiveTab(normalizeSceneTab(_activeTab));
         if (_weatherSubTab) setWeatherSubTab(_weatherSubTab);
         if (_currencySubTab) setCurrencySubTab(_currencySubTab);
         if (typeof _screenRotation === "number") setScreenRotation(_screenRotation);
@@ -1252,7 +1256,7 @@ export default function CenarioTelaFull() {
         bc.postMessage({ type: "pong" });
       }
       if (ev.data?.type === "tab-change") {
-        const newTab = ev.data.tab;
+        const newTab = normalizeSceneTab(ev.data.tab, activeTab);
         const newSubTab = ev.data.subTab;
         const newCurrencySubTab = ev.data.currencySubTab;
         
@@ -1269,7 +1273,7 @@ export default function CenarioTelaFull() {
         setConfig(prev => ({ ...prev, ...(ev.data.config as Partial<CenarioConfig>) }));
       }
       if (ev.data?.type === "full-state") {
-        const newTab = ev.data.tab;
+        const newTab = normalizeSceneTab(ev.data.tab, activeTab);
         const newSubTab = ev.data.subTab;
         const newCurrencySubTab = ev.data.currencySubTab;
 
