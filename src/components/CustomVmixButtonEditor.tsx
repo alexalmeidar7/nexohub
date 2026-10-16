@@ -686,19 +686,46 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 </label>
                 <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: "#12121a", border: "1px solid #343440" }}>
                   <button type="button" onClick={() => { setColor("#0756C9"); setCustomColorMode(false); }} aria-label="Azul padrão do site" aria-pressed={color.toUpperCase() === "#0756C9"} title="Azul padrão do site"
-                    className="h-7 w-7 rounded-md border-2 transition-transform hover:scale-105"
-                    style={{ backgroundColor: "#0756C9", borderColor: color.toUpperCase() === "#0756C9" ? "#fff" : "#ffffff30" }} />
+                    className="h-9 w-9 shrink-0 rounded-lg border-2 transition-transform hover:scale-105"
+                    style={{ backgroundColor: "#0756C9", borderColor: color.toUpperCase() === "#0756C9" ? "#FFFFFF" : "#ffffff30" }} />
                   {PRESET_BUTTON_COLORS.map(option => (
                     <button key={option.value} type="button" onClick={() => { setColor(option.value); setCustomColorMode(false); }} aria-label={option.label} aria-pressed={!customColorMode && color.toUpperCase() === option.value}
-                      title={option.label} className="h-7 w-7 rounded-md border-2 transition-transform hover:scale-105"
-                      style={{ backgroundColor: option.value, borderColor: !customColorMode && color.toUpperCase() === option.value ? "#fff" : "#ffffff30" }} />
+                      title={option.label} className="h-9 w-9 shrink-0 rounded-lg border-2 transition-transform hover:scale-105"
+                      style={{ backgroundColor: option.value, borderColor: !customColorMode && color.toUpperCase() === option.value ? "#FFFFFF" : "#ffffff30" }} />
                   ))}
-                  <label className="relative flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded-md border-2 transition-transform hover:scale-105" title="Escolher cor personalizada" style={{ backgroundColor: customColorMode ? color : "#252530", borderColor: customColorMode ? "#fff" : "#ffffff30" }}>
-                    <Palette size={13} color="#fff" />
+                  <label className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 transition-transform hover:scale-105" title="Escolher cor personalizada" style={{ backgroundColor: customColorMode ? color : "#252530", borderColor: customColorMode ? "#FFFFFF" : "#ffffff30" }}>
+                    <Palette size={15} color="#fff" />
                     <input type="color" value={color} onChange={event => { setColor(event.target.value.toUpperCase()); setCustomColorMode(true); }} aria-label="Definir cor personalizada" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
                   </label>
                 </div>
-                <span className="text-[8px]" style={{ color: "#777" }}>Azul padrão, 4 cores e opção personalizada.</span>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="custom-button-hex-color" className="shrink-0 text-[9px] font-bold uppercase tracking-wider" style={{ color: "#888" }}>Hexadecimal</label>
+                  <input
+                    key={color}
+                    id="custom-button-hex-color"
+                    type="text"
+                    defaultValue={color.toUpperCase()}
+                    maxLength={7}
+                    spellCheck={false}
+                    autoCapitalize="characters"
+                    onChange={event => {
+                      const value = event.target.value.trim().toUpperCase();
+                      if (/^#[0-9A-F]{6}$/.test(value)) {
+                        setColor(value);
+                        setCustomColorMode(true);
+                      }
+                    }}
+                    onBlur={event => {
+                      const value = event.target.value.trim().toUpperCase();
+                      if (!/^#[0-9A-F]{6}$/.test(value)) event.currentTarget.value = color.toUpperCase();
+                    }}
+                    placeholder="#BFFF00"
+                    aria-label="Colar código hexadecimal da cor"
+                    className="h-9 min-w-0 flex-1 rounded-lg px-3 text-xs font-bold uppercase outline-none focus:border-[#0756C9]"
+                    style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46" }}
+                  />
+                </div>
+                <span className="text-[8px]" style={{ color: "#777" }}>Azul padrão, verde-limão, laranja, magenta, roxo ou cole um hexadecimal (ex.: #BFFF00).</span>
               </div>
               </div>
 
