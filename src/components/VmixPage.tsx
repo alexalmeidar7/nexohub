@@ -3960,7 +3960,7 @@ function SwitcherUI({
 
   return (
     <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
+      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517", display: isButtonDevicePreview ? "none" : undefined }}>
         <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="group/previous relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">
             {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60 transition-opacity duration-200 group-hover/previous:opacity-100" />}
@@ -4969,7 +4969,7 @@ function SwitcherUI({
                         ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" style={{ display: isButtonDevicePreview ? "none" : undefined }}>
                       <div className="flex items-center gap-1 mr-1" aria-label="Visualizar botões por dispositivo">
                         <button type="button" onClick={() => openButtonDevicePreview("mobile")} title="Abrir visualização de celular em nova aba" aria-label="Visualização celular" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "mobile" ? "#0756C9" : "#ffffff08" }}><Smartphone size={14} /></button>
                         <button type="button" onClick={() => openButtonDevicePreview("tablet")} title="Abrir visualização de tablet em nova aba" aria-label="Visualização tablet" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "tablet" ? "#0756C9" : "#ffffff08" }}><Tablet size={14} /></button>
