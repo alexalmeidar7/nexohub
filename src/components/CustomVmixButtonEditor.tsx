@@ -274,6 +274,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     { value: "#4B00FF", label: "Roxo" },
   ];
   const [customColorMode, setCustomColorMode] = useState(false);
+  const [customColorPickerOpen, setCustomColorPickerOpen] = useState(false);
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [dataEspecifica, setDataEspecifica] = useState("");
   const [horario, setHorario] = useState("");
@@ -719,48 +720,53 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
                   <Palette size={10} /> Cor do Botão
                 </label>
-                <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: "#12121a", border: "1px solid #343440" }}>
-                  <div role="button" tabIndex={0} onClick={() => { setColor("#0756C9"); setCustomColorMode(false); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setColor("#0756C9"); setCustomColorMode(false); } }} aria-label="Azul padrão do site" aria-pressed={color.toUpperCase() === "#0756C9"} title="Azul padrão do site"
-                    className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border-2 transition-transform hover:scale-105"
+                <div className="flex min-h-10 flex-nowrap items-center gap-1.5 rounded-xl px-2 py-2" style={{ backgroundColor: "#12121a", border: "1px solid #343440" }}>
+                  <div role="button" tabIndex={0} onClick={() => { setColor("#0756C9"); setCustomColorMode(false); setCustomColorPickerOpen(false); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setColor("#0756C9"); setCustomColorMode(false); setCustomColorPickerOpen(false); } }} aria-label="Azul padrão do site" aria-pressed={color.toUpperCase() === "#0756C9"} title="Azul padrão do site"
+                    className="h-7 w-7 shrink-0 cursor-pointer rounded-md border-2 transition-transform hover:scale-105"
                     style={{ backgroundColor: "#0756C9", borderColor: color.toUpperCase() === "#0756C9" ? "#FFFFFF" : "#ffffff30" }} />
                   {PRESET_BUTTON_COLORS.map(option => (
-                    <div key={option.value} role="button" tabIndex={0} onClick={() => { setColor(option.value); setCustomColorMode(false); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setColor(option.value); setCustomColorMode(false); } }} aria-label={option.label} aria-pressed={!customColorMode && color.toUpperCase() === option.value}
-                      title={option.label} className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border-2 transition-transform hover:scale-105"
+                    <div key={option.value} role="button" tabIndex={0} onClick={() => { setColor(option.value); setCustomColorMode(false); setCustomColorPickerOpen(false); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setColor(option.value); setCustomColorMode(false); setCustomColorPickerOpen(false); } }} aria-label={option.label} aria-pressed={!customColorMode && color.toUpperCase() === option.value}
+                      title={option.label} className="h-7 w-7 shrink-0 cursor-pointer rounded-md border-2 transition-transform hover:scale-105"
                       style={{ backgroundColor: option.value, borderColor: !customColorMode && color.toUpperCase() === option.value ? "#FFFFFF" : "#ffffff30" }} />
                   ))}
-                  <label className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 transition-transform hover:scale-105" title="Escolher cor personalizada" style={{ backgroundColor: customColorMode ? color : "#252530", borderColor: customColorMode ? "#FFFFFF" : "#ffffff30" }}>
-                    <Palette size={15} color="#fff" />
-                    <input type="color" value={color} onChange={event => { setColor(event.target.value.toUpperCase()); setCustomColorMode(true); }} aria-label="Definir cor personalizada" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
-                  </label>
+                  <div className="relative shrink-0">
+                    <button type="button" onClick={() => { setCustomColorMode(true); setCustomColorPickerOpen(open => !open); }} aria-label="Escolher cor personalizada" aria-expanded={customColorPickerOpen} title="Cor personalizada"
+                      className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border-2 transition-transform hover:scale-105"
+                      style={{ backgroundColor: customColorMode ? color : "#252530", borderColor: customColorMode ? "#FFFFFF" : "#ffffff30" }}>
+                      <Palette size={13} color="#fff" />
+                    </button>
+                    {customColorPickerOpen && (
+                      <div className="absolute right-0 top-full z-[70] mt-2 w-52 rounded-xl border border-white/15 p-3 shadow-2xl" style={{ backgroundColor: "#19191f" }}>
+                        <label className="mb-2 block text-[9px] font-bold uppercase tracking-wider text-white/65">Cor personalizada</label>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={color} onChange={event => { setColor(event.target.value.toUpperCase()); setCustomColorMode(true); }} aria-label="Selecionar cor visualmente" className="h-9 w-10 cursor-pointer rounded border-0 bg-transparent p-0" />
+                          <input
+                            key={color}
+                            type="text"
+                            defaultValue={color.toUpperCase()}
+                            maxLength={7}
+                            spellCheck={false}
+                            autoCapitalize="characters"
+                            onChange={event => {
+                              const value = event.target.value.trim().toUpperCase();
+                              if (/^#[0-9A-F]{6}$/.test(value)) { setColor(value); setCustomColorMode(true); }
+                            }}
+                            onBlur={event => {
+                              const value = event.target.value.trim().toUpperCase();
+                              if (!/^#[0-9A-F]{6}$/.test(value)) event.currentTarget.value = color.toUpperCase();
+                            }}
+                            onKeyDown={event => { if (event.key === "Enter") setCustomColorPickerOpen(false); }}
+                            placeholder="#BFFF00"
+                            aria-label="Colar código hexadecimal da cor"
+                            className="h-9 min-w-0 flex-1 rounded-lg px-2 text-xs font-bold uppercase outline-none focus:border-[#0756C9]"
+                            style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46" }}
+                          />
+                        </div>
+                        <button type="button" onClick={() => setCustomColorPickerOpen(false)} className="mt-2 w-full rounded-md bg-[#0756C9] py-1.5 text-[10px] font-bold text-white">Concluir</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label htmlFor="custom-button-hex-color" className="shrink-0 text-[9px] font-bold uppercase tracking-wider" style={{ color: "#888" }}>Hexadecimal</label>
-                  <input
-                    key={color}
-                    id="custom-button-hex-color"
-                    type="text"
-                    defaultValue={color.toUpperCase()}
-                    maxLength={7}
-                    spellCheck={false}
-                    autoCapitalize="characters"
-                    onChange={event => {
-                      const value = event.target.value.trim().toUpperCase();
-                      if (/^#[0-9A-F]{6}$/.test(value)) {
-                        setColor(value);
-                        setCustomColorMode(true);
-                      }
-                    }}
-                    onBlur={event => {
-                      const value = event.target.value.trim().toUpperCase();
-                      if (!/^#[0-9A-F]{6}$/.test(value)) event.currentTarget.value = color.toUpperCase();
-                    }}
-                    placeholder="#BFFF00"
-                    aria-label="Colar código hexadecimal da cor"
-                    className="h-9 min-w-0 flex-1 rounded-lg px-3 text-xs font-bold uppercase outline-none focus:border-[#0756C9]"
-                    style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46" }}
-                  />
-                </div>
-                <span className="text-[8px]" style={{ color: "#777" }}>Azul padrão, verde-limão, laranja, magenta, roxo ou cole um hexadecimal (ex.: #BFFF00).</span>
               </div>
               </div>
 
