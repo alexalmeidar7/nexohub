@@ -261,7 +261,14 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapp
 export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping, estudio }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
-  const [color, setColor] = useState("#C6F03C");
+  const [color, setColor] = useState("#0756C9");
+  const PRESET_BUTTON_COLORS = [
+    { value: "#BFFF00", label: "Verde-limão" },
+    { value: "#FF6900", label: "Laranja" },
+    { value: "#F000F5", label: "Magenta" },
+    { value: "#4B00FF", label: "Roxo" },
+  ];
+  const [customColorMode, setCustomColorMode] = useState(false);
   const [diasSemana, setDiasSemana] = useState<string[]>([]);
   const [dataEspecifica, setDataEspecifica] = useState("");
   const [horario, setHorario] = useState("");
@@ -311,7 +318,9 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         .then(({ data }: any) => {
           if (data) {
             setNome(data.nome || "");
-            setColor(data.color || "#C6F03C");
+            const savedButtonColor = data.color && data.color.toUpperCase() !== "#C6F03C" ? data.color : "#0756C9";
+            setColor(savedButtonColor);
+            setCustomColorMode(!["#0756C9", ...PRESET_BUTTON_COLORS.map(option => option.value)].includes(savedButtonColor.toUpperCase()));
             setDiasSemana(data.dias_semana || []);
             setDataEspecifica(data.data_especifica || "");
             setHorario(data.horario || "");
@@ -324,7 +333,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         });
     } else {
       setNome("");
-      setColor("#C6F03C");
+      setColor("#0756C9");
+      setCustomColorMode(false);
       setDiasSemana([]);
       setDataEspecifica("");
       setHorario("");
@@ -610,8 +620,9 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 </div>
               )}
 
-              {/* Seletor compacto de ícone: a biblioteca abre somente quando solicitada. */}
-              <div className="flex flex-col gap-2">
+              {/* Seletor de ícone compacto com opções de cor ao lado. */}
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1.65fr)_minmax(220px,1fr)]">
+              <div className="flex min-w-0 flex-col gap-2">
                 <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
                   <Sparkles size={10} /> Ícone do Botão
                 </label>
@@ -669,7 +680,27 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 <span className="text-[8px]" style={{ color: "#777" }}>O ícone escolhido será exibido no botão do switcher.</span>
               </div>
 
-
+              <div className="flex min-w-0 flex-col gap-2">
+                <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#888" }}>
+                  <Palette size={10} /> Cor do Botão
+                </label>
+                <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: "#12121a", border: "1px solid #343440" }}>
+                  <button type="button" onClick={() => { setColor("#0756C9"); setCustomColorMode(false); }} aria-label="Azul padrão do site" aria-pressed={color.toUpperCase() === "#0756C9"} title="Azul padrão do site"
+                    className="h-7 w-7 rounded-md border-2 transition-transform hover:scale-105"
+                    style={{ backgroundColor: "#0756C9", borderColor: color.toUpperCase() === "#0756C9" ? "#fff" : "#ffffff30" }} />
+                  {PRESET_BUTTON_COLORS.map(option => (
+                    <button key={option.value} type="button" onClick={() => { setColor(option.value); setCustomColorMode(false); }} aria-label={option.label} aria-pressed={!customColorMode && color.toUpperCase() === option.value}
+                      title={option.label} className="h-7 w-7 rounded-md border-2 transition-transform hover:scale-105"
+                      style={{ backgroundColor: option.value, borderColor: !customColorMode && color.toUpperCase() === option.value ? "#fff" : "#ffffff30" }} />
+                  ))}
+                  <label className="relative flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded-md border-2 transition-transform hover:scale-105" title="Escolher cor personalizada" style={{ backgroundColor: customColorMode ? color : "#252530", borderColor: customColorMode ? "#fff" : "#ffffff30" }}>
+                    <Palette size={13} color="#fff" />
+                    <input type="color" value={color} onChange={event => { setColor(event.target.value.toUpperCase()); setCustomColorMode(true); }} aria-label="Definir cor personalizada" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+                  </label>
+                </div>
+                <span className="text-[8px]" style={{ color: "#777" }}>Azul padrão, 4 cores e opção personalizada.</span>
+              </div>
+              </div>
 
               {/* Agenda: data, horário e dias na mesma linha */}
               <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(170px,1.15fr)_minmax(112px,0.72fr)_minmax(220px,1.4fr)]">
