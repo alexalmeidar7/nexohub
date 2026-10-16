@@ -262,6 +262,11 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const { toast } = useToast();
   const [nome, setNome] = useState("");
   const [color, setColor] = useState("#0756C9");
+  const DEFAULT_BUTTON_CATEGORIES = ["AUDIO", "CAMERAS", "EFEITOS"];
+  const [buttonCategory, setButtonCategory] = useState("AUDIO");
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const PRESET_BUTTON_COLORS = [
     { value: "#BFFF00", label: "Verde-limão" },
     { value: "#FF6900", label: "Laranja" },
@@ -308,6 +313,17 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   }, [open, isPodcastStudio, estudio, userId]);
 
   useEffect(() => {
+    try {
+      const savedCategories = JSON.parse(localStorage.getItem("nexohub-vmix-button-categories") || "[]");
+      if (Array.isArray(savedCategories)) {
+        setCustomCategories(savedCategories.filter((value): value is string => typeof value === "string" && value.trim().length > 0));
+      }
+    } catch {
+      setCustomCategories([]);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
     if (buttonId) {
       setLoading(true);
@@ -318,6 +334,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         .then(({ data }: any) => {
           if (data) {
             setNome(data.nome || "");
+            setButtonCategory(data.category || "AUDIO");
             const savedButtonColor = data.color && data.color.toUpperCase() !== "#C6F03C" ? data.color : "#0756C9";
             setColor(savedButtonColor);
             setCustomColorMode(!["#0756C9", ...PRESET_BUTTON_COLORS.map(option => option.value)].includes(savedButtonColor.toUpperCase()));
@@ -333,6 +350,9 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         });
     } else {
       setNome("");
+      setButtonCategory("AUDIO");
+      setNewCategoryName("");
+      setShowNewCategoryInput(false);
       setColor("#0756C9");
       setCustomColorMode(false);
       setDiasSemana([]);
@@ -346,6 +366,20 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     }
   }, [open, buttonId]);
 
+
+  const addCustomCategory = () => {
+    const category = newCategoryName.trim().toUpperCase();
+    if (!category) return;
+    const allCategories = [...DEFAULT_BUTTON_CATEGORIES, ...customCategories];
+    if (!allCategories.some(existing => existing.toUpperCase() === category)) {
+      const nextCategories = [...customCategories, category];
+      setCustomCategories(nextCategories);
+      try { localStorage.setItem("nexohub-vmix-button-categories", JSON.stringify(nextCategories)); } catch { /* armazenamento local indisponível */ }
+    }
+    setButtonCategory(category);
+    setNewCategoryName("");
+    setShowNewCategoryInput(false);
+  };
 
   const toggleDia = (dia: string) => {
     setDiasSemana(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
@@ -403,6 +437,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
 
     const payload = {
       nome: nome.trim(),
+      category: buttonCategory,
       color,
       dias_semana: diasSemana,
       data_especifica: dataEspecifica || null,
@@ -729,8 +764,41 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
               </div>
               </div>
 
-              {/* Agenda: data, horário e dias na mesma linha */}
-              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(170px,1.15fr)_minmax(112px,0.72fr)_minmax(220px,1.4fr)]">
+              {/* Agenda, horário, dias e categoria do botão */}
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(150px,1fr)_minmax(100px,0.7fr)_minmax(190px,1.25fr)_minmax(150px,0.9fr)]">
+                {/* Categoria */}
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+                    <Layers size={10} /> Categoria
+                  </label>
+                  <select
+                    value={buttonCategory}
+                    onChange={event => setButtonCategory(event.target.value)}
+                    className="h-[34px] w-full min-w-0 rounded-lg px-2 text-[11px] font-semibold outline-none [color-scheme:dark]"
+                    style={{ backgroundColor: "#181820", color: "#f4f4f5", border: "1px solid #333" }}
+                  >
+                    {[...DEFAULT_BUTTON_CATEGORIES, ...customCategories, ...(buttonCategory && ![...DEFAULT_BUTTON_CATEGORIES, ...customCategories].includes(buttonCategory) ? [buttonCategory] : [])].map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                  {showNewCategoryInput ? (
+                    <div className="flex gap-1">
+                      <input
+                        autoFocus
+                        value={newCategoryName}
+                        onChange={event => setNewCategoryName(event.target.value)}
+                        onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); addCustomCategory(); } }}
+                        placeholder="Nova categoria"
+                        className="h-7 min-w-0 flex-1 rounded-md px-2 text-[10px] outline-none"
+                        style={{ backgroundColor: "#181820", color: "#fff", border: "1px solid #333" }}
+                      />
+                      <button type="button" onClick={addCustomCategory} className="rounded-md bg-[#0756C9] px-2 text-[9px] font-bold text-white">Adicionar</button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setShowNewCategoryInput(true)} className="self-start text-[8px] font-bold text-[#60A5FA] hover:text-white">+ Nova categoria</button>
+                  )}
+                </div>
+
                 {/* Data específica */}
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
