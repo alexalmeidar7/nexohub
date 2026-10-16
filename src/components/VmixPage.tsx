@@ -4387,6 +4387,7 @@ function SwitcherUI({
                               </div>
                             </div>
                           </div>
+                          </>
                         );
                       })}
                     </div>
@@ -4935,10 +4936,16 @@ function SwitcherUI({
                   </div>
                   <div className="p-5 space-y-4">
                     <div className="grid w-full grid-cols-7 items-start gap-3 pb-2">
-                      {customButtons.map((btn: any) => {
+                      {[...customButtons].sort((a: any, b: any) => String(a.category || a.commands?.[0]?._buttonCategory || "OUTROS").localeCompare(String(b.category || b.commands?.[0]?._buttonCategory || "OUTROS"))).map((btn: any, buttonIndex, sortedButtons) => {
+                        const buttonCategory = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                        const previousCategory = buttonIndex > 0 ? String(sortedButtons[buttonIndex - 1].category || sortedButtons[buttonIndex - 1].commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS" : null;
+                        const showCategoryHeader = buttonCategory !== previousCategory;
+                        const categoryHeader = showCategoryHeader ? <div key={"category-" + buttonCategory} className="col-span-7 flex items-center gap-2 pt-2 pb-0.5"><span className="text-[9px] font-black uppercase tracking-widest text-white/60">{buttonCategory}</span><div className="h-px flex-1 bg-white/10" /></div> : null;
                         const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
                           return (
+                            <>
+                            {categoryHeader}
                             <AudioMonitorButton
                               key={btn.id}
                               button={btn}
@@ -4949,6 +4956,7 @@ function SwitcherUI({
                               onEdit={() => openAudioMonitorEditor(btn)}
                               onDelete={() => deleteAudioMonitor(btn)}
                             />
+                            </>
                           );
                         }
 
@@ -4978,6 +4986,8 @@ function SwitcherUI({
                         const isBrightButtonColor = ["#BFFF00", "#FF6900", "#C6F03C"].includes(btnColor.toUpperCase());
                         const textColor = isLiveButtonEnabled ? (isBrightButtonColor ? "#000000" : "#FFFFFF") : "#85858d";
                         return (
+                          <>
+                          {categoryHeader}
                           <div
                             key={btn.id}
                             className={`group/custom relative w-full min-w-0 rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
