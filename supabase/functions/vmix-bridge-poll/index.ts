@@ -12,10 +12,10 @@ Deno.serve(async (req) => {
     const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
     if (!token) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: device, error } = await admin.from("vmix_bridge_devices").select("id").eq("token_hash", await hash(token)).is("revoked_at", null).maybeSingle();
+    const { data: device, error } = await admin.from("vmix_bridge_devices").select("id,last_seen_at").eq("token_hash", await hash(token)).is("revoked_at", null).maybeSingle();
     if (error) throw error;
     if (!device) return new Response(JSON.stringify({ error: "Invalid Bridge token" }), { status: 401, headers });
-    await admin.from("vmix_bridge_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id);
+    if (!device.last_seen_at || Date.now() - new Date(device.last_seen_at).getTime() > 15000) {\n      await admin.from("vmix_bridge_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id);\n    }
     const { data: jobs, error: jobError } = await admin.rpc("claim_next_vmix_bridge_job", { p_device_id: device.id });
     if (jobError) throw jobError;
     const job = jobs?.[0];
