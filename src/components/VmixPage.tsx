@@ -3217,6 +3217,9 @@ function SwitcherUI({
   navigate,
   currentTime
 }: any) {
+  // O painel de logs é ocultado nas abas de visualização isolada dos botões.
+  const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
+  const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
 
   const [onAirBlinkOn, setOnAirBlinkOn] = useState(true);
   useEffect(() => {
