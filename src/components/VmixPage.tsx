@@ -5033,11 +5033,10 @@ function SwitcherUI({
                                   <div className="h-px min-w-[18px] flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span>
                                 </div>
                                 <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, 6)}, minmax(0, 171px))`, maxWidth: "100%" }}>
-                                  {categoryButtons.map((btn: any, buttonIndex, sortedButtons) => {                        const audioMonitorInput = getAudioMonitorInput(btn);
+                                  {categoryButtons.map((btn: any, buttonIndex, sortedButtons) => {
+                        const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
                           return (
-                            <>
-                            {categoryHeader}
                             <AudioMonitorButton
                               key={btn.id}
                               button={btn}
@@ -5048,7 +5047,6 @@ function SwitcherUI({
                               onEdit={() => openAudioMonitorEditor(btn)}
                               onDelete={() => deleteAudioMonitor(btn)}
                             />
-                            </>
                           );
                         }
 
@@ -5075,7 +5073,8 @@ function SwitcherUI({
                         const btnColor = isLiveButtonEnabled ? savedColor : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
                         const isBrightButtonColor = ["#BFFF00", "#FF6900", "#C6F03C"].includes(btnColor.toUpperCase());
-                        const textColor = isLiveButtonEnabled ? (isBrightButtonColor ? "#000000" : "#FFFFFF") : "#85858d"; return (
+                        const textColor = isLiveButtonEnabled ? (isBrightButtonColor ? "#000000" : "#FFFFFF") : "#85858d";
+                        return (
                           <div
                             key={btn.id}
                             className={`group/custom relative w-full min-w-0 rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
@@ -5222,7 +5221,10 @@ function SwitcherUI({
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
                               <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
-                            </div>\n                          </div>\n                        );                                  })}
+                            </div>
+                          </div>
+                        );
+                                  })}
                                 </div>
                               </div>
                             );
