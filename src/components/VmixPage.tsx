@@ -4922,7 +4922,7 @@ function SwitcherUI({
                     </div>
                   </div>
                   <div className="p-5 space-y-4">
-                    <div className="flex items-start gap-3 overflow-x-auto pb-2">
+                    <div className="grid w-full grid-cols-7 items-start gap-3 pb-2">
                       {customButtons.map((btn: any) => {
                         const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
@@ -4965,7 +4965,7 @@ function SwitcherUI({
                         return (
                           <div
                             key={btn.id}
-                            className={`group/custom relative w-[180px] min-w-[180px] shrink-0 rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
+                            className={`group/custom relative w-full min-w-0 rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: btnColor,
