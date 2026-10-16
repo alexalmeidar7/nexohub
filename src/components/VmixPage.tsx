@@ -3267,6 +3267,18 @@ function SwitcherUI({
     });
   };
   const [creationChoiceOpen, setCreationChoiceOpen] = useState(false);
+  const creationChoiceRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!creationChoiceOpen) return;
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      if (creationChoiceRef.current && !creationChoiceRef.current.contains(event.target as Node)) {
+        setCreationChoiceOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handleOutsidePointerDown);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointerDown);
+  }, [creationChoiceOpen]);
   const [creatingAudioMonitor, setCreatingAudioMonitor] = useState(false);
   const [audioMonitorInput, setAudioMonitorInput] = useState("");
   const [audioMonitorName, setAudioMonitorName] = useState("");
@@ -5091,9 +5103,9 @@ function SwitcherUI({
                         );
                       })}
                       {/* + Criar */}
-                      <div className="relative w-[180px] min-w-[180px] shrink-0" style={{ aspectRatio: "3/2" }}>
+                      <div ref={creationChoiceRef} className="relative w-full min-w-0" style={{ aspectRatio: "3/2" }}>
                         {creationChoiceOpen && (
-                          <div className="absolute left-full top-1/2 z-[80] ml-2 w-[118px] -translate-y-1/2">
+                          <div className="absolute bottom-full left-0 z-[80] mb-2 w-full min-w-[118px]">
                             <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
                               <button
                                 type="button"
