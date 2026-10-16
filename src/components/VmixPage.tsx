@@ -4523,6 +4523,14 @@ function SwitcherUI({
 
         {/* ══ SCENES TAB ══ */}
         {activeTab === "scenes" && (() => {
+          const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
+          const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
+          const openButtonDevicePreview = (mode: "mobile" | "tablet" | "desktop") => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("buttonPreview", mode);
+            window.open(url.toString(), "_blank", "noopener,noreferrer");
+          };
+          const buttonPreviewWidth = buttonPreviewMode === "mobile" ? 390 : buttonPreviewMode === "tablet" ? 768 : buttonPreviewMode === "desktop" ? 1280 : undefined;
           const normalizeWeekday = (value: string) =>
             value
               .normalize("NFD")
@@ -4945,7 +4953,7 @@ function SwitcherUI({
                         <span className="text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: "#C6F03C" }}>Botões Personalizados</span>
                       </div>
                       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                        {["TODOS", ...Array.from(new Set(customButtons.map((btn: any) => String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS"))).sort((a, b) => a.localeCompare(b))].map(category => (
+                        {["TODOS", ...Array.from(new Set<string>((customButtons || []).map((btn: any): string => String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS"))).sort((a, b) => a.localeCompare(b))].map(category => (
                           <button key={category} type="button" onClick={() => setCustomButtonCategoryFilter(category)}
                             className="rounded-md px-2 py-1 text-[8px] font-black uppercase tracking-wide transition-colors"
                             style={{
