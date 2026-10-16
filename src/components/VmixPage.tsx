@@ -16,7 +16,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings
+  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings, Smartphone, Tablet, Monitor
 } from "lucide-react";
 
 import {
@@ -470,6 +470,14 @@ interface NetworkInterfaceInfo {
 
 export default function VmixPage({ forcedConnected = false, cleanLayout = false }: { forcedConnected?: boolean; cleanLayout?: boolean }) {
   const navigate = useNavigate();
+  const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
+  const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
+  const openButtonDevicePreview = (mode: "mobile" | "tablet" | "desktop") => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("buttonPreview", mode);
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  };
+  const buttonPreviewWidth = buttonPreviewMode === "mobile" ? 390 : buttonPreviewMode === "tablet" ? 768 : buttonPreviewMode === "desktop" ? 1280 : undefined;
   const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
@@ -4617,9 +4625,9 @@ function SwitcherUI({
           return (
             <>
               {/* ── Programas Preset + Botões de Efeitos side by side ── */}
-              <div className="flex flex-col gap-4">
+              <div className={`flex flex-col gap-4 ${isButtonDevicePreview ? "items-center" : ""}`}>
                 {/* Left: Programas Preset */}
-                <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                {!isButtonDevicePreview && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2">
@@ -4926,10 +4934,10 @@ function SwitcherUI({
                         <p className="text-[11px] text-white/30 py-4">Nenhum programa cadastrado.</p>
                       )}
                   </div>
-                </div>
+                </div>}
 
                 {/* Right: Botões de Efeitos */}
-                <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                <div className="rounded-xl overflow-hidden w-full" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <div className="flex shrink-0 items-center gap-2">
@@ -4951,6 +4959,11 @@ function SwitcherUI({
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 mr-1" aria-label="Visualizar botões por dispositivo">
+                        <button type="button" onClick={() => openButtonDevicePreview("mobile")} title="Abrir visualização de celular em nova aba" aria-label="Visualização celular" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "mobile" ? "#0756C9" : "#ffffff08" }}><Smartphone size={14} /></button>
+                        <button type="button" onClick={() => openButtonDevicePreview("tablet")} title="Abrir visualização de tablet em nova aba" aria-label="Visualização tablet" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "tablet" ? "#0756C9" : "#ffffff08" }}><Tablet size={14} /></button>
+                        <button type="button" onClick={() => openButtonDevicePreview("desktop")} title="Abrir visualização de desktop em nova aba" aria-label="Visualização desktop" className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 transition-colors hover:bg-white/10" style={{ color: "#D1D5DB", backgroundColor: buttonPreviewMode === "desktop" ? "#0756C9" : "#ffffff08" }}><Monitor size={14} /></button>
+                      </div>
                       <button
                         onClick={() => setEditingCustomButtonId("new")}
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all hover:brightness-110"
