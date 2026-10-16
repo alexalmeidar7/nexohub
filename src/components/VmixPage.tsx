@@ -3267,6 +3267,7 @@ function SwitcherUI({
     });
   };
   const [creationChoiceOpen, setCreationChoiceOpen] = useState(false);
+  const [customButtonCategoryFilter, setCustomButtonCategoryFilter] = useState("TODOS");
   const creationChoiceRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -4863,9 +4864,24 @@ function SwitcherUI({
                 {/* Right: Botões de Efeitos */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                    <div className="flex items-center gap-2">
-                      <Wand2 size={14} style={{ color: "#C6F03C" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>Botões Personalizados</span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Wand2 size={14} style={{ color: "#C6F03C" }} />
+                        <span className="text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: "#C6F03C" }}>Botões Personalizados</span>
+                      </div>
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        {["TODOS", ...Array.from(new Set(customButtons.map((btn: any) => String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS"))).sort((a, b) => a.localeCompare(b))].map(category => (
+                          <button key={category} type="button" onClick={() => setCustomButtonCategoryFilter(category)}
+                            className="rounded-md px-2 py-1 text-[8px] font-black uppercase tracking-wide transition-colors"
+                            style={{
+                              backgroundColor: customButtonCategoryFilter === category ? "#0756C9" : "#ffffff08",
+                              color: customButtonCategoryFilter === category ? "#FFFFFF" : "#9CA3AF",
+                              border: customButtonCategoryFilter === category ? "1px solid #3985f6" : "1px solid #ffffff12",
+                            }}>
+                            {category}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -4935,7 +4951,10 @@ function SwitcherUI({
                   </div>
                   <div className="p-5 space-y-4">
                     <div className="grid w-full grid-cols-7 items-start gap-3 pb-2">
-                      {[...customButtons].sort((a: any, b: any) => String(a.category || a.commands?.[0]?._buttonCategory || "OUTROS").localeCompare(String(b.category || b.commands?.[0]?._buttonCategory || "OUTROS"))).map((btn: any, buttonIndex, sortedButtons) => {
+                      {[...customButtons]
+                        .filter((btn: any) => customButtonCategoryFilter === "TODOS" || String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() === customButtonCategoryFilter)
+                        .sort((a: any, b: any) => String(a.category || a.commands?.[0]?._buttonCategory || "OUTROS").localeCompare(String(b.category || b.commands?.[0]?._buttonCategory || "OUTROS")))
+                        .map((btn: any, buttonIndex, sortedButtons) => {
                         const buttonCategory = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
                         const previousCategory = buttonIndex > 0 ? String(sortedButtons[buttonIndex - 1].category || sortedButtons[buttonIndex - 1].commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS" : null;
                         const showCategoryHeader = buttonCategory !== previousCategory;
