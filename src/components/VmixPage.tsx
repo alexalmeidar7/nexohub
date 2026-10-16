@@ -2709,6 +2709,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       dragCustomButtonId={dragCustomButtonId}
       setDragCustomButtonId={setDragCustomButtonId}
       reorderCustomButton={reorderCustomButton}
+      dragCustomCategory={dragCustomCategory}
+      setDragCustomCategory={setDragCustomCategory}
+      customButtonCategoryOrder={customButtonCategoryOrder}
+      reorderCustomCategory={reorderCustomCategory}
+      assignCustomButtonCategory={assignCustomButtonCategory}
       editingCustomButtonId={editingCustomButtonId}
       setEditingCustomButtonId={setEditingCustomButtonId}
       activeCustomButton={activeCustomButton}
@@ -3196,6 +3201,7 @@ function SwitcherUI({
   ndiUrl, setNdiUrl, programas, setProgramas, activePreset, setActivePreset,
   editingPresetId, setEditingPresetId, dragPresetIdx, setDragPresetIdx,
   customButtons, setCustomButtons, dragCustomButtonId, setDragCustomButtonId, reorderCustomButton,
+  dragCustomCategory, setDragCustomCategory, customButtonCategoryOrder, reorderCustomCategory, assignCustomButtonCategory,
   editingCustomButtonId, setEditingCustomButtonId,
   activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
   loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
