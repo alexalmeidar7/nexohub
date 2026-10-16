@@ -5033,7 +5033,9 @@ function SwitcherUI({
                           </div>
                         )}
                       </div>
-                    </div>                  <div className="p-5 space-y-4">
+                    </div>
+                  </div>
+                  <div className="p-5 space-y-4">
                     <div className="flex w-full flex-wrap items-start gap-3 pb-2">
                       {(() => {
                         const getCategory = (button: any) => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
