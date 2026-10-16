@@ -263,7 +263,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [nome, setNome] = useState("");
   const [color, setColor] = useState("#0756C9");
   const DEFAULT_BUTTON_CATEGORIES = ["AUDIO", "CAMERAS", "EFEITOS"];
-  const [buttonCategory, setButtonCategory] = useState("AUDIO");
+  const [buttonCategory, setButtonCategory] = useState("");
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
@@ -335,7 +335,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         .then(({ data }: any) => {
           if (data) {
             setNome(data.nome || "");
-            setButtonCategory(data.category || "AUDIO");
+            setButtonCategory(data.category || data.commands?.[0]?._buttonCategory || "");
             const savedButtonColor = data.color && data.color.toUpperCase() !== "#C6F03C" ? data.color : "#0756C9";
             setColor(savedButtonColor);
             setCustomColorMode(!["#0756C9", ...PRESET_BUTTON_COLORS.map(option => option.value)].includes(savedButtonColor.toUpperCase()));
@@ -351,7 +351,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         });
     } else {
       setNome("");
-      setButtonCategory("AUDIO");
+      setButtonCategory("");
       setNewCategoryName("");
       setShowNewCategoryInput(false);
       setColor("#0756C9");
@@ -436,14 +436,14 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         : commandData;
     });
 
+    const commandsWithCategory = savedCommands.map((command, index) => index === 0 ? { ...command, _buttonCategory: buttonCategory || null } : command);
     const payload = {
       nome: nome.trim(),
-      category: buttonCategory,
       color,
       dias_semana: diasSemana,
       data_especifica: dataEspecifica || null,
       horario,
-      commands: savedCommands,
+      commands: commandsWithCategory,
       estudio: estudio || null,
       shortcut: shortcut || null,
       icon: iconKey || null,
@@ -723,6 +723,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                     <select value={buttonCategory} onChange={event => setButtonCategory(event.target.value)}
                       className="h-[34px] min-w-0 flex-1 rounded-lg px-2 text-[11px] font-semibold outline-none [color-scheme:dark]"
                       style={{ backgroundColor: "#181820", color: "#f4f4f5", border: "1px solid #333" }}>
+                      <option value="">Selecionar categoria</option>
                       {[...DEFAULT_BUTTON_CATEGORIES, ...customCategories, ...(buttonCategory && ![...DEFAULT_BUTTON_CATEGORIES, ...customCategories].includes(buttonCategory) ? [buttonCategory] : [])].map(category => (
                         <option key={category} value={category}>{category}</option>
                       ))}
