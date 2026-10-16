@@ -1,0 +1,36 @@
+name: Build NexoHub Bridge (Windows)
+on:
+  workflow_dispatch:
+  push:
+    paths: ["tools/NexoHubBridge/**", ".github/workflows/build-nexohub-bridge.yml"]
+    branches: [main, feature/nexohub-bridge]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "8.0.x" }
+      - name: Publish standalone Windows executable
+        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/NexoHubBridge
+      - name: Add configuration template and guide
+        shell: pwsh
+        run: |
+          Copy-Item tools/NexoHubBridge/appsettings.example.json artifacts/NexoHubBridge/appsettings.example.json
+          @'
+          NexoHub Bridge - primeiros passos
+          1. Copie appsettings.example.json para appsettings.json.
+          2. Insira em PairingCode o código de pareamento gerado pelo NexoHub.
+          3. Ajuste VmixUrl se necessário (padrão http://127.0.0.1:8088).
+          4. Execute NexoHubBridge.exe. Após parear, o token será salvo em appsettings.json.
+          5. Não compartilhe appsettings.json: ele contém uma credencial secreta.
+          O servidor de pareamento e relay deve estar implantado para o agente operar.
+          '@ | Set-Content artifacts/NexoHubBridge/LEIA-ME.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NexoHubBridge-Windows-x64
+          path: artifacts/NexoHubBridge/*
+          if-no-files-found: error
+          retention-days: 30
