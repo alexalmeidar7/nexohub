@@ -1626,9 +1626,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
 
   useEffect(() => {
     if (!savedUrl) return;
-    const pollInterval = connected ? 5000 : 20000;
+    // Health check contínuo: mantém a verificação rápida mesmo quando o vMix
+    // está offline, para detectar quando o operador o abre novamente.
+    const pollInterval = 5000;
     const id = window.setInterval(() => {
-      if (navigator.onLine) void silentRefresh();
+      if (navigator.onLine && document.visibilityState === "visible") void silentRefresh();
     }, pollInterval);
     const refreshWhenAvailable = () => {
       if (document.visibilityState === "visible" && navigator.onLine) void silentRefresh();
