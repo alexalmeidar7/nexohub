@@ -4979,7 +4979,6 @@ function SwitcherUI({
                           : "";
                         // Usa a cor escolhida no editor; botões antigos sem cor personalizada ficam no azul padrão do site.
                         const savedColor = typeof btn.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(btn.color) ? btn.color : "#0756C9";
-                        const buttonCategory = String(btn.category || btn.commands?.[0]?._buttonCategory || "").trim();
                         const btnColor = isLiveButtonEnabled ? savedColor : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
                         const isBrightButtonColor = ["#BFFF00", "#FF6900", "#C6F03C"].includes(btnColor.toUpperCase());
