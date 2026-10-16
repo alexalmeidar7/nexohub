@@ -4958,10 +4958,12 @@ function SwitcherUI({
                         const liveScheduleLabel = liveEvento
                           ? `${liveEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(liveEvento.horario_gravacao || "--:--").slice(0, 5)}–${(liveEvento.horario_gravacao_fim || "--:--").slice(0, 5)}`
                           : "";
-                        // Cor padronizada (mesmo visual do botão "+ novo botão")
-                        const btnColor = isLiveButtonEnabled ? "#C6F03C" : "#36363d";
+                        // Usa a cor escolhida no editor; botões antigos sem cor personalizada ficam no azul padrão do site.
+                        const savedColor = typeof btn.color === "string" && btn.color.toUpperCase() !== "#C6F03C" ? btn.color : "#0756C9";
+                        const btnColor = isLiveButtonEnabled ? savedColor : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
-                        const textColor = isLiveButtonEnabled ? "#000000" : "#85858d";
+                        const isBrightButtonColor = ["#BFFF00", "#FF6900", "#C6F03C"].includes(btnColor.toUpperCase());
+                        const textColor = isLiveButtonEnabled ? (isBrightButtonColor ? "#000000" : "#FFFFFF") : "#85858d";
                         return (
                           <div
                             key={btn.id}
