@@ -9,6 +9,7 @@ const sha256 = async (value: string) => {
 const randomCode = (bytes = 18) => {
   const data = crypto.getRandomValues(new Uint8Array(bytes));
   return Array.from(data).map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
