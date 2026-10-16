@@ -720,12 +720,12 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   <Palette size={10} /> Cor do Botão
                 </label>
                 <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: "#12121a", border: "1px solid #343440" }}>
-                  <button type="button" onClick={() => { setColor("#0756C9"); setCustomColorMode(false); }} aria-label="Azul padrão do site" aria-pressed={color.toUpperCase() === "#0756C9"} title="Azul padrão do site"
-                    className="h-9 w-9 shrink-0 rounded-lg border-2 transition-transform hover:scale-105"
+                  <div role="button" tabIndex={0} onClick={() => { setColor("#0756C9"); setCustomColorMode(false); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setColor("#0756C9"); setCustomColorMode(false); } }} aria-label="Azul padrão do site" aria-pressed={color.toUpperCase() === "#0756C9"} title="Azul padrão do site"
+                    className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border-2 transition-transform hover:scale-105"
                     style={{ backgroundColor: "#0756C9", borderColor: color.toUpperCase() === "#0756C9" ? "#FFFFFF" : "#ffffff30" }} />
                   {PRESET_BUTTON_COLORS.map(option => (
-                    <button key={option.value} type="button" onClick={() => { setColor(option.value); setCustomColorMode(false); }} aria-label={option.label} aria-pressed={!customColorMode && color.toUpperCase() === option.value}
-                      title={option.label} className="h-9 w-9 shrink-0 rounded-lg border-2 transition-transform hover:scale-105"
+                    <div key={option.value} role="button" tabIndex={0} onClick={() => { setColor(option.value); setCustomColorMode(false); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setColor(option.value); setCustomColorMode(false); } }} aria-label={option.label} aria-pressed={!customColorMode && color.toUpperCase() === option.value}
+                      title={option.label} className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border-2 transition-transform hover:scale-105"
                       style={{ backgroundColor: option.value, borderColor: !customColorMode && color.toUpperCase() === option.value ? "#FFFFFF" : "#ffffff30" }} />
                   ))}
                   <label className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 transition-transform hover:scale-105" title="Escolher cor personalizada" style={{ backgroundColor: customColorMode ? color : "#252530", borderColor: customColorMode ? "#FFFFFF" : "#ffffff30" }}>
