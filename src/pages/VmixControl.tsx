@@ -16,6 +16,8 @@ type VmixControlProps = {
 
 export default function VmixControl({ forcedConnected = false, cleanLayout = false }: VmixControlProps) {
   const { user, loading, signOut } = useAuth();
+  const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
+  const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -58,7 +60,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   if (cleanLayout) {
     return (
       <div className="vmix-flat-palette relative min-h-screen w-full overflow-hidden flex flex-col" style={{ backgroundColor: "#111111", color: "#fff" }}>
-        <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
+        <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20" style={{ display: isButtonDevicePreview ? "none" : undefined }}>
           <div className="relative mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8" style={{ backgroundColor: "#242424" }}>
             <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[17px] w-auto max-w-full object-contain object-left" />
 
@@ -192,7 +194,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
           )}
         </div>
       </header>
-      <main className="flex-1 p-6" style={{ backgroundColor: "#000000" }}>
+      <main className={`flex-1 ${isButtonDevicePreview ? "p-0" : "p-6"}`} style={{ backgroundColor: "#000000" }}>
         <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} /></Suspense>
       </main>
     </div>
