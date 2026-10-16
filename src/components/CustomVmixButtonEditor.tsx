@@ -714,6 +714,32 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   )}
                 </div>
                 <span className="text-[8px]" style={{ color: "#777" }}>O ícone escolhido será exibido no botão do switcher.</span>
+                {/* Categoria */}
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
+                    <Layers size={10} /> Categoria
+                  </label>
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <select value={buttonCategory} onChange={event => setButtonCategory(event.target.value)}
+                      className="h-[34px] min-w-0 flex-1 rounded-lg px-2 text-[11px] font-semibold outline-none [color-scheme:dark]"
+                      style={{ backgroundColor: "#181820", color: "#f4f4f5", border: "1px solid #333" }}>
+                      {[...DEFAULT_BUTTON_CATEGORIES, ...customCategories, ...(buttonCategory && ![...DEFAULT_BUTTON_CATEGORIES, ...customCategories].includes(buttonCategory) ? [buttonCategory] : [])].map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => setShowNewCategoryInput(open => !open)} aria-label="Adicionar categoria" title="Adicionar categoria"
+                      className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-[#0756C9] text-lg font-medium text-white hover:bg-[#0b65e5]">+</button>
+                  </div>
+                  {showNewCategoryInput && (
+                    <div className="flex gap-1">
+                      <input autoFocus value={newCategoryName} onChange={event => setNewCategoryName(event.target.value)}
+                        onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); addCustomCategory(); } }}
+                        placeholder="Nova categoria" className="h-7 min-w-0 flex-1 rounded-md px-2 text-[10px] outline-none"
+                        style={{ backgroundColor: "#181820", color: "#fff", border: "1px solid #333" }} />
+                      <button type="button" onClick={addCustomCategory} className="rounded-md bg-[#0756C9] px-2 text-[9px] font-bold text-white">Adicionar</button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex min-w-0 flex-col gap-2">
@@ -770,41 +796,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
               </div>
               </div>
 
-              {/* Agenda, horário, dias e categoria do botão */}
-              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(150px,1fr)_minmax(100px,0.7fr)_minmax(190px,1.25fr)_minmax(150px,0.9fr)]">
-                {/* Categoria */}
-                <div className="flex min-w-0 flex-col gap-1.5">
-                  <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
-                    <Layers size={10} /> Categoria
-                  </label>
-                  <select
-                    value={buttonCategory}
-                    onChange={event => setButtonCategory(event.target.value)}
-                    className="h-[34px] w-full min-w-0 rounded-lg px-2 text-[11px] font-semibold outline-none [color-scheme:dark]"
-                    style={{ backgroundColor: "#181820", color: "#f4f4f5", border: "1px solid #333" }}
-                  >
-                    {[...DEFAULT_BUTTON_CATEGORIES, ...customCategories, ...(buttonCategory && ![...DEFAULT_BUTTON_CATEGORIES, ...customCategories].includes(buttonCategory) ? [buttonCategory] : [])].map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                  {showNewCategoryInput ? (
-                    <div className="flex gap-1">
-                      <input
-                        autoFocus
-                        value={newCategoryName}
-                        onChange={event => setNewCategoryName(event.target.value)}
-                        onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); addCustomCategory(); } }}
-                        placeholder="Nova categoria"
-                        className="h-7 min-w-0 flex-1 rounded-md px-2 text-[10px] outline-none"
-                        style={{ backgroundColor: "#181820", color: "#fff", border: "1px solid #333" }}
-                      />
-                      <button type="button" onClick={addCustomCategory} className="rounded-md bg-[#0756C9] px-2 text-[9px] font-bold text-white">Adicionar</button>
-                    </div>
-                  ) : (
-                    <button type="button" onClick={() => setShowNewCategoryInput(true)} className="self-start text-[8px] font-bold text-[#60A5FA] hover:text-white">+ Nova categoria</button>
-                  )}
-                </div>
-
+              {/* Agenda, horário e dias da semana */}
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(150px,1fr)_minmax(100px,0.7fr)_minmax(190px,1.25fr)]">
                 {/* Data específica */}
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
