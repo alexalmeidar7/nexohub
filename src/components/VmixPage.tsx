@@ -5094,10 +5094,7 @@ function SwitcherUI({
                               });
                             return (
                               <div key={"category-group-" + categoryName} className="flex min-w-0 flex-col gap-2 rounded-lg"
-                                style={{
-                                  flex: `0 0 calc(${Math.min(categoryButtons.length, 3)} * (33.333333% - 8px))`,
-                                  width: `calc(${Math.min(categoryButtons.length, 3)} * (33.333333% - 8px))`,
-                                  maxWidth: "100%",
+                                style={{ width: "max-content", maxWidth: "100%" }}>
                                 }}>
                                 <div draggable onDragStart={(event) => { event.dataTransfer.setData("text/vmix-custom-category", categoryName); event.dataTransfer.effectAllowed = "move"; setDragCustomCategory(categoryName); }} onDragEnd={() => setDragCustomCategory(null)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); const draggedCategory = event.dataTransfer.getData("text/vmix-custom-category") || dragCustomCategory; const draggedButton = event.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId; if (draggedCategory) reorderCustomCategory(draggedCategory, categoryName); else if (draggedButton) assignCustomButtonCategory(draggedButton, categoryName); setDragCustomCategory(null); setDragCustomButtonId(null); }}
                                   className={`flex items-center gap-2 cursor-grab rounded pt-2 pb-0.5 ${dragCustomCategory === categoryName ? "opacity-50" : ""}`}
@@ -5105,7 +5102,7 @@ function SwitcherUI({
                                   <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">{categoryName}</span>
                                   <div className="h-px min-w-[18px] flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span>
                                 </div>
-                                <div className="grid w-full min-w-0 gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, 3)}, minmax(0, 1fr))`, width: "100%" }}>
+                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, buttonPreviewMode === "mobile" ? 1 : buttonPreviewMode === "tablet" ? 2 : 3)}, 171px)`, maxWidth: "100%", width: "max-content" }}>
                                   {categoryButtons.map((btn: any, buttonIndex, sortedButtons) => {
                         const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
