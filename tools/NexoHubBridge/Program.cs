@@ -8,7 +8,7 @@ internal sealed class BridgeConfig {
  public string SupabaseUrl {get;set;}="https://zzjfzxxvxbspbdkodoix.supabase.co";
  public string PairingCode {get;set;}=""; public string BridgeToken {get;set;}="";
  public string VmixUrl {get;set;}="http://127.0.0.1:8088"; public string VmixUsername {get;set;}="";
- public string VmixPassword {get;set;}=""; public string DeviceName {get;set;}=Environment.MachineName; public int PollIntervalMs {get;set;}=700;
+ public string VmixPassword {get;set;}=""; public string DeviceName {get;set;}=Environment.MachineName; public int PollIntervalMs {get;set;}=1000;
 }
 internal sealed record BridgeJob(string Id,string Path,string Method,JsonElement? Body);
 internal sealed record PollResponse(BridgeJob? Job);
@@ -37,7 +37,7 @@ internal static class Program {
     if(poll?.Job is {} job) {
      var result=await ExecuteJobAsync(vmix,c,job,stop.Token);
      await CloudPostAsync<JsonElement>(cloud,c,"vmix-bridge-result",new{jobId=job.Id,success=result.Success,statusCode=result.Status,body=result.Body},stop.Token);
-    } else await Task.Delay(Math.Clamp(c.PollIntervalMs,300,5000),stop.Token);
+    } else await Task.Delay(Math.Clamp(c.PollIntervalMs,750,5000),stop.Token);
    } catch(OperationCanceledException) when(stop.IsCancellationRequested) { break; }
    catch(Exception ex) { failures++; if(failures==1||failures%10==0) Console.WriteLine($"Conexão indisponível ({failures}): {ex.Message}. Tentando novamente."); await Task.Delay(Math.Min(1000*Math.Min(failures,10),10000),stop.Token); }
   }
