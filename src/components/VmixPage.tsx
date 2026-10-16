@@ -3957,7 +3957,7 @@ function SwitcherUI({
 
   return (
     <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
+      {!isButtonDevicePreview && <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="group/previous relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">
             {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60 transition-opacity duration-200 group-hover/previous:opacity-100" />}
@@ -4021,7 +4021,7 @@ function SwitcherUI({
             <ArrowRight size={20} strokeWidth={1.2} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-white/75 transition-transform duration-200 group-hover/next:translate-x-1" />
           </div>
         </div>
-      </div>
+      </div>}
 
         <Dialog open={!!capturingShortcut} onOpenChange={(open) => !open && setCapturingShortcut(null)}>
           <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-8">
@@ -4946,7 +4946,7 @@ function SwitcherUI({
 
                 {/* Right: Botões de Efeitos */}
                 <div className="rounded-xl overflow-hidden w-full" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
-                  <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                  {!isButtonDevicePreview && <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <div className="flex shrink-0 items-center gap-2">
                         <Wand2 size={14} style={{ color: "#C6F03C" }} />
@@ -5055,7 +5055,7 @@ function SwitcherUI({
                         )}
                       </div>
                     </div>
-                  </div>
+                  </div>}
                   <div className="p-5 space-y-4">
                     <div className="flex w-full flex-wrap items-start gap-3 pb-2">
                       {(() => {
@@ -5592,7 +5592,7 @@ function SwitcherUI({
       )}
 
       {/* ── Command Log Panel ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50" style={{ pointerEvents: "none" }}>
+      <div className={`${isButtonDevicePreview ? "hidden" : ""} fixed bottom-0 left-0 right-0 z-50`} style={{ pointerEvents: "none" }}>
         <div className="max-w-5xl mx-auto" style={{ pointerEvents: "auto" }}>
           {/* Toggle bar */}
           <button
