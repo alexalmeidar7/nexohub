@@ -2868,16 +2868,27 @@ function AudioMonitorButton({
 
   return (
     <div
-      className="group/custom relative w-[180px] min-w-[180px] shrink-0 overflow-hidden rounded-lg transition-all duration-200 hover:brightness-110"
-      style={{ width: 180, minWidth: 180, aspectRatio: "3/2", background: "#08090b", border: "1px solid #292a2e", boxSizing: "border-box" }}
+      className="group/custom relative h-[54px] w-full min-w-0 overflow-hidden rounded-lg transition-all duration-200 hover:brightness-110 sm:h-auto sm:aspect-[3/2]"
+      style={{ width: "100%", minWidth: 0, background: "#08090b", border: "1px solid #292a2e", boxSizing: "border-box" }}
       title={`Monitor estéreo L/R do Input ${input}`}
     >
-      <div className="flex items-center gap-1.5 px-2 pt-2">
+      <div className="absolute inset-0 flex items-center gap-2 px-2 sm:hidden">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
+        <span className="min-w-0 flex-1 truncate text-[10px] font-black uppercase text-white" title={inputName || `Input ${input}`}>{inputName || `Input ${input}`}</span>
+        <div className="flex h-9 w-5 shrink-0 items-stretch gap-[2px]">
+          {channelMeters.map(channel => {
+            const totalSegments = 12;
+            const activeSegments = levels?.available ? activeSegmentsFor(channel.level) : 0;
+            return <div key={channel.label} className="flex min-w-0 flex-1 flex-col-reverse gap-[1px] rounded-sm bg-[#17181b] p-[1px]">{Array.from({ length: totalSegments }, (_, index) => { const active = index < activeSegments; const color = meterColor(index, totalSegments); return <div key={index} className="min-h-0 flex-1" style={{ backgroundColor: active ? color : "#242529", boxShadow: active ? `0 0 4px ${color}55` : "none" }} />; })}</div>;
+          })}
+        </div>
+      </div>
+      <div className="hidden items-center gap-1.5 px-2 pt-2 sm:flex">
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
         <span className="truncate text-[7px] font-black uppercase tracking-wider text-white">Monitor de áudio</span>
       </div>
 
-      <div className="absolute inset-x-2 bottom-2 top-[39px] flex items-stretch gap-3">
+      <div className="absolute inset-x-2 bottom-2 top-[39px] hidden items-stretch gap-3 sm:flex">
         <div className="flex w-[18px] shrink-0 items-stretch gap-[3px]">
           {channelMeters.map(channel => {
             const totalSegments = 12;
