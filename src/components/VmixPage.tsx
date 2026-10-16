@@ -4971,7 +4971,8 @@ function SwitcherUI({
                           ? `${liveEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(liveEvento.horario_gravacao || "--:--").slice(0, 5)}–${(liveEvento.horario_gravacao_fim || "--:--").slice(0, 5)}`
                           : "";
                         // Usa a cor escolhida no editor; botões antigos sem cor personalizada ficam no azul padrão do site.
-                        const savedColor = typeof btn.color === "string" && btn.color.toUpperCase() !== "#C6F03C" ? btn.color : "#0756C9";
+                        const savedColor = typeof btn.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(btn.color) ? btn.color : "#0756C9";
+                        const buttonCategory = String(btn.category || btn.commands?.[0]?._buttonCategory || "").trim();
                         const btnColor = isLiveButtonEnabled ? savedColor : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
                         const isBrightButtonColor = ["#BFFF00", "#FF6900", "#C6F03C"].includes(btnColor.toUpperCase());
