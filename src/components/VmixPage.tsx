@@ -16,7 +16,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil
+  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings
 } from "lucide-react";
 
 import {
@@ -3302,6 +3302,19 @@ function SwitcherUI({
     };
   }, [musicDataUserIds]);
 
+  const [customButtonToolsOpen, setCustomButtonToolsOpen] = useState(false);
+  const customButtonToolsRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!customButtonToolsOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (customButtonToolsRef.current && !customButtonToolsRef.current.contains(event.target as Node)) {
+        setCustomButtonToolsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    return () => document.removeEventListener("pointerdown", closeOnOutside);
+  }, [customButtonToolsOpen]);
+
   const [customBtnTextScale, setCustomBtnTextScale] = useState<number>(() => {
     try {
       return Number(localStorage.getItem("vmix_custom_btn_text_scale")) || 1;
@@ -4939,51 +4952,6 @@ function SwitcherUI({
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => {
-                          const data = JSON.stringify(customButtons, null, 2);
-                          const blob = new Blob([data], { type: "application/json" });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = `botoes-efeitos-${new Date().toISOString().split("T")[0]}.json`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                          toast({ title: "Exportado", description: "Lista de efeitos exportada com sucesso." });
-                        }}
-                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                        style={{ color: "#888" }}
-                        title="Exportar efeitos"
-                      >
-                        <Download size={12} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          const input = document.createElement("input");
-                          input.type = "file";
-                          input.accept = ".json";
-                          input.onchange = async (e) => {
-                            const file = (e.target as HTMLInputElement).files?.[0];
-                            if (!file) return;
-                            try {
-                              const text = await file.text();
-                              const imported = JSON.parse(text);
-                              if (Array.isArray(imported)) {
-                                setCustomButtons(prev => [...imported, ...prev.filter(p => !imported.find((i: any) => i.id === p.id))]);
-                                toast({ title: "Importado", description: `${imported.length} efeitos carregados na lista.` });
-                              }
-                            } catch (err) {
-                              toast({ title: "Erro na importação", variant: "destructive" });
-                            }
-                          };
-                          input.click();
-                        }}
-                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                        style={{ color: "#888" }}
-                        title="Importar efeitos"
-                      >
-                        <Upload size={12} />
-                      </button>
-                      <button
                         onClick={() => setEditingCustomButtonId("new")}
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all hover:brightness-110"
                         style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
@@ -4992,18 +4960,80 @@ function SwitcherUI({
                         <Plus size={12} />
                         <span className="text-[10px] font-black uppercase tracking-wider">novo botão</span>
                       </button>
-                      <button
-                        onClick={cycleCustomBtnTextScale}
-                        className="vmix-hover-ring flex items-center gap-1 px-2 py-1 rounded-md transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#C6F03C15", color: "#C6F03C", border: "1px solid #C6F03C50" }}
-                        title="Aumentar o texto dos botões personalizados"
-                      >
-                        <span className="text-[10px] font-black uppercase tracking-wider">A+</span>
-                        <span className="text-[9px] font-bold tabular-nums opacity-70">{Math.round(customBtnTextScale * 100)}%</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-5 space-y-4">
+                      <div ref={customButtonToolsRef} className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setCustomButtonToolsOpen(open => !open)}
+                          aria-label="Configurações dos botões personalizados"
+                          aria-expanded={customButtonToolsOpen}
+                          className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-white/10"
+                          style={{ backgroundColor: customButtonToolsOpen ? "#0756C9" : "#ffffff08", color: "#D1D5DB", border: "1px solid #ffffff12" }}
+                          title="Configurações dos botões"
+                        >
+                          <Settings size={14} />
+                        </button>
+                        {customButtonToolsOpen && (
+                          <div className="absolute right-0 top-full z-[90] mt-2 w-52 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
+                            <div className="px-2 pb-2 text-[9px] font-black uppercase tracking-widest text-white/45">Ferramentas dos botões</div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const data = JSON.stringify(customButtons, null, 2);
+                                const blob = new Blob([data], { type: "application/json" });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `botoes-efeitos-${new Date().toISOString().split("T")[0]}.json`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                                setCustomButtonToolsOpen(false);
+                                toast({ title: "Exportado", description: "Lista de efeitos exportada com sucesso." });
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-bold text-white/80 hover:bg-white/8"
+                            >
+                              <Download size={13} /> Exportar botões
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const input = document.createElement("input");
+                                input.type = "file";
+                                input.accept = ".json";
+                                input.onchange = async (e) => {
+                                  const file = (e.target as HTMLInputElement).files?.[0];
+                                  if (!file) return;
+                                  try {
+                                    const text = await file.text();
+                                    const imported = JSON.parse(text);
+                                    if (Array.isArray(imported)) {
+                                      setCustomButtons(prev => [...imported, ...prev.filter(p => !imported.find((i: any) => i.id === p.id))]);
+                                      toast({ title: "Importado", description: `${imported.length} efeitos carregados na lista.` });
+                                    }
+                                  } catch {
+                                    toast({ title: "Erro na importação", variant: "destructive" });
+                                  }
+                                };
+                                setCustomButtonToolsOpen(false);
+                                input.click();
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-bold text-white/80 hover:bg-white/8"
+                            >
+                              <Upload size={13} /> Importar botões
+                            </button>
+                            <div className="my-1 border-t border-white/10" />
+                            <button
+                              type="button"
+                              onClick={() => { cycleCustomBtnTextScale(); setCustomButtonToolsOpen(false); }}
+                              className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-bold text-white/80 hover:bg-white/8"
+                              title="Aumentar o texto dos botões personalizados"
+                            >
+                              <span className="flex items-center gap-2"><span className="font-black">A+</span> Tamanho do texto</span>
+                              <span className="text-[9px] tabular-nums text-white/50">{Math.round(customBtnTextScale * 100)}%</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>                  <div className="p-5 space-y-4">
                     <div className="flex w-full flex-wrap items-start gap-3 pb-2">
                       {(() => {
                         const getCategory = (button: any) => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
