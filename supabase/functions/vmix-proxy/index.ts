@@ -104,6 +104,7 @@ Deno.serve(async (req) => {
       const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       const { data: bridge, error: bridgeError } = await admin.from("vmix_bridge_devices")
         .select("id").eq("user_id", userId).is("revoked_at", null)
+        .gte("last_seen_at", new Date(Date.now() - 45000).toISOString())
         .order("last_seen_at", { ascending: false }).limit(1).maybeSingle();
       if (bridgeError) throw bridgeError;
       if (!bridge) return new Response(JSON.stringify({ error: "NexoHub Bridge não conectado. Pareie o computador do estúdio primeiro." }), {
