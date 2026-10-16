@@ -5444,7 +5444,7 @@ function SwitcherUI({
         </div>
       )}
       <Dialog open={!!editingAudioMonitor} onOpenChange={(open) => !open && setEditingAudioMonitor(null)}>
-        <DialogContent className="max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 p-0 text-white shadow-2xl sm:max-w-3xl" style={{ backgroundColor: "#19191f", borderColor: "#303039" }}>
+        <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden rounded-2xl border border-white/10 bg-[#19191f] p-0 text-white shadow-2xl sm:max-w-3xl" style={{ backgroundColor: "#19191f", borderColor: "#303039" }}>
           <DialogHeader className="px-6 py-5 text-left" style={{ backgroundColor: "#19191f", borderColor: "transparent" }}>
             <DialogTitle className="text-base font-black uppercase tracking-wide text-white">Editar Monitor de Áudio</DialogTitle>
             <DialogDescription className="text-xs leading-relaxed text-white/55">
