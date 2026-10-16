@@ -116,24 +116,24 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   // Original layout retained for /vmix-control/switcher and any other callers.
   if (!user) {
     return (
-      <div className="vmix-flat-palette h-screen flex items-center justify-center" style={{ backgroundColor: "#111111" }}>
-        <form onSubmit={handleLogin} className="w-full max-w-sm rounded-2xl p-8 flex flex-col gap-5" style={{ backgroundColor: "#0d0d0d", border: "1px solid #C6F03C25", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
-          <div className="flex flex-col items-center gap-2 mb-2">
-            <img src={cleanVmixControlLogo} alt="NEXO VMIX CONTROL" className="h-6 w-auto max-w-full object-contain" />
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff45" }}>Faça login para acessar o controle</p>
+      <div className="vmix-flat-palette relative min-h-screen w-full flex items-center justify-center overflow-hidden px-4 py-10" style={{ backgroundColor: "#080d18", color: "#fff", backgroundImage: "radial-gradient(ellipse at 15% 0%, rgba(0,101,249,0.22), transparent 42%), radial-gradient(ellipse at 100% 100%, rgba(0,66,163,0.18), transparent 45%)" }}>
+        <form onSubmit={handleLogin} className="relative w-full max-w-[360px] rounded-[22px] px-7 py-8 sm:px-8 flex flex-col gap-5" style={{ backgroundColor: "rgba(9,16,29,0.92)", border: "1px solid rgba(59,130,246,0.28)", boxShadow: "0 24px 80px rgba(0,0,0,0.38)", backdropFilter: "blur(16px)" }}>
+          <div className="flex flex-col items-center gap-3 mb-1">
+            <img src={cleanVmixControlLogo} alt="NEXO VMIX CONTROL" className="h-[18px] w-auto max-w-[220px] object-contain opacity-95" />
+            <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-center" style={{ color: "#aab7ca" }}>Faça login para acessar o controle</p>
           </div>
-          {error && <div className="text-xs text-center font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: "#dc262620", color: "#f87171", border: "1px solid #dc262640" }}>{error}</div>}
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>E-mail</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all" style={{ backgroundColor: "#141414", color: "#fff", border: "1px solid #ffffff14" }} />
+          {error && <div className="text-xs text-center font-medium px-3 py-2 rounded-lg" style={{ backgroundColor: "rgba(220,38,38,0.12)", color: "#fca5a5", border: "1px solid rgba(248,113,113,0.25)" }} role="alert">{error}</div>}
+          <div className="flex flex-col gap-2">
+            <label className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: "#b9c7dc" }}>E-mail</label>
+            <input type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30" style={{ backgroundColor: "rgba(255,255,255,0.035)", color: "#fff", border: "1px solid rgba(148,163,184,0.3)" }} />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#C6F03C" }}>Senha</label>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all" style={{ backgroundColor: "#141414", color: "#fff", border: "1px solid #ffffff14" }} />
+          <div className="flex flex-col gap-2">
+            <label className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: "#b9c7dc" }}>Senha</label>
+            <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30" style={{ backgroundColor: "rgba(255,255,255,0.035)", color: "#fff", border: "1px solid rgba(148,163,184,0.3)" }} />
           </div>
-          <button type="submit" disabled={signing} className="w-full py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#C6F03C", color: "#000" }}>
+          <button type="submit" disabled={signing} className="mt-1 w-full py-3 rounded-xl text-[11px] font-extrabold uppercase tracking-[0.16em] flex items-center justify-center gap-2 transition-all hover:brightness-110 disabled:opacity-50" style={{ background: "linear-gradient(105deg, #0065F9, #0052d4)", color: "#fff", boxShadow: "0 8px 24px rgba(0,101,249,0.22)" }}>
             {signing ? <Loader2 className="animate-spin" size={16} /> : null}
-            Entrar
+            {signing ? "Entrando..." : "Entrar"}
           </button>
         </form>
       </div>
