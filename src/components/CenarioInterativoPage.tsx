@@ -352,11 +352,17 @@ function ExceptionWordsInput({ value, onSave }: { value: string; onSave: (v: str
 
 /* ─── COMPONENT ─── */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+const VALID_SCENE_TABS = new Set(["home", "weather", "traffic", "currency", "chat", "enquete"]);
+const normalizeSceneTab = (tab: unknown, fallback = "home") =>
+  typeof tab === "string" && VALID_SCENE_TABS.has(tab) ? tab : fallback;
+
 export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
   const targetUserId = effectiveUserId || user?.id;
   const [config, setConfig] = useState<CenarioConfig>(defaultConfig);
+  // activeTab é exclusivamente a cena que vai ao ar; settingsTab controla apenas a navegação do editor.
   const [activeTab, setActiveTab] = useState("home");
+  const [settingsTab, setSettingsTab] = useState("home");
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>([]);
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -576,8 +582,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
       }
       
       // Prevent infinite loop by checking if the tab actually changed
-        if (payload.config._activeTab && payload.config._activeTab !== activeTabRef.current) {
-          setActiveTab(payload.config._activeTab);
+        if (payload.config._activeTab) {
+          const incomingScene = normalizeSceneTab(payload.config._activeTab, activeTabRef.current);
+          if (incomingScene !== activeTabRef.current) setActiveTab(incomingScene);
         }
         
         if (payload.config._weatherSubTab && payload.config._weatherSubTab !== weatherSubTabRef.current) {
@@ -916,7 +923,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if (tab === activeTab) return;
+    // A aba Cores é apenas uma área de configuração e nunca deve virar cena de saída.
+    setSettingsTab(tab);
+    if (!VALID_SCENE_TABS.has(tab) || tab === activeTab) return;
     setActiveTab(tab);
     // Mirroring to other devices happens via the main save useEffect
   };
@@ -1371,13 +1380,14 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
       if ((data as any)?.cenario_config && typeof (data as any).cenario_config === "object") {
         const savedConfig = (data as any).cenario_config as any;
         finalConfig = { ...defaultConfig, ...savedConfig };
-        if (savedConfig._activeTab) finalActiveTab = savedConfig._activeTab;
+        if (savedConfig._activeTab) finalActiveTab = normalizeSceneTab(savedConfig._activeTab);
         if (savedConfig._weatherSubTab) finalWeatherTab = savedConfig._weatherSubTab;
         if (savedConfig._currencySubTab) finalCurrencyTab = savedConfig._currencySubTab;
         if (typeof savedConfig._screenRotation === "number") finalRotation = savedConfig._screenRotation;
         
         setConfig(finalConfig);
         setActiveTab(finalActiveTab);
+        setSettingsTab(finalActiveTab);
         setWeatherSubTab(finalWeatherTab);
         setCurrencySubTab(finalCurrencyTab);
         setExternalRotation(finalRotation);
@@ -1900,7 +1910,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
           <div className="flex-1 min-w-0">
             <div className="h-0" aria-hidden="true" />
 
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <Tabs value={settingsTab} onValueChange={handleTabChange}>
               <TabsList className="w-full grid grid-cols-7 gap-1 p-1 mb-4 rounded-xl" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
                 <TabsTrigger value="home" title="Home" aria-label="Home" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><Home size={16} /></TabsTrigger>
                 <TabsTrigger value="weather" title="Tempo" aria-label="Tempo" className="h-9 w-full p-0 justify-center rounded-lg text-xs transition-colors data-[state=active]:bg-[var(--layout-accent-color)] data-[state=active]:text-white data-[state=active]:shadow-sm"><CloudSun size={16} /></TabsTrigger>
