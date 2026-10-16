@@ -5077,7 +5077,7 @@ function SwitcherUI({
                                   <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">{categoryName}</span>
                                   <div className="h-px min-w-[18px] flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span>
                                 </div>
-                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, 6)}, minmax(0, 171px))`, maxWidth: "100%" }}>
+                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, buttonPreviewMode === "mobile" ? 2 : buttonPreviewMode === "tablet" ? 4 : 6)}, minmax(0, 171px))`, maxWidth: "100%" }}>
                                   {categoryButtons.map((btn: any, buttonIndex, sortedButtons) => {
                         const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
