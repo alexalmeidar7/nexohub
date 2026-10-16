@@ -5060,7 +5060,7 @@ function SwitcherUI({
                     </div>
                   </div>
                   <div className="p-5 space-y-4">
-                    <div className="flex w-full flex-wrap items-start gap-3 pb-2">
+                    <div className={`flex w-full ${buttonPreviewMode ? "flex-col" : "flex-wrap"} items-start gap-3 pb-2`}>
                       {(() => {
                         const getCategory = (button: any) => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
                         const categoryNames = Array.from(new Set(customButtons.map((button: any) => getCategory(button))));
@@ -5080,15 +5080,15 @@ function SwitcherUI({
                                 return 0;
                               });
                             return (
-                              <div key={"category-group-" + categoryName} className="flex shrink-0 flex-col gap-2 rounded-lg"
-                                style={{ width: "max-content", maxWidth: "100%" }}>
+                              <div key={"category-group-" + categoryName} className="flex min-w-0 flex-col gap-2 rounded-lg"
+                                style={{ width: "100%", maxWidth: "100%" }}>
                                 <div draggable onDragStart={(event) => { event.dataTransfer.setData("text/vmix-custom-category", categoryName); event.dataTransfer.effectAllowed = "move"; setDragCustomCategory(categoryName); }} onDragEnd={() => setDragCustomCategory(null)} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); const draggedCategory = event.dataTransfer.getData("text/vmix-custom-category") || dragCustomCategory; const draggedButton = event.dataTransfer.getData("text/vmix-custom-button") || dragCustomButtonId; if (draggedCategory) reorderCustomCategory(draggedCategory, categoryName); else if (draggedButton) assignCustomButtonCategory(draggedButton, categoryName); setDragCustomCategory(null); setDragCustomButtonId(null); }}
                                   className={`flex items-center gap-2 cursor-grab rounded pt-2 pb-0.5 ${dragCustomCategory === categoryName ? "opacity-50" : ""}`}
                                   title="Arraste para reorganizar categorias ou solte um botão aqui para mover para esta categoria">
                                   <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">{categoryName}</span>
                                   <div className="h-px min-w-[18px] flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span>
                                 </div>
-                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, buttonPreviewMode === "mobile" ? 2 : buttonPreviewMode === "tablet" ? 4 : 6)}, minmax(0, 171px))`, maxWidth: "100%" }}>
+                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, buttonPreviewMode === "mobile" ? 3 : buttonPreviewMode === "tablet" ? 4 : 6)}, minmax(0, 1fr))`, maxWidth: "100%", width: "100%" }}>
                                   {categoryButtons.map((btn: any, buttonIndex, sortedButtons) => {
                         const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
