@@ -5231,9 +5231,9 @@ function SwitcherUI({
                           });
                       })()}
                       {/* + Criar */}
-                      <div ref={creationChoiceRef} className="relative w-full min-w-0" style={{ aspectRatio: "3/2" }}>
+                      <div ref={creationChoiceRef} className="relative w-full min-w-0 basis-full">
                         {creationChoiceOpen && (
-                          <div className="absolute bottom-full left-0 z-[80] mb-2 w-full min-w-[118px]">
+                          <div className="absolute bottom-full left-0 z-[80] mb-2 w-[171px] min-w-[118px]">
                             <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
                               <button
                                 type="button"
@@ -5257,8 +5257,8 @@ function SwitcherUI({
                         )}
                         <button
                           type="button"
-                          className="vmix-hover-ring flex h-full w-full flex-col items-center justify-center rounded-lg transition-all duration-200"
-                          style={{ backgroundColor: creationChoiceOpen ? "#25252e" : "#1e1e26", border: creationChoiceOpen ? "1px solid #0756C9" : "2px dashed #333338" }}
+                          className="vmix-hover-ring flex w-[171px] flex-col items-center justify-center rounded-lg transition-all duration-200"
+                          style={{ aspectRatio: "3/2", backgroundColor: creationChoiceOpen ? "#25252e" : "#1e1e26", border: creationChoiceOpen ? "1px solid #0756C9" : "2px dashed #333338" }}
                           onClick={() => { setCreationChoiceOpen(open => !open); setAudioMonitorInput(""); }}
                           aria-expanded={creationChoiceOpen}
                           aria-label="Criar botão personalizado"
