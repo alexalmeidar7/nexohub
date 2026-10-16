@@ -5591,8 +5591,8 @@ function SwitcherUI({
         />
       )}
 
+      {/* ── Command Log Panel (hidden in device previews) ── */}
       {!isButtonDevicePreview && (
-      {/* ── Command Log Panel ── */}
       <div className="fixed bottom-0 left-0 right-0 z-50" style={{ pointerEvents: "none" }}>
         <div className="max-w-5xl mx-auto" style={{ pointerEvents: "auto" }}>
           {/* Toggle bar */}
