@@ -667,6 +667,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
   const [dragPresetIdx, setDragPresetIdx] = useState<number | null>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [dragCustomButtonId, setDragCustomButtonId] = useState<string | null>(null);
+  const [dragCustomCategory, setDragCustomCategory] = useState<string | null>(null);
+  const [customButtonCategoryOrder, setCustomButtonCategoryOrder] = useState<string[]>([]);
   const [editingCustomButtonId, setEditingCustomButtonId] = useState<string | null | "new">(null);
   const [activeCustomButton, setActiveCustomButton] = useState<string | null>(null);
   // HLS stream URLs per input (for NDI live preview)
@@ -921,7 +923,15 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
 
     const { data } = await query.order("created_at");
     if (data) {
-      const filtered = (data as any[]).filter(b => matchesStudio(b.estudio, studioName));
+      let filtered = (data as any[]).filter(b => matchesStudio(b.estudio, studioName));
+      try {
+        const categoryKey = `vmix_custom_button_categories:${user?.id}:${normStudio(studioName) || "all"}`;
+        const overrides = JSON.parse(localStorage.getItem(categoryKey) || "{}") as Record<string, string>;
+        filtered = filtered.map(button => overrides[button.id] ? { ...button, category: overrides[button.id] } : button);
+        const categoryOrderKey = `vmix_custom_category_order:${user?.id}:${normStudio(studioName) || "all"}`;
+        const savedCategoryOrder = JSON.parse(localStorage.getItem(categoryOrderKey) || "[]") as string[];
+        setCustomButtonCategoryOrder(savedCategoryOrder);
+      } catch { /* mantém categorias originais */ }
       try {
         const orderKey = `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}`;
         const savedOrder = JSON.parse(localStorage.getItem(orderKey) || "[]") as string[];
@@ -937,6 +947,44 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       setCustomButtons(filtered);
     }
   }, [user, studioName]);
+
+  const assignCustomButtonCategory = useCallback((buttonId: string, category: string) => {
+    if (!user || !buttonId || !category) return;
+    const storageKey = `vmix_custom_button_categories:${user.id}:${normStudio(studioName) || "all"}`;
+    try {
+      const overrides = JSON.parse(localStorage.getItem(storageKey) || "{}") as Record<string, string>;
+      overrides[buttonId] = category;
+      localStorage.setItem(storageKey, JSON.stringify(overrides));
+    } catch { /* no-op */ }
+    const targetColor = customButtons.find(button =>
+      String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() === category &&
+      button.id !== buttonId && typeof button.color === "string" && /^#[0-9a-f]{6}$/i.test(button.color)
+    )?.color;
+    setCustomButtons(prev => prev.map(button => {
+      if (button.id !== buttonId) return button;
+      const commands = Array.isArray(button.commands) ? [...button.commands] : [];
+      if (commands.length) commands[0] = { ...commands[0], _buttonCategory: category };
+      return { ...button, category, color: targetColor || button.color, commands };
+    }));
+    if (targetColor) {
+      void (supabase.from("custom_vmix_buttons" as any) as any)
+        .update({ color: targetColor })
+        .eq("id", buttonId);
+    }
+  }, [user, studioName, customButtons]);
+
+  const reorderCustomCategory = useCallback((draggedCategory: string, targetCategory: string) => {
+    if (!user || !draggedCategory || !targetCategory || draggedCategory === targetCategory) return;
+    const allCategories = Array.from(new Set(customButtons.map(button => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS")));
+    const baseOrder = [...customButtonCategoryOrder, ...allCategories.filter(category => !customButtonCategoryOrder.includes(category))];
+    const from = baseOrder.indexOf(draggedCategory);
+    const to = baseOrder.indexOf(targetCategory);
+    if (from < 0 || to < 0) return;
+    baseOrder.splice(to, 0, baseOrder.splice(from, 1)[0]);
+    const key = `vmix_custom_category_order:${user.id}:${normStudio(studioName) || "all"}`;
+    localStorage.setItem(key, JSON.stringify(baseOrder));
+    setCustomButtonCategoryOrder(baseOrder);
+  }, [user, studioName, customButtons, customButtonCategoryOrder]);
 
   const reorderCustomButton = useCallback((draggedId: string, targetId: string) => {
     if (!user || draggedId === targetId) return;
