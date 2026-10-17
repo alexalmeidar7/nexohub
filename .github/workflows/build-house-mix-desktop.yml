@@ -1,0 +1,41 @@
+name: Build House Mix Desktop
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/house-mix-desktop]
+    paths:
+      - "desktop/**"
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/build-house-mix-desktop.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Build desktop frontend
+        run: npm run desktop:build
+      - name: Package Windows installer
+        run: npx electron-builder --win nsis --x64
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: House-Mix-Desktop-Windows-x64
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 14
