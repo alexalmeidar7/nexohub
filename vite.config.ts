@@ -8,6 +8,7 @@ import { logoTransformPlugin } from "./vite-plugins/logoTransformPlugin";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: process.env.HOUSE_MIX_DESKTOP === "1" ? "./" : "/",
   server: {
     host: "::",
     port: 8080,
