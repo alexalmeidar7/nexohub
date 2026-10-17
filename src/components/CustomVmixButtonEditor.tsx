@@ -439,6 +439,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     const commandsWithCategory = savedCommands.map((command, index) => index === 0 ? { ...command, _buttonCategory: buttonCategory || null } : command);
     const payload = {
       nome: nome.trim(),
+      category: buttonCategory.trim() || "OUTROS",
       color,
       dias_semana: diasSemana,
       data_especifica: dataEspecifica || null,
