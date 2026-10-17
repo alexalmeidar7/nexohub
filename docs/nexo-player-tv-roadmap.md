@@ -71,3 +71,20 @@ Evoluir a experiência de rádio para Smart TVs com foco em navegação por cont
 - Migrar banco de dados.
 - Alterar o comportamento de produção de `/player`.
 - Prometer publicação em lojas de Smart TV antes de testes reais e requisitos de cada fabricante.
+
+
+## Auditoria inicial do repositório (17/10/2026)
+
+Arquivos verificados na branch `main`:
+- `src/App.tsx`: já existem rotas `/player`, `/player/watch`, `/player/catalog`, `/player/app` e rotas por emissora `/:userSlug/player` e `/:userSlug/player/tv`.
+- `src/pages/Player.tsx`: player existente e extenso, com áudio/HLS, autenticação, dados da emissora e diversos componentes de interface. Deve ser tratado como fluxo legado a preservar.
+- `src/pages/player/PlayerHub.tsx`: hub de entrada já tem modo convidado por `?tvGuest=1`, passos de login/splash/welcome/home e hook de foco para TV. É um ponto de reaproveitamento, mas precisa de revisão antes de ser expandido.
+- `src/pages/player/PlayerCatalog.tsx`: catálogo existente consulta canais em `streaming_channels` e busca conteúdo de playlists.
+- `src/pages/player/AccessScreen.tsx`: fluxo de autenticação já existente; QR pairing seguro será um fluxo complementar, não substituição improvisada do login.
+
+### Implicações
+1. Não criar uma segunda experiência paralela sem antes entender o hub e as rotas atuais.
+2. Fazer o primeiro protótipo como rota TV isolada, com sinalização explícita de experimento e sem alterar o comportamento de `/player`.
+3. Antes de QR login/chat/notificações, identificar os serviços e políticas de acesso existentes no Lovable Cloud; não criar tabelas ou funções de produção nesta etapa.
+4. Validar foco com controle remoto, foco visível, navegação por setas/Enter/Voltar, e comportamento em telas 16:9.
+5. A auditoria é parcial: ainda faltam mapear o schema/políticas de dados, serviços de notícias/clima/programação e a estratégia de empacotamento por fabricante.
