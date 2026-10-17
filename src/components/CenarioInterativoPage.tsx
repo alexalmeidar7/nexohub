@@ -3670,7 +3670,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
                       {/* ═══ ENQUETE ═══ */}
                       {activeTab === "enquete" && (
-                        <div className="flex flex-col items-center justify-start h-full w-full overflow-hidden" style={{ gap: pvh(2), paddingTop: `${pvh(3)}px`, paddingLeft: `${pvh(4)}px`, paddingRight: `${pvh(4)}px`, color: config.home.colorMusicName || "#fff" }}>
+                        <div className="flex flex-col items-center justify-start h-full w-full overflow-hidden" style={{ gap: pvh(1.6), paddingTop: `${pvh(2)}px`, paddingLeft: `${pvh(3)}px`, paddingRight: `${pvh(3)}px`, color: config.home.colorMusicName || "#fff" }}>
                           <div className="text-center">
                             <div className="font-black leading-tight" style={{ fontSize: pvh(6), textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>ENQUETE</div>
                             
@@ -3720,18 +3720,18 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                               {weatherSubTab === "today" && (
                                 <div className="flex flex-col items-center justify-start h-full w-full overflow-y-auto" style={{ gap: `${pvh(1.5)}px`, padding: `${pvh(1.5)}px ${pvh(2)}px` }}>
                                   <div className="text-center" style={{ marginBottom: `${pvh(1)}px` }}>
-                                    <div className="font-black leading-none" style={{ fontSize: `${pvh(4.2)}px`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.6)" }}>{weatherCity || config.city || "Cidade"}</div>
+                                    <div className="font-black leading-none" style={{ fontSize: `${pvh(3.8)}px`, letterSpacing: "-0.03em", color: config.home.colorMusicName || "#fff", textShadow: "0 3px 16px rgba(0,0,0,0.35)" }}>{weatherCity || config.city || "Cidade"}</div>
                                     <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.5)}px`, color: config.home.colorMusicTitle || "var(--layout-accent-color, #00BFF0)", marginTop: `${pvh(0.6)}px`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
                                   </div>
 
                                   {config.weather.showCurrent && (
-                                    <div className="rounded-3xl w-full max-w-[90%]" style={{ padding: `${pvh(2.5)}px`, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 12px 48px rgba(0,0,0,0.2)" }}>
+                                    <div className="rounded-2xl w-full max-w-[92%]" style={{ padding: `${pvh(1.8)}px`, background: "rgba(255,255,255,0.08)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 8px 24px rgba(0,0,0,0.16)" }}>
                                       <div className="flex items-center justify-center" style={{ gap: `${pvh(3)}px`, marginBottom: `${pvh(2)}px` }}>
                                         <div style={{ width: `${pvh(10)}px`, height: `${pvh(10)}px`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
                                           <WeatherIcon code={liveWeather.current.code} size={pvh(10)} forceDay />
                                         </div>
                                         <div className="flex flex-col">
-                                          <div className="font-black" style={{ fontSize: `${pvh(6.5)}px`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,0.4)" }}>{liveWeather.current.temp}°</div>
+                                          <div className="font-black" style={{ fontSize: `${pvh(5.2)}px`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,0.4)" }}>{liveWeather.current.temp}°</div>
                                           <div className="font-medium" style={{ fontSize: `${pvh(1.8)}px`, opacity: 0.85, marginTop: `${pvh(0.3)}px` }}>{getWLabel(liveWeather.current.code)}</div>
                                         </div>
                                       </div>
@@ -3749,13 +3749,13 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                   )}
 
                                   {config.weather.showForecast3Days && (
-                                    <div className="w-full max-w-[90%] flex flex-col" style={{ gap: `${pvh(1.2)}px` }}>
+                                    <div className="w-full max-w-[92%] flex flex-col" style={{ gap: `${pvh(0.8)}px` }}>
                                       <div className="font-bold uppercase tracking-widest text-center" style={{ fontSize: `${pvh(1.3)}px`, opacity: 0.5, marginBottom: `${pvh(0.5)}px` }}>Próximos Dias</div>
                                       {liveWeather.daily.slice(1, 4).map((d, i) => (
                                         <div key={i} className={`w-full flex items-center cenario-anim-row-${i + 1}`} style={{
-                                          padding: `${pvh(1.2)}px ${pvh(2)}px`,
+                                          padding: `${pvh(0.9)}px ${pvh(1.5)}px`,
                                           background: "rgba(255,255,255,0.08)",
-                                          borderRadius: `${pvh(1.8)}px`,
+                                          borderRadius: `${pvh(1.2)}px`,
                                           backdropFilter: "blur(20px)",
                                           border: "1.5px solid rgba(255,255,255,0.15)",
                                           boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
@@ -3822,7 +3822,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                           {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.5)" }} />}
                           {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
                           <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
-                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(4)}px`, paddingLeft: `calc(${pvh(4)}px + 50px)` }}>
+                          <div className="relative z-10 flex flex-col h-full items-center justify-start overflow-y-auto" style={{ padding: `${pvh(2)}px ${pvh(2.5)}px`, paddingLeft: `calc(${pvh(2.5)}px + 50px)` }}>
                             {config.currency.enabled ? (
                               <CenarioQuotesPanel
                                 accentColor={config.home.colorMusicTitle || "var(--layout-accent-color, #00BFF0)"}
@@ -3847,9 +3847,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                         <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: config.home.colorMusicName || "#fff" }}>
                           {!config.chat.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
                           <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.1), transparent)" }} />
-                          <div className="relative z-10 flex flex-col h-full" style={{ padding: `${pvh(3)}px` }}>
+                          <div className="relative z-10 flex flex-col h-full" style={{ padding: `${pvh(2)}px ${pvh(2.5)}px` }}>
                             {config.chat.enabled ? (
-                              <div className="flex-1 flex flex-col items-center justify-center relative">
+                              <div className="flex-1 flex flex-col items-center justify-start relative pt-2">
                                 {/* Header for Chat */}
                                 <div className="absolute top-0 right-0 flex flex-col items-end">
                                   <div className="flex items-center gap-2 mb-1">
@@ -3860,7 +3860,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                 </div>
 
                                 {/* Last 3 Messages List Preview */}
-                                <div className="w-full flex flex-col items-center justify-center gap-6" style={{ padding: `0 ${pvh(4)}px` }}>
+                                <div className="w-full flex flex-col items-center justify-start gap-3" style={{ padding: `0 ${pvh(2)}px`, marginTop: `${pvh(9)}px` }}>
                                   {chatMessages.length > 0 ? chatMessages.slice(-3).map((m, i) => (
                                     <div
                                       key={i}
