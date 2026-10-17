@@ -1124,7 +1124,7 @@ export default function CortesVideoPage() {
   const currentSelectedText = textOverlays.find(t => t.id === selectedTextId);
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-[#f8fafc] text-slate-900 select-none">
+    <div className="fixed inset-x-2 top-[72px] bottom-2 z-[80] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-[#f8fafc] text-slate-900 shadow-2xl select-none">
       {/* ════════ TOP HEADER BAR (Matching reference image) ════════ */}
       <header className="relative h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between shrink-0 z-20">
         {/* Left: Project Name & Undo/Redo */}
