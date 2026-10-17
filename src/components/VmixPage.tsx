@@ -876,13 +876,6 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
     }
   }, [user]);
 
-  // Initial load effect
-  useEffect(() => {
-    if (user) {
-      loadProgramas();
-    }
-  }, [user, loadProgramas]);
-
   // Mantém a grade sincronizada sem recarregar a página.
   // Realtime atende as alterações normais; a consulta periódica cobre eventos perdidos.
   useEffect(() => {
@@ -893,6 +886,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       if (disposed || document.visibilityState === "hidden") return;
       void loadProgramas();
     };
+    // Carregamento inicial único: evita duplicar a consulta feita pelo efeito inicial separado.
+    void loadProgramas();
     const channel = supabase
       .channel(`vmix-program-grid-${user.id}`)
       .on(
