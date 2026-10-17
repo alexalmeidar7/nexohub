@@ -2361,18 +2361,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                 <span className="text-sm font-bold" style={{ color: NEXO_CYAN }}>Roteiro</span>
               </div>
               <div className="p-4 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <div>
-                  <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Type size={12} style={{ color: NEXO_CYAN }} /> Título
-                  </label>
-                  <input
-                    value={podcastData.tituloTarja}
-                    onChange={e => setPodcastData(prev => ({ ...prev, tituloTarja: e.target.value }))}
-                    placeholder="Título principal"
-                    className="w-full px-4 py-2.5 rounded-full text-[12px] outline-none"
-                    style={inputStyle}
-                  />
+                    <label className="text-[13px] font-bold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <Type size={14} style={{ color: NEXO_CYAN }} /> Título
+                    </label>
+                    <input
+                      value={podcastData.tituloTarja}
+                      onChange={e => setPodcastData(prev => ({ ...prev, tituloTarja: e.target.value }))}
+                      placeholder="Título principal"
+                      className="w-full px-4 py-2.5 rounded-lg text-[12px] font-bold outline-none"
+                      style={{ ...inputStyle, borderRadius: 8, fontWeight: 700 }}
+                    />
                   </div>
                   <div>
                     <label className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -2382,8 +2382,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                       value={podcastData.subtituloTarja}
                       onChange={e => setPodcastData(prev => ({ ...prev, subtituloTarja: e.target.value }))}
                       placeholder="Complemento da tarja"
-                      className="w-full px-4 py-2.5 rounded-full text-[12px] outline-none"
-                      style={inputStyle}
+                      className="w-full px-4 py-2.5 rounded-lg text-[12px] outline-none"
+                      style={{ ...inputStyle, borderRadius: 8 }}
                     />
                   </div>
                 </div>
@@ -2399,7 +2399,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                     placeholder="Descreva o tema principal do podcast e o contexto da conversa..."
                     className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none resize-none"
                     rows={3}
-                    style={inputStyle}
+                    style={{ ...inputStyle, borderRadius: 10 }}
                   />
                 </div>
 
@@ -2424,7 +2424,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                           placeholder={`Pergunta ${idx + 1}...`}
                           className="flex-1 px-3 py-2 rounded-lg text-[12px] outline-none resize-none min-w-0"
                           rows={2}
-                          style={inputStyle}
+                          style={{ ...inputStyle, borderRadius: 8 }}
                         />
                         {podcastData.perguntas.length > 1 && (
                           <button
