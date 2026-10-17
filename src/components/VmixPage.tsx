@@ -3218,6 +3218,7 @@ function SwitcherUI({
   currentTime
 }: any) {
 
+  const isButtonDevicePreview = typeof window !== "undefined" && ["mobile", "tablet", "desktop"].includes(new URLSearchParams(window.location.search).get("buttonPreview") || "");
   const [onAirBlinkOn, setOnAirBlinkOn] = useState(true);
   useEffect(() => {
     const blinkTimer = window.setInterval(() => setOnAirBlinkOn(value => !value), 500);
