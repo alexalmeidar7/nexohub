@@ -3190,7 +3190,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
               </div>
             )}
 
-            <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[530px] -mt-5 pt-0 min-h-0 overflow-hidden bg-transparent rounded-none relative">
+            <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[460px] -mt-5 pt-0 min-h-0 overflow-hidden bg-transparent rounded-none relative">
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
