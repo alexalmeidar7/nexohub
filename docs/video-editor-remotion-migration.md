@@ -1,31 +1,38 @@
-# House Mix Video Editor — Remotion migration audit
+# House Mix Video Editor — simplificação sem custo de licença
 
-## Goal
-Rework the video editor in an isolated, incremental path without replacing the current editor or changing the existing Lovable Cloud database/authentication.
+## Objetivo
+Entregar um editor simples e específico para cortes de entrevistas/podcasts, sem adotar Remotion ou bibliotecas com licença que possa criar obrigações para o produto comercial.
 
-## Verified baseline
-- Main editor component: `src/components/CortesVideoPage.tsx`.
-- Current dependencies include `@ffmpeg/ffmpeg@0.12.10` and `@ffmpeg/util@0.12.1`; `@remotion/player` is not currently listed in `package.json`.
-- The current preview is drawn to a canvas and the export path records a WebM stream using `MediaRecorder`, then transcodes it in browser FFmpeg to MP4 using H.264 at 5 Mbps and AAC at 96 kbps.
-- The video library reads `video_editor_assets` and the `video-editor-media` storage bucket, generating signed URLs. The code declares a 50 MiB library limit.
-- The current timeline clip model contains video and image clips; audio is connected separately during export. Undo/redo controls are visible in the header but are not wired in the inspected JSX.
-- No `render-worker/Dockerfile` or `render-worker/package.json` was found at the repository root in this audit. This does not rule out a separate external render service; it must be confirmed before designing the server render path.
+## Escopo do editor
+- Importar um vídeo de entrevista e cortar/remover trechos.
+- Inserir no máximo um texto sobre o vídeo.
+- Sobrepor uma máscara PNG com transparência alfa.
+- Acrescentar um vídeo de assinatura no final.
+- Exportar MP4 H.264 com vídeo a 5 Mbps e áudio AAC a 96 kbps.
+- Legenda automática fica fora do escopo inicial; só será considerada depois se houver uma opção sem custo de serviço e viável para o navegador/infraestrutura.
 
-## Proposed staged implementation
-1. Preserve the current editor as fallback while building the new editor surface behind an isolated route/feature flag.
-2. Prototype Remotion Player preview using a minimal composition and verify preview, seek, and aspect-ratio behavior before adapting the full timeline.
-3. Rework the workspace into media library, preview monitor, properties inspector, and multitrack timeline; add real undo/redo and audio-track editing only with focused tests.
-4. Decide on server-side rendering only after locating the actual deployment/worker setup and measuring the cost of a short MP4 render.
-5. Run lint/build and targeted tests; validate MP4 H.264, 5 Mbps video, AAC 96 kbps audio, progress reporting, retries, and media-library preservation.
-6. Keep the old export path available until the new render pipeline passes validation. Do not deploy or change production rendering as part of the prototype.
+## Base técnica verificada
+- Componente principal: `src/components/CortesVideoPage.tsx`.
+- O projeto já utiliza `@ffmpeg/ffmpeg@0.12.10` e `@ffmpeg/util@0.12.1`; não é necessário comprar licença para iniciar os ajustes na implementação atual.
+- A prévia usa canvas e a exportação grava um WebM com `MediaRecorder`, depois transcodifica para MP4 no FFmpeg do navegador.
+- A biblioteca de mídias usa a tabela `video_editor_assets` e o bucket `video-editor-media` do Supabase/Lovable Cloud.
+- O código declara um limite de biblioteca de 50 MiB.
+- A renderização atual já foi relatada como travando perto de 66–69%; é necessário testar e corrigir essa etapa, sem afirmar estabilidade antes de validar.
 
-## Cost and license gate
-- Do not purchase the official Editor Starter template yet; it is listed at US$600 per project.
-- Remotion's published license currently allows eligible individuals and organizations with up to 3 people to use it for free, including commercial use. Larger/ineligible organizations using the Player or automated editor workflows may require Remotion for Automators, currently US$0.01 per successful render with a US$100/month minimum.
-- Confirm the organization's eligibility before using Remotion in production. Infrastructure costs for server rendering are separate and depend on the hosting provider and usage.
+## Primeira alteração nesta branch
+- A janela do editor foi ampliada para ocupar quase toda a área útil abaixo do menu.
+- O painel opaco do editor cobre os widgets flutuantes da página enquanto estiver aberto, deixando a área de edição livre da capa/nome/artista da música e do programa no ar, sem alterar os dados desses widgets.
+- Alteração feita em branch isolada; ainda não é merge nem implantação em produção.
 
-## Safety constraints
-- No database migration.
-- No production deployment.
-- No replacement of existing library/auth logic.
-- No changes to the public player routes.
+## Próximas etapas
+1. Simplificar a interface para o fluxo podcast: vídeo, texto único, máscara PNG, assinatura final e exportação.
+2. Manter o banco, autenticação, biblioteca e armazenamento atuais.
+3. Testar cortes e composições de vídeo com mídia real, incluindo sobreposições PNG e vídeo final.
+4. Diagnosticar a renderização por etapas e corrigir progresso, timeout e tratamento de falhas; preservar o formato MP4 e os parâmetros definidos.
+5. Manter o caminho antigo disponível até validar o fluxo simplificado.
+
+## Restrições
+- Sem compra de licença ou serviço de renderização por enquanto.
+- Sem migração de banco de dados.
+- Sem implantação em produção nesta etapa.
+- Não alterar rotas nem comportamento do player público.
