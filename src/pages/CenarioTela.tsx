@@ -2245,7 +2245,7 @@ export default function CenarioTela() {
                           className="font-black leading-tight" 
                           style={{ fontSize: `${vhToPx(7)}${vu}`, textShadow: "0 4px 30px rgba(0,0,0,0.8)" }}
                         >
-                          ENQUETE INTERATIVA
+                          ENQUETE
                         </motion.div>
                         <div className="font-bold uppercase tracking-[0.4em] mt-[1.5vh]" style={{ fontSize: `${vhToPx(2)}${vu}`, color: accentColor }}>
                           PARTICIPE AGORA
