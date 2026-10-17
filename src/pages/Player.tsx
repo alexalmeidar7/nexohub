@@ -4012,7 +4012,12 @@ export default function PlayerPage() {
                 {/* Chat */}
                 {!isCatalog && (
                 <button
-                  onClick={() => setChatOpen(!chatOpen)}
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setChatOpen((open) => !open);
+                  }}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all hover:scale-105 border-2 hover:border-white/70"
                   style={{ backgroundColor: chatOpen ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.08)", color: chatOpen ? "#000" : "#fff", borderColor: chatOpen ? "hsl(var(--player-accent))" : "transparent" }}
                   title="Chat ao Vivo"
