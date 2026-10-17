@@ -1982,9 +1982,9 @@ export default function CenarioTela() {
                             >
                           {/* City & Title Section */}
                           <div className="text-center mb-12">
-                            <h2 className="text-[6vh] font-black text-white tracking-tight flex flex-col items-center leading-none">
+                            <h2 className="text-[6vh] font-black tracking-tight flex flex-col items-center leading-none" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>
                               {config.weather.city || "goiânia"}
-                              <span className="text-[1.8vh] font-bold text-[#00BFF0] uppercase tracking-[0.4em] mt-2">
+                              <span className="text-[1.8vh] font-bold uppercase tracking-[0.4em] mt-2" style={{ color: config.home.colorDate || config.home.colorMusicTitle || accentColor }}>
                                 Previsão do Tempo
                               </span>
                             </h2>
@@ -2002,8 +2002,8 @@ export default function CenarioTela() {
                                 </motion.div>
                               </div>
                               <div className="text-right">
-                                <div className="text-[12vh] font-black text-white leading-none">{Math.round(liveWeather.current.temp)}°</div>
-                                <div className="text-[2.5vh] font-bold text-white/80 mt-2">{getWLabel(liveWeather.current.code)}</div>
+                                <div className="text-[12vh] font-black leading-none" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{Math.round(liveWeather.current.temp)}°</div>
+                                <div className="text-[2.5vh] font-bold mt-2" style={{ color: config.home.colorDate || "#FFFFFF" }}>{getWLabel(liveWeather.current.code)}</div>
                               </div>
                             </div>
 
@@ -2011,15 +2011,15 @@ export default function CenarioTela() {
                             <div className="bg-white/5 rounded-[2vh] py-[2vh] px-[4vh] flex items-center justify-between border border-white/5">
                               <div className="flex items-center gap-[1.5vh]">
                                 <Thermometer className="text-white/40" style={{ width: '2.5vh', height: '2.5vh' }} />
-                                <span className="text-[2.8vh] font-bold text-white">{liveWeather.daily[0]?.min}° / {liveWeather.daily[0]?.max}°</span>
+                                <span className="text-[2.8vh] font-bold" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{liveWeather.daily[0]?.min}° / {liveWeather.daily[0]?.max}°</span>
                               </div>
                               <div className="flex items-center gap-[1.5vh]">
                                 <Droplets className="text-[#00BFF0]" style={{ width: '2.5vh', height: '2.5vh' }} />
-                                <span className="text-[2.8vh] font-bold text-[#00BFF0]">{liveWeather.current.humidity}%</span>
+                                <span className="text-[2.8vh] font-bold" style={{ color: config.home.colorMusicTitle || accentColor }}>{liveWeather.current.humidity}%</span>
                               </div>
                               <div className="flex items-center gap-[1.5vh]">
                                 <CloudRain className="text-white/40" style={{ width: '2.5vh', height: '2.5vh' }} />
-                                <span className="text-[2.8vh] font-bold text-white/60">{liveWeather.daily[0]?.precip ?? 0}%</span>
+                                <span className="text-[2.8vh] font-bold" style={{ color: config.home.colorDate || "#FFFFFF" }}>{liveWeather.daily[0]?.precip ?? 0}%</span>
                               </div>
                             </div>
                           </div>
@@ -2027,7 +2027,7 @@ export default function CenarioTela() {
                           {/* Next Days Section */}
                           <div className="w-full space-y-[2vh]">
                             <div className="text-center mb-4">
-                              <span className="text-[1.4vh] font-black text-white/40 uppercase tracking-[0.3em]">Próximos Dias</span>
+                              <span className="text-[1.4vh] font-black uppercase tracking-[0.3em]" style={{ color: config.home.colorDate || "#FFFFFF" }}>Próximos Dias</span>
                             </div>
                             
                             {liveWeather.daily.slice(1, 4).map((d, i) => {
@@ -2042,21 +2042,21 @@ export default function CenarioTela() {
                                   transition={{ delay: i * 0.1 }}
                                   className="bg-[#0A2540]/40 p-[3vh] rounded-[3vh] border border-white/10 flex items-center justify-between backdrop-blur-sm"
                                 >
-                                  <span className="text-[2.5vh] font-bold text-white/80 w-[15vh]">{wk}, {dayNum}</span>
+                                  <span className="text-[2.5vh] font-bold w-[15vh]" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{wk}, {dayNum}</span>
                                   <div className="flex items-center gap-[2vh]">
                                     <div className="p-[1vh] bg-white/5 rounded-[1.5vh]" style={{ width: '6vh', height: '6vh' }}>
                                       <WeatherIcon code={d.code} size={60} />
                                     </div>
                                     <div className="flex flex-col">
-                                      <span className="text-[1.4vh] font-black text-[#00BFF0] uppercase flex items-center gap-1">
+                                      <span className="text-[1.4vh] font-black uppercase flex items-center gap-1" style={{ color: config.home.colorMusicTitle || accentColor }}>
                                         <Droplets style={{ width: '1.2vh', height: '1.2vh' }} /> {d.precip}%
                                       </span>
-                                      <span className="text-[1.4vh] font-bold text-white/40">{d.rainMm || 0}mm</span>
+                                      <span className="text-[1.4vh] font-bold" style={{ color: config.home.colorDate || "#FFFFFF" }}>{d.rainMm || 0}mm</span>
                                     </div>
                                   </div>
                                   <div className="flex items-baseline gap-[1.5vh]">
-                                    <span className="text-[3.5vh] font-black text-white">{d.max}°</span>
-                                    <span className="text-[2vh] font-bold text-white/30">{d.min}°</span>
+                                    <span className="text-[3.5vh] font-black" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{d.max}°</span>
+                                    <span className="text-[2vh] font-bold" style={{ color: config.home.colorDate || "#FFFFFF" }}>{d.min}°</span>
                                   </div>
                                 </motion.div>
                               );
