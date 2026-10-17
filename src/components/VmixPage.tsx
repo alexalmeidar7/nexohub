@@ -963,17 +963,15 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
       String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() === category &&
       button.id !== buttonId && typeof button.color === "string" && /^#[0-9a-f]{6}$/i.test(button.color)
     )?.color;
+    void (supabase.from("custom_vmix_buttons" as any) as any)
+      .update({ category, ...(targetColor ? { color: targetColor } : {}) })
+      .eq("id", buttonId);
     setCustomButtons(prev => prev.map(button => {
       if (button.id !== buttonId) return button;
       const commands = Array.isArray(button.commands) ? [...button.commands] : [];
       if (commands.length) commands[0] = { ...commands[0], _buttonCategory: category };
       return { ...button, category, color: targetColor || button.color, commands };
     }));
-    if (targetColor) {
-      void (supabase.from("custom_vmix_buttons" as any) as any)
-        .update({ color: targetColor })
-        .eq("id", buttonId);
-    }
   }, [user, studioName, customButtons]);
 
   const reorderCustomCategory = useCallback((draggedCategory: string, targetCategory: string) => {
