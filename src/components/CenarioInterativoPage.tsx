@@ -3673,7 +3673,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                         <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: pvh(4) }}>
                           <div className="text-center">
                             <div className="font-black leading-tight" style={{ fontSize: pvh(6), textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>ENQUETE</div>
-                            <div className="font-bold uppercase tracking-[0.3em] mt-2" style={{ fontSize: pvh(1.5), color: accentColor }}>Interativa</div>
+                            
                           </div>
 
                           {(() => {
