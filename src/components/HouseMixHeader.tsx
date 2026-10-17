@@ -75,6 +75,7 @@ export default function HouseMixHeader({
   // Calendar states
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
+  const { user } = useAuth();
   const [eventDates, setEventDates] = useState<Date[]>([]);
   const [todayAgendaItems, setTodayAgendaItems] = useState<Array<{ id: string; title: string; time?: string }>>([]);
   const [activeAgendaItem, setActiveAgendaItem] = useState(0);
@@ -171,7 +172,6 @@ export default function HouseMixHeader({
   }, [todayAgendaItems.length]);
 
   // User Auth & Profile state
-  const { user } = useAuth();
   const [unreadChatbotCount, setUnreadChatbotCount] = useState<number>(() => {
     try {
       const local = localStorage.getItem("nexohub_chatbot_contacts_v1");
