@@ -75,10 +75,103 @@ export default function HouseMixHeader({
   // Calendar states
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
+  const { user } = useAuth();
   const [eventDates, setEventDates] = useState<Date[]>([]);
+  const [todayAgendaItems, setTodayAgendaItems] = useState<Array<{ id: string; title: string; time?: string }>>([]);
+  const [activeAgendaItem, setActiveAgendaItem] = useState(0);
+
+  // Load today's agenda items for the signed-in station, including recurring events.
+  useEffect(() => {
+    if (!user) {
+      setTodayAgendaItems([]);
+      return;
+    }
+    let cancelled = false;
+    const loadTodayAgenda = async () => {
+      try {
+        let targetUserId = user.id;
+        const { data: subUser } = await supabase
+          .from("sub_users")
+          .select("parent_user_id, ativo")
+          .eq("auth_user_id", user.id)
+          .maybeSingle();
+        if (subUser?.ativo && subUser.parent_user_id) targetUserId = subUser.parent_user_id;
+
+        const today = new Date();
+        const todayKey = format(today, "yyyy-MM-dd");
+        const [uniqueRes, recurringRes, programsRes] = await Promise.all([
+          supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId)
+            .or("recorrencia.eq.unico,recorrencia.is.null").eq("data", todayKey).limit(100),
+          supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId)
+            .not("recorrencia", "eq", "unico").lte("data", todayKey)
+            .or(`periodo_fim.gte.${todayKey},periodo_fim.is.null`).limit(200),
+          supabase.from("programas").select("id,nome,horario_inicio,dias_semana").eq("user_id", targetUserId),
+        ]);
+        if (cancelled) return;
+        const programs = new Map((programsRes.data || []).map((p: any) => [p.id, p]));
+        const dow = today.getDay();
+        const dayNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+        const recurringMatches = (evt: any) => {
+          const start = evt.data ? new Date(evt.data + "T12:00:00") : null;
+          if (!start) return false;
+          if (evt.periodo_inicio && todayKey < evt.periodo_inicio) return false;
+          if (evt.periodo_fim && todayKey > evt.periodo_fim) return false;
+          const program: any = programs.get(evt.programa_id);
+          const days = evt.dias_semana || program?.dias_semana;
+          if (Array.isArray(days) && days.length) {
+            const normalized = days.map((d: any) => String(d).toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, ""));
+            return normalized.some((d: string) => d.includes(dayNames[dow]));
+          }
+          if (evt.recorrencia === "semanal") return start.getDay() === dow;
+          if (evt.recorrencia === "mensal") return start.getDate() === today.getDate();
+          if (evt.recorrencia === "programa_semanal" || evt.recorrencia?.startsWith("programa_semanal:") || evt.recorrencia?.startsWith("dias:")) {
+            let activeDays = [1, 2, 3, 4, 5];
+            if (Array.isArray(evt.dias_semana) && evt.dias_semana.length) activeDays = evt.dias_semana.map(Number);
+            else if (evt.recorrencia.startsWith("programa_semanal:")) activeDays = evt.recorrencia.slice(17).split(",").map(Number);
+            else if (evt.recorrencia.startsWith("dias:")) activeDays = evt.recorrencia.slice(5).split(",").map(Number);
+            return activeDays.includes(dow);
+          }
+          return false;
+        };
+        const all = new Map<string, any>();
+        (uniqueRes.data || []).forEach((evt: any) => all.set(evt.id, evt));
+        (recurringRes.data || []).filter(recurringMatches).forEach((evt: any) => all.set(evt.id, evt));
+        const items = Array.from(all.values()).map((evt: any) => {
+          const program: any = programs.get(evt.programa_id);
+          const title = String(evt.descricao || evt.titulo || program?.nome || evt.tipo_evento || "Evento").trim();
+          const rawTime = evt.horario_gravacao || program?.horario_inicio || "";
+          return { id: String(evt.id), title, time: rawTime ? String(rawTime).slice(0, 5) : "" };
+        }).sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+        if (!cancelled) {
+          setTodayAgendaItems(items);
+          setActiveAgendaItem(0);
+        }
+      } catch {
+        if (!cancelled) setTodayAgendaItems([]);
+      }
+    };
+    void loadTodayAgenda();
+    const channel = supabase.channel(`header-agenda-today-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos" }, () => { void loadTodayAgenda(); })
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (todayAgendaItems.length < 2) {
+      setActiveAgendaItem(0);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setActiveAgendaItem((current) => (current + 1) % todayAgendaItems.length);
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [todayAgendaItems.length]);
 
   // User Auth & Profile state
-  const { user } = useAuth();
   const [unreadChatbotCount, setUnreadChatbotCount] = useState<number>(() => {
     try {
       const local = localStorage.getItem("nexohub_chatbot_contacts_v1");
@@ -1194,6 +1287,27 @@ export default function HouseMixHeader({
                 </div>
               </PopoverContent>
             </Popover>
+            <div
+              className="min-w-0 max-w-[min(520px,48vw)] flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition-all duration-300"
+              style={{
+                background: "rgba(255,255,255,0.14)",
+                border: "1px solid rgba(255,255,255,0.16)",
+                color: "var(--layout-nav-text, #ffffff)",
+                backdropFilter: "blur(14px)",
+              }}
+              title={todayAgendaItems.length ? "Eventos cadastrados na agenda para hoje" : "Nenhum evento cadastrado para hoje"}
+              aria-live="polite"
+            >
+              <CalendarDays className="w-3.5 h-3.5 shrink-0 opacity-80" />
+              <span className="truncate">
+                {todayAgendaItems.length === 0
+                  ? "Sem eventos para hoje"
+                  : `${todayAgendaItems[activeAgendaItem]?.time ? todayAgendaItems[activeAgendaItem].time + " · " : ""}${todayAgendaItems[activeAgendaItem]?.title || "Evento"}`}
+              </span>
+              {todayAgendaItems.length > 1 && (
+                <span className="shrink-0 text-[10px] opacity-65">{activeAgendaItem + 1}/{todayAgendaItems.length}</span>
+              )}
+            </div>
 
             {/* Breadcrumb — only visible when not on home/dashboard */}
             {currentPage !== "dashboard" && pageTitle && (
