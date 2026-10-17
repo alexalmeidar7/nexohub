@@ -15,7 +15,9 @@ Deno.serve(async (req) => {
     const { data: device, error } = await admin.from("vmix_bridge_devices").select("id,last_seen_at").eq("token_hash", await hash(token)).is("revoked_at", null).maybeSingle();
     if (error) throw error;
     if (!device) return new Response(JSON.stringify({ error: "Invalid Bridge token" }), { status: 401, headers });
-    if (!device.last_seen_at || Date.now() - new Date(device.last_seen_at).getTime() > 15000) {\n      await admin.from("vmix_bridge_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id);\n    }
+    if (!device.last_seen_at || Date.now() - new Date(device.last_seen_at).getTime() > 15000) {
+      await admin.from("vmix_bridge_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id);
+    }
     const { data: jobs, error: jobError } = await admin.rpc("claim_next_vmix_bridge_job", { p_device_id: device.id });
     if (jobError) throw jobError;
     const job = jobs?.[0];
