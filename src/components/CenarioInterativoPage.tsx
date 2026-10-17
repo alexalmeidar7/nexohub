@@ -3690,7 +3690,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                   <div className="grid grid-cols-2 gap-[2vh]">
                                     {[activePoll.resposta1, activePoll.resposta2, activePoll.resposta3, activePoll.resposta4].filter(Boolean).map((resp, idx) => (
                                       <div key={idx} className="p-[2vh] rounded-[1.5vh] border border-white/10 flex items-center gap-[1.5vh]" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                        <div className="w-[4vh] h-[4vh] rounded-full flex items-center justify-center font-black text-[2vh]" style={{ background: accentColor }}>{idx + 1}</div>
+                                        <div className="w-[4vh] h-[4vh] rounded-full flex items-center justify-center font-black text-[2vh]" style={{ background: accentColor, color: config.home.colorClock || "#fff" }}>{idx + 1}</div>
                                         <span className="font-bold text-[1.8vh] truncate">{resp}</span>
                                       </div>
                                     ))}
@@ -3700,7 +3700,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                             }
                             return (
                               <div className="opacity-40 flex flex-col items-center">
-                                <Tag size={pvh(8)} className="mb-2" />
+                                <Tag size={pvh(8)} className="mb-2" style={{ color: config.home.colorMusicTitle || "var(--layout-accent-color, #00BFF0)" }} />
                                 <div className="font-bold uppercase tracking-widest text-xs">Nenhuma enquete ativa</div>
                               </div>
                             );
@@ -3711,7 +3711,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                       {/* ═══ WEATHER ═══ */}
 
                       {activeTab === "weather" && weatherSubTab !== "satellite" && (
-                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: config.home.colorMusicName || "#fff" }}>
                           {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}
                           <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 75% 15%, rgba(255,255,255,0.12) 0%, transparent 55%)" }} />
                           <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }} />
@@ -3721,7 +3721,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                 <div className="flex flex-col items-center justify-start h-full w-full overflow-y-auto" style={{ gap: `${pvh(1.5)}px`, padding: `${pvh(1.5)}px ${pvh(2)}px` }}>
                                   <div className="text-center" style={{ marginBottom: `${pvh(1)}px` }}>
                                     <div className="font-black leading-none" style={{ fontSize: `${pvh(4.2)}px`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.6)" }}>{weatherCity || config.city || "Cidade"}</div>
-                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.5)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.6)}px`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
+                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.5)}px`, color: config.home.colorMusicTitle || "var(--layout-accent-color, #00BFF0)", marginTop: `${pvh(0.6)}px`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
                                   </div>
 
                                   {config.weather.showCurrent && (
@@ -3818,14 +3818,14 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
                       {/* ═══ CURRENCY ═══ */}
                       {activeTab === "currency" && (
-                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: config.home.colorMusicName || "#fff" }}>
                           {config.currency.bgImage && <div className="absolute inset-0" style={{ background: "rgba(3,8,14,0.5)" }} />}
                           {!config.currency.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #080c14 0%, #0f1923 30%, #141e2e 60%, #0d1520 100%)" }} />}
                           <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)" }} />
                           <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(4)}px`, paddingLeft: `calc(${pvh(4)}px + 50px)` }}>
                             {config.currency.enabled ? (
                               <CenarioQuotesPanel
-                                accentColor="var(--layout-accent-color, #444)"
+                                accentColor={config.home.colorMusicTitle || "var(--layout-accent-color, #00BFF0)"}
                                 currencyOptions={CURRENCY_OPTIONS}
                                 currencySubTab={currencySubTab}
                                 currencyCodes={config.currency.currencies}
@@ -3844,7 +3844,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
                       {/* ═══ CHAT ═══ */}
                       {activeTab === "chat" && (
-                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                        <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: config.home.colorMusicName || "#fff" }}>
                           {!config.chat.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)" }} />}
                           <div className="absolute bottom-0 left-0 right-0 h-1/4" style={{ background: "linear-gradient(to top, rgba(200,230,0,0.1), transparent)" }} />
                           <div className="relative z-10 flex flex-col h-full" style={{ padding: `${pvh(3)}px` }}>
