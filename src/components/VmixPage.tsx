@@ -5101,7 +5101,7 @@ function SwitcherUI({
                                   <span className="text-[9px] font-black uppercase tracking-widest text-white/60 whitespace-nowrap">{categoryName}</span>
                                   <div className="h-px min-w-[18px] flex-1 bg-white/10" /><span className="text-[8px] text-white/25">⠿</span>
                                 </div>
-                                <div className="grid w-full min-w-0 gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, buttonPreviewMode === "mobile" ? 4 : buttonPreviewMode === "tablet" ? 5 : 8)}, minmax(0, 1fr))`, maxWidth: "100%", width: "100%" }}>
+                                <div className="grid min-w-0 gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(categoryButtons.length, buttonPreviewMode === "mobile" ? 3 : buttonPreviewMode === "tablet" ? 5 : 8)}, ${buttonPreviewMode === "mobile" ? 92 : buttonPreviewMode === "tablet" ? 112 : 150}px)`, width: "max-content", maxWidth: "100%" }}>
                                   {categoryButtons.map((btn: any, buttonIndex, sortedButtons) => {
                         const audioMonitorInput = getAudioMonitorInput(btn);
                         if (audioMonitorInput) {
@@ -5146,7 +5146,7 @@ function SwitcherUI({
                         return (
                           <div
                             key={btn.id}
-                            className={`group/custom relative w-full min-w-0 max-w-[171px] rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
+                            className={`group/custom relative w-full min-w-0 rounded-lg overflow-hidden transition-colors duration-200 ${isLiveButtonEnabled ? "vmix-hover-ring cursor-pointer" : "cursor-not-allowed grayscale"}${isBtnActive ? " vmix-active-blink" : ""}`}
                             style={{
                               aspectRatio: "3/2",
                               backgroundColor: btnColor,
