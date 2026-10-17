@@ -3318,10 +3318,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                                   {config.weather.enabled && config.weather.showSatellite && (
                                     <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "satellite"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "satellite"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
                                   )}
-                                    <button onClick={() => handleTabChange("enquete")} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all relative" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "enquete"), border: "none", color: btnIcon(activeTab === "enquete"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
-                                      3
-                                      {enquetes.length > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse" />}
-                                    </button>
+
                                   </div>
                                 </div>
                               </div>
