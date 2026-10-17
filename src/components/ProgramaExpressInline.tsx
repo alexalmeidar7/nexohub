@@ -2387,6 +2387,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                     />
                   </div>
                 </div>
+                <p className="text-[11px] font-medium" style={{ color: (podcastData.tituloTarja.length + podcastData.subtituloTarja.length) > 100 ? "#dc2626" : "var(--layout-page-text, #64748b)" }}>
+                  Total máximo de caracteres no título do YouTube (100): {podcastData.tituloTarja.length + podcastData.subtituloTarja.length}
+                </p>
 
                 {/* Introdução do Tema */}
                 <div>
@@ -2460,7 +2463,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                     placeholder="Texto de encerramento ou considerações finais..."
                     className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none resize-none"
                     rows={3}
-                    style={inputStyle}
+                    style={{ ...inputStyle, borderRadius: 10 }}
                   />
                 </div>
               </div>
