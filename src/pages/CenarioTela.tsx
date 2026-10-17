@@ -1938,7 +1938,7 @@ export default function CenarioTela() {
                 {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
                 <div className="absolute inset-0" style={{ background: "transparent" }} />
                 <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "transparent" }} />
-                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
+                <div className="relative z-10 flex flex-col h-full items-center justify-start overflow-y-auto" style={{ padding: `${vhToPx(2)}${vu}`, paddingLeft: `calc(${vhToPx(2)}${vu} + 50px)` }}>
                   {liveWeather ? (
                     <div className="flex flex-col items-center justify-center h-full w-full" style={{ padding: `${vhToPx(2)}${vu}` }}>
                       <AnimatePresence mode="wait">
@@ -1981,7 +1981,7 @@ export default function CenarioTela() {
                               className="flex flex-col items-center w-full"
                             >
                           {/* City & Title Section */}
-                          <div className="text-center mb-12">
+                          <div className="text-center mb-[2vh]">
                             <h2 className="text-[6vh] font-black tracking-tight flex flex-col items-center leading-none" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>
                               {config.weather.city || "goiânia"}
                               <span className="text-[1.8vh] font-bold uppercase tracking-[0.4em] mt-2" style={{ color: config.home.colorDate || config.home.colorMusicTitle || accentColor }}>
@@ -1991,27 +1991,27 @@ export default function CenarioTela() {
                           </div>
 
                           {/* Current Weather Card */}
-                          <div className="w-full bg-[#0A2540]/60 rounded-[4vh] p-[4vh] border border-white/10 backdrop-blur-md mb-8 flex flex-col">
+                          <div className="w-full max-w-[92%] bg-white/8 rounded-[2vh] p-[2vh] border border-white/15 backdrop-blur-md mb-[1.5vh] flex flex-col">
                             <div className="flex items-center justify-between mb-8">
                               <div className="relative">
                                 <motion.div
                                   animate={{ y: [0, -vhToPx(1), 0] }}
                                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                                 >
-                                  <WeatherIcon code={liveWeather.current.code} size={250} />
+                                  <WeatherIcon code={liveWeather.current.code} size={100} />
                                 </motion.div>
                               </div>
                               <div className="text-right">
-                                <div className="text-[12vh] font-black leading-none" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{Math.round(liveWeather.current.temp)}°</div>
-                                <div className="text-[2.5vh] font-bold mt-2" style={{ color: config.home.colorDate || "#FFFFFF" }}>{getWLabel(liveWeather.current.code)}</div>
+                                <div className="text-[7vh] font-black leading-none" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{Math.round(liveWeather.current.temp)}°</div>
+                                <div className="text-[1.8vh] font-semibold mt-1" style={{ color: config.home.colorDate || "#FFFFFF" }}>{getWLabel(liveWeather.current.code)}</div>
                               </div>
                             </div>
 
                             {/* Main Stats Bar */}
-                            <div className="bg-white/5 rounded-[2vh] py-[2vh] px-[4vh] flex items-center justify-between border border-white/5">
+                            <div className="bg-black/10 rounded-[1.2vh] py-[1.2vh] px-[1.8vh] flex items-center justify-between border border-white/10">
                               <div className="flex items-center gap-[1.5vh]">
                                 <Thermometer className="text-white/40" style={{ width: '2.5vh', height: '2.5vh' }} />
-                                <span className="text-[2.8vh] font-bold" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{liveWeather.daily[0]?.min}° / {liveWeather.daily[0]?.max}°</span>
+                                <span className="text-[1.8vh] font-semibold" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{liveWeather.daily[0]?.min}° / {liveWeather.daily[0]?.max}°</span>
                               </div>
                               <div className="flex items-center gap-[1.5vh]">
                                 <Droplets className="text-[#00BFF0]" style={{ width: '2.5vh', height: '2.5vh' }} />
@@ -2025,7 +2025,7 @@ export default function CenarioTela() {
                           </div>
 
                           {/* Next Days Section */}
-                          <div className="w-full space-y-[2vh]">
+                          <div className="w-full max-w-[92%] space-y-[1vh]">
                             <div className="text-center mb-4">
                               <span className="text-[1.4vh] font-black uppercase tracking-[0.3em]" style={{ color: config.home.colorDate || "#FFFFFF" }}>Próximos Dias</span>
                             </div>
@@ -2040,7 +2040,7 @@ export default function CenarioTela() {
                                   initial={{ opacity: 0, x: -20 }}
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{ delay: i * 0.1 }}
-                                  className="bg-[#0A2540]/40 p-[3vh] rounded-[3vh] border border-white/10 flex items-center justify-between backdrop-blur-sm"
+                                  className="bg-white/8 p-[1.5vh] rounded-[1.5vh] border border-white/15 flex items-center justify-between backdrop-blur-sm"
                                 >
                                   <span className="text-[2.5vh] font-bold w-[15vh]" style={{ color: config.home.colorMusicName || "#FFFFFF" }}>{wk}, {dayNum}</span>
                                   <div className="flex items-center gap-[2vh]">
@@ -2156,9 +2156,9 @@ export default function CenarioTela() {
             {activeTab === "chat" && (
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {!config.chat.bgImage && !config.home.bgGradient && !config.home.bgImage && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} />}
-                <div className="relative z-10 flex flex-col h-full" style={{ padding: `${vhToPx(3)}${vu}` }}>
+                <div className="relative z-10 flex flex-col h-full" style={{ padding: `${vhToPx(2)}${vu}` }}>
                   {config.chat.enabled ? (
-                    <div className="flex-1 flex flex-col items-center justify-center relative">
+                    <div className="flex-1 flex flex-col items-center justify-start relative pt-[1vh]">
                       {/* Header for Chat */}
                       <div className="absolute top-0 right-0 flex flex-col items-end">
                         <div className="flex items-center gap-2 mb-1">
@@ -2169,7 +2169,7 @@ export default function CenarioTela() {
                       </div>
 
                       {/* Last 3 Messages List */}
-                      <div className="w-full flex flex-col items-center justify-center gap-6" style={{ padding: `0 ${vhToPx(4)}${vu}` }}>
+                      <div className="w-full flex flex-col items-center justify-start gap-[1.5vh]" style={{ padding: `0 ${vhToPx(2)}${vu}`, marginTop: `${vhToPx(9)}${vu}` }}>
                         {chatMessages.slice(-3).map((m, i) => (
                           <div
                             key={i}
@@ -2235,15 +2235,15 @@ export default function CenarioTela() {
               <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                 {config.enquete?.bgImage && <img src={config.enquete.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                 {!config.enquete?.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
-                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}` }}>
+                <div className="relative z-10 flex flex-col h-full items-center justify-start overflow-y-auto" style={{ padding: `${vhToPx(2)}${vu}` }}>
                   {config.enquete?.enabled ? (
                     <div className="w-full max-w-[85%] flex flex-col items-center">
-                      <div className="text-center mb-[6vh]">
+                      <div className="text-center mb-[2.5vh]">
                         <motion.div 
                           initial={{ opacity: 0, y: -20 }}
                           animate={{ opacity: 1, y: 0 }}
                           className="font-black leading-tight" 
-                          style={{ fontSize: `${vhToPx(7)}${vu}`, textShadow: "0 4px 30px rgba(0,0,0,0.8)" }}
+                          style={{ fontSize: `${vhToPx(4.5)}${vu}`, color: config.home.colorMusicName || "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.35)" }}
                         >
                           ENQUETE
                         </motion.div>
