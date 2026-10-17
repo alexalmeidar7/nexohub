@@ -3670,7 +3670,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
                       {/* ═══ ENQUETE ═══ */}
                       {activeTab === "enquete" && (
-                        <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: pvh(4) }}>
+                        <div className="flex flex-col items-center justify-start h-full w-full overflow-hidden" style={{ gap: pvh(2), paddingTop: `${pvh(3)}px`, paddingLeft: `${pvh(4)}px`, paddingRight: `${pvh(4)}px`, color: config.home.colorMusicName || "#fff" }}>
                           <div className="text-center">
                             <div className="font-black leading-tight" style={{ fontSize: pvh(6), textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>ENQUETE</div>
                             
@@ -3715,10 +3715,10 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
                           {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}
                           <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 75% 15%, rgba(255,255,255,0.12) 0%, transparent 55%)" }} />
                           <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "linear-gradient(to top, rgba(0,0,0,0.45), transparent)" }} />
-                          <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${pvh(4)}px`, paddingLeft: `calc(${pvh(4)}px + 50px)` }}>
+                          <div className="relative z-10 flex flex-col h-full items-center justify-start overflow-y-auto" style={{ padding: `${pvh(2.5)}px ${pvh(3)}px ${pvh(2)}px`, paddingLeft: `calc(${pvh(3)}px + 50px)` }}>
                             {liveWeather ? (<>
                               {weatherSubTab === "today" && (
-                                <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${pvh(2)}px`, padding: `${pvh(2)}px` }}>
+                                <div className="flex flex-col items-center justify-start h-full w-full overflow-y-auto" style={{ gap: `${pvh(1.5)}px`, padding: `${pvh(1.5)}px ${pvh(2)}px` }}>
                                   <div className="text-center" style={{ marginBottom: `${pvh(1)}px` }}>
                                     <div className="font-black leading-none" style={{ fontSize: `${pvh(4.2)}px`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,0.6)" }}>{weatherCity || config.city || "Cidade"}</div>
                                     <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${pvh(1.5)}px`, color: "var(--layout-accent-color, #444)", marginTop: `${pvh(0.6)}px`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
