@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import jsPDF from "jspdf";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -71,6 +72,11 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   const [commercialAudience, setCommercialAudience] = useState<AnyRow[]>([]);
   const [vmixEvents, setVmixEvents] = useState<AnyRow[]>([]);
   const [vmixUnavailable, setVmixUnavailable] = useState(false);
+  const [vmixStartDate, setVmixStartDate] = useState(() => {
+    const date = new Date(); date.setDate(date.getDate() - 29);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  });
+  const [vmixEndDate, setVmixEndDate] = useState(todayISO);
   const [audienceDate, setAudienceDate] = useState(todayISO);
   const [blitzDate, setBlitzDate] = useState("");
   const [audienceRows, setAudienceRows] = useState<AnyRow[]>([]);
@@ -109,6 +115,21 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
   };
 
   useEffect(() => { void load(); }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase.channel(`vmix-report-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vmix_button_interactions", filter: `user_id=eq.${userId}` }, (payload: any) => {
+        if (payload.eventType === "INSERT" && payload.new) {
+          setVmixEvents(current => [payload.new as AnyRow, ...current.filter(row => row.id !== payload.new.id)].slice(0, 1000));
+          setVmixUnavailable(false);
+        } else {
+          void supabase.from("vmix_button_interactions" as any).select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1000)
+            .then(({ data, error }: any) => { if (!error) { setVmixEvents((data || []) as AnyRow[]); setVmixUnavailable(false); } });
+        }
+      }).subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [userId]);
 
   useEffect(() => {
     if (active !== "audiencia" || !userId) return;
@@ -260,9 +281,19 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
     const today = todayISO();
     return promos.filter(p => p.ativo !== false && (!p.data_inicio || p.data_inicio <= today) && (!p.data_fim || p.data_fim >= today));
   }, [promos]);
+  const vmixPeriodEvents = useMemo(() => {
+    const start = new Date(`${vmixStartDate}T00:00:00`);
+    const end = new Date(`${vmixEndDate}T23:59:59.999`);
+    return vmixEvents.filter(event => {
+      if (!event.created_at) return false;
+      const created = new Date(event.created_at);
+      return !Number.isNaN(created.getTime()) && created >= start && created <= end;
+    });
+  }, [vmixEvents, vmixStartDate, vmixEndDate]);
+
   const vmixRanking = useMemo(() => {
     const totals = new Map<string, { name: string; clicks: number; points: number; lastClick: string; buttons: Set<string> }>();
-    vmixEvents.forEach(event => {
+    vmixPeriodEvents.forEach(event => {
       const name = String(event.locutor_nome || event.apresentador_nome || event.user_email || "Locutor não identificado");
       const current = totals.get(name) || { name, clicks: 0, points: 0, lastClick: event.created_at || "", buttons: new Set<string>() };
       current.clicks += 1;
@@ -272,8 +303,8 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       totals.set(name, current);
     });
     return Array.from(totals.values()).sort((a, b) => b.points - a.points || b.clicks - a.clicks);
-  }, [vmixEvents]);
-  const vmixTotalPoints = useMemo(() => vmixEvents.reduce((sum, event) => sum + (Number(event.points) || 0), 0), [vmixEvents]);
+  }, [vmixPeriodEvents]);
+  const vmixTotalPoints = useMemo(() => vmixPeriodEvents.reduce((sum, event) => sum + (Number(event.points) || 0), 0), [vmixPeriodEvents]);
 
   const audienceByProgram = useMemo(() => {
     const groups = new Map<string, { program: string; audio: number; video: number; lastSeen: string }>();
@@ -291,6 +322,51 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       .sort((a, b) => b.total - a.total || a.program.localeCompare(b.program, "pt-BR"));
   }, [audienceRows]);
   const topAudiencePrograms = audienceByProgram.slice(0, 3);
+
+  const exportVmixPdf = () => {
+    if (!vmixPeriodEvents.length) return;
+    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    pdf.setFont("helvetica", "bold"); pdf.setFontSize(16); pdf.text("HOUSE MIX - RELATORIO VMIX", 14, 16);
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(9);
+    pdf.text(`Periodo: ${dateOnly(vmixStartDate)} a ${dateOnly(vmixEndDate)}`, 14, 23);
+    pdf.text(`Cliques: ${vmixPeriodEvents.length} | Pontos: ${vmixTotalPoints.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}`, 14, 29);
+    pdf.setFont("helvetica", "bold"); pdf.text("RANKING DE LOCUTORES", 14, 38);
+    let y = 44; pdf.setFontSize(8);
+    ["POS.", "LOCUTOR", "CLIQUES", "PONTOS"].forEach((v, i) => pdf.text(v, [14, 28, 125, 155][i], y));
+    y += 5; pdf.setFont("helvetica", "normal");
+    vmixRanking.forEach((item, index) => {
+      if (y > 185) { pdf.addPage(); y = 16; }
+      pdf.text(`${index + 1}º`, 14, y); pdf.text(item.name.slice(0, 50), 28, y);
+      pdf.text(String(item.clicks), 125, y); pdf.text(item.points.toLocaleString("pt-BR", { maximumFractionDigits: 1 }), 155, y); y += 5;
+    });
+    y += 5; if (y > 180) { pdf.addPage(); y = 16; }
+    pdf.setFont("helvetica", "bold"); pdf.text("REGISTROS DE CLIQUES", 14, y); y += 6; pdf.setFontSize(7);
+    const columns = [14, 37, 60, 100, 160, 225, 255];
+    const headers = ["DATA", "HORA", "PROGRAMA", "LOCUTOR", "BOTAO", "CATEGORIA", "PONTOS"];
+    headers.forEach((header, i) => pdf.text(header, columns[i], y)); y += 5; pdf.setFont("helvetica", "normal");
+    vmixPeriodEvents.forEach(event => {
+      if (y > 195) { pdf.addPage(); y = 16; headers.forEach((header, i) => pdf.text(header, columns[i], y)); y += 5; }
+      const created = event.created_at ? new Date(event.created_at) : null;
+      const values = [created ? created.toLocaleDateString("pt-BR") : "—", created ? created.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—", String(event.program_name || "—").slice(0, 22), String(event.locutor_nome || event.apresentador_nome || event.user_email || "Não identificado").slice(0, 30), String(event.button_name || "Botão personalizado").slice(0, 28), String(event.button_category || "OUTROS").slice(0, 18), (Number(event.points) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })];
+      values.forEach((value, i) => pdf.text(value, columns[i], y)); y += 4.5;
+    });
+    pdf.save(`house-mix-relatorio-vmix-${vmixStartDate}-a-${vmixEndDate}.pdf`);
+  };
+
+  const changeVmixStartDate = (value: string) => {
+    if (value && vmixEndDate && (new Date(vmixEndDate).getTime() - new Date(value).getTime()) / 86400000 > 29) {
+      const limit = new Date(value); limit.setDate(limit.getDate() + 29);
+      setVmixEndDate(new Date(limit.getTime() - limit.getTimezoneOffset() * 60000).toISOString().slice(0, 10));
+    }
+    setVmixStartDate(value);
+  };
+  const changeVmixEndDate = (value: string) => {
+    if (value && vmixStartDate && (new Date(value).getTime() - new Date(vmixStartDate).getTime()) / 86400000 > 29) {
+      const limit = new Date(value); limit.setDate(limit.getDate() - 29);
+      setVmixStartDate(new Date(limit.getTime() - limit.getTimezoneOffset() * 60000).toISOString().slice(0, 10));
+    }
+    setVmixEndDate(value);
+  };
 
   const activeReport = REPORTS.find(r => r.key === active)!;
   const Icon = activeReport.icon;
@@ -470,7 +546,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
                   </div>
                 )}
 
-                {active === "vmix" && (vmixEvents.length ? <><div className="mb-4 grid gap-3 sm:grid-cols-4"><div className="rounded-xl bg-blue-50 p-4"><div className="text-[10px] font-bold uppercase text-blue-500">Cliques registrados</div><div className="mt-1 text-2xl font-black text-blue-700">{vmixEvents.length}</div></div><div className="rounded-xl bg-emerald-50 p-4"><div className="text-[10px] font-bold uppercase text-emerald-600">Pontos acumulados</div><div className="mt-1 text-2xl font-black text-emerald-700">{vmixTotalPoints.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-[10px] font-bold uppercase text-slate-400">Locutores identificados</div><div className="mt-1 text-2xl font-black text-slate-800">{new Set(vmixEvents.map(e => e.locutor_nome || e.apresentador_nome).filter(Boolean)).size}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-[10px] font-bold uppercase text-slate-400">Botões diferentes</div><div className="mt-1 text-2xl font-black text-slate-800">{new Set(vmixEvents.map(e => e.button_id).filter(Boolean)).size}</div></div></div>{vmixRanking.length > 0 && <div className="mb-4 overflow-hidden rounded-xl border border-slate-100"><div className="border-b border-slate-100 bg-slate-50 px-4 py-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-600">Ranking de pontuação por locutor</div><div className="divide-y divide-slate-100">{vmixRanking.map((item, index) => <div key={item.name} className="flex items-center gap-3 px-4 py-3"><div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black ${index === 0 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"}`}>{index + 1}º</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold text-slate-800">{item.name}</div><div className="mt-1 text-[10px] text-slate-400">{item.buttons.size} botão(ões) diferentes · {item.clicks} cliques · último clique {dateTime(item.lastClick)}</div></div><div className="text-right"><div className="text-lg font-black text-emerald-700">{item.points.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</div><div className="text-[9px] font-bold uppercase text-slate-400">pontos</div></div></div>)}</div></div>}<div className="mb-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-600"><span className="rounded-lg bg-slate-100 px-3 py-2">CAMERAS: 1 ponto</span><span className="rounded-lg bg-slate-100 px-3 py-2">DIVS: 0,5 ponto</span><span className="rounded-lg bg-slate-100 px-3 py-2">COMERCIAL: 1,5 ponto</span><span className="rounded-lg bg-slate-100 px-3 py-2">EFEITOS: 2,5 pontos</span><span className="rounded-lg bg-slate-100 px-3 py-2">QUADROS: 1,5 ponto</span></div><div className="overflow-x-auto rounded-xl border border-slate-100"><table className="w-full"><thead className="bg-slate-50"><tr><Th>Data</Th><Th>Horário</Th><Th>Programa</Th><Th>Locutor</Th><Th>Tecla apertada</Th><Th>Categoria</Th><Th>Pontuação</Th></tr></thead><tbody>{filtered(vmixEvents, ["locutor_nome", "apresentador_nome", "studio_name", "button_name", "button_category", "program_name"]).map(e => <tr key={e.id} className="border-t border-slate-100"><Td>{dateOnly(e.created_at)}</Td><Td><span className="font-bold">{e.created_at ? new Date(e.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—"}</span></Td><Td className="font-semibold">{e.program_name || "—"}</Td><Td className="font-bold">{e.locutor_nome || e.apresentador_nome || e.user_email || "—"}</Td><Td>{e.button_name || "Botão personalizado"}</Td><Td>{e.button_category || "OUTROS"}</Td><Td><span className="inline-flex min-w-16 items-center justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">{(Number(e.points) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</span></Td></tr>)}</tbody></table></div></> : <TableEmpty text={vmixUnavailable ? "O registro de cliques do vMix ainda não está disponível no banco de dados. Após habilitar a tabela de interações, os próximos cliques aparecerão aqui." : "Ainda não há cliques de botões personalizados registrados."} />)}
+                {active === "vmix" && <><div className="mb-4 flex flex-wrap items-end justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3"><div className="flex flex-wrap items-end gap-3"><label className="grid gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">De<input type="date" value={vmixStartDate} max={vmixEndDate || todayISO()} onChange={e => changeVmixStartDate(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700" /></label><label className="grid gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">Até<input type="date" value={vmixEndDate} min={vmixStartDate} max={todayISO()} onChange={e => changeVmixEndDate(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700" /></label><span className="pb-2 text-[10px] text-slate-500">Período máximo: 30 dias</span></div><button onClick={exportVmixPdf} disabled={!vmixPeriodEvents.length} className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-4 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"><Download size={14} /> Exportar PDF</button></div>{vmixPeriodEvents.length ? <><div className="mb-4 grid gap-3 sm:grid-cols-4"><div className="rounded-xl bg-blue-50 p-4"><div className="text-[10px] font-bold uppercase text-blue-500">Cliques registrados</div><div className="mt-1 text-2xl font-black text-blue-700">{vmixPeriodEvents.length}</div></div><div className="rounded-xl bg-emerald-50 p-4"><div className="text-[10px] font-bold uppercase text-emerald-600">Pontos acumulados</div><div className="mt-1 text-2xl font-black text-emerald-700">{vmixTotalPoints.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-[10px] font-bold uppercase text-slate-400">Locutores identificados</div><div className="mt-1 text-2xl font-black text-slate-800">{new Set(vmixEvents.map(e => e.locutor_nome || e.apresentador_nome).filter(Boolean)).size}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-[10px] font-bold uppercase text-slate-400">Botões diferentes</div><div className="mt-1 text-2xl font-black text-slate-800">{new Set(vmixEvents.map(e => e.button_id).filter(Boolean)).size}</div></div></div>{vmixRanking.length > 0 && <div className="mb-4 overflow-hidden rounded-xl border border-slate-100"><div className="border-b border-slate-100 bg-slate-50 px-4 py-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-600">Ranking de pontuação por locutor</div><div className="divide-y divide-slate-100">{vmixRanking.map((item, index) => <div key={item.name} className="flex items-center gap-3 px-4 py-3"><div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black ${index === 0 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"}`}>{index + 1}º</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-bold text-slate-800">{item.name}</div><div className="mt-1 text-[10px] text-slate-400">{item.buttons.size} botão(ões) diferentes · {item.clicks} cliques · último clique {dateTime(item.lastClick)}</div></div><div className="text-right"><div className="text-lg font-black text-emerald-700">{item.points.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</div><div className="text-[9px] font-bold uppercase text-slate-400">pontos</div></div></div>)}</div></div>}<div className="mb-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-600"><span className="rounded-lg bg-slate-100 px-3 py-2">CAMERAS: 1 ponto</span><span className="rounded-lg bg-slate-100 px-3 py-2">DIVS: 0,5 ponto</span><span className="rounded-lg bg-slate-100 px-3 py-2">COMERCIAL: 1,5 ponto</span><span className="rounded-lg bg-slate-100 px-3 py-2">EFEITOS: 2,5 pontos</span><span className="rounded-lg bg-slate-100 px-3 py-2">QUADROS: 1,5 ponto</span></div><div className="overflow-x-auto rounded-xl border border-slate-100"><table className="w-full"><thead className="bg-slate-50"><tr><Th>Data</Th><Th>Horário</Th><Th>Programa</Th><Th>Locutor</Th><Th>Tecla apertada</Th><Th>Categoria</Th><Th>Pontuação</Th></tr></thead><tbody>{filtered(vmixPeriodEvents, ["locutor_nome", "apresentador_nome", "studio_name", "button_name", "button_category", "program_name"]).map(e => <tr key={e.id} className="border-t border-slate-100"><Td>{dateOnly(e.created_at)}</Td><Td><span className="font-bold">{e.created_at ? new Date(e.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—"}</span></Td><Td className="font-semibold">{e.program_name || "—"}</Td><Td className="font-bold">{e.locutor_nome || e.apresentador_nome || e.user_email || "—"}</Td><Td>{e.button_name || "Botão personalizado"}</Td><Td>{e.button_category || "OUTROS"}</Td><Td><span className="inline-flex min-w-16 items-center justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">{(Number(e.points) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</span></Td></tr>)}</tbody></table></div></> : <TableEmpty text={vmixUnavailable ? "O registro de cliques do vMix ainda não está disponível no banco de dados. Após habilitar a tabela de interações, os próximos cliques aparecerão aqui." : "Nenhum clique registrado neste período."} />}</>}
               </>
             )}
           </section>
