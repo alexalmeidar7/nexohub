@@ -1,21 +1,18 @@
-/* Glassmorphism theme scoped to /vmix-control and /vmix-control/switcher.
-   Rollback: restore the previous vmix-flat-palette.css to return to the flat theme. */
+/* Lightweight glassmorphism scoped to /vmix-control routes.
+   Performance: blur is limited to major panels; operational tiles retain their own colors.
+   Rollback: restore the previous stylesheet to return to the flat theme. */
 .vmix-flat-palette {
-  --vmix-glass-page: #071329;
-  --vmix-glass-panel: rgba(13, 31, 62, 0.62);
-  --vmix-glass-panel-strong: rgba(9, 23, 48, 0.82);
-  --vmix-glass-border: rgba(148, 190, 255, 0.24);
-  --vmix-glass-highlight: rgba(255, 255, 255, 0.09);
-  --vmix-glass-blue: #087bff;
+  --vmix-glass-panel: rgba(13, 31, 62, .72);
+  --vmix-glass-border: rgba(148, 190, 255, .22);
   --vmix-glass-text: #f7faff;
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(ellipse at 8% 8%, rgba(0, 101, 249, .24), transparent 38%),
-    radial-gradient(ellipse at 92% 26%, rgba(91, 48, 255, .20), transparent 36%),
-    linear-gradient(135deg, #050b18 0%, #081832 52%, #070d1b 100%) !important;
-  color: var(--vmix-glass-text) !important;
   min-height: 100vh;
+  color: var(--vmix-glass-text) !important;
+  background:
+    radial-gradient(ellipse at 8% 8%, rgba(0, 101, 249, .16), transparent 38%),
+    radial-gradient(ellipse at 92% 26%, rgba(91, 48, 255, .13), transparent 36%),
+    linear-gradient(135deg, #050b18 0%, #081832 52%, #070d1b 100%) !important;
 }
 .vmix-flat-palette::before {
   content: "";
@@ -23,97 +20,68 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse at 18% 40%, rgba(0, 115, 255, .12), transparent 42%),
-    radial-gradient(ellipse at 82% 78%, rgba(88, 34, 220, .12), transparent 40%);
+  background: radial-gradient(ellipse at 18% 40%, rgba(0, 115, 255, .07), transparent 42%);
 }
 .vmix-flat-palette,
-.vmix-flat-palette * {
-  box-sizing: border-box;
-}
+.vmix-flat-palette * { box-sizing: border-box; }
 .vmix-flat-palette :is(h1,h2,h3,h4,h5,h6,p,span,label,small,strong,em,li,td,th,a),
-.vmix-flat-palette svg {
-  color: var(--vmix-glass-text);
-}
-.vmix-flat-palette :is(section,article,aside) {
-  border-color: var(--vmix-glass-border) !important;
-}
-.vmix-flat-palette :is(div,section,article,header,footer,aside)[style*="backgroundColor"],
-.vmix-flat-palette :is(div,section,article,header,footer,aside)[style*="background-color"] {
-  background-color: var(--vmix-glass-panel) !important;
-  background-image: linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.012)) !important;
-  border: 1px solid var(--vmix-glass-border) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 12px 30px rgba(0,0,0,.16) !important;
-  backdrop-filter: blur(16px) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(135%) !important;
-}
-/* Main page shell and header surfaces */
+.vmix-flat-palette svg { color: var(--vmix-glass-text); }
+
+/* Glass only on major containers, never every nested div. This avoids expensive
+   layers and prevents overriding the colored backgrounds of custom button tiles. */
 .vmix-flat-palette > header,
-.vmix-flat-palette header {
+.vmix-flat-palette .rounded-2xl.overflow-hidden[style*="backgroundColor"],
+.vmix-flat-palette .rounded-xl.overflow-hidden[style*="backgroundColor"] {
+  background-color: var(--vmix-glass-panel) !important;
+  background-image: linear-gradient(135deg, rgba(255,255,255,.045), rgba(255,255,255,.008)) !important;
   border-color: var(--vmix-glass-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 8px 20px rgba(0,0,0,.12) !important;
+  backdrop-filter: blur(8px) saturate(115%);
+  -webkit-backdrop-filter: blur(8px) saturate(115%);
 }
+.vmix-flat-palette header { border-color: var(--vmix-glass-border) !important; }
 .vmix-flat-palette :is(input,textarea,select) {
   color: #fff !important;
-  background: rgba(5, 16, 36, .78) !important;
+  background: rgba(5,16,36,.78) !important;
   border: 1px solid rgba(148,190,255,.25) !important;
   border-radius: 10px;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,.22) !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.18) !important;
 }
-.vmix-flat-palette :is(input,textarea,select)::placeholder {
-  color: rgba(235,243,255,.52) !important;
-}
+.vmix-flat-palette :is(input,textarea,select)::placeholder { color: rgba(235,243,255,.52) !important; }
 .vmix-flat-palette button,
 .vmix-flat-palette [role="button"] {
   color: #fff !important;
   border-radius: 10px;
-  border-color: rgba(255,255,255,.14) !important;
+  border-color: rgba(255,255,255,.14);
   text-shadow: none !important;
-  transition: transform .16s ease, filter .16s ease, box-shadow .16s ease !important;
+  transition: filter .14s ease, box-shadow .14s ease;
 }
-/* Keep operational tiles color-coded; add only a restrained highlight, not a glass wash. */
-.vmix-flat-palette button[style*="background"],
-.vmix-flat-palette [role="button"][style*="background"],
-.vmix-flat-palette button[class*="bg-"],
-.vmix-flat-palette [role="button"][class*="bg-"] {
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 5px 14px rgba(0,0,0,.18) !important;
+/* Explicitly preserve each custom tile's inline category color. */
+.vmix-flat-palette .group\/custom[style*="backgroundColor"] {
+  background-image: none !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 3px 9px rgba(0,0,0,.16) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 .vmix-flat-palette button:hover,
-.vmix-flat-palette [role="button"]:hover {
-  filter: brightness(1.08);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 7px 18px rgba(0,0,0,.24) !important;
-}
+.vmix-flat-palette [role="button"]:hover { filter: brightness(1.06); }
 .vmix-flat-palette button:focus-visible,
 .vmix-flat-palette [role="button"]:focus-visible {
   outline: 2px solid rgba(120,190,255,.95) !important;
   outline-offset: 2px;
 }
-/* Audio meters and signal surfaces stay crisp and dark for live use. */
-.vmix-flat-palette :is(video,canvas,iframe) {
-  background: #02050a !important;
-  box-shadow: none !important;
-}
-.vmix-flat-palette :is([role="dialog"],[data-radix-dialog-content]) {
+.vmix-flat-palette :is(video,canvas,iframe) { background: #02050a !important; box-shadow: none !important; }
+.vmix-flat-palette :is([role="dialog"],[data-radix-dialog-content]),
+body:has(.vmix-flat-palette) :is([role="dialog"],[data-radix-dialog-content]) {
   color: #fff !important;
-  background: rgba(8, 22, 46, .94) !important;
-  border: 1px solid var(--vmix-glass-border) !important;
-  box-shadow: 0 24px 70px rgba(0,0,0,.48) !important;
-  backdrop-filter: blur(22px) saturate(145%) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
-}
-body:has(.vmix-flat-palette) [role="dialog"],
-body:has(.vmix-flat-palette) [data-radix-dialog-content] {
-  color: #fff !important;
-  background: rgba(8, 22, 46, .96) !important;
-  border: 1px solid rgba(148,190,255,.24) !important;
-  box-shadow: 0 24px 70px rgba(0,0,0,.48) !important;
-  backdrop-filter: blur(22px) saturate(145%) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+  background: rgba(8,22,46,.96) !important;
+  border: 1px solid var(--vmix-glass-border, rgba(148,190,255,.24)) !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.38) !important;
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
 }
 body:has(.vmix-flat-palette) [role="dialog"] *,
-body:has(.vmix-flat-palette) [data-radix-dialog-content] * {
-  text-shadow: none !important;
-}
+body:has(.vmix-flat-palette) [data-radix-dialog-content] * { text-shadow: none !important; }
 @media (prefers-reduced-motion: reduce) {
-  .vmix-flat-palette button,
-  .vmix-flat-palette [role="button"] { transition: none !important; }
+  .vmix-flat-palette button, .vmix-flat-palette [role="button"] { transition: none !important; }
 }
