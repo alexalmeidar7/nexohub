@@ -2903,11 +2903,11 @@ function AudioMonitorButton({
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 border-l border-white/10 pl-2">
           <div className="grid grid-cols-2 gap-1">
             <div className="rounded bg-white/[0.04] px-1.5 py-1">
-              <p className="text-[6px] font-black text-white/45">L · LEFT</p>
+              <p className="text-[6px] font-black text-white/45">L1</p>
               <p className="text-[10px] font-black tabular-nums text-[#00e83b]">{levels?.available ? `${dbFor(leftLevel)} dB` : "— dB"}</p>
             </div>
             <div className="rounded bg-white/[0.04] px-1.5 py-1">
-              <p className="text-[6px] font-black text-white/45">R · RIGHT</p>
+              <p className="text-[6px] font-black text-white/45">R1</p>
               <p className="text-[10px] font-black tabular-nums text-[#00e83b]">{levels?.available ? `${dbFor(rightLevel)} dB` : "— dB"}</p>
             </div>
           </div>
