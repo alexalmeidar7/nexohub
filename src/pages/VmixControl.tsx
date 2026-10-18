@@ -146,49 +146,13 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
 
   return (
     <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
-      <header className="w-full px-4 sm:px-8 pt-6 sm:pt-8 shrink-0 relative z-20">
-        <div className="mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8" style={{ backgroundColor: "#242424" }}>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("vmix-control-header-action", { detail: "back" }))} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0042A3] text-white transition-colors hover:bg-[#0065F9]" title="Voltar" aria-label="Voltar">
-              <ChevronLeft size={17} />
-            </button>
-            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("vmix-control-header-action", { detail: "automation" }))} className="flex h-9 items-center gap-2 rounded-lg bg-[#0042A3] px-3 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Automação">
-              <Cpu size={14} /> <span>Automação</span>
-            </button>
-          </div>
-          <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none absolute left-1/2 top-1/2 block h-auto max-h-[19px] w-auto max-w-[38%] -translate-x-1/2 -translate-y-1/2 translate-y-[2px] object-contain" />
+      <header className="w-full px-4 sm:px-8 pt-3 sm:pt-4 shrink-0 relative z-20">
+        <div className="relative mx-auto flex w-full max-w-[1656px] min-h-[44px] items-center justify-center rounded-full px-4 sm:px-6" style={{ backgroundColor: "#242424" }}>
+          <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none block h-auto max-h-[14px] w-auto max-w-[34%] object-contain" />
           {user && (
-            <div className="ml-auto flex items-center gap-3 pl-4">
-              <div className="flex items-center gap-3 text-white/90">
-                <div className="flex items-center gap-1.5" title={headerTime.toLocaleDateString("pt-BR")}>
-                  <Clock size={14} className="text-white/70" />
-                  <span className="min-w-[48px] text-[13px] font-medium tabular-nums">{headerTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-                </div>
-                {headerStudioName && (
-                  <span
-                    className="whitespace-nowrap rounded-md bg-white/[0.06] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white/75"
-                    title="Estúdio selecionado para o controle vMix"
-                  >
-                    ESTÚDIO: {headerStudioName}
-                  </span>
-                )}
-                <div className="flex items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
-                  {vmixOnline ? <Wifi size={14} className="text-emerald-400" /> : <WifiOff size={14} className="text-red-400" />}
-                  <span className={`text-[9px] font-bold uppercase tracking-wide ${vmixOnline ? "text-emerald-400" : "text-red-400"}`}>{vmixOnline ? "Conectado" : "Desconectado"}</span>
-                </div>
-              </div>
-              <div className="relative group/account">
-                <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0055ff] text-white text-sm font-bold uppercase transition-colors hover:bg-[#0042A3] focus:outline-none focus:ring-2 focus:ring-[#0065F9]/50" title="Conta do usuário" aria-label="Abrir menu da conta">
-                  {(String(user.user_metadata?.full_name || user.user_metadata?.name || user.email || "U").trim()[0] || "U").toUpperCase()}
-                </button>
-                <div className="invisible opacity-0 group-hover/account:visible group-hover/account:opacity-100 group-focus-within/account:visible group-focus-within/account:opacity-100 absolute right-0 top-full z-50 mt-2 w-64 rounded-xl bg-[#242424] p-4 text-white transition-opacity duration-150">
-                  <p className="truncate text-sm font-semibold">{String(user.user_metadata?.full_name || user.user_metadata?.name || "Usuário")}</p>
-                  <p className="mt-1 truncate text-xs text-white/60">{user.email}</p>
-                  <button onClick={handleLogout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#333333] px-3 py-2 text-sm font-semibold transition-colors hover:bg-[#444444]">
-                    <LogOut size={15} /> Sair
-                  </button>
-                </div>
-              </div>
+            <div className="absolute right-4 flex items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
+              {vmixOnline ? <Wifi size={13} className="text-emerald-400" /> : <WifiOff size={13} className="text-red-400" />}
+              <span className={`text-[9px] font-bold uppercase tracking-wide ${vmixOnline ? "text-emerald-400" : "text-red-400"}`}>{vmixOnline ? "Conectado" : "Desconectado"}</span>
             </div>
           )}
         </div>
