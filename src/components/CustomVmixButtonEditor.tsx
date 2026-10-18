@@ -845,7 +845,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                           return;
                         }
                         if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) return;
-                        if (e.key.length === 1 || /^F\\d{1,2}$/.test(e.key)) {
+                        if (e.key.length === 1 || /^F\d{1,2}$/.test(e.key)) {
                           const nextKey = e.key === " " ? "Space" : e.key.toUpperCase();
                           setShortcutKey(nextKey);
                           setShortcut(formatButtonShortcut(nextKey, shortcutModifiers));
