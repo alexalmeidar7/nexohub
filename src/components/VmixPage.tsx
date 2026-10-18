@@ -4015,7 +4015,7 @@ function SwitcherUI({
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517", display: isButtonDevicePreview ? "none" : undefined }}>
         <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="group/previous relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">
-            {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60 transition-opacity duration-200 group-hover/previous:opacity-100" />}
+            {previousProgram?.apresentador_foto && <img src={previousProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute right-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom opacity-85 transition-opacity duration-200 group-hover/previous:opacity-100" />}
             <div className="relative z-10 min-w-0 pr-8">
               <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">PASSOU</span>
               <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{previousProgram?.nome || "—"}</span>
@@ -4067,7 +4067,7 @@ function SwitcherUI({
             </div>
           </div>
           <div className="group/next relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:items-end sm:text-right sm:px-6">
-            {headerNextProgram?.apresentador_foto && <img src={headerNextProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute left-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom grayscale opacity-60 transition-opacity duration-200 group-hover/next:opacity-100" />}
+            {headerNextProgram?.apresentador_foto && <img src={headerNextProgram.apresentador_foto} alt="" aria-hidden="true" className="pointer-events-none absolute left-[78px] bottom-0 z-0 h-full max-h-[120px] w-[120px] object-contain object-bottom opacity-85 transition-opacity duration-200 group-hover/next:opacity-100" />}
             <div className="relative z-10 min-w-0 pl-8">
               <span className="mb-1 block text-[8px] font-black uppercase tracking-[0.2em] text-white/55">A SEGUIR</span>
               <span className="block truncate text-[11px] font-black uppercase tracking-wide text-white/90">{headerNextProgram?.nome || "—"}</span>
@@ -4697,7 +4697,7 @@ function SwitcherUI({
                         <Radio size={14} style={{ color: "#C6F03C" }} />
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>PRESETS PROGRAMAS</span>
                       </div>
-                      <button onClick={() => setEditingPresetId("new")} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-colors hover:brightness-110" style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }} title="Criar novo programa">
+                      <button onClick={() => setEditingPresetId("new")} className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-white transition-colors hover:brightness-110" style={{ backgroundColor: "#0756C9", color: "#FFFFFF", border: "1px solid #3985f6" }} title="Criar novo programa">
                         <Plus size={12} /><span className="text-[10px] font-black uppercase tracking-wider">nova automação</span>
                       </button>
                       <span className="text-[9px] font-semibold uppercase tracking-wide text-white/65">
@@ -5029,8 +5029,8 @@ function SwitcherUI({
                       </div>
                       <button
                         onClick={() => setEditingCustomButtonId("new")}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#C6F03C", color: "#000", border: "1px solid #C6F03C" }}
+                        className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-white transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#0756C9", color: "#FFFFFF", border: "1px solid #3985f6" }}
                         title="Criar novo botão"
                       >
                         <Plus size={12} />
