@@ -16,7 +16,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings, Smartphone, Tablet
+  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings, Smartphone, Tablet, Trophy
 } from "lucide-react";
 
 import {
@@ -3228,6 +3228,44 @@ function SwitcherUI({
   navigate,
   currentTime
 }: any) {
+  const defaultButtonPoints = { CAMERAS: 1, DIVS: 0.5, COMERCIAL: 1.5, EFEITOS: 2.5, QUADROS: 1.5 };
+  const buttonPointsStorageKey = `vmix_button_points:${user?.id || "anonymous"}:${normStudio(studioName) || "all"}`;
+  const [buttonPoints, setButtonPoints] = useState<Record<keyof typeof defaultButtonPoints, number>>(defaultButtonPoints);
+  const [buttonPointsDraft, setButtonPointsDraft] = useState<Record<keyof typeof defaultButtonPoints, string>>({
+    CAMERAS: "1", DIVS: "0.5", COMERCIAL: "1.5", EFEITOS: "2.5", QUADROS: "1.5",
+  });
+  const [buttonPointsDialogOpen, setButtonPointsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(buttonPointsStorageKey) || "null");
+      const normalized = { ...defaultButtonPoints, ...(saved && typeof saved === "object" ? saved : {}) };
+      setButtonPoints(normalized);
+      setButtonPointsDraft(Object.fromEntries(Object.entries(normalized).map(([key, value]) => [key, String(value)])) as Record<keyof typeof defaultButtonPoints, string>);
+    } catch {
+      setButtonPoints(defaultButtonPoints);
+      setButtonPointsDraft({ CAMERAS: "1", DIVS: "0.5", COMERCIAL: "1.5", EFEITOS: "2.5", QUADROS: "1.5" });
+    }
+  }, [buttonPointsStorageKey]);
+
+  const saveButtonPoints = () => {
+    const categories = Object.keys(defaultButtonPoints) as Array<keyof typeof defaultButtonPoints>;
+    const next = { ...defaultButtonPoints };
+    for (const category of categories) {
+      const raw = buttonPointsDraft[category].trim().replace(",", ".");
+      const value = Number(raw);
+      if (!raw || !Number.isFinite(value) || value < 0 || value > 9999) {
+        toast({ title: "Pontuação inválida", description: `Informe um valor entre 0 e 9999 para ${category}.`, variant: "destructive" });
+        return;
+      }
+      next[category] = value;
+    }
+    setButtonPoints(next);
+    localStorage.setItem(buttonPointsStorageKey, JSON.stringify(next));
+    setButtonPointsDialogOpen(false);
+    toast({ title: "Pontuação salva", description: "Os próximos cliques usarão os novos valores." });
+  };
+
   // O painel de logs é ocultado nas abas de visualização isolada dos botões.
   const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
   const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
@@ -5013,6 +5051,9 @@ function SwitcherUI({
                         {customButtonToolsOpen && (
                           <div className="absolute right-0 top-full z-[90] mt-2 w-52 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
                             <div className="px-2 pb-2 text-[9px] font-black uppercase tracking-widest text-white/45">Ferramentas dos botões</div>
+                            <button type="button" onClick={() => { setButtonPointsDraft(Object.fromEntries(Object.entries(buttonPoints).map(([key, value]) => [key, String(value)])) as Record<keyof typeof defaultButtonPoints, string>); setButtonPointsDialogOpen(true); setCustomButtonToolsOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-bold text-white/80 hover:bg-white/8">
+                              <Trophy size={13} /> Definir pontuação
+                            </button>
                             <button
                               type="button"
                               onClick={() => {
@@ -5068,6 +5109,42 @@ function SwitcherUI({
                               <span className="flex items-center gap-2"><span className="font-black">A+</span> Tamanho do texto</span>
                               <span className="text-[9px] tabular-nums text-white/50">{Math.round(customBtnTextScale * 100)}%</span>
                             </button>
+                          </div>
+                        )}
+                        {buttonPointsDialogOpen && (
+                          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setButtonPointsDialogOpen(false); }}>
+                            <div role="dialog" aria-modal="true" aria-labelledby="button-points-title" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#17171f] p-5 text-white shadow-2xl">
+                              <div className="mb-1 flex items-center gap-2">
+                                <Trophy size={18} className="text-[#C6F03C]" />
+                                <h2 id="button-points-title" className="text-sm font-black uppercase tracking-wide">Pontuação dos botões</h2>
+                              </div>
+                              <p className="mb-4 text-xs text-white/55">Defina quantos pontos cada categoria vale. Os novos valores serão usados nos próximos cliques registrados.</p>
+                              <div className="space-y-3">
+                                {(["CAMERAS", "DIVS", "COMERCIAL", "EFEITOS", "QUADROS"] as const).map(category => (
+                                  <label key={category} className="flex items-center justify-between gap-4 rounded-xl bg-white/5 px-3 py-2.5">
+                                    <span className="text-xs font-bold">{category}</span>
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="9999"
+                                        step="0.5"
+                                        inputMode="decimal"
+                                        value={buttonPointsDraft[category] ?? ""}
+                                        onChange={event => setButtonPointsDraft(prev => ({ ...prev, [category]: event.target.value }))}
+                                        className="w-24 rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-right text-sm font-bold text-white outline-none focus:border-[#C6F03C]"
+                                        aria-label={`Pontos para ${category}`}
+                                      />
+                                      <span className="text-[10px] text-white/45">pontos</span>
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                              <div className="mt-5 flex justify-end gap-2">
+                                <button type="button" onClick={() => setButtonPointsDialogOpen(false)} className="rounded-lg px-4 py-2 text-xs font-bold text-white/65 hover:bg-white/8">Cancelar</button>
+                                <button type="button" onClick={saveButtonPoints} className="rounded-lg bg-[#C6F03C] px-4 py-2 text-xs font-black text-black hover:brightness-110">Salvar pontuação</button>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -5205,6 +5282,11 @@ function SwitcherUI({
                                     studio_name: studioName || null,
                                     button_id: String(btn.id),
                                     button_name: String(btn.nome || "Botão personalizado"),
+                                    button_category: String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR"),
+                                    points: (() => {
+                                      const category = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR");
+                                      return (buttonPoints as Record<string, number>)[category] ?? 0;
+                                    })(),
                                     program_name: trackingProgram?.nome || null,
                                   })
                                   .then(({ error }: any) => {
