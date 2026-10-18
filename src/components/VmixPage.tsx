@@ -3228,6 +3228,44 @@ function SwitcherUI({
   navigate,
   currentTime
 }: any) {
+  const defaultButtonPoints = { CAMERAS: 1, DIVS: 0.5, COMERCIAL: 1.5, EFEITOS: 2.5, QUADROS: 1.5 };
+  const buttonPointsStorageKey = `vmix_button_points:${user?.id || "anonymous"}:${normStudio(studioName) || "all"}`;
+  const [buttonPoints, setButtonPoints] = useState<Record<keyof typeof defaultButtonPoints, number>>(defaultButtonPoints);
+  const [buttonPointsDraft, setButtonPointsDraft] = useState<Record<keyof typeof defaultButtonPoints, string>>({
+    CAMERAS: "1", DIVS: "0.5", COMERCIAL: "1.5", EFEITOS: "2.5", QUADROS: "1.5",
+  });
+  const [buttonPointsDialogOpen, setButtonPointsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(buttonPointsStorageKey) || "null");
+      const normalized = { ...defaultButtonPoints, ...(saved && typeof saved === "object" ? saved : {}) };
+      setButtonPoints(normalized);
+      setButtonPointsDraft(Object.fromEntries(Object.entries(normalized).map(([key, value]) => [key, String(value)])) as Record<keyof typeof defaultButtonPoints, string>);
+    } catch {
+      setButtonPoints(defaultButtonPoints);
+      setButtonPointsDraft({ CAMERAS: "1", DIVS: "0.5", COMERCIAL: "1.5", EFEITOS: "2.5", QUADROS: "1.5" });
+    }
+  }, [buttonPointsStorageKey]);
+
+  const saveButtonPoints = () => {
+    const categories = Object.keys(defaultButtonPoints) as Array<keyof typeof defaultButtonPoints>;
+    const next = { ...defaultButtonPoints };
+    for (const category of categories) {
+      const raw = buttonPointsDraft[category].trim().replace(",", ".");
+      const value = Number(raw);
+      if (!raw || !Number.isFinite(value) || value < 0 || value > 9999) {
+        toast({ title: "Pontuação inválida", description: `Informe um valor entre 0 e 9999 para ${category}.`, variant: "destructive" });
+        return;
+      }
+      next[category] = value;
+    }
+    setButtonPoints(next);
+    localStorage.setItem(buttonPointsStorageKey, JSON.stringify(next));
+    setButtonPointsDialogOpen(false);
+    toast({ title: "Pontuação salva", description: "Os próximos cliques usarão os novos valores." });
+  };
+
   // O painel de logs é ocultado nas abas de visualização isolada dos botões.
   const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
   const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
@@ -5013,6 +5051,9 @@ function SwitcherUI({
                         {customButtonToolsOpen && (
                           <div className="absolute right-0 top-full z-[90] mt-2 w-52 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
                             <div className="px-2 pb-2 text-[9px] font-black uppercase tracking-widest text-white/45">Ferramentas dos botões</div>
+                            <button type="button" onClick={() => { setButtonPointsDraft(Object.fromEntries(Object.entries(buttonPoints).map(([key, value]) => [key, String(value)])) as Record<keyof typeof defaultButtonPoints, string>); setButtonPointsDialogOpen(true); setCustomButtonToolsOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-bold text-white/80 hover:bg-white/8">
+                              <Trophy size={13} /> Definir pontuação
+                            </button>
                             <button
                               type="button"
                               onClick={() => {
@@ -5244,8 +5285,7 @@ function SwitcherUI({
                                     button_category: String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR"),
                                     points: (() => {
                                       const category = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR");
-                                      const pointsByCategory: Record<string, number> = { CAMERAS: 1, DIVS: 0.5, COMERCIAL: 1.5, EFEITOS: 2.5, QUADROS: 1.5 };
-                                      return pointsByCategory[category] ?? 0;
+                                      return (buttonPoints as Record<string, number>)[category] ?? 0;
                                     })(),
                                     program_name: trackingProgram?.nome || null,
                                   })
