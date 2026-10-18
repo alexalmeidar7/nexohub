@@ -5278,9 +5278,15 @@ function SwitcherUI({
                                     program_name: currentProgram?.nome || null,
                                   })
                                   .then(({ error }: any) => {
-                                    if (error) console.warn("Não foi possível registrar o clique do botão vMix:", error.message);
+                                    if (error) {
+                                      console.warn("Não foi possível registrar o clique do botão vMix:", error.message);
+                                      toast({ title: "Clique não registrado no relatório", description: error.message, variant: "destructive" });
+                                    }
                                   })
-                                  .catch(() => {});
+                                  .catch((error: any) => {
+                                    console.warn("Falha ao registrar o clique do botão vMix:", error);
+                                    toast({ title: "Falha ao registrar o clique", description: error?.message || "Verifique a conexão e tente novamente.", variant: "destructive" });
+                                  });
                               }
                               if (btn.commands && Array.isArray(btn.commands) && btn.commands.length > 0) {
                                 await runCommandsUnified(btn.commands as any[], `Efeito: ${btn.nome}`);
