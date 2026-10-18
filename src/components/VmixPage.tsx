@@ -5299,7 +5299,7 @@ function SwitcherUI({
                           });
                       })()}
                       {/* + Criar */}
-                      <div ref={creationChoiceRef} className="relative w-full min-w-0 basis-full">
+                      <div ref={creationChoiceRef} className="relative w-[171px] min-w-0 shrink-0">
                         {creationChoiceOpen && (
                           <div className="absolute bottom-full left-0 z-[80] mb-2 w-[171px] min-w-[118px]">
                             <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
@@ -5325,14 +5325,14 @@ function SwitcherUI({
                         )}
                         <button
                           type="button"
-                          className="vmix-hover-ring flex w-[171px] flex-col items-center justify-center rounded-lg transition-all duration-200"
-                          style={{ aspectRatio: "3/2", backgroundColor: creationChoiceOpen ? "#25252e" : "#1e1e26", border: creationChoiceOpen ? "1px solid #0756C9" : "2px dashed #333338" }}
+                          className="vmix-hover-ring flex w-full flex-col items-center justify-center rounded-lg transition-all duration-200"
+                          style={{ aspectRatio: "3/2", backgroundColor: "transparent", border: creationChoiceOpen ? "1px solid #ffffff" : "1px solid #ffffff55" }}
                           onClick={() => { setCreationChoiceOpen(open => !open); setAudioMonitorInput(""); }}
                           aria-expanded={creationChoiceOpen}
                           aria-label="Criar botão personalizado"
                         >
-                          <Plus size={14} style={{ color: "#C6F03C" }} />
-                          <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "#C6F03C" }}>{creationChoiceOpen ? "Fechar" : "+ Criar"}</span>
+                          <Plus size={14} style={{ color: "#ffffff" }} />
+                          <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "#ffffff" }}>{creationChoiceOpen ? "Fechar" : "+ Criar"}</span>
                         </button>
                       </div>
                     </div>
