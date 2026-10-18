@@ -129,6 +129,7 @@ const COMMAND_OPTIONS = [
   { value: "StopStreaming", label: "Parar Streaming", category: "Streaming" },
   { value: "StartRecording", label: "Iniciar Gravação", category: "Gravação" },
   { value: "StopRecording", label: "Parar Gravação", category: "Gravação" },
+  { value: "ToggleRecording", label: "Iniciar / Parar Gravação", category: "Gravação" },
   { value: "PreviewInput", label: "Preview Input", category: "Input" },
   { value: "OverlayInput1", label: "Overlay 1 ON", category: "Overlay" },
   { value: "OverlayInput1Off", label: "Overlay 1 OFF", category: "Overlay" },
