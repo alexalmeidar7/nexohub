@@ -27,11 +27,13 @@
 .vmix-flat-palette :is(h1,h2,h3,h4,h5,h6,p,span,label,small,strong,em,li,td,th,a),
 .vmix-flat-palette svg { color: var(--vmix-glass-text); }
 
-/* Glass only on major containers, never every nested div. This avoids expensive
-   layers and prevents overriding the colored backgrounds of custom button tiles. */
+/* Apply the same glass treatment to major panel containers. Do not depend on
+   inline-style attribute text: browsers serialize React backgroundColor as
+   background-color, so [style*="backgroundColor"] can silently miss panels.
+   Colored operational tiles are explicitly excluded below. */
 .vmix-flat-palette > header,
-.vmix-flat-palette .rounded-2xl.overflow-hidden[style*="backgroundColor"],
-.vmix-flat-palette .rounded-xl.overflow-hidden[style*="backgroundColor"] {
+.vmix-flat-palette .rounded-2xl.overflow-hidden:not(.group\/custom),
+.vmix-flat-palette .rounded-xl.overflow-hidden:not(.group\/custom) {
   background-color: var(--vmix-glass-panel) !important;
   background-image: linear-gradient(135deg, rgba(255,255,255,.045), rgba(255,255,255,.008)) !important;
   border-color: var(--vmix-glass-border) !important;
