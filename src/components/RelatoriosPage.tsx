@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart3, Gift, History, Truck, Siren, Tag, MonitorPlay, Search,
-  CalendarDays, Clock3, RefreshCw, Loader2, AlertCircle, Package,
+  CalendarDays, Clock3, RefreshCw, Loader2, AlertCircle, Package, Download,
   CheckCircle2, CircleX, UserRound, Image as ImageIcon, Trophy, Headphones, Video, Radio
 } from "lucide-react";
 
