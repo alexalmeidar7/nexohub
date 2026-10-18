@@ -458,6 +458,21 @@ function formatCommandPreview(cmd: PresetCommand, inputs: VmixInput[], inputMapp
   return line;
 }
 
+const SHORTCUT_MODIFIERS = ["Ctrl", "Alt", "Shift"] as const;
+type ShortcutModifier = typeof SHORTCUT_MODIFIERS[number];
+
+function parseButtonShortcut(value: string): { key: string; modifiers: ShortcutModifier[] } {
+  const parts = String(value || "").split("+").map(part => part.trim()).filter(Boolean);
+  const modifiers = SHORTCUT_MODIFIERS.filter(modifier => parts.some(part => part.toLowerCase() === modifier.toLowerCase()));
+  const key = parts.find(part => !SHORTCUT_MODIFIERS.some(modifier => part.toLowerCase() === modifier.toLowerCase())) || "";
+  return { key, modifiers: [...modifiers] };
+}
+
+function formatButtonShortcut(key: string, modifiers: ShortcutModifier[]): string {
+  if (!key) return "";
+  return [...SHORTCUT_MODIFIERS.filter(modifier => modifiers.includes(modifier)), key].join("+");
+}
+
 export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId, inputs, onRunCommands, onSaved, inputMapping, estudio }: Props) {
   const { toast } = useToast();
   const [nome, setNome] = useState("");
@@ -479,6 +494,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [dataEspecifica, setDataEspecifica] = useState("");
   const [horario, setHorario] = useState("");
   const [shortcut, setShortcut] = useState("");
+  const [shortcutKey, setShortcutKey] = useState("");
+  const [shortcutModifiers, setShortcutModifiers] = useState<ShortcutModifier[]>([]);
   const [iconKey, setIconKey] = useState("");
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [programaId, setProgramaId] = useState("");
@@ -543,7 +560,10 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
             setDiasSemana(data.dias_semana || []);
             setDataEspecifica(data.data_especifica || "");
             setHorario(data.horario || "");
-            setShortcut(data.shortcut || "");
+            const savedShortcut = parseButtonShortcut(data.shortcut || "");
+            setShortcutKey(savedShortcut.key);
+            setShortcutModifiers(savedShortcut.modifiers);
+            setShortcut(formatButtonShortcut(savedShortcut.key, savedShortcut.modifiers));
             setIconKey(data.icon || "");
             setProgramaId(data.programa_id || getStoredProgramaId(data.commands));
             setCommands(Array.isArray(data.commands) ? data.commands : []);
@@ -561,6 +581,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
       setDataEspecifica("");
       setHorario("");
       setShortcut("");
+      setShortcutKey("");
+      setShortcutModifiers([]);
       setIconKey("");
       setProgramaId("");
       setCommands([]);
@@ -817,20 +839,56 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                       readOnly
                       onKeyDown={e => {
                         e.preventDefault();
-                        if (e.key === "Backspace" || e.key === "Delete" || e.key === "Escape") { setShortcut(""); return; }
+                        if (e.key === "Backspace" || e.key === "Delete" || e.key === "Escape") {
+                          setShortcutKey("");
+                          setShortcut("");
+                          return;
+                        }
+                        if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) return;
                         if (e.key.length === 1 || /^F\d{1,2}$/.test(e.key)) {
-                          setShortcut(`${e.ctrlKey ? "Ctrl+" : ""}${e.altKey ? "Alt+" : ""}${e.shiftKey ? "Shift+" : ""}${e.key.toUpperCase()}`);
+                          const nextKey = e.key === " " ? "Space" : e.key.toUpperCase();
+                          setShortcutKey(nextKey);
+                          setShortcut(formatButtonShortcut(nextKey, shortcutModifiers));
                         }
                       }}
                       className="w-full text-center text-[11px] font-black uppercase px-3 py-2.5 rounded-lg outline-none cursor-pointer"
                       style={{ backgroundColor: "#181820", color: "#fff", border: `1px solid ${shortcut ? "#C6F03C60" : "#333"}` }}
                       placeholder="Clique e tecle"
+                      aria-label="Tecla principal do atalho"
                     />
                     {shortcut && (
-                      <button onClick={() => setShortcut("")} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10" style={{ color: "#888" }}>
+                      <button onClick={() => { setShortcutKey(""); setShortcut(""); }} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10" style={{ color: "#888" }} title="Limpar atalho">
                         <X size={12} />
                       </button>
                     )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Combinar teclas modificadoras">
+                    {SHORTCUT_MODIFIERS.map(modifier => {
+                      const selected = shortcutModifiers.includes(modifier);
+                      return (
+                        <button
+                          key={modifier}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => {
+                            const nextModifiers = selected
+                              ? shortcutModifiers.filter(item => item !== modifier)
+                              : [...shortcutModifiers, modifier];
+                            setShortcutModifiers(nextModifiers);
+                            setShortcut(formatButtonShortcut(shortcutKey, nextModifiers));
+                          }}
+                          className="rounded-md px-2.5 py-1.5 text-[9px] font-black tracking-wide transition-colors"
+                          style={{
+                            backgroundColor: selected ? "#0756C9" : "#181820",
+                            color: selected ? "#fff" : "#888",
+                            border: `1px solid ${selected ? "#2878E8" : "#333"}`,
+                          }}
+                        >
+                          {modifier.toUpperCase()}
+                        </button>
+                      );
+                    })}
+                    <span className="self-center text-[9px]" style={{ color: "#777" }}>Selecione ALT, CTRL e/ou SHIFT e depois escolha a tecla.</span>
                   </div>
                 </div>
               </div>
