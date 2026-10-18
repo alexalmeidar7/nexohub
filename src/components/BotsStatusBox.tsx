@@ -171,8 +171,8 @@ export default function BotsStatusBox() {
           className="relative flex items-center justify-center w-8 h-8 shrink-0 rounded-full text-slate-700 hover:text-black hover:bg-slate-100/80 active:scale-95 transition-all outline-none ml-0.5 cursor-pointer select-none"
           aria-label="Status dos Bots"
         >
-          <Bot className="w-4 h-4 text-slate-600 hover:text-black transition-transform hover:scale-110" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#0055ff] border border-white shadow-[0_0_6px_rgba(0,85,255,0.5)]" />
+          <Bot className="w-4 h-4 text-white transition-transform hover:scale-110" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#0055ff]" />
         </button>
       </TooltipTrigger>
       <TooltipContent
