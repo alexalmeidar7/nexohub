@@ -660,7 +660,7 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
             Para criar grupos de TVs e vincular ao programa no ar, você precisa ter ao menos um programa ativo cadastrado.
           </p>
           <Button asChild size="sm">
-            <Link to="/user/nexohub/programas">
+            <Link to="/home?page=programas">
               Cadastrar programa <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </Button>
