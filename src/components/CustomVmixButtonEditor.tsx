@@ -335,7 +335,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         .then(({ data }: any) => {
           if (data) {
             setNome(data.nome || "");
-            setButtonCategory(data.category || data.commands?.[0]?._buttonCategory || "");
+            // Prioriza o metadado legado do comando: a migração antiga preencheu AUDIO por padrão em todas as linhas.
+            setButtonCategory(data.commands?.[0]?._buttonCategory || data.category || "");
             const savedButtonColor = data.color && data.color.toUpperCase() !== "#C6F03C" ? data.color : "#0756C9";
             setColor(savedButtonColor);
             setCustomColorMode(!["#0756C9", ...PRESET_BUTTON_COLORS.map(option => option.value)].includes(savedButtonColor.toUpperCase()));
