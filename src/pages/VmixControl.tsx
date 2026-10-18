@@ -12,9 +12,10 @@ import "@/styles/vmix-flat-palette.css";
 type VmixControlProps = {
   forcedConnected?: boolean;
   cleanLayout?: boolean;
+  automationMode?: boolean;
 };
 
-export default function VmixControl({ forcedConnected = false, cleanLayout = false }: VmixControlProps) {
+export default function VmixControl({ forcedConnected = false, cleanLayout = false, automationMode = false }: VmixControlProps) {
   const { user, loading, signOut } = useAuth();
   const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
   const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
@@ -158,7 +159,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
         </div>
       </header>
       <main className={`mx-auto w-full max-w-[1440px] flex-1 ${isButtonDevicePreview ? "p-0" : "p-6"}`} style={{ backgroundColor: "#000000" }}>
-        <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} /></Suspense>
+        <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} automationMode={automationMode} /></Suspense>
       </main>
     </div>
   );
