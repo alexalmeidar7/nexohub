@@ -5367,40 +5367,42 @@ function SwitcherUI({
         );
       })()}
       <Dialog open={isAllPresetsDialogOpen} onOpenChange={setIsAllPresetsDialogOpen}>
-        <DialogContent className="max-h-[85vh] overflow-hidden rounded-xl border border-[#34343C] bg-[#1B1B20] p-0 text-white sm:max-w-4xl">
-          <DialogHeader className="border-b border-[#303039] bg-[#222228] px-5 py-4 text-left">
+        <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden rounded-xl border border-[#34343C] bg-[#1B1B20] p-0 text-white sm:max-w-4xl">
+          <DialogHeader className="shrink-0 bg-[#222228] px-5 py-4 text-left">
             <DialogTitle className="text-base font-black uppercase tracking-wide text-white">Editar todos os presets</DialogTitle>
             <DialogDescription className="text-xs text-[#C4C4CF]">
-              Todos os programas cadastrados, independentemente do dia da semana ou estúdio. Selecione o ícone de edição no cartão para alterar as ações.
+              Programas do estúdio atual. Selecione o ícone de edição no cartão para alterar as ações.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid max-h-[65vh] grid-cols-2 gap-3 overflow-y-auto bg-[#17171B] p-4 sm:grid-cols-3 lg:grid-cols-4">
-            {[...programas].sort((a, b) => {
-              const studioCompare = String(a.estudio || "").localeCompare(String(b.estudio || ""), "pt-BR");
-              if (studioCompare !== 0) return studioCompare;
-              const timeCompare = String(a.horario_inicio || "").localeCompare(String(b.horario_inicio || ""));
-              return timeCompare || String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR");
-            }).map((prog) => (
-              <div key={prog.id} className="group/allpreset relative flex min-h-[108px] flex-col items-center justify-center rounded-lg border border-[#35353E] bg-[#25252C] px-3 py-4 text-center transition-colors hover:border-[#0756C9]" >
-                <span className="mb-2 rounded bg-black/50 px-2 py-1 text-[10px] font-bold tabular-nums text-[#E5E7EB]">
-                  <Clock size={10} className="mr-1 inline" />{String(prog.horario_inicio || "--:--").slice(0,5)}
-                </span>
-                <span className="text-[11px] font-black uppercase leading-snug text-white">{prog.nome}</span>
-                <span className="mt-2 max-w-full truncate text-[9px] font-semibold uppercase tracking-wide text-[#B8C0CC]">{prog.estudio || "Sem estúdio"} · {(prog.dias_semana || []).join("/") || "Todos os dias"}</span>
-                <button
-                  type="button"
-                  aria-label={`Editar ações de ${prog.nome}`}
-                  title={`Editar ações de ${prog.nome}`}
-                  onClick={() => { setIsAllPresetsDialogOpen(false); setEditingPresetId(prog.id); }}
-                  className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-[#0756C9] text-white opacity-100 transition-colors hover:bg-[#0967ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                >
-                  <Pencil size={13} />
-                </button>
-              </div>
-            ))}
-            {programas.length === 0 && <p className="col-span-full py-10 text-center text-sm text-[#C4C4CF]">Nenhum preset cadastrado.</p>}
+          <div className="grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-x-hidden overflow-y-auto bg-[#17171B] p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-cols-3 lg:grid-cols-4">
+            {(() => {
+              const normalizeStudio = (value: unknown) => String(value || "").trim().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("pt-BR");
+              const currentStudio = normalizeStudio(studioName);
+              const studioPrograms = programas.filter((programa) => normalizeStudio(programa.estudio) === currentStudio);
+              return [...studioPrograms].sort((a, b) => {
+                const timeCompare = String(a.horario_inicio || "").localeCompare(String(b.horario_inicio || ""));
+                return timeCompare || String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR");
+              }).map((prog) => (
+                <div key={prog.id} className="group/allpreset relative flex min-h-[108px] flex-col items-center justify-center rounded-lg border border-[#35353E] bg-[#25252C] px-3 py-4 text-center transition-colors hover:border-[#0756C9]">
+                  <span className="mb-2 rounded bg-black/50 px-2 py-1 text-[10px] font-bold tabular-nums text-[#E5E7EB]">
+                    <Clock size={10} className="mr-1 inline" />{String(prog.horario_inicio || "--:--").slice(0,5)}
+                  </span>
+                  <span className="line-clamp-2 text-[11px] font-black uppercase leading-snug text-white">{prog.nome}</span>
+                  <button
+                    type="button"
+                    aria-label={`Editar ações de ${prog.nome}`}
+                    title={`Editar ações de ${prog.nome}`}
+                    onClick={() => { setIsAllPresetsDialogOpen(false); setEditingPresetId(prog.id); }}
+                    className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-[#0756C9] text-white opacity-100 transition-colors hover:bg-[#0967ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                </div>
+              ));
+            })()}
+            {programas.filter((programa) => String(programa.estudio || "").trim().toLocaleLowerCase("pt-BR") === String(studioName || "").trim().toLocaleLowerCase("pt-BR")).length === 0 && <p className="col-span-full py-10 text-center text-sm text-[#C4C4CF]">Nenhum preset cadastrado para este estúdio.</p>}
           </div>
-          <div className="flex justify-end border-t border-[#303039] bg-[#222228] px-5 py-3">
+          <div className="flex shrink-0 justify-end bg-[#222228] px-5 py-3">
             <button type="button" onClick={() => setIsAllPresetsDialogOpen(false)} className="rounded-md bg-[#0756C9] px-4 py-2 text-[10px] font-black uppercase tracking-wide text-white hover:bg-[#0967ED]">Fechar</button>
           </div>
         </DialogContent>
