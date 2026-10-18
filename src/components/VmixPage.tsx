@@ -1726,8 +1726,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         const forceMode: "direct" | "proxy" | undefined = savedUrl && isPrivateIp(savedUrl) ? "direct" : undefined;
         const statusXml = await vmixFetch("/api/", forceMode);
         const recordingMatch =
-          statusXml.match(/\\brecording\\s*=\\s*["'](true|false)["']/i) ||
-          statusXml.match(/<recording>\\s*(true|false)\\s*<\\/recording>/i);
+          statusXml.match(/\brecording\s*=\s*["'](true|false)["']/i) ||
+          statusXml.match(/<recording>\s*(true|false)\s*<\/recording>/i);
         if (!recordingMatch) {
           throw new Error("Não foi possível identificar se a gravação está ativa no vMix.");
         }
