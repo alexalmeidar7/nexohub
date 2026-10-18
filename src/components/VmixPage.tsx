@@ -5376,9 +5376,8 @@ function SwitcherUI({
           </DialogHeader>
           <div className="grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-x-hidden overflow-y-auto bg-[#17171B] p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-cols-3 lg:grid-cols-4">
             {(() => {
-              const normalizeStudio = (value: unknown) => String(value || "").trim().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("pt-BR");
-              const currentStudio = normalizeStudio(studioName);
-              const studioPrograms = programas.filter((programa) => normalizeStudio(programa.estudio) === currentStudio);
+              const sameStudio = (a: unknown, b: unknown) => String(a || "").trim().localeCompare(String(b || "").trim(), "pt-BR", { sensitivity: "base" }) === 0;
+              const studioPrograms = programas.filter((programa) => sameStudio(programa.estudio, studioName));
               return [...studioPrograms].sort((a, b) => {
                 const timeCompare = String(a.horario_inicio || "").localeCompare(String(b.horario_inicio || ""));
                 return timeCompare || String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR");
