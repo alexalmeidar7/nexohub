@@ -1,12 +1,45 @@
 name: Build NexoHub Bridge (Windows)
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tools/NexoHubBridge/**"
+      - "supabase/functions/execute-vmix-commands/**"
+      - "supabase/functions/vmix-bridge-*/**"
+      - "supabase/functions/vmix-proxy/**"
+      - "supabase/functions/_shared/**"
+      - "supabase/migrations/**"
+      - ".github/workflows/build-nexohub-bridge.yml"
   push:
-    paths: ["tools/NexoHubBridge/**", ".github/workflows/build-nexohub-bridge.yml"]
+    paths:
+      - "tools/NexoHubBridge/**"
+      - "supabase/functions/execute-vmix-commands/**"
+      - "supabase/functions/vmix-bridge-*/**"
+      - "supabase/functions/vmix-proxy/**"
+      - "supabase/functions/_shared/**"
+      - "supabase/migrations/**"
+      - ".github/workflows/build-nexohub-bridge.yml"
     branches: [main, feature/nexohub-bridge]
 permissions:
   contents: read
 jobs:
+  validate-edge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check NexoHub Bridge Edge Functions
+        run: |
+          deno check \
+            supabase/functions/vmix-bridge-pairing/index.ts \
+            supabase/functions/vmix-bridge-connect/index.ts \
+            supabase/functions/vmix-bridge-poll/index.ts \
+            supabase/functions/vmix-bridge-result/index.ts \
+            supabase/functions/vmix-proxy/index.ts \
+            supabase/functions/execute-vmix-commands/index.ts
   build:
     runs-on: windows-latest
     steps:
