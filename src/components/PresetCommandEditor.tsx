@@ -64,6 +64,7 @@ const PRESET_COMMANDS = [
   { value: "StopStreaming", label: "StopStreaming", desc: "Para streaming", category: "Streaming", params: [] },
   { value: "StartRecording", label: "StartRecording", desc: "Inicia gravação", category: "Gravação", params: [] },
   { value: "StopRecording", label: "StopRecording", desc: "Para gravação", category: "Gravação", params: [] },
+  { value: "ToggleRecording", label: "ToggleRecording (Iniciar / Parar Gravação)", desc: "Alterna entre iniciar e parar a gravação conforme o estado atual do vMix", category: "Gravação", params: [] },
   { value: "ScriptStart", label: "ScriptStart", desc: "Inicia um script vMix", category: "Script", params: ["value"] },
   { value: "ScriptStop", label: "ScriptStop", desc: "Para um script vMix", category: "Script", params: ["value"] },
 ];
