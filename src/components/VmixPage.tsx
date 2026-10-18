@@ -2177,7 +2177,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+    <div className="rounded-xl overflow-hidden border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]" style={{ backgroundColor: "rgba(13, 31, 62, 0.38)", backdropFilter: "blur(8px) saturate(115%)", WebkitBackdropFilter: "blur(8px) saturate(115%)" }}>
       <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
         {icon}
         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>{title}</span>
@@ -4681,7 +4681,7 @@ function SwitcherUI({
               <div className={`flex flex-col gap-4 ${isButtonDevicePreview ? "items-center" : ""}`}>
                 {/* Left: Programas Preset */}
                 {!isButtonDevicePreview && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-b border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.025)" }}>
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2">
                         <Radio size={14} style={{ color: "#C6F03C" }} />
