@@ -209,6 +209,7 @@ const PRESET_COMMANDS = [
   { value: "SendKeys", label: "SendKeys", desc: "Envia teclas para janela ativa", category: "Geral", params: ["value"] },
   { value: "StartRecording", label: "StartRecording", desc: "Inicia gravação", category: "Gravação", params: [] },
   { value: "StopRecording", label: "StopRecording", desc: "Para gravação", category: "Gravação", params: [] },
+  { value: "ToggleRecording", label: "Iniciar / Parar Gravação", desc: "Alterna entre iniciar e parar a gravação conforme o estado atual do vMix", category: "Gravação", params: [] },
   { value: "StartPlayList", label: "StartPlayList", desc: "Inicia a playlist configurada no vMix", category: "Playlist", params: [] },
   { value: "StopPlayList", label: "StopPlayList", desc: "Para a playlist configurada no vMix", category: "Playlist", params: [] },
   { value: "ScriptStart", label: "ScriptStart", desc: "Inicia um script vMix", category: "Script", params: ["value"] },
