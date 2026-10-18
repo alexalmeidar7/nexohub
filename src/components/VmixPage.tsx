@@ -976,7 +976,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false 
 
   const reorderCustomCategory = useCallback((draggedCategory: string, targetCategory: string) => {
     if (!user || !draggedCategory || !targetCategory || draggedCategory === targetCategory) return;
-    const allCategories = Array.from(new Set(customButtons.map(button => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS")));
+    const allCategories = Array.from(new Set(customButtons.map(button => getAudioMonitorInput(button) ? "AUDIO" : String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS")));
     const baseOrder = [...customButtonCategoryOrder, ...allCategories.filter(category => !customButtonCategoryOrder.includes(category))];
     const from = baseOrder.indexOf(draggedCategory);
     const to = baseOrder.indexOf(targetCategory);
@@ -2876,9 +2876,12 @@ function AudioMonitorButton({
           })}
         </div>
       </div>
-      <div className="hidden items-center gap-1.5 px-2 pt-2 sm:flex">
-        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
-        <span className="truncate text-[7px] font-black uppercase tracking-wider text-white">Monitor de áudio</span>
+      <div className="hidden flex-col items-start gap-0.5 px-2 pt-1.5 sm:flex">
+        <div className="flex min-w-0 items-center gap-1">
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
+          <span className="truncate text-[6px] font-normal uppercase leading-none tracking-wide text-white/70">Monitor de áudio</span>
+        </div>
+        <span className="w-full truncate pl-2.5 text-[8px] font-semibold uppercase leading-tight text-white" title={inputName || `Input ${input}`}>{inputName || `Input ${input}`}</span>
       </div>
 
       <div className="absolute inset-x-2 bottom-2 top-[39px] hidden items-stretch gap-3 sm:flex">
@@ -2898,9 +2901,6 @@ function AudioMonitorButton({
           })}
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 border-l border-white/10 pl-2">
-          <div className="min-w-0">
-            <p className="truncate text-[9px] font-black uppercase leading-tight text-white" title={inputName || `Input ${input}`}>{inputName || `Input ${input}`}</p>
-          </div>
           <div className="grid grid-cols-2 gap-1">
             <div className="rounded bg-white/[0.04] px-1.5 py-1">
               <p className="text-[6px] font-black text-white/45">L · LEFT</p>
@@ -3475,7 +3475,9 @@ function SwitcherUI({
         user_id: user.id,
         estudio: studioName || null,
         nome: audioMonitorName.trim(),
-        commands: [{ fn: "AudioMonitor", input: audioMonitorInput }],
+        category: "AUDIO",
+        audio_input: audioMonitorInput,
+        commands: [{ fn: "AudioMonitor", input: audioMonitorInput, _buttonCategory: "AUDIO" }],
       });
       if (error) throw error;
       await loadCustomButtons();
@@ -3519,7 +3521,8 @@ function SwitcherUI({
       const { error } = await (supabase.from("custom_vmix_buttons" as any) as any)
         .update({
           nome: `Áudio · ${selectedInput?.title || `Input ${editingAudioMonitorInput}`}`,
-          commands: updatedCommands,
+          category: "AUDIO",
+          commands: updatedCommands.map((command: any, index: number) => index === 0 ? { ...command, _buttonCategory: "AUDIO" } : command),
           audio_input: editingAudioMonitorInput,
         })
         .eq("id", editingAudioMonitor.id);
@@ -5068,7 +5071,7 @@ function SwitcherUI({
                   <div className="p-5 space-y-4">
                     <div className="flex w-full flex-wrap items-start gap-3 pb-2">
                       {(() => {
-                        const getCategory = (button: any) => String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                        const getCategory = (button: any) => getAudioMonitorInput(button) ? "AUDIO" : String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
                         const categoryNames = Array.from(new Set(customButtons.map((button: any) => getCategory(button))));
                         const orderedCategories = [...customButtonCategoryOrder, ...categoryNames.filter(category => !customButtonCategoryOrder.includes(category))];
                         const savedOrderKey = user ? `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}` : "";
