@@ -2882,12 +2882,11 @@ function AudioMonitorButton({
       <div className="hidden h-full min-h-0 flex-col px-2 py-2 sm:flex">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
-          <span className="truncate text-[8px] font-bold uppercase leading-none tracking-wide text-white/70">Monitor de áudio</span>
+          <span className="min-w-0 flex-1 truncate text-[10px] font-bold uppercase leading-tight tracking-wide text-white" title={inputName || monitorName}>
+            {inputName || monitorName}
+          </span>
         </div>
-        <span className="mt-1 block w-full truncate text-[10px] font-semibold leading-tight text-white" title={inputName || monitorName}>
-          {inputName || monitorName}
-        </span>
-        <div className="mt-2 flex min-h-0 flex-1 gap-2">
+        <div className="mt-2 flex min-h-0 flex-1 gap-2 pb-2">
           <div className="flex w-[22px] shrink-0 items-stretch gap-[4px]" aria-label="Medidores de áudio esquerdo e direito">
             {channelMeters.map(channel => {
               const totalSegments = 12;
