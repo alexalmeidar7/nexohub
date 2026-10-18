@@ -2868,16 +2868,15 @@ function AudioMonitorButton({
       style={{ width: "100%", minWidth: 0, background: "#08090b", border: "1px solid #292a2e", boxSizing: "border-box" }}
       title={`Monitor estéreo L/R do Input ${input}`}
     >
-      <div className="absolute inset-0 flex items-center gap-2 px-2 sm:hidden">
-        <span className={`h-2 w-2 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
-        <span className="min-w-0 flex-1 truncate text-[10px] font-black uppercase text-white" title={inputName || `Input ${input}`}>{inputName || `Input ${input}`}</span>
-        <div className="flex h-9 w-5 shrink-0 items-stretch gap-[2px]">
+      <div className="absolute inset-0 flex items-center justify-center gap-2 px-2 sm:hidden">
+        <div className="flex h-9 w-5 shrink-0 items-stretch gap-[2px]" aria-label="Espectro estéreo L/R">
           {channelMeters.map(channel => {
             const totalSegments = 12;
             const activeSegments = levels?.available ? activeSegmentsFor(channel.level) : 0;
             return <div key={channel.label} className="flex min-w-0 flex-1 flex-col-reverse gap-[1px] rounded-sm bg-[#17181b] p-[1px]">{Array.from({ length: totalSegments }, (_, index) => { const active = index < activeSegments; const color = meterColor(index, totalSegments); return <div key={index} className="min-h-0 flex-1" style={{ backgroundColor: active ? color : "#242529", boxShadow: active ? `0 0 4px ${color}55` : "none" }} />; })}</div>;
           })}
         </div>
+        <span className="whitespace-nowrap text-[11px] font-black tabular-nums text-white">{averageDb} dB</span>
       </div>
       <div className="hidden h-full min-h-0 flex-col px-2 py-2 sm:flex">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -5135,8 +5134,9 @@ function SwitcherUI({
                         const liveScheduleLabel = liveEvento
                           ? `${liveEvento.data.split("-").reverse().slice(0, 2).join("/")} · ${(liveEvento.horario_gravacao || "--:--").slice(0, 5)}–${(liveEvento.horario_gravacao_fim || "--:--").slice(0, 5)}`
                           : "";
-                        // Usa a cor escolhida no editor; botões antigos sem cor personalizada ficam no azul padrão do site.
-                        const savedColor = typeof btn.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(btn.color) ? btn.color : "#0756C9";
+                        // A primeira tecla/botão da categoria define a cor visual de todos os botões dessa categoria.
+                        const categoryLeadColor = sortedButtons[0]?.color;
+                        const savedColor = typeof categoryLeadColor === "string" && /^#[0-9A-Fa-f]{6}$/.test(categoryLeadColor) ? categoryLeadColor : "#0756C9";
                         const btnColor = isLiveButtonEnabled ? savedColor : "#36363d";
                         const BtnIcon = resolveButtonIcon(btn.icon, btn.nome || "");
                         const isBrightButtonColor = ["#BFFF00", "#FF6900", "#C6F03C"].includes(btnColor.toUpperCase());
@@ -5298,7 +5298,7 @@ function SwitcherUI({
                           });
                       })()}
                       {/* + Criar */}
-                      <div ref={creationChoiceRef} className="relative mt-3 flex w-full basis-full min-w-0 justify-start border-t border-white/10 pt-3">
+                      <div ref={creationChoiceRef} className="relative w-full min-w-0">
                         {creationChoiceOpen && (
                           <div className="absolute bottom-full left-0 z-[80] mb-2 w-[150px] min-w-[118px]">
                             <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-[#17171f] p-2 shadow-2xl">
@@ -5324,7 +5324,7 @@ function SwitcherUI({
                         )}
                         <button
                           type="button"
-                          className="vmix-hover-ring flex h-[112px] w-[150px] shrink-0 flex-col items-center justify-center rounded-lg transition-colors duration-200"
+                          className="vmix-hover-ring flex h-[54px] w-full min-w-0 flex-col items-center justify-center rounded-lg transition-colors duration-200 sm:h-auto sm:aspect-[3/2] sm:w-[150px]"
                           style={{ background: "transparent", backgroundColor: "transparent", border: creationChoiceOpen ? "1px solid #ffffff" : "1px solid #ffffff66", boxShadow: "none" }}
                           onClick={() => { setCreationChoiceOpen(open => !open); setAudioMonitorInput(""); }}
                           aria-expanded={creationChoiceOpen}
