@@ -118,18 +118,62 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
 
   useEffect(() => {
     if (!userId) return;
+    let disposed = false;
+    let refreshInFlight = false;
+
+    // Realtime remains the primary path. Polling is a safety net for environments
+    // where the table was not added to supabase_realtime or the websocket drops.
+    const refreshVmixEvents = async () => {
+      if (disposed || refreshInFlight) return;
+      refreshInFlight = true;
+      try {
+        const { data, error } = await (supabase.from("vmix_button_interactions" as any) as any)
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(1000);
+        if (disposed) return;
+        if (error) {
+          setVmixUnavailable(true);
+          console.warn("Falha ao atualizar relatório vMix:", error.message);
+          return;
+        }
+        setVmixEvents((data || []) as AnyRow[]);
+        setVmixUnavailable(false);
+      } catch (error) {
+        if (!disposed) console.warn("Falha ao atualizar relatório vMix:", error);
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
     const channel = supabase.channel(`vmix-report-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "vmix_button_interactions", filter: `user_id=eq.${userId}` }, (payload: any) => {
         if (payload.eventType === "INSERT" && payload.new) {
           setVmixEvents(current => [payload.new as AnyRow, ...current.filter(row => row.id !== payload.new.id)].slice(0, 1000));
           setVmixUnavailable(false);
         } else {
-          void supabase.from("vmix_button_interactions" as any).select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1000)
-            .then(({ data, error }: any) => { if (!error) { setVmixEvents((data || []) as AnyRow[]); setVmixUnavailable(false); } });
+          void refreshVmixEvents();
         }
-      }).subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [userId]);
+      })
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          console.warn("Canal Realtime do relatório vMix indisponível:", status);
+        }
+      });
+
+    // Near-real-time fallback: a new click appears within 5 seconds even if
+    // Realtime publication/subscription is not configured correctly.
+    const pollTimer = window.setInterval(() => {
+      if (active === "vmix") void refreshVmixEvents();
+    }, 5000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(pollTimer);
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, active]);
 
   useEffect(() => {
     if (active !== "audiencia" || !userId) return;
