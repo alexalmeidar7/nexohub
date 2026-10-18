@@ -16,7 +16,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings, Smartphone, Tablet
+  ScrollText, ChevronDown, ChevronUp, ChevronLeft, ArrowLeft, ArrowRight, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy, Mic, Music2, Pencil, Settings, Smartphone, Tablet, Trophy
 } from "lucide-react";
 
 import {
