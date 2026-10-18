@@ -5324,8 +5324,8 @@ function SwitcherUI({
                         )}
                         <button
                           type="button"
-                          className="vmix-hover-ring flex h-[54px] w-full min-w-0 flex-col items-center justify-center rounded-lg transition-colors duration-200 sm:h-auto sm:aspect-[3/2] sm:w-[150px]"
-                          style={{ background: "transparent", backgroundColor: "transparent", border: creationChoiceOpen ? "1px solid #ffffff" : "1px solid #ffffff66", boxShadow: "none" }}
+                          className="vmix-hover-ring !bg-transparent hover:!bg-transparent active:!bg-transparent focus:!bg-transparent flex h-[54px] w-full min-w-0 flex-col items-center justify-center rounded-lg transition-colors duration-200 sm:h-auto sm:aspect-[3/2] sm:w-[150px]"
+                          style={{ background: "transparent", backgroundColor: "transparent", border: creationChoiceOpen ? "1px solid #ffffff" : "1px solid #ffffff66", boxShadow: "none", backgroundImage: "none" }}
                           onClick={() => { setCreationChoiceOpen(open => !open); setAudioMonitorInput(""); }}
                           aria-expanded={creationChoiceOpen}
                           aria-label="Criar botão personalizado"
