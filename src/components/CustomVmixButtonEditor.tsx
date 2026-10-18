@@ -213,6 +213,15 @@ const PRESET_COMMANDS = [
   { value: "StopPlayList", label: "StopPlayList", desc: "Para a playlist configurada no vMix", category: "Playlist", params: [] },
   { value: "ScriptStart", label: "ScriptStart", desc: "Inicia um script vMix", category: "Script", params: ["value"] },
   { value: "ScriptStop", label: "ScriptStop", desc: "Para um script vMix", category: "Script", params: ["value"] },
+  { value: "PTZMove", label: "PTZMove", desc: "Move a câmera PTZ nos eixos Pan/Tilt; informe direção/velocidade em Value conforme suporte do dispositivo", category: "PTZ", params: ["input", "value"] },
+  { value: "PTZZoom", label: "PTZZoom", desc: "Controla zoom da câmera PTZ; informe tele/ wide ou valor compatível em Value", category: "PTZ", params: ["input", "value"] },
+  { value: "PTZFocus", label: "PTZFocus", desc: "Ajusta foco da câmera PTZ; informe modo ou valor em Value", category: "PTZ", params: ["input", "value"] },
+  { value: "PTZIris", label: "PTZIris", desc: "Ajusta abertura do diafragma da câmera PTZ", category: "PTZ", params: ["input", "value"] },
+  { value: "PTZHome", label: "PTZHome", desc: "Retorna a câmera PTZ à posição inicial", category: "PTZ", params: ["input"] },
+  { value: "PTZPreset", label: "PTZPreset", desc: "Chama um preset salvo na câmera PTZ; informe o número do preset em Value", category: "PTZ", params: ["input", "value"] },
+  { value: "PTZSpeed", label: "PTZSpeed", desc: "Define a velocidade de movimento da câmera PTZ", category: "PTZ", params: ["input", "value"] },
+  { value: "PTZAutoFocus", label: "PTZAutoFocus", desc: "Ativa o foco automático da câmera PTZ", category: "PTZ", params: ["input"] },
+  { value: "PTZAutoWhiteBalance", label: "PTZAutoWhiteBalance", desc: "Ativa o balanço de branco automático da câmera PTZ", category: "PTZ", params: ["input"] },
 ];
 
 const CATEGORIES = [...new Set(PRESET_COMMANDS.map(c => c.category))];
