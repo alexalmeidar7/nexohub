@@ -5070,6 +5070,42 @@ function SwitcherUI({
                             </button>
                           </div>
                         )}
+                        {buttonPointsDialogOpen && (
+                          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setButtonPointsDialogOpen(false); }}>
+                            <div role="dialog" aria-modal="true" aria-labelledby="button-points-title" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#17171f] p-5 text-white shadow-2xl">
+                              <div className="mb-1 flex items-center gap-2">
+                                <Trophy size={18} className="text-[#C6F03C]" />
+                                <h2 id="button-points-title" className="text-sm font-black uppercase tracking-wide">Pontuação dos botões</h2>
+                              </div>
+                              <p className="mb-4 text-xs text-white/55">Defina quantos pontos cada categoria vale. Os novos valores serão usados nos próximos cliques registrados.</p>
+                              <div className="space-y-3">
+                                {(["CAMERAS", "DIVS", "COMERCIAL", "EFEITOS", "QUADROS"] as const).map(category => (
+                                  <label key={category} className="flex items-center justify-between gap-4 rounded-xl bg-white/5 px-3 py-2.5">
+                                    <span className="text-xs font-bold">{category}</span>
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="9999"
+                                        step="0.5"
+                                        inputMode="decimal"
+                                        value={buttonPointsDraft[category] ?? ""}
+                                        onChange={event => setButtonPointsDraft(prev => ({ ...prev, [category]: event.target.value }))}
+                                        className="w-24 rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-right text-sm font-bold text-white outline-none focus:border-[#C6F03C]"
+                                        aria-label={`Pontos para ${category}`}
+                                      />
+                                      <span className="text-[10px] text-white/45">pontos</span>
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                              <div className="mt-5 flex justify-end gap-2">
+                                <button type="button" onClick={() => setButtonPointsDialogOpen(false)} className="rounded-lg px-4 py-2 text-xs font-bold text-white/65 hover:bg-white/8">Cancelar</button>
+                                <button type="button" onClick={saveButtonPoints} className="rounded-lg bg-[#C6F03C] px-4 py-2 text-xs font-black text-black hover:brightness-110">Salvar pontuação</button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
