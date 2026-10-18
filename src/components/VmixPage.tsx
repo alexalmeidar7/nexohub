@@ -5205,6 +5205,12 @@ function SwitcherUI({
                                     studio_name: studioName || null,
                                     button_id: String(btn.id),
                                     button_name: String(btn.nome || "Botão personalizado"),
+                                    button_category: String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR"),
+                                    points: (() => {
+                                      const category = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR");
+                                      const pointsByCategory: Record<string, number> = { CAMERAS: 1, DIVS: 0.5, COMERCIAL: 1.5, EFEITOS: 2.5, QUADROS: 1.5 };
+                                      return pointsByCategory[category] ?? 0;
+                                    })(),
                                     program_name: trackingProgram?.nome || null,
                                   })
                                   .then(({ error }: any) => {
