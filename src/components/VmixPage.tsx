@@ -5269,15 +5269,13 @@ function SwitcherUI({
                                 return;
                               }
                               setActiveCustomButton(btn.id);
-                              // Registra a utilização para o relatório de locutores sem bloquear o comando do vMix.
-                              const trackingProgram = linkedProgramaId
-                                ? programas.find((programa: Programa) => programa.id === linkedProgramaId)
-                                : undefined;
+                              // Registra o locutor e o programa que estão efetivamente no ar.
+                              // Não usar o programa vinculado ao botão nem o e-mail como nome do locutor.
                               if (user?.id) {
                                 void (supabase.from("vmix_button_interactions" as any) as any)
                                   .insert({
                                     user_id: user.id,
-                                    locutor_nome: trackingProgram?.apresentador_nome || (user as any)?.user_metadata?.full_name || user.email || null,
+                                    locutor_nome: currentProgram?.apresentador_nome || null,
                                     user_email: user.email || null,
                                     studio_name: studioName || null,
                                     button_id: String(btn.id),
@@ -5287,7 +5285,7 @@ function SwitcherUI({
                                       const category = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR");
                                       return (buttonPoints as Record<string, number>)[category] ?? 0;
                                     })(),
-                                    program_name: trackingProgram?.nome || null,
+                                    program_name: currentProgram?.nome || null,
                                   })
                                   .then(({ error }: any) => {
                                     if (error) console.warn("Não foi possível registrar o clique do botão vMix:", error.message);
