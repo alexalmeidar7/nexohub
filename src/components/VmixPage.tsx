@@ -5400,7 +5400,7 @@ function SwitcherUI({
                 </div>
               ));
             })()}
-            {programas.filter((programa) => String(programa.estudio || "").trim().toLocaleLowerCase("pt-BR") === String(studioName || "").trim().toLocaleLowerCase("pt-BR")).length === 0 && <p className="col-span-full py-10 text-center text-sm text-[#C4C4CF]">Nenhum preset cadastrado para este estúdio.</p>}
+            {programas.filter((programa) => String(programa.estudio || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR") === String(studioName || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR")).length === 0 && <p className="col-span-full py-10 text-center text-sm text-[#C4C4CF]">Nenhum preset cadastrado para este estúdio.</p>}
           </div>
           <div className="flex shrink-0 justify-end bg-[#222228] px-5 py-3">
             <button type="button" onClick={() => setIsAllPresetsDialogOpen(false)} className="rounded-md bg-[#0756C9] px-4 py-2 text-[10px] font-black uppercase tracking-wide text-white hover:bg-[#0967ED]">Fechar</button>
