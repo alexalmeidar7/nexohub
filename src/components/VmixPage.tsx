@@ -2879,46 +2879,46 @@ function AudioMonitorButton({
           })}
         </div>
       </div>
-      <div className="hidden flex-col items-start gap-0.5 px-2 pt-1.5 sm:flex">
-        <div className="flex min-w-0 items-center gap-1">
+      <div className="hidden h-full min-h-0 flex-col px-2 py-2 sm:flex">
+        <div className="flex min-w-0 items-center gap-1.5">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${levels?.available ? "bg-[#00e83b]" : "bg-[#f59e0b]"}`} />
-          <span className="truncate text-[6px] font-normal uppercase leading-none tracking-wide text-white/70">Monitor de áudio</span>
+          <span className="truncate text-[8px] font-bold uppercase leading-none tracking-wide text-white/70">Monitor de áudio</span>
         </div>
-        <span className="w-full truncate pl-2.5 text-[8px] font-semibold uppercase leading-tight text-white" title={inputName || `Input ${input}`}>{inputName || `Input ${input}`}</span>
-      </div>
-
-      <div className="absolute inset-x-2 bottom-2 top-[39px] hidden items-stretch gap-3 sm:flex">
-        <div className="flex w-[18px] shrink-0 items-stretch gap-[3px]">
-          {channelMeters.map(channel => {
-            const totalSegments = 12;
-            const activeSegments = levels?.available ? activeSegmentsFor(channel.level) : 0;
-            return (
-              <div key={channel.label} className="flex min-w-0 flex-1 flex-col-reverse gap-[2px] rounded-sm bg-[#17181b] p-[1px]">
-                {Array.from({ length: totalSegments }, (_, index) => {
-                  const active = index < activeSegments;
-                  const color = meterColor(index, totalSegments);
-                  return <div key={index} className="min-h-0 flex-1" style={{ backgroundColor: active ? color : "#242529", boxShadow: active ? `0 0 4px ${color}55` : "none" }} />;
-                })}
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 border-l border-white/10 pl-2">
-          <div className="grid grid-cols-2 gap-1">
-            <div className="rounded bg-white/[0.04] px-1.5 py-1">
-              <p className="text-[6px] font-black text-white/45">L1</p>
-              <p className="text-[10px] font-black tabular-nums text-[#00e83b]">{levels?.available ? `${dbFor(leftLevel)} dB` : "— dB"}</p>
+        <span className="mt-1 block w-full truncate text-[10px] font-semibold leading-tight text-white" title={inputName || monitorName}>
+          {inputName || monitorName}
+        </span>
+        <div className="mt-2 flex min-h-0 flex-1 gap-2">
+          <div className="flex w-[22px] shrink-0 items-stretch gap-[4px]" aria-label="Medidores de áudio esquerdo e direito">
+            {channelMeters.map(channel => {
+              const totalSegments = 12;
+              const activeSegments = levels?.available ? activeSegmentsFor(channel.level) : 0;
+              return (
+                <div key={channel.label} className="flex w-[9px] min-w-0 flex-col-reverse gap-[2px] rounded-sm bg-[#17181b] p-[1px]">
+                  {Array.from({ length: totalSegments }, (_, index) => {
+                    const active = index < activeSegments;
+                    return <div key={index} className="min-h-0 w-full flex-1 rounded-[1px]" style={{ backgroundColor: active ? meterColor(index, totalSegments) : "#242529" }} />;
+                  })}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="grid grid-cols-2 gap-1">
+              {[
+                { label: "L1", value: leftLevel },
+                { label: "R1", value: rightLevel },
+              ].map(channel => (
+                <div key={channel.label} className="min-w-0 rounded bg-[#17181b] px-1 py-1 text-center">
+                  <div className="text-[8px] font-semibold leading-none text-white/60">{channel.label}</div>
+                  <div className="mt-1 whitespace-nowrap text-[9px] font-bold leading-none tabular-nums text-white">{levels?.available ? `${dbFor(channel.value)} dB` : "— dB"}</div>
+                </div>
+              ))}
             </div>
-            <div className="rounded bg-white/[0.04] px-1.5 py-1">
-              <p className="text-[6px] font-black text-white/45">R1</p>
-              <p className="text-[10px] font-black tabular-nums text-[#00e83b]">{levels?.available ? `${dbFor(rightLevel)} dB` : "— dB"}</p>
+            <div className="min-w-0 rounded bg-[#10241b] px-1 py-1 text-center">
+              <div className="text-[8px] font-semibold leading-none text-white/70">MÉDIA L/R</div>
+              <div className="mt-1 whitespace-nowrap text-[10px] font-bold leading-none tabular-nums text-white">{averageDb} dB</div>
             </div>
           </div>
-          <div className="rounded bg-[#00e83b]/[0.08] px-1.5 py-1">
-            <p className="text-[6px] font-black uppercase tracking-wide text-white/45">Média L/R</p>
-            <p className="text-[11px] font-black tabular-nums text-white">{averageDb} dB</p>
-          </div>
-          {!levels?.available && <p className="text-[6px] font-bold uppercase leading-tight text-amber-300">Aguardando nível real do vMix</p>}
         </div>
       </div>
       <div className="absolute bottom-1 right-1 z-20 flex items-center gap-1 opacity-0 transition-all group-hover/custom:opacity-100">
