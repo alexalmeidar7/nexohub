@@ -126,7 +126,7 @@ export default function SitePage({ effectiveUserId }: Props) {
   const subtleBorder = "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
 
   return (
-    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
+    <div className="nexo-scope space-y-4 w-full max-w-none mx-0">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Site — Admin
