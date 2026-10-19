@@ -3261,6 +3261,7 @@ function SwitcherUI({
   navigate,
   currentTime
 }: any) {
+  const isAutomationRoute = window.location.pathname === "/vmix-control/automation";
   const defaultButtonPoints = { CAMERAS: 1, DIVS: 0.5, COMERCIAL: 1.5, EFEITOS: 2.5, QUADROS: 1.5 };
   const buttonPointsStorageKey = `vmix_button_points:${user?.id || "anonymous"}:${normStudio(studioName) || "all"}`;
   const [buttonPoints, setButtonPoints] = useState<Record<keyof typeof defaultButtonPoints, number>>(defaultButtonPoints);
