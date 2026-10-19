@@ -376,7 +376,7 @@ export default function SorteiosPage({ effectiveUserId }: { effectiveUserId?: st
   if (loading) return <ModulePageSkeleton />;
 
   return (
-    <div className="max-w-6xl mx-auto w-full space-y-6" style={{ fontFamily: FONT }}>
+    <div className="max-w-none mx-0 w-full space-y-6" style={{ fontFamily: FONT }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Sorteios
