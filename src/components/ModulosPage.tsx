@@ -24,7 +24,7 @@ interface ModulosPageProps {
 
 export default function ModulosPage({ groups, onSelectGroup, onSelectChild, accentColor = "#0055ff" }: ModulosPageProps) {
   return (
-    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="max-w-none mx-0 w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* Header Section */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90">
         <h2 className="text-base md:text-lg font-black tracking-wider text-[#002132] uppercase leading-tight">
