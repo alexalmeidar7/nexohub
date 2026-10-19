@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Maximize2, Minimize2, MonitorPlay, RefreshCw, Settings, X } from "lucide-react";
 
 type NdiNetworkSource = { name: string; address?: string };
@@ -32,7 +32,7 @@ export default function FloatingNdiPreview({
   const [selected, setSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(storageKey) || "";
-      return saved && !saved.startsWith("input:") && !saved.startsWith("network:") ? `input:${saved}` : saved;
+      return saved.startsWith("network:") ? saved : "";
     } catch { return ""; }
   });
   const [visible, setVisible] = useState(true);
