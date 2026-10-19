@@ -76,7 +76,7 @@ Deno.serve(async (req: Request) => {
       }, 503);
     }
 
-    const matches = originalDataUrl.match(/^data:(image\\/(?:png|jpeg|webp));base64,([\\s\\S]+)$/);
+    const matches = originalDataUrl.match(/^data:(image\/(?:png|jpeg|webp));base64,([\s\S]+)$/);
     if (!matches) {
       return json({
         success: false,
