@@ -2208,3 +2208,5 @@ textarea:disabled,
 select:disabled {
   border-color: #d6dce5 !important;
 }
+
+/* Lovable sync checkpoint: PR #72 integrated on 2026-10-19. */
