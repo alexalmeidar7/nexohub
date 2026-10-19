@@ -91,7 +91,8 @@ export default function FloatingNdiPreview({
     <aside
       className="fixed bottom-16 z-[60] overflow-hidden rounded-xl shadow-2xl"
       style={{
-        right: `${rightOffset}px`,\n        width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))",
+        right: `${rightOffset}px`,
+        width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))",
         background: "#111b2d",
         border: "1px solid #314766",
         boxShadow: "0 18px 50px #0008",
