@@ -172,7 +172,7 @@ internal static class NdiNetworkDiscovery
     {
         context.Response.StatusCode = status;
         context.Response.ContentType = "application/json; charset=utf-8";
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(value);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(value, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         context.Response.ContentLength64 = bytes.Length;
         await context.Response.OutputStream.WriteAsync(bytes, token);
     }
