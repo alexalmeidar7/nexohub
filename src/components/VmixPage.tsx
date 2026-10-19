@@ -470,6 +470,7 @@ interface NetworkInterfaceInfo {
 }
 
 export default function VmixPage({ forcedConnected = false, cleanLayout = false, automationMode = false }: { forcedConnected?: boolean; cleanLayout?: boolean; automationMode?: boolean }) {
+  const isAutomationRoute = window.location.pathname === "/vmix-control/automation" || automationMode;
   const navigate = useNavigate();
   const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
   const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
@@ -638,7 +639,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   const [transitionStyle, setTransitionStyle] = useState<string>(() => localStorage.getItem("vmix_transition_style") || "Fade");
   const [transitionDuration, setTransitionDuration] = useState<number>(() => Number(localStorage.getItem("vmix_transition_duration") || 1000));
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">(automationMode ? "scenes" : "scenes");
+  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">(isAutomationRoute ? "scenes" : "scenes");
 
   useEffect(() => {
     if (automationMode) setActiveTab("scenes");
@@ -5718,7 +5719,7 @@ function SwitcherUI({
         />
       )}
 
-      {automationMode && !isButtonDevicePreview && (
+      {isAutomationRoute && !isButtonDevicePreview && (
         <FloatingNdiPreview inputs={inputs} baseUrl={savedUrl || vmixUrl} />
       )}
 
