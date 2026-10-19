@@ -96,3 +96,6 @@ verify_jwt = false
 
 [functions.collect-audience]
 verify_jwt = false
+
+[functions.google-calendar-disconnect]
+verify_jwt = false
