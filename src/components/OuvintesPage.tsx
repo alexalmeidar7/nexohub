@@ -439,7 +439,7 @@ export default function OuvintesPage({ effectiveUserId }: { effectiveUserId?: st
   const today = new Date().toLocaleDateString("pt-BR");
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="space-y-8 animate-fade-in w-full max-w-none mx-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cadastro de Ouvintes
