@@ -4,7 +4,7 @@ import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from "react-router-dom";
 import { consumeOAuthReturnPath } from "@/lib/oauthReturn";
 
 // Redirect helper that interpolates :userSlug from the current URL params.
@@ -270,6 +270,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Desktop builds use hash routing so file:// startup and refresh keep a valid SPA route.
+const AppRouter = import.meta.env.BASE_URL === "./" ? HashRouter : BrowserRouter;
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -278,7 +281,7 @@ const App = () => (
       <DailyUpdateGuard />
       
       <AuthProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AppRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <OAuthReturnHandler />
           <PlayerSplashPrefetch />
           <NavigationErrorBoundary>
@@ -360,7 +363,7 @@ const App = () => (
           </Routes>
           </Suspense>
           </NavigationErrorBoundary>
-        </BrowserRouter>
+        </AppRouter>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
