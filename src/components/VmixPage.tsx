@@ -5721,7 +5721,7 @@ function SwitcherUI({
       )}
 
       {isAutomationRoute && !isButtonDevicePreview && (
-        <FloatingNdiPreview inputs={inputs} baseUrl={savedUrl || vmixUrl} targetSelector="#custom-buttons-panel" />
+        <FloatingNdiPreview inputs={inputs} baseUrl={savedUrl || vmixUrl} targetSelector="#custom-buttons-panel" onRefreshSources={reloadInputsAndSources} />
       )}
 
       {/* ── Command Log Panel (hidden in device previews) ── */}
