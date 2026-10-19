@@ -44,6 +44,7 @@ import { getSnapshotApresentadores, getSnapshotProgramas } from "@/lib/supabaseD
 const ProgramaExpressInline = lazy(() => import("@/components/ProgramaExpressInline"));
 import DatasComemorativasCidades from "@/components/agenda/DatasComemorativasCidades";
 import GoogleWeekGrid, { type GridEvent } from "@/components/agenda/GoogleWeekGrid";
+import GoogleCalendarSync from "@/components/GoogleCalendarSync";
 import AgendaPageSkeleton from "@/components/skeletons/AgendaPageSkeleton";
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
@@ -4167,6 +4168,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
             </div>
           </DialogContent>
         </Dialog>
+
+        <GoogleCalendarSync />
 
         {/* Calendar + Events Grid + Today's Feed */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] 2xl:grid-cols-[1fr_360px] gap-5 items-stretch">
