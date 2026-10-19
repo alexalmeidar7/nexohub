@@ -284,7 +284,7 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
-    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
+    <div className="nexo-scope space-y-4 w-full max-w-none mx-0">
       <div id="module-header-title" style={{ display: "none" }}>
         vMix — Quiz
       </div>
