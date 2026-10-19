@@ -91,7 +91,7 @@ export default function TeleprompterPage() {
   if (initialLoading) return <ModulePageSkeleton variant="form" />;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto w-full">
+    <div className="space-y-6 w-full max-w-none mx-0">
       {/* Form */}
       <div className="rounded-xl p-5 space-y-4" style={{ backgroundColor: "#f0f2f8", border: "1px solid #e2e8f0" }}>
         <h3 className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cadastrar TP</h3>
