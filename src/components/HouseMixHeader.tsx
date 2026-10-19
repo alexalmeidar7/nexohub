@@ -415,7 +415,7 @@ export default function HouseMixHeader({
         {/* Main Navbar Card (Pure white rounded bar matching Super Admin) */}
         <div
           ref={dropdownContainerRef}
-          className="rounded-full px-6 py-3 flex items-center justify-between relative z-40"
+          className="rounded-full px-2 sm:px-3 lg:px-3 xl:px-4 2xl:px-6 py-2 lg:py-2.5 xl:py-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 relative z-40"
           style={{
             background: "rgba(255,255,255,0.78)",
             backdropFilter: "blur(20px) saturate(1.8)",
@@ -426,7 +426,7 @@ export default function HouseMixHeader({
         >
 
           {/* Left: NX. Logo & House Mix */}
-          <div className={`flex items-center ${isIntercomEnabled ? "gap-2 xl:gap-3" : "gap-6"} shrink-0`}>
+          <div className={`flex items-center ${isIntercomEnabled ? "gap-1.5 xl:gap-2" : "gap-2 xl:gap-3"} shrink-0`}>
             <button
               onClick={() => onNavigate("dashboard")}
               className="flex items-center gap-2.5 outline-none focus:opacity-80 transition-opacity cursor-pointer group shrink-0"
@@ -444,7 +444,7 @@ export default function HouseMixHeader({
           </div>
 
           {/* Center: Navigation Links & Hover Dropdowns */}
-          <nav className={`hidden lg:flex items-center ${isIntercomEnabled ? "gap-1" : "gap-1 xl:gap-1.5"}`}>
+          <nav className={`hidden lg:flex flex-1 min-w-0 flex-wrap content-center justify-center items-center ${isIntercomEnabled ? "gap-0" : "gap-0 lg:gap-0.5 xl:gap-1"}`}>
             {/* Seta esquerda para itens anteriores quando intercom estiver habilitado */}
             {isIntercomEnabled && (
               <button
@@ -474,7 +474,7 @@ export default function HouseMixHeader({
                   <button
                     onClick={() => handleNavigate("dashboard")}
                     onMouseEnter={() => { handleDirectItemHover(); prefetchPage("dashboard"); }}
-                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                    className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                       currentPage === "dashboard" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
@@ -494,7 +494,7 @@ export default function HouseMixHeader({
                     <button
                       type="button"
                       onClick={(e) => handleDropdownTriggerClick("cadastros", e)}
-                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "cadastros"
                           ? "bg-black text-white shadow-sm"
                           : ["apresentadores", "ouvintes", "programas", "clientes", "previsao"].includes(currentPage)
@@ -585,7 +585,7 @@ export default function HouseMixHeader({
                   <button
                     onClick={() => handleNavigate("sorteios")}
                     onMouseEnter={() => { handleDirectItemHover(); prefetchPage("sorteios"); }}
-                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                    className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                       currentPage === "sorteios" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
@@ -600,7 +600,7 @@ export default function HouseMixHeader({
                   <button
                     onClick={() => handleNavigate("blitz")}
                     onMouseEnter={() => { handleDirectItemHover(); prefetchPage("blitz"); }}
-                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                    className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                       currentPage === "blitz" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
@@ -615,7 +615,7 @@ export default function HouseMixHeader({
                   <button
                     onClick={() => handleNavigate("noticias")}
                     onMouseEnter={() => { handleDirectItemHover(); prefetchPage("noticias"); }}
-                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                    className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                       currentPage === "noticias" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
@@ -630,7 +630,7 @@ export default function HouseMixHeader({
                   <button
                     onClick={() => handleNavigate("musica")}
                     onMouseEnter={() => { handleDirectItemHover(); prefetchPage("musica"); }}
-                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                    className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                       currentPage === "musica" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
@@ -645,7 +645,7 @@ export default function HouseMixHeader({
                   <button
                     onClick={() => handleNavigate("agenda")}
                     onMouseEnter={() => { handleDirectItemHover(); prefetchPage("agenda"); }}
-                    className={`text-[11px] xl:text-xs font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                    className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                       currentPage === "agenda" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
@@ -665,7 +665,7 @@ export default function HouseMixHeader({
                     <button
                       type="button"
                       onClick={(e) => handleDropdownTriggerClick("site", e)}
-                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "site"
                           ? "bg-black text-white shadow-sm"
                           : ["site", "playerconfig"].includes(currentPage)
@@ -735,7 +735,7 @@ export default function HouseMixHeader({
                     <button
                       type="button"
                       onClick={(e) => handleDropdownTriggerClick("comercial", e)}
-                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "comercial"
                           ? "bg-black text-white shadow-sm"
                           : ["preroll", "testemunhais", "promocoes", "logos", "configtelapromo", "shopping"].includes(currentPage)
@@ -852,7 +852,7 @@ export default function HouseMixHeader({
                     <button
                       type="button"
                       onClick={(e) => handleDropdownTriggerClick("vmix", e)}
-                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "vmix"
                           ? "bg-black text-white shadow-sm"
                           : ["broadcast", "cenario", "batalha", "enquete", "quiz"].includes(currentPage)
@@ -958,7 +958,7 @@ export default function HouseMixHeader({
                     <button
                       type="button"
                       onClick={(e) => handleDropdownTriggerClick("ferramentas", e)}
-                      className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                      className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full outline-none cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                         openDropdown === "ferramentas"
                           ? "bg-black text-white shadow-sm"
                           : ["cortevideo", "tp"].includes(currentPage)
@@ -1012,7 +1012,7 @@ export default function HouseMixHeader({
                     onClick={() => handleNavigate("relatorios")}
                     onMouseEnter={() => { handleDirectItemHover(); prefetchPage("relatorios"); }}
                     title="Relatórios"
-                    className={`text-[11px] xl:text-xs font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
+                    className={`text-[9px] xl:text-[10px] 2xl:text-[11px] font-semibold flex items-center gap-1 ${itemPaddingClass} py-1.5 rounded-full cursor-pointer select-none active:scale-95 transition-colors duration-100 whitespace-nowrap shrink-0 ${
                       currentPage === "relatorios" ? "text-black font-bold bg-slate-100/80" : "text-slate-700 hover:text-black hover:bg-slate-100/70"
                     }`}
                   >
