@@ -149,7 +149,7 @@ export default function ModulePageSkeleton({ variant = "list" }: Props) {
       return <MusicaNoArSkeleton />;
     case "form":
       return (
-        <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+        <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in">
           <ModernHeaderBlock />
           <ModernFormBlock />
           <ModernTableRows />
@@ -157,7 +157,7 @@ export default function ModulePageSkeleton({ variant = "list" }: Props) {
       );
     case "table":
       return (
-        <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+        <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in">
           <ModernHeaderBlock />
           <ModernTableRows />
         </div>
