@@ -188,7 +188,7 @@ export default function FloatingNdiPreview({
         )}
         <div className="relative aspect-video overflow-hidden rounded-md" style={{ background: "#05080e", border: "1px solid #25344b" }}>
           {previewUrl && !imageFailed ? (
-            <img key={previewUrl} src={previewUrl} alt={activeInput?.title || "Preview NDI"} onError={() => setImageFailed(true)} onLoad={() => setImageFailed(false)} className="absolute inset-0 h-full w-full object-contain" />
+            <img key={previewUrl} src={previewUrl} alt={selectedNetworkName || "Preview NDI"} onError={() => setImageFailed(true)} onLoad={() => setImageFailed(false)} className="absolute inset-0 h-full w-full object-contain" />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-slate-400">
               {imageFailed ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
