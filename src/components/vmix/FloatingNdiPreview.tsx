@@ -1,64 +1,67 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, Maximize2, Minimize2, MonitorPlay, RefreshCw, Settings, X } from "lucide-react";
 
-type NdiInput = { key: string; number: string; title: string; type: string };
+type VideoDevice = { deviceId: string; label: string };
 
-function normalizeBase(raw: string) {
-  const value = raw.trim();
-  if (!value) return "";
-  try {
-    const url = new URL(/^https?:\/\//i.test(value) ? value : "http://" + value);
-    if (!url.port) url.port = "8088";
-    return url.toString().replace(/\/$/, "");
-  } catch {
-    return "";
-  }
-}
-
-/**
- * Temporário, sem Bridge: mostra vídeo de entradas NDI reais já adicionadas ao vMix.
- * Para visualizar uma nova fonte de rede, o operador precisa adicioná-la primeiro em Input > NDI/OMT no vMix.
- * Quando o NexoHub Bridge estiver pronto, rever este preview para descobrir e receber fontes diretamente da rede.
- */
 export default function FloatingNdiPreview({
-  inputs,
-  baseUrl,
+  baseUrl: _baseUrl,
   targetSelector = "#custom-buttons-panel",
   onRefreshSources,
 }: {
-  inputs: NdiInput[];
+  inputs: { key: string; number: string; title: string; type: string }[];
   baseUrl: string;
   targetSelector?: string;
   onRefreshSources?: () => Promise<unknown> | void;
 }) {
-  const ndiInputs = useMemo(
-    () => inputs.filter((input) => input.type.trim().toLowerCase() === "ndi"),
-    [inputs],
-  );
-  const base = normalizeBase(baseUrl);
-  const storageKey = "vmix_ndi_preview_selected_" + (base || "default");
-  const [selected, setSelected] = useState(() => {
-    try {
-      const saved = localStorage.getItem(storageKey) || "";
-      return saved.startsWith("input:") ? saved : "";
-    } catch {
-      return "";
-    }
-  });
   const [visible, setVisible] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(true);
   const [rightOffset, setRightOffset] = useState(16);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [imageFailed, setImageFailed] = useState(false);
+  const [devices, setDevices] = useState<VideoDevice[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState("");
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const refreshDevices = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
+      setError("Este navegador não permite acesso à câmera. Abra o House Mix no Chrome ou Edge atualizado, usando HTTPS.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      // A permissão revela os nomes dos dispositivos virtuais, inclusive NDI Webcam Input.
+      const permissionStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      permissionStream.getTracks().forEach((track) => track.stop());
+      const list = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = list
+        .filter((device) => device.kind === "videoinput")
+        .map((device, index) => ({
+          deviceId: device.deviceId,
+          label: device.label || "Câmera local " + (index + 1),
+        }));
+      setDevices(videoDevices);
+      const ndiDevice = videoDevices.find((device) => /ndi webcam input/i.test(device.label));
+      const nextSelected = selectedDevice && videoDevices.some((device) => device.deviceId === selectedDevice)
+        ? selectedDevice
+        : ndiDevice?.deviceId || videoDevices[0]?.deviceId || "";
+      setSelectedDevice(nextSelected);
+      if (!videoDevices.length) setError("Nenhuma câmera local foi encontrada. Instale e abra o NDI Webcam Input e selecione uma fonte NDI nele.");
+    } catch (cause) {
+      const name = cause instanceof DOMException ? cause.name : "";
+      setError(name === "NotAllowedError"
+        ? "Permita o acesso à câmera para o House Mix nas configurações do navegador."
+        : "Não foi possível listar as câmeras locais. Verifique a permissão do navegador e tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, selected);
-    } catch {
-      // Storage may be unavailable.
-    }
-  }, [storageKey, selected]);
+    void onRefreshSources?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const updateAnchor = () => {
@@ -82,103 +85,89 @@ export default function FloatingNdiPreview({
   }, [targetSelector]);
 
   useEffect(() => {
-    void onRefreshSources?.();
-    // Refresh once when opened; manual refresh remains available.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!selectedDevice || !navigator.mediaDevices?.getUserMedia) {
+      setStream(null);
+      return;
+    }
+    let cancelled = false;
+    let nextStream: MediaStream | null = null;
+    setError("");
+    navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: selectedDevice } },
+      audio: false,
+    }).then((result) => {
+      if (cancelled) {
+        result.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      nextStream = result;
+      setStream(result);
+    }).catch((cause: unknown) => {
+      const name = cause instanceof DOMException ? cause.name : "";
+      setStream(null);
+      setError(name === "NotAllowedError"
+        ? "Permita o acesso à câmera nas configurações do navegador."
+        : "Não foi possível abrir este dispositivo. Verifique se ele está disponível e tente atualizar a lista.");
+    });
+    return () => {
+      cancelled = true;
+      nextStream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [selectedDevice]);
 
-  const refreshSources = () => {
-    setImageFailed(false);
-    setRefreshKey((key) => key + 1);
-    void onRefreshSources?.();
-  };
-
-  const activeInput = selected.startsWith("input:")
-    ? ndiInputs.find((input) => input.number === selected.slice("input:".length))
-    : undefined;
-  const previewUrl = base && activeInput
-    ? base + "/mjpeg?Input=" + encodeURIComponent(activeInput.number) + "&preview=" + refreshKey
-    : "";
-  const selectedSourceLabel = activeInput?.title || "";
+  const selectedLabel = devices.find((device) => device.deviceId === selectedDevice)?.label || "";
 
   if (!visible) {
     return (
-      <button
-        type="button"
-        onClick={() => setVisible(true)}
-        className="fixed bottom-16 z-[60] flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-white shadow-xl"
-        style={{ right: rightOffset + "px", background: "#17243d", borderColor: "#315078" }}
-      >
+      <button type="button" onClick={() => setVisible(true)} className="fixed bottom-16 z-[60] flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-white shadow-xl" style={{ right: rightOffset + "px", background: "#17243d", borderColor: "#315078" }}>
         <MonitorPlay size={15} /> Preview NDI
       </button>
     );
   }
 
   return (
-    <aside
-      className="fixed bottom-16 z-[60] overflow-hidden rounded-xl shadow-2xl"
-      style={{
-        right: rightOffset + "px",
-        width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))",
-        background: "#111b2d",
-        border: "1px solid #314766",
-        boxShadow: "0 18px 50px #0008",
-      }}
-      aria-label="Preview de vídeo NDI"
-    >
+    <aside className="fixed bottom-16 z-[60] overflow-hidden rounded-xl shadow-2xl" style={{ right: rightOffset + "px", width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))", background: "#111b2d", border: "1px solid #314766", boxShadow: "0 18px 50px #0008" }} aria-label="Preview NDI">
       <header className="flex items-center gap-2 px-3 py-2" style={{ background: "#17243d", borderBottom: "1px solid #314766" }}>
-        <span className="h-2 w-2 rounded-full" style={{ background: previewUrl ? "#8bcf38" : "#64748b" }} />
+        <span className="h-2 w-2 rounded-full" style={{ background: stream ? "#8bcf38" : "#64748b" }} />
         <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-white">Preview NDI</span>
-        <button type="button" onClick={refreshSources} title="Atualizar entradas NDI do vMix" aria-label="Atualizar entradas NDI do vMix" className="rounded p-1 text-slate-300 hover:bg-white/10"><RefreshCw size={13} /></button>
-        <button type="button" onClick={() => setSetupOpen((value) => !value)} title="Selecionar entrada NDI" aria-label="Selecionar entrada NDI" className={"rounded p-1 hover:bg-white/10 " + (setupOpen ? "text-white" : "text-slate-300")}><Settings size={13} /></button>
+        <button type="button" onClick={() => void refreshDevices()} title="Atualizar dispositivos de vídeo" aria-label="Atualizar dispositivos de vídeo" className="rounded p-1 text-slate-300 hover:bg-white/10"><RefreshCw size={13} /></button>
+        <button type="button" onClick={() => setSetupOpen((value) => !value)} title="Selecionar dispositivo" aria-label="Selecionar dispositivo" className={"rounded p-1 hover:bg-white/10 " + (setupOpen ? "text-white" : "text-slate-300")}><Settings size={13} /></button>
         <button type="button" onClick={() => setExpanded((value) => !value)} title={expanded ? "Reduzir preview" : "Expandir preview"} className="rounded p-1 text-slate-300 hover:bg-white/10">{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
         <button type="button" onClick={() => setVisible(false)} title="Ocultar preview" className="rounded p-1 text-slate-300 hover:bg-white/10"><X size={13} /></button>
       </header>
       <div className="p-2">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <label className="block min-w-0 truncate text-[9px] font-bold uppercase tracking-wider text-slate-300">
-            {selectedSourceLabel || "Selecione uma entrada NDI"}
-          </label>
-          {selected && <span className="shrink-0 text-[8px] text-slate-500">Seleção salva</span>}
-        </div>
         {setupOpen && (
-          <select
-            autoFocus
-            value={selected}
-            onChange={(event) => {
-              setSelected(event.target.value);
-              setImageFailed(false);
-              setRefreshKey((key) => key + 1);
-              setSetupOpen(false);
-            }}
-            className="mb-2 h-8 w-full rounded-md border px-2 text-xs text-white outline-none"
-            style={{ background: "#0c1525", borderColor: "#314766" }}
-          >
-            <option value="">Selecione uma entrada NDI carregada no vMix…</option>
-            {ndiInputs.map((input) => (
-              <option key={input.key || input.number} value={"input:" + input.number}>{input.title || "Input " + input.number}</option>
-            ))}
-          </select>
+          <div className="mb-2 flex gap-1.5">
+            <select value={selectedDevice} onChange={(event) => setSelectedDevice(event.target.value)} className="h-8 min-w-0 flex-1 rounded-md border px-2 text-[10px] text-white outline-none" style={{ background: "#0c1525", borderColor: "#314766" }}>
+              <option value="">Selecione a câmera NDI…</option>
+              {devices.map((device) => <option key={device.deviceId} value={device.deviceId}>{device.label}</option>)}
+            </select>
+            <button type="button" onClick={() => void refreshDevices()} disabled={loading} className="shrink-0 rounded-md border border-white/20 px-2 text-[9px] font-bold text-white hover:bg-white/10 disabled:opacity-50">{loading ? "…" : "Listar"}</button>
+          </div>
         )}
         <div className="relative aspect-video overflow-hidden rounded-md" style={{ background: "#05080e", border: "1px solid #25344b" }}>
-          {previewUrl && !imageFailed ? (
-            <img key={previewUrl} src={previewUrl} alt={activeInput?.title || "Preview NDI"} onError={() => setImageFailed(true)} onLoad={() => setImageFailed(false)} className="absolute inset-0 h-full w-full object-contain" />
+          {stream ? (
+            <VideoStream stream={stream} label={selectedLabel} />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-slate-400">
-              {imageFailed ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
-              <span className="text-[10px] font-semibold">
-                {imageFailed
-                  ? "Não foi possível receber o vídeo desta entrada. Verifique se ela está ativa no vMix."
-                  : "Sem Bridge, o navegador não descobre fontes NDI diretamente na rede. Adicione a fonte pelo seletor nativo Input > NDI/OMT do vMix e depois atualize esta lista."}
-              </span>
-              <button type="button" onClick={refreshSources} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10">Atualizar entradas</button>
+              {error ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
+              <span className="text-[10px] font-semibold">{error || "Para ver uma fonte NDI sem Bridge, abra o NDI Webcam Input no computador, selecione nele a fonte da rede e depois escolha esse dispositivo aqui."}</span>
+              <button type="button" onClick={() => void refreshDevices()} disabled={loading} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10 disabled:opacity-50">{loading ? "Carregando…" : "Ativar e listar câmeras"}</button>
             </div>
           )}
         </div>
-        <p className="mt-2 text-[9px] leading-relaxed text-slate-400">
-          Modo temporário sem Bridge: selecione uma entrada NDI real já carregada no vMix. Para trazer uma nova fonte da rede, use Input → NDI/OMT no próprio vMix e clique em atualizar. Quando o NexoHub Bridge estiver pronto, reveremos este preview para descobrir e reproduzir fontes diretamente da rede.
-        </p>
+        {selectedLabel && <p className="mt-1.5 truncate text-[9px] font-bold text-slate-400">{selectedLabel}</p>}
       </div>
     </aside>
   );
+}
+
+function VideoStream({ stream, label }: { stream: MediaStream; label: string }) {
+  const ref = (element: HTMLVideoElement | null) => {
+    if (element && element.srcObject !== stream) {
+      element.srcObject = stream;
+      void element.play().catch(() => {});
+    }
+  };
+  return <video ref={ref} autoPlay playsInline muted aria-label={label || "Preview de vídeo"} className="absolute inset-0 h-full w-full object-contain" />;
 }
