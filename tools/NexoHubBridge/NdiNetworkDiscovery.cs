@@ -122,7 +122,7 @@ internal static class NdiNetworkDiscovery
             }
 
             var result = DiscoverSources();
-            await WriteJsonAsync(context, result.Available ? 200 : 503, result, token);
+            await WriteJsonAsync(context, result.available ? 200 : 503, result, token);
         }
         catch (Exception ex)
         {
