@@ -12,7 +12,7 @@ import { consumeOAuthReturnPath } from "@/lib/oauthReturn";
 // send the browser literally to "/:userSlug/...", producing a blank page.
 function SlugRedirect({ template }: { template: string }) {
   const { userSlug = "" } = useParams();
-  const { search, hash } = window.location;
+  const { search, hash } = useLocation();
   return <Navigate to={`${template.replace(":userSlug", userSlug)}${search}${hash}`} replace />;
 }
 
@@ -112,7 +112,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
     console.error("[NavigationErrorBoundary]", {
       message: error.message,
       stack: error.stack,
-      path: window.location.pathname,
+      path: this.props.locationKey,
       isChunkError,
       attempt: this.state.retryCount,
     });
@@ -186,12 +186,16 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
       localStorage.clear();
       sessionStorage.clear();
     } catch {}
-    window.location.href = "/";
+    if (import.meta.env.BASE_URL === "./") {
+      window.location.hash = "#/";
+    } else {
+      window.location.href = "/";
+    }
   };
 
   render() {
     if (this.state.hasError) {
-      const isPlayer = typeof window !== "undefined" && window.location.pathname.includes("/player");
+      const isPlayer = this.props.locationKey.includes("/player");
       const healing = this.state.retryCount < AUTO_HEAL_DELAYS_MS.length;
 
       if (isPlayer && healing) {
