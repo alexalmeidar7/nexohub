@@ -4,7 +4,7 @@
  */
 export default function DashboardSkeleton() {
   return (
-    <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-8 pt-4 pb-12 space-y-6 font-sans animate-fade-in">
+    <div className="w-full max-w-none mx-0 px-4 lg:px-8 pt-4 pb-12 space-y-6 font-sans animate-fade-in">
       {/* 1. Header Navigation Bar Pill Skeleton */}
       <div className="bg-white/80 backdrop-blur-md rounded-full px-6 py-3.5 flex items-center justify-between border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.03)] animate-pulse">
         <div className="flex items-center gap-3">
