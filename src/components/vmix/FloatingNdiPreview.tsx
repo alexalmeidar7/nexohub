@@ -63,10 +63,7 @@ export default function FloatingNdiPreview({
   }, [storageKey, selected]);
 
   useEffect(() => {
-    if (!ndiInputs.length) {
-      setSelected("");
-      return;
-    }
+    if (!ndiInputs.length) return;
     if (!ndiInputs.some((input) => input.number === selected)) {
       setSelected(ndiInputs[0].number);
     }
@@ -82,8 +79,8 @@ export default function FloatingNdiPreview({
       <button
         type="button"
         onClick={() => setVisible(true)}
-        className="fixed bottom-16 right-4 z-[60] flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-white shadow-xl"
-        style={{ background: "#17243d", borderColor: "#315078" }}
+        className="fixed bottom-16 z-[60] flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-white shadow-xl"
+        style={{ right: `${rightOffset}px`, background: "#17243d", borderColor: "#315078" }}
       >
         <MonitorPlay size={15} /> Preview NDI
       </button>
