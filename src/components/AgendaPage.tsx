@@ -2215,6 +2215,76 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     fetchEventos();
   };
 
+  const handleClearCurrentMonth = async () => {
+    if (!targetUserId) {
+      toast({ title: "Não foi possível identificar a emissora", variant: "destructive" });
+      return;
+    }
+
+    const monthStartDate = new Date();
+    monthStartDate.setDate(1);
+    monthStartDate.setHours(0, 0, 0, 0);
+    const nextMonthDate = new Date(monthStartDate);
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+    const monthStart = format(monthStartDate, "yyyy-MM-dd");
+    const nextMonthStart = format(nextMonthDate, "yyyy-MM-dd");
+    const monthLabel = format(monthStartDate, "MMMM yyyy", { locale: ptBR });
+
+    const confirmed = await confirmDialog({
+      title: "Limpar agenda do mês",
+      message: "Isso excluirá os eventos do House Mix com data cadastrada em " + monthLabel + ". Essa ação não pode ser desfeita. Eventos do Google Agenda não serão alterados. Deseja continuar?",
+      confirmLabel: "Limpar agenda",
+      cancelLabel: "Cancelar",
+      destructive: true,
+      icon: "trash",
+    });
+    if (!confirmed) return;
+
+    setLoadingData(true);
+    try {
+      const { data: rows, error: selectError } = await supabase
+        .from("agenda_eventos")
+        .select("id")
+        .eq("user_id", targetUserId)
+        .gte("data", monthStart)
+        .lt("data", nextMonthStart);
+      if (selectError) throw selectError;
+
+      const dbIds = (rows || []).map((row: any) => String(row.id));
+      if (dbIds.length) {
+        const { error: participantError } = await supabase
+          .from("agenda_participantes")
+          .delete()
+          .in("evento_id", dbIds);
+        if (participantError) throw participantError;
+
+        const { error: deleteError } = await supabase
+          .from("agenda_eventos")
+          .delete()
+          .eq("user_id", targetUserId)
+          .gte("data", monthStart)
+          .lt("data", nextMonthStart);
+        if (deleteError) throw deleteError;
+      }
+
+      const localMonthIds = eventos
+        .filter((event) => String(event.data || "") >= monthStart && String(event.data || "") < nextMonthStart)
+        .map((event) => event.id);
+      for (const id of localMonthIds) deleteStoredAgendaEvent(id, targetUserId);
+
+      const removedIds = new Set([...dbIds, ...localMonthIds]);
+      setEventos((prev) => prev.filter((event) => !removedIds.has(event.id)));
+      try { window.dispatchEvent(new CustomEvent("nexohub:agenda-updated")); } catch {}
+      toast({ title: "Agenda limpa", description: removedIds.size + " evento(s) removido(s) de " + monthLabel + "." });
+      await fetchEventos();
+    } catch (error: any) {
+      console.error("[Agenda] Falha ao limpar o mês vigente:", error);
+      toast({ title: "Não foi possível limpar a agenda", description: error?.message || "Ocorreu um erro ao excluir os eventos.", variant: "destructive" });
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   const locais = Array.from(new Set(eventos.map((e) => e.local).filter(Boolean)));
 
   const getExcecao = (evt: Evento, dateStr: string): EventoExcecao | undefined => {
@@ -3237,6 +3307,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
+            <GoogleCalendarSync compact />
             {locais.length > 0 && (
               <Select value={filterLocal} onValueChange={setFilterLocal}>
                 <SelectTrigger className="w-[180px] h-10 text-xs bg-[#f8fafc] border border-slate-200 text-slate-700 rounded-full font-semibold">
@@ -3295,6 +3366,16 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
               className="group h-10 px-6 rounded-full bg-[#0055ff] hover:bg-[#0047e1] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 cursor-pointer"
             >
               <Plus size={14} className="text-black group-hover:text-white transition-colors" /> Novo Evento
+            </button>
+            <button
+              type="button"
+              onClick={handleClearCurrentMonth}
+              disabled={loadingData}
+              className="h-10 px-4 rounded-full bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95 cursor-pointer"
+              title="Excluir eventos do House Mix com data cadastrada no mês vigente"
+            >
+              <Trash2 size={14} />
+              Limpar agenda
             </button>
           </div>
         </section>
@@ -4199,7 +4280,6 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           </DialogContent>
         </Dialog>
 
-        <GoogleCalendarSync />
 
         {/* Calendar + Events Grid + Today's Feed */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] 2xl:grid-cols-[1fr_360px] gap-5 items-stretch">
