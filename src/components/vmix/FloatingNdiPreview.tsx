@@ -34,6 +34,7 @@ export default function FloatingNdiPreview({
     () => inputs.filter((input) => input.type.trim().toLowerCase() === "ndi"),
     [inputs],
   );
+  const otherInputs = useMemo(() => inputs.filter((input) => input.type.trim().toLowerCase() !== "ndi"), [inputs]);
   const base = normalizeBase(baseUrl);
   const storageKey = `vmix_ndi_preview_selected_${base || "default"}`;
   const [selected, setSelected] = useState(() => {
@@ -124,7 +125,7 @@ export default function FloatingNdiPreview({
 
   const selectedNetworkName = selected.startsWith("network:") ? decodeURIComponent(selected.slice("network:".length)) : "";
   const activeInput = selected.startsWith("input:")
-    ? ndiInputs.find((input) => input.number === selected.slice("input:".length))
+    ? inputs.find((input) => input.number === selected.slice("input:".length))
     : selectedNetworkName
       ? ndiInputs.find((input) => input.title.toLowerCase().includes(selectedNetworkName.toLowerCase()))
       : undefined;
@@ -200,6 +201,11 @@ export default function FloatingNdiPreview({
                 <option key={input.key || input.number} value={`input:${input.number}`}>{input.title || `Input ${input.number}`}</option>
               ))}
             </optgroup>
+            <optgroup label="Outras entradas carregadas no vMix (paliativo)">
+              {otherInputs.map((input) => (
+                <option key={input.key || input.number} value={`input:${input.number}`}>{input.title || `Input ${input.number}`} · {input.type}</option>
+              ))}
+            </optgroup>
           </select>
         )}
         <div className="relative aspect-video overflow-hidden rounded-md" style={{ background: "#05080e", border: "1px solid #25344b" }}>
@@ -222,7 +228,7 @@ export default function FloatingNdiPreview({
           )}
         </div>
         <p className="mt-2 text-[9px] leading-relaxed text-slate-400">
-          A lista de rede vem do NDI Runtime local, não dos nomes dos inputs do vMix. Mantenha o NexoHub Bridge aberto no computador do estúdio. O preview de vídeo pelo vMix funciona para entradas que já estejam carregadas nele.
+          Paliativo: também é possível selecionar uma entrada real já carregada no vMix, como uma câmera virtual NDI Webcam Input. Fontes NDI ainda precisam estar carregadas no vMix para usar o preview MJPEG.
         </p>
       </div>
     </aside>
