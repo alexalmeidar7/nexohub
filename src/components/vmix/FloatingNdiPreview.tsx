@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Maximize2, Minimize2, MonitorPlay, RefreshCw, Settings, X } from "lucide-react";
 
 type NdiInput = { key: string; number: string; title: string; type: string };
+type NdiNetworkSource = { name: string; address?: string };
+type DiscoveryPayload = { available?: boolean; provider?: string; message?: string | null; sources?: NdiNetworkSource[] };
 
 function normalizeBase(raw: string) {
   const value = raw.trim();
@@ -15,7 +17,7 @@ function normalizeBase(raw: string) {
   }
 }
 
-/** Compact preview for NDI inputs already received by vMix. vMix exposes each input as MJPEG. */
+/** Preview MJPEG do vMix + descoberta real de fontes da rede via NexoHub Bridge local. */
 export default function FloatingNdiPreview({
   inputs,
   baseUrl,
@@ -27,16 +29,18 @@ export default function FloatingNdiPreview({
   targetSelector?: string;
   onRefreshSources?: () => Promise<unknown> | void;
 }) {
-  // Only use inputs explicitly identified as NDI by vMix's live API.
-  // Matching the title alone can incorrectly advertise ordinary inputs as NDI sources.
+  // O vMix informa somente os inputs que já foram adicionados. A descoberta da rede vem do Bridge/NDI Runtime.
   const ndiInputs = useMemo(
-    () => inputs.filter((input) => /^ndi(?:\\s|$)/i.test(input.type.trim())),
+    () => inputs.filter((input) => input.type.trim().toLowerCase() === "ndi"),
     [inputs],
   );
   const base = normalizeBase(baseUrl);
   const storageKey = `vmix_ndi_preview_selected_${base || "default"}`;
   const [selected, setSelected] = useState(() => {
-    try { return localStorage.getItem(storageKey) || ""; } catch { return ""; }
+    try {
+      const saved = localStorage.getItem(storageKey) || "";
+      return saved && !saved.startsWith("input:") && !saved.startsWith("network:") ? `input:${saved}` : saved;
+    } catch { return ""; }
   });
   const [visible, setVisible] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -45,6 +49,9 @@ export default function FloatingNdiPreview({
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshingSources, setRefreshingSources] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [networkSources, setNetworkSources] = useState<NdiNetworkSource[]>([]);
+  const [discoveryMessage, setDiscoveryMessage] = useState("Consultando o NexoHub Bridge neste computador…");
+  const [discoveryReady, setDiscoveryReady] = useState(false);
 
   useEffect(() => {
     const updateAnchor = () => {
@@ -68,32 +75,63 @@ export default function FloatingNdiPreview({
     try { localStorage.setItem(storageKey, selected); } catch { /* storage may be unavailable */ }
   }, [storageKey, selected]);
 
+  const discoverNetworkSources = useCallback(async () => {
+    setDiscoveryMessage("Buscando fontes NDI reais na rede…");
+    try {
+      const response = await fetch("http://127.0.0.1:8765/ndi/sources", {
+        method: "GET",
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      });
+      const payload = await response.json() as DiscoveryPayload;
+      if (!response.ok || !payload.available) {
+        setNetworkSources([]);
+        setDiscoveryReady(false);
+        setDiscoveryMessage(payload.message || "O NexoHub Bridge não conseguiu consultar o NDI Runtime.");
+        return;
+      }
+      const sources = Array.isArray(payload.sources) ? payload.sources.filter((source) => typeof source?.name === "string" && source.name.trim()) : [];
+      setNetworkSources(sources);
+      setDiscoveryReady(true);
+      setDiscoveryMessage(sources.length ? `${sources.length} fonte(s) NDI encontrada(s) na rede.` : "O NDI Runtime respondeu, mas não encontrou fontes anunciadas na rede.");
+    } catch {
+      setNetworkSources([]);
+      setDiscoveryReady(false);
+      setDiscoveryMessage("NexoHub Bridge não encontrado neste computador. Inicie o Bridge com o NDI Runtime instalado para pesquisar as fontes reais da rede.");
+    }
+  }, []);
+
   const refreshSources = useCallback(async () => {
-    if (!onRefreshSources || refreshingSources) return;
+    if (refreshingSources) return;
     setRefreshingSources(true);
     try {
-      await onRefreshSources();
+      await Promise.all([
+        Promise.resolve(onRefreshSources?.()),
+        discoverNetworkSources(),
+      ]);
       setImageFailed(false);
       setRefreshKey((key) => key + 1);
     } finally {
       setRefreshingSources(false);
     }
-  }, [onRefreshSources, refreshingSources]);
+  }, [discoverNetworkSources, onRefreshSources, refreshingSources]);
 
   useEffect(() => {
     void refreshSources();
-    // Refresh the current vMix input list once on page entry.
+    // Atualiza uma vez ao abrir; o botão de recarregar permite nova varredura sob demanda.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Never silently choose another input when the saved source disappears.
-  // A selection is restored only if it still exists in the current live vMix inputs.
-
-  const activeInput = ndiInputs.find((input) => input.number === selected);
-  useEffect(() => { setImageFailed(false); }, [selected]);
+  const selectedNetworkName = selected.startsWith("network:") ? decodeURIComponent(selected.slice("network:".length)) : "";
+  const activeInput = selected.startsWith("input:")
+    ? ndiInputs.find((input) => input.number === selected.slice("input:".length))
+    : selectedNetworkName
+      ? ndiInputs.find((input) => input.title.toLowerCase().includes(selectedNetworkName.toLowerCase()))
+      : undefined;
   const previewUrl = base && activeInput
     ? `${base}/mjpeg?Input=${encodeURIComponent(activeInput.number)}&preview=${refreshKey}`
     : "";
+  const selectedSourceLabel = selectedNetworkName || activeInput?.title || "";
 
   if (!visible) {
     return (
@@ -121,9 +159,9 @@ export default function FloatingNdiPreview({
       aria-label="Preview de vídeo NDI"
     >
       <header className="flex items-center gap-2 px-3 py-2" style={{ background: "#17243d", borderBottom: "1px solid #314766" }}>
-        <span className="h-2 w-2 rounded-full" style={{ background: previewUrl ? "#8bcf38" : "#64748b" }} />
+        <span className="h-2 w-2 rounded-full" style={{ background: previewUrl ? "#8bcf38" : discoveryReady ? "#fbbf24" : "#64748b" }} />
         <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-white">Preview NDI</span>
-        <button type="button" onClick={() => { setImageFailed(false); setRefreshKey((key) => key + 1); void refreshSources(); }} title="Atualizar fontes e preview" aria-label="Atualizar fontes e preview NDI" className="rounded p-1 text-slate-300 hover:bg-white/10" disabled={refreshingSources}><RefreshCw size={13} className={refreshingSources ? "animate-spin" : ""} /></button>
+        <button type="button" onClick={() => { setImageFailed(false); setRefreshKey((key) => key + 1); void refreshSources(); }} title="Pesquisar fontes NDI novamente" aria-label="Pesquisar fontes NDI novamente" className="rounded p-1 text-slate-300 hover:bg-white/10" disabled={refreshingSources}><RefreshCw size={13} className={refreshingSources ? "animate-spin" : ""} /></button>
         <button type="button" onClick={() => { const next = !setupOpen; setSetupOpen(next); if (next) void refreshSources(); }} title="Configurar fonte NDI" aria-label="Configurar fonte NDI" className={`rounded p-1 hover:bg-white/10 ${setupOpen ? "text-white" : "text-slate-300"}`}><Settings size={13} /></button>
         <button type="button" onClick={() => setExpanded((value) => !value)} title={expanded ? "Reduzir preview" : "Expandir preview"} className="rounded p-1 text-slate-300 hover:bg-white/10">{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
         <button type="button" onClick={() => setVisible(false)} title="Ocultar preview" className="rounded p-1 text-slate-300 hover:bg-white/10"><X size={13} /></button>
@@ -131,7 +169,7 @@ export default function FloatingNdiPreview({
       <div className="p-2">
         <div className="mb-2 flex items-center justify-between gap-2">
           <label className="block min-w-0 truncate text-[9px] font-bold uppercase tracking-wider text-slate-300">
-            {activeInput ? (activeInput.title || `Input ${activeInput.number}`) : "Nenhuma entrada NDI válida selecionada"}
+            {selectedSourceLabel || "Selecione uma fonte NDI"}
           </label>
           {selected && <span className="shrink-0 text-[8px] text-slate-500">Fonte salva</span>}
         </div>
@@ -143,18 +181,25 @@ export default function FloatingNdiPreview({
               const value = event.target.value;
               setSelected(value);
               try { localStorage.setItem(storageKey, value); } catch { /* storage may be unavailable */ }
+              setImageFailed(false);
               setSetupOpen(false);
               setRefreshKey((key) => key + 1);
             }}
             onBlur={() => setSetupOpen(false)}
             className="mb-2 h-8 w-full rounded-md border px-2 text-xs text-white outline-none"
             style={{ background: "#0c1525", borderColor: "#314766" }}
-            disabled={!ndiInputs.length}
           >
-            <option value="" disabled>{ndiInputs.length ? "Selecione uma entrada NDI real do vMix…" : "Nenhuma entrada do tipo NDI reportada pelo vMix"}</option>
-            {ndiInputs.map((input) => (
-              <option key={input.key || input.number} value={input.number}>{input.title || `Input ${input.number}`}</option>
-            ))}
+            <option value="">Selecione uma fonte NDI…</option>
+            <optgroup label="Fontes anunciadas na rede (NDI Runtime)">
+              {networkSources.map((source) => (
+                <option key={source.name} value={`network:${encodeURIComponent(source.name)}`}>{source.name}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Entradas NDI já adicionadas ao vMix">
+              {ndiInputs.map((input) => (
+                <option key={input.key || input.number} value={`input:${input.number}`}>{input.title || `Input ${input.number}`}</option>
+              ))}
+            </optgroup>
           </select>
         )}
         <div className="relative aspect-video overflow-hidden rounded-md" style={{ background: "#05080e", border: "1px solid #25344b" }}>
@@ -163,13 +208,21 @@ export default function FloatingNdiPreview({
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-slate-400">
               {imageFailed ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
-              <span className="text-[10px] font-semibold">{!base ? "Conecte o vMix na rede para visualizar o vídeo" : imageFailed ? "Não foi possível receber o vídeo desta entrada. Verifique se ela está ativa no vMix e se o endpoint MJPEG está acessível." : refreshingSources ? "Atualizando entradas do vMix…" : "Nenhuma entrada identificada como NDI foi retornada pela API do vMix. A descoberta de fontes NDI disponíveis na rede requer um serviço local com o NDI Runtime."}</span>
-              {imageFailed && <button type="button" onClick={() => { setImageFailed(false); setRefreshKey((key) => key + 1); void refreshSources(); }} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10">Tentar novamente</button>}
+              <span className="text-[10px] font-semibold">
+                {imageFailed
+                  ? "Não foi possível receber o vídeo desta entrada. Verifique se ela está ativa no vMix."
+                  : selectedNetworkName
+                    ? "Fonte encontrada na rede. Para mostrar o vídeo pelo endpoint MJPEG, ela precisa estar adicionada como entrada no vMix. A API HTTP do vMix não permite adicionar entradas NDI automaticamente."
+                    : refreshingSources
+                      ? "Pesquisando fontes NDI reais na rede…"
+                      : discoveryMessage}
+              </span>
+              {!discoveryReady && !refreshingSources && <button type="button" onClick={() => void refreshSources()} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10">Pesquisar novamente</button>}
             </div>
           )}
         </div>
         <p className="mt-2 text-[9px] leading-relaxed text-slate-400">
-          A lista mostra apenas entradas identificadas como NDI pela API ao vivo do vMix — nunca nomes sugeridos ou inventados. A descoberta de todas as fontes anunciadas na rede precisa ser feita por um serviço local NDI; o endpoint MJPEG transmite a entrada já adicionada ao vMix.
+          A lista de rede vem do NDI Runtime local, não dos nomes dos inputs do vMix. Mantenha o NexoHub Bridge aberto no computador do estúdio. O preview de vídeo pelo vMix funciona para entradas que já estejam carregadas nele.
         </p>
       </div>
     </aside>
