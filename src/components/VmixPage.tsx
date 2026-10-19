@@ -3168,7 +3168,9 @@ function useAgendaPodcastTriggers({
         return { ev, programaId, ms, endMs: eventoEndMs(ev, programa) };
       })
       .filter(item => item.programaId && validIds.has(item.programaId) && isLiveEvento(item.ev.tipo_evento) && !rejected.has(item.ev.id))
-      .filter(item => item.ms !== null && item.endMs !== null && (item.ms as number) <= tick && tick < (item.endMs as number))
+      // O botão fica habilitado assim que existe um AO VIVO futuro/atual na Agenda.
+      // A execução continua protegida pelo efeito abaixo, que dispara apenas na janela do horário inicial.
+      .filter(item => item.ms !== null && item.endMs !== null && (item.endMs as number) > tick)
       .sort((a, b) => (a.ms as number) - (b.ms as number));
 
     for (const { ev, programaId } of candidates) {
