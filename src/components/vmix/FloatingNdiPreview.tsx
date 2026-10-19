@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Maximize2, Minimize2, MonitorPlay, RefreshCw, Settings, X } from "lucide-react";
 
-type NdiInput = { key: string; number: string; title: string; type: string };
 type NdiNetworkSource = { name: string; address?: string };
 type DiscoveryPayload = { available?: boolean; provider?: string; message?: string | null; sources?: NdiNetworkSource[] };
 
@@ -19,22 +18,15 @@ function normalizeBase(raw: string) {
 
 /** Preview MJPEG do vMix + descoberta real de fontes da rede via NexoHub Bridge local. */
 export default function FloatingNdiPreview({
-  inputs,
   baseUrl,
   targetSelector = "#custom-buttons-panel",
   onRefreshSources,
 }: {
-  inputs: NdiInput[];
+  inputs: { key: string; number: string; title: string; type: string }[];
   baseUrl: string;
   targetSelector?: string;
   onRefreshSources?: () => Promise<unknown> | void;
 }) {
-  // O vMix informa somente os inputs que já foram adicionados. A descoberta da rede vem do Bridge/NDI Runtime.
-  const ndiInputs = useMemo(
-    () => inputs.filter((input) => input.type.trim().toLowerCase() === "ndi"),
-    [inputs],
-  );
-  const otherInputs = useMemo(() => inputs.filter((input) => input.type.trim().toLowerCase() !== "ndi"), [inputs]);
   const base = normalizeBase(baseUrl);
   const storageKey = `vmix_ndi_preview_selected_${base || "default"}`;
   const [selected, setSelected] = useState(() => {
@@ -124,15 +116,10 @@ export default function FloatingNdiPreview({
   }, []);
 
   const selectedNetworkName = selected.startsWith("network:") ? decodeURIComponent(selected.slice("network:".length)) : "";
-  const activeInput = selected.startsWith("input:")
-    ? inputs.find((input) => input.number === selected.slice("input:".length))
-    : selectedNetworkName
-      ? ndiInputs.find((input) => input.title.toLowerCase().includes(selectedNetworkName.toLowerCase()))
-      : undefined;
-  const previewUrl = base && activeInput
-    ? `${base}/mjpeg?Input=${encodeURIComponent(activeInput.number)}&preview=${refreshKey}`
+  const previewUrl = selectedNetworkName
+    ? `http://127.0.0.1:8765/ndi/preview?name=${encodeURIComponent(selectedNetworkName)}&preview=${refreshKey}`
     : "";
-  const selectedSourceLabel = selectedNetworkName || activeInput?.title || "";
+  const selectedSourceLabel = selectedNetworkName;
 
   if (!visible) {
     return (
@@ -196,16 +183,7 @@ export default function FloatingNdiPreview({
                 <option key={source.name} value={`network:${encodeURIComponent(source.name)}`}>{source.name}</option>
               ))}
             </optgroup>
-            <optgroup label="Entradas NDI já adicionadas ao vMix">
-              {ndiInputs.map((input) => (
-                <option key={input.key || input.number} value={`input:${input.number}`}>{input.title || `Input ${input.number}`}</option>
-              ))}
-            </optgroup>
-            <optgroup label="Outras entradas carregadas no vMix (paliativo)">
-              {otherInputs.map((input) => (
-                <option key={input.key || input.number} value={`input:${input.number}`}>{input.title || `Input ${input.number}`} · {input.type}</option>
-              ))}
-            </optgroup>
+
           </select>
         )}
         <div className="relative aspect-video overflow-hidden rounded-md" style={{ background: "#05080e", border: "1px solid #25344b" }}>
@@ -218,7 +196,7 @@ export default function FloatingNdiPreview({
                 {imageFailed
                   ? "Não foi possível receber o vídeo desta entrada. Verifique se ela está ativa no vMix."
                   : selectedNetworkName
-                    ? "Fonte encontrada na rede. Para mostrar o vídeo pelo endpoint MJPEG, ela precisa estar adicionada como entrada no vMix. A API HTTP do vMix não permite adicionar entradas NDI automaticamente."
+                    ? "Fonte NDI real selecionada. Aguardando vídeo do receptor NDI local…"
                     : refreshingSources
                       ? "Pesquisando fontes NDI reais na rede…"
                       : discoveryMessage}
@@ -228,7 +206,7 @@ export default function FloatingNdiPreview({
           )}
         </div>
         <p className="mt-2 text-[9px] leading-relaxed text-slate-400">
-          Paliativo: também é possível selecionar uma entrada real já carregada no vMix, como uma câmera virtual NDI Webcam Input. Fontes NDI ainda precisam estar carregadas no vMix para usar o preview MJPEG.
+          O seletor lista somente fontes NDI reais anunciadas na rede. O vídeo é recebido localmente pelo NexoHub Bridge, sem depender de a fonte estar adicionada como entrada no vMix.
         </p>
       </div>
     </aside>
