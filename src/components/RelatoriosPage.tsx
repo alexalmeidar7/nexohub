@@ -351,7 +351,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       cancelled = true;
       if (interval) clearInterval(interval);
     };
-  }, [active, userId]);
+  }, [active, userId, audienceDate]);
 
   useEffect(() => {
     let lastDay = todayISO();
