@@ -1,0 +1,42 @@
+name: Build NexoHub Bridge (Windows)
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tools/NexoHubBridge/**"
+      - ".github/workflows/build-nexohub-bridge.yml"
+  push:
+    paths:
+      - "tools/NexoHubBridge/**"
+      - ".github/workflows/build-nexohub-bridge.yml"
+    branches: [main, feat/real-ndi-network-discovery]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "8.0.x" }
+      - name: Publish standalone Windows executable
+        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/NexoHubBridge
+      - name: Add configuration template and guide
+        shell: pwsh
+        run: |
+          Copy-Item tools/NexoHubBridge/appsettings.example.json artifacts/NexoHubBridge/appsettings.example.json
+          @'
+          NexoHub Bridge — descoberta NDI
+          1. Instale o NDI Runtime oficial x64.
+          2. Copie appsettings.example.json para appsettings.json.
+          3. Configure o pareamento remoto apenas se for usar o relay vMix.
+          4. Execute NexoHubBridge.exe e mantenha-o aberto.
+          5. A descoberta local fica em http://127.0.0.1:8765/ndi/sources.
+          '@ | Set-Content artifacts/NexoHubBridge/LEIA-ME.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NexoHubBridge-Windows-x64
+          path: artifacts/NexoHubBridge/*
+          if-no-files-found: error
+          retention-days: 30
