@@ -251,7 +251,7 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const cardRadius = config.card_style === "sharp" ? "4px" : config.card_style === "pill" ? "50px" : "16px";
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="space-y-6 animate-fade-in w-full max-w-none mx-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header */}
       <div className="flex items-center gap-3">
         <div style={{ width: 48, height: 48, borderRadius: 16, background: "#0055ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
