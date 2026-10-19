@@ -732,7 +732,7 @@ export default function BlitzPage({ effectiveUserId }: { effectiveUserId?: strin
 
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto" style={{ fontFamily: FONT }}>
+    <div className="space-y-6 w-full max-w-none mx-0" style={{ fontFamily: FONT }}>
       <div id="module-header-title" style={{ display: "none" }}>
         Atendimento — Blitz
       </div>

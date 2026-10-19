@@ -1550,7 +1550,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       className="px-3 pt-3 pb-4 h-full min-h-0"
       style={{ fontFamily: "'Manrope', sans-serif", backgroundColor: "transparent" }}
     >
-      <div className="w-full max-w-6xl mx-auto h-full min-h-0 flex flex-col gap-4">
+      <div className="w-full max-w-none mx-0 h-full min-h-0 flex flex-col gap-4">
         {/* Header handled by Dashboard Portal */}
         <div id="module-header-title" style={{ display: "none" }}>
           vMix — Broadcast
@@ -1667,7 +1667,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           </div>
         )}
         {activeTab === "insert" && (
-          <div className="max-w-5xl mx-auto flex flex-col gap-5 w-full">
+          <div className="max-w-none mx-0 flex flex-col gap-5 w-full">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 flex flex-col gap-5" style={cardStyle}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
@@ -1798,7 +1798,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
         )}
  
         {activeTab === "titulo" && (
-          <div className="max-w-3xl mx-auto flex flex-col gap-5 w-full">
+          <div className="max-w-none mx-0 flex flex-col gap-5 w-full">
             <div className="p-6 rounded-2xl flex flex-col gap-4 bg-white" style={{ ...cardStyle, border: `1px solid ${NAVY_BORDER}` }}>
               <label className="flex flex-col gap-1.5">
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">Assunto / Título no ar</span>

@@ -2723,7 +2723,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   };
 
   return (
-    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
+    <div className="nexo-scope space-y-4 w-full max-w-none mx-0">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Agenda

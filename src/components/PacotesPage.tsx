@@ -212,7 +212,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="max-w-none mx-0 w-full space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* 1. Criar novo pacote (Card Branco Moderno) */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">

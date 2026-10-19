@@ -33,7 +33,7 @@ export default function ChatbotHome() {
   const effectiveUserId = isUuid(rawUid) ? rawUid : "";
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full space-y-3.5 pb-4 font-sans animate-fade-in">
+    <div className="max-w-none mx-0 w-full space-y-3.5 pb-4 font-sans animate-fade-in">
       <div id="module-header-title" style={{ display: "none" }}>
         Chatbot & Atendimento WhatsApp
       </div>

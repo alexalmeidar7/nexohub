@@ -1874,7 +1874,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
   const ORANGE = "#fe8900";
 
   return (
-    <div className="animate-fade-in space-y-5 max-w-6xl mx-auto w-full" style={MONT}>
+    <div className="animate-fade-in space-y-5 w-full max-w-none mx-0" style={MONT}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         vMix — Roteiro de Programa

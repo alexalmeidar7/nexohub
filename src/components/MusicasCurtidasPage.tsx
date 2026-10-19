@@ -83,7 +83,7 @@ export default function MusicasCurtidasPage() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in max-w-6xl mx-auto w-full">
+    <div className="space-y-4 animate-fade-in w-full max-w-none mx-0">
       <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
         Suas {songs.length} músicas mais curtidas, da mais curtida para a menos curtida.
         Músicas além da posição 100 são removidas automaticamente.

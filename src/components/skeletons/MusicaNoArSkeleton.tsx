@@ -3,7 +3,7 @@ import { Music } from "lucide-react";
 
 export default function MusicaNoArSkeleton() {
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in animate-pulse">
+    <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in animate-pulse">
       {/* 1. Header do Módulo Música no Ar (Padrão Nexo Card / Agenda) */}
       <section
         className="rounded-3xl p-6 lg:p-7 shadow-[0_4px_24px_rgba(0,191,240,0.08)] border border-[#00BFF0]/20 flex items-center justify-between gap-4 flex-wrap"

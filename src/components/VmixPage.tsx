@@ -2411,7 +2411,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className={`w-full max-w-7xl mx-auto py-12 px-6 min-h-[90vh] flex flex-col items-center justify-center ${cleanLayout ? "vmix-clean-layout" : ""}`}>
+      <div className={`w-full max-w-none mx-0 py-12 px-6 min-h-[90vh] flex flex-col items-center justify-center ${cleanLayout ? "vmix-clean-layout" : ""}`}>
         <div className="flex flex-col items-center gap-16 w-full">
           
 
@@ -4011,7 +4011,7 @@ function SwitcherUI({
 
 
   return (
-    <div className="mx-auto w-full max-w-[1490px] space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
+    <div className="w-full max-w-none mx-0 space-y-4 pb-20" style={{ color: "#e7e7e7" }}>
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517", display: isButtonDevicePreview ? "none" : undefined }}>
         <div className="grid min-h-[120px] grid-cols-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-0 sm:p-0">
           <div className="group/previous relative flex min-w-0 flex-col justify-center overflow-hidden px-4 py-2 sm:px-6">

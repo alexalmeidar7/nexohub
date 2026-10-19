@@ -1,6 +1,6 @@
 export default function AgendaPageSkeleton() {
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+    <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in">
       {/* 1. Top Header Card Skeleton */}
       <section className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex items-center justify-between gap-4 flex-wrap animate-pulse">
         <div className="flex items-center gap-4">

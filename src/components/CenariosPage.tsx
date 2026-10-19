@@ -18,7 +18,7 @@ export default function CenariosPage({ effectiveUserId }: { effectiveUserId?: st
   const [tab, setTab] = useState<Tab>("interativo");
 
   return (
-    <div className="nexo-scope max-w-6xl mx-auto w-full rounded-2xl border border-slate-200 bg-[#F8FAFC] p-3 sm:p-4 space-y-4">
+    <div className="nexo-scope w-full max-w-none mx-0 rounded-2xl border border-slate-200 bg-[#F8FAFC] p-3 sm:p-4 space-y-4">
       {/* Themed pill tabs and on-air info */}
       <div className="flex items-center gap-3 flex-wrap w-full">
         <div

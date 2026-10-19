@@ -1,6 +1,6 @@
 export default function AdminDashboardSkeleton() {
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in animate-pulse">
+    <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in animate-pulse">
       {/* 1. TOP BANNER: Dark Living Aurora Banner Skeleton */}
       <div className="relative rounded-3xl p-6 lg:p-8 bg-[#0a0c10] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden min-h-[220px] flex flex-col justify-between">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">

@@ -2421,7 +2421,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const bothActive = isOnlineSelected && isLocalSelected;
 
   return (
-    <div className="nexo-scope space-y-4 max-w-6xl mx-auto w-full">
+    <div className="nexo-scope space-y-4 w-full max-w-none mx-0">
       <input ref={fileInputRef} type="file" accept=".xml,.txt,.log,.nowplaying,application/xml,text/xml,text/plain,*/*" onChange={handleFileSelect} className="hidden" />
 
       {/* Header handled by Dashboard Portal */}

@@ -392,7 +392,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   if (loading) return <ModulePageSkeleton variant="form" />;
 
   return (
-    <div className="nexo-scope space-y-6 max-w-6xl mx-auto w-full" style={{ fontFamily: FONT }}>
+    <div className="nexo-scope space-y-6 w-full max-w-none mx-0" style={{ fontFamily: FONT }}>
       <div id="module-header-title" style={{ display: "none" }}>ADS — Citações</div>
 
       <style>{`
