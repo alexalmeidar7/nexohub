@@ -44,21 +44,27 @@ export default function GoogleCalendarSync() {
   }, [fetchEvents]);
 
   const handleConnect = async () => {
+    // Open synchronously from the click handler so browser popup blockers do not block OAuth.
+    const popup = window.open("about:blank", "google-cal", "width=520,height=640");
+    if (!popup) {
+      toast({ title: "Janela bloqueada", description: "Permita pop-ups para conectar o Google Agenda.", variant: "destructive" });
+      return;
+    }
     setConnecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("google-calendar-auth");
-      if (error || !data?.url) throw error || new Error("Sem URL");
-      const popup = window.open(data.url, "google-cal", "width=520,height=640");
-      // Poll for completion
-      const t = setInterval(async () => {
-        if (popup?.closed) {
-          clearInterval(t);
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth", { method: "POST" });
+      if (error || !data?.url) throw error || new Error("Não foi possível iniciar a autorização.");
+      popup.location.href = data.url;
+      const t = window.setInterval(async () => {
+        if (popup.closed) {
+          window.clearInterval(t);
           setConnecting(false);
           await fetchEvents();
         }
       }, 1000);
     } catch (e: any) {
-      toast({ title: "Erro ao conectar", description: e.message, variant: "destructive" });
+      popup.close();
+      toast({ title: "Erro ao conectar", description: e?.message || "Tente novamente.", variant: "destructive" });
       setConnecting(false);
     }
   };
