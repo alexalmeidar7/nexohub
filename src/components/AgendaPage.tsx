@@ -500,6 +500,36 @@ const isUuidId = (id?: string | null) =>
   !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
 /**
+ * Hide duplicate agenda rows that have the same event identity but different IDs.
+ * Prefer the persisted UUID row over a local/offline copy. This is a display/cache
+ * safeguard only; it never deletes records from the database.
+ */
+function dedupeAgendaEvents(events: Evento[]): Evento[] {
+  const identity = (event: Evento) => [
+    event.data || "",
+    event.programa_id || "",
+    (event.youtube_titulo || event.descricao || "").trim().toLocaleLowerCase("pt-BR"),
+    (event.local || "").trim().toLocaleLowerCase("pt-BR"),
+    (event.horario_gravacao || event.programa?.horario_inicio || "").slice(0, 5),
+    (event.horario_gravacao_fim || event.programa?.horario_fim || "").slice(0, 5),
+    event.tipo_evento || "",
+    event.status || "ativo",
+    event.recorrencia || "unico",
+    event.periodo_inicio || "",
+    event.periodo_fim || "",
+  ].join("|");
+
+  const ordered = [...events].sort((a, b) => Number(isUuidId(b.id)) - Number(isUuidId(a.id)));
+  const seen = new Set<string>();
+  return ordered.filter((event) => {
+    const key = identity(event);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
  * Remove do cache local qualquer evento do banco (id uuid) que NÃO pertença
  * mais a este usuário — evita vazamento de eventos entre contas.
  */
@@ -1303,7 +1333,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
       const baseEvents = Array.from(map.values()).filter(
         (e) => !!evtsErr || !isUuidId(e.id) || dbEventIds.includes(e.id),
       );
-      setEventos(baseEvents);
+      setEventos(dedupeAgendaEvents(baseEvents));
 
       if (dbEventIds.length) {
         const { data: parts } = await supabase
@@ -1463,7 +1493,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         const baseEvents: Evento[] = Array.from(map.values()).filter(
           (e) => !isUuidId(e.id) || dbIdsNow.includes(e.id),
         );
-        setEventos(baseEvents);
+        setEventos(dedupeAgendaEvents(baseEvents));
         setLoadingData(false);
 
         // Fetch presenters and clients in background for form pickers
