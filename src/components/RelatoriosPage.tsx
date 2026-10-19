@@ -188,6 +188,8 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
     let programs: AnyRow[] = [];
     let latestAudio: number | null = null;
     let latestVideo: number | null = null;
+    let lastPersistedAt = 0;
+    let persistInFlight = false;
     let currentProgram = "Programa não identificado";
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const getCurrentProgram = () => {
@@ -253,6 +255,79 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
         updatedAt: now,
         configured: audioSources.length > 0 || videoSources.length > 0,
       });
+
+      // Persiste os picos observados pelo próprio relatório no banco, sem depender
+      // de o widget da página inicial estar aberto. O coletor em background continua
+      // responsável pela coleta quando nenhum navegador está aberto.
+      const nowMs = Date.now();
+      if (
+        !persistInFlight &&
+        (latestAudio !== null || latestVideo !== null) &&
+        nowMs - lastPersistedAt >= 5 * 60 * 1000
+      ) {
+        persistInFlight = true;
+        lastPersistedAt = nowMs;
+        try {
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          const snapshotTime = new Date().toISOString();
+          const { data: existingRows, error: lookupError } = await supabase
+            .from("audiencia_historico")
+            .select("id, audio, video, created_at")
+            .eq("user_id", userId as any)
+            .eq("programa", currentProgram)
+            .gte("created_at", todayStart.toISOString())
+            .order("created_at", { ascending: true })
+            .limit(1);
+
+          if (lookupError) {
+            console.error("Relatório de audiência: falha ao consultar histórico para gravação:", lookupError.message);
+          } else {
+            const existing = existingRows?.[0] as AnyRow | undefined;
+            const audioPeak = Math.max(Number(existing?.audio) || 0, latestAudio ?? 0);
+            const videoPeak = Math.max(Number(existing?.video) || 0, latestVideo ?? 0);
+            if (existing?.id) {
+              if (audioPeak !== (Number(existing.audio) || 0) || videoPeak !== (Number(existing.video) || 0)) {
+                const { error: updateError } = await supabase
+                  .from("audiencia_historico")
+                  .update({ audio: audioPeak, video: videoPeak })
+                  .eq("id", existing.id);
+                if (updateError) {
+                  console.error("Relatório de audiência: falha ao atualizar pico:", updateError.message);
+                } else if (audienceDate === todayISO()) {
+                  setAudienceRows(rows => rows.map(row =>
+                    row.created_at === existing.created_at && row.programa === currentProgram
+                      ? { ...row, audio: audioPeak, video: videoPeak }
+                      : row
+                  ));
+                }
+              }
+            } else {
+              const { data: inserted, error: insertError } = await supabase
+                .from("audiencia_historico")
+                .insert({
+                  user_id: userId,
+                  programa: currentProgram,
+                  audio: audioPeak,
+                  video: videoPeak,
+                  youtube: 0,
+                  created_at: snapshotTime,
+                } as any)
+                .select("created_at, programa, audio, video")
+                .maybeSingle();
+              if (insertError) {
+                console.error("Relatório de audiência: falha ao gravar histórico:", insertError.message);
+              } else if (inserted && audienceDate === todayISO()) {
+                setAudienceRows(rows => [...rows, inserted as AnyRow]);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Relatório de audiência: erro inesperado ao persistir os dados:", error);
+        } finally {
+          persistInFlight = false;
+        }
+      }
     };
     const initialize = async () => {
       const [{ data: configData, error: configError }, { data: programData }] = await Promise.all([
@@ -276,7 +351,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       cancelled = true;
       if (interval) clearInterval(interval);
     };
-  }, [active, userId]);
+  }, [active, userId, audienceDate]);
 
   useEffect(() => {
     let lastDay = todayISO();
