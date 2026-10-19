@@ -30,6 +30,29 @@ internal static class NdiNetworkDiscovery
         public IntPtr UrlAddress;
     }
 
+    static NdiNetworkDiscovery()
+    {
+        NativeLibrary.SetDllImportResolver(typeof(NdiNetworkDiscovery).Assembly, (name, assembly, searchPath) =>
+        {
+            if (!string.Equals(name, NdiLibrary, StringComparison.OrdinalIgnoreCase)) return IntPtr.Zero;
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            var programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            var candidates = new[]
+            {
+                Path.Combine(AppContext.BaseDirectory, NdiLibrary),
+                Path.Combine(programFiles, "NDI", "NDI 6 Runtime", NdiLibrary),
+                Path.Combine(programFiles, "NDI", "NDI 5 Runtime", NdiLibrary),
+                Path.Combine(programFiles, "NDI", "NDI 6 SDK", "Bin", "x64", NdiLibrary),
+                Path.Combine(programFiles, "NDI", "NDI 5 SDK", "Bin", "x64", NdiLibrary),
+                Path.Combine(programFilesX86, "NDI", "NDI 6 Runtime", NdiLibrary),
+                Path.Combine(programFilesX86, "NDI", "NDI 5 Runtime", NdiLibrary)
+            };
+            foreach (var candidate in candidates)
+                if (File.Exists(candidate)) return NativeLibrary.Load(candidate);
+            return IntPtr.Zero;
+        });
+    }
+
     private sealed record SourceDto(string name, string address);
     private sealed record SourcesDto(bool available, string provider, string? message, IReadOnlyList<SourceDto> sources);
 
