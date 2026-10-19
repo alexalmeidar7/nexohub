@@ -166,7 +166,7 @@ export default function FloatingNdiPreview({
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-slate-400">
               {imageFailed ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
               <span className="text-[10px] font-semibold">{!base ? "Conecte o vMix na rede para visualizar o vídeo" : imageFailed ? "Não foi possível receber o vídeo desta fonte. Verifique se ela está ativa no vMix e se o endpoint MJPEG está acessível." : refreshingSources ? "Atualizando entradas do vMix…" : "Nenhuma fonte NDI adicionada como entrada no vMix"}</span>
-              {imageFailed && <button type="button" onClick={() => { setImageFailed(false); setRefreshKey((key) => key + 1); void refreshSources(); }} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10">Tentar novamente</button>
+              {imageFailed && <button type="button" onClick={() => { setImageFailed(false); setRefreshKey((key) => key + 1); void refreshSources(); }} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10">Tentar novamente</button>}
             </div>
           )}
         </div>
