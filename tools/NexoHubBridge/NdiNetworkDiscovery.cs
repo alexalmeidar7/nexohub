@@ -114,6 +114,20 @@ internal static class NdiNetworkDiscovery
                 return;
             }
 
+            if (context.Request.HttpMethod == "GET" &&
+                string.Equals(context.Request.Url?.AbsolutePath, "/ndi/preview", StringComparison.OrdinalIgnoreCase))
+            {
+                var sourceName = context.Request.QueryString["name"];
+                if (string.IsNullOrWhiteSpace(sourceName))
+                {
+                    await WriteJsonAsync(context, 400, new { error = "Query parameter 'name' is required." }, token);
+                    return;
+                }
+
+                await NdiVideoPreview.StreamAsync(context, sourceName, token);
+                return;
+            }
+
             if (context.Request.HttpMethod != "GET" ||
                 !string.Equals(context.Request.Url?.AbsolutePath, "/ndi/sources", StringComparison.OrdinalIgnoreCase))
             {
