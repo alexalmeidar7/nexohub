@@ -233,7 +233,7 @@ export default function PreRollPage() {
   );
 
   return (
-    <div className="nexo-scope animate-fade-in max-w-6xl mx-auto w-full" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
+    <div className="nexo-scope animate-fade-in w-full max-w-none mx-0" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         ADS — Pre-Roll
