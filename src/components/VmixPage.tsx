@@ -11,6 +11,7 @@ import { confirmDialog } from "@/lib/confirmDialog";
 import { Button } from "@/components/ui/button";
 import { useVmixCategories, VmixCategoryCreator, VmixCategoryPanel } from "@/components/vmix/VmixCategories";
 import NdiWebrtcMonitor from "@/components/vmix/NdiWebrtcMonitor";
+import FloatingNdiPreview from "@/components/vmix/FloatingNdiPreview";
 
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
@@ -469,6 +470,7 @@ interface NetworkInterfaceInfo {
 }
 
 export default function VmixPage({ forcedConnected = false, cleanLayout = false, automationMode = false }: { forcedConnected?: boolean; cleanLayout?: boolean; automationMode?: boolean }) {
+  const isAutomationRoute = window.location.pathname === "/vmix-control/automation" || automationMode;
   const navigate = useNavigate();
   const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
   const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
@@ -637,7 +639,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   const [transitionStyle, setTransitionStyle] = useState<string>(() => localStorage.getItem("vmix_transition_style") || "Fade");
   const [transitionDuration, setTransitionDuration] = useState<number>(() => Number(localStorage.getItem("vmix_transition_duration") || 1000));
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">(automationMode ? "scenes" : "scenes");
+  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">(isAutomationRoute ? "scenes" : "scenes");
 
   useEffect(() => {
     if (automationMode) setActiveTab("scenes");
@@ -3259,6 +3261,7 @@ function SwitcherUI({
   navigate,
   currentTime
 }: any) {
+  const isAutomationRoute = window.location.pathname === "/vmix-control/automation";
   const defaultButtonPoints = { CAMERAS: 1, DIVS: 0.5, COMERCIAL: 1.5, EFEITOS: 2.5, QUADROS: 1.5 };
   const buttonPointsStorageKey = `vmix_button_points:${user?.id || "anonymous"}:${normStudio(studioName) || "all"}`;
   const [buttonPoints, setButtonPoints] = useState<Record<keyof typeof defaultButtonPoints, number>>(defaultButtonPoints);
@@ -4153,7 +4156,7 @@ function SwitcherUI({
         </Dialog>
 
       {/* Tab Content (Main Switcher Area) */}
-      <div className="rounded-2xl p-5 space-y-4 border border-white/10" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
+      <div className={`rounded-2xl p-5 space-y-4 ${isAutomationRoute ? "border-0 bg-transparent" : "border border-white/10"}`} style={{ backgroundColor: isAutomationRoute ? "transparent" : "#1a1a1f", minHeight: 300 }}>
 
 
         {/* ══ CONTROLS TAB ══ */}
@@ -4711,7 +4714,7 @@ function SwitcherUI({
               {/* ── Programas Preset + Botões de Efeitos side by side ── */}
               <div className={`flex flex-col gap-4 ${isButtonDevicePreview ? "items-center" : ""}`}>
                 {/* Left: Programas Preset */}
-                {!isButtonDevicePreview && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
+                {!isButtonDevicePreview && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: isAutomationRoute ? "transparent" : "#1a1a1f", border: isAutomationRoute ? "1px solid transparent" : "1px solid #ffffff08" }}>
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-b border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.025)" }}>
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2">
@@ -5021,7 +5024,7 @@ function SwitcherUI({
                 </div>}
 
                 {/* Right: Botões de Efeitos */}
-                <div className="rounded-xl overflow-hidden w-full" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
+                <div className="rounded-xl overflow-hidden w-full" style={{ backgroundColor: isAutomationRoute ? "transparent" : "#1a1a1f", border: isAutomationRoute ? "1px solid transparent" : "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <div className="flex shrink-0 items-center gap-2">
@@ -5715,6 +5718,10 @@ function SwitcherUI({
           estudio={studioName || null}
           onSaved={loadCustomButtons}
         />
+      )}
+
+      {isAutomationRoute && !isButtonDevicePreview && (
+        <FloatingNdiPreview inputs={inputs} baseUrl={savedUrl || vmixUrl} />
       )}
 
       {/* ── Command Log Panel (hidden in device previews) ── */}
