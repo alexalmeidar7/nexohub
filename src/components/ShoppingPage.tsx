@@ -181,7 +181,7 @@ export default function ShoppingPage({ effectiveUserId }: { effectiveUserId?: st
   };
 
   return (
-    <div className="nexo-scope animate-fade-in max-w-6xl mx-auto w-full">
+    <div className="nexo-scope animate-fade-in w-full max-w-none mx-0">
       <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
