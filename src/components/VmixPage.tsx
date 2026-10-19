@@ -2099,6 +2099,36 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   studioNameRef.current = studioName;
   const runCommandsRef = useRef(runCommandsUnified);
   runCommandsRef.current = runCommandsUnified;
+  const auditContextRef = useRef({ userId: user?.id, email: user?.email, program: null as any, points: {} as Record<string, number> });
+  const logKeyboardClick = (btn: any) => {
+    const { userId, email, program, points } = auditContextRef.current;
+    if (!userId) {
+      console.warn("Clique vMix via atalho sem usuário autenticado; registro não enviado");
+      return;
+    }
+    const category = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR");
+    void (supabase.from("vmix_button_interactions" as any) as any).insert({
+      user_id: userId,
+      locutor_nome: program?.apresentador_nome || null,
+      user_email: email || null,
+      studio_name: studioNameRef.current || null,
+      button_id: String(btn.id),
+      button_name: String(btn.nome || "Botão personalizado"),
+      button_category: category,
+      points: (points as Record<string, number>)[category] ?? 0,
+      program_name: program?.nome || null,
+    }).then(({ error }: any) => {
+      if (error) {
+        console.warn("Clique vMix via atalho não registrado:", error.message);
+        toast({ title: "Clique não registrado no relatório", description: error.message, variant: "destructive" });
+      }
+    }).catch((error: any) => {
+      console.warn("Erro ao registrar atalho vMix:", error);
+      toast({ title: "Falha ao registrar clique do atalho", description: error?.message || "Verifique a conexão.", variant: "destructive" });
+    });
+  };
+  const logKeyboardClickRef = useRef(logKeyboardClick);
+  logKeyboardClickRef.current = logKeyboardClick;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -2106,7 +2136,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       const pressed = `${e.ctrlKey ? "Ctrl+" : ""}${e.altKey ? "Alt+" : ""}${e.shiftKey ? "Shift+" : ""}${e.key.toUpperCase()}`.toLowerCase();
       const btn = customButtonsRef.current.find((b: any) => (b?.shortcut || "").toLowerCase() === pressed);
-      if (!btn) return;
+      if (!btn || e.repeat) return;
       e.preventDefault();
       if (normStudio(studioNameRef.current).includes("podcast") && hasStartStreamingCommand(btn)) {
         toast({
@@ -2117,6 +2147,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         return;
       }
       setActiveCustomButton(btn.id);
+      logKeyboardClickRef.current(btn);
       if (Array.isArray(btn.commands) && btn.commands.length > 0) {
         void runCommandsRef.current(btn.commands as any[], `Efeito: ${btn.nome}`);
       }
