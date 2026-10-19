@@ -27,8 +27,10 @@ export default function FloatingNdiPreview({
   targetSelector?: string;
   onRefreshSources?: () => Promise<unknown> | void;
 }) {
+  // Only use inputs explicitly identified as NDI by vMix's live API.
+  // Matching the title alone can incorrectly advertise ordinary inputs as NDI sources.
   const ndiInputs = useMemo(
-    () => inputs.filter((input) => /ndi/i.test(`${input.type} ${input.title}`)),
+    () => inputs.filter((input) => /^ndi(?:\\s|$)/i.test(input.type.trim())),
     [inputs],
   );
   const base = normalizeBase(baseUrl);
@@ -84,12 +86,8 @@ export default function FloatingNdiPreview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!ndiInputs.length) return;
-    if (!ndiInputs.some((input) => input.number === selected)) {
-      setSelected(ndiInputs[0].number);
-    }
-  }, [ndiInputs, selected]);
+  // Never silently choose another input when the saved source disappears.
+  // A selection is restored only if it still exists in the current live vMix inputs.
 
   const activeInput = ndiInputs.find((input) => input.number === selected);
   useEffect(() => { setImageFailed(false); }, [selected]);
@@ -133,7 +131,7 @@ export default function FloatingNdiPreview({
       <div className="p-2">
         <div className="mb-2 flex items-center justify-between gap-2">
           <label className="block min-w-0 truncate text-[9px] font-bold uppercase tracking-wider text-slate-300">
-            {activeInput ? (activeInput.title || `Input ${activeInput.number}`) : "Nenhuma fonte NDI selecionada"}
+            {activeInput ? (activeInput.title || `Input ${activeInput.number}`) : "Nenhuma entrada NDI válida selecionada"}
           </label>
           {selected && <span className="shrink-0 text-[8px] text-slate-500">Fonte salva</span>}
         </div>
@@ -153,7 +151,7 @@ export default function FloatingNdiPreview({
             style={{ background: "#0c1525", borderColor: "#314766" }}
             disabled={!ndiInputs.length}
           >
-            <option value="" disabled>{ndiInputs.length ? "Selecione a fonte NDI…" : "Nenhuma entrada NDI encontrada"}</option>
+            <option value="" disabled>{ndiInputs.length ? "Selecione uma entrada NDI real do vMix…" : "Nenhuma entrada do tipo NDI reportada pelo vMix"}</option>
             {ndiInputs.map((input) => (
               <option key={input.key || input.number} value={input.number}>{input.title || `Input ${input.number}`}</option>
             ))}
@@ -165,13 +163,13 @@ export default function FloatingNdiPreview({
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-slate-400">
               {imageFailed ? <AlertTriangle size={25} className="text-amber-400" /> : <MonitorPlay size={25} />}
-              <span className="text-[10px] font-semibold">{!base ? "Conecte o vMix na rede para visualizar o vídeo" : imageFailed ? "Não foi possível receber o vídeo desta fonte. Verifique se ela está ativa no vMix e se o endpoint MJPEG está acessível." : refreshingSources ? "Atualizando entradas do vMix…" : "Nenhuma fonte NDI adicionada como entrada no vMix"}</span>
+              <span className="text-[10px] font-semibold">{!base ? "Conecte o vMix na rede para visualizar o vídeo" : imageFailed ? "Não foi possível receber o vídeo desta entrada. Verifique se ela está ativa no vMix e se o endpoint MJPEG está acessível." : refreshingSources ? "Atualizando entradas do vMix…" : "Nenhuma entrada identificada como NDI foi retornada pela API do vMix. A descoberta de fontes NDI disponíveis na rede requer um serviço local com o NDI Runtime."}</span>
               {imageFailed && <button type="button" onClick={() => { setImageFailed(false); setRefreshKey((key) => key + 1); void refreshSources(); }} className="rounded-md border border-white/20 px-2 py-1 text-[9px] font-bold text-white hover:bg-white/10">Tentar novamente</button>}
             </div>
           )}
         </div>
         <p className="mt-2 text-[9px] leading-relaxed text-slate-400">
-          O preview usa a entrada NDI selecionada no vMix. A conexão precisa permitir acesso ao endpoint MJPEG do vMix.
+          A lista mostra apenas entradas identificadas como NDI pela API ao vivo do vMix — nunca nomes sugeridos ou inventados. A descoberta de todas as fontes anunciadas na rede precisa ser feita por um serviço local NDI; o endpoint MJPEG transmite a entrada já adicionada ao vMix.
         </p>
       </div>
     </aside>
