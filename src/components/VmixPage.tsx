@@ -3948,7 +3948,6 @@ function SwitcherUI({
   // No PODCAST, o quadro central representa exclusivamente um evento da Agenda
   // cujo dia/horário esteja ativo agora; a grade normal do programa não ativa o quadro.
   const headerCurrentProgram = isPodcastStudio ? podcastCurrentAgenda?.programa || null : currentProgram;
-  auditContextRef.current = { userId: user?.id, email: user?.email, program: headerCurrentProgram, points: buttonPoints as Record<string, number> };
   const headerNextProgram = isPodcastStudio ? podcastNextAgenda?.programa || null : nextProgram;
   const headerCurrentSchedule = isPodcastStudio
     ? podcastCurrentAgenda
