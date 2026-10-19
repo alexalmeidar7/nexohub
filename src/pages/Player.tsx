@@ -3573,7 +3573,9 @@ export default function PlayerPage() {
                         </button>
                       )}
                       <button
+                        type="button"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           setChatOpen(true);
                           setPresenterMenuOpen(false);
