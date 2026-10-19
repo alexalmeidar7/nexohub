@@ -165,7 +165,7 @@ export default function ModulePageSkeleton({ variant = "list" }: Props) {
     case "list":
     default:
       return (
-        <div className="w-full max-w-6xl mx-auto space-y-6 pt-2 pb-12 font-sans animate-fade-in">
+        <div className="w-full max-w-none mx-0 space-y-6 pt-2 pb-12 font-sans animate-fade-in">
           <ModernHeaderBlock />
           <ModernActionBar />
           <ModernCardsList />
