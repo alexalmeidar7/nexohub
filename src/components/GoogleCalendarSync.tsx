@@ -64,9 +64,11 @@ export default function GoogleCalendarSync() {
   };
 
   const handleDisconnect = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from("google_calendar_tokens").delete().eq("user_id", user.id);
+    const { error } = await supabase.functions.invoke("google-calendar-disconnect", { method: "POST" });
+    if (error) {
+      toast({ title: "Não foi possível desconectar", description: error.message, variant: "destructive" });
+      return;
+    }
     setConnected(false);
     setEvents([]);
     toast({ title: "Google Agenda desconectado" });
