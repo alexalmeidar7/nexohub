@@ -66,9 +66,6 @@ verify_jwt = false
 [functions.public-cenario-data]
 verify_jwt = false
 
-[functions.fetch-social-followers]
-verify_jwt = false
-
 [functions.probe-stream-xpath]
 verify_jwt = false
 
@@ -93,9 +90,13 @@ verify_jwt = false
 [functions.serve-xml-geral]
 verify_jwt = false
 
-
 [functions.collect-audience]
 verify_jwt = false
 
 [functions.google-calendar-disconnect]
+verify_jwt = false
+
+# Sponsor logo transformation must use the dedicated OpenAI-backed Edge Function,
+# not the Lovable AI gateway. The browser invokes this function from logoTransformService.
+[functions.transform-logo]
 verify_jwt = false
