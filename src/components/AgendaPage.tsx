@@ -1352,22 +1352,23 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           return;
         }
 
-        // Parallel fetch with 2.5s timeout: everything needed for instant first render
-        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
-        const queryPromise = Promise.all([
+        // Não transformar uma consulta lenta em lista vazia: isso fazia eventos
+        // existentes parecerem ausentes e podia limpar registros locais válidos.
+        const [empRes, progsRes, evtsRes, profileRes] = await Promise.all([
           supabase.from("empresa_config").select("timezone").eq("user_id", targetUserId).maybeSingle(),
           supabase.from("programas").select("*").eq("user_id", targetUserId).order("horario_inicio"),
-          supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId).gte("data", winStart).lte("data", winEnd).order("data"),
+          // Eventos recorrentes podem ter começado há mais de 120 dias e continuam ativos.
+          supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId)
+            .or("data.gte." + winStart + ",and(recorrencia.not.is.null,recorrencia.neq.unico)")
+            .lte("data", winEnd).order("data"),
           supabase.from("profiles").select("event_types_config").eq("user_id", targetUserId).maybeSingle(),
         ]);
 
-        const raceRes = await Promise.race([queryPromise, timeoutPromise]);
-        const [empRes, progsRes, evtsRes, profileRes] = (raceRes || [
-          { data: null },
-          { data: [] },
-          { data: [] },
-          { data: null },
-        ]) as any;
+        // Falha no backend não significa que não existem eventos: preserve o cache.
+        if (evtsRes?.error) {
+          console.error("Falha ao carregar eventos da agenda:", evtsRes.error.message);
+          throw evtsRes.error;
+        }
 
         if (!active) return;
 
@@ -1455,11 +1456,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         });
 
         const dbIdsNow = evts.map((e: any) => e.id);
-        // Só limpa o cache quando a consulta ao banco realmente respondeu
-        const dbAnswered = !!raceRes;
-        if (dbAnswered) pruneStoredAgendaEvents(targetUserId, dbIdsNow);
+        // A consulta de eventos foi validada acima; só então o banco é fonte segura
+        // para remover do cache IDs que não existem mais.
+        pruneStoredAgendaEvents(targetUserId, dbIdsNow);
         const baseEvents: Evento[] = Array.from(map.values()).filter(
-          (e) => !dbAnswered || !isUuidId(e.id) || dbIdsNow.includes(e.id),
+          (e) => !isUuidId(e.id) || dbIdsNow.includes(e.id),
         );
         setEventos(baseEvents);
         setLoadingData(false);
