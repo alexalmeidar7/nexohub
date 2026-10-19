@@ -2099,8 +2099,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   studioNameRef.current = studioName;
   const runCommandsRef = useRef(runCommandsUnified);
   runCommandsRef.current = runCommandsUnified;
-  const auditContextRef = useRef({ userId: user?.id, email: user?.email, program: currentProgram, points: buttonPoints });
-  auditContextRef.current = { userId: user?.id, email: user?.email, program: currentProgram, points: buttonPoints };
+  const auditContextRef = useRef({ userId: user?.id, email: user?.email, program: headerCurrentProgram, points: defaultButtonPoints as Record<string, number> });
+  auditContextRef.current = { userId: user?.id, email: user?.email, program: headerCurrentProgram, points: buttonPoints as Record<string, number> };
   const logKeyboardClick = (btn: any) => {
     const { userId, email, program, points } = auditContextRef.current;
     if (!userId) {
