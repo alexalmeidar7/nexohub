@@ -604,7 +604,7 @@ export default function ProdutosPage({
   }, [produtos, busca, categoriaFiltro]);
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8 pt-2 pb-16 font-sans animate-fade-in">
+    <div className="w-full max-w-none mx-0 space-y-8 pt-2 pb-16 font-sans animate-fade-in">
       {/* 1. SEÇÃO DE CADASTRO DE PRODUTO */}
       <section ref={formRef} className="bg-white rounded-3xl p-6 lg:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-slate-100/90">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
