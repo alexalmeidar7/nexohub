@@ -58,6 +58,9 @@ function Status({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
 export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
   const userId = effectiveUserId || user?.id || "";
+  // O relatório da conta principal também inclui cliques do usuário autenticado quando ele opera como subusuário.
+  const reportUserIds = Array.from(new Set([effectiveUserId, user?.id].filter((id): id is string => Boolean(id))));
+  const reportUserIdsKey = reportUserIds.join(",");
   const [active, setActive] = useState<ReportKey>("estoque");
   const [prizesMenuOpen, setPrizesMenuOpen] = useState(true);
   const [search, setSearch] = useState("");
@@ -92,7 +95,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       supabase.from("sorteio_sorteios").select("*").eq("user_id", userId).order("data_sorteio", { ascending: false }),
       supabase.from("blitz_promocionais").select("*").eq("user_id", userId).order("dia", { ascending: false }),
       supabase.from("promocoes").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-      (supabase.from("vmix_button_interactions" as any).select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1000) as any),
+      (supabase.from("vmix_button_interactions" as any).select("*").in("user_id", reportUserIds).order("created_at", { ascending: false }).limit(1000) as any),
       supabase.from("logos_patrocinadores").select("*").eq("user_id", userId).eq("excluido", false).order("created_at", { ascending: false }),
       supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId),
       supabase.from("audiencia_historico").select("created_at, programa, audio, video").eq("user_id", userId).order("created_at", { ascending: false }).limit(5000),
@@ -114,22 +117,22 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
     setRefreshing(false);
   };
 
-  useEffect(() => { void load(); }, [userId]);
+  useEffect(() => { void load(); }, [userId, reportUserIdsKey]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!reportUserIds.length) return;
     let disposed = false;
     let refreshInFlight = false;
 
-    // Realtime remains the primary path. Polling is a safety net for environments
-    // where the table was not added to supabase_realtime or the websocket drops.
+    // Realtime atualiza imediatamente; a consulta periódica recupera falhas do websocket.
+    // O vMix grava com user.id, enquanto o relatório pode receber o ID do titular da conta.
     const refreshVmixEvents = async () => {
       if (disposed || refreshInFlight) return;
       refreshInFlight = true;
       try {
         const { data, error } = await (supabase.from("vmix_button_interactions" as any) as any)
           .select("*")
-          .eq("user_id", userId)
+          .in("user_id", reportUserIds)
           .order("created_at", { ascending: false })
           .limit(1000);
         if (disposed) return;
@@ -147,33 +150,35 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       }
     };
 
-    const channel = supabase.channel(`vmix-report-${userId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "vmix_button_interactions", filter: `user_id=eq.${userId}` }, (payload: any) => {
-        if (payload.eventType === "INSERT" && payload.new) {
-          setVmixEvents(current => [payload.new as AnyRow, ...current.filter(row => row.id !== payload.new.id)].slice(0, 1000));
-          setVmixUnavailable(false);
-        } else {
-          void refreshVmixEvents();
-        }
-      })
-      .subscribe((status: string) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          console.warn("Canal Realtime do relatório vMix indisponível:", status);
-        }
-      });
+    const channels = reportUserIds.map((id) =>
+      supabase.channel(`vmix-report-${id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "vmix_button_interactions", filter: `user_id=eq.${id}` }, (payload: any) => {
+          if (payload.eventType === "INSERT" && payload.new) {
+            const inserted = payload.new as AnyRow;
+            setVmixEvents(current => [inserted, ...current.filter(row => row.id !== inserted.id)].slice(0, 1000));
+            setVmixUnavailable(false);
+          } else {
+            void refreshVmixEvents();
+          }
+        })
+        .subscribe((status: string) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn(`Canal Realtime do relatório vMix indisponível para ${id}:`, status);
+          }
+        })
+    );
 
-    // Near-real-time fallback: a new click appears within 5 seconds even if
-    // Realtime publication/subscription is not configured correctly.
+    // Fallback em até 3 segundos quando o Realtime não estiver disponível.
     const pollTimer = window.setInterval(() => {
       if (active === "vmix") void refreshVmixEvents();
-    }, 5000);
+    }, 3000);
 
     return () => {
       disposed = true;
       window.clearInterval(pollTimer);
-      void supabase.removeChannel(channel);
+      channels.forEach(channel => { void supabase.removeChannel(channel); });
     };
-  }, [userId, active]);
+  }, [reportUserIdsKey, active]);
 
   useEffect(() => {
     if (active !== "audiencia" || !userId) return;
