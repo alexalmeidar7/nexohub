@@ -647,7 +647,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   // remontagem a cada render, o que fazia o foco sair dos inputs/combos.
 
   return (
-    <div className="animate-fade-in space-y-8 max-w-6xl mx-auto w-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="animate-fade-in space-y-8 w-full max-w-none mx-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cadastro de Participantes
