@@ -148,7 +148,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   return (
     <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
       <header className="w-full shrink-0 px-0 pt-1 sm:pt-2 relative z-20">
-        <div className={`relative mx-auto flex w-full max-w-[1440px] min-h-[44px] items-center justify-between px-4 sm:px-6 ${isButtonDevicePreview ? "rounded-none" : "rounded-xl"}`} style={{ backgroundColor: "#242424" }}>
+        <div className={`relative mx-auto flex w-full max-w-[1440px] min-h-[44px] items-center justify-between px-4 sm:px-6 ${automationMode && !isButtonDevicePreview ? "rounded-full border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]" : isButtonDevicePreview ? "rounded-none" : "rounded-xl"}`} style={automationMode ? { backgroundColor: "rgba(13, 31, 62, 0.78)", backdropFilter: "blur(8px) saturate(115%)", WebkitBackdropFilter: "blur(8px) saturate(115%)" } : { backgroundColor: "#242424" }}>
           <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none block h-auto max-h-[14px] w-auto max-w-[34%] object-contain object-left" />
           {user && (
             <div className="ml-auto flex shrink-0 items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
