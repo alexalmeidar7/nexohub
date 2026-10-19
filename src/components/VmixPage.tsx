@@ -5024,7 +5024,7 @@ function SwitcherUI({
                 </div>}
 
                 {/* Right: Botões de Efeitos */}
-                <div className="rounded-xl overflow-hidden w-full" style={{ backgroundColor: isAutomationRoute ? "transparent" : "#1a1a1f", border: isAutomationRoute ? "1px solid transparent" : "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
+                <div id="custom-buttons-panel" className="rounded-xl overflow-hidden w-full" style={{ backgroundColor: isAutomationRoute ? "transparent" : "#1a1a1f", border: isAutomationRoute ? "1px solid transparent" : "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <div className="flex shrink-0 items-center gap-2">
@@ -5721,7 +5721,7 @@ function SwitcherUI({
       )}
 
       {isAutomationRoute && !isButtonDevicePreview && (
-        <FloatingNdiPreview inputs={inputs} baseUrl={savedUrl || vmixUrl} />
+        <FloatingNdiPreview inputs={inputs} baseUrl={savedUrl || vmixUrl} targetSelector="#custom-buttons-panel" />
       )}
 
       {/* ── Command Log Panel (hidden in device previews) ── */}
