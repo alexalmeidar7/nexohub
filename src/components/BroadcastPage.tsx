@@ -1550,7 +1550,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       className="px-3 pt-3 pb-4 h-full min-h-0"
       style={{ fontFamily: "'Manrope', sans-serif", backgroundColor: "transparent" }}
     >
-      <div className="w-full max-w-6xl mx-auto h-full min-h-0 flex flex-col gap-4">
+      <div className="w-full max-w-none mx-0 h-full min-h-0 flex flex-col gap-4">
         {/* Header handled by Dashboard Portal */}
         <div id="module-header-title" style={{ display: "none" }}>
           vMix — Broadcast
