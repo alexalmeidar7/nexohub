@@ -104,37 +104,34 @@ Deno.serve(async (req) => {
       url.searchParams.get("timeMax") ||
       new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Fetch Google Calendar events
-    const calendarParams = new URLSearchParams({
-      timeMin,
-      timeMax,
-      singleEvents: "true",
-      orderBy: "startTime",
-      maxResults: "100",
-    });
-
-    const calRes = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${calendarParams.toString()}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    const calData = await calRes.json();
-
-    if (!calRes.ok) {
-      console.error("Google Calendar API error:", calData);
-      return new Response(
-        JSON.stringify({ connected: true, events: [], error: calData.error?.message }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const minDate = new Date(timeMin);
+    const maxDate = new Date(timeMax);
+    if (!Number.isFinite(minDate.getTime()) || !Number.isFinite(maxDate.getTime()) || minDate >= maxDate) {
+      return new Response(JSON.stringify({ connected: true, events: [], error: "Intervalo de datas inválido." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const events = (calData.items || []).map((item: any) => ({
-      id: item.id,
-      summary: item.summary || "(Sem título)",
-      description: item.description || "",
-      location: item.location || "",
-      start: item.start?.dateTime || item.start?.date || "",
-      end: item.end?.dateTime || item.end?.date || "",
+    // Paginate Google Calendar results instead of silently dropping events after the first page.
+    const items: any[] = [];
+    let pageToken: string | undefined;
+    let pageCount = 0;
+    do {
+      const calendarParams = new URLSearchParams({ timeMin: minDate.toISOString(), timeMax: maxDate.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "250" });
+      if (pageToken) calendarParams.set("pageToken", pageToken);
+      const calRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?" + calendarParams.toString(), { headers: { Authorization: "Bearer " + accessToken } });
+      const calData = await calRes.json();
+      if (!calRes.ok) {
+        console.error("Google Calendar API error status:", calRes.status);
+        return new Response(JSON.stringify({ connected: true, events: [], error: "Não foi possível consultar os eventos do Google Calendar." }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      items.push(...(calData.items || []));
+      pageToken = calData.nextPageToken || undefined;
+      pageCount += 1;
+    } while (pageToken && pageCount < 20);
+
+    const events = items.map((item: any) => ({
+      id: item.id, summary: item.summary || "(Sem título)", description: item.description || "",
+      location: item.location || "", start: item.start?.dateTime || item.start?.date || "",
+      end: item.end?.dateTime || item.end?.date || "", allDay: Boolean(item.start?.date && !item.start?.dateTime),
       htmlLink: item.htmlLink || "",
     }));
 
