@@ -2221,19 +2221,10 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
       return;
     }
 
-    const monthStartDate = new Date();
-    monthStartDate.setDate(1);
-    monthStartDate.setHours(0, 0, 0, 0);
-    const nextMonthDate = new Date(monthStartDate);
-    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-    const monthStart = format(monthStartDate, "yyyy-MM-dd");
-    const nextMonthStart = format(nextMonthDate, "yyyy-MM-dd");
-    const monthLabel = format(monthStartDate, "MMMM yyyy", { locale: ptBR });
-
     const confirmed = await confirmDialog({
-      title: "Limpar agenda do mês",
-      message: "Isso excluirá os eventos do House Mix com data cadastrada em " + monthLabel + ". Essa ação não pode ser desfeita. Eventos do Google Agenda não serão alterados. Deseja continuar?",
-      confirmLabel: "Limpar agenda",
+      title: "Limpar toda a agenda",
+      message: "Esta ação excluirá TODOS os eventos agendados do House Mix desta emissora, independentemente do mês ou da data, incluindo eventos futuros e recorrentes cadastrados. Os eventos do Google Agenda não serão alterados. Esta ação não pode ser desfeita. Deseja continuar?",
+      confirmLabel: "Excluir todos os eventos",
       cancelLabel: "Cancelar",
       destructive: true,
       icon: "trash",
@@ -2242,43 +2233,50 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
     setLoadingData(true);
     try {
+      // Get all event IDs first so participant rows can be removed as well.
       const { data: rows, error: selectError } = await supabase
         .from("agenda_eventos")
         .select("id")
-        .eq("user_id", targetUserId)
-        .gte("data", monthStart)
-        .lt("data", nextMonthStart);
+        .eq("user_id", targetUserId);
       if (selectError) throw selectError;
 
       const dbIds = (rows || []).map((row: any) => String(row.id));
-      if (dbIds.length) {
+      if (dbIds.length > 0) {
         const { error: participantError } = await supabase
           .from("agenda_participantes")
           .delete()
           .in("evento_id", dbIds);
         if (participantError) throw participantError;
-
-        const { error: deleteError } = await supabase
-          .from("agenda_eventos")
-          .delete()
-          .eq("user_id", targetUserId)
-          .gte("data", monthStart)
-          .lt("data", nextMonthStart);
-        if (deleteError) throw deleteError;
       }
 
-      const localMonthIds = eventos
-        .filter((event) => String(event.data || "") >= monthStart && String(event.data || "") < nextMonthStart)
-        .map((event) => event.id);
-      for (const id of localMonthIds) deleteStoredAgendaEvent(id, targetUserId);
+      // Delete every event belonging to this station, not just the current month.
+      const { error: deleteError } = await supabase
+        .from("agenda_eventos")
+        .delete()
+        .eq("user_id", targetUserId);
+      if (deleteError) throw deleteError;
 
-      const removedIds = new Set([...dbIds, ...localMonthIds]);
-      setEventos((prev) => prev.filter((event) => !removedIds.has(event.id)));
+      // Clear the station-specific cache and its entries in the shared fallback.
+      try {
+        const norm = targetUserId.trim().toLowerCase();
+        localStorage.removeItem(`nexohub_agenda_local_events_v2_${norm}`);
+        const fallbackKey = "nexohub_agenda_local_events_v2";
+        const fallbackRaw = localStorage.getItem(fallbackKey);
+        if (fallbackRaw) {
+          const fallbackList = JSON.parse(fallbackRaw);
+          if (Array.isArray(fallbackList)) {
+            localStorage.setItem(fallbackKey, JSON.stringify(fallbackList.filter((event: any) => event?.user_id !== targetUserId)));
+          }
+        }
+      } catch (storageError) {
+        console.warn("[Agenda] Não foi possível limpar todo o cache local:", storageError);
+      }
+
+      setEventos([]);
       try { window.dispatchEvent(new CustomEvent("nexohub:agenda-updated")); } catch {}
-      toast({ title: "Agenda limpa", description: removedIds.size + " evento(s) removido(s) de " + monthLabel + "." });
-      await fetchEventos();
+      toast({ title: "Agenda totalmente limpa", description: `${dbIds.length} evento(s) excluído(s).` });
     } catch (error: any) {
-      console.error("[Agenda] Falha ao limpar o mês vigente:", error);
+      console.error("[Agenda] Falha ao limpar todos os eventos:", error);
       toast({ title: "Não foi possível limpar a agenda", description: error?.message || "Ocorreu um erro ao excluir os eventos.", variant: "destructive" });
     } finally {
       setLoadingData(false);
