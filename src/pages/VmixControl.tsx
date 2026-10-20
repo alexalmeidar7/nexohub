@@ -181,14 +181,36 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
       <header className="w-full shrink-0 px-0 pt-1 sm:pt-2 relative z-20">
         <div className={`relative mx-auto flex w-full max-w-[1440px] min-h-[44px] items-center justify-between px-4 sm:px-6 ${automationMode && !isButtonDevicePreview ? "rounded-full border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]" : isButtonDevicePreview ? "rounded-none" : "rounded-xl"}`} style={automationMode ? { backgroundColor: "rgba(13, 31, 62, 0.78)", backdropFilter: "blur(8px) saturate(115%)", WebkitBackdropFilter: "blur(8px) saturate(115%)" } : { backgroundColor: "#242424" }}>
           <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none block h-auto max-h-[14px] w-auto max-w-[34%] object-contain object-left" />
+          {user && !isButtonDevicePreview && (
+            <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
+          )}
           {user && (
-            <div className="ml-auto flex shrink-0 items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
+            <div className={`${isButtonDevicePreview ? "ml-auto" : ""} flex shrink-0 items-center gap-1.5`} title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
               {vmixOnline ? <Wifi size={13} className="text-emerald-400" /> : <WifiOff size={13} className="text-red-400" />}
               <span className={`text-[9px] font-bold uppercase tracking-wide ${vmixOnline ? "text-emerald-400" : "text-red-400"}`}>{vmixOnline ? "Conectado" : "Desconectado"}</span>
             </div>
           )}
         </div>
       </header>
+      {showBridgePairing && !isButtonDevicePreview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true" aria-labelledby="bridge-pairing-title">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#19191f] p-6 text-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div><h2 id="bridge-pairing-title" className="text-lg font-bold">Ponte remota NexoHub</h2><p className="mt-2 text-sm text-white/65">Gere um código temporário para vincular o computador onde o vMix está instalado.</p></div>
+              <button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-full bg-white/10 px-3 py-1" aria-label="Fechar">✕</button>
+            </div>
+            {bridgePairingLoading ? <p className="mt-6 text-sm text-white/70">Gerando código seguro...</p> : null}
+            {bridgePairingError ? <p className="mt-5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{bridgePairingError}</p> : null}
+            {bridgePairingCode ? <div className="mt-5 rounded-xl bg-black/40 p-4">
+              <p className="text-xs uppercase tracking-widest text-white/50">Código válido por 10 minutos</p>
+              <p className="my-3 break-all font-mono text-lg font-bold tracking-wider">{bridgePairingCode}</p>
+              <button type="button" onClick={() => navigator.clipboard.writeText(bridgePairingCode)} className="rounded-lg bg-[#0055ff] px-4 py-2 text-sm font-semibold">Copiar código</button>
+            </div> : null}
+            <p className="mt-5 text-xs leading-relaxed text-white/50">Use o código no NexoHub Bridge do computador do estúdio. Não compartilhe o token gerado após o pareamento.</p>
+            <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={createBridgePairing} disabled={bridgePairingLoading} className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold disabled:opacity-50">Gerar novo código</button><button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-lg bg-[#0055ff] px-4 py-2 text-sm font-semibold">Fechar</button></div>
+          </div>
+        </div>
+      )}
       <main className={`mx-auto w-full max-w-[1440px] flex-1 ${isButtonDevicePreview ? "p-0" : "p-6"}`} style={{ backgroundColor: "transparent" }}>
         <Suspense fallback={<div className="w-full min-h-[480px]" />}><VmixPage forcedConnected={forcedConnected} automationMode={automationMode} /></Suspense>
       </main>
