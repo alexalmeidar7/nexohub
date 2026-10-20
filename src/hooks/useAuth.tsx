@@ -575,8 +575,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null);
 
     if (shouldRedirect) {
-      // Hard redirect to login so any cached state is cleared
-      window.location.replace("/?signed_out=1");
+      // Keep the web hard redirect, but use HashRouter navigation in the packaged desktop app.
+      if (import.meta.env.BASE_URL === "./") {
+        window.location.hash = "#/";
+      } else {
+        window.location.replace("/?signed_out=1");
+      }
     }
   };
 
