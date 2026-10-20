@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { corsHeaders } from "../_shared/cors.ts";
 
 function isPrivateOrLocalUrl(rawUrl: string): boolean {
   try {
@@ -101,13 +101,44 @@ Deno.serve(async (req) => {
     }
 
     if (isPrivateOrLocalUrl(vmixBaseUrl)) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "URL local (192.168.x.x) inacessível pela nuvem. Soluções: 1) Acesse este painel via HTTP (não HTTPS) na mesma rede do vMix; 2) Configure port forwarding no roteador e use o IP público; 3) Use túnel HTTPS (ngrok/Cloudflare Tunnel).",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: bridge, error: bridgeError } = await admin.from("vmix_bridge_devices")
+        .select("id").eq("user_id", userId).is("revoked_at", null)
+        .gte("last_seen_at", new Date(Date.now() - 45000).toISOString())
+        .order("last_seen_at", { ascending: false }).limit(1).maybeSingle();
+      if (bridgeError) throw bridgeError;
+      if (!bridge) return new Response(JSON.stringify({ error: "NexoHub Bridge não conectado. Pareie o computador do estúdio primeiro." }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+      const { data: job, error: queueError } = await admin.from("vmix_bridge_jobs").insert({
+        device_id: bridge.id, user_id: userId, path, method: "GET",
+        expires_at: new Date(Date.now() + 20000).toISOString(),
+      }).select("id").single();
+      if (queueError || !job) throw queueError || new Error("Could not queue Bridge request");
+
+      let completed: any = null;
+      const deadline = Date.now() + 12000;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const { data: current, error: readError } = await admin.from("vmix_bridge_jobs")
+          .select("status,result").eq("id", job.id).eq("user_id", userId).maybeSingle();
+        if (readError) throw readError;
+        if (current && (current.status === "completed" || current.status === "failed")) { completed = current; break; }
+      }
+      if (!completed) {
+        await admin.from("vmix_bridge_jobs").update({ status: "expired" }).eq("id", job.id).eq("status", "queued");
+        return new Response(JSON.stringify({ error: "Timeout aguardando resposta do vMix pelo NexoHub Bridge." }), {
+          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (completed.status !== "completed" || !completed.result?.success) {
+        return new Response(JSON.stringify({ error: "O vMix não respondeu com sucesso pelo Bridge.", details: completed.result }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const body = String(completed.result?.body || "");
+      return new Response(body, { status: Number(completed.result?.statusCode || 200), headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } });
     }
 
     const targetUrl = vmixBaseUrl.replace(/\/+$/, "") + path;
@@ -132,9 +163,9 @@ Deno.serve(async (req) => {
     });
 
     const contentType = response.headers.get("content-type") || "text/plain";
-    const body = await response.text();
+    const responseBody = await response.text();
 
-    return new Response(body, {
+    return new Response(responseBody, {
       status: response.status,
       headers: {
         ...corsHeaders,

@@ -1,16 +1,32 @@
-# NexoHub Bridge — vMix e descoberta NDI
+# NexoHub Bridge — aplicativo Windows
 
-Agente Windows x64 para conexão local com o vMix e descoberta real de fontes NDI anunciadas na rede.
+O NexoHub Bridge conecta o House Mix ao vMix instalado neste computador e pode permanecer ativo na bandeja do Windows.
 
-## Descoberta local
-- O Bridge inicia um endpoint somente local em `http://127.0.0.1:8765/ndi/sources`.
-- A lista é obtida pelo NDI Finder API do NDI Runtime instalado no computador; não usa sugestões ou nomes fictícios.
-- Instale o NDI Runtime oficial (x64) no computador do vMix e reinicie o Bridge.
-- O endpoint só permite CORS para o domínio House Mix e previews conhecidos do Lovable.
-- Se o Runtime estiver ausente, o endpoint retorna erro explícito em vez de inventar fontes.
+## Primeiro uso
 
-## Relay remoto vMix
-O relay usa pareamento temporário e token do Supabase. Para o controle remoto funcionar, as funções e a migração do PR #23 precisam estar implantadas e o Bridge precisa ser pareado.
+1. Extraia o pacote. O executável `NexoHubBridge.exe` fica na pasta principal.
+2. Execute o Bridge e informe o IP/porta da API do vMix (no mesmo computador, normalmente `127.0.0.1:8088`).
+3. No House Mix, abra **vMix Control → Ponte remota**, gere o código temporário e cole-o no campo de pareamento.
+4. Marque **Iniciar com Windows** e clique em **Salvar e conectar**.
+5. Ao fechar a janela, o Bridge continua ativo junto ao relógio do Windows. Use o menu do ícone para abrir ou encerrar.
 
-## Limitação do preview
-A descoberta retorna fontes reais, mas o endpoint MJPEG do vMix só mostra inputs já adicionados ao vMix. O vMix HTTP API padrão não permite adicionar inputs NDI pela API. Para exibir no preview uma fonte de rede que ainda não esteja carregada no vMix, será necessário um receiver NDI local que retransmita vídeo para o navegador; a lista de descoberta e o preview de vídeo são partes distintas.
+## NDI Runtime
+
+O Bridge verifica automaticamente se encontra o NDI Runtime. Se não estiver instalado, a interface mostra um aviso e o botão **Baixar NDI Runtime**, que abre o site oficial: https://ndi.video/tools/.
+
+O endpoint local de descoberta é `http://127.0.0.1:8765/ndi/sources`. A detecção de instalação não garante, por si só, que a descoberta de fontes esteja funcionando; isso depende do runtime e da rede local.
+
+## Arquivos de configuração
+
+A subpasta **Configuração** contém o modelo `appsettings.example.json`, o guia e o ícone. O arquivo de exemplo é apenas uma referência para configuração manual. O aplicativo salva as configurações reais e a credencial em:
+
+`%APPDATA%\NexoBrasil\NexoHubBridge\appsettings.json`
+
+Não é necessário editar o JSON para usar a interface, e não compartilhe o arquivo real porque contém uma credencial secreta.
+
+## Segurança e dependências
+
+- A conexão com a nuvem usa HTTPS.
+- O Bridge só executa caminhos sob `/api/` no host/porta configurado.
+- Não exponha diretamente a porta 8088 do vMix à internet.
+- O relay remoto depende das funções/migrações do Supabase e do fluxo de comandos do House Mix implantados e integrados.

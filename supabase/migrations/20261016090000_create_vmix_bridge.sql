@@ -1,0 +1,77 @@
+create extension if not exists pgcrypto;
+
+create table if not exists public.vmix_bridge_pairings (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  code_hash text not null unique,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.vmix_bridge_devices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null default 'vMix Studio',
+  token_hash text not null unique,
+  last_seen_at timestamptz,
+  created_at timestamptz not null default now(),
+  revoked_at timestamptz
+);
+
+create table if not exists public.vmix_bridge_jobs (
+  id uuid primary key default gen_random_uuid(),
+  device_id uuid not null references public.vmix_bridge_devices(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  path text not null check (path like '/api/%'),
+  method text not null default 'GET' check (method in ('GET','POST')),
+  body jsonb,
+  status text not null default 'queued' check (status in ('queued','running','completed','failed','expired')),
+  result jsonb,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default (now() + interval '30 seconds'),
+  completed_at timestamptz
+);
+
+create index if not exists vmix_bridge_pairings_expiry_idx on public.vmix_bridge_pairings(expires_at);
+create index if not exists vmix_bridge_devices_user_idx on public.vmix_bridge_devices(user_id) where revoked_at is null;
+create index if not exists vmix_bridge_jobs_queue_idx on public.vmix_bridge_jobs(device_id, status, created_at);
+
+alter table public.vmix_bridge_pairings enable row level security;
+alter table public.vmix_bridge_devices enable row level security;
+alter table public.vmix_bridge_jobs enable row level security;
+
+revoke all on public.vmix_bridge_pairings from anon, authenticated;
+revoke all on public.vmix_bridge_devices from anon, authenticated;
+revoke all on public.vmix_bridge_jobs from anon, authenticated;
+grant all on public.vmix_bridge_pairings to service_role;
+grant all on public.vmix_bridge_devices to service_role;
+grant all on public.vmix_bridge_jobs to service_role;
+
+create or replace function public.claim_next_vmix_bridge_job(p_device_id uuid)
+returns table(id uuid, path text, method text, body jsonb)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  with next_job as (
+    select j.id
+    from public.vmix_bridge_jobs j
+    where j.device_id = p_device_id
+      and j.status = 'queued'
+      and j.expires_at > now()
+    order by j.created_at
+    for update skip locked
+    limit 1
+  )
+  update public.vmix_bridge_jobs j
+  set status = 'running'
+  from next_job n
+  where j.id = n.id
+  returning j.id, j.path, j.method, j.body;
+end;
+$$;
+
+revoke all on function public.claim_next_vmix_bridge_job(uuid) from public, anon, authenticated;
+grant execute on function public.claim_next_vmix_bridge_job(uuid) to service_role;

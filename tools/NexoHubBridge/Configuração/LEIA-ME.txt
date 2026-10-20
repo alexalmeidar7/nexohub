@@ -1,0 +1,11 @@
+NEXO BRIDGE — GUIA RÁPIDO
+
+1. Execute NexoHubBridge.exe na pasta principal.
+2. Informe o IP/porta do vMix e cole o código temporário gerado no House Mix > vMix Control > Ponte remota.
+3. Marque “Iniciar com Windows” e clique em “Salvar e conectar”.
+4. Se o NDI Runtime não estiver instalado, use o botão de download que aparece no aplicativo.
+5. Ao fechar a janela, o Bridge fica em segundo plano junto ao relógio. Use o menu do ícone para abrir ou encerrar.
+
+O appsettings.example.json é um modelo de referência, não o arquivo de configuração ativo. As configurações reais ficam em %APPDATA%\NexoBrasil\NexoHubBridge\appsettings.json. Não compartilhe o arquivo real: ele contém uma credencial secreta.
+
+Download oficial do NDI: https://ndi.video/tools/
