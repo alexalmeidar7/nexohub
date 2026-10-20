@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  CloudSun, TrendingUp, TrendingDown, Radio, Tag, Calendar, Newspaper,
+  CloudSun, TrendingUp, TrendingDown, Tag, Calendar, Newspaper,
   Play, Search, UserRound, Headphones, Gift, ArrowRight, Music2, Clock3,
-  MoonStar, MapPin, ExternalLink,
+  MoonStar,
 } from "lucide-react";
 import type { SiteConfig } from "@/hooks/useSiteConfig";
 import { subscribeSiteSync } from "@/lib/siteSync";
@@ -49,10 +49,6 @@ interface Banner {
 }
 
 const formatTime = (value?: string) => value?.slice(0, 5) || "";
-const dayNames: Record<string, string> = {
-  seg: "SEG", ter: "TER", qua: "QUA", qui: "QUI", sex: "SEX", sab: "SÁB", dom: "DOM",
-};
-
 export default function SiteMockup({ config, effectiveUserId }: Props) {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [promos, setPromos] = useState<Promo[]>([]);
