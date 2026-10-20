@@ -102,7 +102,7 @@ internal sealed class BridgeForm : Form
         try
         {
             using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("NexoHubBridge.assets.bridge-logo.png");
-            if (stream is not null) logo.Image = Image.FromStream(stream);
+            if (stream is not null) { using var source = Image.FromStream(stream); logo.Image = new Bitmap(source); }
         }
         catch { }
         body.Controls.Add(logo);

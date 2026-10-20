@@ -11,6 +11,10 @@
     <Nullable>enable</Nullable>
     <AssemblyName>NexoHubBridge</AssemblyName>
     <RootNamespace>NexoHubBridge</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
     <EmbeddedResource Include="assets\bridge-logo.png" LogicalName="NexoHubBridge.assets.bridge-logo.png" />
+  </ItemGroup>
+  <PropertyGroup>
   </PropertyGroup>
 </Project>
