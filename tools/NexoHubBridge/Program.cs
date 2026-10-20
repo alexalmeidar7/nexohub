@@ -70,7 +70,7 @@ internal sealed class BridgeForm : Form
         FormBorderStyle = FormBorderStyle.None;
         MinimumSize = new Size(750, 390);
         Size = new Size(750, 390);
-        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+        Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
         MaximizeBox = false;
         Font = new Font("Arial", 9F);
         BackColor = Color.FromArgb(246, 248, 251);
@@ -169,7 +169,7 @@ internal sealed class BridgeForm : Form
         _trayMenu.Items.Add(new ToolStripSeparator());
         _trayMenu.Items.Add("Encerrar Bridge", null, (_, _) => ExitApplication());
         _tray.ContextMenuStrip = _trayMenu;
-        _tray.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+        _tray.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
         _tray.Text = "NexoHub Bridge";
         _tray.Visible = true;
         _tray.DoubleClick += (_, _) => ShowFromTray();

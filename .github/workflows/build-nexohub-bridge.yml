@@ -70,6 +70,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: NexoHubBridge-Windows-x64
-          path: artifacts/NexoHubBridge/*
+          path: artifacts/NexoHubBridge/**
           if-no-files-found: error
           retention-days: 30
