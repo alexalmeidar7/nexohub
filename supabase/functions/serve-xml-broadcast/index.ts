@@ -628,6 +628,9 @@ Deno.serve(async (req) => {
 
     // ── A SEGUIR (next program) ──────────────────────────────────────────
     const aSeguirEnabled = !!broadcastConfig.aSeguirEnabled;
+    // Saved by BroadcastPage as aSeguirRefreshSeconds (default 60 = vMix refresh rule).
+    const rawRefresh = Number(broadcastConfig.aSeguirRefreshSeconds);
+    const aSeguirRefreshSeconds = Number.isFinite(rawRefresh) && rawRefresh > 0 ? Math.round(rawRefresh) : 60;
     const showNextProgram = broadcastConfig.aSeguirShowPrograma !== false;
     const showNextProgramLogo = broadcastConfig.aSeguirShowLogoPrograma !== false;
     const showNextStart = broadcastConfig.aSeguirShowHorario !== false;
