@@ -163,9 +163,9 @@ Deno.serve(async (req) => {
     });
 
     const contentType = response.headers.get("content-type") || "text/plain";
-    const body = await response.text();
+    const responseBody = await response.text();
 
-    return new Response(body, {
+    return new Response(responseBody, {
       status: response.status,
       headers: {
         ...corsHeaders,
