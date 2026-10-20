@@ -209,7 +209,7 @@ export default function SitePage({ effectiveUserId }: Props) {
                         <Smartphone size={12} />
                       </button>
                       <span className="opacity-60 ml-2">Preview ao vivo</span>
-                      <span className="ml-auto text-[10px] opacity-70">preview ao vivo</span>
+                      <span className="ml-auto text-[10px] font-semibold opacity-70">Template Nexo — Site Rádio Completo</span>
                     </div>
                     <div className="bg-white flex justify-center overflow-auto" style={{ maxHeight: 480 }}>
                       <div style={{ width: device === "mobile" ? 360 : "100%", maxWidth: device === "mobile" ? 360 : "none" }}>
