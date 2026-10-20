@@ -6,6 +6,8 @@ using System.Text.Json;
 using Microsoft.Win32;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using System.Reflection;
 
 namespace NexoHubBridge;
 
@@ -63,9 +65,11 @@ internal sealed class BridgeForm : Form
     {
         Text = "NexoHub Bridge";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(590, 590);
-        Size = new Size(650, 690);
-        Font = new Font("Segoe UI", 9F);
+        FormBorderStyle = FormBorderStyle.None;
+        MinimumSize = new Size(750, 350);
+        Size = new Size(750, 350);
+        MaximizeBox = false;
+        Font = new Font("Arial", 9F);
         BackColor = Color.FromArgb(246, 248, 251);
         BuildUi();
         BuildTray();
@@ -76,51 +80,100 @@ internal sealed class BridgeForm : Form
 
     private void BuildUi()
     {
-        var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1, RowCount = 5 };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-        Controls.Add(root);
+        var titleBar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(0, 77, 255) };
+        var title = new Label { Text = "Nexo Brasil - Soluções visuais - Nexo Bridge", ForeColor = Color.White, Font = new Font("Arial", 9F), AutoSize = true, Location = new Point(15, 10) };
+        var minimizeWindow = new Button { Text = "—", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Arial", 12F), Size = new Size(30, 30), Location = new Point(680, 3), TabStop = false };
+        minimizeWindow.FlatAppearance.BorderSize = 0;
+        minimizeWindow.Click += (_, _) => HideToTray();
+        var closeWindow = new Button { Text = "×", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Arial", 16F), Size = new Size(30, 30), Location = new Point(710, 3), TabStop = false };
+        closeWindow.FlatAppearance.BorderSize = 0;
+        closeWindow.Click += (_, _) => HideToTray();
+        titleBar.Controls.Add(title); titleBar.Controls.Add(minimizeWindow); titleBar.Controls.Add(closeWindow);
+        titleBar.MouseDown += DragWindow;
+        title.MouseDown += DragWindow;
+        Controls.Add(titleBar);
 
-        var header = new Panel { Dock = DockStyle.Fill };
-        var title = new Label { Text = "NexoHub Bridge", Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold), ForeColor = Color.FromArgb(20, 35, 65), AutoSize = true, Location = new Point(0, 0) };
-        var subtitle = new Label { Text = "Conexão segura entre o House Mix e o vMix deste estúdio", ForeColor = Color.FromArgb(90, 103, 125), AutoSize = true, Location = new Point(2, 38) };
-        header.Controls.Add(title); header.Controls.Add(subtitle); root.Controls.Add(header, 0, 0);
+        var body = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(246, 248, 250) };
+        Controls.Add(body);
+        body.BringToFront();
+        titleBar.BringToFront();
 
-        var statusCard = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, Padding = new Padding(12) };
-        _status.Text = "●  Preparando aplicativo…"; _status.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold); _status.ForeColor = Color.FromArgb(180, 120, 0); _status.AutoSize = true; _status.Location = new Point(12, 7);
-        _detail.Text = "Você poderá minimizar esta janela para a bandeja do Windows."; _detail.ForeColor = Color.FromArgb(90, 103, 125); _detail.AutoSize = true; _detail.Location = new Point(13, 29);
-        statusCard.Controls.Add(_status); statusCard.Controls.Add(_detail); root.Controls.Add(statusCard, 0, 1);
+        var logo = new PictureBox { Location = new Point(18, 18), Size = new Size(208, 37), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
+        try
+        {
+            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("NexoHubBridge.assets.bridge-logo.png");
+            if (stream is not null) logo.Image = Image.FromStream(stream);
+        }
+        catch { }
+        body.Controls.Add(logo);
 
-        var fields = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 12, Padding = new Padding(0, 14, 0, 8) };
-        fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (int i = 0; i < 6; i++) { fields.RowStyles.Add(new RowStyle(SizeType.Absolute, 24)); fields.RowStyles.Add(new RowStyle(SizeType.Absolute, i == 2 ? 52 : 38)); }
-        AddField(fields, 0, "Nome deste estúdio", _device);
-        AddField(fields, 2, "Endereço do vMix neste computador", _vmixUrl);
-        AddField(fields, 4, "Código de pareamento (gerado no House Mix)", _pairingCode);
-        AddField(fields, 6, "Usuário da API do vMix (se houver)", _username);
-        AddField(fields, 8, "Senha da API do vMix (se houver)", _password);
-        _password.UseSystemPasswordChar = true;
-        _startup.Text = "Iniciar o NexoHub Bridge junto com o Windows"; _startup.AutoSize = true; _startup.ForeColor = Color.FromArgb(45, 57, 78); _startup.Margin = new Padding(0, 10, 0, 0);
-        fields.Controls.Add(_startup, 0, 10);
-        var hint = new Label { Text = "O código é usado uma vez. Depois do pareamento, a credencial é guardada no perfil deste usuário.", AutoSize = true, ForeColor = Color.FromArgb(90, 103, 125), MaximumSize = new Size(540, 0), Padding = new Padding(0, 8, 0, 0) };
-        fields.Controls.Add(hint, 0, 11);
-        root.Controls.Add(fields, 0, 2);
+        _vmixUrl.Location = new Point(18, 88);
+        _vmixUrl.Size = new Size(356, 36);
+        _vmixUrl.Font = new Font("Arial", 10F);
+        _vmixUrl.BorderStyle = BorderStyle.FixedSingle;
+        _vmixUrl.PlaceholderText = "VMIX IP  (ex.: 192.168.1.50:8088)";
+        body.Controls.Add(_vmixUrl);
 
-        var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, Padding = new Padding(0, 12, 0, 0) };
-        _connect.Text = "Salvar e conectar"; _connect.Width = 180; _connect.Height = 42; _connect.FlatStyle = FlatStyle.Flat; _connect.FlatAppearance.BorderSize = 0; _connect.BackColor = Color.FromArgb(0, 91, 187); _connect.ForeColor = Color.White; _connect.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold); _connect.Cursor = Cursors.Hand;
+        _connect.Text = "SALVAR E CONECTAR";
+        _connect.Location = new Point(382, 88);
+        _connect.Size = new Size(174, 36);
+        _connect.FlatStyle = FlatStyle.Flat;
+        _connect.FlatAppearance.BorderSize = 0;
+        _connect.BackColor = Color.FromArgb(0, 65, 190);
+        _connect.ForeColor = Color.White;
+        _connect.Font = new Font("Arial", 9F, FontStyle.Bold);
+        _connect.Cursor = Cursors.Hand;
         _connect.Click += async (_, _) => await SaveAndConnectAsync(true);
-        _save.Text = "Salvar configurações"; _save.Width = 160; _save.Height = 42; _save.FlatStyle = FlatStyle.Flat; _save.BackColor = Color.White; _save.ForeColor = Color.FromArgb(30, 50, 80); _save.Cursor = Cursors.Hand;
-        _save.Click += async (_, _) => await SaveOnlyAsync();
-        var minimize = new Button { Text = "Minimizar", Width = 100, Height = 42, FlatStyle = FlatStyle.Flat, BackColor = Color.White, ForeColor = Color.FromArgb(30, 50, 80), Cursor = Cursors.Hand };
-        minimize.Click += (_, _) => HideToTray();
-        buttons.Controls.Add(_connect); buttons.Controls.Add(_save); buttons.Controls.Add(minimize); root.Controls.Add(buttons, 0, 3);
+        body.Controls.Add(_connect);
 
-        var footer = new Label { Text = "Nexo Brasil  •  O ícone ao lado do relógio mantém o Bridge em execução.", AutoSize = true, ForeColor = Color.FromArgb(105, 115, 132), Anchor = AnchorStyles.Left | AnchorStyles.Bottom, Padding = new Padding(0, 8, 0, 0) };
-        root.Controls.Add(footer, 0, 4);
+        _pairingCode.Location = new Point(18, 137);
+        _pairingCode.Size = new Size(356, 34);
+        _pairingCode.Font = new Font("Arial", 10F);
+        _pairingCode.BorderStyle = BorderStyle.FixedSingle;
+        _pairingCode.PlaceholderText = "CÓDIGO DE PAREAMENTO DO HOUSE MIX";
+        body.Controls.Add(_pairingCode);
+
+        _startup.Text = "Iniciar com Windows";
+        _startup.AutoSize = true;
+        _startup.Location = new Point(390, 145);
+        _startup.Font = new Font("Arial", 9F);
+        _startup.ForeColor = Color.FromArgb(100, 105, 112);
+        _startup.BackColor = Color.Transparent;
+        body.Controls.Add(_startup);
+
+        _status.Text = "●  STATUS DA CONEXÃO";
+        _status.Font = new Font("Arial", 9F);
+        _status.ForeColor = Color.FromArgb(140, 145, 150);
+        _status.AutoSize = true;
+        _status.Location = new Point(29, 193);
+        body.Controls.Add(_status);
+
+        _detail.Text = "Informe o IP do vMix e o código gerado no House Mix.";
+        _detail.Font = new Font("Arial", 8F);
+        _detail.ForeColor = Color.FromArgb(125, 130, 136);
+        _detail.AutoSize = false;
+        _detail.Location = new Point(29, 216);
+        _detail.Size = new Size(690, 36);
+        body.Controls.Add(_detail);
+
+        var footer = new Label { Text = "Desenvolvido por Nexo Brasil - Soluções Visuais", Font = new Font("Arial", 8F), ForeColor = Color.FromArgb(170, 174, 179), AutoSize = true, Location = new Point(29, 278), Anchor = AnchorStyles.Left | AnchorStyles.Bottom };
+        body.Controls.Add(footer);
     }
+
+    private static void DragWindow(object? sender, MouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Left) return;
+        var form = ((Control)sender!).FindForm();
+        if (form is null) return;
+        ReleaseCapture();
+        SendMessage(form.Handle, 0xA1, (IntPtr)2, IntPtr.Zero);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool ReleaseCapture();
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
     private static void AddField(TableLayoutPanel panel, int row, string label, TextBox box)
     {
@@ -166,7 +219,7 @@ internal sealed class BridgeForm : Form
     private void FillFields()
     {
         _device.Text = _config.DeviceName;
-        _vmixUrl.Text = _config.VmixUrl;
+        _vmixUrl.Text = _config.VmixUrl.Replace("http://", "", StringComparison.OrdinalIgnoreCase).Replace("https://", "", StringComparison.OrdinalIgnoreCase);
         _pairingCode.Text = _config.PairingCode;
         _username.Text = _config.VmixUsername;
         _password.Text = _config.VmixPassword;
@@ -176,7 +229,9 @@ internal sealed class BridgeForm : Form
     {
         var c = _config;
         c.DeviceName = string.IsNullOrWhiteSpace(_device.Text) ? Environment.MachineName : _device.Text.Trim();
-        c.VmixUrl = string.IsNullOrWhiteSpace(_vmixUrl.Text) ? "http://127.0.0.1:8088" : _vmixUrl.Text.Trim().TrimEnd('/');
+        var vmixInput = string.IsNullOrWhiteSpace(_vmixUrl.Text) ? "127.0.0.1:8088" : _vmixUrl.Text.Trim().TrimEnd('/');
+        c.VmixUrl = vmixInput.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || vmixInput.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            ? vmixInput : "http://" + vmixInput;
         c.PairingCode = _pairingCode.Text.Trim();
         c.VmixUsername = _username.Text.Trim();
         c.VmixPassword = _password.Text;
@@ -301,7 +356,7 @@ internal sealed class BridgeForm : Form
 
     private void SetStatus(string title, string detail, Color color)
     {
-        _status.Text = "●  " + title;
+        _status.Text = "●  " + (title.Contains("conect", StringComparison.OrdinalIgnoreCase) || title.Contains("acessível", StringComparison.OrdinalIgnoreCase) ? "STATUS DA CONEXÃO: CONECTADO" : title.Contains("Reconect", StringComparison.OrdinalIgnoreCase) ? "STATUS DA CONEXÃO: RECONECTANDO" : "STATUS DA CONEXÃO: " + title.ToUpperInvariant());
         _status.ForeColor = color;
         _detail.Text = detail;
         _tray.Text = ("NexoHub Bridge — " + title).Length > 63 ? "NexoHub Bridge" : "NexoHub Bridge — " + title;
