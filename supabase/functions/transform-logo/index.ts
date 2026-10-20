@@ -95,7 +95,7 @@ Deno.serve(async (req: Request) => {
 
     const form = new FormData();
     form.append("model", IMAGE_MODEL);
-    form.append("image[]", new Blob([bytes], { type: mime }), `sponsor-logo.${mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png"}`);
+    form.append("image[]", new Blob([bytes as unknown as BlobPart], { type: mime }), `sponsor-logo.${mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png"}`);
     form.append("prompt", isRetry ? `${BASE_PROMPT}${RETRY_SUFFIX}` : BASE_PROMPT);
     form.append("size", "1024x1024");
     form.append("quality", "high");

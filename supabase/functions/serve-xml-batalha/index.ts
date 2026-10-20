@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
 
     const allowLatest = url.searchParams.get("latest") === "1" || url.searchParams.get("preview") === "1";
     if (!scheduled && (list || []).length > 0 && allowLatest) {
-      scheduled = list[0];
+      scheduled = (list || [])[0];
     }
 
     let nome1 = "", musica1 = "", pct1 = "", img1 = "";

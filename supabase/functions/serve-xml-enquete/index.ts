@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
     // Fallback: se solicitado preview ou latest, ou se existe apenas 1 enquete cadastrada para hoje
     const allowLatest = url.searchParams.get("latest") === "1" || url.searchParams.get("preview") === "1";
     if (!scheduled && (list || []).length > 0 && allowLatest) {
-      scheduled = list[0];
+      scheduled = (list || [])[0];
     }
 
     // Fallback adicional: nenhuma enquete para hoje -> usa a mais recente cujo horario bate agora

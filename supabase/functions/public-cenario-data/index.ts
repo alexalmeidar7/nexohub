@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     // Wrap DB calls with a hard timeout to prevent 150s hangs
     const DB_TIMEOUT_MS = 8000;
 
-    const withTimeout = <T>(promise: Promise<T>, label: string): Promise<T> =>
+    const withTimeout = <T>(promise: PromiseLike<T>, label: string): Promise<T> =>
       Promise.race([
         promise,
         new Promise<T>((_, reject) =>

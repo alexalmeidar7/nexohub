@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
 
     const allowLatest = url.searchParams.get("latest") === "1" || url.searchParams.get("preview") === "1";
     if (!quiz && (list || []).length > 0 && allowLatest) {
-      quiz = list[0];
+      quiz = (list || [])[0];
     }
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<items>\n  <dados>\n';
