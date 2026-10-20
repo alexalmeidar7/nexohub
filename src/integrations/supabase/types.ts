@@ -2993,6 +2993,48 @@ export type Database = {
           },
         ]
       }
+      vmix_button_interactions: {
+        Row: {
+          button_category: string | null
+          button_id: string
+          button_name: string
+          created_at: string
+          id: string
+          locutor_nome: string | null
+          points: number
+          program_name: string | null
+          studio_name: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          button_category?: string | null
+          button_id: string
+          button_name: string
+          created_at?: string
+          id?: string
+          locutor_nome?: string | null
+          points?: number
+          program_name?: string | null
+          studio_name?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          button_category?: string | null
+          button_id?: string
+          button_name?: string
+          created_at?: string
+          id?: string
+          locutor_nome?: string | null
+          points?: number
+          program_name?: string | null
+          studio_name?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vmix_connections: {
         Row: {
           created_at: string
