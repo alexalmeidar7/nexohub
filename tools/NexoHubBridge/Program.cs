@@ -51,6 +51,8 @@ internal sealed class BridgeForm : Form
     private readonly CheckBox _startup = new();
     private readonly Label _status = new();
     private readonly Label _detail = new();
+    private readonly Label _ndiStatus = new();
+    private readonly Button _ndiDownload = new();
     private readonly Button _connect = new();
     private readonly Button _save = new();
     private readonly NotifyIcon _tray = new();
@@ -66,8 +68,9 @@ internal sealed class BridgeForm : Form
         Text = "NexoHub Bridge";
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.None;
-        MinimumSize = new Size(750, 350);
-        Size = new Size(750, 350);
+        MinimumSize = new Size(750, 390);
+        Size = new Size(750, 390);
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
         MaximizeBox = false;
         Font = new Font("Arial", 9F);
         BackColor = Color.FromArgb(246, 248, 251);
@@ -80,25 +83,19 @@ internal sealed class BridgeForm : Form
 
     private void BuildUi()
     {
-        var titleBar = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = Color.FromArgb(0, 77, 255) };
-        var title = new Label { Text = "Nexo Brasil - Soluções visuais - Nexo Bridge", ForeColor = Color.White, Font = new Font("Arial", 9F), AutoSize = true, Location = new Point(15, 10) };
-        var minimizeWindow = new Button { Text = "—", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Arial", 12F), Size = new Size(30, 30), Location = new Point(680, 3), TabStop = false };
-        minimizeWindow.FlatAppearance.BorderSize = 0;
-        minimizeWindow.Click += (_, _) => HideToTray();
-        var closeWindow = new Button { Text = "×", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Arial", 16F), Size = new Size(30, 30), Location = new Point(710, 3), TabStop = false };
-        closeWindow.FlatAppearance.BorderSize = 0;
-        closeWindow.Click += (_, _) => HideToTray();
+        // Explicit positions prevent the body panel from covering the logo.
+        var titleBar = new Panel { Location = new Point(0, 0), Size = new Size(750, 36), BackColor = Color.FromArgb(0, 77, 255) };
+        var title = new Label { Text = "Nexo Brasil - Soluções visuais - Nexo Bridge", ForeColor = Color.White, Font = new Font("Segoe UI", 9F), AutoSize = true, Location = new Point(15, 10), BackColor = Color.Transparent };
+        var minimizeWindow = new Button { Text = "—", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Segoe UI", 12F), Size = new Size(30, 30), Location = new Point(680, 3), TabStop = false, Cursor = Cursors.Hand };
+        minimizeWindow.FlatAppearance.BorderSize = 0; minimizeWindow.Click += (_, _) => HideToTray();
+        var closeWindow = new Button { Text = "×", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Segoe UI", 16F), Size = new Size(30, 30), Location = new Point(710, 3), TabStop = false, Cursor = Cursors.Hand };
+        closeWindow.FlatAppearance.BorderSize = 0; closeWindow.Click += (_, _) => HideToTray();
         titleBar.Controls.Add(title); titleBar.Controls.Add(minimizeWindow); titleBar.Controls.Add(closeWindow);
-        titleBar.MouseDown += DragWindow;
-        title.MouseDown += DragWindow;
-        Controls.Add(titleBar);
+        titleBar.MouseDown += DragWindow; title.MouseDown += DragWindow; Controls.Add(titleBar);
 
-        var body = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(246, 248, 250) };
+        var body = new Panel { Location = new Point(0, 36), Size = new Size(750, 354), BackColor = Color.FromArgb(246, 248, 250) };
         Controls.Add(body);
-        body.BringToFront();
-        titleBar.BringToFront();
-
-        var logo = new PictureBox { Location = new Point(18, 18), Size = new Size(208, 37), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
+        var logo = new PictureBox { Location = new Point(20, 17), Size = new Size(235, 45), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent };
         try
         {
             using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("NexoHubBridge.assets.bridge-logo.png");
@@ -106,58 +103,41 @@ internal sealed class BridgeForm : Form
         }
         catch { }
         body.Controls.Add(logo);
+        body.Controls.Add(new Label { Text = "Conecte o House Mix ao vMix deste computador", Location = new Point(22, 65), AutoSize = true, Font = new Font("Segoe UI", 9F), ForeColor = Color.FromArgb(105, 113, 125) });
 
-        _vmixUrl.Location = new Point(18, 88);
-        _vmixUrl.Size = new Size(356, 36);
-        _vmixUrl.Font = new Font("Arial", 10F);
-        _vmixUrl.BorderStyle = BorderStyle.FixedSingle;
-        _vmixUrl.PlaceholderText = "VMIX IP  (ex.: 192.168.1.50:8088)";
-        body.Controls.Add(_vmixUrl);
+        _vmixUrl.Location = new Point(18, 91); _vmixUrl.Size = new Size(356, 37); _vmixUrl.Font = new Font("Segoe UI", 10F);
+        _vmixUrl.BorderStyle = BorderStyle.FixedSingle; _vmixUrl.PlaceholderText = "IP DO VMIX (ex.: 192.168.1.50:8088)"; body.Controls.Add(_vmixUrl);
 
-        _connect.Text = "SALVAR E CONECTAR";
-        _connect.Location = new Point(382, 88);
-        _connect.Size = new Size(174, 36);
-        _connect.FlatStyle = FlatStyle.Flat;
-        _connect.FlatAppearance.BorderSize = 0;
-        _connect.BackColor = Color.FromArgb(0, 65, 190);
-        _connect.ForeColor = Color.White;
-        _connect.Font = new Font("Arial", 9F, FontStyle.Bold);
-        _connect.Cursor = Cursors.Hand;
-        _connect.Click += async (_, _) => await SaveAndConnectAsync(true);
-        body.Controls.Add(_connect);
+        _connect.Text = "SALVAR E CONECTAR"; _connect.Location = new Point(382, 91); _connect.Size = new Size(174, 37);
+        _connect.FlatStyle = FlatStyle.Flat; _connect.FlatAppearance.BorderSize = 0; _connect.BackColor = Color.FromArgb(0, 65, 190);
+        _connect.ForeColor = Color.White; _connect.Font = new Font("Segoe UI", 9F, FontStyle.Bold); _connect.Cursor = Cursors.Hand;
+        _connect.Click += async (_, _) => await SaveAndConnectAsync(true); body.Controls.Add(_connect);
 
-        _pairingCode.Location = new Point(18, 137);
-        _pairingCode.Size = new Size(356, 34);
-        _pairingCode.Font = new Font("Arial", 10F);
-        _pairingCode.BorderStyle = BorderStyle.FixedSingle;
-        _pairingCode.PlaceholderText = "CÓDIGO DE PAREAMENTO DO HOUSE MIX";
-        body.Controls.Add(_pairingCode);
+        _pairingCode.Location = new Point(18, 139); _pairingCode.Size = new Size(356, 35); _pairingCode.Font = new Font("Segoe UI", 10F);
+        _pairingCode.BorderStyle = BorderStyle.FixedSingle; _pairingCode.PlaceholderText = "CÓDIGO DE PAREAMENTO DO HOUSE MIX"; body.Controls.Add(_pairingCode);
 
-        _startup.Text = "Iniciar com Windows";
-        _startup.AutoSize = true;
-        _startup.Location = new Point(390, 145);
-        _startup.Font = new Font("Arial", 9F);
-        _startup.ForeColor = Color.FromArgb(100, 105, 112);
-        _startup.BackColor = Color.Transparent;
+        _startup.Text = "Iniciar com Windows"; _startup.AutoSize = true; _startup.Location = new Point(390, 147);
+        _startup.Font = new Font("Segoe UI", 9F); _startup.ForeColor = Color.FromArgb(80, 88, 100); _startup.BackColor = Color.Transparent;
+        _startup.CheckedChanged += (_, _) => { if (!IsDisposed && IsHandleCreated) { try { ApplyStartupSetting(); } catch (Exception ex) { SetStatus("Não foi possível alterar a inicialização", ex.Message, Color.Firebrick); } } };
         body.Controls.Add(_startup);
 
-        _status.Text = "●  STATUS DA CONEXÃO";
-        _status.Font = new Font("Arial", 9F);
-        _status.ForeColor = Color.FromArgb(140, 145, 150);
-        _status.AutoSize = true;
-        _status.Location = new Point(29, 193);
-        body.Controls.Add(_status);
+        _status.Text = "●  STATUS DA CONEXÃO"; _status.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _status.ForeColor = Color.FromArgb(140, 145, 150); _status.AutoSize = true; _status.Location = new Point(29, 190); body.Controls.Add(_status);
 
-        _detail.Text = "Informe o IP do vMix e o código gerado no House Mix.";
-        _detail.Font = new Font("Arial", 8F);
-        _detail.ForeColor = Color.FromArgb(125, 130, 136);
-        _detail.AutoSize = false;
-        _detail.Location = new Point(29, 216);
-        _detail.Size = new Size(690, 36);
-        body.Controls.Add(_detail);
+        _detail.Text = "Informe o IP do vMix e o código gerado no House Mix."; _detail.Font = new Font("Segoe UI", 8.5F);
+        _detail.ForeColor = Color.FromArgb(105, 113, 125); _detail.AutoSize = false; _detail.Location = new Point(29, 213);
+        _detail.Size = new Size(690, 28); body.Controls.Add(_detail);
 
-        var footer = new Label { Text = "Desenvolvido por Nexo Brasil - Soluções Visuais", Font = new Font("Arial", 8F), ForeColor = Color.FromArgb(170, 174, 179), AutoSize = true, Location = new Point(29, 278), Anchor = AnchorStyles.Left | AnchorStyles.Bottom };
-        body.Controls.Add(footer);
+        _ndiStatus.Text = "Verificando instalação do NDI Runtime…"; _ndiStatus.Font = new Font("Segoe UI", 8.5F);
+        _ndiStatus.ForeColor = Color.FromArgb(105, 113, 125); _ndiStatus.AutoSize = true; _ndiStatus.Location = new Point(29, 249); body.Controls.Add(_ndiStatus);
+
+        _ndiDownload.Text = "BAIXAR NDI RUNTIME"; _ndiDownload.Location = new Point(29, 272); _ndiDownload.Size = new Size(166, 30);
+        _ndiDownload.FlatStyle = FlatStyle.Flat; _ndiDownload.FlatAppearance.BorderSize = 1; _ndiDownload.FlatAppearance.BorderColor = Color.FromArgb(0, 77, 255);
+        _ndiDownload.BackColor = Color.White; _ndiDownload.ForeColor = Color.FromArgb(0, 65, 190); _ndiDownload.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
+        _ndiDownload.Cursor = Cursors.Hand; _ndiDownload.Visible = false;
+        _ndiDownload.Click += (_, _) => { try { Process.Start(new ProcessStartInfo("https://ndi.video/tools/") { UseShellExecute = true }); } catch (Exception ex) { MessageBox.Show(this, "Não foi possível abrir o site do NDI: " + ex.Message, "Nexo Bridge", MessageBoxButtons.OK, MessageBoxIcon.Warning); } };
+        body.Controls.Add(_ndiDownload);
+        body.Controls.Add(new Label { Text = "Desenvolvido por Nexo Brasil - Soluções Visuais", Font = new Font("Segoe UI", 8F), ForeColor = Color.FromArgb(160, 166, 174), AutoSize = true, Location = new Point(29, 324) });
     }
 
     private static void DragWindow(object? sender, MouseEventArgs e)
@@ -189,7 +169,7 @@ internal sealed class BridgeForm : Form
         _trayMenu.Items.Add(new ToolStripSeparator());
         _trayMenu.Items.Add("Encerrar Bridge", null, (_, _) => ExitApplication());
         _tray.ContextMenuStrip = _trayMenu;
-        _tray.Icon = SystemIcons.Application;
+        _tray.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
         _tray.Text = "NexoHub Bridge";
         _tray.Visible = true;
         _tray.DoubleClick += (_, _) => ShowFromTray();
@@ -205,6 +185,7 @@ internal sealed class BridgeForm : Form
             FillFields();
             _startup.Checked = IsStartupEnabled();
             StartNdiDiscovery();
+            UpdateNdiStatus();
             if (!string.IsNullOrWhiteSpace(_config.BridgeToken))
             {
                 StartService();
@@ -308,6 +289,49 @@ internal sealed class BridgeForm : Form
     {
         using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
         return string.Equals(key?.GetValue("NexoHubBridge") as string, $"\"{Application.ExecutablePath}\" --background", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void UpdateNdiStatus()
+    {
+        var installed = IsNdiRuntimeInstalled();
+        _ndiStatus.Text = installed ? "NDI Runtime detectado neste computador." : "NDI Runtime não encontrado. A descoberta NDI ficará indisponível.";
+        _ndiStatus.ForeColor = installed ? Color.FromArgb(0, 125, 65) : Color.FromArgb(170, 92, 0);
+        _ndiDownload.Visible = !installed;
+    }
+
+    private static bool IsNdiRuntimeInstalled()
+    {
+        var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        const string dll = "Processing.NDI.Lib.x64.dll";
+        var candidates = new[]
+        {
+            Path.Combine(pf, "NDI", "NDI 6 Runtime", dll), Path.Combine(pf, "NDI", "NDI 5 Runtime", dll),
+            Path.Combine(pf, "NDI", "NDI 6 SDK", "Bin", "x64", dll), Path.Combine(pf, "NDI", "NDI 5 SDK", "Bin", "x64", dll),
+            Path.Combine(pf86, "NDI", "NDI 6 Runtime", dll), Path.Combine(pf86, "NDI", "NDI 5 Runtime", dll)
+        };
+        if (candidates.Any(File.Exists)) return true;
+        var registryPaths = new[]
+        {
+            (RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+            (RegistryHive.LocalMachine, @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+            (RegistryHive.CurrentUser, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
+        };
+        foreach (var (hive, path) in registryPaths)
+        {
+            using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Default);
+            using var root = baseKey.OpenSubKey(path);
+            if (root is null) continue;
+            foreach (var name in root.GetSubKeyNames())
+            {
+                using var item = root.OpenSubKey(name);
+                var displayName = item?.GetValue("DisplayName") as string;
+                if (!string.IsNullOrWhiteSpace(displayName) && displayName.Contains("NDI", StringComparison.OrdinalIgnoreCase) &&
+                    (displayName.Contains("Runtime", StringComparison.OrdinalIgnoreCase) || displayName.Contains("Tools", StringComparison.OrdinalIgnoreCase) || displayName.Contains("SDK", StringComparison.OrdinalIgnoreCase)))
+                    return true;
+            }
+        }
+        return false;
     }
 
     private void StartNdiDiscovery()

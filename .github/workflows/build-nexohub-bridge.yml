@@ -51,7 +51,10 @@ jobs:
       - name: Add configuration template and guide
         shell: pwsh
         run: |
-          Copy-Item tools/NexoHubBridge/appsettings.example.json artifacts/NexoHubBridge/appsettings.example.json
+          New-Item -ItemType Directory -Force artifacts/NexoHubBridge/Configuração | Out-Null
+          Copy-Item tools/NexoHubBridge/Configuração/appsettings.example.json artifacts/NexoHubBridge/Configuração/appsettings.example.json
+          Copy-Item tools/NexoHubBridge/Configuração/LEIA-ME.txt artifacts/NexoHubBridge/Configuração/LEIA-ME.txt
+          Copy-Item tools/NexoHubBridge/assets/NexoHubBridge.ico artifacts/NexoHubBridge/Configuração/NexoHubBridge.ico
           @'
           NexoHub Bridge — vMix remoto e descoberta NDI
           1. Execute NexoHubBridge.exe no computador onde o vMix está instalado.
