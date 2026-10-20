@@ -124,7 +124,7 @@ serve(async (req) => {
 
     console.log(`[serve-xml-geral] fetched owner=${ownerId} prog=${programasRes.data?.length || 0} ap=${apresentadoresRes.data?.length || 0} logos=${logosRes.data?.length || 0} rot=${roteiroRes.data?.length || 0} bat=${batalhaRes.data?.length || 0}`);
 
-    const empresa = empresaRes.data || {};
+    const empresa: any = empresaRes.data || {};
     const programas = programasRes.data || [];
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
@@ -153,7 +153,7 @@ serve(async (req) => {
     const now = new Date();
     const currentDayName = DIAS_MAP[now.getDay()];
 
-    let currentProgram = programas.find((p: any) => {
+    let currentProgram: any = programas.find((p: any) => {
       const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
       if (dias.length > 0 && !dias.includes(currentDayName)) return false;
       const ini = (p.horario_inicio || "").slice(0, 5);
