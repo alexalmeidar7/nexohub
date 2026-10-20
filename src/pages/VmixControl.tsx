@@ -84,6 +84,9 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
           <div className="relative mx-auto w-full max-w-[1656px] min-h-[54px] sm:min-h-[56px] rounded-full flex items-center px-5 sm:px-8 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]" style={{ backgroundColor: "rgba(13, 31, 62, 0.78)", backdropFilter: "blur(8px) saturate(115%)", WebkitBackdropFilter: "blur(8px) saturate(115%)" }}>
             <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[17px] w-auto max-w-full object-contain object-left" />
 
+            {user && automationMode && !isButtonDevicePreview && (
+              <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
+            )}
             {user && (
               <div className="ml-auto flex items-center gap-3 pl-4">
                 <div className="relative group/account">
