@@ -5,15 +5,41 @@ on:
     branches: [main]
     paths:
       - "tools/NexoHubBridge/**"
+      - "supabase/functions/execute-vmix-commands/**"
+      - "supabase/functions/vmix-bridge-*/**"
+      - "supabase/functions/vmix-proxy/**"
+      - "supabase/functions/_shared/**"
+      - "supabase/migrations/**"
       - ".github/workflows/build-nexohub-bridge.yml"
   push:
     paths:
       - "tools/NexoHubBridge/**"
+      - "supabase/functions/execute-vmix-commands/**"
+      - "supabase/functions/vmix-bridge-*/**"
+      - "supabase/functions/vmix-proxy/**"
+      - "supabase/functions/_shared/**"
+      - "supabase/migrations/**"
       - ".github/workflows/build-nexohub-bridge.yml"
-    branches: [main, feat/real-ndi-network-discovery]
+    branches: [main, feat/real-ndi-network-discovery, feature/nexohub-bridge]
 permissions:
   contents: read
 jobs:
+  validate-edge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check NexoHub Bridge Edge Functions
+        run: |
+          deno check \
+            supabase/functions/vmix-bridge-pairing/index.ts \
+            supabase/functions/vmix-bridge-connect/index.ts \
+            supabase/functions/vmix-bridge-poll/index.ts \
+            supabase/functions/vmix-bridge-result/index.ts \
+            supabase/functions/vmix-proxy/index.ts \
+            supabase/functions/execute-vmix-commands/index.ts
   build:
     runs-on: windows-latest
     steps:
@@ -27,12 +53,15 @@ jobs:
         run: |
           Copy-Item tools/NexoHubBridge/appsettings.example.json artifacts/NexoHubBridge/appsettings.example.json
           @'
-          NexoHub Bridge — descoberta NDI
-          1. Instale o NDI Runtime oficial x64.
+          NexoHub Bridge — vMix remoto e descoberta NDI
+          1. Instale o NDI Runtime oficial x64 para descoberta de fontes NDI.
           2. Copie appsettings.example.json para appsettings.json.
-          3. Configure o pareamento remoto apenas se for usar o relay vMix.
-          4. Execute NexoHubBridge.exe e mantenha-o aberto.
-          5. A descoberta local fica em http://127.0.0.1:8765/ndi/sources.
+          3. Gere o código temporário em Ponte remota no House Mix e informe em PairingCode.
+          4. Ajuste VmixUrl se necessário (padrão http://127.0.0.1:8088).
+          5. Execute NexoHubBridge.exe. Após parear, o token será salvo em appsettings.json.
+          6. A descoberta local fica em http://127.0.0.1:8765/ndi/sources.
+          7. Não compartilhe appsettings.json: ele contém uma credencial secreta.
+          O relay remoto exige a migração e as funções do Supabase implantadas.
           '@ | Set-Content artifacts/NexoHubBridge/LEIA-ME.txt
       - uses: actions/upload-artifact@v4
         with:

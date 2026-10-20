@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { corsHeaders } from "../_shared/cors.ts";
 import { isPrivateOrLocalUrl } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
@@ -68,17 +68,61 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    if (isPrivateOrLocalUrl(vmixBaseUrl)) {
-      return new Response(
-        JSON.stringify({ error: "vMix URL points to a private/local address" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
     if (!commands || !Array.isArray(commands) || commands.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Missing 'commands' array" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Missing 'commands' array" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (isPrivateOrLocalUrl(vmixBaseUrl)) {
+      const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: bridge, error: bridgeError } = await admin.from("vmix_bridge_devices")
+        .select("id").eq("user_id", userId).is("revoked_at", null)
+        .gte("last_seen_at", new Date(Date.now() - 45000).toISOString())
+        .order("last_seen_at", { ascending: false }).limit(1).maybeSingle();
+      if (bridgeError) throw bridgeError;
+      if (!bridge) return new Response(JSON.stringify({ error: "NexoHub Bridge não conectado. Pareie o computador do estúdio primeiro." }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+      const results: { fn: string; status: number; ok: boolean }[] = [];
+      for (const cmd of commands) {
+        const fn = typeof cmd?.fn === "string" ? cmd.fn : "";
+        const input = typeof cmd?.input === "string" ? cmd.input : "";
+        const value = cmd?.extraValue ? (cmd?.value ? `${cmd.value},${cmd.extraValue}` : cmd.extraValue) : (cmd?.value || "");
+        if (!fn || /[^a-zA-Z0-9 _-]/.test(fn)) {
+          results.push({ fn, status: 400, ok: false });
+          continue;
+        }
+        const params = new URLSearchParams({ Function: fn });
+        if (input) params.set("Input", String(input));
+        if (value) params.set("Value", String(value));
+        const { data: job, error: queueError } = await admin.from("vmix_bridge_jobs").insert({
+          device_id: bridge.id, user_id: userId, path: `/api/?${params.toString()}`, method: "GET",
+          expires_at: new Date(Date.now() + 20000).toISOString(),
+        }).select("id").single();
+        if (queueError || !job) throw queueError || new Error("Could not queue Bridge command");
+
+        let completed: any = null;
+        const deadline = Date.now() + 12000;
+        while (Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          const { data: current, error: readError } = await admin.from("vmix_bridge_jobs")
+            .select("status,result").eq("id", job.id).eq("user_id", userId).maybeSingle();
+          if (readError) throw readError;
+          if (current && (current.status === "completed" || current.status === "failed")) { completed = current; break; }
+        }
+        if (!completed) {
+          await admin.from("vmix_bridge_jobs").update({ status: "expired" }).eq("id", job.id).eq("status", "queued");
+          results.push({ fn, status: 504, ok: false });
+        } else {
+          results.push({ fn, status: Number(completed.result?.statusCode || 0), ok: completed.status === "completed" && completed.result?.success === true });
+        }
+        if (commands.indexOf(cmd) < commands.length - 1) await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+      return new Response(JSON.stringify({ success: results.every((r) => r.ok), executed: results.length, results, via: "NexoHub Bridge" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const fetchHeaders: Record<string, string> = {

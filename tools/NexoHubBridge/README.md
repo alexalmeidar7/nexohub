@@ -14,3 +14,18 @@ O relay usa pareamento temporário e token do Supabase. Para o controle remoto f
 
 ## Limitação do preview
 A descoberta retorna fontes reais, mas o endpoint MJPEG do vMix só mostra inputs já adicionados ao vMix. O vMix HTTP API padrão não permite adicionar inputs NDI pela API. Para exibir no preview uma fonte de rede que ainda não esteja carregada no vMix, será necessário um receiver NDI local que retransmita vídeo para o navegador; a lista de descoberta e o preview de vídeo são partes distintas.
+
+## Relay remoto vMix
+
+# NexoHub Bridge (Windows x64)
+
+Conector local para encaminhar comandos autorizados do NexoHub ao vMix pela rede local. O executável será publicado pelo workflow Build NexoHub Bridge (Windows) como artefato do GitHub Actions.
+
+## Segurança
+- O Bridge só executa caminhos sob `/api/` no host/porta configurado em `VmixUrl`.
+- A conexão com a nuvem usa HTTPS.
+- O token é secreto e deve ser tratado como credencial. Não publique nem compartilhe `appsettings.json`.
+- Não abra a porta 8088 do vMix para a internet.
+
+## Estado
+O agente Windows é a base do conector. Para funcionar em produção, depende das funções de pareamento, fila de comandos e resultado no Supabase e da integração do Switcher com essa fila.
