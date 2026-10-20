@@ -14,7 +14,6 @@ import { compressImage } from "@/lib/imageCompressor";
 import { toast } from "sonner";
 import { confirmDialog } from "@/lib/confirmDialog";
 import { scrollToForm } from "@/lib/utils";
-import { getProgramas } from "./ProgramaForm";
 
 interface Programa {
   id: string;
@@ -184,70 +183,59 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", ownerId).order("posicao"),
       supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio, capa, thumb").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
     ]);
-    const tvsByGrupo: Record<string, TV[]> = {};
-    ((tvsRes.data as any[]) || []).forEach((t) => {
-      tvsByGrupo[t.grupo_id] = tvsByGrupo[t.grupo_id] || [];
-      tvsByGrupo[t.grupo_id].push({ id: t.id, posicao: t.posicao, imagem_url: t.imagem_url || "" });
-    });
-    let gs: Grupo[] = ((gruposRes.data as any[]) || []).map((g) => ({
-      id: g.id,
-      user_id: g.user_id,
-      nome: g.nome,
-      rows: g.rows,
-      cols: g.cols,
-      programa_ids: g.programa_ids || [],
-      tvs: tvsByGrupo[g.id] || [],
-    }));
 
-    if (gs.length > 0) {
-      try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(gs)); } catch {}
-    } else {
-      try {
-        const raw = localStorage.getItem(`nexohub_cenarios_grupos_${ownerId}`);
-        if (raw) gs = JSON.parse(raw);
-      } catch {}
+    // Fail closed: a query error must never be interpreted as an empty account and
+    // trigger cross-account fallbacks or cached artwork from a previous station.
+    const loadError = gruposRes.error || tvsRes.error || progsRes.error;
+    if (loadError) {
+      console.error("Falha ao carregar cenários do usuário autenticado:", loadError);
+      toast.error("Não foi possível carregar os cenários desta conta. Nenhum dado de outra conta será exibido.");
+      setLoading(false);
+      return;
     }
 
-    const fallbackProgs = await getProgramas(ownerId, user?.email);
-    let progs: Programa[] = ((progsRes.data as any[]) || []).map((p: any) => ({
+    const progs: Programa[] = ((progsRes.data as any[]) || []).map((p: any) => ({
       id: p.id,
       nome: p.nome,
       ativo: p.ativo ?? true,
-      dias_semana: p.dias_semana || p.diasSemana || [],
-      horario_inicio: p.horario_inicio || p.horarioInicio || "00:00:00",
-      horario_fim: p.horario_fim || p.horarioFim || "00:00:00",
-      estudio: p.estudio || "ESTÚDIO FM",
+      dias_semana: p.dias_semana || [],
+      horario_inicio: p.horario_inicio || "00:00:00",
+      horario_fim: p.horario_fim || "00:00:00",
+      estudio: p.estudio || "",
       capa: p.capa || "",
       thumb: p.thumb || "",
     }));
-
-    if (!progs.length) {
-      progs = fallbackProgs.map((p: any) => ({
-        id: p.id,
-        nome: p.nome,
-        ativo: p.ativo ?? true,
-        dias_semana: p.dias_semana || p.diasSemana || [],
-        horario_inicio: p.horario_inicio || p.horarioInicio || "00:00:00",
-        horario_fim: p.horario_fim || p.horarioFim || "00:00:00",
-        estudio: p.estudio || "ESTÚDIO FM",
-        capa: p.capa || "",
-        thumb: p.thumb || "",
+    const ownProgramIds = new Set(progs.map((p) => p.id));
+    const ownGroupRows = ((gruposRes.data as any[]) || []).filter((g) => g.user_id === ownerId);
+    const ownGroupIds = new Set(ownGroupRows.map((g) => g.id));
+    const tvsByGrupo: Record<string, TV[]> = {};
+    ((tvsRes.data as any[]) || []).filter((t) => ownGroupIds.has(t.grupo_id)).forEach((t) => {
+      tvsByGrupo[t.grupo_id] = tvsByGrupo[t.grupo_id] || [];
+      tvsByGrupo[t.grupo_id].push({ id: t.id, posicao: t.posicao, imagem_url: t.imagem_url || "" });
+    });
+    // Program-linked templates are valid only when every linked program belongs to
+    // this same account. Legacy local caches are intentionally not read here:
+    // earlier fallback logic could cache another station's program artwork under this account.
+    let gs: Grupo[] = ownGroupRows
+      .filter((g) => {
+        const ids = Array.isArray(g.programa_ids) ? g.programa_ids : [];
+        return ids.length === 0 || ids.every((id: string) => ownProgramIds.has(id));
+      })
+      .map((g) => ({
+        id: g.id,
+        user_id: ownerId,
+        nome: g.nome,
+        rows: g.rows,
+        cols: g.cols,
+        programa_ids: Array.isArray(g.programa_ids) ? g.programa_ids : [],
+        tvs: tvsByGrupo[g.id] || [],
       }));
-    } else {
-      progs = progs.map(p => {
-        const match = fallbackProgs.find(fb => fb.id === p.id || fb.nome.trim().toUpperCase() === p.nome.trim().toUpperCase());
-        return {
-          ...p,
-          capa: p.capa || match?.capa || "",
-          thumb: p.thumb || match?.thumb || "",
-        };
-      });
-    }
 
-    const hasValidTemplates = gs.some(g => g.tvs.some(tv => tv.posicao === 0 && !!tv.imagem_url));
+    // Generate defaults only from programs fetched by the authenticated owner's ID.
+    // Never use cross-account/station fallback services for this page.
+    const hasValidTemplates = gs.some((g) => g.tvs.some((tv) => tv.posicao === 0 && !!tv.imagem_url));
     if (!hasValidTemplates) {
       gs = getDefaultCenariosEstudioGrupos(ownerId, progs);
-      try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(gs)); } catch {}
     }
 
     setGrupos(gs);
