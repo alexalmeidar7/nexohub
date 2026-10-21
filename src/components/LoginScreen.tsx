@@ -81,18 +81,18 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 800,
   letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: "#64748b",
-  marginBottom: 6,
+  color: "#A9B9D2",
+  marginBottom: 7,
   display: "block",
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  height: 46,
-  borderRadius: 999,
-  background: "#ededed",
-  border: "1px solid rgba(226, 232, 240, 0.9)",
-  padding: "0 20px",
+  height: 44,
+  borderRadius: 10,
+  background: "#E7EEFF",
+  border: "1px solid #344664",
+  padding: "0 14px",
   fontFamily: FONT_FAMILY,
   fontSize: 13,
   color: "#0f172a",
@@ -296,21 +296,18 @@ export default function LoginScreen() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden"
-      style={{ background: "#000000" }}
+      style={{ background: "linear-gradient(135deg, #07152E 0%, #061126 52%, #020817 100%)" }}
     >
-      <div className="relative w-full max-w-[440px] z-10">
+      <div className="relative w-full max-w-[330px] z-10">
         {/* Main Login Card - Super Admin / Cadastro de Cliente Visual Style */}
         <div
-          className="relative z-10 w-full bg-white rounded-3xl p-8 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-slate-100/90 animate-fade-in"
-          style={{ fontFamily: FONT_FAMILY }}
+          className="relative z-10 w-full rounded-2xl p-6 sm:p-6 shadow-[0_24px_70px_rgba(0,0,0,0.48)] animate-fade-in"
+          style={{ fontFamily: FONT_FAMILY, background: "#080F20", border: "1px solid #172B4B" }}
         >
-          {/* Logo on top of form */}
-          <div className="flex items-center justify-center mb-8">
-            <img
-              src={logoNexoSolucoes}
-              alt="Nexo Soluções Visuais"
-              className="h-16 sm:h-20 w-auto object-contain"
-            />
+          {/* Cabeçalho alinhado ao login do vMix Control */}
+          <div className="flex flex-col items-center justify-center mb-6 text-center">
+            <div className="text-[27px] font-extrabold leading-none tracking-[-1.6px] text-white">nexo <span className="font-light tracking-[-1px] text-slate-300">HOUSE MIX</span></div>
+            <p className="mt-3 text-[8px] font-extrabold uppercase tracking-[1.6px]" style={{ color: "#9AAAC4" }}>Faça login para acessar o controle</p>
           </div>
 
           <div className="space-y-4">
@@ -330,8 +327,8 @@ export default function LoginScreen() {
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,85,255,0.15)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(226, 232, 240, 0.9)";
-                  e.currentTarget.style.backgroundColor = "#ededed";
+                  e.currentTarget.style.borderColor = "#344664";
+                  e.currentTarget.style.backgroundColor = "#E7EEFF";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -372,7 +369,7 @@ export default function LoginScreen() {
             {/* Mantenha-me conectado */}
             <label
               htmlFor="keep-connected"
-              className="flex items-center gap-3 cursor-pointer select-none px-4 py-2.5 rounded-full bg-[#f8fafc] border border-slate-200/80 hover:bg-slate-100/80 transition-colors"
+              className="flex items-center gap-3 cursor-pointer select-none px-3 py-2 rounded-lg transition-colors" style={{ background: "#101B30", border: "1px solid #233754" }}
             >
               <input
                 id="keep-connected"
@@ -392,7 +389,7 @@ export default function LoginScreen() {
                   fontWeight: 700,
                   letterSpacing: 0.8,
                   textTransform: "uppercase",
-                  color: "#475569",
+                  color: "#B9C7DD",
                 }}
               >
                 Mantenha-me conectado
@@ -410,7 +407,7 @@ export default function LoginScreen() {
                   fontWeight: 700,
                   letterSpacing: 0.8,
                   textTransform: "uppercase",
-                  color: "#64748b",
+                  color: "#9AAAC4",
                 }}
                 className="hover:text-[#0055ff] transition-colors cursor-pointer"
               >
@@ -425,8 +422,8 @@ export default function LoginScreen() {
                 aria-live="polite"
                 style={{
                   height: 44,
-                  borderRadius: 999,
-                  background: "#0055ff",
+                  borderRadius: 10,
+                  background: "linear-gradient(90deg, #0875FF, #0052D9)",
                   color: "#ffffff",
                   fontFamily: FONT_FAMILY,
                   fontWeight: 800,
