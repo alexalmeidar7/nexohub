@@ -1254,7 +1254,7 @@ Deno.serve(async (req) => {
       lines.push(`    <info_music>${esc(curiosidade)}</info_music>`);
       lines.push("  </dados>");
       lines.push("</items>");
-      return new Response(lines.join("\\n"), {
+      return new Response(lines.join("\n"), {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" },
       });
     }
