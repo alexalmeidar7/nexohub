@@ -501,6 +501,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [programaId, setProgramaId] = useState("");
   const [programasPodcast, setProgramasPodcast] = useState<ProgramaOption[]>([]);
   const [commands, setCommands] = useState<PresetCommand[]>([]);
+  const [commandSearchById, setCommandSearchById] = useState<Record<string, string>>({});
+  const [commandDropdownOpenById, setCommandDropdownOpenById] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
@@ -911,7 +913,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                       </option>
                     ))}
                   </select>
-                  <span className="text-[8px]" style={{ color: "#555" }}>
+                  <span className="text-[8px]" style={{ color: "#A6B2C5" }}>
                     O botão será associado ao programa selecionado na agenda do estúdio PODCAST.
                   </span>
                 </div>
@@ -1228,35 +1230,70 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
                         <div className="flex flex-col gap-1 sm:col-span-2">
-                          <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Command</label>
-                          <select
-                            value={cmd.fn}
-                            onChange={e => updateCommand(cmd.id, { fn: e.target.value, input: undefined, value: undefined, extraKey: undefined, extraValue: undefined })}
-                            className="h-[34px] w-full min-w-0 box-border text-[11px] px-2.5 py-2 rounded-lg outline-none transition-colors focus:border-[#0065F9] focus:ring-2 focus:ring-[#0065F9]/20 [color-scheme:dark]"
-                            style={{ backgroundColor: "#181820", color: "#F4F4F5", border: "1px solid #3A3A46", colorScheme: "dark" }}
-                          >
-                            {/*
-                              Funções importadas que não fazem parte do catálogo padrão
-                              precisam continuar visíveis no seletor; caso contrário, o
-                              navegador mostra visualmente a primeira opção (CutDirect),
-                              embora o comando salvo seja outro.
-                            */}
-                            {!PRESET_COMMANDS.some(c => c.value === cmd.fn) && (
-                              <option value={cmd.fn}>{cmd.fn} — função importada</option>
+                          <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>Comando</label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              aria-haspopup="listbox"
+                              aria-expanded={!!commandDropdownOpenById[cmd.id]}
+                              onClick={() => setCommandDropdownOpenById(prev => ({ ...prev, [cmd.id]: !prev[cmd.id] }))}
+                              className="flex h-[38px] w-full min-w-0 items-center justify-between gap-2 rounded-lg px-3 text-left text-[11px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#168BFF]"
+                              style={{ backgroundColor: "#10131c", color: "#F8FAFC", border: "1px solid #46536b" }}
+                            >
+                              <span className="min-w-0 truncate">{PRESET_COMMANDS.find(c => c.value === cmd.fn)?.value || cmd.fn} <span style={{ color: "#B7C4D8", fontWeight: 400 }}>— {PRESET_COMMANDS.find(c => c.value === cmd.fn)?.desc || "função importada"}</span></span>
+                              <ChevronDown size={14} className="shrink-0" style={{ color: "#DCE6F5" }} />
+                            </button>
+                            {commandDropdownOpenById[cmd.id] && (
+                              <div className="absolute left-0 right-0 top-full z-[80] mt-1 overflow-hidden rounded-xl shadow-2xl" style={{ backgroundColor: "#111722", border: "1px solid #46536b" }}>
+                                <div className="sticky top-0 p-2" style={{ backgroundColor: "#111722", borderBottom: "1px solid #303b4d" }}>
+                                  <input
+                                    autoFocus
+                                    type="search"
+                                    value={commandSearchById[cmd.id] || ""}
+                                    onChange={e => setCommandSearchById(prev => ({ ...prev, [cmd.id]: e.target.value }))}
+                                    onKeyDown={e => { if (e.key === "Escape") setCommandDropdownOpenById(prev => ({ ...prev, [cmd.id]: false })); }}
+                                    placeholder="Buscar comando pelo nome..."
+                                    aria-label="Buscar comando"
+                                    className="h-9 w-full rounded-lg px-3 text-xs outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500"
+                                    style={{ backgroundColor: "#080D16", color: "#FFFFFF", border: "1px solid #53627A" }}
+                                  />
+                                </div>
+                                <div role="listbox" aria-label="Comandos vMix" className="max-h-64 overflow-y-auto p-1">
+                                  {!PRESET_COMMANDS.some(c => c.value === cmd.fn) && (
+                                    <button type="button" role="option" aria-selected="true"
+                                      onClick={() => { updateCommand(cmd.id, { fn: cmd.fn, input: undefined, value: undefined, extraKey: undefined, extraValue: undefined }); setCommandDropdownOpenById(prev => ({ ...prev, [cmd.id]: false })); }}
+                                      className="mb-1 w-full rounded-md px-3 py-2 text-left text-[11px] hover:bg-blue-600/30"
+                                      style={{ color: "#FFFFFF", backgroundColor: "#202B3B" }}>{cmd.fn} — função importada</button>
+                                  )}
+                                  {CATEGORIES.map(cat => {
+                                    const query = (commandSearchById[cmd.id] || "").trim().toLocaleLowerCase("pt-BR");
+                                    const matching = PRESET_COMMANDS.filter(c => c.category === cat && `${c.value} ${c.label} ${c.desc} ${c.category}`.toLocaleLowerCase("pt-BR").includes(query));
+                                    if (!matching.length) return null;
+                                    return <div key={cat} className="mb-1">
+                                      <div className="sticky top-0 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: "#B9C9E0", backgroundColor: "#202B3B" }}>{cat}</div>
+                                      {matching.map(c => (
+                                        <button key={c.value} type="button" role="option" aria-selected={cmd.fn === c.value}
+                                          onClick={() => { updateCommand(cmd.id, { fn: c.value, input: undefined, value: undefined, extraKey: undefined, extraValue: undefined }); setCommandDropdownOpenById(prev => ({ ...prev, [cmd.id]: false })); setCommandSearchById(prev => ({ ...prev, [cmd.id]: "" })); }}
+                                          className="flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left transition-colors hover:bg-blue-600/30"
+                                          style={{ color: cmd.fn === c.value ? "#FFFFFF" : "#E2E8F0", backgroundColor: cmd.fn === c.value ? "#174A8B" : "transparent" }}>
+                                          <span className="text-[11px] font-semibold">{c.value}</span>
+                                          <span className="text-[10px]" style={{ color: "#B8C5D8" }}>{c.desc}</span>
+                                        </button>
+                                      ))}
+                                    </div>;
+                                  })}
+                                  {PRESET_COMMANDS.filter(c => `${c.value} ${c.label} ${c.desc} ${c.category}`.toLocaleLowerCase("pt-BR").includes((commandSearchById[cmd.id] || "").trim().toLocaleLowerCase("pt-BR"))).length === 0 && (
+                                    <p className="px-3 py-5 text-center text-xs" style={{ color: "#D0D9E8" }}>Nenhum comando encontrado.</p>
+                                  )}
+                                </div>
+                              </div>
                             )}
-                            {CATEGORIES.map(cat => (
-                              <optgroup key={cat} label={cat}>
-                                {PRESET_COMMANDS.filter(c => c.category === cat).map(c => (
-                                  <option key={c.value} value={c.value}>{c.value} — {c.desc}</option>
-                                ))}
-                              </optgroup>
-                            ))}
-                          </select>
+                          </div>
                         </div>
 
                         {hasInput && (
                           <div className="flex flex-col gap-1">
-                            <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Input</label>
+                            <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>Input</label>
                             <select
                               value={cmd.input || ""}
                               onChange={e => updateCommand(cmd.id, { input: e.target.value })}
