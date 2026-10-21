@@ -1843,6 +1843,12 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
           const progMap = new Map((progs || []).map((p: any) => [p.id, p]));
 
           for (const preset of presets) {
+            // No estúdio PODCAST, os presets não podem ser disparados pelo horário fixo
+            // da grade. A Agenda é a única fonte de verdade: o efeito central executa
+            // o preset somente quando há evento GRAVAÇÃO ativo para esse programa.
+            // Eventos AO VIVO são tratados exclusivamente pelos botões LIVE personalizados.
+            if (normStudio(studioName).includes("podcast")) continue;
+
             const prog = progMap.get(preset.programa_id);
             if (!prog) continue;
 
