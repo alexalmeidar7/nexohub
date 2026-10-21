@@ -425,16 +425,14 @@ Deno.serve(async (req) => {
         .eq("ativo", true),
       supabase
         .from("roteiros")
-        .select("tickertitulos")
+        .select("id, titulo, tickertitulos, updated_at")
         .eq("user_id", dataOwnerId)
         .ilike("estudio", "%fm%")
         .in("tipo_programa", ["Jornalístico", "express"])
-
         .not("tickertitulos", "is", null)
         .neq("tickertitulos", "")
         .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(50),
       supabase
         .from("user_settings")
         .select("cenario_config, weather_lat, weather_lon, weather_city, dashboard_items, last_manual_curiosity_id")
@@ -718,7 +716,15 @@ Deno.serve(async (req) => {
         const rssTitles = await fetchRssTitles(broadcastConfig.tickerRssUrl.trim());
         if (rssTitles.length > 0) titulos = rssTitles.join("  •  ");
       }
-      if (!titulos && broadcastConfig.tickerNews) titulos = (roteiroRes.data?.tickertitulos || "").trim();
+      if (!titulos && broadcastConfig.tickerNews) {
+        // Respeita a fonte escolhida na tela Broadcast. Sem seleção explícita,
+        // usa o roteiro jornalístico mais recentemente atualizado.
+        const roteirosComTicker = Array.isArray(roteiroRes.data) ? roteiroRes.data : [];
+        const roteiroSelecionado = broadcastConfig.tickerNewsRoteiroId
+          ? roteirosComTicker.find((roteiro: any) => String(roteiro.id) === String(broadcastConfig.tickerNewsRoteiroId))
+          : roteirosComTicker[0];
+        titulos = String(roteiroSelecionado?.tickertitulos || "").trim();
+      }
       if (titulos) tickerParts.push(titulos);
     }
     if (broadcastConfig.tickerWeather && settingsRes.data?.weather_lat && settingsRes.data?.weather_lon) {
