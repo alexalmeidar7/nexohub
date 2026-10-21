@@ -798,7 +798,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
             <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#eee" }}>
               {buttonId ? "Editar Botão" : "Novo Botão Personalizado"}
             </h2>
-            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#666" }}>
+            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff08", color: "#B8C5D8" }}>
               {commands.length} ação(ões)
             </span>
           </div>
@@ -811,7 +811,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="animate-spin" size={20} style={{ color: "#666" }} />
+              <Loader2 className="animate-spin" size={20} style={{ color: "#B8C5D8" }} />
             </div>
           ) : (
             <>
@@ -1074,7 +1074,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                     className="h-[34px] w-full min-w-0 box-border text-xs px-2.5 py-2 rounded-lg outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
                     style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                   />
-                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional: dia único</span>
+                  <span className="text-[8px]" style={{ color: "#91A0B5" }}>Opcional: dia único</span>
                 </div>
 
                 {/* Horário */}
@@ -1089,7 +1089,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                     className="h-[34px] w-full min-w-0 box-border text-xs px-2.5 py-2 rounded-lg outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
                     style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
                   />
-                  <span className="text-[8px]" style={{ color: "#555" }}>Opcional</span>
+                  <span className="text-[8px]" style={{ color: "#91A0B5" }}>Opcional</span>
                 </div>
 
                 {/* Dias da semana */}
@@ -1135,7 +1135,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Ações do Botão</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>Ações do Botão</span>
                   <div className="flex-1 h-px" style={{ backgroundColor: "#ffffff08" }} />
                 </div>
               </div>
@@ -1146,7 +1146,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   {commands.length > 0 && (
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Código Atual</label>
+                        <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>Código Atual</label>
                         <button
                           onClick={() => { navigator.clipboard.writeText(generateScript()); toast({ title: "Copiado!" }); }}
                           className="flex items-center gap-1 text-[8px] font-bold px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors"
@@ -1159,7 +1159,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                     </div>
                   )}
                   <div className="flex flex-col gap-1">
-                    <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>Colar Código</label>
+                    <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>Colar Código</label>
                     <textarea
                       value={pasteValue}
                       onChange={e => setPasteValue(e.target.value)}
@@ -1183,8 +1183,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
               {/* Commands list */}
               {commands.length === 0 ? (
                 <div className="text-center py-6">
-                  <p className="text-xs mb-1" style={{ color: "#666" }}>Nenhuma ação configurada.</p>
-                  <p className="text-[10px]" style={{ color: "#555" }}>Clique em "Adicionar Ação" para programar este botão.</p>
+                  <p className="text-xs mb-1" style={{ color: "#B8C5D8" }}>Nenhuma ação configurada.</p>
+                  <p className="text-[10px]" style={{ color: "#91A0B5" }}>Clique em "Adicionar Ação" para programar este botão.</p>
                 </div>
               ) : (
                 commands.map((cmd, idx) => {
@@ -1199,13 +1199,13 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   const cmdEnabled = cmd.enabled !== false;
 
                   return (
-                    <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#222230", border: "1px solid #2a2a38", opacity: cmdEnabled ? 1 : 0.45 }}>
+                    <div key={cmd.id} className="rounded-lg transition-opacity" style={{ backgroundColor: "#222230", border: "1px solid #2a2a38", opacity: cmdEnabled ? 1 : 0.45 }}>
                       <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#ffffff04", borderBottom: "1px solid #ffffff06" }}>
                         <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#dc262630" : "#ffffff08", color: idx === 0 ? "#dc2626" : "#888" }}>
                           #{idx}
                         </span>
                         <div className="flex items-center gap-1 flex-1 min-w-0">
-                          <GripVertical size={10} style={{ color: "#444" }} />
+                          <GripVertical size={10} style={{ color: "#91A0B5" }} />
                           <span className="text-[10px] font-bold truncate" style={{ color: "#ccc" }}>{formatCommandPreview(cmd, inputs, inputMapping)}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1222,7 +1222,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                             checked={cmdEnabled}
                             onCheckedChange={v => updateCommand(cmd.id, { enabled: v })}
                             aria-label={cmdEnabled ? "Desabilitar comando" : "Habilitar comando"}
-                            className="scale-75"
+                            className="h-5 w-9 data-[state=checked]:bg-[#0756C9] data-[state=unchecked]:bg-[#374151]"
                           />
                         </div>
                       </div>
@@ -1244,7 +1244,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                               <ChevronDown size={14} className="shrink-0" style={{ color: "#DCE6F5" }} />
                             </button>
                             {commandDropdownOpenById[cmd.id] && (
-                              <div className="absolute left-0 right-0 top-full z-[80] mt-1 overflow-hidden rounded-xl shadow-2xl" style={{ backgroundColor: "#111722", border: "1px solid #46536b" }}>
+                              <div className="relative z-[80] mt-2 w-full overflow-hidden rounded-xl shadow-xl" style={{ backgroundColor: "#111722", border: "1px solid #46536b" }}>
                                 <div className="sticky top-0 p-2" style={{ backgroundColor: "#111722", borderBottom: "1px solid #303b4d" }}>
                                   <input
                                     autoFocus
@@ -1315,7 +1315,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
 
                         {hasValue && (
                           <div className="flex flex-col gap-1">
-                            <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>
+                            <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>
                               {cmd.fn === "SelectIndex" ? "Index" : cmd.fn === "Fade" ? "Duração (ms)" : cmd.fn === "SetVolume" ? "Volume (0-100)" : isStreamingFn ? "Streaming" : isMultiViewOverlayFn ? "Index (1-10)" : hasExtra ? extraLabels.keyLabel : "Value"}
                             </label>
                             {isStreamingFn ? (
@@ -1355,7 +1355,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
 
                         {hasExtra && (
                           <div className="flex flex-col gap-1 sm:col-span-2">
-                            <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#666" }}>{extraLabels.valueLabel}</label>
+                            <label className="text-[8px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>{extraLabels.valueLabel}</label>
                             <input
                               type="text"
                               value={cmd.extraValue || ""}
@@ -1397,13 +1397,16 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                 Testar
               </button>
             )}
-            <Button variant="save"
+            <button
+              type="button"
               onClick={save}
               disabled={saving}
+              className="inline-flex h-9 min-w-[92px] items-center justify-center gap-2 rounded-lg border px-4 text-[11px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: "#0756C9", color: "#FFFFFF", borderColor: "#2878E8", boxShadow: "none" }}
             >
               {saving ? <Loader2 className="animate-spin" size={12} /> : null}
               Salvar
-            </Button>
+            </button>
             <button
               onClick={onClose}
               className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
