@@ -1887,9 +1887,15 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
         if (buttons) {
           for (const btn of buttons) {
-            // StartStreaming do PODCAST nunca usa o agendador genérico: ele depende
-            // exclusivamente do evento AO VIVO vinculado ao programa na Agenda.
-            if (normStudio(btn.estudio).includes("podcast") && hasStartStreamingCommand(btn)) continue;
+            // O agendador genérico só pode executar botões do estúdio atual.
+            if (!matchesStudio(btn.estudio, studioName)) continue;
+            // No PODCAST, botões LIVE são acionados exclusivamente pela Agenda,
+            // independentemente de usarem StartStreaming ou outro comando de automação LIVE.
+            if (
+              normStudio(studioName).includes("podcast") &&
+              normStudio(btn.estudio).includes("podcast") &&
+              (hasStartStreamingCommand(btn) || isLiveAutomationButton(btn))
+            ) continue;
             if (!btn.horario || !btn.dias_semana || (btn.dias_semana as string[]).length === 0) continue;
             const parts = btn.horario.split(":");
             const matchH = parts[0]?.padStart(2, "0");
