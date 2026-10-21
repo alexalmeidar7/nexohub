@@ -3341,13 +3341,24 @@ function SwitcherUI({
 
   useEffect(() => {
     let disposed = false;
+    // A última conta que publicou uma faixa válida tem prioridade sobre caches
+    // antigos de contas vinculadas (ex.: usuário de rádio + conta principal).
+    let preferredMusicUserId: string | null = null;
     const applyTrack = (track: any, displayArt?: string) => {
       if (disposed || !track || !(track.titulo || track.artista || track.capa || displayArt)) return;
-      setLiveTrackData({
-        titulo: track.titulo || "",
-        artista: track.artista || "",
-        capa: track.capa || displayArt || "",
-        duracao: track.duracao,
+      setLiveTrackData((previous) => {
+        const next = {
+          titulo: track.titulo || "",
+          artista: track.artista || "",
+          capa: track.capa || displayArt || "",
+          duracao: track.duracao,
+        };
+        return previous?.titulo === next.titulo &&
+          previous?.artista === next.artista &&
+          previous?.capa === next.capa &&
+          Number(previous?.duracao || 0) === Number(next.duracao || 0)
+          ? previous
+          : next;
       });
     };
     const hasTrackData = (track: any) => !!(track && (track.titulo || track.artista || track.capa));
@@ -3357,9 +3368,12 @@ function SwitcherUI({
       (a?.capa || "") === (b?.capa || "") &&
       Number(a?.duracao || 0) === Number(b?.duracao || 0);
     const readLatestMusic = () => {
-      // Fonte principal: armazenamento compartilhado escrito pela tela Música no Ar.
-      // Ler novamente a cada evento evita manter __lastPlayerMusicState obsoleto em primeiro plano.
-      const storedTrack = musicDataUserIds
+      // Prioriza a conta que efetivamente publicou a faixa mais recente; só
+      // depois consulta as contas relacionadas, evitando escolher cache obsoleto.
+      const orderedIds = preferredMusicUserId && musicDataUserIds.includes(preferredMusicUserId)
+        ? [preferredMusicUserId, ...musicDataUserIds.filter((id) => id !== preferredMusicUserId)]
+        : musicDataUserIds;
+      const storedTrack = orderedIds
         .map((id) => readMusicData(id))
         .find((track) => hasTrackData(track));
       if (storedTrack) {
@@ -3371,7 +3385,6 @@ function SwitcherUI({
         });
         return;
       }
-      // Fallback somente quando ainda não há faixa salva; nunca sobrescreve dados persistidos atuais.
       const playerState = (window as any).__lastPlayerMusicState;
       const playerTrack = playerState?.currentMusic;
       if (hasTrackData(playerTrack)) {
@@ -3381,14 +3394,20 @@ function SwitcherUI({
     };
     const onPlayerMusic = (event: Event) => {
       const detail = (event as CustomEvent).detail;
-      // O evento pode chegar antes da gravação no storage; reler em seguida no polling/evento de storage.
       if (detail?.userId && !musicDataUserIds.includes(detail.userId)) return;
-      readLatestMusic();
+      if (detail?.userId) preferredMusicUserId = detail.userId;
+      // Usa o payload do evento quando disponível, sem depender do momento em
+      // que localStorage termina de atualizar.
+      const track = detail?.data?.music || detail?.data || detail?.currentMusic;
+      if (hasTrackData(track)) applyTrack(track, detail?.displayArt);
+      else readLatestMusic();
     };
     const onStoredMusic = (event: Event) => {
       const detail = (event as CustomEvent).detail;
       if (detail?.userId && !musicDataUserIds.includes(detail.userId)) return;
-      readLatestMusic();
+      if (detail?.userId) preferredMusicUserId = detail.userId;
+      if (hasTrackData(detail?.data)) applyTrack(detail.data);
+      else readLatestMusic();
     };
     readLatestMusic();
     window.addEventListener("player:music", onPlayerMusic as EventListener);

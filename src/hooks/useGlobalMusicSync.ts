@@ -323,10 +323,12 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
-        // Debounce rapid writes to localStorage/dashboard_items when the same
-        // key was just written (<5s ago), BUT still fall through to
-        // recordToHistory below so musicas_tocadas gets the new track.
-        const skipWrite = !prevIsBreak && !!existingStartStr && !!prev && prevAgeMs < 5000;
+        // Nunca pule a persistência da faixa atual: o XML do Broadcast lê
+        // dashboard_items no servidor. Se a gravação for ignorada aqui, a faixa
+        // seguinte pode ser igual ao localStorage e não haverá nova tentativa,
+        // deixando <musica_atual> congelado até outra troca de música.
+        // O histórico continua protegido pelo próprio upsert/debounce abaixo.
+        const skipWrite = false;
         if (!skipWrite) {
           let songStartTime = parseHorarioToTimestamp(data.horario);
           if (!songStartTime || Math.abs(Date.now() - songStartTime) > 12 * 3600 * 1000) {
