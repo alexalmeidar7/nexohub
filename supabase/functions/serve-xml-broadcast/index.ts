@@ -1243,6 +1243,22 @@ Deno.serve(async (req) => {
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
     lines.push("  <dados>");
+
+    // O feed tipo=musica é intencionalmente enxuto: não deve expor o
+    // conjunto completo de campos do Broadcast, apenas os dados de música.
+    if (url.searchParams.get("tipo") === "musica") {
+      lines.push(`    <musica_atual>${esc(musicaAtual)}</musica_atual>`);
+      lines.push(`    <artista_atual>${esc(artistaAtual)}</artista_atual>`);
+      lines.push(`    <musica_capa>${esc(ensurePngExtension(musicaCapa))}</musica_capa>`);
+      lines.push(`    <deezer_artist_img>${esc(ensurePngExtension(deezerArtistImg))}</deezer_artist_img>`);
+      lines.push(`    <info_music>${esc(curiosidade)}</info_music>`);
+      lines.push("  </dados>");
+      lines.push("</items>");
+      return new Response(lines.join("\\n"), {
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" },
+      });
+    }
+
     lines.push(`    <empresa_logo>${esc(ensurePngExtension(empresaLogo))}</empresa_logo>`);
     lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
     lines.push(`    <programa_logo>${esc(ensurePngExtension(programaLogo))}</programa_logo>`);
