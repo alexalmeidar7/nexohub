@@ -3580,8 +3580,8 @@ function SwitcherUI({
         estudio: studioName || null,
         nome: audioMonitorName.trim(),
         category: "AUDIO",
-        audio_input: audioMonitorInput,
-        commands: [{ fn: "AudioMonitor", input: audioMonitorInput, _buttonCategory: "AUDIO" }],
+        // Keep the selected input in the JSON command: some deployed schemas do not have audio_input.
+        commands: [{ fn: "AudioMonitor", input: audioMonitorInput, audioMonitorInput, _buttonCategory: "AUDIO" }],
       });
       if (error) throw error;
       await loadCustomButtons();
@@ -3626,8 +3626,8 @@ function SwitcherUI({
         .update({
           nome: `Áudio · ${selectedInput?.title || `Input ${editingAudioMonitorInput}`}`,
           category: "AUDIO",
-          commands: updatedCommands.map((command: any, index: number) => index === 0 ? { ...command, _buttonCategory: "AUDIO" } : command),
-          audio_input: editingAudioMonitorInput,
+          // Persist monitor input in commands JSON for compatibility with schemas without audio_input.
+          commands: updatedCommands.map((command: any, index: number) => index === 0 ? { ...command, input: editingAudioMonitorInput, audioMonitorInput: editingAudioMonitorInput, _buttonCategory: "AUDIO" } : command),
         })
         .eq("id", editingAudioMonitor.id);
       if (error) throw error;
