@@ -139,7 +139,7 @@ export default function FloatingNdiPreview({
   if (!visible) {
     return (
       <button type="button" onClick={() => setVisible(true)} className="fixed bottom-16 z-[60] flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-white shadow-xl" style={{ right: rightOffset + "px", background: "#17243d", borderColor: "#315078" }}>
-        <MonitorPlay size={15} /> Preview NDI
+        <MonitorPlay size={15} /> Preview
       </button>
     );
   }
