@@ -410,7 +410,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     forceRole = localStorage.getItem("nexohub_force_role");
   } catch {}
 
-  const isAlexAdmin = user?.email === "alex@nexobrasil.net" || (user?.email ? user.email.toLowerCase().includes("alex") : false);
+  const isAlexAdmin = user?.email?.toLowerCase() === "alex@nexobrasil.net";
   const isClientUser = !!user?.email && !isAlexAdmin;
   const isAdmin = forceRole === "admin" || (
     forceRole !== "user" && !isClientUser && (

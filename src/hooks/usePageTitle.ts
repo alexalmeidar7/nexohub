@@ -75,8 +75,7 @@ export function usePageTitle(pageName: string) {
     const isAdmin = forceRole === "admin" || (
       forceRole !== "user" && (
         isLocal ||
-        user?.email === "alex@nexobrasil.net" ||
-        (user?.email ? user.email.toLowerCase().includes("alex") : false)
+        user?.email?.toLowerCase() === "alex@nexobrasil.net"
       )
     );
 

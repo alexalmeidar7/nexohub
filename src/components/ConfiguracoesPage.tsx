@@ -227,8 +227,7 @@ export default function ConfiguracoesPage({
     forceRole !== "user" && (
       role === "admin" ||
       isLocal ||
-      user?.email === "alex@nexobrasil.net" ||
-      (user?.email ? user.email.toLowerCase().includes("alex") : false)
+      user?.email?.toLowerCase() === "alex@nexobrasil.net"
     )
   );
   const isAdmin = isSuperAdmin ?? isEffectiveAdmin;

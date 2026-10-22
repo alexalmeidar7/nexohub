@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (forceRole === "user") return "user";
       } catch {}
 
-      if (email && (email.toLowerCase() === "alex@nexobrasil.net" || email.toLowerCase().includes("alex"))) {
+      if (email?.toLowerCase() === "alex@nexobrasil.net") {
         return "admin";
       }
 
