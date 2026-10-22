@@ -2993,6 +2993,116 @@ export type Database = {
           },
         ]
       }
+      vmix_bridge_devices: {
+        Row: {
+          created_at: string
+          device_name: string
+          id: string
+          last_seen_at: string | null
+          revoked: boolean
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_name?: string
+          id?: string
+          last_seen_at?: string | null
+          revoked?: boolean
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          id?: string
+          last_seen_at?: string | null
+          revoked?: boolean
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vmix_bridge_jobs: {
+        Row: {
+          body: Json | null
+          completed_at: string | null
+          created_at: string
+          device_id: string
+          id: string
+          method: string
+          path: string
+          result_body: string | null
+          result_status: number | null
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          body?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          device_id: string
+          id?: string
+          method?: string
+          path: string
+          result_body?: string | null
+          result_status?: number | null
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          body?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          device_id?: string
+          id?: string
+          method?: string
+          path?: string
+          result_body?: string | null
+          result_status?: number | null
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vmix_bridge_jobs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "vmix_bridge_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vmix_bridge_pairings: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vmix_button_interactions: {
         Row: {
           button_category: string | null
