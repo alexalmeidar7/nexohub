@@ -18,7 +18,10 @@ export default function FloatingNdiPreview({
   const [setupOpen, setSetupOpen] = useState(true);
   const [rightOffset, setRightOffset] = useState(16);
   const [devices, setDevices] = useState<VideoDevice[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState("");
+  const storageKey = "housemix:ndi-preview-device:v1";
+  const [selectedDevice, setSelectedDevice] = useState(() => {
+    try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
+  });
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,10 +46,18 @@ export default function FloatingNdiPreview({
         }));
       setDevices(videoDevices);
       const ndiDevice = videoDevices.find((device) => /ndi webcam input/i.test(device.label));
-      const nextSelected = selectedDevice && videoDevices.some((device) => device.deviceId === selectedDevice)
-        ? selectedDevice
-        : ndiDevice?.deviceId || videoDevices[0]?.deviceId || "";
+      const savedDevice = (() => {
+        try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
+      })();
+      const nextSelected = savedDevice && videoDevices.some((device) => device.deviceId === savedDevice)
+        ? savedDevice
+        : selectedDevice && videoDevices.some((device) => device.deviceId === selectedDevice)
+          ? selectedDevice
+          : ndiDevice?.deviceId || videoDevices[0]?.deviceId || "";
       setSelectedDevice(nextSelected);
+      if (nextSelected) {
+        try { window.localStorage.setItem(storageKey, nextSelected); } catch { /* storage may be disabled */ }
+      }
       if (!videoDevices.length) setError("Nenhuma câmera local foi encontrada. Instale e abra o NDI Webcam Input e selecione uma fonte NDI nele.");
     } catch (cause) {
       const name = cause instanceof DOMException ? cause.name : "";
@@ -115,21 +126,29 @@ export default function FloatingNdiPreview({
     };
   }, [selectedDevice]);
 
+  const handleDeviceChange = (deviceId: string) => {
+    setSelectedDevice(deviceId);
+    try {
+      if (deviceId) window.localStorage.setItem(storageKey, deviceId);
+      else window.localStorage.removeItem(storageKey);
+    } catch { /* storage may be disabled */ }
+  };
+
   const selectedLabel = devices.find((device) => device.deviceId === selectedDevice)?.label || "";
 
   if (!visible) {
     return (
       <button type="button" onClick={() => setVisible(true)} className="fixed bottom-16 z-[60] flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-white shadow-xl" style={{ right: rightOffset + "px", background: "#17243d", borderColor: "#315078" }}>
-        <MonitorPlay size={15} /> Preview NDI
+        <MonitorPlay size={15} /> Preview
       </button>
     );
   }
 
   return (
-    <aside className="fixed bottom-16 z-[60] overflow-hidden rounded-xl shadow-2xl" style={{ right: rightOffset + "px", width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))", background: "#111b2d", border: "1px solid #314766", boxShadow: "0 18px 50px #0008" }} aria-label="Preview NDI">
+    <aside className="fixed bottom-16 z-[60] overflow-hidden rounded-xl shadow-2xl" style={{ right: rightOffset + "px", width: expanded ? "min(640px, calc(100vw - 32px))" : "min(340px, calc(100vw - 32px))", background: "#111b2d", border: "1px solid #314766", boxShadow: "0 18px 50px #0008" }} aria-label="Preview">
       <header className="flex items-center gap-2 px-3 py-2" style={{ background: "#17243d", borderBottom: "1px solid #314766" }}>
         <span className="h-2 w-2 rounded-full" style={{ background: stream ? "#8bcf38" : "#64748b" }} />
-        <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-white">Preview NDI</span>
+        <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-white">Preview</span>
         <button type="button" onClick={() => void refreshDevices()} title="Atualizar dispositivos de vídeo" aria-label="Atualizar dispositivos de vídeo" className="rounded p-1 text-slate-300 hover:bg-white/10"><RefreshCw size={13} /></button>
         <button type="button" onClick={() => setSetupOpen((value) => !value)} title="Selecionar dispositivo" aria-label="Selecionar dispositivo" className={"rounded p-1 hover:bg-white/10 " + (setupOpen ? "text-white" : "text-slate-300")}><Settings size={13} /></button>
         <button type="button" onClick={() => setExpanded((value) => !value)} title={expanded ? "Reduzir preview" : "Expandir preview"} className="rounded p-1 text-slate-300 hover:bg-white/10">{expanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
@@ -138,7 +157,7 @@ export default function FloatingNdiPreview({
       <div className="p-2">
         {setupOpen && (
           <div className="mb-2 flex gap-1.5">
-            <select value={selectedDevice} onChange={(event) => setSelectedDevice(event.target.value)} className="h-8 min-w-0 flex-1 rounded-md border px-2 text-[10px] text-white outline-none" style={{ background: "#0c1525", borderColor: "#314766" }}>
+            <select value={selectedDevice} onChange={(event) => handleDeviceChange(event.target.value)} className="h-8 min-w-0 flex-1 rounded-md border px-2 text-[10px] text-white outline-none" style={{ background: "#0c1525", borderColor: "#314766" }}>
               <option value="">Selecione a câmera NDI…</option>
               {devices.map((device) => <option key={device.deviceId} value={device.deviceId}>{device.label}</option>)}
             </select>
