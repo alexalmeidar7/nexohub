@@ -2598,12 +2598,12 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         )}
 
         {/* Dock com Pills Flutuantes para Módulos Minimizados */}
-        {minimizedModules.length > 0 && (currentPage === "dashboard" || isWindowMode) && (
+        {minimizedModules.some(mod => mod !== currentPage) && (currentPage === "dashboard" || isWindowMode) && (
           <div 
             className={`fixed bottom-5 ${!isAdmin ? "left-1/2 -translate-x-1/2" : "left-[88px]"} z-[70] flex flex-wrap items-center justify-center gap-2.5 pointer-events-none p-1`}
             style={{ maxWidth: "calc(100vw - 120px)" }}
           >
-            {minimizedModules.map((mod, idx) => (
+            {minimizedModules.filter(mod => mod !== currentPage).map((mod, idx) => (
               <div 
                 key={mod}
                 className="animate-in slide-in-from-bottom-3 duration-200 pointer-events-auto"
