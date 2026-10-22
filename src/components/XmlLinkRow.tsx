@@ -226,41 +226,9 @@ export default function XmlLinkRow({
             {url}
           </div>
         )}
-        {supabaseUrl && (
-          <div
-            className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100 text-[10px] text-slate-400 font-mono"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="font-bold text-blue-600/70 uppercase tracking-wider text-[9px] shrink-0">
-              Supabase:
-            </span>
-            <span className="truncate flex-1 select-all hover:text-slate-600" title={supabaseUrl}>
-              {supabaseUrl}
-            </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(supabaseUrl);
-                toast.success(`URL Supabase copiada: ${displayName}`);
-              }}
-              title="Copiar URL do Supabase"
-              className="p-1 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0055ff] transition shrink-0"
-            >
-              <Copy size={11} />
-            </button>
-            <a
-              href={supabaseUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              title="Abrir feed do Supabase em nova aba"
-              className="p-1 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0055ff] transition shrink-0"
-            >
-              <ExternalLink size={11} />
-            </a>
-          </div>
-        )}
+        {/* Exibimos apenas a URL permanente do feed. A URL alternativa do
+            Supabase continua aceita por compatibilidade, mas não é mostrada
+            como um segundo link para não confundir os clientes. */}
       </div>
 
       {/* Ações à direita */}
