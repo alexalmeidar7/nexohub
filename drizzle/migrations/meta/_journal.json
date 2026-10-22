@@ -78,6 +78,13 @@
       "when": 1790872874791,
       "tag": "0010_programas_soft_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792697300545,
+      "tag": "0011_vmix_bridge_backend",
+      "breakpoints": true
     }
   ]
 }
