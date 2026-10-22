@@ -84,6 +84,13 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
         description: "Enquete interativa com respostas e percentuais",
       },
       {
+        label: "XML CENÁRIOS ESTÚDIO",
+        kicker: "XML",
+        url: `${effectiveSupabaseUrl}/functions/v1/serve-xml-cenarios-estudio?uid=${encodeURIComponent(resolvedUid)}`,
+        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-cenarios-estudio?uid=${encodeURIComponent(resolvedUid)}`,
+        description: "Cenários de estúdio, programa no ar e artes das TVs para integração com vMix",
+      },
+      {
         label: "XML QUIZ",
         kicker: "XML",
         url: liveUrl("serve-xml-quiz", `&slug=${encodeURIComponent(resolvedSlug)}`),
