@@ -3579,8 +3579,7 @@ function SwitcherUI({
         user_id: user.id,
         estudio: studioName || null,
         nome: audioMonitorName.trim(),
-        category: "AUDIO",
-        // Keep the selected input in the JSON command: some deployed schemas do not have audio_input.
+        // Store category and input in JSON for compatibility with databases without category/audio_input columns.
         commands: [{ fn: "AudioMonitor", input: audioMonitorInput, audioMonitorInput, _buttonCategory: "AUDIO" }],
       });
       if (error) throw error;
@@ -3625,8 +3624,7 @@ function SwitcherUI({
       const { error } = await (supabase.from("custom_vmix_buttons" as any) as any)
         .update({
           nome: `Áudio · ${selectedInput?.title || `Input ${editingAudioMonitorInput}`}`,
-          category: "AUDIO",
-          // Persist monitor input in commands JSON for compatibility with schemas without audio_input.
+          // Persist category and monitor input in commands JSON for compatibility with older schemas.
           commands: updatedCommands.map((command: any, index: number) => index === 0 ? { ...command, input: editingAudioMonitorInput, audioMonitorInput: editingAudioMonitorInput, _buttonCategory: "AUDIO" } : command),
         })
         .eq("id", editingAudioMonitor.id);
