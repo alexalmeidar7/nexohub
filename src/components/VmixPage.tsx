@@ -3579,9 +3579,8 @@ function SwitcherUI({
         user_id: user.id,
         estudio: studioName || null,
         nome: audioMonitorName.trim(),
-        category: "AUDIO",
-        audio_input: audioMonitorInput,
-        commands: [{ fn: "AudioMonitor", input: audioMonitorInput, _buttonCategory: "AUDIO" }],
+        // Store category and input in JSON for compatibility with databases without category/audio_input columns.
+        commands: [{ fn: "AudioMonitor", input: audioMonitorInput, audioMonitorInput, _buttonCategory: "AUDIO" }],
       });
       if (error) throw error;
       await loadCustomButtons();
@@ -3625,9 +3624,8 @@ function SwitcherUI({
       const { error } = await (supabase.from("custom_vmix_buttons" as any) as any)
         .update({
           nome: `Áudio · ${selectedInput?.title || `Input ${editingAudioMonitorInput}`}`,
-          category: "AUDIO",
-          commands: updatedCommands.map((command: any, index: number) => index === 0 ? { ...command, _buttonCategory: "AUDIO" } : command),
-          audio_input: editingAudioMonitorInput,
+          // Persist category and monitor input in commands JSON for compatibility with older schemas.
+          commands: updatedCommands.map((command: any, index: number) => index === 0 ? { ...command, input: editingAudioMonitorInput, audioMonitorInput: editingAudioMonitorInput, _buttonCategory: "AUDIO" } : command),
         })
         .eq("id", editingAudioMonitor.id);
       if (error) throw error;
