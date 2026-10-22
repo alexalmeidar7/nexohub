@@ -95,7 +95,7 @@ const inputStyle: React.CSSProperties = {
   padding: "0 14px",
   fontFamily: FONT_FAMILY,
   fontSize: 13,
-  color: "#0f172a",
+  color: "#fff",
   outline: "none",
   transition: "all 0.2s ease",
 };
@@ -296,16 +296,16 @@ export default function LoginScreen() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #07152E 0%, #061126 52%, #020817 100%)" }}
+      style={{ backgroundColor: "#080d18", backgroundImage: "radial-gradient(ellipse at 15% 0%, rgba(0,101,249,0.22), transparent 42%), radial-gradient(ellipse at 100% 100%, rgba(0,66,163,0.18), transparent 45%)" }}
     >
-      <div className="relative w-full max-w-[330px] z-10">
+      <div className="relative w-full max-w-[360px] z-10">
         {/* Main Login Card - Super Admin / Cadastro de Cliente Visual Style */}
         <div
           className="relative z-10 w-full rounded-2xl p-6 sm:p-6 shadow-[0_24px_70px_rgba(0,0,0,0.48)] animate-fade-in"
           style={{ fontFamily: FONT_FAMILY, background: "#080F20", border: "1px solid #172B4B" }}
         >
           {/* Cabeçalho alinhado ao login do vMix Control */}
-          <div className="flex flex-col items-center justify-center mb-6 text-center">
+          <div className="flex flex-col items-center gap-3 mb-1 text-center">
             <div className="text-[27px] font-extrabold leading-none tracking-[-1.6px] text-white">nexo <span className="font-light tracking-[-1px] text-slate-300">HOUSE MIX</span></div>
             <p className="mt-3 text-[8px] font-extrabold uppercase tracking-[1.6px]" style={{ color: "#9AAAC4" }}>Faça login para acessar o controle</p>
           </div>
@@ -369,7 +369,7 @@ export default function LoginScreen() {
             {/* Mantenha-me conectado */}
             <label
               htmlFor="keep-connected"
-              className="flex items-center gap-3 cursor-pointer select-none px-3 py-2 rounded-lg transition-colors" style={{ background: "#101B30", border: "1px solid #233754" }}
+              className="flex items-center gap-3 cursor-pointer select-none px-3 py-2 rounded-xl transition-colors" style={{ background: "#101B30", border: "1px solid #233754" }}
             >
               <input
                 id="keep-connected"
