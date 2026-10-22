@@ -60,6 +60,19 @@ verify_jwt = false
 [functions.vmix-proxy]
 verify_jwt = false
 
+# Bridge endpoints validate their own auth (user JWT or hashed device token).
+[functions.vmix-bridge-pairing]
+verify_jwt = false
+
+[functions.vmix-bridge-connect]
+verify_jwt = false
+
+[functions.vmix-bridge-poll]
+verify_jwt = false
+
+[functions.vmix-bridge-result]
+verify_jwt = false
+
 [functions.fetch-weather]
 verify_jwt = false
 
