@@ -1,0 +1,70 @@
+name: Deploy NexoHub vMix Bridge backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_project_ref:
+        description: "Digite exatamente o Project Ref do backend ativo para evitar publicar no projeto errado"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate target project
+        env:
+          INPUT_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          SECRET_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SECRET_PROJECT_REF}" ]; then
+            echo "::error::Configure o segredo SUPABASE_PROJECT_REF com o ref do backend ativo."
+            exit 1
+          fi
+          if [ "${INPUT_PROJECT_REF}" != "${SECRET_PROJECT_REF}" ]; then
+            echo "::error::O ref digitado não corresponde ao segredo SUPABASE_PROJECT_REF. Nada foi publicado."
+            exit 1
+          fi
+          if [ -z "${DATABASE_URL}" ] || [[ "${DATABASE_URL}" != *"${SECRET_PROJECT_REF}"* ]]; then
+            echo "::error::SUPABASE_DB_URL ausente ou não contém o ref do projeto esperado. Nada foi alterado."
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "::error::Configure o segredo SUPABASE_ACCESS_TOKEN."
+            exit 1
+          fi
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Apply only the vMix Bridge schema migration
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -f supabase/migrations/20261022185000_vmix_bridge_backend.sql
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy Bridge Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          for fn in vmix-bridge-pairing vmix-bridge-connect vmix-bridge-poll vmix-bridge-result; do
+            supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --use-api
+          done
