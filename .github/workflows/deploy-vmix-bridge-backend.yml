@@ -65,6 +65,6 @@ jobs:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          for fn in vmix-bridge-pairing vmix-bridge-connect vmix-bridge-poll vmix-bridge-result; do
+          for fn in vmix-bridge-pairing vmix-bridge-connect vmix-bridge-poll vmix-bridge-result vmix-bridge-status; do
             supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --use-api
           done
