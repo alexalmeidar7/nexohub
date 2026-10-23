@@ -234,13 +234,24 @@ internal sealed class BridgeForm : Form
 
             using var downloadResponse = await http.GetAsync(download, HttpCompletionOption.ResponseHeadersRead);
             if ((int)downloadResponse.StatusCode != 200) return false;
-            if (downloadResponse.Content.Headers.ContentLength is > 150_000_000) return false;
+            const long maxUpdateBytes = 150_000_000;
+            if (downloadResponse.Content.Headers.ContentLength is > maxUpdateBytes) return false;
 
             tempExe = Path.Combine(Path.GetTempPath(), $"NexoHubBridge-{Guid.NewGuid():N}.exe");
             await using (var source = await downloadResponse.Content.ReadAsStreamAsync())
             await using (var destination = new FileStream(tempExe, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true))
             {
-                await source.CopyToAsync(destination);
+                var buffer = new byte[81920];
+                long totalBytes = 0;
+                while (true)
+                {
+                    var bytesRead = await source.ReadAsync(buffer.AsMemory(0, buffer.Length));
+                    if (bytesRead == 0) break;
+                    totalBytes += bytesRead;
+                    if (totalBytes > maxUpdateBytes)
+                        throw new InvalidDataException("O arquivo de atualização excede o limite permitido.");
+                    await destination.WriteAsync(buffer.AsMemory(0, bytesRead));
+                }
                 await destination.FlushAsync();
             }
 
