@@ -5049,8 +5049,8 @@ function SwitcherUI({
                 </div>}
 
                 {/* Right: Botões de Efeitos */}
-                <div id="custom-buttons-panel" className="rounded-xl overflow-hidden w-full" style={{ backgroundColor: isAutomationRoute ? "transparent" : "#1a1a1f", border: isAutomationRoute ? "1px solid transparent" : "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
-                  <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                <div id="custom-buttons-panel" className="relative z-20 rounded-xl overflow-visible w-full" style={{ backgroundColor: isAutomationRoute ? "transparent" : "#1a1a1f", border: isAutomationRoute ? "1px solid transparent" : "1px solid #ffffff08", maxWidth: buttonPreviewWidth ? `${buttonPreviewWidth}px` : undefined }}>
+                  <div className="relative z-30 flex items-center justify-between rounded-t-xl px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <div className="flex shrink-0 items-center gap-2">
                         <Wand2 size={14} style={{ color: "#C6F03C" }} />
