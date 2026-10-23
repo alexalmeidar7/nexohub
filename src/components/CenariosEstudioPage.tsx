@@ -205,7 +205,6 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       capa: p.capa || "",
       thumb: p.thumb || "",
     }));
-    const ownProgramIds = new Set(progs.map((p) => p.id));
     const ownGroupRows = ((gruposRes.data as any[]) || []).filter((g) => g.user_id === ownerId);
     const ownGroupIds = new Set(ownGroupRows.map((g) => g.id));
     const tvsByGrupo: Record<string, TV[]> = {};
