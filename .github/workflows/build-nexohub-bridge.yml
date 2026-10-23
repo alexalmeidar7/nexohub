@@ -38,7 +38,7 @@ jobs:
           $bitmap.Dispose()
           $source.Dispose()
       - name: Publish standalone Windows executable
-        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:ApplicationIcon=tools/NexoHubBridge/bridge.ico -o artifacts/NexoHubBridge
+        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:ApplicationIcon=bridge.ico -o artifacts/NexoHubBridge
       - name: Add configuration template and guide
         shell: pwsh
         run: |
