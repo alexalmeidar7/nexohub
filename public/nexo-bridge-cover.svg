@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0645b5"/><stop offset="1" stop-color="#0645ff"/></linearGradient><linearGradient id="mark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#063c9d"/><stop offset="1" stop-color="#0754d8"/></linearGradient></defs>
+<rect width="512" height="512" rx="72" fill="url(#bg)"/>
+<rect x="112" y="36" width="288" height="250" rx="62" fill="url(#mark)"/>
+<path d="M256 82v158M205 130l-48 31 48 31m-48-31h82m76-31 48 31-48 31m48-31h-82" fill="none" stroke="#fff" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="256" y="366" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="91" font-weight="700" letter-spacing="-8">nxo</text>
+<text x="256" y="424" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="47" font-weight="300" letter-spacing="-1">BRIDGE</text>
+</svg>
