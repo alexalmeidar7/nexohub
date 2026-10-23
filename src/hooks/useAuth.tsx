@@ -70,12 +70,6 @@ const AuthContext = createContext<AuthContextType>({
 
 });
 
-const isLocalhostEnvironment = () => {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  return host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.");
-};
-
 const getInitialBackupSession = (): Session | null => {
   try {
     if (typeof window === "undefined") return null;
@@ -112,15 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(() => initialBackup?.user || null);
   const [session, setSession] = useState<Session | null>(() => initialBackup || null);
   const [loading, setLoading] = useState(() => !initialBackup);
-  const [role, setRole] = useState<AppRole | null>(() => {
-    try {
-      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
-      const metaRole = initialBackup?.user?.user_metadata?.role as AppRole;
-      if (metaRole === "admin" || metaRole === "user") return metaRole;
-    } catch {}
-    if (isLocalhostEnvironment() && !(typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true")) return "admin";
-    return null;
-  });
+  const [role, setRole] = useState<AppRole | null>(null);
   const prevUserIdRef = useRef<string | null>(initialBackup?.user?.id || null);
   const manualSignOutRef = useRef(false);
   const loadingRef = useRef(!initialBackup);
@@ -186,13 +172,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }, 5000);
 
-    const fetchRole = async (userId: string, email?: string): Promise<AppRole> => {
+    const fetchRole = async (userId: string): Promise<AppRole> => {
       if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
         return "user";
-      }
-
-      if (email?.toLowerCase() === "alex@nexobrasil.net") {
-        return "admin";
       }
 
       try {
@@ -203,11 +185,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!error && data && data.length > 0) {
           return data.some((r: any) => r.role === "admin") ? "admin" : "user";
         }
-      } catch { /* silent */ }
+      } catch { /* fail closed */ }
 
-      if (isLocalhostEnvironment()) {
-        return "admin";
-      }
+      // Missing/failed role lookup must never grant admin privileges.
       return "user";
     };
 
@@ -254,8 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const isSim = isSimulatedAccessToken(restored.access_token);
 
           // Determine role
-          const roleFromMeta = (restored.user.user_metadata?.role as AppRole) || null;
-          const roleResult = roleFromMeta || (await fetchRole(restored.user.id, restored.user.email));
+          const roleResult = await fetchRole(restored.user.id);
           if (mounted) setRole(roleResult);
           finishLoading();
 
@@ -312,10 +291,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Race role fetch against a 5s timeout so we never hang
-      const roleFromMeta = (newUser.user_metadata?.role as AppRole) || null;
-      const roleResult = roleFromMeta || await Promise.race([
-        fetchRole(newUser.id, newUser.email),
-        new Promise<AppRole>((resolve) => addTimer(() => resolve(isLocalhostEnvironment() ? "admin" : "user"), 5000)),
+      const roleResult = await Promise.race([
+        fetchRole(newUser.id),
+        new Promise<AppRole>((resolve) => addTimer(() => resolve("user"), 5000)),
       ]);
 
       if (!mounted) return;
