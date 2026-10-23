@@ -15,23 +15,45 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
   try {
-    const input = await req.json();
+    let input: { pairingCode?: string; deviceName?: string };
+    try { input = await req.json(); } catch { return new Response(JSON.stringify({ error: "Invalid request body" }), { status: 400, headers }); }
     const pairingCode = typeof input?.pairingCode === "string" ? input.pairingCode.trim().toUpperCase() : "";
-    const deviceName = typeof input?.deviceName === "string" ? input.deviceName.trim().slice(0, 100) : "vMix Studio";
-    if (!pairingCode || pairingCode.length < 16) return new Response(JSON.stringify({ error: "Invalid pairing code" }), { status: 400, headers });
+    const deviceName = typeof input?.deviceName === "string" ? input.deviceName.trim().slice(0, 120) : "vMix Studio";
+    if (!/^[A-F0-9]{36}$/.test(pairingCode)) return new Response(JSON.stringify({ error: "Invalid pairing code" }), { status: 400, headers });
 
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const codeHash = await hash(pairingCode);
-    const { data: pairing, error } = await admin.from("vmix_bridge_pairings").select("id,user_id,expires_at").eq("code_hash", codeHash).maybeSingle();
+    const url = Deno.env.get("SUPABASE_URL");
+    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !service) return new Response(JSON.stringify({ error: "Bridge backend is not configured" }), { status: 500, headers });
+    const admin = createClient(url, service, { auth: { persistSession: false } });
+    const now = new Date().toISOString();
+    const { data: pairing, error } = await admin.from("vmix_bridge_pairings")
+      .select("id,user_id,expires_at,used_at")
+      .eq("code_hash", await hash(pairingCode))
+      .is("used_at", null)
+      .gt("expires_at", now)
+      .maybeSingle();
     if (error) throw error;
-    if (!pairing || new Date(pairing.expires_at).getTime() < Date.now()) return new Response(JSON.stringify({ error: "Pairing code invalid or expired" }), { status: 401, headers });
+    if (!pairing) return new Response(JSON.stringify({ error: "Pairing code invalid, expired, or already used" }), { status: 401, headers });
+
+    // Conditional consumption prevents two concurrent requests from using the same code.
+    const { data: consumed, error: consumeError } = await admin.from("vmix_bridge_pairings")
+      .update({ used_at: now })
+      .eq("id", pairing.id)
+      .is("used_at", null)
+      .select("id")
+      .maybeSingle();
+    if (consumeError) throw consumeError;
+    if (!consumed) return new Response(JSON.stringify({ error: "Pairing code already used; generate a new code" }), { status: 409, headers });
 
     const token = randomToken();
     const { error: deviceError } = await admin.from("vmix_bridge_devices").insert({
-      user_id: pairing.user_id, name: deviceName || "vMix Studio", token_hash: await hash(token), last_seen_at: new Date().toISOString(),
+      user_id: pairing.user_id,
+      device_name: deviceName || "vMix Studio",
+      token_hash: await hash(token),
+      revoked: false,
+      last_seen_at: now,
     });
     if (deviceError) throw deviceError;
-    await admin.from("vmix_bridge_pairings").delete().eq("id", pairing.id);
     return new Response(JSON.stringify({ token }), { headers });
   } catch (e) {
     console.error("vmix-bridge-connect", e);
