@@ -143,10 +143,10 @@ export default function LoginScreen() {
         if (error) {
           if (attempt === MAX_RETRIES - 1) {
             setForgotError(getFriendlyAuthMessage(error.message));
-          } else {
-            await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
-            continue;
+            break;
           }
+          await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
+          continue;
         }
         setForgotSent(true);
         break;
