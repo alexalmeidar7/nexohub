@@ -14,7 +14,7 @@ const DEFAULT_FAVICON = "/favicon.png";
 const DEFAULT_TITLE = "NexoHub";
 
 export function usePageTitle(pageName: string) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [empresaNome, setEmpresaNome] = useState(cachedEmpresaNome);
 
   // Public/anonymous pages pass an empty pageName. In that case we must NOT
@@ -60,24 +60,7 @@ export function usePageTitle(pageName: string) {
   useEffect(() => {
     if (isPublic) return;
 
-    let forceRole: string | null = null;
-    try {
-      forceRole = localStorage.getItem("nexohub_force_role");
-    } catch {}
-
-    const isLocal = typeof window !== "undefined" && (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname.startsWith("192.168.") ||
-      window.location.hostname.startsWith("10.")
-    );
-
-    const isAdmin = forceRole === "admin" || (
-      forceRole !== "user" && (
-        isLocal ||
-        user?.email?.toLowerCase() === "alex@nexobrasil.net"
-      )
-    );
+    const isAdmin = role === "admin";
 
     if (isAdmin) {
       document.title = "Nexo Brasil - Soluções Visuais";
@@ -86,7 +69,7 @@ export function usePageTitle(pageName: string) {
 
     document.title = "NXO - House Mix";
     setFavicon(DEFAULT_FAVICON);
-  }, [empresaNome, pageName, isPublic, user]);
+  }, [empresaNome, pageName, isPublic, user, role]);
 }
 
 export function setFavicon(url: string) {
