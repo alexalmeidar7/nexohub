@@ -437,7 +437,7 @@ internal sealed class BridgeService
     public async Task RunAsync(CancellationToken token)
     {
         using var cloud = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-        using var vmix = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+        using var vmix = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(8) };
         cloud.DefaultRequestHeaders.UserAgent.ParseAdd("NexoHubBridge/1.0");
         if (!string.IsNullOrWhiteSpace(_config.VmixUsername))
             vmix.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
@@ -492,19 +492,31 @@ internal sealed class BridgeService
 
     private static async Task<(bool Success, int Status, string Body)> ExecuteJobAsync(HttpClient client, BridgeConfig c, BridgeJob job, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(job.Path) || !job.Path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) ||
-            job.Path.Contains("://") || job.Path.Contains('\\'))
-            return (false, 400, "Rejected: only vMix /api/ paths are allowed.");
+        var rawPath = job.Path ?? "";
+        var rawPathOnly = rawPath.Split('?', 2)[0];
+        var decodedPath = Uri.UnescapeDataString(rawPathOnly);
+        if (string.IsNullOrWhiteSpace(rawPath) ||
+            !rawPath.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) ||
+            rawPath.Contains("://", StringComparison.Ordinal) ||
+            rawPath.Contains('\\') || rawPath.Contains('#') || rawPath.Any(char.IsControl) ||
+            rawPathOnly.Contains("%2f", StringComparison.OrdinalIgnoreCase) ||
+            rawPathOnly.Contains("%5c", StringComparison.OrdinalIgnoreCase) ||
+            decodedPath.Split('/').Any(segment => segment is "." or ".."))
+            return (false, 400, "Rejected: only normalized vMix /api/ paths are allowed.");
+
         var baseUri = new Uri(c.VmixUrl.TrimEnd('/') + "/");
-        var target = new Uri(baseUri, job.Path.TrimStart('/'));
-        if (target.Host != baseUri.Host || target.Port != baseUri.Port)
-            return (false, 400, "Rejected: destination must be the configured vMix host.");
+        var target = new Uri(baseUri, rawPath.TrimStart('/'));
+        if (!string.Equals(target.Scheme, baseUri.Scheme, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(target.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase) ||
+            target.Port != baseUri.Port ||
+            !target.AbsolutePath.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+            return (false, 400, "Rejected: destination must remain within the configured vMix /api/ endpoint.");
         using var req = new HttpRequestMessage(job.Method == "POST" ? HttpMethod.Post : HttpMethod.Get, target);
         if (job.Body is { } body && job.Method == "POST")
             req.Content = new StringContent(body.GetRawText(), Encoding.UTF8, "application/json");
         using var res = await client.SendAsync(req, ct);
         var content = await res.Content.ReadAsStringAsync(ct);
-        return ((int)res.StatusCode is >= 200 and < 400, (int)res.StatusCode, content.Length > 500000 ? content[..500000] : content);
+        return ((int)res.StatusCode is >= 200 and < 300, (int)res.StatusCode, content.Length > 500000 ? content[..500000] : content);
     }
 
     private static string Short(string s) => s.Length > 500 ? s[..500] : s;
