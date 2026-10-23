@@ -77,14 +77,15 @@ internal static class Program {
    var currentExe=Environment.ProcessPath;
    if(string.IsNullOrWhiteSpace(currentExe)||!File.Exists(currentExe)){File.Delete(tempExe);return;}
    var script=Path.Combine(Path.GetTempPath(),$"NexoHubBridge-update-{Guid.NewGuid():N}.cmd");
-   var content=$"@echo off\r
-timeout /t 2 /nobreak >nul\r
-copy /Y \"{tempExe}\" \"{currentExe}\" >nul\r
-if errorlevel 1 exit /b 1\r
-start \"\" \"{currentExe}\"\r
-del \"{tempExe}\"\r
-del \"%~f0\"\r
-";
+   var content=string.Join(Environment.NewLine,new[]{
+    "@echo off",
+    "timeout /t 2 /nobreak >nul",
+    $"copy /Y \"{tempExe}\" \"{currentExe}\" >nul",
+    "if errorlevel 1 exit /b 1",
+    $"start \"\" \"{currentExe}\"",
+    $"del \"{tempExe}\"",
+    "del \"%~f0\""
+   })+Environment.NewLine;
    await File.WriteAllTextAsync(script,content,Encoding.Default);
    Process.Start(new ProcessStartInfo("cmd.exe",$"/c \"{script}\""){UseShellExecute=false,CreateNoWindow=true});
    Environment.Exit(0);
