@@ -36,7 +36,23 @@ jobs:
           mkdir -p dist/downloads/nexohub-bridge
           convert src/assets/logo-nexo.png -background none -gravity center -resize 256x256 -extent 256x256 -define icon:auto-resize=256,128,64,48,32,16 tools/NexoHubBridge/bridge.ico
           dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:ApplicationIcon=bridge.ico -o dist/downloads/nexohub-bridge
-          printf '{"version":"1.1.0","downloadUrl":"https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"}' > dist/downloads/nexohub-bridge/latest.json
+          export BRIDGE_VERSION="$(dotnet msbuild tools/NexoHubBridge/NexoHubBridge.csproj -getProperty:Version | tail -n 1 | tr -d '\r')"
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          path = "dist/downloads/nexohub-bridge/NexoHubBridge.exe"
+          if not os.path.isfile(path):
+              raise SystemExit("NexoHubBridge.exe was not generated")
+          manifest = {
+              "version": os.environ["BRIDGE_VERSION"],
+              "updatedAt": datetime.now(timezone.utc).isoformat(),
+              "sizeBytes": os.path.getsize(path),
+              "downloadUrl": "https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"
+          }
+          with open("dist/downloads/nexohub-bridge/latest.json", "w", encoding="utf-8") as f:
+              json.dump(manifest, f, ensure_ascii=False)
+          PY
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
