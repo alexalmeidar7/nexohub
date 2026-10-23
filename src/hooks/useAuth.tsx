@@ -71,29 +71,9 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 const getInitialBackupSession = (): Session | null => {
-  try {
-    if (typeof window === "undefined") return null;
-    // Remove the legacy client-side role override; roles must come from auth/backend.
-    localStorage.removeItem("nexohub_force_role");
-    if (localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
-    const raw = localStorage.getItem("nexohub_backup_session");
-    if (!raw) return null;
-    const backup = JSON.parse(raw) as Session;
-    const token = backup?.access_token;
-    // Never restore legacy simulated sessions from localStorage.
-    if (
-      typeof token !== "string" ||
-      token.startsWith("client-token-") ||
-      token.startsWith("admin-token-") ||
-      token.startsWith("sim-")
-    ) {
-      localStorage.removeItem("nexohub_backup_session");
-      return null;
-    }
-    return backup;
-  } catch {
-    return null;
-  }
+  // Backup sessions must be validated by Supabase before entering auth state.
+  // AuthProvider restores them asynchronously through supabase.auth.setSession.
+  return null;
 };
 
 const isSimulatedAccessToken = (token?: string | null) => {
@@ -165,10 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     addTimer(() => {
       if (mounted && loadingRef.current) {
         console.warn("Auth: safety timeout reached (5s), forcing load complete");
+        // Never expose a backup session that Supabase has not validated.
         finishLoading();
-        if (!user && lastGoodSessionRef.current) {
-          updateAuth(lastGoodSessionRef.current);
-        }
       }
     }, 5000);
 
@@ -221,53 +199,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const newUser = newSession?.user ?? null;
 
-      if (!newUser && !manualSignOutRef.current) {
-        if (lastGoodSessionRef.current?.user && lastGoodSessionRef.current.access_token) {
-          const restored = lastGoodSessionRef.current;
-          if (prevUserIdRef.current !== restored.user.id) {
-            prevUserIdRef.current = restored.user.id;
-            ensureMusicScopeForUser(restored.user.id);
-            setUser(restored.user);
-          }
-          setSession(restored);
-
-          const isSim = isSimulatedAccessToken(restored.access_token);
-
-          // Determine role
-          const roleResult = await fetchRole(restored.user.id);
-          if (mounted) setRole(roleResult);
-          finishLoading();
-
-          // Only attempt supabase.auth.setSession for real Supabase JWT tokens
-          if (!isSim) {
-            supabase.auth.setSession({
-              access_token: restored.access_token,
-              refresh_token: restored.refresh_token,
-            }).then(({ data: setRes, error: setErr }) => {
-              if (setErr) {
-                console.warn("Auth: setSession failed with restored tokens", setErr.message);
-                if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
-                  localStorage.removeItem('nexohub_backup_session');
-                  lastGoodSessionRef.current = null;
-                  if (mounted) {
-                    setUser(null);
-                    setSession(null);
-                    setRole(null);
-                  }
-                }
-              } else if (setRes.session && mounted) {
-                lastGoodSessionRef.current = setRes.session;
-                setSession(setRes.session);
-                setUser(setRes.session.user);
-                try {
-                  localStorage.setItem('nexohub_backup_session', JSON.stringify(setRes.session));
-                } catch {}
-              }
-            }).catch(() => { /* keep current state */ });
-          }
-          return;
-        }
-        // No prior session at all -> treat as logged out
+      if (!newUser) {
+        // Empty auth state must not resurrect an unvalidated local backup.
         prevUserIdRef.current = null;
         setUser(null);
         setSession(null);
@@ -328,13 +261,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
       // hard refresh keeps the user on the welcome screen.
-      if (event === "INITIAL_SESSION" && !session) {
-        if (lastGoodSessionRef.current) {
-          console.log("Auth: Restoring session from backup on INITIAL_SESSION.");
-          void updateAuth(lastGoodSessionRef.current);
-          return;
-        }
-      }
+      // An empty INITIAL_SESSION is not proof that a stored backup is valid.
+      // The getSession path below validates backups with supabase.auth.setSession.
 
       if (event === "SIGNED_OUT") {
         // Manual logout should always work (flag stays set until the reload)
@@ -410,18 +338,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 refresh_token: lastGoodSessionRef.current.refresh_token,
               }).then(({ data: setRes, error: setErr }) => {
                 if (!mounted) return;
-                if (setErr) {
-                  console.warn("Auth: initial setSession failed", setErr.message);
-                  if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
-                    localStorage.removeItem('nexohub_backup_session');
-                    lastGoodSessionRef.current = null;
-                    void updateAuth(null);
-                    return;
+                if (setErr || !setRes?.session) {
+                  console.warn("Auth: initial setSession failed; refusing to restore an unvalidated backup", setErr?.message);
+                  if (setErr?.message?.toLowerCase().includes("invalid") || setErr?.message?.toLowerCase().includes("expired")) {
+                    localStorage.removeItem("nexohub_backup_session");
                   }
+                  lastGoodSessionRef.current = null;
+                  void updateAuth(null);
+                  return;
                 }
-                void updateAuth(setRes?.session || lastGoodSessionRef.current);
+                void updateAuth(setRes.session);
               }).catch(() => {
-                if (mounted) void updateAuth(lastGoodSessionRef.current);
+                if (!mounted) return;
+                // A network error must not turn an unvalidated backup into an authenticated UI state.
+                lastGoodSessionRef.current = null;
+                void updateAuth(null);
               });
               return;
             }
