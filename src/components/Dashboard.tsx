@@ -1650,7 +1650,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           )}
 
           <div className={`relative flex-1 h-full ${isAdmin ? "max-w-[1600px] mx-auto w-full flex flex-col" : ""}`}>
-            <div ref={contentScrollRef} className={`flex-1 h-full ${currentPage === "cortevideo" ? "overflow-hidden !p-0" : "overflow-y-auto overflow-x-hidden"} ${isAdmin ? "rounded-3xl" : "rounded-2xl"} ${currentPage !== "dashboard" && !isWindowMode ? "mv-content-area" : ""}`} style={(currentPage === "dashboard" || isWindowMode) ? {} : (currentPage === "cortevideo" ? { padding: 0 } : { padding: isAdmin ? "1.5rem" : "0.5rem" })}>
+            <div ref={contentScrollRef} className={`flex-1 h-full ${currentPage === "cortevideo" ? "overflow-hidden !p-0" : "overflow-y-auto overflow-x-hidden"} ${isAdmin ? "rounded-3xl" : "rounded-2xl"} ${currentPage !== "dashboard" && currentPage !== "nexoplugins" && !isWindowMode ? "mv-content-area" : ""}`} style={(currentPage === "dashboard" || isWindowMode) ? {} : (currentPage === "cortevideo" ? { padding: 0 } : { padding: isAdmin ? "1.5rem" : "0.5rem" })}>
             <Suspense fallback={
               <ModulePageSkeleton
                 variant={
