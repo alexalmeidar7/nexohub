@@ -32,7 +32,21 @@ internal static class Program {
   }, CancellationToken.None);
 
   BridgeConfig c;
-  try { c=await LoadConfigAsync(); Validate(c); }
+  try {
+   c=await LoadConfigAsync();
+   if(string.IsNullOrWhiteSpace(c.BridgeToken)&&string.IsNullOrWhiteSpace(c.PairingCode)) {
+    Console.WriteLine("Este computador ainda não está vinculado ao House Mix.");
+    Console.WriteLine("1. No House Mix, abra vMix Control > Ponte remota e gere um código individual.");
+    Console.WriteLine("2. Digite aqui o código de 8 caracteres exibido pelo House Mix.");
+    while(string.IsNullOrWhiteSpace(c.PairingCode)||!System.Text.RegularExpressions.Regex.IsMatch(c.PairingCode,@"^[A-Fa-f0-9]{8}$")) {
+     Console.Write("Código de pareamento: ");
+     c.PairingCode=(Console.ReadLine()??"").Trim().ToUpperInvariant();
+     if(!System.Text.RegularExpressions.Regex.IsMatch(c.PairingCode,@"^[A-Fa-f0-9]{8}$")) Console.WriteLine("Código inválido. Informe os 8 caracteres exibidos no House Mix.");
+    }
+    await SaveAsync(c);
+   }
+   Validate(c);
+  }
   catch(Exception ex) {
    Console.Error.WriteLine($"Configuração do relay remoto: {ex.Message}");
    Console.WriteLine("A descoberta NDI local continua ativa. Pressione Ctrl+C para encerrar.");
@@ -103,14 +117,14 @@ internal static class Program {
  }
 
  static async Task<BridgeConfig> LoadConfigAsync() {
-  if(!File.Exists(ConfigPath)){await SaveAsync(new BridgeConfig());throw new InvalidOperationException("Criei appsettings.json. Edite PairingCode com o código gerado pelo NexoHub e execute novamente.");}
+  if(!File.Exists(ConfigPath)) await SaveAsync(new BridgeConfig());
   return JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(ConfigPath),JsonOptions)??new BridgeConfig();
  }
  static Task SaveAsync(BridgeConfig c)=>File.WriteAllTextAsync(ConfigPath,JsonSerializer.Serialize(c,new JsonSerializerOptions{WriteIndented=true}));
  static void Validate(BridgeConfig c) {
   if(!Uri.TryCreate(c.SupabaseUrl,UriKind.Absolute,out var cloud)||cloud.Scheme!="https")throw new InvalidOperationException("SupabaseUrl deve usar HTTPS.");
   if(!Uri.TryCreate(c.VmixUrl,UriKind.Absolute,out var local)||!(local.Scheme=="http"||local.Scheme=="https"))throw new InvalidOperationException("VmixUrl inválida.");
-  if(string.IsNullOrWhiteSpace(c.BridgeToken)&&string.IsNullOrWhiteSpace(c.PairingCode))throw new InvalidOperationException("PairingCode não informado.");
+  if(!string.IsNullOrWhiteSpace(c.PairingCode)&&!System.Text.RegularExpressions.Regex.IsMatch(c.PairingCode,@"^[A-Fa-f0-9]{8}$"))throw new InvalidOperationException("PairingCode deve conter os 8 caracteres do código gerado no House Mix.");
  }
  static async Task<string> PairAsync(HttpClient client,BridgeConfig c) {
   using var r=await client.PostAsJsonAsync(c.SupabaseUrl.TrimEnd('/')+"/functions/v1/vmix-bridge-connect",new{pairingCode=c.PairingCode,deviceName=c.DeviceName});
