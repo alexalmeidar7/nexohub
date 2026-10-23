@@ -132,9 +132,22 @@ export default function LoginScreen() {
     setForgotLoading(true);
     setForgotError("");
 
+    // A packaged file:// origin is not a valid password-reset callback.
+    // Require an explicitly configured, allowlisted callback for the Desktop build.
+    const redirectTo =
+      import.meta.env.BASE_URL === "./"
+        ? import.meta.env.VITE_DESKTOP_AUTH_REDIRECT_URL?.trim()
+        : `${window.location.origin}/reset-password`;
+
+    if (!redirectTo) {
+      setForgotError("A recuperação de senha ainda não está configurada para o aplicativo Desktop. Entre em contato com o suporte.");
+      setForgotLoading(false);
+      return;
+    }
+
     const request = () =>
       supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo,
       });
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
