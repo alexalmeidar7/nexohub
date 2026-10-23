@@ -3336,7 +3336,13 @@ function InteractivityMenu({
           )}
           
           <button
-            onClick={() => { onToggleChat(); setOpen(false); }}
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onToggleChat();
+              setOpen(false);
+            }}
             className="w-16 h-16 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
             title="Chat"
           >
