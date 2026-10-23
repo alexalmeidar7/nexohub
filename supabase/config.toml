@@ -113,3 +113,7 @@ verify_jwt = false
 # not the Lovable AI gateway. The browser invokes this function from logoTransformService.
 [functions.transform-logo]
 verify_jwt = false
+
+# Reports the online bridge device for the authenticated user.
+[functions.vmix-bridge-status]
+verify_jwt = false
