@@ -90,14 +90,14 @@ internal static class Program {
    var content=string.Join(Environment.NewLine,new[]{
     "@echo off",
     "timeout /t 2 /nobreak >nul",
-    $"copy /Y \\"{tempExe}\\" \\"{currentExe}\\" >nul",
+    $"copy /Y \"{tempExe}\" \"{currentExe}\" >nul",
     "if errorlevel 1 exit /b 1",
-    $"start \\"\\" \\"{currentExe}\\"",
-    $"del \\"{tempExe}\\"",
-    "del \\"%~f0\\""
+    $"start \"\" \"{currentExe}\"",
+    $"del \"{tempExe}\"",
+    "del \"%~f0\""
    })+Environment.NewLine;
    await File.WriteAllTextAsync(script,content,Encoding.Default);
-   Process.Start(new ProcessStartInfo("cmd.exe",$"/c \\"{script}\\""){UseShellExecute=false,CreateNoWindow=true});
+   Process.Start(new ProcessStartInfo("cmd.exe",$"/c \"{script}\""){UseShellExecute=false,CreateNoWindow=true});
    Environment.Exit(0);
   } catch(Exception ex) { Console.WriteLine($"Atualização automática indisponível; iniciando v{CurrentVersion}: {ex.Message}"); }
  }
