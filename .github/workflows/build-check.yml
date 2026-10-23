@@ -20,8 +20,22 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - name: Instalar dependências
-        run: bun install
+      - name: Instalar dependências (retry para rate limit transitório)
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if bun install; then
+              exit 0
+            else
+              status=$?
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "bun install falhou após 3 tentativas."
+              exit "$status"
+            fi
+            echo "bun install falhou na tentativa $attempt/3; aguardando antes de repetir..."
+            sleep $((attempt * 15))
+          done
 
       - name: Verificar tipos (erros de sintaxe e JSX)
         run: bunx --bun -p @typescript/native-preview tsgo -p tsconfig.app.json --noEmit
