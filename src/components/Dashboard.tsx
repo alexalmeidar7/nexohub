@@ -78,6 +78,7 @@ const BatalhaMusicalPage = lazyRetry(() => import("./BatalhaMusicalPage"));
 const EnquetePage = lazyRetry(() => import("./EnquetePage"));
 const QuizPage = lazyRetry(() => import("./QuizPage"));
 const SitePage = lazyRetry(() => import("./site/SitePage"));
+const NexoPluginsPage = lazyRetry(() => import("./NexoPluginsPage"));
 const ClientesPage = lazyRetry(() => import("./ClientesPage"));
 const ModulosPage = lazyRetry(() => import("./ModulosPage"));
 const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
@@ -103,7 +104,7 @@ import HouseMixHeader from "./HouseMixHeader";
 import HouseMixWindow from "./HouseMixWindow";
 import ServerClock from "./ServerClock";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup" | "relatorios";
+type Page = "nexoplugins" | "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic" | "financeiro" | "chatbot" | "housemix" | "produtos" | "backup" | "relatorios";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -320,6 +321,7 @@ const collectModuleKeys = (items: { label: string; page?: unknown; children?: an
 const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as any), "clientes", "subusuarios", "pacotes"]);
 
 const pageTitle: Record<Page, string> = {
+  nexoplugins: "Nexo Plugins",
   dashboard: "Home",
   previsao: "Cidade Tempo",
   noticias: "Roteiro de Programa",
@@ -1678,6 +1680,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
 
 
 
+              {!isAdmin && currentPage === "nexoplugins" && <NexoPluginsPage />}
               {!isAdmin && currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "financeiro" && <FinanceiroSuperAdminPage />}
               {isAdmin && currentPage === "chatbot" && <ChatbotHome />}
