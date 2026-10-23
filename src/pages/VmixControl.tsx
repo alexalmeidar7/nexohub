@@ -30,6 +30,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   const [bridgePairingCode, setBridgePairingCode] = useState("");
   const [bridgePairingError, setBridgePairingError] = useState("");
   const [bridgePairingLoading, setBridgePairingLoading] = useState(false);
+  const [bridgeDeviceStatus, setBridgeDeviceStatus] = useState<{ connected: boolean; deviceName?: string | null }>({ connected: false });
 
   const createBridgePairing = async () => {
     setBridgePairingLoading(true);
@@ -45,6 +46,19 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
     setBridgePairingCode(data.pairingCode);
   };
 
+
+  useEffect(() => {
+    if (!user || !automationMode || isButtonDevicePreview) { setBridgeDeviceStatus({ connected: false }); return; }
+    let cancelled = false;
+    const refreshBridgeStatus = async () => {
+      const { data, error } = await supabase.functions.invoke("vmix-bridge-status");
+      if (!cancelled && !error && data) setBridgeDeviceStatus({ connected: Boolean(data.connected), deviceName: data.deviceName || null });
+      else if (!cancelled && error) setBridgeDeviceStatus({ connected: false });
+    };
+    void refreshBridgeStatus();
+    const interval = window.setInterval(() => void refreshBridgeStatus(), 10000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, [user?.id, automationMode, isButtonDevicePreview]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setHeaderTime(new Date()), 1000);
@@ -85,7 +99,14 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
             <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="block h-auto max-h-[17px] w-auto max-w-full object-contain object-left" />
 
             {user && automationMode && !isButtonDevicePreview && (
-              <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
+              bridgeDeviceStatus.connected ? (
+                <div role="status" title="Nexo Bridge ativo neste computador" className="ml-auto mr-3 inline-flex max-w-[48%] shrink items-center gap-2 rounded-lg border border-emerald-300/30 bg-emerald-600 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-[0_0_18px_rgba(16,185,129,0.18)]">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-white animate-pulse" />
+                  <span className="truncate">Ponte remota conectado ao {bridgeDeviceStatus.deviceName || "computador do estúdio"}</span>
+                </div>
+              ) : (
+                <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
+              )
             )}
             {user && (
               <div className="ml-auto flex items-center gap-3 pl-4">
@@ -172,7 +193,14 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
         <div className={`relative mx-auto flex w-full max-w-[1440px] min-h-[44px] items-center justify-between px-4 sm:px-6 ${automationMode && !isButtonDevicePreview ? "rounded-full border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]" : isButtonDevicePreview ? "rounded-none" : "rounded-xl"}`} style={automationMode ? { backgroundColor: "rgba(13, 31, 62, 0.78)", backdropFilter: "blur(8px) saturate(115%)", WebkitBackdropFilter: "blur(8px) saturate(115%)" } : { backgroundColor: "#242424" }}>
           <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none block h-auto max-h-[14px] w-auto max-w-[34%] object-contain object-left" />
           {user && automationMode && !isButtonDevicePreview && (
-            <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
+            bridgeDeviceStatus.connected ? (
+              <div role="status" title="Nexo Bridge ativo neste computador" className="ml-auto mr-3 inline-flex max-w-[48%] shrink items-center gap-2 rounded-lg border border-emerald-300/30 bg-emerald-600 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-[0_0_18px_rgba(16,185,129,0.18)]">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-white animate-pulse" />
+                <span className="truncate">Ponte remota conectado ao {bridgeDeviceStatus.deviceName || "computador do estúdio"}</span>
+              </div>
+            ) : (
+              <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
+            )
           )}
           {user && (
             <div className="ml-auto flex shrink-0 items-center gap-1.5" title={vmixOnline ? "vMix conectado" : "vMix desconectado"}>
