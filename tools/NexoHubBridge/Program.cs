@@ -69,7 +69,17 @@ internal static class Program {
   try {
    using var http=new HttpClient{Timeout=TimeSpan.FromSeconds(8)};
    http.DefaultRequestHeaders.UserAgent.ParseAdd("NexoHubBridge-Updater");
-   var manifest=await http.GetFromJsonAsync<BridgeUpdateManifest>(UpdateManifestUri);
+   using var response=await http.GetAsync(UpdateManifestUri);
+   if(!response.IsSuccessStatusCode) {
+    Console.WriteLine($"Atualizador: manifesto indisponível (HTTP {(int)response.StatusCode}); iniciando normalmente.");
+    return;
+   }
+   var raw=await response.Content.ReadAsStringAsync();
+   if(string.IsNullOrWhiteSpace(raw)||!raw.TrimStart().StartsWith("{",StringComparison.Ordinal)) {
+    Console.WriteLine("Atualizador: resposta do servidor não é um manifesto JSON válido; iniciando normalmente.");
+    return;
+   }
+   var manifest=JsonSerializer.Deserialize<BridgeUpdateManifest>(raw,JsonOptions);
    if(manifest is null||!Version.TryParse(manifest.Version,out var latest)||latest<=CurrentVersion||!Uri.TryCreate(manifest.DownloadUrl,UriKind.Absolute,out var download)||download.Scheme!="https")return;
    Console.WriteLine($"Nova versão disponível: {latest}. Baixando atualização...");
    var tempExe=Path.Combine(Path.GetTempPath(),$"NexoHubBridge-{Guid.NewGuid():N}.exe");
@@ -80,16 +90,16 @@ internal static class Program {
    var content=string.Join(Environment.NewLine,new[]{
     "@echo off",
     "timeout /t 2 /nobreak >nul",
-    $"copy /Y \"{tempExe}\" \"{currentExe}\" >nul",
+    $"copy /Y \\"{tempExe}\\" \\"{currentExe}\\" >nul",
     "if errorlevel 1 exit /b 1",
-    $"start \"\" \"{currentExe}\"",
-    $"del \"{tempExe}\"",
-    "del \"%~f0\""
+    $"start \\"\\" \\"{currentExe}\\"",
+    $"del \\"{tempExe}\\"",
+    "del \\"%~f0\\""
    })+Environment.NewLine;
    await File.WriteAllTextAsync(script,content,Encoding.Default);
-   Process.Start(new ProcessStartInfo("cmd.exe",$"/c \"{script}\""){UseShellExecute=false,CreateNoWindow=true});
+   Process.Start(new ProcessStartInfo("cmd.exe",$"/c \\"{script}\\""){UseShellExecute=false,CreateNoWindow=true});
    Environment.Exit(0);
-  } catch(Exception ex) { Console.WriteLine($"Atualização automática indisponível; mantendo v{CurrentVersion}: {ex.Message}"); }
+  } catch(Exception ex) { Console.WriteLine($"Atualização automática indisponível; iniciando v{CurrentVersion}: {ex.Message}"); }
  }
 
  static async Task<BridgeConfig> LoadConfigAsync() {
