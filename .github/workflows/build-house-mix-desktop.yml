@@ -29,6 +29,8 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Build desktop frontend
+        env:
+          VITE_DESKTOP_AUTH_REDIRECT_URL: ${{ vars.VITE_DESKTOP_AUTH_REDIRECT_URL }}
         run: npm run desktop:build
       - name: Package Windows installer
         run: npx electron-builder --win nsis --x64 --publish never
