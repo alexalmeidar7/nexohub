@@ -51,6 +51,7 @@ jobs:
           SHA256="$(sha256sum dist/downloads/nexohub-bridge/NexoHubBridge.exe | cut -d ' ' -f1)"
           DOWNLOAD_URL="https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"
           printf '{"version":"%s","downloadUrl":"%s","sha256":"%s"}\n' "$VERSION" "$DOWNLOAD_URL" "$SHA256" > dist/downloads/nexohub-bridge/latest.json
+          python -m json.tool dist/downloads/nexohub-bridge/latest.json > /dev/null
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
