@@ -175,15 +175,7 @@ export default function LoginScreen() {
     if (loading) return;
     setLoading(true);
     setError("");
-    try {
-      localStorage.removeItem("nexohub_explicit_logout");
-    } catch {}
-    // Só um novo envio explícito do formulário pode encerrar o bloqueio pós-logout.
-    localStorage.removeItem(SIGNED_OUT_FLAG);
-    sessionStorage.removeItem(SIGNED_OUT_FLAG);
-    if (new URLSearchParams(window.location.search).get("signed_out") === "1") {
-      window.history.replaceState({}, "", "/");
-    }
+    // Keep the post-logout lock until Supabase confirms a real sign-in.
     localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
     if (keepConnected) {
       localStorage.setItem(REMEMBERED_USER_KEY, email.trim());
@@ -209,6 +201,15 @@ export default function LoginScreen() {
           }
         }
         if (data?.session) {
+          // Only a confirmed Supabase session can clear the post-logout lock.
+          try {
+            localStorage.removeItem("nexohub_explicit_logout");
+            localStorage.removeItem(SIGNED_OUT_FLAG);
+            sessionStorage.removeItem(SIGNED_OUT_FLAG);
+            if (import.meta.env.BASE_URL !== "./" && new URLSearchParams(window.location.search).get("signed_out") === "1") {
+              window.history.replaceState({}, "", "/");
+            }
+          } catch {}
           localStorage.setItem("nexohub_backup_session", JSON.stringify(data.session));
           localStorage.setItem(KEEP_CONNECTED_KEY, "true");
           localStorage.removeItem("nexohub_explicit_logout");
