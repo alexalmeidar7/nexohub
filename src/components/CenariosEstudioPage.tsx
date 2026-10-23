@@ -181,7 +181,7 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
     const [gruposRes, tvsRes, progsRes] = await Promise.all([
       supabase.from("cenario_estudio_grupos" as any).select("*").eq("user_id", ownerId).order("created_at"),
       supabase.from("cenario_estudio_tvs" as any).select("*").eq("user_id", ownerId).order("posicao"),
-      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio, capa, thumb").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"),
+      supabase.from("programas").select("id, nome, ativo, dias_semana, horario_inicio, horario_fim, estudio, capa, thumb").eq("user_id", ownerId).order("horario_inicio"),
     ]);
 
     // Fail closed: a query error must never be interpreted as an empty account and
@@ -235,7 +235,7 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
     // Never use cross-account/station fallback services for this page.
     const hasValidTemplates = gs.some((g) => g.tvs.some((tv) => tv.posicao === 0 && !!tv.imagem_url));
     if (!hasValidTemplates) {
-      gs = getDefaultCenariosEstudioGrupos(ownerId, progs);
+      gs = getDefaultCenariosEstudioGrupos(ownerId, progs.filter((programa) => programa.ativo));
     }
 
     setGrupos(gs);
