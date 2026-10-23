@@ -346,19 +346,19 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: "rgba(4,10,22,0.72)", backdropFilter: "blur(6px)" }}>
-      <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden" style={{ backgroundColor: "#1f1f24", border: "1px solid #34343d", boxShadow: "0 24px 70px rgba(0,0,0,0.42)" }}>
+      <div className="w-[calc(100%-2rem)] max-w-2xl max-h-[88vh] flex flex-col rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #111e35 0%, #0b172c 58%, #111827 100%)", border: "1px solid #344967", boxShadow: "0 24px 70px rgba(0,0,0,0.55)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #34343d", backgroundColor: "#1f1f24", color: "#FFFFFF" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #263a59", background: "linear-gradient(135deg, #20212b 0%, #1a2130 100%)", color: "#FFFFFF" }}>
           <div className="flex flex-col gap-1">
             <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "#F3F4F6", opacity: 1 }}>
               {programaId === "new" ? "Nova Automação" : (nome || programaNome)}
             </h2>
             <div className="flex items-center gap-1.5">
-              <Clock size={10} style={{ color: "#334155" }} />
+              <Clock size={10} style={{ color: "#9fb3d1" }} />
               <span className="text-[10px] font-mono" style={{ color: "#334155", textDecoration: (customHorario || programaId === "new") ? "none" : "line-through", opacity: (customHorario || programaId === "new") ? 1 : 0.65 }}>
                 {programaId === "new" ? (customHorario || "00:00") : programaHorario}
               </span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#101013", color: "#E5E7EB", border: "1px solid #34343d" }}>{commands.length} ação(ões)</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#0b172b", color: "#dce8fb", border: "1px solid #304563" }}>{commands.length} ação(ões)</span>
               {estudio && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest" style={{ backgroundColor: "#101013", color: "#E5E7EB", border: "1px solid #34343d" }}>{estudio}</span>
               )}
@@ -370,7 +370,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
         </div>
 
         {/* Configurações do Programa */}
-        <div className="px-5 py-4 space-y-4" style={{ backgroundColor: "#1f1f24", borderBottom: "1px solid #34343d", color: "#FFFFFF" }}>
+        <div className="px-5 py-4 space-y-4" style={{ background: "#101d33", borderBottom: "1px solid #263a59", color: "#FFFFFF" }}>
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#102A4C", opacity: 1 }}>Nome do Programa</label>
             <input
@@ -459,9 +459,9 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               const cmdEnabled = cmd.enabled !== false;
 
               return (
-                <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ backgroundColor: "#161619", border: "1px solid #34343d", opacity: cmdEnabled ? 1 : 0.7, boxShadow: "none" }}>
+                <div key={cmd.id} className="rounded-lg overflow-hidden transition-opacity" style={{ background: "linear-gradient(145deg, #192842, #111d32)", border: "1px solid #304563", opacity: cmdEnabled ? 1 : 0.7, boxShadow: "0 5px 14px rgba(0,0,0,0.16)" }}>
                   {/* Command header */}
-                  <div className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#161619", borderBottom: "1px solid #34343d", color: "#F3F4F6" }}>
+                  <div className="flex items-center gap-2 px-3 py-2" style={{ background: "rgba(255,255,255,0.035)", borderBottom: "1px solid #304563", color: "#F3F4F6" }}>
                     <span className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: idx === 0 ? "#3f1d1d" : "#29292f", color: idx === 0 ? "#fca5a5" : "#D4D4D8" }}>
                       #{idx}
                     </span>
@@ -493,12 +493,12 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
                     {/* Command select */}
                     <div className="flex flex-col gap-1 sm:col-span-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#1E293B" }}>Command</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#8fa6c5" }}>Command</label>
                       <select
                         value={cmd.fn}
                         onChange={e => updateCommand(cmd.id, { fn: e.target.value, input: undefined, value: undefined, extraKey: undefined, extraValue: undefined })}
                         className="w-full text-[10px] px-2.5 py-1.5 rounded-lg outline-none"
-                        style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", opacity: 1 }}
+                        style={{ backgroundColor: "#0b172b", color: "#E5EDF9", border: "1px solid #3b5274", boxShadow: "none", opacity: 1 }}
                       >
                         {CATEGORIES.map(cat => (
                           <optgroup key={cat} label={cat}>
@@ -518,7 +518,7 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
                           value={cmd.input || ""}
                           onChange={e => updateCommand(cmd.id, { input: e.target.value })}
                           className="w-full text-[10px] px-2.5 py-1.5 rounded-lg outline-none"
-                          style={{ backgroundColor: "#FFFFFF", color: "#172B4D", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", opacity: 1 }}
+                          style={{ backgroundColor: "#0b172b", color: "#E5EDF9", border: "1px solid #3b5274", boxShadow: "none", opacity: 1 }}
                         >
                           <option value="">— Selecionar Input —</option>
                           {cmd.input && !inputs.some(i => i.key === cmd.input) && inputMapping?.[cmd.input] && (
