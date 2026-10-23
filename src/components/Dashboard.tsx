@@ -1109,7 +1109,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
 
   const isModuleEnabled = (page: Page): boolean => {
     // Pages that are always accessible regardless of plan
-    if (page === "dashboard") return true;
+    if (page === "dashboard" || page === "nexoplugins") return true;
 
     // Sub-users: only allow modules explicitly assigned + always-accessible pages
     if (subUserModules !== null) {
