@@ -55,11 +55,11 @@ export function isPrivateOrLocalUrl(input: string): boolean {
     const u = new URL(input);
     if ((u.protocol !== "http:" && u.protocol !== "https:") || u.username || u.password) return true;
     let host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-    if (!host) return true;
+    if (!host || (!host.includes(".") && !host.includes(":"))) return true;
 
     if (
       host === "localhost" || host.endsWith(".localhost") ||
-      host.endsWith(".local") || host.endsWith(".internal") ||
+      host.endsWith(".local") || host.endsWith(".lan") || host.endsWith(".home") || host.endsWith(".internal") ||
       host === "metadata.google.internal" || host === "metadata" ||
       host === "0.0.0.0" || host === "::" || host === "::1"
     ) return true;
