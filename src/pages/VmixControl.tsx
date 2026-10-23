@@ -211,21 +211,21 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
         </div>
       </header>
       {showBridgePairing && automationMode && !isButtonDevicePreview && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true" aria-labelledby="bridge-pairing-title">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#19191f] p-6 text-white shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020817]/80 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="bridge-pairing-title">
+          <div className="w-full relative w-full max-w-[440px] overflow-hidden rounded-[24px] border border-[#29456f] bg-gradient-to-br from-[#14294b] via-[#0c1b34] to-[#071326] p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,.55)]">
             <div className="flex items-start justify-between gap-4">
-              <div><h2 id="bridge-pairing-title" className="text-lg font-bold">Ponte remota NexoHub</h2><p className="mt-2 text-sm text-white/65">Gere um código temporário para vincular o computador onde o vMix está instalado.</p></div>
-              <button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-full bg-white/10 px-3 py-1" aria-label="Fechar">✕</button>
+              <div><h2 id="bridge-pairing-title" className="text-lg font-bold">Ponte remota NexoHub</h2><p className="mt-2 text-sm text-white/65">Vincule o computador do estúdio para controlar o vMix pela rede.</p></div>
+              <button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white/70 transition hover:bg-white/10" aria-label="Fechar">✕</button>
             </div>
-            {bridgePairingLoading ? <p className="mt-6 text-sm text-white/70">Gerando código seguro...</p> : null}
-            {bridgePairingError ? <p className="mt-5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{bridgePairingError}</p> : null}
-            {bridgePairingCode ? <div className="mt-5 rounded-xl bg-black/40 p-4">
-              <p className="text-xs uppercase tracking-widest text-white/50">Código válido por 10 minutos</p>
-              <p className="my-3 break-all font-mono text-lg font-bold tracking-wider">{bridgePairingCode}</p>
-              <button type="button" onClick={() => navigator.clipboard.writeText(bridgePairingCode)} className="rounded-lg bg-[#0055ff] px-4 py-2 text-sm font-semibold">Copiar código</button>
+            {bridgePairingLoading ? <p className="mt-6 text-sm text-white/70">Preparando conexão segura…</p> : null}
+            {bridgePairingError ? <p className="mt-5 rounded-xl border border-rose-400/25 bg-rose-500/10 p-3 text-sm text-rose-200">{bridgePairingError}</p> : null}
+            {bridgePairingCode ? <div className="mt-5 rounded-2xl border border-blue-300/20 bg-[#071326]/75 p-5">
+              <p className="text-xs uppercase tracking-widest text-white/50">CÓDIGO DE PAREAMENTO</p>
+              <p className="my-4 break-all text-center font-mono text-3xl font-extrabold tracking-[.24em]">{bridgePairingCode}</p>
+              <button type="button" onClick={() => navigator.clipboard.writeText(bridgePairingCode)} className="w-full rounded-xl bg-gradient-to-r from-[#1768ff] to-[#0751cf] px-4 py-3 text-sm font-bold shadow-lg shadow-blue-950/40 transition hover:brightness-110">Copiar código</button>
             </div> : null}
-            <p className="mt-5 text-xs leading-relaxed text-white/50">Use o código no NexoHub Bridge do computador do estúdio. Não compartilhe o token gerado após o pareamento.</p>
-            <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={createBridgePairing} disabled={bridgePairingLoading} className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold disabled:opacity-50">Gerar novo código</button><button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-lg bg-[#0055ff] px-4 py-2 text-sm font-semibold">Fechar</button></div>
+            <p className="mt-4 rounded-xl border border-white/[.07] bg-white/[.035] p-3 text-xs leading-relaxed text-slate-400">Use o código no NexoHub Bridge do computador do estúdio. Não compartilhe o token gerado após o pareamento.</p>
+            <div className="mt-5 flex justify-between gap-3 border-t border-white/10 pt-4"><button type="button" onClick={createBridgePairing} disabled={bridgePairingLoading} className="rounded-xl border border-white/10 bg-white/[.06] px-4 py-2.5 text-xs font-bold text-slate-200 transition hover:bg-white/10 disabled:opacity-50">Gerar novo código</button><button type="button" onClick={() => setShowBridgePairing(false)} className="rounded-xl bg-white px-5 py-2.5 text-xs font-extrabold text-[#0b1b32] transition hover:bg-blue-50">Concluir</button></div>
           </div>
         </div>
       )}
