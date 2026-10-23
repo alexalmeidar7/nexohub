@@ -15,7 +15,7 @@ export default function FloatingNdiPreview({
 }) {
   const [visible, setVisible] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [setupOpen, setSetupOpen] = useState(true);
+  const [setupOpen, setSetupOpen] = useState(() => {\n    try { return !window.localStorage.getItem("housemix:ndi-preview-device:v1") && !window.localStorage.getItem("housemix:ndi-preview-network-source:v1"); } catch { return true; }\n  });
   const [rightOffset, setRightOffset] = useState(16);
   const [devices, setDevices] = useState<VideoDevice[]>([]);\n  const [networkSources, setNetworkSources] = useState<NdiNetworkSource[]>([]);\n  const [networkDiscoveryMessage, setNetworkDiscoveryMessage] = useState("");\n  const [selectedNetworkSource, setSelectedNetworkSource] = useState(() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } });
   const storageKey = "housemix:ndi-preview-device:v1";
