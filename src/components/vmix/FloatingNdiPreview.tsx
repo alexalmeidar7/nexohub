@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Maximize2, Minimize2, MonitorPlay, RefreshCw, Settings, X } from "lucide-react";
 
 type VideoDevice = { deviceId: string; label: string };
+type NdiNetworkSource = { name: string; address: string };
 
 export default function FloatingNdiPreview({
   baseUrl: _baseUrl,
@@ -15,9 +16,14 @@ export default function FloatingNdiPreview({
 }) {
   const [visible, setVisible] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [setupOpen, setSetupOpen] = useState(true);
+  const [setupOpen, setSetupOpen] = useState(() => {
+    try { return !window.localStorage.getItem("housemix:ndi-preview-device:v1") && !window.localStorage.getItem("housemix:ndi-preview-network-source:v1"); } catch { return true; }
+  });
   const [rightOffset, setRightOffset] = useState(16);
   const [devices, setDevices] = useState<VideoDevice[]>([]);
+  const [networkSources, setNetworkSources] = useState<NdiNetworkSource[]>([]);
+  const [networkDiscoveryMessage, setNetworkDiscoveryMessage] = useState("");
+  const [selectedNetworkSource, setSelectedNetworkSource] = useState(() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } });
   const storageKey = "housemix:ndi-preview-device:v1";
   const [selectedDevice, setSelectedDevice] = useState(() => {
     try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
@@ -25,6 +31,37 @@ export default function FloatingNdiPreview({
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const refreshNetworkSources = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8765/ndi/sources", { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok || !payload.available) {
+        setNetworkSources([]);
+        setNetworkDiscoveryMessage(payload.message || "Não foi possível descobrir fontes NDI da rede. Verifique se o Nexo Bridge está aberto neste computador.");
+        return;
+      }
+      const sources = Array.isArray(payload.sources) ? payload.sources as NdiNetworkSource[] : [];
+      setNetworkSources(sources);
+      setNetworkDiscoveryMessage(sources.length ? "" : "Nenhuma fonte NDI encontrada na rede.");
+      setSelectedNetworkSource((current) => {
+        const saved = (() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } })();
+        const next = [saved, current].find((name) => name && sources.some((source) => source.name === name)) || "";
+        return next;
+      });
+    } catch {
+      setNetworkSources([]);
+      setNetworkDiscoveryMessage("Abra o Nexo Bridge neste computador para descobrir todas as fontes NDI visíveis na rede.");
+    }
+  };
+
+  const handleNetworkSourceChange = (name: string) => {
+    setSelectedNetworkSource(name);
+    try {
+      if (name) window.localStorage.setItem("housemix:ndi-preview-network-source:v1", name);
+      else window.localStorage.removeItem("housemix:ndi-preview-network-source:v1");
+    } catch { /* storage may be disabled */ }
+  };
 
   const refreshDevices = async () => {
     if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
@@ -45,6 +82,7 @@ export default function FloatingNdiPreview({
           label: device.label || "Câmera local " + (index + 1),
         }));
       setDevices(videoDevices);
+      await refreshNetworkSources();
       const ndiDevice = videoDevices.find((device) => /ndi webcam input/i.test(device.label));
       const savedDevice = (() => {
         try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
@@ -71,6 +109,7 @@ export default function FloatingNdiPreview({
 
   useEffect(() => {
     void onRefreshSources?.();
+    void refreshNetworkSources();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -175,7 +214,7 @@ export default function FloatingNdiPreview({
             </div>
           )}
         </div>
-        {selectedLabel && <p className="mt-1.5 truncate text-[9px] font-bold text-slate-400">{selectedLabel}</p>}
+        {(selectedNetworkSource || selectedLabel) && <p className="mt-1.5 truncate text-[9px] font-bold text-slate-400">{selectedNetworkSource ? `NDI da rede: ${selectedNetworkSource}` : selectedLabel}</p>}
       </div>
     </aside>
   );
