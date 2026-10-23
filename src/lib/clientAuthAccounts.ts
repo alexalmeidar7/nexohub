@@ -2,7 +2,6 @@ export interface ClientAccountInfo {
   id: string;
   email: string;
   aliases?: string[];
-  passwords: string[];
   nome: string;
   razaoSocial: string;
   slug: string;
@@ -35,7 +34,6 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     id: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
     email: "alex@nexobrasil.net",
     aliases: ["alex@nexo.com.br", "admin@nexobrasil.net", "alex", "admin", "admin_alex_nexo", "superadmin"],
-    passwords: ["nexo2026", "Nexo@2026", "alex2026", "123456", "12345678", "admin", "admin123", "nexobrasil", "alex", "alex@2026", "Alex@2026", "positiva2026", "interativa2026", "123", "1234"],
     nome: "Alex Almeida",
     razaoSocial: "Nexo Brasil",
     slug: "alex",
@@ -49,7 +47,6 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     id: "d17e65af-e407-466f-9b60-b55c43399513",
     email: "positivafm@positivafm.com.br",
     aliases: ["positiva@positivafm.com.br", "positivafm@gmail.com", "positiva@gmail.com", "positivafm", "positiva", "cli_radio_positiva_fm"],
-    passwords: ["positiva2026", "positiva123", "positivafm", "123456", "12345678", "1234", "123", "Nexo@2026", "nexo2026", "positiva"],
     nome: "Positiva FM 99.1",
     razaoSocial: "RADIO POSITIVA FM LTDA",
     slug: "positivafm",
@@ -74,7 +71,6 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     id: "sub_positiva_opec",
     email: "opec@positivafm.com.br",
     aliases: ["opecpositiva@gmail.com", "opecpositiva"],
-    passwords: ["positivacom", "positiva2026", "opec2026", "positiva123", "123456", "12345678", "1234", "123", "Nexo@2026", "nexo2026", "opec"],
     nome: "OPEC Positiva FM",
     razaoSocial: "RADIO POSITIVA FM LTDA",
     slug: "positivafm",
@@ -100,7 +96,6 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     id: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
     email: "interativafmgynaovivo@gmail.com",
     aliases: ["interativafm@gmail.com", "interativa@interativafm.net", "interativa@interativa.fm", "interativafm", "interativa", "cli_interativa_fm"],
-    passwords: ["interativa2026", "interativa123", "interativafm", "123456", "12345678", "1234", "123", "Nexo@2026", "nexo2026", "interativa"],
     nome: "Interativa FM 94.9",
     razaoSocial: "RADIO INTERATIVA FM LTDA",
     slug: "interativafm",
@@ -125,7 +120,6 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     id: "sub_interativa_opec",
     email: "opec@interativafm.net",
     aliases: ["opec@interativafm.com.br", "opecinterativa@gmail.com", "opecinterativa"],
-    passwords: ["interativacom", "interativa2026", "opec2026", "interativa123", "123456", "12345678", "1234", "123", "Nexo@2026", "nexo2026", "opec"],
     nome: "OPEC Interativa FM",
     razaoSocial: "RADIO INTERATIVA FM LTDA",
     slug: "interativafm",
@@ -151,7 +145,6 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     id: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
     email: "transmissao@jornalfm.com.br",
     aliases: ["jornalfm@jornalfm.com.br", "jornalfm@gmail.com", "transmissao@gmail.com", "jornalfm", "jornal", "cli_jornal_fm"],
-    passwords: ["jornal2026", "jornal123", "transmissao", "jornalfm", "123456", "12345678", "1234", "123", "Nexo@2026", "nexo2026", "jornal"],
     nome: "Jornal FM 96.5",
     razaoSocial: "RADIO JORNAL DE INHUMAS LTDA",
     slug: "transmissao",
@@ -176,7 +169,6 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     id: "66337743-4e4f-4950-b58f-750b0c76861e",
     email: "culturafm973@gmail.com",
     aliases: ["culturafm@gmail.com", "cultura973@gmail.com", "culturafm973", "culturafm", "cultura", "cli_cultura_fm"],
-    passwords: ["cultura2026", "cultura123", "culturafm", "cultura973", "123456", "12345678", "1234", "123", "Nexo@2026", "nexo2026", "cultura"],
     nome: "Cultura FM 97.3",
     razaoSocial: "A3 PRODUCOES E MARKETING LTDA",
     slug: "culturafm973",
@@ -223,18 +215,6 @@ export function findClientAccountById(id?: string | null): ClientAccountInfo | n
         (c.aliases && c.aliases.some((a) => a.toLowerCase() === clean))
     ) || null
   );
-}
-
-export function verifyClientCredentials(email: string, pass: string): ClientAccountInfo | null {
-  const account = findClientAccountByEmail(email);
-  if (!account) return null;
-  const cleanPass = (pass || "").trim();
-  if (!cleanPass) return null;
-  const cleanPassLower = cleanPass.toLowerCase();
-
-  const isDirectMatch = account.passwords.some((p) => p.toLowerCase() === cleanPassLower);
-
-  return isDirectMatch ? account : null;
 }
 
 export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
