@@ -1002,13 +1002,13 @@ export default function HouseMixHeader({
                             type="button"
                             onClick={() => {
                               setOpenDropdown(null);
-                              window.open("https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe", "_blank", "noopener,noreferrer");
+                              handleNavigate("nexoplugins");
                             }}
                             className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
                           >
                             <div className="flex items-center gap-2">
                               <MonitorPlay size={13} className="text-white/70" />
-                              <span>Download Nexo Bridge</span>
+                              <span>Nexo Plugins</span>
                             </div>
                             <ExternalLink size={11} className="text-white/50" />
                           </button>
