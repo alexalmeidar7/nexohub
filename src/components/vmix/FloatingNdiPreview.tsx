@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Maximize2, Minimize2, MonitorPlay, RefreshCw, Settings, X } from "lucide-react";
 
-type VideoDevice = { deviceId: string; label: string };\ntype NdiNetworkSource = { name: string; address: string };
+type VideoDevice = { deviceId: string; label: string };
+type NdiNetworkSource = { name: string; address: string };
 
 export default function FloatingNdiPreview({
   baseUrl: _baseUrl,
@@ -15,9 +16,14 @@ export default function FloatingNdiPreview({
 }) {
   const [visible, setVisible] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [setupOpen, setSetupOpen] = useState(() => {\n    try { return !window.localStorage.getItem("housemix:ndi-preview-device:v1") && !window.localStorage.getItem("housemix:ndi-preview-network-source:v1"); } catch { return true; }\n  });
+  const [setupOpen, setSetupOpen] = useState(() => {
+    try { return !window.localStorage.getItem("housemix:ndi-preview-device:v1") && !window.localStorage.getItem("housemix:ndi-preview-network-source:v1"); } catch { return true; }
+  });
   const [rightOffset, setRightOffset] = useState(16);
-  const [devices, setDevices] = useState<VideoDevice[]>([]);\n  const [networkSources, setNetworkSources] = useState<NdiNetworkSource[]>([]);\n  const [networkDiscoveryMessage, setNetworkDiscoveryMessage] = useState("");\n  const [selectedNetworkSource, setSelectedNetworkSource] = useState(() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } });
+  const [devices, setDevices] = useState<VideoDevice[]>([]);
+  const [networkSources, setNetworkSources] = useState<NdiNetworkSource[]>([]);
+  const [networkDiscoveryMessage, setNetworkDiscoveryMessage] = useState("");
+  const [selectedNetworkSource, setSelectedNetworkSource] = useState(() => { try { return window.localStorage.getItem("housemix:ndi-preview-network-source:v1") || ""; } catch { return ""; } });
   const storageKey = "housemix:ndi-preview-device:v1";
   const [selectedDevice, setSelectedDevice] = useState(() => {
     try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
@@ -75,7 +81,8 @@ export default function FloatingNdiPreview({
           deviceId: device.deviceId,
           label: device.label || "Câmera local " + (index + 1),
         }));
-      setDevices(videoDevices);\n      await refreshNetworkSources();
+      setDevices(videoDevices);
+      await refreshNetworkSources();
       const ndiDevice = videoDevices.find((device) => /ndi webcam input/i.test(device.label));
       const savedDevice = (() => {
         try { return window.localStorage.getItem(storageKey) || ""; } catch { return ""; }
@@ -101,7 +108,8 @@ export default function FloatingNdiPreview({
   };
 
   useEffect(() => {
-    void onRefreshSources?.();\n    void refreshNetworkSources();
+    void onRefreshSources?.();
+    void refreshNetworkSources();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
