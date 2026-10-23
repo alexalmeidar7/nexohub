@@ -79,10 +79,24 @@ const isLocalhostEnvironment = () => {
 const getInitialBackupSession = (): Session | null => {
   try {
     if (typeof window === "undefined") return null;
+    // Remove the legacy client-side role override; roles must come from auth/backend.
+    localStorage.removeItem("nexohub_force_role");
     if (localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
-    const raw = localStorage.getItem('nexohub_backup_session');
+    const raw = localStorage.getItem("nexohub_backup_session");
     if (!raw) return null;
-    return JSON.parse(raw) as Session;
+    const backup = JSON.parse(raw) as Session;
+    const token = backup?.access_token;
+    // Never restore legacy simulated sessions from localStorage.
+    if (
+      typeof token !== "string" ||
+      token.startsWith("client-token-") ||
+      token.startsWith("admin-token-") ||
+      token.startsWith("sim-")
+    ) {
+      localStorage.removeItem("nexohub_backup_session");
+      return null;
+    }
+    return backup;
   } catch {
     return null;
   }
@@ -101,9 +115,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(() => {
     try {
       if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
-      const forceRole = localStorage.getItem("nexohub_force_role");
-      if (forceRole === "admin") return "admin";
-      if (forceRole === "user") return "user";
       const metaRole = initialBackup?.user?.user_metadata?.role as AppRole;
       if (metaRole === "admin" || metaRole === "user") return metaRole;
     } catch {}
@@ -179,11 +190,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
         return "user";
       }
-      try {
-        const forceRole = localStorage.getItem("nexohub_force_role");
-        if (forceRole === "admin") return "admin";
-        if (forceRole === "user") return "user";
-      } catch {}
 
       if (email?.toLowerCase() === "alex@nexobrasil.net") {
         return "admin";
@@ -207,6 +213,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
+
+      if (newSession && isSimulatedAccessToken(newSession.access_token)) {
+        purgeStoredAuth();
+        lastGoodSessionRef.current = null;
+        prevUserIdRef.current = null;
+        setUser(null);
+        setSession(null);
+        setRole(null);
+        finishLoading();
+        return;
+      }
 
       if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
         lastGoodSessionRef.current = null;
