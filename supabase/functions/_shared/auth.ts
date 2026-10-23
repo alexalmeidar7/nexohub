@@ -53,27 +53,40 @@ export async function requireUser(
 export function isPrivateOrLocalUrl(input: string): boolean {
   try {
     const u = new URL(input);
-    const host = u.hostname.toLowerCase();
+    if ((u.protocol !== "http:" && u.protocol !== "https:") || u.username || u.password) return true;
+    let host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     if (!host) return true;
-    if (host === "localhost" || host.endsWith(".localhost")) return true;
-    if (host === "0.0.0.0" || host === "::" || host === "[::]") return true;
-    if (host === "::1" || host === "[::1]") return true;
-    // AWS/GCP/Azure metadata
-    if (host === "169.254.169.254" || host === "metadata.google.internal") return true;
-    // IPv4 private ranges
-    const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-    if (m) {
-      const [a, b] = [parseInt(m[1], 10), parseInt(m[2], 10)];
-      if (a === 10) return true;
-      if (a === 127) return true;
+
+    if (
+      host === "localhost" || host.endsWith(".localhost") ||
+      host.endsWith(".local") || host.endsWith(".internal") ||
+      host === "metadata.google.internal" || host === "metadata" ||
+      host === "0.0.0.0" || host === "::" || host === "::1"
+    ) return true;
+
+    // Block IPv4-mapped IPv6 rather than risk bypassing IPv4 private-range checks.
+    if (host.startsWith("::ffff:")) return true;
+
+    // IPv6 local, link-local, multicast, and unique-local ranges.
+    if (/^(fc|fd)/i.test(host) || /^fe[89ab]/i.test(host) || /^ff/i.test(host)) return true;
+
+    // IPv4 private, loopback, link-local, carrier-grade NAT, and reserved ranges.
+    const match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (match) {
+      const octets = match.slice(1).map(Number);
+      if (octets.some((n) => n < 0 || n > 255)) return true;
+      const [a, b, c] = octets;
+      if (a === 0 || a === 10 || a === 127 || a >= 224) return true;
       if (a === 169 && b === 254) return true;
       if (a === 172 && b >= 16 && b <= 31) return true;
       if (a === 192 && b === 168) return true;
-      if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-      if (a === 0) return true;
+      if (a === 100 && b >= 64 && b <= 127) return true;
+      if (a === 192 && b === 0 && c === 0) return true;
+      if (a === 198 && (b === 18 || b === 19)) return true;
+      if (a === 192 && b === 0 && c === 2) return true;
+      if (a === 198 && b === 51 && c === 100) return true;
+      if (a === 203 && b === 0 && c === 113) return true;
     }
-    // IPv6 unique local / link local
-    if (host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80")) return true;
     return false;
   } catch {
     return true;
