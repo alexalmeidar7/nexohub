@@ -1680,7 +1680,6 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
 
 
 
-              {!isAdmin && currentPage === "nexoplugins" && <NexoPluginsPage />}
               {!isAdmin && currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "financeiro" && <FinanceiroSuperAdminPage />}
               {isAdmin && currentPage === "chatbot" && <ChatbotHome />}
@@ -1974,6 +1973,31 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           {/* end max-w wrapper */}
           </div>
         </div>
+
+        {/* House Mix Window Mode - Nexo Plugins */}
+        {!isAdmin && (currentPage === "nexoplugins" || (minimizedModules.includes("nexoplugins") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – NEXO PLUGINS"
+            wide
+            isOpen={currentPage === "nexoplugins"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "nexoplugins"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("nexoplugins")) return prev;
+                return [...prev, "nexoplugins"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
+              <NexoPluginsPage />
+            </Suspense>
+          </HouseMixWindow>
+        )}
 
         {/* House Mix Window Mode - Cadastro de Clientes */}
         {!isAdmin && (currentPage === "clientes" || (minimizedModules.includes("clientes") && (currentPage === "dashboard" || isWindowMode))) && (

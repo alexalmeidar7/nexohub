@@ -106,48 +106,52 @@ export default function NexoPluginsPage() {
         </p>
       </header>
 
-      <article className="flex flex-col gap-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:flex-row sm:items-center sm:p-6">
-        <div
-          aria-label="Logo Nexo Bridge"
-          className="flex h-32 w-32 shrink-0 items-center justify-center self-center sm:self-auto"
-        >
+      <article className="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:flex-row sm:items-center sm:gap-7 sm:p-6">
+        <div className="mx-auto w-36 shrink-0 overflow-hidden rounded-[1.65rem] bg-[#0645d5] shadow-sm sm:mx-0 sm:w-40">
           <img
-            src="/nexo-bridge-mark.svg"
-            alt="Nexo Bridge"
-            className="h-full w-full object-contain"
+            src="/nexo-bridge-cover.svg"
+            alt="Capa do aplicativo Nexo Bridge"
+            className="block aspect-square h-auto w-full object-cover"
           />
         </div>
 
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-slate-900">Nexo Bridge</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Ponte de conexão entre o House Mix e o vMix.
-          </p>
-          <div className="mt-4 space-y-1.5 text-sm text-slate-600">
-            <p><strong className="text-slate-800">Versão:</strong> {details.version}</p>
-            <p><strong className="text-slate-800">Última atualização:</strong> {formatDate(details.updatedAt)}</p>
-            <p><strong className="text-slate-800">Tamanho:</strong> {formatSize(details.sizeBytes)}</p>
+          <div className="mb-3">
+            <h2 className="text-xl font-bold leading-tight tracking-tight text-slate-900">Nexo Bridge</h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              Ponte de conexão entre o House Mix e o vMix.
+            </p>
           </div>
+
+          <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[max-content_1fr]">
+            <dt className="font-semibold text-slate-800">Versão</dt>
+            <dd className="text-slate-600">{details.version}</dd>
+            <dt className="font-semibold text-slate-800">Última atualização</dt>
+            <dd className="text-slate-600">{formatDate(details.updatedAt)}</dd>
+            <dt className="font-semibold text-slate-800">Tamanho</dt>
+            <dd className="text-slate-600">{formatSize(details.sizeBytes)}</dd>
+          </dl>
+
           <div className="mt-4">
             {details.available ? (
               <a
                 href={details.downloadUrl}
                 download="NexoHubBridge.exe"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#0055ff] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0046d5] active:scale-[0.98]"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#0055ff] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0046d5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0055ff] focus-visible:ring-offset-2 active:scale-[0.98]"
               >
-                <Download size={16} /> Download
+                <Download size={17} /> Download
               </a>
             ) : (
               <button
                 type="button"
                 disabled
-                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-[#0055ff]/40 px-6 py-2.5 text-sm font-semibold text-white"
               >
-                <Download size={16} /> {checking ? "Verificando..." : "Download indisponível"}
+                <Download size={17} /> {checking ? "Verificando..." : "Download indisponível"}
               </button>
             )}
           </div>
-          <p className={`mt-2 text-xs font-medium ${details.available ? "text-emerald-700" : "text-amber-700"}`}>
+          <p className={`mt-2 text-xs leading-relaxed ${details.available ? "text-emerald-700" : "text-amber-700"}`}>
             {details.available
               ? "Executável disponível para download."
               : checking
