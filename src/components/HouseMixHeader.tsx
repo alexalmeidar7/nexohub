@@ -1004,13 +1004,10 @@ export default function HouseMixHeader({
                               setOpenDropdown(null);
                               handleNavigate("nexoplugins");
                             }}
-                            className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
+                            className="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 text-white/85 hover:bg-[#0055ff] hover:text-white cursor-pointer select-none active:bg-[#002680] transition-colors duration-75 ease-out"
                           >
-                            <div className="flex items-center gap-2">
-                              <MonitorPlay size={13} className="text-white/70" />
-                              <span>Nexo Plugins</span>
-                            </div>
-                            <ExternalLink size={11} className="text-white/50" />
+                            <MonitorPlay size={13} className="text-white/70" />
+                            <span>Nexo Plugins</span>
                           </button>
                         </div>
                       </div>
