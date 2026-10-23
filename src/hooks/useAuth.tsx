@@ -244,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // (broker do preview, outra aba, cache) até um novo login de fato.
       // Um novo login bem-sucedido sempre cancela o bloqueio de logout,
       // independente da tela usada (player, Google, TP, vMix...).
-      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+      if (event === "SIGNED_IN" && session) {
         clearSignOutFlag();
       }
 
