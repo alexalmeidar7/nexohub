@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
+using System.Text.Json;\nusing System.Diagnostics;
 
 namespace NexoHubBridge;
 internal sealed class BridgeConfig {
@@ -13,11 +13,13 @@ internal sealed class BridgeConfig {
 internal sealed record BridgeJob(string Id,string Path,string Method,JsonElement? Body);
 internal sealed record PollResponse(BridgeJob? Job);
 internal sealed record PairResponse(string Token);
+internal sealed record BridgeUpdateManifest(string Version,string DownloadUrl);
+
 internal static class Program {
  static readonly JsonSerializerOptions JsonOptions=new(){PropertyNameCaseInsensitive=true};
- static readonly string ConfigPath=Path.Combine(AppContext.BaseDirectory,"appsettings.json");
+ static readonly string ConfigPath=Path.Combine(AppContext.BaseDirectory,"appsettings.json");\n static readonly Version CurrentVersion=typeof(Program).Assembly.GetName().Version ?? new Version(1,0,0);\n static readonly Uri UpdateManifestUri=new("https://housemix.nexobrasil.net/downloads/nexohub-bridge/latest.json");
  public static async Task<int> Main() {
-  Console.Title="NexoHub Bridge"; Console.WriteLine("NexoHub Bridge - conector local do vMix e descoberta NDI");
+  Console.Title="NexoHub Bridge"; Console.WriteLine($"NexoHub Bridge v{CurrentVersion} - conector local do vMix e descoberta NDI");\n  await CheckForUpdatesAsync();
   using var stop=new CancellationTokenSource();
   Console.CancelKeyPress+=(_,e)=>{e.Cancel=true;stop.Cancel();};
   _ = Task.Run(async () => {
@@ -58,7 +60,26 @@ internal static class Program {
   try { await Task.Delay(Timeout.Infinite, stop.Token); } catch (OperationCanceledException) { }
   return 0;
  }
- static async Task<BridgeConfig> LoadConfigAsync() {
+
+ static async Task CheckForUpdatesAsync() {
+  try {
+   using var http=new HttpClient{Timeout=TimeSpan.FromSeconds(8)};
+   http.DefaultRequestHeaders.UserAgent.ParseAdd("NexoHubBridge-Updater");
+   var manifest=await http.GetFromJsonAsync<BridgeUpdateManifest>(UpdateManifestUri);
+   if(manifest is null||!Version.TryParse(manifest.Version,out var latest)||latest<=CurrentVersion||!Uri.TryCreate(manifest.DownloadUrl,UriKind.Absolute,out var download)||download.Scheme!="https")return;
+   Console.WriteLine($"Nova versão disponível: {latest}. Baixando atualização...");
+   var tempExe=Path.Combine(Path.GetTempPath(),$"NexoHubBridge-{Guid.NewGuid():N}.exe");
+   await using(var stream=await http.GetStreamAsync(download)) await using(var output=File.Create(tempExe)) await stream.CopyToAsync(output);
+   var currentExe=Environment.ProcessPath;
+   if(string.IsNullOrWhiteSpace(currentExe)||!File.Exists(currentExe)){File.Delete(tempExe);return;}
+   var script=Path.Combine(Path.GetTempPath(),$"NexoHubBridge-update-{Guid.NewGuid():N}.cmd");
+   var content=$"@echo off\r\ntimeout /t 2 /nobreak >nul\r\ncopy /Y \"{tempExe}\" \"{currentExe}\" >nul\r\nif errorlevel 1 exit /b 1\r\nstart \"\" \"{currentExe}\"\r\ndel \"{tempExe}\"\r\ndel \"%~f0\"\r\n";
+   await File.WriteAllTextAsync(script,content,Encoding.Default);
+   Process.Start(new ProcessStartInfo("cmd.exe",$"/c \"{script}\""){UseShellExecute=false,CreateNoWindow=true});
+   Environment.Exit(0);
+  } catch(Exception ex) { Console.WriteLine($"Atualização automática indisponível; mantendo v{CurrentVersion}: {ex.Message}"); }
+ }
+\n static async Task<BridgeConfig> LoadConfigAsync() {
   if(!File.Exists(ConfigPath)){await SaveAsync(new BridgeConfig());throw new InvalidOperationException("Criei appsettings.json. Edite PairingCode com o código gerado pelo NexoHub e execute novamente.");}
   return JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(ConfigPath),JsonOptions)??new BridgeConfig();
  }
