@@ -23,6 +23,18 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build NexoHub Bridge (Windows x64)
+        run: |
+          mkdir -p dist/downloads/nexohub-bridge
+          dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist/downloads/nexohub-bridge
+          printf '{"version":"1.1.0","downloadUrl":"https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"}' > dist/downloads/nexohub-bridge/latest.json
+
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
