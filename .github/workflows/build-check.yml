@@ -20,8 +20,20 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - name: Instalar dependências
-        run: bun install
+      - name: Instalar dependências (retry para limites temporários do registry)
+        shell: bash
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3 4; do
+            if bun install; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              sleep $((attempt * 15))
+            fi
+          done
+          echo "::error::bun install falhou após 4 tentativas; verifique disponibilidade ou rate limit do registry."
+          exit 1
 
       - name: Verificar tipos (erros de sintaxe e JSX)
         run: bunx --bun -p @typescript/native-preview tsgo -p tsconfig.app.json --noEmit
