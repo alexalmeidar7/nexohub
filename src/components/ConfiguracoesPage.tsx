@@ -211,25 +211,7 @@ export default function ConfiguracoesPage({
 }) {
   const { user, role } = useAuth();
   const targetUid = effectiveUserId || user?.id;
-  const isLocal = typeof window !== "undefined" && (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "[::1]" ||
-    window.location.hostname.startsWith("192.168.") ||
-    window.location.hostname.startsWith("10.")
-  );
-  let forceRole: string | null = null;
-  try {
-    forceRole = localStorage.getItem("nexohub_force_role");
-  } catch {}
-
-  const isEffectiveAdmin = forceRole === "admin" || (
-    forceRole !== "user" && (
-      role === "admin" ||
-      isLocal ||
-      user?.email?.toLowerCase() === "alex@nexobrasil.net"
-    )
-  );
+  const isEffectiveAdmin = role === "admin";
   const isAdmin = isSuperAdmin ?? isEffectiveAdmin;
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
   const configRef = useRef<EmpresaConfig>(config);
