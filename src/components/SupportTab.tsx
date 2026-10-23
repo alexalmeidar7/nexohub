@@ -30,7 +30,7 @@ interface SupportTabProps {
 
 export default function SupportTab({ userId, clientAcc }: SupportTabProps) {
   const { user, role } = useAuth();
-  const isSuperAdmin = role === "admin" || user?.email === "alex@nexobrasil.net";
+  const isSuperAdmin = role === "admin";
   const clientEmail = clientAcc?.email || user?.email || "";
   const clientName = clientAcc?.nome || user?.email?.split("@")[0] || "Emissora";
   const effectiveId = userId || clientAcc?.id || user?.id || "";
