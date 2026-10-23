@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
-import { verifyClientCredentials } from "@/lib/clientAuthAccounts";
 
 const AUTH_TIMEOUT_MS = 12000;
 const MAX_RETRIES = 3;
@@ -192,60 +191,7 @@ export default function LoginScreen() {
       localStorage.removeItem(REMEMBERED_USER_KEY);
     }
 
-    const clientAccount = verifyClientCredentials(email.trim(), pass);
-
     const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
-
-    // IMPORTANTE: sempre tentamos a autenticação real primeiro. Uma sessão
-    // simulada (client-token-*) não tem JWT válido, então qualquer gravação no
-    // banco é recusada pelas políticas de segurança (ex.: cadastro de programa).
-    if (clientAccount) {
-      try {
-        const { data: realData } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
-        if (realData?.session) {
-          localStorage.setItem("nexohub_backup_session", JSON.stringify(realData.session));
-          localStorage.setItem(KEEP_CONNECTED_KEY, "true");
-          localStorage.removeItem("nexohub_force_role");
-          localStorage.removeItem("nexohub_explicit_logout");
-          window.location.replace("/home");
-          return;
-        }
-      } catch {
-        /* sem conexão ou credencial diferente no banco — segue para sessão local */
-      }
-    }
-
-    if (clientAccount) {
-      const targetRole = (clientAccount.isAdmin || clientAccount.email.toLowerCase() === "alex@nexobrasil.net") ? "admin" : "user";
-      const clientSession = {
-        access_token: (targetRole === "admin" ? "admin-token-" : "client-token-") + clientAccount.id,
-        refresh_token: (targetRole === "admin" ? "admin-refresh-" : "client-refresh-") + clientAccount.id,
-        expires_in: 3600 * 24 * 30,
-        expires_at: Math.floor(Date.now() / 1000) + 3600 * 24 * 30,
-        token_type: "bearer",
-        user: {
-          id: clientAccount.id,
-          app_metadata: { provider: "email", providers: ["email"] },
-          user_metadata: {
-            nome: clientAccount.nome,
-            razao_social: clientAccount.razaoSocial,
-            slug: clientAccount.slug,
-            cidade: clientAccount.cidade,
-            role: targetRole,
-          },
-          aud: "authenticated",
-          created_at: new Date().toISOString(),
-          email: clientAccount.email,
-        }
-      };
-      localStorage.setItem("nexohub_backup_session", JSON.stringify(clientSession));
-      localStorage.setItem(KEEP_CONNECTED_KEY, "true");
-      localStorage.setItem("nexohub_force_role", targetRole);
-      localStorage.removeItem("nexohub_explicit_logout");
-      window.location.replace("/home");
-      return;
-    }
-
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
