@@ -233,10 +233,8 @@ export function verifyClientCredentials(email: string, pass: string): ClientAcco
   const cleanPassLower = cleanPass.toLowerCase();
 
   const isDirectMatch = account.passwords.some((p) => p.toLowerCase() === cleanPassLower);
-  const isCommonMatch = ["123", "1234", "123456", "12345678", "nexo2026", "nexo@2026", "admin", "admin123"].includes(cleanPassLower);
-  const isFlexMatch = cleanPass.length >= 2; // Flexible login for ease of development/testing
 
-  return (isDirectMatch || isCommonMatch || isFlexMatch) ? account : null;
+  return isDirectMatch ? account : null;
 }
 
 export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
