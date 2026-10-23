@@ -244,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // (broker do preview, outra aba, cache) até um novo login de fato.
       // Um novo login bem-sucedido sempre cancela o bloqueio de logout,
       // independente da tela usada (player, Google, TP, vMix...).
-      if (event === "SIGNED_IN" && session) {
+      if (event === "SIGNED_IN" && session && !isSimulatedAccessToken(session.access_token)) {
         clearSignOutFlag();
       }
 
@@ -255,7 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         void updateAuth(null);
         return;
       }
-      if (event === "SIGNED_IN" && session) {
+      if (event === "SIGNED_IN" && session && !isSimulatedAccessToken(session.access_token)) {
         manualSignOutRef.current = false;
       }
 
@@ -297,7 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
+      if ((event === "TOKEN_REFRESHED" || event === "SIGNED_IN") && !isSimulatedAccessToken(session?.access_token)) {
         lastGoodSessionRef.current = session;
         if (session) {
           try {
@@ -327,8 +327,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (lastGoodSessionRef.current?.access_token) {
               const isSim = isSimulatedAccessToken(lastGoodSessionRef.current.access_token);
               if (isSim) {
-                console.log("Auth: Restored simulated client/admin session on start.");
-                void updateAuth(lastGoodSessionRef.current);
+                console.warn("Auth: rejecting simulated backup session on start.");
+                purgeStoredAuth();
+                lastGoodSessionRef.current = null;
+                void updateAuth(null);
                 return;
               }
 
