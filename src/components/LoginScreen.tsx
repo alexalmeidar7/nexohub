@@ -212,7 +212,11 @@ export default function LoginScreen() {
           localStorage.setItem("nexohub_backup_session", JSON.stringify(data.session));
           localStorage.setItem(KEEP_CONNECTED_KEY, "true");
           localStorage.removeItem("nexohub_explicit_logout");
-          window.location.replace("/home");
+          if (import.meta.env.BASE_URL === "./") {
+            window.location.hash = "#/home";
+          } else {
+            window.location.replace("/home");
+          }
           return;
         }
         break;
