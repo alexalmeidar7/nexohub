@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (isPrivateOrLocalUrl(vmixBaseUrl)) {
       const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       const { data: bridge, error: bridgeError } = await admin.from("vmix_bridge_devices")
-        .select("id").eq("user_id", userId).is("revoked_at", null)
+        .select("id").eq("user_id", userId).eq("revoked", false)
         .gte("last_seen_at", new Date(Date.now() - 45000).toISOString())
         .order("last_seen_at", { ascending: false }).limit(1).maybeSingle();
       if (bridgeError) throw bridgeError;
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
         if (value) params.set("Value", String(value));
         const { data: job, error: queueError } = await admin.from("vmix_bridge_jobs").insert({
           device_id: bridge.id, user_id: userId, path: `/api/?${params.toString()}`, method: "GET",
-          expires_at: new Date(Date.now() + 20000).toISOString(),
+          status: "pending",
         }).select("id").single();
         if (queueError || !job) throw queueError || new Error("Could not queue Bridge command");
 
@@ -108,15 +108,18 @@ Deno.serve(async (req) => {
         while (Date.now() < deadline) {
           await new Promise((resolve) => setTimeout(resolve, 250));
           const { data: current, error: readError } = await admin.from("vmix_bridge_jobs")
-            .select("status,result").eq("id", job.id).eq("user_id", userId).maybeSingle();
+            .select("status,result_status,result_body").eq("id", job.id).eq("user_id", userId).maybeSingle();
           if (readError) throw readError;
-          if (current && (current.status === "completed" || current.status === "failed")) { completed = current; break; }
+          if (current && (current.status === "succeeded" || current.status === "failed")) { completed = current; break; }
         }
         if (!completed) {
-          await admin.from("vmix_bridge_jobs").update({ status: "expired" }).eq("id", job.id).eq("status", "queued");
+          await admin.from("vmix_bridge_jobs").update({
+            status: "failed", result_status: 504, result_body: "Timed out waiting for NexoHub Bridge.",
+            completed_at: new Date().toISOString(),
+          }).eq("id", job.id).eq("status", "pending");
           results.push({ fn, status: 504, ok: false });
         } else {
-          results.push({ fn, status: Number(completed.result?.statusCode || 0), ok: completed.status === "completed" && completed.result?.success === true });
+          results.push({ fn, status: Number(completed.result_status || 0), ok: completed.status === "succeeded" });
         }
         if (commands.indexOf(cmd) < commands.length - 1) await new Promise((resolve) => setTimeout(resolve, 400));
       }
@@ -155,6 +158,7 @@ Deno.serve(async (req) => {
           method: "GET",
           headers: fetchHeaders,
           signal: AbortSignal.timeout(10000),
+          redirect: "manual",
         });
         results.push({ fn, status: response.status, ok: response.ok });
       } catch (err) {
