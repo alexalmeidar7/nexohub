@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
   try {
-    const token = (req.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "").trim();
+    const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
     const url = Deno.env.get("SUPABASE_URL");
     const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!token || !url || !service) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
