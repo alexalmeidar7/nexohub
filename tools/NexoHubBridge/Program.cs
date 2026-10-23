@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Reflection;
+using System.Security.Cryptography;
 
 namespace NexoHubBridge;
 
@@ -26,6 +27,7 @@ internal sealed class BridgeConfig
 internal sealed record BridgeJob(string Id, string Path, string Method, JsonElement? Body);
 internal sealed record PollResponse(BridgeJob? Job);
 internal sealed record PairResponse(string Token);
+internal sealed record BridgeUpdateManifest(string Version, string DownloadUrl, string Sha256);
 
 internal static class Program
 {
@@ -41,6 +43,9 @@ internal static class Program
 
 internal sealed class BridgeForm : Form
 {
+    private static readonly Version CurrentVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
+    private static readonly Uri UpdateManifestUri = new("https://housemix.nexobrasil.net/downloads/nexohub-bridge/latest.json");
+
     private readonly string _configPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NexoBrasil", "NexoHubBridge", "appsettings.json");
     private readonly TextBox _device = new();
@@ -65,7 +70,7 @@ internal sealed class BridgeForm : Form
 
     public BridgeForm(bool startHidden)
     {
-        Text = "NexoHub Bridge";
+        Text = $"NexoHub Bridge v{CurrentVersion}";
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.None;
         MinimumSize = new Size(750, 390);
@@ -85,7 +90,7 @@ internal sealed class BridgeForm : Form
     {
         // Explicit positions prevent the body panel from covering the logo.
         var titleBar = new Panel { Location = new Point(0, 0), Size = new Size(750, 36), BackColor = Color.FromArgb(0, 77, 255) };
-        var title = new Label { Text = "Nexo Brasil - Soluções visuais - Nexo Bridge", ForeColor = Color.White, Font = new Font("Segoe UI", 9F), AutoSize = true, Location = new Point(15, 10), BackColor = Color.Transparent };
+        var title = new Label { Text = $"Nexo Brasil - Soluções visuais - Nexo Bridge v{CurrentVersion}", ForeColor = Color.White, Font = new Font("Segoe UI", 9F), AutoSize = true, Location = new Point(15, 10), BackColor = Color.Transparent };
         var minimizeWindow = new Button { Text = "—", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Segoe UI", 12F), Size = new Size(30, 30), Location = new Point(680, 3), TabStop = false, Cursor = Cursors.Hand };
         minimizeWindow.FlatAppearance.BorderSize = 0; minimizeWindow.Click += (_, _) => HideToTray();
         var closeWindow = new Button { Text = "×", FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(0, 77, 255), Font = new Font("Segoe UI", 16F), Size = new Size(30, 30), Location = new Point(710, 3), TabStop = false, Cursor = Cursors.Hand };
@@ -179,6 +184,11 @@ internal sealed class BridgeForm : Form
     {
         try
         {
+            if (await CheckForUpdatesAsync())
+            {
+                ExitApplication();
+                return;
+            }
             Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
             if (File.Exists(_configPath))
                 _config = JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(_configPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new BridgeConfig();
@@ -196,6 +206,117 @@ internal sealed class BridgeForm : Form
         }
         catch (Exception ex) { SetStatus("Não foi possível iniciar", ex.Message, Color.Firebrick); }
     }
+
+
+    private async Task<bool> CheckForUpdatesAsync()
+    {
+        string? tempExe = null;
+        string? scriptPath = null;
+        try
+        {
+            using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+            using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(60) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd($"NexoHubBridge-Updater/{CurrentVersion}");
+
+            using var manifestResponse = await http.GetAsync(UpdateManifestUri, HttpCompletionOption.ResponseHeadersRead);
+            if ((int)manifestResponse.StatusCode != 200) return false;
+            var manifest = await manifestResponse.Content.ReadFromJsonAsync<BridgeUpdateManifest>(
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (manifest is null ||
+                !Version.TryParse(manifest.Version, out var latest) ||
+                latest <= CurrentVersion ||
+                string.IsNullOrWhiteSpace(manifest.Sha256) ||
+                manifest.Sha256.Length != 64 ||
+                !manifest.Sha256.All(Uri.IsHexDigit) ||
+                !Uri.TryCreate(manifest.DownloadUrl, UriKind.Absolute, out var download) ||
+                !IsAllowedUpdateUri(download))
+                return false;
+
+            using var downloadResponse = await http.GetAsync(download, HttpCompletionOption.ResponseHeadersRead);
+            if ((int)downloadResponse.StatusCode != 200) return false;
+            if (downloadResponse.Content.Headers.ContentLength is > 150_000_000) return false;
+
+            tempExe = Path.Combine(Path.GetTempPath(), $"NexoHubBridge-{Guid.NewGuid():N}.exe");
+            await using (var source = await downloadResponse.Content.ReadAsStreamAsync())
+            await using (var destination = new FileStream(tempExe, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true))
+            {
+                await source.CopyToAsync(destination);
+                await destination.FlushAsync();
+            }
+
+            await using var verifyStream = File.OpenRead(tempExe);
+            var actualHash = Convert.ToHexString(await SHA256.HashDataAsync(verifyStream));
+            if (!string.Equals(actualHash, manifest.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                File.Delete(tempExe);
+                return false;
+            }
+
+            var currentExe = Application.ExecutablePath;
+            if (string.IsNullOrWhiteSpace(currentExe) || !File.Exists(currentExe))
+            {
+                File.Delete(tempExe);
+                return false;
+            }
+
+            static string PsQuote(string value) => "'" + value.Replace("'", "''") + "'";
+            scriptPath = Path.Combine(Path.GetTempPath(), $"NexoHubBridge-update-{Guid.NewGuid():N}.ps1");
+            var script = string.Join(Environment.NewLine, new[]
+            {
+                "$ErrorActionPreference = 'Stop'",
+                "Start-Sleep -Seconds 2",
+                $"$current = {PsQuote(currentExe)}",
+                $"$download = {PsQuote(tempExe)}",
+                $"$expected = {PsQuote(actualHash)}",
+                "$backup = $current + '.previous'",
+                "try {",
+                "  Copy-Item -LiteralPath $current -Destination $backup -Force",
+                "  Copy-Item -LiteralPath $download -Destination $current -Force",
+                "  $installed = (Get-FileHash -LiteralPath $current -Algorithm SHA256).Hash",
+                "  if ($installed -ne $expected) { throw 'SHA-256 mismatch after replacement' }",
+                "  Start-Process -FilePath $current",
+                "  Remove-Item -LiteralPath $backup -Force -ErrorAction SilentlyContinue",
+                "} catch {",
+                "  if (Test-Path -LiteralPath $backup) { Copy-Item -LiteralPath $backup -Destination $current -Force; Start-Process -FilePath $current }",
+                "  exit 1",
+                "} finally {",
+                "  Remove-Item -LiteralPath $download -Force -ErrorAction SilentlyContinue",
+                "  Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue",
+                "}"
+            }) + Environment.NewLine;
+            await File.WriteAllTextAsync(scriptPath, script, new System.Text.UTF8Encoding(false));
+
+            var startInfo = new ProcessStartInfo("powershell.exe")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-NonInteractive");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(scriptPath);
+            if (Process.Start(startInfo) is null) throw new InvalidOperationException("Não foi possível iniciar o atualizador.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Atualização automática indisponível; mantendo v{CurrentVersion}: {ex.Message}");
+            try { if (tempExe is not null && File.Exists(tempExe)) File.Delete(tempExe); } catch { }
+            try { if (scriptPath is not null && File.Exists(scriptPath)) File.Delete(scriptPath); } catch { }
+            return false;
+        }
+    }
+
+    private static bool IsAllowedUpdateUri(Uri uri) =>
+        uri.Scheme == Uri.UriSchemeHttps &&
+        string.Equals(uri.Host, "housemix.nexobrasil.net", StringComparison.OrdinalIgnoreCase) &&
+        uri.Port == 443 &&
+        string.IsNullOrEmpty(uri.UserInfo) &&
+        string.IsNullOrEmpty(uri.Query) &&
+        string.IsNullOrEmpty(uri.Fragment) &&
+        string.Equals(uri.AbsolutePath, "/downloads/nexohub-bridge/NexoHubBridge.exe", StringComparison.Ordinal);
 
     private void FillFields()
     {
