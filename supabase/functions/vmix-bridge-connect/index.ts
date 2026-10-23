@@ -35,15 +35,17 @@ Deno.serve(async (req) => {
     if (error) throw error;
     if (!pairing) return new Response(JSON.stringify({ error: "Pairing code invalid, expired, or already used" }), { status: 401, headers });
 
-    // Conditional consumption prevents two concurrent requests from using the same code.
+    // Re-check expiry at the atomic consume step so a code cannot be paired after its deadline.
+    const consumedAt = new Date().toISOString();
     const { data: consumed, error: consumeError } = await admin.from("vmix_bridge_pairings")
-      .update({ used_at: now })
+      .update({ used_at: consumedAt })
       .eq("id", pairing.id)
       .is("used_at", null)
+      .gt("expires_at", consumedAt)
       .select("id")
       .maybeSingle();
     if (consumeError) throw consumeError;
-    if (!consumed) return new Response(JSON.stringify({ error: "Pairing code already used; generate a new code" }), { status: 409, headers });
+    if (!consumed) return new Response(JSON.stringify({ error: "Pairing code expired or already used; generate a new code" }), { status: 409, headers });
 
     const token = randomToken();
     const { error: deviceError } = await admin.from("vmix_bridge_devices").insert({
