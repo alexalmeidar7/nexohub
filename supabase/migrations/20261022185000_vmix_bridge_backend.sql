@@ -70,11 +70,13 @@ create table if not exists public.vmix_bridge_jobs (
   result_body text,
   created_at timestamptz not null default now(),
   started_at timestamptz,
-  completed_at timestamptz
+  completed_at timestamptz,
+  expires_at timestamptz not null default (now() + interval '30 seconds')
 );
 alter table public.vmix_bridge_jobs add column if not exists result_status integer;
 alter table public.vmix_bridge_jobs add column if not exists result_body text;
 alter table public.vmix_bridge_jobs add column if not exists started_at timestamptz;
+alter table public.vmix_bridge_jobs add column if not exists expires_at timestamptz not null default (now() + interval '30 seconds');
 
 -- Normalize legacy statuses while retaining all job rows and legacy result/expiry columns.
 alter table public.vmix_bridge_jobs drop constraint if exists vmix_bridge_jobs_status_check;
