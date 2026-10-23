@@ -35,4 +35,4 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Compilar NexoHub Bridge para Windows
-        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o /tmp/nexohub-bridge
+        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableWindowsTargeting=true -o /tmp/nexohub-bridge
