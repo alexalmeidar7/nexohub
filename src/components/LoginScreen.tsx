@@ -95,7 +95,7 @@ const inputStyle: React.CSSProperties = {
   padding: "0 14px",
   fontFamily: FONT_FAMILY,
   fontSize: 13,
-  color: "#fff",
+  color: "#17243A",
   outline: "none",
   transition: "all 0.2s ease",
 };
@@ -329,6 +329,7 @@ export default function LoginScreen() {
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = "#344664";
                   e.currentTarget.style.backgroundColor = "#E7EEFF";
+                  e.currentTarget.style.color = "#17243A";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -351,7 +352,8 @@ export default function LoginScreen() {
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = "rgba(226, 232, 240, 0.9)";
-                  e.currentTarget.style.backgroundColor = "#ededed";
+                  e.currentTarget.style.backgroundColor = "#E7EEFF";
+                  e.currentTarget.style.color = "#17243A";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
