@@ -24,14 +24,29 @@ Deno.serve(async (req) => {
     if (error) throw error;
     if (!device) return new Response(JSON.stringify({ error: "Invalid or revoked Bridge token" }), { status: 401, headers });
 
+    const now = new Date().toISOString();
     const { error: heartbeatError } = await admin.from("vmix_bridge_devices")
-      .update({ last_seen_at: new Date().toISOString() }).eq("id", device.id);
+      .update({ last_seen_at: now }).eq("id", device.id);
     if (heartbeatError) throw heartbeatError;
+
+    // Expire commands that were not claimed before their deadline.
+    const { error: expiryError } = await admin.from("vmix_bridge_jobs")
+      .update({
+        status: "failed",
+        result_status: 504,
+        result_body: "Command expired before execution.",
+        completed_at: now,
+      })
+      .eq("device_id", device.id)
+      .eq("status", "pending")
+      .lte("expires_at", now);
+    if (expiryError) throw expiryError;
 
     const { data: job, error: jobError } = await admin.from("vmix_bridge_jobs")
       .select("id,path,method,body")
       .eq("device_id", device.id)
       .eq("status", "pending")
+      .gt("expires_at", now)
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
@@ -44,6 +59,7 @@ Deno.serve(async (req) => {
       .eq("id", job.id)
       .eq("device_id", device.id)
       .eq("status", "pending")
+      .gt("expires_at", new Date().toISOString())
       .select("id,path,method,body")
       .maybeSingle();
     if (claimError) throw claimError;
