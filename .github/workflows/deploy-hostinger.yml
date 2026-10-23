@@ -28,10 +28,14 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Install ImageMagick for application icon
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
       - name: Build NexoHub Bridge (Windows x64)
         run: |
           mkdir -p dist/downloads/nexohub-bridge
-          dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist/downloads/nexohub-bridge
+          magick src/assets/logo-nexo.png -background none -gravity center -resize 256x256 -extent 256x256 -define icon:auto-resize=256,128,64,48,32,16 tools/NexoHubBridge/bridge.ico
+          dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:ApplicationIcon=tools/NexoHubBridge/bridge.ico -o dist/downloads/nexohub-bridge
           printf '{"version":"1.1.0","downloadUrl":"https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"}' > dist/downloads/nexohub-bridge/latest.json
 
 
