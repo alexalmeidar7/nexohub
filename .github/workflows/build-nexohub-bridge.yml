@@ -20,8 +20,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: "8.0.x" }
+      - name: Generate Windows application icon
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $source = [System.Drawing.Image]::FromFile("$PWD/src/assets/logo-nexo.png")
+          $bitmap = New-Object System.Drawing.Bitmap 256,256
+          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+          $graphics.Clear([System.Drawing.Color]::Transparent)
+          $graphics.DrawImage($source,0,0,256,256)
+          $icon = [System.Drawing.Icon]::FromHandle($bitmap.GetHicon())
+          $stream = [System.IO.File]::Create("$PWD/tools/NexoHubBridge/bridge.ico")
+          $icon.Save($stream)
+          $stream.Dispose()
+          $icon.Dispose()
+          $graphics.Dispose()
+          $bitmap.Dispose()
+          $source.Dispose()
       - name: Publish standalone Windows executable
-        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/NexoHubBridge
+        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:ApplicationIcon=tools/NexoHubBridge/bridge.ico -o artifacts/NexoHubBridge
       - name: Add configuration template and guide
         shell: pwsh
         run: |
