@@ -107,25 +107,16 @@ export default function NexoPluginsPage() {
       </header>
 
       <article className="flex flex-col gap-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:flex-row sm:items-center sm:p-6">
-        {details.available ? (
-          <a
-            href={details.downloadUrl}
-            download="NexoHubBridge.exe"
-            aria-label="Baixar Nexo Bridge para Windows"
-            className="flex h-32 w-32 shrink-0 flex-col items-center justify-center gap-3 self-center rounded-[24px] bg-[#0055ff] text-white transition hover:bg-[#0046d5] active:scale-[0.98] sm:self-auto"
-          >
-            <Download size={32} strokeWidth={2.2} />
-            <span className="text-sm font-bold">Nexo Bridge</span>
-          </a>
-        ) : (
-          <div
-            aria-label="Download do Nexo Bridge indisponível"
-            className="flex h-32 w-32 shrink-0 flex-col items-center justify-center gap-3 self-center rounded-[24px] bg-slate-200 text-slate-500 sm:self-auto"
-          >
-            <Download size={32} strokeWidth={2.2} />
-            <span className="text-sm font-bold">Nexo Bridge</span>
-          </div>
-        )}
+        <div
+          aria-label="Logo Nexo Bridge"
+          className="flex h-32 w-32 shrink-0 items-center justify-center self-center sm:self-auto"
+        >
+          <img
+            src="/nexo-bridge-mark.svg"
+            alt="Nexo Bridge"
+            className="h-full w-full object-contain"
+          />
+        </div>
 
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-bold text-slate-900">Nexo Bridge</h2>
@@ -137,7 +128,26 @@ export default function NexoPluginsPage() {
             <p><strong className="text-slate-800">Última atualização:</strong> {formatDate(details.updatedAt)}</p>
             <p><strong className="text-slate-800">Tamanho:</strong> {formatSize(details.sizeBytes)}</p>
           </div>
-          <p className={`mt-3 text-xs font-medium ${details.available ? "text-emerald-700" : "text-amber-700"}`}>
+          <div className="mt-4">
+            {details.available ? (
+              <a
+                href={details.downloadUrl}
+                download="NexoHubBridge.exe"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#0055ff] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0046d5] active:scale-[0.98]"
+              >
+                <Download size={16} /> Download
+              </a>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500"
+              >
+                <Download size={16} /> {checking ? "Verificando..." : "Download indisponível"}
+              </button>
+            )}
+          </div>
+          <p className={`mt-2 text-xs font-medium ${details.available ? "text-emerald-700" : "text-amber-700"}`}>
             {details.available
               ? "Executável disponível para download."
               : checking
