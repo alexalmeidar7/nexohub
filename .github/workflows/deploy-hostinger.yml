@@ -49,9 +49,30 @@ jobs:
           mkdir -p dist/downloads/nexohub-bridge
           dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist/downloads/nexohub-bridge
           SHA256="$(sha256sum dist/downloads/nexohub-bridge/NexoHubBridge.exe | cut -d ' ' -f1)"
-          DOWNLOAD_URL="https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"
-          printf '{"version":"%s","downloadUrl":"%s","sha256":"%s"}\n' "$VERSION" "$DOWNLOAD_URL" "$SHA256" > dist/downloads/nexohub-bridge/latest.json
-          python -m json.tool dist/downloads/nexohub-bridge/latest.json > /dev/null
+          [[ "$SHA256" =~ ^[a-fA-F0-9]{64}$ ]]
+          export BRIDGE_VERSION="$VERSION"
+          export BRIDGE_SHA256="$SHA256"
+          export BRIDGE_DOWNLOAD_URL="https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+
+          path = "dist/downloads/nexohub-bridge/NexoHubBridge.exe"
+          if not os.path.isfile(path):
+              raise SystemExit("NexoHubBridge.exe was not generated")
+
+          manifest = {
+              "version": os.environ["BRIDGE_VERSION"],
+              "updatedAt": datetime.now(timezone.utc).isoformat(),
+              "sizeBytes": os.path.getsize(path),
+              "downloadUrl": os.environ["BRIDGE_DOWNLOAD_URL"],
+              "sha256": os.environ["BRIDGE_SHA256"],
+          }
+          with open("dist/downloads/nexohub-bridge/latest.json", "w", encoding="utf-8") as f:
+              json.dump(manifest, f, ensure_ascii=False)
+          PY
+          python3 -m json.tool dist/downloads/nexohub-bridge/latest.json > /dev/null
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
