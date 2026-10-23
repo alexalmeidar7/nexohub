@@ -972,10 +972,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     const currentButton = customButtons.find(button => button.id === buttonId);
     const commands = Array.isArray(currentButton?.commands) ? [...currentButton.commands] : [];
     if (commands.length) commands[0] = { ...commands[0], _buttonCategory: category };
-    // Não gravar `category` como coluna: persistir no JSON evita erro em bancos
-    // que ainda não receberam a migração dessa coluna.
+    // Persist both the dedicated category column and legacy JSON metadata.
     void (supabase.from("custom_vmix_buttons" as any) as any)
-      .update({ commands, ...(targetColor ? { color: targetColor } : {}) })
+      .update({ category, commands, ...(targetColor ? { color: targetColor } : {}) })
       .eq("id", buttonId);
     setCustomButtons(prev => prev.map(button => {
       if (button.id !== buttonId) return button;
@@ -5202,7 +5201,7 @@ function SwitcherUI({
                   <div className="p-5 space-y-4">
                     <div className="flex w-full flex-wrap items-start gap-3 pb-2">
                       {(() => {
-                        const getCategory = (button: any) => getAudioMonitorInput(button) ? "AUDIO" : String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
+                        const getCategory = (button: any) => getAudioMonitorInput(button) ? "AUDIO" : String((button.category === "AUDIO" && button.commands?.[0]?._buttonCategory && button.commands[0]._buttonCategory !== "AUDIO" ? button.commands[0]._buttonCategory : button.category) || button.commands?.[0]?._buttonCategory || "OUTROS").trim() || "OUTROS";
                         const categoryNames = Array.from(new Set(customButtons.map((button: any) => getCategory(button))));
                         const orderedCategories = [...customButtonCategoryOrder, ...categoryNames.filter(category => !customButtonCategoryOrder.includes(category))];
                         const savedOrderKey = user ? `vmix_custom_button_order:${user.id}:${normStudio(studioName) || "all"}` : "";
