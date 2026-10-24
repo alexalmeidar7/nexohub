@@ -40,3 +40,13 @@ jobs:
 
       - name: Montar a prévia
         run: bun run build
+
+      - name: Preparar .NET para validar o Bridge (se o projeto estiver nesta branch)
+        if: hashFiles('tools/NexoHubBridge/NexoHubBridge.csproj') != ''
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Validar compilação do NexoHub Bridge para Windows (se disponível)
+        if: hashFiles('tools/NexoHubBridge/NexoHubBridge.csproj') != ''
+        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o /tmp/nexohub-bridge
