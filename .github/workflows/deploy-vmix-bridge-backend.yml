@@ -114,7 +114,7 @@ jobs:
                OR position('failed' IN status_constraint) = 0 THEN
               RAISE EXCEPTION 'Bridge job status constraint is not compatible with the pending/failed contract.';
             END IF;
-          END
+          END;
           $preflight$;
           SQL
 
