@@ -49,4 +49,4 @@ jobs:
 
       - name: Validar compilação do NexoHub Bridge para Windows (se disponível)
         if: hashFiles('tools/NexoHubBridge/NexoHubBridge.csproj') != ''
-        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o /tmp/nexohub-bridge
+        run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableWindowsTargeting=true -o /tmp/nexohub-bridge
