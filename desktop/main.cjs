@@ -1,8 +1,27 @@
 const { app, BrowserWindow, shell, dialog } = require("electron");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 
 const isDev = !app.isPackaged;
 let mainWindow;
+
+function isAllowedAppNavigation(url) {
+  try {
+    const target = new URL(url);
+    if (isDev) {
+      return target.protocol === "http:" &&
+        target.hostname === "localhost" &&
+        target.port === "8080";
+    }
+
+    const entry = new URL(pathToFileURL(path.join(__dirname, "..", "dist", "index.html")).href);
+    return target.protocol === "file:" &&
+      target.host === entry.host &&
+      target.pathname === entry.pathname;
+  } catch {
+    return false;
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -30,9 +49,7 @@ function createWindow() {
     return { action: "deny" };
   });
   mainWindow.webContents.on("will-navigate", (event, url) => {
-    const localFile = url.startsWith("file://");
-    const allowedDev = isDev && url.startsWith("http://localhost:8080");
-    if (!localFile && !allowedDev) event.preventDefault();
+    if (!isAllowedAppNavigation(url)) event.preventDefault();
   });
 
   if (isDev) {
