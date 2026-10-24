@@ -4,7 +4,7 @@ import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from "react-router-dom";
 import { consumeOAuthReturnPath } from "@/lib/oauthReturn";
 
 // Redirect helper that interpolates :userSlug from the current URL params.
@@ -12,7 +12,7 @@ import { consumeOAuthReturnPath } from "@/lib/oauthReturn";
 // send the browser literally to "/:userSlug/...", producing a blank page.
 function SlugRedirect({ template }: { template: string }) {
   const { userSlug = "" } = useParams();
-  const { search, hash } = window.location;
+  const { search, hash } = useLocation();
   return <Navigate to={`${template.replace(":userSlug", userSlug)}${search}${hash}`} replace />;
 }
 
@@ -112,7 +112,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
     console.error("[NavigationErrorBoundary]", {
       message: error.message,
       stack: error.stack,
-      path: window.location.pathname,
+      path: this.props.locationKey,
       isChunkError,
       attempt: this.state.retryCount,
     });
@@ -186,12 +186,16 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode; locationKey: s
       localStorage.clear();
       sessionStorage.clear();
     } catch {}
-    window.location.href = "/";
+    if (import.meta.env.BASE_URL === "./") {
+      window.location.hash = "#/";
+    } else {
+      window.location.href = "/";
+    }
   };
 
   render() {
     if (this.state.hasError) {
-      const isPlayer = typeof window !== "undefined" && window.location.pathname.includes("/player");
+      const isPlayer = this.props.locationKey.includes("/player");
       const healing = this.state.retryCount < AUTO_HEAL_DELAYS_MS.length;
 
       if (isPlayer && healing) {
@@ -270,6 +274,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Desktop builds use hash routing so file:// startup and refresh keep a valid SPA route.
+const AppRouter = import.meta.env.BASE_URL === "./" ? HashRouter : BrowserRouter;
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -278,7 +285,7 @@ const App = () => (
       <DailyUpdateGuard />
       
       <AuthProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AppRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <OAuthReturnHandler />
           <PlayerSplashPrefetch />
           <NavigationErrorBoundary>
@@ -361,7 +368,7 @@ const App = () => (
           </Routes>
           </Suspense>
           </NavigationErrorBoundary>
-        </BrowserRouter>
+        </AppRouter>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

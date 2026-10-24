@@ -9,6 +9,11 @@ function sanitizeReturnPath(path: string | null | undefined): string | null {
 
 export function getCurrentReturnPath() {
   if (typeof window === "undefined") return "/";
+  // In the packaged desktop build, HashRouter keeps the route inside the URL fragment.
+  // Read that route rather than the filesystem path supplied by file://.
+  if (import.meta.env.BASE_URL === "./" && window.location.hash.startsWith("#/")) {
+    return sanitizeReturnPath(window.location.hash.slice(1)) || "/";
+  }
   return sanitizeReturnPath(`${window.location.pathname}${window.location.search}${window.location.hash}`) || "/";
 }
 

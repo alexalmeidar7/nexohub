@@ -400,27 +400,8 @@ interface DashboardProps {
 
 export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const { user, role } = useAuth();
-  const isLocal = typeof window !== "undefined" && (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "[::1]" ||
-    window.location.hostname.startsWith("192.168.") ||
-    window.location.hostname.startsWith("10.")
-  );
-  let forceRole: string | null = null;
-  try {
-    forceRole = localStorage.getItem("nexohub_force_role");
-  } catch {}
-
-  const isAlexAdmin = user?.email === "alex@nexobrasil.net" || (user?.email ? user.email.toLowerCase().includes("alex") : false);
-  const isClientUser = !!user?.email && !isAlexAdmin;
-  const isAdmin = forceRole === "admin" || (
-    forceRole !== "user" && !isClientUser && (
-      role === "admin" ||
-      isAlexAdmin ||
-      (isLocal && !user)
-    )
-  );
+  // Administrative UI follows only the role resolved by AuthProvider from Supabase.
+  const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   
   useEffect(() => {

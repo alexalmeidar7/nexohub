@@ -643,14 +643,7 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
     }
   };
 
-  const isSuperAdmin = 
-    user?.email === "alex@nexobrasil.net" || 
-    user?.email === "alex@nexo.com.br" || 
-    user?.email === "admin@nexobrasil.net" || 
-    user?.email === "alexalmeidar7@gmail.com" ||
-    user?.id === "admin_alex_nexo" || 
-    (user as any)?.isAdmin === true ||
-    (user as any)?.plano === "Super Admin";
+  const isSuperAdmin = role === "admin";
   const isScopedToStation = !isSuperAdmin || (Boolean(effectiveUserId) && effectiveUserId !== user?.id);
 
   const load = async () => {
