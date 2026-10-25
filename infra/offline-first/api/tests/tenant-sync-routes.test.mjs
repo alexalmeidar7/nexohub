@@ -72,6 +72,12 @@ test("sync pull reads only from the authenticated radio database", async () => {
     statements.push({ sql: strings.join("?"), values });
     return [];
   };
+  db.begin = async (callback) => callback(async (strings, ...values) => {
+    const sql = strings.join("?");
+    statements.push({ sql, values });
+    if (sql.includes("SELECT cursor_value, issued_cursor_value")) return [{ cursor_value: null, issued_cursor_value: null }];
+    return [];
+  });
   db.end = async () => {};
   const routes = setup({ async openForAuthenticatedTenant(id) {
     assert.equal(id, tenantId);
@@ -87,7 +93,7 @@ test("sync pull reads only from the authenticated radio database", async () => {
   assert.doesNotMatch(statements[0].sql, /tenant_id/);
 });
 
-test("sync endpoints fail closed until the protected tenant runtime is configured", async () => {
+test("sync pull rejects client-forged cursors", async () => {\n  const db = async () => []; db.end = async () => {};\n  const routes = setup({ async openForAuthenticatedTenant() { return { tenantId, databaseKey: "hm_test", client: db }; } });\n  const res = response();\n  await dispatch(routes.get("GET /v1/sync/changes"), { device: { id: deviceId, tenant_id: tenantId }, query: { cursor: "forged" } }, res);\n  assert.equal(res.statusCode, 400);\n  assert.deepEqual(res.payload, { error: "server_managed_checkpoint_required" });\n});\n\ntest("sync endpoints fail closed until the protected tenant runtime is configured", async () => {
   const routes = setup(null);
   const res = response();
   await dispatch(routes.get("POST /v1/sync/outbox"), {
