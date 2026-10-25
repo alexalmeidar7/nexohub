@@ -18,8 +18,9 @@ export function buildRuntimeRoleMembershipRevocations(runtimeRole, memberships) 
     throw new TypeError("Invalid server-generated runtime role");
   }
   return memberships.map(({ grantedRole, memberRole }) => {
-    if (typeof grantedRole !== "string" || typeof memberRole !== "string" ||
-        !/^[a-zA-Z0-9_]+$/.test(grantedRole) || !/^[a-zA-Z0-9_]+$/.test(memberRole)) {
+    if (typeof grantedRole !== "string" || !grantedRole.length || grantedRole.length > 63 ||
+        typeof memberRole !== "string" || !memberRole.length || memberRole.length > 63 ||
+        grantedRole.includes("\\0") || memberRole.includes("\\0")) {
       throw new TypeError("Invalid PostgreSQL role membership");
     }
     if (grantedRole !== runtimeRole && memberRole !== runtimeRole) {
@@ -56,6 +57,14 @@ export async function provisionTenantRuntimeCredentials({ admin, tenantDb, tenan
   for (const statement of buildRuntimeRoleMembershipRevocations(runtimeRole, memberships)) {
     await admin.unsafe(statement);
   }
+  const remainingMemberships = await admin`
+    SELECT 1
+    FROM pg_auth_members m
+    JOIN pg_roles granted ON granted.oid = m.roleid
+    JOIN pg_roles member ON member.oid = m.member
+    WHERE granted.rolname = ${runtimeRole} OR member.rolname = ${runtimeRole}
+  `;
+  if (remainingMemberships.length) throw new Error("runtime_role_membership_removal_failed");
 
   const roles = await admin`SELECT rolname, rolsuper, rolcreatedb, rolcreaterole, rolreplication, rolbypassrls FROM pg_roles WHERE rolname = ${runtimeRole}`;
   if (roles.length && (roles[0].rolsuper || roles[0].rolcreatedb || roles[0].rolcreaterole || roles[0].rolreplication || roles[0].rolbypassrls)) {
