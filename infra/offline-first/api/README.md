@@ -139,3 +139,34 @@ This adapter does not retrieve or persist runtime passwords and does not create 
 `createTenantRuntimeService` composes the control-plane registry adapter and the authenticated-tenant database resolver. The caller supplies a protected secret-vault implementation and a PostgreSQL client factory. Each open operation accepts only the tenant UUID already established by server-side device authentication; it verifies the active registry mapping, retrieves that tenant's runtime secret, and only then creates a tenant-scoped PostgreSQL client.
 
 The service deliberately has no default vault, environment-variable password fallback, or in-memory secret store. Construction fails unless an explicit protected vault provider is supplied, and no PostgreSQL client is created when the tenant is inactive or its secret is invalid. This is a tested composition boundary; it is not yet wired into HTTP handlers. Keep the existing control-plane endpoints unchanged until the OS-protected server vault and request lifecycle integration are reviewed.
+
+## Windows DPAPI vault host bridge
+
+The Windows-only `HouseMix.OfflineFirst.VaultHost` helper exposes the existing DPAPI credential store to the Node API through private stdin/stdout pipes. Build it with:
+
+```powershell
+dotnet publish infra/offline-first/desktop-client/HouseMix.OfflineFirst.VaultHost/HouseMix.OfflineFirst.VaultHost.csproj -c Release -r win-x64 --self-contained true
+```
+
+The Node adapter in `dpapi-tenant-secret-vault.mjs` requires an absolute path to the published helper and an absolute credentials root. It derives the tenant credential directory from the UUID supplied by the authenticated request context, passes no password or secret on the command line, discards helper stderr, bounds execution time/output, validates the returned tenant/database/role tuple, and fails closed on helper errors. The helper itself requires Windows DPAPI CurrentUser and never returns a secret for a different tenant.
+
+Example composition:
+
+```js
+import postgres from "postgres";
+import { createTenantRuntimeService } from "./tenant-runtime-service.mjs";
+import { createDpapiTenantSecretVault } from "./dpapi-tenant-secret-vault.mjs";
+
+const secretVault = createDpapiTenantSecretVault({
+  executablePath: process.env.HOUSEMIX_DPAPI_VAULT_HOST,
+  credentialsRoot: process.env.HOUSEMIX_TENANT_CREDENTIALS_ROOT,
+});
+const tenantRuntime = createTenantRuntimeService({
+  controlPlaneDb,
+  secretVault,
+  controlPlaneUrl: process.env.DATABASE_URL,
+  postgresFactory: (url, options) => postgres(url, options),
+});
+```
+
+This is a host bridge and composition primitive; it does not yet attach tenant-scoped clients to HTTP routes or change the existing control-plane endpoints. Keep the API loopback-only. The credentials root must be the protected server-side tenant vault root, not a path supplied by a browser or workstation.
