@@ -1,9 +1,11 @@
 using System.Security.Cryptography;
+using System.Runtime.Versioning;
 using HouseMix.OfflineFirst.Transport;
 using Xunit;
 
 namespace HouseMix.OfflineFirst.Transport.Tests;
 
+[SupportedOSPlatform("windows")]
 public sealed class TenantRuntimeCredentialStoreTests : IDisposable
 {
     private const string TenantA = "00000000-0000-4000-8000-000000000001";
