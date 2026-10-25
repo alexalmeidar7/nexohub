@@ -19,7 +19,9 @@ Apply schema migrations in order (001, then 002) before starting the API. The se
 
 The API currently accepts only `127.0.0.1`. Any other `HOUSEMIX_API_HOST` value causes startup to fail, including private LAN addresses and `0.0.0.0`. Setting `HOUSEMIX_ALLOW_LAN=true` does not bypass this guard.
 
-This is intentional: the current API serves plain HTTP and does not yet implement TLS certificates, certificate validation, or the LAN acceptance suite. Do not expose this prototype to another computer or use customer data. A future LAN implementation must replace this hard stop only after HTTPS and all security acceptance tests are implemented and reviewed.
+Optional HTTPS transport can now be exercised on loopback only by setting `HOUSEMIX_API_TLS=true`, `HOUSEMIX_TLS_CERT_FILE` and `HOUSEMIX_TLS_KEY_FILE` to a matching PEM certificate/private-key pair. TLS enforces a minimum of TLS 1.2. With TLS unset, the existing loopback-only HTTP development mode remains unchanged. Invalid or incomplete TLS configuration fails startup.
+
+**This does not enable LAN access.** `network-config.mjs` still hard-rejects every non-loopback bind, regardless of TLS settings or `HOUSEMIX_ALLOW_LAN`. Do not expose this prototype to another computer or use customer data. Server-certificate trust/hostname validation on the future Desktop client, firewall restrictions and the complete LAN acceptance suite remain required before any LAN pilot.
 
 ## Issue a one-time enrollment token
 

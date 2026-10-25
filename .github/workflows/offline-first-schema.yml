@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - name: Verify LAN binding remains hard-disabled
-        run: node --test infra/offline-first/api/tests/network-config.test.mjs
+        run: node --test infra/offline-first/api/tests/network-config.test.mjs infra/offline-first/api/tests/tls-config.test.mjs
       - name: Apply local schema
         env:
           PGPASSWORD: test-only-password
