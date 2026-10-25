@@ -11,7 +11,7 @@ The future Desktop shell may use the transport factory only when all of these re
 7. Enrollment uses the existing one-time token API. The client persists a pending token/key pair with Windows DPAPI before network I/O so a lost response can be retried idempotently.
 8. The device key is generated with a cryptographically secure random generator; tenant and role are accepted only from the server response.
 9. An enrolled identity cannot be silently overwritten by another enrollment. Revocation remains enforced by the server.
-10. The local API remains bound to loopback until the separate LAN security gate, firewall policy, and full LAN acceptance tests are approved.
-11. No PostgreSQL port is exposed to workstations; Desktop communicates only with the versioned API.
+10. Every authenticated Desktop request uses the protected device key only in an Authorization Bearer header over the HTTPS-only client; no key is stored in shared default headers or renderer/browser storage.\n11. `GET /v1/me` must return the same device ID, tenant slug, role, and label saved during enrollment. Unauthorized/revoked credentials and identity mismatches are hard failures; the client never self-corrects identity from server data.\n12. The local API remains bound to loopback until the separate LAN security gate, firewall policy, and full LAN acceptance tests are approved.
+13. No PostgreSQL port is exposed to workstations; Desktop communicates only with the versioned API.
 
 This milestone adds a reusable pairing client and Windows-protected credential storage. It does not authorize LAN access or production rollout.
