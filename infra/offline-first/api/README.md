@@ -13,7 +13,7 @@ $env:DATABASE_URL = "postgres://housemix_dev:YOUR_DB_PASSWORD@127.0.0.1:55432/ho
 node infra/offline-first/api/server.mjs
 ```
 
-Apply schema migrations in order (001, then 002) before starting the API. The service binds only to 127.0.0.1. LAN access is deliberately hard-disabled in code.
+Apply control-plane migrations 001–003 and initialize each radio database using `bootstrap-tenant-schema.mjs` before starting sync traffic. The tenant bootstrap now applies the baseline (001) and sync (002) migrations in order. The service binds only to 127.0.0.1. LAN access is deliberately hard-disabled in code.
 
 ## Network exposure safety gate
 
@@ -53,8 +53,8 @@ The revoke command requires both the tenant slug and device UUID, rejects cross-
 - `POST /v1/devices/enroll`: body includes `enrollment_token`, a client-generated cryptographically random `device_key` (32+ chars), and `label`. Tenant and role are taken from the grant, never from client-supplied fields.
 - `GET /v1/me`: requires `Authorization: Bearer <device_key>`.
 - `GET /v1/tenant/diagnostics`: requires device authentication and, when the protected Windows DPAPI vault is configured, opens only that device's active radio database and runs a read-only `SELECT 1`. It returns readiness only, never database credentials or connection details.
-- `POST /v1/sync/outbox`: writes events only under the authenticated device's tenant; repeated idempotency keys do not create duplicate events.
-- `GET /v1/sync/changes`: paginates the authenticated tenant's change feed with an opaque cursor; page size is limited to 1–250.
+- `POST /v1/sync/outbox`: opens the authenticated radio's isolated database and writes to `housemix.sync_outbox`; repeated idempotency keys do not create duplicate events.
+- `GET /v1/sync/changes`: reads and paginates only that radio's `housemix.sync_outbox` using an opaque cursor; page size is limited to 1–250. Both routes fail closed with 503 until the protected DPAPI tenant runtime is configured.
 
 Enrollment tokens are single-use, expire, can be revoked by setting `revoked_at`, and cannot enroll a second device. If the enrollment response is lost, the same token + same device key safely returns the already-created device; a different key is rejected.
 
@@ -91,11 +91,11 @@ After the dedicated database has been created and verified by the provisioning s
 node infra/offline-first/api/scripts/bootstrap-tenant-schema.mjs <tenant-slug>
 ```
 
-The command resolves the database only from the active tenant's control-plane mapping, verifies the deterministic tenant/database relationship and actual PostgreSQL owner, then applies version 1 under the tenant's non-login owner role. It stores a SHA-256 checksum in `housemix.schema_migrations`; reruns verify the checksum and do not reapply a changed migration. This only creates the isolated schema and migration ledger. It does not add application tables, create workstation login credentials, mark the tenant active, or enable network access.
+The command resolves the database only from the active tenant's control-plane mapping, verifies the deterministic tenant/database relationship and actual PostgreSQL owner, then applies migrations 001 (baseline) and 002 (sync) in order under the tenant's non-login owner role. It stores a SHA-256 checksum for each migration in `housemix.schema_migrations`; reruns verify the checksums and reject modified migrations. It does not create workstation login credentials, mark the tenant active, or enable network access.
 
 ## Per-radio synchronization schema (migration 002)
 
-Each radio database receives its own synchronization tables in `housemix` through `infra/offline-first/schema/tenant/002_sync.sql`, applied only after tenant baseline migration 001 and while connected as that radio database's owner role. It creates a local outbox with idempotency enforcement, a per-device checkpoint table, and an audit event ledger. The schema deliberately omits `tenant_id`: the separate PostgreSQL database is the isolation boundary. Public table and sequence privileges are revoked. CI validates the schema and its payload constraints against disposable PostgreSQL; this migration does not yet redirect the HTTP sync endpoints, which remains a separately reviewed integration step.
+Each radio database receives its own synchronization tables in `housemix` through `infra/offline-first/schema/tenant/002_sync.sql`, applied only after tenant baseline migration 001 and while connected as that radio database's owner role. It creates a local outbox with idempotency enforcement, a per-device checkpoint table, and an audit event ledger. The schema deliberately omits `tenant_id`: the separate PostgreSQL database is the isolation boundary. Public table and sequence privileges are revoked. CI validates the schema and its payload constraints against disposable PostgreSQL. The HTTP sync endpoints now use this per-radio schema through the authenticated request-scoped runtime; they return 503 until the Windows DPAPI runtime is configured.
 
 ## Create least-privilege runtime credentials for a radio
 

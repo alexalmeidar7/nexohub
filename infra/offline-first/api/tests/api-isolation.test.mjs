@@ -92,68 +92,9 @@ try {
   assert.equal(missingAuthChanges.status, 401, "sync pull requires device authentication");
   const missingAuthOutbox = await post("/v1/sync/outbox", {});
   assert.equal(missingAuthOutbox.status, 401, "sync push requires device authentication");
-
-  const malformedJson = await fetch(baseUrl + "/v1/sync/outbox", {
-    method: "POST", headers: { ...auth(keyA), "content-type": "application/json" }, body: "{"
-  });
-  assert.equal(malformedJson.status, 400, "malformed JSON is rejected with a client error");
-  assert.deepEqual(await malformedJson.json(), { error: "invalid_json" });
-  const oversized = await post("/v1/sync/outbox", {
-    aggregate_type: "program", aggregate_id: "oversized", operation: "upsert",
-    payload: { text: "x".repeat(70 * 1024) }, idempotency_key: "oversized-payload-key"
-  }, auth(keyA));
-  assert.equal(oversized.status, 413, "request bodies above 64 KiB are rejected");
-  assert.deepEqual(await oversized.json(), { error: "request_body_too_large" });
-
-  for (const limit of ["0", "251", "1.5", "not-a-number"]) {
-    const invalidLimit = await fetch(baseUrl + "/v1/sync/changes?limit=" + encodeURIComponent(limit), { headers: auth(keyA) });
-    assert.equal(invalidLimit.status, 400, `invalid page limit ${limit} is rejected`);
-    assert.deepEqual(await invalidLimit.json(), { error: "invalid_page_limit" });
-  }
-  const malformedCursor = await fetch(baseUrl + "/v1/sync/changes?cursor=not-a-valid-cursor", { headers: auth(keyA) });
-  assert.equal(malformedCursor.status, 400, "malformed sync cursors are rejected");
-  assert.deepEqual(await malformedCursor.json(), { error: "invalid_sync_cursor" });
-  const oversizedCursor = await fetch(baseUrl + "/v1/sync/changes?cursor=" + "a".repeat(513), { headers: auth(keyA) });
-  assert.equal(oversizedCursor.status, 400, "oversized sync cursors are rejected");
-
-  const event = {
-    aggregate_type: "program", aggregate_id: "program-1", operation: "upsert",
-    payload: { name: "Alpha program" }, idempotency_key: "shared-idempotency-key-001",
-    tenant_id: bodyB.device.tenant_id,
-  };
-  const first = await post("/v1/sync/outbox", event, auth(keyA));
-  assert.equal(first.status, 202, await first.clone().text());
-  const firstBody = await first.json();
-  assert.equal(firstBody.event.tenant_id, bodyA.device.tenant_id, "client-supplied tenant_id is ignored");
-  const duplicate = await post("/v1/sync/outbox", event, auth(keyA));
-  assert.equal(duplicate.status, 200);
-  assert.equal((await duplicate.json()).duplicate, true);
-  const beta = await post("/v1/sync/outbox", { ...event, payload: { name: "Beta program" } }, auth(keyB));
-  assert.equal(beta.status, 202);
-  assert.equal((await beta.json()).event.tenant_id, bodyB.device.tenant_id);
-
-  await new Promise((resolve) => setTimeout(resolve, 25));
-  const second = await post("/v1/sync/outbox", {
-    aggregate_type: "program", aggregate_id: "program-2", operation: "upsert",
-    payload: { name: "Alpha page two" }, idempotency_key: "alpha-second-page-event-002",
-  }, auth(keyA));
-  assert.equal(second.status, 202);
-  const page1Response = await fetch(baseUrl + "/v1/sync/changes?limit=1", { headers: auth(keyA) });
-  const page1 = await page1Response.json();
-  assert.equal(page1Response.status, 200);
-  assert.equal(page1.changes.length, 1);
-  assert.equal(page1.changes[0].payload.name, "Alpha program");
-  assert.equal(page1.has_more, true);
-  const page2Response = await fetch(baseUrl + "/v1/sync/changes?limit=1&cursor=" + encodeURIComponent(page1.next_cursor), { headers: auth(keyA) });
-  const page2 = await page2Response.json();
-  assert.equal(page2Response.status, 200);
-  assert.equal(page2.changes.length, 1);
-  assert.equal(page2.changes[0].payload.name, "Alpha page two");
-  assert.equal(page2.has_more, false);
-  const betaChanges = await fetch(baseUrl + "/v1/sync/changes", { headers: auth(keyB) });
-  const betaBody = await betaChanges.json();
-  assert.equal(betaBody.changes.length, 1, "Beta cannot pull Alpha tenant events");
-  assert.equal(betaBody.changes[0].payload.name, "Beta program");
+  const protectedRuntimeMissing = await fetch(baseUrl + "/v1/sync/changes", { headers: auth(keyA) });
+  assert.equal(protectedRuntimeMissing.status, 503, "sync is disabled until the protected tenant runtime is configured");
+  assert.deepEqual(await protectedRuntimeMissing.json(), { error: "tenant_runtime_not_configured" });
 
   const scriptPath = "infra/offline-first/api/scripts/manage-devices.mjs";
   const list = spawnSync(process.execPath, [scriptPath, "list", tenantB], {

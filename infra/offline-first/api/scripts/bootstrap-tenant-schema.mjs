@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { buildTenantDatabaseUrl, bootstrapTenantSchema, loadTenantBaselineMigration } from "../tenant-schema-bootstrap.mjs";
+import { buildTenantDatabaseUrl, bootstrapTenantSchema, loadTenantMigrations } from "../tenant-schema-bootstrap.mjs";
 import { createDatabaseKey } from "../database-provisioning.mjs";
 
 const [tenantSlug] = process.argv.slice(2);
@@ -30,9 +30,9 @@ try {
   target = postgres(buildTenantDatabaseUrl(process.env.DATABASE_ADMIN_URL, tenant.database_key), {
     max: 1, connect_timeout: 5
   });
-  const migrationSql = await loadTenantBaselineMigration();
+  const migrationList = await loadTenantMigrations();
   const result = await bootstrapTenantSchema({
-    admin: target, tenant, databaseKey: tenant.database_key, migrationSql
+    admin: target, tenant, databaseKey: tenant.database_key, migrationList
   });
   console.log(JSON.stringify({ tenant_slug: tenant.slug, ...result }, null, 2));
 } finally {
