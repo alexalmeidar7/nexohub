@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Runtime.Versioning;
 
 namespace HouseMix.OfflineFirst.Transport;
 
@@ -10,6 +11,7 @@ namespace HouseMix.OfflineFirst.Transport;
 /// binds it to the tenant UUID. The workspace path must be the credentials
 /// directory resolved for the selected House Mix client profile.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class TenantRuntimeCredentialStore
 {
     private const string FileName = "postgres-runtime-credential.bin";
