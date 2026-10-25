@@ -12,7 +12,7 @@ const registryEntry = { tenant_id: tenantId, database_key: databaseKey, status: 
 const runtimeSecret = { role, password: "a".repeat(64) };
 const valid = {
   tenantId, registryEntry, runtimeSecret,
-  controlPlaneUrl: "postgres://catalog@127.0.0.1:55432/housemix_local",
+  controlPlaneUrl: "postgres://127.0.0.1:55432/housemix_local",
 };
 
 test("builds a tenant-specific connection from authenticated tenant identity", () => {
