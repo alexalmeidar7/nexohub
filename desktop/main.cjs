@@ -1,14 +1,22 @@
-const { app, BrowserWindow, shell, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, shell, dialog, ipcMain, session } = require("electron");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const { pathToFileURL } = require("node:url");
 const { resolveClientProfile, parseClientId } = require("./clientProfile.cjs");
-const { listClients, createClient } = require("./clientRegistry.cjs");
+const { listClients, createClient, provisionClientWorkspace } = require("./clientRegistry.cjs");
 
 const isDev = !app.isPackaged;
 const clientArg = process.argv.some((arg) => arg.startsWith("--client-id="));
-const profile = clientArg ? resolveClientProfile(process.argv, app.getPath("appData")) : null;
-if (profile) app.setPath("userData", profile.userDataPath);
+const appDataPath = app.getPath("appData");
+const profile = clientArg ? resolveClientProfile(process.argv, appDataPath) : null;
+if (profile) {
+  if (!listClients(appDataPath).some((client) => client.id === profile.clientId)) {
+    throw new Error("Cliente não cadastrado neste computador.");
+  }
+  provisionClientWorkspace(appDataPath, profile.clientId);
+  app.setPath("userData", profile.userDataPath);
+  app.setPath("sessionData", profile.sessionDataPath);
+}
 let mainWindow;
 
 function isAllowedAppNavigation(rawUrl) {
@@ -26,7 +34,7 @@ function createClientWindow() {
   mainWindow = new BrowserWindow({
     width: 1440, height: 900, minWidth: 1024, minHeight: 680, show: false,
     backgroundColor: "#111318", title: `House Mix Desktop — ${profile.clientId}`, autoHideMenuBar: true,
-    webPreferences: { preload: path.join(__dirname, "preload.cjs"), additionalArguments: [`--house-mix-client-id=${profile.clientId}`], contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: { session: session.fromPartition(profile.sessionPartition), preload: path.join(__dirname, "preload.cjs"), additionalArguments: [`--house-mix-client-id=${profile.clientId}`], contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   mainWindow.once("ready-to-show", () => mainWindow?.show());
   mainWindow.webContents.setWindowOpenHandler(({ url }) => { openExternalSafely(url); return { action: "deny" }; });
