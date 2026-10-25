@@ -142,7 +142,7 @@ function decodeCursor(value) {
     const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
     if (!parsed || parsed.version !== 2 ||
         typeof parsed.created_at_us !== "string" ||
-        !/^-?\\d{1,20}$/.test(parsed.created_at_us) ||
+        !/^-?\d{1,20}$/.test(parsed.created_at_us) ||
         typeof parsed.id !== "string" ||
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.id)) return undefined;
     return { created_at_us: parsed.created_at_us, id: parsed.id };
