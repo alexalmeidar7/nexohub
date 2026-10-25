@@ -1,0 +1,25 @@
+services:
+  housemix-local-postgres:
+    image: postgres:16-alpine
+    container_name: housemix-offline-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: housemix_local
+      POSTGRES_USER: housemix_dev
+      POSTGRES_PASSWORD: ${HOUSEMIX_LOCAL_DB_PASSWORD:?Set HOUSEMIX_LOCAL_DB_PASSWORD in infra/offline-first/.env}
+      TZ: America/Sao_Paulo
+    ports:
+      # Development-only: bind to loopback, never expose this disposable DB to the LAN.
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - housemix_local_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U housemix_dev -d housemix_local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  housemix_local_pgdata:
