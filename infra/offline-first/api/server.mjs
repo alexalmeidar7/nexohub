@@ -215,7 +215,12 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
 });
 
 app.use((err, _req, res, _next) => {
-  if (err instanceof SyntaxError) return res.status(400).json({ error: "invalid_json" });
+  if (err instanceof SyntaxError && err.status === 400) {
+    return res.status(400).json({ error: "invalid_json" });
+  }
+  if (err?.type === "entity.too.large" || err?.status === 413) {
+    return res.status(413).json({ error: "request_body_too_large" });
+  }
   return res.status(500).json({ error: "internal_error" });
 });
 

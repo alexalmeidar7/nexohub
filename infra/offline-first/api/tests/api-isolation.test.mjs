@@ -88,6 +88,33 @@ try {
   assert.equal((await meB.json()).device.tenant_slug, tenantB);
   const badAuth = await fetch(baseUrl + "/v1/me", { headers: auth(randomKey()) });
   assert.equal(badAuth.status, 401);
+  const missingAuthChanges = await fetch(baseUrl + "/v1/sync/changes");
+  assert.equal(missingAuthChanges.status, 401, "sync pull requires device authentication");
+  const missingAuthOutbox = await post("/v1/sync/outbox", {});
+  assert.equal(missingAuthOutbox.status, 401, "sync push requires device authentication");
+
+  const malformedJson = await fetch(baseUrl + "/v1/sync/outbox", {
+    method: "POST", headers: { ...auth(keyA), "content-type": "application/json" }, body: "{"
+  });
+  assert.equal(malformedJson.status, 400, "malformed JSON is rejected with a client error");
+  assert.deepEqual(await malformedJson.json(), { error: "invalid_json" });
+  const oversized = await post("/v1/sync/outbox", {
+    aggregate_type: "program", aggregate_id: "oversized", operation: "upsert",
+    payload: { text: "x".repeat(70 * 1024) }, idempotency_key: "oversized-payload-key"
+  }, auth(keyA));
+  assert.equal(oversized.status, 413, "request bodies above 64 KiB are rejected");
+  assert.deepEqual(await oversized.json(), { error: "request_body_too_large" });
+
+  for (const limit of ["0", "251", "1.5", "not-a-number"]) {
+    const invalidLimit = await fetch(baseUrl + "/v1/sync/changes?limit=" + encodeURIComponent(limit), { headers: auth(keyA) });
+    assert.equal(invalidLimit.status, 400, `invalid page limit ${limit} is rejected`);
+    assert.deepEqual(await invalidLimit.json(), { error: "invalid_page_limit" });
+  }
+  const malformedCursor = await fetch(baseUrl + "/v1/sync/changes?cursor=not-a-valid-cursor", { headers: auth(keyA) });
+  assert.equal(malformedCursor.status, 400, "malformed sync cursors are rejected");
+  assert.deepEqual(await malformedCursor.json(), { error: "invalid_sync_cursor" });
+  const oversizedCursor = await fetch(baseUrl + "/v1/sync/changes?cursor=" + "a".repeat(513), { headers: auth(keyA) });
+  assert.equal(oversizedCursor.status, 400, "oversized sync cursors are rejected");
 
   const event = {
     aggregate_type: "program", aggregate_id: "program-1", operation: "upsert",
@@ -170,7 +197,7 @@ try {
   await sql`UPDATE local_devices SET status = 'revoked' WHERE id = ${bodyA.device.id}`;
   const revokedA = await fetch(baseUrl + "/v1/me", { headers: auth(keyA) });
   assert.equal(revokedA.status, 401, "revoked device credentials stop working immediately");
-  console.log("PASS: one-time enrollment, expiry, tenant/role binding, safe retry, device listing, tenant-scoped revocation, audit, tenant isolation, idempotency and pagination");
+  console.log("PASS: enrollment, authentication, tenant isolation, revocation, idempotency, pagination and HTTP input boundaries");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => server.once("exit", resolve));
