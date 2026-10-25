@@ -24,6 +24,9 @@ public sealed class DeviceCredentialStore
 
     public async Task<DeviceEnrollmentState?> LoadAsync(CancellationToken cancellationToken = default)
     {
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("House Mix device credentials require Windows DPAPI.");
+
         if (!File.Exists(_path)) return null;
         var protectedBytes = await File.ReadAllBytesAsync(_path, cancellationToken).ConfigureAwait(false);
         var clearBytes = ProtectedData.Unprotect(protectedBytes, Entropy, DataProtectionScope.CurrentUser);
@@ -40,6 +43,9 @@ public sealed class DeviceCredentialStore
 
     public async Task SaveAsync(DeviceEnrollmentState state, CancellationToken cancellationToken = default)
     {
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("House Mix device credentials require Windows DPAPI.");
+
         ArgumentNullException.ThrowIfNull(state);
         var clearBytes = JsonSerializer.SerializeToUtf8Bytes(state);
         byte[] protectedBytes;
