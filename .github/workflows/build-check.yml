@@ -44,9 +44,11 @@ jobs:
         run: bun run build
 
       - name: Validar compilação do NexoHub Bridge
+        if: ${{ hashFiles('tools/NexoHubBridge/NexoHubBridge.csproj') != '' }}
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
       - name: Compilar NexoHub Bridge para Windows
+        if: ${{ hashFiles('tools/NexoHubBridge/NexoHubBridge.csproj') != '' }}
         run: dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o /tmp/nexohub-bridge
