@@ -127,3 +127,9 @@ The activation gate rechecks the tenant UUID/database mapping, deterministic own
 The API runtime can now resolve a tenant-specific PostgreSQL client using only the tenant UUID from the authenticated request context. It checks the control-plane registry is `active`, recomputes the deterministic database and runtime-role names, retrieves the matching secret through an injected local secret-vault provider, and builds the connection URL from the configured loopback PostgreSQL origin. Client-supplied tenant slugs, database names, passwords, and connection URLs are never used for routing.
 
 The resolver is a tested integration boundary, not yet wired into the HTTP request handlers. The secret-vault provider must be backed by the per-radio protected credential store before runtime use; do not use an in-memory placeholder or expose secrets to logs. The current host policy is loopback-only and must remain so until the separately gated TLS/LAN acceptance work is complete.
+
+## Control-plane tenant registry adapter
+
+`createTenantRegistryLookup(controlPlaneDb)` implements the registry provider used by the tenant runtime router. It accepts only the authenticated tenant UUID, performs a parameterized lookup in `tenant_database_registry`, and verifies that the stored database key matches the deterministic key for that UUID. It returns the registry status unchanged; the runtime router remains responsible for rejecting anything other than `active`.
+
+This adapter does not retrieve or persist runtime passwords and does not create database connections by itself. The protected server-side secret-vault integration and request-handler wiring remain separate gated steps.
