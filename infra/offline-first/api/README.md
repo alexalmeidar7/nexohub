@@ -97,3 +97,13 @@ node infra/offline-first/api/scripts/provision-tenant-runtime-credentials.mjs <t
 ```
 
 The command creates a unique per-tenant LOGIN role with no superuser, database-creation, role-creation, replication, or RLS-bypass privileges. It grants CONNECT only to that tenant database, plus schema usage and CRUD rights inside `housemix`; default privileges apply to future tables/sequences created by the tenant owner. A fresh high-entropy password is displayed once. Do not redirect terminal output or store it in logs; secure local secret-store integration and rotation are a separate step. This does not activate the tenant or enable LAN.
+
+## Rotate an active radio's runtime password
+
+Run this command on the local server/administrator machine when a radio's PostgreSQL runtime password must be replaced:
+
+```powershell
+node infra/offline-first/api/scripts/rotate-tenant-runtime-credentials.mjs <tenant-slug>
+```
+
+The command accepts only an active tenant whose database mapping matches its UUID. It verifies database ownership and least-privilege role flags, replaces the password on that radio's dedicated runtime role, and displays the new random secret once. **The old password stops working immediately.** Securely save the new secret in that radio's local DPAPI credential vault before reconnecting its House Mix Desktop instances. This prototype command does not remotely distribute the new secret, provide zero-downtime dual-password rotation, or update workstation vaults automatically. If the one-time output is lost, run rotation again and securely store the newly issued password.
