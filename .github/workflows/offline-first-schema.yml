@@ -57,6 +57,8 @@ jobs:
         run: node --test infra/offline-first/api/tests/tenant-registry-adapter.test.mjs
       - name: Test tenant runtime service composition
         run: node --test infra/offline-first/api/tests/tenant-runtime-service.test.mjs
+      - name: Test authenticated tenant HTTP runtime lifecycle
+        run: node --test infra/offline-first/api/tests/tenant-runtime-http.test.mjs
       - name: Test DPAPI tenant secret vault host adapter
         run: node --test infra/offline-first/api/tests/dpapi-tenant-secret-vault.test.mjs
       - name: Verify LAN binding remains hard-disabled
