@@ -1,0 +1,30 @@
+name: Offline First Desktop
+
+on:
+  pull_request:
+    paths:
+      - "infra/offline-first/desktop-client/**"
+      - ".github/workflows/offline-first-desktop.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/offline-first/desktop-client/**"
+      - ".github/workflows/offline-first-desktop.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-transport:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build transport
+        run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.Transport/HouseMix.OfflineFirst.Transport.csproj --configuration Release
+      - name: Run connection tests
+        run: dotnet test infra/offline-first/desktop-client/HouseMix.OfflineFirst.Transport.Tests/HouseMix.OfflineFirst.Transport.Tests.csproj --configuration Release --logger "trx;LogFileName=offline-first-desktop.trx"
