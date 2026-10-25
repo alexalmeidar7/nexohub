@@ -52,7 +52,7 @@ test("rejects invalid tenant identity before starting the helper", async () => {
 
 test("rejects a response containing another tenant's secret", async (t) => {
   const vault = await fixture(t, { secret: { ...secret, tenantId: "00000000-0000-4000-8000-000000000002" } });
-  await assert.rejects(() => vault.getTenantRuntimeSecret(tenantId), /tenant_runtime_secret_invalid/);
+  await assert.rejects(() => vault.getTenantRuntimeSecret(tenantId), /tenant_runtime_vault_invalid_response/);
 });
 
 test("fails closed on helper errors without exposing stderr", async (t) => {
