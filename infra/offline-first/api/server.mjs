@@ -178,6 +178,11 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
           ORDER BY created_at ASC, id ASC
           LIMIT ${rawLimit + 1}
         `;
+    console.log("SYNC_ROWS_DIAGNOSTIC", JSON.stringify(rows.map((row) => ({
+      id: row.id,
+      created_at_cursor: row.created_at_cursor,
+      name: row.payload?.name,
+    }))));
     const hasMore = rows.length > rawLimit;
     const page = hasMore ? rows.slice(0, rawLimit) : rows;
     const last = page[page.length - 1];
