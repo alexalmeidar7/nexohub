@@ -87,3 +87,13 @@ node infra/offline-first/api/scripts/bootstrap-tenant-schema.mjs <tenant-slug>
 ```
 
 The command resolves the database only from the active tenant's control-plane mapping, verifies the deterministic tenant/database relationship and actual PostgreSQL owner, then applies version 1 under the tenant's non-login owner role. It stores a SHA-256 checksum in `housemix.schema_migrations`; reruns verify the checksum and do not reapply a changed migration. This only creates the isolated schema and migration ledger. It does not add application tables, create workstation login credentials, mark the tenant active, or enable network access.
+
+## Create least-privilege runtime credentials for a radio
+
+After a radio database has been provisioned and its baseline schema initialized, an operator can create its dedicated application login:
+
+```powershell
+node infra/offline-first/api/scripts/provision-tenant-runtime-credentials.mjs <tenant-slug>
+```
+
+The command creates a unique per-tenant LOGIN role with no superuser, database-creation, role-creation, replication, or RLS-bypass privileges. It grants CONNECT only to that tenant database, plus schema usage and CRUD rights inside `housemix`; default privileges apply to future tables/sequences created by the tenant owner. A fresh high-entropy password is displayed once. Do not redirect terminal output or store it in logs; secure local secret-store integration and rotation are a separate step. This does not activate the tenant or enable LAN.
