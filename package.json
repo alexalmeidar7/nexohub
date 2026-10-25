@@ -13,7 +13,10 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:responsive": "playwright test --config=playwright.config.ts"
+    "test:responsive": "playwright test --config=playwright.config.ts",
+    "desktop:dev": "cross-env HOUSE_MIX_DESKTOP=1 vite",
+    "desktop:build": "cross-env HOUSE_MIX_DESKTOP=1 vite build",
+    "desktop:package": "npm run desktop:build && electron-builder --win nsis --x64"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "0.12.10",
@@ -109,6 +112,41 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
-    "vitest": "^3.2.4"
-  }
+    "vitest": "^3.2.4",
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12",
+    "cross-env": "^7.0.3"
+  },
+  "build": {
+    "appId": "br.com.nexobrasil.housemix",
+    "productName": "House Mix Desktop",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "House-Mix-Desktop-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "House Mix Desktop"
+    }
+  },
+  "main": "desktop/main.cjs"
 }
