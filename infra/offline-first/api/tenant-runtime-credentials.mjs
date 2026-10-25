@@ -13,7 +13,7 @@ export function generateRuntimePassword() {
   return crypto.randomBytes(48).toString("base64url");
 }
 
-export async function provisionTenantRuntimeCredentials({ admin, tenant, databaseKey, password = generateRuntimePassword() }) {
+export async function provisionTenantRuntimeCredentials({ admin, tenantDb, tenant, databaseKey, password = generateRuntimePassword() }) {
   validateDatabaseKey(databaseKey);
   if (createDatabaseKey(tenant.id) !== databaseKey) throw new Error("tenant_database_mapping_mismatch");
   if (typeof password !== "string" || password.length < 48 || !/^[A-Za-z0-9_-]+$/.test(password)) {
@@ -42,13 +42,13 @@ export async function provisionTenantRuntimeCredentials({ admin, tenant, databas
   }
 
   await admin.unsafe(`GRANT CONNECT ON DATABASE ${quoteIdentifier(databaseKey)} TO ${quoteIdentifier(runtimeRole)}`);
-  await admin.unsafe(`GRANT USAGE ON SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
-  await admin.unsafe(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
-  await admin.unsafe(`GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
-  await admin.unsafe(`ALTER DEFAULT PRIVILEGES FOR ROLE ${quoteIdentifier(ownerRole)} IN SCHEMA housemix GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${quoteIdentifier(runtimeRole)}`);
-  await admin.unsafe(`ALTER DEFAULT PRIVILEGES FOR ROLE ${quoteIdentifier(ownerRole)} IN SCHEMA housemix GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO ${quoteIdentifier(runtimeRole)}`);
+  await tenantDb.unsafe(`GRANT USAGE ON SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
+  await tenantDb.unsafe(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
+  await tenantDb.unsafe(`GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
+  await tenantDb.unsafe(`ALTER DEFAULT PRIVILEGES FOR ROLE ${quoteIdentifier(ownerRole)} IN SCHEMA housemix GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${quoteIdentifier(runtimeRole)}`);
+  await tenantDb.unsafe(`ALTER DEFAULT PRIVILEGES FOR ROLE ${quoteIdentifier(ownerRole)} IN SCHEMA housemix GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO ${quoteIdentifier(runtimeRole)}`);
 
-  const verified = await admin`
+  const verified = await tenantDb`
     SELECT r.rolcanlogin, r.rolsuper, r.rolcreatedb, r.rolcreaterole,
            has_database_privilege(r.rolname, ${databaseKey}, 'CONNECT') AS can_connect,
            has_schema_privilege(r.rolname, 'housemix', 'USAGE') AS can_use_schema,
