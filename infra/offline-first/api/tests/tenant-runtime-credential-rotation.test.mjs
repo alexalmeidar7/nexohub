@@ -6,7 +6,7 @@ const tenant = {
   id: "00000000-0000-4000-8000-000000000001",
   slug: "radio-positiva",
   status: "active",
-  database_key: "hm_00000000000040008000000000000001",
+  database_key: "hm_11e594f481958c10e3015d0bf0447a22",
 };
 
 test("rotation delegates only for an active tenant with matching database mapping", async () => {
