@@ -1,7 +1,10 @@
 import crypto from "node:crypto";
+import { createServer as createHttpServer } from "node:http";
+import { createServer as createHttpsServer } from "node:https";
 import express from "express";
 import postgres from "postgres";
 import { resolveApiHost } from "./network-config.mjs";
+import { resolveTlsOptions } from "./tls-config.mjs";
 
 const required = ["DATABASE_URL"];
 for (const key of required) {
@@ -224,8 +227,13 @@ app.use((err, _req, res, _next) => {
   return res.status(500).json({ error: "internal_error" });
 });
 
-const server = app.listen(port, host, () => {
-  console.log(`House Mix local API listening on http://${host}:${port}`);
+const tlsOptions = resolveTlsOptions(process.env);
+const protocol = tlsOptions ? "https" : "http";
+const server = tlsOptions
+  ? createHttpsServer(tlsOptions, app)
+  : createHttpServer(app);
+server.listen(port, host, () => {
+  console.log(`House Mix local API listening on ${protocol}://${host}:${port}`);
 });
 async function shutdown() {
   server.close();
