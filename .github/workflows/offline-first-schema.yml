@@ -39,6 +39,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: Test per-radio database provisioning primitives
         run: node --test infra/offline-first/api/tests/database-provisioning.test.mjs
+      - name: Test PostgreSQL tenant database provisioner
+        run: node --test infra/offline-first/api/tests/postgres-tenant-provisioner.test.mjs
       - name: Verify LAN binding remains hard-disabled
         run: node --test infra/offline-first/api/tests/network-config.test.mjs infra/offline-first/api/tests/tls-config.test.mjs infra/offline-first/api/tests/https-handshake.test.mjs
       - name: Apply local schema
