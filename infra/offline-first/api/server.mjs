@@ -140,7 +140,8 @@ function decodeCursor(value) {
         Number.isNaN(Date.parse(parsed.created_at)) ||
         typeof parsed.id !== "string" ||
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.id)) return undefined;
-    return { created_at: new Date(parsed.created_at), id: parsed.id };
+    // Keep PostgreSQL's full timestamp precision; JavaScript Date truncates microseconds to milliseconds.
+    return { created_at: parsed.created_at, id: parsed.id };
   } catch {
     return undefined;
   }
