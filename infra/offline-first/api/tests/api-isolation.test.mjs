@@ -50,6 +50,16 @@ try {
 
   await waitForServer();
 
+  const rejectedEnroll = await post("/v1/devices/enroll",
+    { tenant_slug: tenantA, device_key: deviceKey(), label: "Rejected", device_role: "primary_server" },
+    { "x-housemix-enrollment-secret": "wrong-enrollment-secret" });
+  assert.equal(rejectedEnroll.status, 401, "enrollment requires the bootstrap secret");
+
+  const malformedEnroll = await post("/v1/devices/enroll",
+    { tenant_slug: tenantA, device_key: "short", label: "Invalid", device_role: "primary_server" },
+    { "x-housemix-enrollment-secret": secret });
+  assert.equal(malformedEnroll.status, 400, "malformed device enrollment is rejected");
+
   const keyA = deviceKey();
   const keyB = deviceKey();
   const enrollA = await post("/v1/devices/enroll",
@@ -109,7 +119,11 @@ try {
   assert.equal(count.length, 2, "events remain separated by tenant");
   assert.ok(count.every((row) => row.total === 1), "each tenant has exactly one event");
 
-  console.log("PASS: enrollment, device authentication, tenant scoping, spoofed tenant rejection, and idempotency");
+  await sql`UPDATE local_devices SET status = 'revoked' WHERE tenant_id = ${bodyA.device.tenant_id} AND id = ${bodyA.device.id}`;
+  const revoked = await fetch(baseUrl + "/v1/me", { headers: auth(keyA) });
+  assert.equal(revoked.status, 401, "revoked device credentials stop working immediately");
+
+  console.log("PASS: enrollment authorization, payload validation, device revocation, tenant isolation, and idempotency");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => server.once("exit", resolve));
