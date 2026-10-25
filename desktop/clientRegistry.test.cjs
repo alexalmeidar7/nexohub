@@ -38,3 +38,19 @@ test("refuses a workspace marker belonging to another client", () => {
   assert.throws(()=>provisionClientWorkspace(root,"radio-positiva"),/não corresponde/);
  } finally { fs.rmSync(root,{recursive:true,force:true}); }
 });
+
+test("assigns a unique Electron userData, sessionData and partition to each client workspace", () => {
+ const { resolveClientProfile, clientSessionPartition } = require("./clientProfile.cjs");
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),"housemix-profile-"));
+ try {
+  createClient(root,"Rádio Positiva"); createClient(root,"Rádio Cidade");
+  const a=resolveClientProfile(["--client-id=radio-positiva"],root);
+  const b=resolveClientProfile(["--client-id=radio-cidade"],root);
+  assert.notEqual(a.userDataPath,b.userDataPath);
+  assert.notEqual(a.sessionDataPath,b.sessionDataPath);
+  assert.notEqual(a.sessionPartition,b.sessionPartition);
+  assert.equal(a.userDataPath,path.join(a.workspaceRoot,"runtime","electron"));
+  assert.equal(clientSessionPartition("radio-positiva"),"persist:housemix-radio-positiva");
+  assert.throws(()=>clientSessionPartition("default"),/ambiente padrão/);
+ } finally { fs.rmSync(root,{recursive:true,force:true}); }
+});
