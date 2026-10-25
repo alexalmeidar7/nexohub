@@ -65,3 +65,15 @@ Enrollment tokens are single-use, expire, can be revoked by setting `revoked_at`
 - SHA-256 is used only to hash high-entropy random tokens and device keys, not human passwords.
 - API is not exposed to browsers and must not receive requests from untrusted origins.
 - This prototype is a milestone for local API contract validation, not a production server.
+
+## Provision a dedicated radio database (local operator only)
+
+After migrations 001, 002 and 003 have been applied to the control-plane catalog, provision one empty database for an active tenant:
+
+```powershell
+$env:DATABASE_URL = "postgres://catalog_operator:...@127.0.0.1:55432/housemix_local"
+$env:DATABASE_ADMIN_URL = "postgres://housemix_provisioner:...@127.0.0.1:55432/postgres"
+node infra/offline-first/api/scripts/provision-tenant-database.mjs <tenant-slug>
+```
+
+The provisioning connection must be a dedicated local PostgreSQL role with only the privileges needed to create roles and databases (CREATEROLE and CREATEDB); do not use the postgres superuser for normal operation. The script creates a deterministic database name and a per-tenant NOLOGIN owner role, verifies ownership, and can safely resume after interruption. The database remains in `provisioning` and is not activated for application traffic. Tenant schema migrations, runtime login roles, grants, backup policy, and activation are separate reviewed steps. Never point this script at production or customer data during this prototype phase.
