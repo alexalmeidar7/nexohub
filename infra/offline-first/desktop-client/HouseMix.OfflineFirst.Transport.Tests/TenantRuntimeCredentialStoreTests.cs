@@ -81,7 +81,7 @@ public sealed class TenantRuntimeCredentialStoreTests : IDisposable
             tenantId,
             $"hm_{new string('a', 31)}{suffix}",
             $"hm_app_{new string('b', 31)}{suffix}",
-            Convert.ToBase64String(Guid.NewGuid().ToByteArray()).Replace("+", "-").Replace("/", "_").PadRight(64, 'x')[..64],
+            Convert.ToBase64String(RandomNumberGenerator.GetBytes(48)).TrimEnd('=').Replace("+", "-").Replace("/", "_"),
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddDays(90));
     }
