@@ -141,36 +141,14 @@ try {
   assert.equal(alphaPage.has_more, true, "pull endpoint indicates another page exists");
   assert.ok(alphaPage.next_cursor, "pull endpoint returns a continuation cursor");
 
-  // Temporary CI diagnostics: inspect the exact cursor and rows visible to the tenant.
-  const decodedAlphaCursor = JSON.parse(Buffer.from(alphaPage.next_cursor, "base64url").toString("utf8"));
-  const alphaRowsDebug = await sql`
-    SELECT id::text AS id, payload->>'name' AS name, created_at::text AS created_at
-    FROM sync_outbox
-    WHERE tenant_id = ${bodyA.device.tenant_id}
-    ORDER BY created_at ASC, id ASC
-  `;
-  const alphaAfterCursorDebug = await sql`
-    SELECT id::text AS id, payload->>'name' AS name, created_at::text AS created_at
-    FROM sync_outbox
-    WHERE tenant_id = ${bodyA.device.tenant_id}
-      AND (
-        created_at > ${decodedAlphaCursor.created_at}::timestamptz
-        OR (created_at = ${decodedAlphaCursor.created_at}::timestamptz AND id > ${decodedAlphaCursor.id}::uuid)
-      )
-    ORDER BY created_at ASC, id ASC
-  `;
-  console.log("PAGINATION_DIAGNOSTIC", JSON.stringify({
-    firstPage: alphaPage.changes.map((row) => ({ id: row.id, name: row.payload?.name, created_at: row.created_at })),
-    cursor: decodedAlphaCursor,
-    tenantRows: alphaRowsDebug,
-    rowsAfterCursor: alphaAfterCursorDebug,
-  }));
-
   const alphaNext = await fetch(baseUrl + "/v1/sync/changes?limit=1&cursor=" + encodeURIComponent(alphaPage.next_cursor), { headers: auth(keyA) });
   const alphaNextBody = await alphaNext.json();
   assert.equal(alphaNext.status, 200);
   assert.equal(alphaNextBody.changes.length, 1);
+  assert.notEqual(alphaNextBody.changes[0].id, alphaPage.changes[0].id, "next page must not repeat the previous cursor row");
   assert.equal(alphaNextBody.changes[0].payload.name, "Alpha program page two");
+  assert.equal(alphaNextBody.has_more, false, "last page reports no further records");
+  assert.equal(alphaNextBody.next_cursor, null, "last page does not expose a stale cursor");
 
   const betaChanges = await fetch(baseUrl + "/v1/sync/changes", { headers: auth(keyB) });
   const betaBody = await betaChanges.json();
