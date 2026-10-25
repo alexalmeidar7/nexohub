@@ -129,19 +129,23 @@ app.post("/v1/sync/outbox", authenticateDevice, async (req, res) => {
 
 
 function encodeCursor(row) {
-  return Buffer.from(JSON.stringify({ created_at: row.created_at_cursor, id: row.id })).toString("base64url");
+  return Buffer.from(JSON.stringify({
+    version: 2,
+    created_at_us: row.created_at_cursor_us,
+    id: row.id,
+  })).toString("base64url");
 }
 function decodeCursor(value) {
   if (!value) return null;
   if (typeof value !== "string" || value.length > 512) return undefined;
   try {
     const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
-    if (!parsed || typeof parsed.created_at !== "string" ||
-        Number.isNaN(Date.parse(parsed.created_at)) ||
+    if (!parsed || parsed.version !== 2 ||
+        typeof parsed.created_at_us !== "string" ||
+        !/^-?\\d{1,20}$/.test(parsed.created_at_us) ||
         typeof parsed.id !== "string" ||
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.id)) return undefined;
-    // Keep PostgreSQL's full timestamp precision; JavaScript Date truncates microseconds to milliseconds.
-    return { created_at: parsed.created_at, id: parsed.id };
+    return { created_at_us: parsed.created_at_us, id: parsed.id };
   } catch {
     return undefined;
   }
@@ -150,55 +154,30 @@ function decodeCursor(value) {
 app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
   const cursor = decodeCursor(req.query.cursor);
   if (cursor === undefined) return res.status(400).json({ error: "invalid_sync_cursor" });
-  console.log("SYNC_CURSOR_DIAGNOSTIC", JSON.stringify({
-    url: req.originalUrl,
-    queryCursorPresent: typeof req.query.cursor === "string",
-    cursor,
-  }));
   const rawLimit = req.query.limit === undefined ? 100 : Number(req.query.limit);
   if (!Number.isInteger(rawLimit) || rawLimit < 1 || rawLimit > 250) {
     return res.status(400).json({ error: "invalid_page_limit" });
   }
   try {
-    if (cursor) {
-      const probe = await db`
-        SELECT id, created_at::text AS created_at_text,
-               pg_typeof(created_at)::text AS created_at_type,
-               CAST(${cursor.created_at} AS timestamptz)::text AS cursor_cast_text,
-               created_at::text = CAST(${cursor.created_at} AS timestamptz)::text AS text_equal,
-               created_at > CAST(${cursor.created_at} AS timestamptz) AS timestamp_after,
-               created_at = CAST(${cursor.created_at} AS timestamptz) AS timestamp_equal,
-               id > CAST(${cursor.id} AS uuid) AS id_after,
-               (created_at, id) > (CAST(${cursor.created_at} AS timestamptz), CAST(${cursor.id} AS uuid)) AS tuple_after
-        FROM sync_outbox
-        WHERE tenant_id = ${req.device.tenant_id}
-        ORDER BY created_at ASC, id ASC
-      `;
-      console.log("SYNC_CURSOR_COMPARISON_PROBE", JSON.stringify(probe));
-    }
     const rows = cursor
       ? await db`
           SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
-                 created_at::text AS created_at_cursor
+                 (extract(epoch FROM created_at) * 1000000)::bigint::text AS created_at_cursor_us
           FROM sync_outbox
           WHERE tenant_id = ${req.device.tenant_id}
-            AND (created_at, id) > (${cursor.created_at}::timestamptz, ${cursor.id}::uuid)
+            AND ((extract(epoch FROM created_at) * 1000000)::bigint, id) >
+                (${cursor.created_at_us}::bigint, ${cursor.id}::uuid)
           ORDER BY created_at ASC, id ASC
           LIMIT ${rawLimit + 1}
         `
       : await db`
           SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
-                 created_at::text AS created_at_cursor
+                 (extract(epoch FROM created_at) * 1000000)::bigint::text AS created_at_cursor_us
           FROM sync_outbox
           WHERE tenant_id = ${req.device.tenant_id}
           ORDER BY created_at ASC, id ASC
           LIMIT ${rawLimit + 1}
         `;
-    console.log("SYNC_ROWS_DIAGNOSTIC", JSON.stringify(rows.map((row) => ({
-      id: row.id,
-      created_at_cursor: row.created_at_cursor,
-      name: row.payload?.name,
-    }))));
     const hasMore = rows.length > rawLimit;
     const page = hasMore ? rows.slice(0, rawLimit) : rows;
     const last = page[page.length - 1];
