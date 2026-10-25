@@ -17,7 +17,7 @@ This is an isolated .NET 8 transport foundation for the future House Mix Desktop
 
 Before making the request, the client saves the pending token and device key in a DPAPI CurrentUser-protected file under the Windows user's LocalApplicationData directory. If the response is lost, retrying with the same token reuses the same key and matches the API's idempotent retry behavior. After success, the token is discarded from persisted state and only the device key and returned device identity remain.
 
-A pending enrollment cannot be silently replaced with a different token. An already enrolled Windows user cannot enroll another device through this client. Remote revocation and credential rotation UX are not included.
+A pending enrollment cannot be silently replaced with a different token. An already enrolled Windows user cannot enroll another device through this client.\n\n`DeviceIdentityClient` calls the existing authenticated `GET /v1/me` endpoint using the protected device key in an Authorization Bearer header. It requires a completed enrollment, rejects unauthorized/revoked credentials, and compares the returned device ID, tenant slug, role, and label against the locally protected identity. A mismatch is a hard failure; the client never overwrites its saved identity from an API response. The key is attached only to that request and is not placed in shared default headers. Remote revocation and credential rotation UX are not included.
 
 ## Credential security and platform
 
