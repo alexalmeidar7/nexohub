@@ -13,6 +13,23 @@ export function generateRuntimePassword() {
   return crypto.randomBytes(48).toString("base64url");
 }
 
+export function buildRuntimeRoleMembershipRevocations(runtimeRole, memberships) {
+  if (typeof runtimeRole !== "string" || !/^hm_app_[a-f0-9]{32}$/.test(runtimeRole)) {
+    throw new TypeError("Invalid server-generated runtime role");
+  }
+  return memberships.map(({ grantedRole, memberRole }) => {
+    if (typeof grantedRole !== "string" || !grantedRole.length || grantedRole.length > 63 ||
+        typeof memberRole !== "string" || !memberRole.length || memberRole.length > 63 ||
+        grantedRole.includes("\\0") || memberRole.includes("\\0")) {
+      throw new TypeError("Invalid PostgreSQL role membership");
+    }
+    if (grantedRole !== runtimeRole && memberRole !== runtimeRole) {
+      throw new Error("runtime_role_membership_scope_mismatch");
+    }
+    return `REVOKE ${quoteIdentifier(grantedRole)} FROM ${quoteIdentifier(memberRole)}`;
+  });
+}
+
 export async function provisionTenantRuntimeCredentials({ admin, tenantDb, tenant, databaseKey, password = generateRuntimePassword() }) {
   validateDatabaseKey(databaseKey);
   if (createDatabaseKey(tenant.id) !== databaseKey) throw new Error("tenant_database_mapping_mismatch");
@@ -30,6 +47,25 @@ export async function provisionTenantRuntimeCredentials({ admin, tenantDb, tenan
     throw new Error("tenant_database_owner_verification_failed");
   }
 
+  const memberships = await admin`
+    SELECT granted.rolname AS "grantedRole", member.rolname AS "memberRole"
+    FROM pg_auth_members m
+    JOIN pg_roles granted ON granted.oid = m.roleid
+    JOIN pg_roles member ON member.oid = m.member
+    WHERE granted.rolname = ${runtimeRole} OR member.rolname = ${runtimeRole}
+  `;
+  for (const statement of buildRuntimeRoleMembershipRevocations(runtimeRole, memberships)) {
+    await admin.unsafe(statement);
+  }
+  const remainingMemberships = await admin`
+    SELECT 1
+    FROM pg_auth_members m
+    JOIN pg_roles granted ON granted.oid = m.roleid
+    JOIN pg_roles member ON member.oid = m.member
+    WHERE granted.rolname = ${runtimeRole} OR member.rolname = ${runtimeRole}
+  `;
+  if (remainingMemberships.length) throw new Error("runtime_role_membership_removal_failed");
+
   const roles = await admin`SELECT rolname, rolsuper, rolcreatedb, rolcreaterole, rolreplication, rolbypassrls FROM pg_roles WHERE rolname = ${runtimeRole}`;
   if (roles.length && (roles[0].rolsuper || roles[0].rolcreatedb || roles[0].rolcreaterole || roles[0].rolreplication || roles[0].rolbypassrls)) {
     throw new Error("runtime_role_privilege_escalation_detected");
@@ -41,6 +77,8 @@ export async function provisionTenantRuntimeCredentials({ admin, tenantDb, tenan
     await admin.unsafe(`ALTER ROLE ${quoteIdentifier(runtimeRole)} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD ${quoteLiteral(password)}`);
   }
 
+  await admin.unsafe(`REVOKE CONNECT ON DATABASE ${quoteIdentifier(databaseKey)} FROM PUBLIC`);
+  await admin.unsafe(`GRANT CONNECT ON DATABASE ${quoteIdentifier(databaseKey)} TO CURRENT_USER`);
   await admin.unsafe(`GRANT CONNECT ON DATABASE ${quoteIdentifier(databaseKey)} TO ${quoteIdentifier(runtimeRole)}`);
   await tenantDb.unsafe(`GRANT USAGE ON SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
   await tenantDb.unsafe(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA housemix TO ${quoteIdentifier(runtimeRole)}`);
