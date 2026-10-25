@@ -1,16 +1,14 @@
 import crypto from "node:crypto";
 import express from "express";
 import postgres from "postgres";
+import { resolveApiHost } from "./network-config.mjs";
 
 const required = ["DATABASE_URL"];
 for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing required environment variable: ${key}`);
 }
 
-const host = process.env.HOUSEMIX_API_HOST || "127.0.0.1";
-if (host !== "127.0.0.1" && process.env.HOUSEMIX_ALLOW_LAN !== "true") {
-  throw new Error("LAN binding is disabled until HOUSEMIX_ALLOW_LAN=true after security review");
-}
+const host = resolveApiHost(process.env);
 const port = Number(process.env.HOUSEMIX_API_PORT || 8787);
 const db = postgres(process.env.DATABASE_URL, { max: 10, idle_timeout: 20, connect_timeout: 5 });
 const app = express();

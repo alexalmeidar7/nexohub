@@ -32,6 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - name: Verify LAN binding remains hard-disabled
+        run: node --test infra/offline-first/api/tests/network-config.test.mjs
       - name: Apply local schema
         env:
           PGPASSWORD: test-only-password

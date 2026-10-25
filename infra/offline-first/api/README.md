@@ -13,7 +13,13 @@ $env:DATABASE_URL = "postgres://housemix_dev:YOUR_DB_PASSWORD@127.0.0.1:55432/ho
 node infra/offline-first/api/server.mjs
 ```
 
-Apply schema migrations in order (001, then 002) before starting the API. The service binds only to 127.0.0.1. LAN access is deliberately blocked.
+Apply schema migrations in order (001, then 002) before starting the API. The service binds only to 127.0.0.1. LAN access is deliberately hard-disabled in code.
+
+## Network exposure safety gate
+
+The API currently accepts only `127.0.0.1`. Any other `HOUSEMIX_API_HOST` value causes startup to fail, including private LAN addresses and `0.0.0.0`. Setting `HOUSEMIX_ALLOW_LAN=true` does not bypass this guard.
+
+This is intentional: the current API serves plain HTTP and does not yet implement TLS certificates, certificate validation, or the LAN acceptance suite. Do not expose this prototype to another computer or use customer data. A future LAN implementation must replace this hard stop only after HTTPS and all security acceptance tests are implemented and reviewed.
 
 ## Issue a one-time enrollment token
 
