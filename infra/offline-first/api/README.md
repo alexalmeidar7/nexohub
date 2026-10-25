@@ -8,30 +8,38 @@ From the repository root, install the existing project dependencies, then:
 
 ```powershell
 Copy-Item infra/offline-first/api/.env.example infra/offline-first/api/.env
-# Edit .env: use the same strong DB password as infra/offline-first/.env
-# and generate a separate random enrollment secret (32+ characters).
+# Set DATABASE_URL to the disposable local PostgreSQL instance.
 $env:DATABASE_URL = "postgres://housemix_dev:YOUR_DB_PASSWORD@127.0.0.1:55432/housemix_local"
-$env:HOUSEMIX_ENROLLMENT_SECRET = "YOUR_RANDOM_ENROLLMENT_SECRET_32_CHARS_OR_MORE"
 node infra/offline-first/api/server.mjs
 ```
 
-The service binds only to 127.0.0.1. LAN access is deliberately blocked pending a separate security review.
+Apply schema migrations in order (001, then 002) before starting the API. The service binds only to 127.0.0.1. LAN access is deliberately blocked.
+
+## Issue a one-time enrollment token
+
+Run this only on the local server/administrator machine, with DATABASE_URL set:
+
+```powershell
+node infra/offline-first/api/scripts/issue-enrollment-token.mjs <tenant-slug> <primary_server|workstation|standby_server> [ttl-minutes]
+```
+
+The command creates a cryptographically random 256-bit token, stores only its SHA-256 hash, binds it to one active tenant and one device role, and defaults to a 60-minute expiry. TTL is limited to 5–1440 minutes. The plaintext token is displayed once; deliver it through a secure channel and do not log or commit it.
 
 ## Endpoints
 
 - `GET /health`: process/database health; no customer data.
-- `POST /v1/devices/enroll`: requires `x-housemix-enrollment-secret`; body includes `tenant_slug`, a client-generated random `device_key` (32+ chars), `label`, and `device_role`. The database stores only its SHA-256 hash.
-- `GET /v1/me`: requires `Authorization: Bearer <device_key>`; returns the authenticated device and tenant.
-- `POST /v1/sync/outbox`: requires device authentication; writes events only under the authenticated device's tenant. Repeated idempotency keys do not create duplicate events.
-- `GET /v1/sync/changes`: requires device authentication; paginates the authenticated tenant's change feed using an opaque continuation cursor. Page size is limited to 1–250; a cursor never grants access to another tenant.
+- `POST /v1/devices/enroll`: body includes `enrollment_token`, a client-generated cryptographically random `device_key` (32+ chars), and `label`. Tenant and role are taken from the grant, never from client-supplied fields.
+- `GET /v1/me`: requires `Authorization: Bearer <device_key>`.
+- `POST /v1/sync/outbox`: writes events only under the authenticated device's tenant; repeated idempotency keys do not create duplicate events.
+- `GET /v1/sync/changes`: paginates the authenticated tenant's change feed with an opaque cursor; page size is limited to 1–250.
+
+Enrollment tokens are single-use, expire, can be revoked by setting `revoked_at`, and cannot enroll a second device. If the enrollment response is lost, the same token + same device key safely returns the already-created device; a different key is rejected.
 
 ## Current limitations — do not use with customer data
 
-- Enrollment secret is a single local bootstrap secret, not a complete operator/admin identity system.
-- No LAN binding, TLS, workstation pairing UX, operator login, full credential lifecycle, conflict resolution, backup scheduler, or standby failover yet. The new pull endpoint is a prototype feed, not a complete bidirectional sync engine.
+- Token issuance is a local operator/DB action, not yet an authenticated admin UI or remote identity system.
+- No LAN binding, TLS, workstation pairing UX, operator login, full credential rotation UX, conflict resolution, backup scheduler, or standby failover yet.
 - Device keys must be generated with a cryptographically secure random generator and stored securely by the future Desktop shell; never hardcode them.
-- SHA-256 is used only to hash high-entropy random device keys, not human passwords.
+- SHA-256 is used only to hash high-entropy random tokens and device keys, not human passwords.
 - API is not exposed to browsers and must not receive requests from untrusted origins.
-- Tenant isolation is scoped in every API query and reinforced by composite foreign keys, but a full authorization review and negative integration tests are still required before production use.
-
-This prototype is a milestone for local API contract validation, not a production server.
+- This prototype is a milestone for local API contract validation, not a production server.

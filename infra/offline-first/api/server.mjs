@@ -2,12 +2,9 @@ import crypto from "node:crypto";
 import express from "express";
 import postgres from "postgres";
 
-const required = ["DATABASE_URL", "HOUSEMIX_ENROLLMENT_SECRET"];
+const required = ["DATABASE_URL"];
 for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing required environment variable: ${key}`);
-}
-if (process.env.HOUSEMIX_ENROLLMENT_SECRET.length < 32) {
-  throw new Error("HOUSEMIX_ENROLLMENT_SECRET must contain at least 32 characters");
 }
 
 const host = process.env.HOUSEMIX_API_HOST || "127.0.0.1";
@@ -37,33 +34,61 @@ app.get("/health", async (_req, res) => {
 });
 
 app.post("/v1/devices/enroll", async (req, res) => {
-  const supplied = req.get("x-housemix-enrollment-secret") || "";
-  if (!constantTimeEqual(supplied, process.env.HOUSEMIX_ENROLLMENT_SECRET)) {
-    return res.status(401).json({ error: "invalid_enrollment_secret" });
-  }
-  const { tenant_slug, device_key, label, device_role } = req.body || {};
-  if (typeof tenant_slug !== "string" || typeof device_key !== "string" ||
-      device_key.length < 32 || device_key.length > 256 ||
-      typeof label !== "string" || label.trim().length < 1 || label.length > 120 ||
-      !["primary_server", "workstation", "standby_server"].includes(device_role)) {
+  const { enrollment_token, device_key, label } = req.body || {};
+  if (typeof enrollment_token !== "string" || !/^[A-Za-z0-9_-]{40,64}$/.test(enrollment_token) ||
+      typeof device_key !== "string" || device_key.length < 32 || device_key.length > 256 ||
+      typeof label !== "string" || label.trim().length < 1 || label.length > 120) {
     return res.status(400).json({ error: "invalid_enrollment_payload" });
   }
   try {
-    const rows = await db.begin(async (tx) => {
-      const tenants = await tx`SELECT id FROM tenants WHERE slug = ${tenant_slug} AND status = 'active' FOR SHARE`;
-      if (tenants.length !== 1) return null;
-      return tx`
+    const result = await db.begin(async (tx) => {
+      const grants = await tx`
+        SELECT e.id, e.tenant_id, e.device_role, e.expires_at, e.consumed_at,
+               e.consumed_device_id, e.revoked_at, t.slug AS tenant_slug, t.status AS tenant_status
+        FROM device_enrollment_tokens e
+        JOIN tenants t ON t.id = e.tenant_id
+        WHERE e.token_hash = ${hash(enrollment_token)}
+        FOR UPDATE OF e
+      `;
+      if (grants.length !== 1) return { kind: "invalid" };
+      const grant = grants[0];
+      if (grant.tenant_status !== "active" || grant.revoked_at ||
+          new Date(grant.expires_at).getTime() <= Date.now()) return { kind: "invalid" };
+      const keyHash = hash(device_key);
+      if (grant.consumed_at) {
+        const existing = await tx`
+          SELECT id, tenant_id, label, device_role, status
+          FROM local_devices
+          WHERE tenant_id = ${grant.tenant_id} AND id = ${grant.consumed_device_id}
+            AND device_key_hash = ${keyHash} AND status = 'active'
+        `;
+        return existing.length === 1
+          ? { kind: "retry", device: existing[0], tenant_slug: grant.tenant_slug }
+          : { kind: "consumed" };
+      }
+      const inserted = await tx`
         INSERT INTO local_devices (tenant_id, device_key_hash, label, device_role, status)
-        VALUES (${tenants[0].id}, ${hash(device_key)}, ${label.trim()}, ${device_role}, 'active')
-        ON CONFLICT (tenant_id, device_key_hash) DO UPDATE
-          SET label = EXCLUDED.label, device_role = EXCLUDED.device_role
-          WHERE local_devices.status = 'active'
+        VALUES (${grant.tenant_id}, ${keyHash}, ${label.trim()}, ${grant.device_role}, 'active')
         RETURNING id, tenant_id, label, device_role, status
       `;
+      await tx`
+        UPDATE device_enrollment_tokens
+        SET consumed_at = now(), consumed_device_id = ${inserted[0].id}
+        WHERE id = ${grant.id}
+      `;
+      await tx`
+        INSERT INTO local_audit_events (tenant_id, device_id, event_type, entity_type, entity_id, details)
+        VALUES (${grant.tenant_id}, ${inserted[0].id}, 'device.enrolled', 'device', ${inserted[0].id},
+                ${tx.json({ device_role: grant.device_role, label: label.trim() })})
+      `;
+      return { kind: "created", device: inserted[0], tenant_slug: grant.tenant_slug };
     });
-    if (!rows) return res.status(404).json({ error: "tenant_not_found_or_inactive" });
-    if (rows.length !== 1) return res.status(409).json({ error: "device_key_conflict" });
-    return res.status(201).json({ device: rows[0] });
+    if (result.kind === "invalid") return res.status(401).json({ error: "invalid_or_expired_enrollment_token" });
+    if (result.kind === "consumed") return res.status(409).json({ error: "enrollment_token_already_used" });
+    return res.status(result.kind === "retry" ? 200 : 201).json({
+      device: { ...result.device, tenant_slug: result.tenant_slug },
+      duplicate: result.kind === "retry"
+    });
   } catch {
     return res.status(500).json({ error: "enrollment_failed" });
   }
