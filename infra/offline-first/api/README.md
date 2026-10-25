@@ -111,3 +111,13 @@ The command accepts only an active tenant whose database mapping matches its UUI
 ## PostgreSQL cross-radio connection isolation
 
 Each provisioned radio database removes PostgreSQL's default `CONNECT` privilege from `PUBLIC`, then explicitly preserves access for the local provisioning operator. The radio's dedicated runtime login receives `CONNECT` only on its own database. Runtime credential provisioning also removes any existing role memberships in either direction and verifies that none remain, preventing unexpected inherited or delegated role access. These safeguards apply when a database is provisioned or its runtime credentials are provisioned again; they do not retroactively harden databases that have not passed through these steps. Run this only against disposable local test databases until the full acceptance suite is complete.
+
+## Activate a radio database after verification
+
+Only after database provisioning, schema bootstrap, and runtime credential provisioning have completed, an operator may run:
+
+```powershell
+node infra/offline-first/api/scripts/activate-tenant-database.mjs <tenant-slug>
+```
+
+The activation gate rechecks the tenant UUID/database mapping, deterministic owner, exact baseline migration checksum, dedicated runtime login and its restricted role flags, absence of role memberships, removal of PUBLIC CONNECT, and the runtime login's database/schema grants. It changes the registry from `provisioning` to `active` only after every check succeeds. This marks the isolated database infrastructure as provisioned; it does not mean application tables, data migration, workstation connectivity, backups, or failover are ready. Run only against disposable local test databases until the full acceptance suite is complete.
