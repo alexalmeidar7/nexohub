@@ -77,3 +77,13 @@ node infra/offline-first/api/scripts/provision-tenant-database.mjs <tenant-slug>
 ```
 
 The provisioning connection must be a dedicated local PostgreSQL role with only the privileges needed to create roles and databases (CREATEROLE and CREATEDB); do not use the postgres superuser for normal operation. The script creates a deterministic database name and a per-tenant NOLOGIN owner role, verifies ownership, and can safely resume after interruption. The database remains in `provisioning` and is not activated for application traffic. Tenant schema migrations, runtime login roles, grants, backup policy, and activation are separate reviewed steps. Never point this script at production or customer data during this prototype phase.
+
+## Initialize a provisioned radio database schema
+
+After the dedicated database has been created and verified by the provisioning step, initialize its isolated baseline schema:
+
+```powershell
+node infra/offline-first/api/scripts/bootstrap-tenant-schema.mjs <tenant-slug>
+```
+
+The command resolves the database only from the active tenant's control-plane mapping, verifies the deterministic tenant/database relationship and actual PostgreSQL owner, then applies version 1 under the tenant's non-login owner role. It stores a SHA-256 checksum in `housemix.schema_migrations`; reruns verify the checksum and do not reapply a changed migration. This only creates the isolated schema and migration ledger. It does not add application tables, create workstation login credentials, mark the tenant active, or enable network access.
