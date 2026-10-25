@@ -93,6 +93,10 @@ node infra/offline-first/api/scripts/bootstrap-tenant-schema.mjs <tenant-slug>
 
 The command resolves the database only from the active tenant's control-plane mapping, verifies the deterministic tenant/database relationship and actual PostgreSQL owner, then applies version 1 under the tenant's non-login owner role. It stores a SHA-256 checksum in `housemix.schema_migrations`; reruns verify the checksum and do not reapply a changed migration. This only creates the isolated schema and migration ledger. It does not add application tables, create workstation login credentials, mark the tenant active, or enable network access.
 
+## Per-radio synchronization schema (migration 002)
+
+Each radio database receives its own synchronization tables in `housemix` through `infra/offline-first/schema/tenant/002_sync.sql`, applied only after tenant baseline migration 001 and while connected as that radio database's owner role. It creates a local outbox with idempotency enforcement, a per-device checkpoint table, and an audit event ledger. The schema deliberately omits `tenant_id`: the separate PostgreSQL database is the isolation boundary. Public table and sequence privileges are revoked. CI validates the schema and its payload constraints against disposable PostgreSQL; this migration does not yet redirect the HTTP sync endpoints, which remains a separately reviewed integration step.
+
 ## Create least-privilege runtime credentials for a radio
 
 After a radio database has been provisioned and its baseline schema initialized, an operator can create its dedicated application login:
