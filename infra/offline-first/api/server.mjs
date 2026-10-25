@@ -139,6 +139,10 @@ app.get("/v1/me", authenticateDevice, (req, res) => {
   res.json({ device: req.device });
 });
 
+// Register the isolated-radio endpoints only after the shared device-auth middleware exists.
+mountTenantDiagnosticRoute(app, { authenticateDevice, tenantRuntime });
+mountTenantSyncRoutes(app, { authenticateDevice, tenantRuntime });
+
 app.use((err, _req, res, _next) => {
   if (err instanceof SyntaxError && err.status === 400) {
     return res.status(400).json({ error: "invalid_json" });
