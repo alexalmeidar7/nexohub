@@ -95,6 +95,10 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/tests/tenant_sync_checkpoint_smoke.sql
+      - name: Verify durable tenant sync inbox
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/tests/tenant_sync_inbox_smoke.sql
       - name: Test authenticated tenant sync inbox
         run: node --test infra/offline-first/api/tests/tenant-sync-inbox.test.mjs
       - name: Install API dependencies
