@@ -1,6 +1,16 @@
 name: Build House Mix Desktop
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "desktop/**"
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/build-house-mix-desktop.yml"
   push:
     branches: [feature/house-mix-desktop]
     paths:
