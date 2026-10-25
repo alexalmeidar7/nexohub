@@ -20,6 +20,7 @@ const valid = {
   tenant, databaseKey,
   databaseOwner: "hm_owner_11e594f481958c10e3015d0bf0447a22",
   migration: { version: 1, checksum_sha256: "a".repeat(64) },
+  expectedMigrationChecksum: "a".repeat(64),
   runtimeRole, memberships: [], publicCanConnect: false,
   runtimeCanConnect: true, runtimeCanUseSchema: true,
 };
@@ -58,7 +59,7 @@ test("activation rejects schema checksum mismatch before status change", () => {
   assert.notEqual(expectedTenantSchemaChecksum("schema-a"), expectedTenantSchemaChecksum("schema-b"));
   assert.throws(() => validateTenantDatabaseActivationSnapshot({
     ...valid, migration: { version: 1, checksum_sha256: "b".repeat(64) },
-  }), /tenant_schema_not_initialized/);
+  }), /tenant_schema_checksum_verification_failed/);
 });
 
 test("activation rejects an incorrect tenant/database mapping", () => {
@@ -71,4 +72,10 @@ test("activation rejects missing runtime database grants", () => {
   assert.throws(() => validateTenantDatabaseActivationSnapshot({
     ...valid, runtimeCanConnect: false,
   }), /tenant_runtime_role_grants_incomplete/);
+});
+
+test("activation rejects a missing expected baseline checksum", () => {
+  assert.throws(() => validateTenantDatabaseActivationSnapshot({
+    ...valid, expectedMigrationChecksum: undefined,
+  }), /tenant_schema_checksum_verification_failed/);
 });
