@@ -1,8 +1,11 @@
 const { app, BrowserWindow, shell, dialog } = require("electron");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const { resolveClientProfile } = require("./clientProfile.cjs");
 
 const isDev = !app.isPackaged;
+const profile = resolveClientProfile(process.argv, app.getPath("appData"));
+app.setPath("userData", profile.userDataPath);
 let mainWindow;
 
 function isAllowedAppNavigation(rawUrl) {
@@ -42,10 +45,11 @@ function createWindow() {
     minHeight: 680,
     show: false,
     backgroundColor: "#111318",
-    title: "House Mix Desktop",
+    title: `House Mix Desktop — ${profile.clientId}`,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
+      additionalArguments: [`--house-mix-client-id=${profile.clientId}`],
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
