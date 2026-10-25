@@ -6,9 +6,6 @@ const required = ["DATABASE_URL"];
 for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing required environment variable: ${key}`);
 }
-if (process.env.HOUSEMIX_ENROLLMENT_SECRET.length < 32) {
-  throw new Error("HOUSEMIX_ENROLLMENT_SECRET must contain at least 32 characters");
-}
 
 const host = process.env.HOUSEMIX_API_HOST || "127.0.0.1";
 if (host !== "127.0.0.1" && process.env.HOUSEMIX_ALLOW_LAN !== "true") {
