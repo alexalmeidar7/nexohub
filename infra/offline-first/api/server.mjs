@@ -150,6 +150,11 @@ function decodeCursor(value) {
 app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
   const cursor = decodeCursor(req.query.cursor);
   if (cursor === undefined) return res.status(400).json({ error: "invalid_sync_cursor" });
+  console.log("SYNC_CURSOR_DIAGNOSTIC", JSON.stringify({
+    url: req.originalUrl,
+    queryCursorPresent: typeof req.query.cursor === "string",
+    cursor,
+  }));
   const rawLimit = req.query.limit === undefined ? 100 : Number(req.query.limit);
   if (!Number.isInteger(rawLimit) || rawLimit < 1 || rawLimit > 250) {
     return res.status(400).json({ error: "invalid_page_limit" });
