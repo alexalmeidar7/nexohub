@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile, chmod } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createDpapiTenantSecretVault } from "../dpapi-tenant-secret-vault.mjs";
@@ -22,7 +23,6 @@ async function fixture(t, output, exitCode = 0) {
     executablePath: resolve(process.execPath),
     credentialsRoot: dir,
     spawnProcess: (exe, _args, options) => {
-      const { spawn } = require("node:child_process");
       return spawn(exe, [script], options);
     },
   });
