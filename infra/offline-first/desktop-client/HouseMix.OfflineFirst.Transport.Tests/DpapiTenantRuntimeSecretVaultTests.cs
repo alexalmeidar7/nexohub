@@ -16,8 +16,10 @@ public sealed class DpapiTenantRuntimeSecretVaultTests : IDisposable
     public async Task RetrievesOnlyTheSecretForTheAuthenticatedTenant()
     {
         if (!OperatingSystem.IsWindows()) return;
-        await Store(TenantA).SaveAsync(Credential(TenantA));
-        await Store(TenantB).SaveAsync(Credential(TenantB));
+        var credentialA = Credential(TenantA);
+        var credentialB = Credential(TenantB);
+        await Store(TenantA).SaveAsync(credentialA);
+        await Store(TenantB).SaveAsync(credentialB);
         var requested = new List<string>();
         var vault = new DpapiTenantRuntimeSecretVault(id =>
         {
@@ -30,8 +32,8 @@ public sealed class DpapiTenantRuntimeSecretVaultTests : IDisposable
         Assert.Equal(new[] { TenantA }, requested);
         Assert.NotNull(secret);
         Assert.Equal(TenantA, secret.TenantId);
-        Assert.Equal(Credential(TenantA).RuntimeRole, secret.Role);
-        Assert.Equal(Credential(TenantA).Password, secret.Password);
+        Assert.Equal(credentialA.RuntimeRole, secret.Role);
+        Assert.Equal(credentialA.Password, secret.Password);
     }
 
     [Fact]
