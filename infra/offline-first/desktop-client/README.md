@@ -34,3 +34,9 @@ dotnet build .\HouseMix.OfflineFirst.Transport\HouseMix.OfflineFirst.Transport.c
 ```
 
 See `CONNECTION-SECURITY.md` and `HouseMix.OfflineFirst.Transport/DeviceCredentialStore.Tests.md` for acceptance and Windows test requirements.
+
+## DPAPI tenant runtime secret vault
+
+`DpapiTenantRuntimeSecretVault` provides the Windows-side protected secret lookup used by the local primary server. It resolves the credentials directory from the authenticated tenant UUID, loads the existing tenant-bound DPAPI blob, validates its validity window, and returns only that tenant's database key, runtime role, and password to the caller.
+
+The vault requires Windows DPAPI CurrentUser and has no plaintext-file or cross-tenant fallback. The Windows CI workflow runs the vault isolation, invalid-identity, missing-secret, and expiry tests. This component is not yet wired to the Node HTTP request handlers; the host integration and connection lifecycle remain the next integration task.
