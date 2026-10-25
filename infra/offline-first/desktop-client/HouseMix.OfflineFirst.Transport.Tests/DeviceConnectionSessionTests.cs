@@ -1,5 +1,6 @@
 using System.Net;
 using HouseMix.OfflineFirst.Transport;
+using Xunit;
 
 namespace HouseMix.OfflineFirst.Transport.Tests;
 
