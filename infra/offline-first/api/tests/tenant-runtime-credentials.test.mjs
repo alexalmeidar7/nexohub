@@ -39,3 +39,13 @@ test("runtime role membership revocation rejects unrelated role pairs", () => {
     /runtime_role_membership_scope_mismatch/,
   );
 });
+
+test("runtime role membership revocation safely quotes PostgreSQL role names", () => {
+  const runtime = "hm_app_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  assert.deepEqual(
+    buildRuntimeRoleMembershipRevocations(runtime, [
+      { grantedRole: "legacy-role", memberRole: runtime },
+    ]),
+    ['REVOKE "legacy-role" FROM "hm_app_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"'],
+  );
+});
