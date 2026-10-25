@@ -39,8 +39,26 @@ jobs:
             echo "::error::The confirmed Project Ref does not match SUPABASE_PROJECT_REF. Nothing was changed."
             exit 1
           fi
-          if [ -z "$DATABASE_URL" ] || [[ "$DATABASE_URL" != *"$SECRET_PROJECT_REF"* ]]; then
-            echo "::error::SUPABASE_DB_URL is missing or does not match the confirmed project. Nothing was changed."
+          if ! python3 - "$DATABASE_URL" "$SECRET_PROJECT_REF" <<'PY'
+          import sys
+          from urllib.parse import unquote, urlparse
+
+          database_url, project_ref = sys.argv[1], sys.argv[2]
+          parsed = urlparse(database_url)
+          host = (parsed.hostname or "").lower()
+          username = unquote(parsed.username or "")
+          direct_database_host = host == f"db.{project_ref}.supabase.co"
+          project_pooler_host = (
+              host.endswith(".pooler.supabase.com")
+              and username == f"postgres.{project_ref}"
+          )
+          if parsed.scheme not in ("postgres", "postgresql") or not (
+              direct_database_host or project_pooler_host
+          ):
+              sys.exit(1)
+          PY
+          then
+            echo "::error::SUPABASE_DB_URL must use the confirmed project's direct database host or its project-specific Supabase pooler. Nothing was changed."
             exit 1
           fi
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
