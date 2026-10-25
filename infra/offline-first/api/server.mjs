@@ -161,13 +161,7 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
                  created_at::text AS created_at_cursor
           FROM sync_outbox
           WHERE tenant_id = ${req.device.tenant_id}
-            AND (
-              created_at > ${cursor.created_at}::timestamptz
-              OR (
-                created_at = ${cursor.created_at}::timestamptz
-                AND id > ${cursor.id}::uuid
-              )
-            )
+            AND (created_at, id) > (${cursor.created_at}::timestamptz, ${cursor.id}::uuid)
           ORDER BY created_at ASC, id ASC
           LIMIT ${rawLimit + 1}
         `
