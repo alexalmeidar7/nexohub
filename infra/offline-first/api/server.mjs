@@ -165,7 +165,8 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
           LIMIT ${rawLimit + 1}
         `
       : await db`
-          SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at
+          SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
+                 created_at::text AS created_at_cursor
           FROM sync_outbox
           WHERE tenant_id = ${req.device.tenant_id}
           ORDER BY created_at ASC, id ASC
