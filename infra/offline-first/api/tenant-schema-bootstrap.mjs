@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { validateDatabaseKey } from "./database-provisioning.mjs";
+import { createDatabaseKey, validateDatabaseKey } from "./database-provisioning.mjs";
 import { buildTenantOwnerRole } from "./postgres-tenant-provisioner.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -19,8 +19,7 @@ export function buildTenantDatabaseUrl(adminUrl, databaseKey) {
 export async function bootstrapTenantSchema({ admin, tenant, databaseKey, migrationSql }) {
   validateDatabaseKey(databaseKey);
   const ownerRole = buildTenantOwnerRole(tenant.id);
-  const expected = `hm_${databaseKey.slice(3)}`;
-  if (databaseKey !== expected) throw new Error("tenant_database_mapping_mismatch");
+  if (createDatabaseKey(tenant.id) !== databaseKey) throw new Error("tenant_database_mapping_mismatch");
   const checksum = crypto.createHash("sha256").update(migrationSql).digest("hex");
 
   const databases = await admin`
