@@ -74,7 +74,7 @@ Required next actions:
 
 The following hashes are computed from the exact attached files and allow the originals to be identified:
 
-- `supabase_database_dump.txt`: `SHA256_PENDING`
-- `supabase_local_db.txt`: `SHA256_PENDING`
+- `supabase_database_dump.txt`: `f67b73278143d086b7a11bf42615da908093108cdaccbf66dc45a71865997b89`
+- `supabase_local_db.txt`: `75d3f13412a57271f4007d12b2f1390d711c4ca879496d162128175e389cea77`
 
 Replace the placeholders with the measured SHA-256 values before treating this document as a final evidence manifest.
