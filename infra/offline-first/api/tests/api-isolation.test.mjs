@@ -119,6 +119,10 @@ try {
   assert.equal(count.length, 2, "events remain separated by tenant");
   assert.ok(count.every((row) => row.total === 1), "each tenant has exactly one event");
 
+  // Ensure distinct database timestamps: pagination is ordered by (created_at, id),
+  // so two writes in the same timestamp tick may be ordered by UUID instead of insertion.
+  await new Promise((resolve) => setTimeout(resolve, 25));
+
   // Add a second Alpha event so limit=1 exercises a real next page.
   const alphaSecond = await post("/v1/sync/outbox", {
     aggregate_type: "program",
