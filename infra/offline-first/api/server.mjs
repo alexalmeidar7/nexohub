@@ -3,6 +3,9 @@ import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import express from "express";
 import postgres from "postgres";
+import { createDpapiTenantSecretVault } from "./dpapi-tenant-secret-vault.mjs";
+import { createTenantRuntimeService } from "./tenant-runtime-service.mjs";
+import { mountTenantDiagnosticRoute } from "./tenant-diagnostic-route.mjs";
 import { resolveApiHost } from "./network-config.mjs";
 import { resolveTlsOptions } from "./tls-config.mjs";
 
@@ -15,6 +18,22 @@ const host = resolveApiHost(process.env);
 const port = Number(process.env.HOUSEMIX_API_PORT || 8787);
 const db = postgres(process.env.DATABASE_URL, { max: 10, idle_timeout: 20, connect_timeout: 5 });
 const app = express();
+const vaultHostPath = process.env.HOUSEMIX_DPAPI_VAULT_HOST;
+const tenantCredentialsRoot = process.env.HOUSEMIX_TENANT_CREDENTIALS_ROOT;
+if (Boolean(vaultHostPath) !== Boolean(tenantCredentialsRoot)) {
+  throw new Error("Both protected tenant vault configuration paths are required together");
+}
+const tenantRuntime = vaultHostPath && tenantCredentialsRoot
+  ? createTenantRuntimeService({
+      controlPlaneDb: db,
+      secretVault: createDpapiTenantSecretVault({
+        executablePath: vaultHostPath,
+        credentialsRoot: tenantCredentialsRoot,
+      }),
+      controlPlaneUrl: process.env.DATABASE_URL,
+      postgresFactory: (url, options) => postgres(url, options),
+    })
+  : null;
 app.disable("x-powered-by");
 app.use(express.json({ limit: "64kb", strict: true }));
 

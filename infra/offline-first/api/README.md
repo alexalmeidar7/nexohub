@@ -52,10 +52,15 @@ The revoke command requires both the tenant slug and device UUID, rejects cross-
 - `GET /health`: process/database health; no customer data.
 - `POST /v1/devices/enroll`: body includes `enrollment_token`, a client-generated cryptographically random `device_key` (32+ chars), and `label`. Tenant and role are taken from the grant, never from client-supplied fields.
 - `GET /v1/me`: requires `Authorization: Bearer <device_key>`.
+- `GET /v1/tenant/diagnostics`: requires device authentication and, when the protected Windows DPAPI vault is configured, opens only that device's active radio database and runs a read-only `SELECT 1`. It returns readiness only, never database credentials or connection details.
 - `POST /v1/sync/outbox`: writes events only under the authenticated device's tenant; repeated idempotency keys do not create duplicate events.
 - `GET /v1/sync/changes`: paginates the authenticated tenant's change feed with an opaque cursor; page size is limited to 1–250.
 
 Enrollment tokens are single-use, expire, can be revoked by setting `revoked_at`, and cannot enroll a second device. If the enrollment response is lost, the same token + same device key safely returns the already-created device; a different key is rejected.
+
+## Protected tenant runtime diagnostic
+
+On the Windows host, publish `HouseMix.OfflineFirst.VaultHost` and set both `HOUSEMIX_DPAPI_VAULT_HOST` (absolute executable path) and `HOUSEMIX_TENANT_CREDENTIALS_ROOT` (absolute protected credential-store root). Configure both together; the API refuses a partial configuration. The authenticated diagnostic endpoint then uses the device-authenticated tenant UUID, the active control-plane registry entry and that tenant's DPAPI-protected runtime secret. It runs only `SELECT 1`, returns a readiness flag, and closes the tenant connection after the request. Without both settings, the endpoint returns `503 tenant_runtime_not_configured`. The endpoint is a validation probe, not a production feature or a data migration.
 
 ## Current limitations — do not use with customer data
 
