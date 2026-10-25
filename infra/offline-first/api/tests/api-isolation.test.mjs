@@ -119,6 +119,16 @@ try {
   assert.equal(count.length, 2, "events remain separated by tenant");
   assert.ok(count.every((row) => row.total === 1), "each tenant has exactly one event");
 
+  // Add a second Alpha event so limit=1 exercises a real next page.
+  const alphaSecond = await post("/v1/sync/outbox", {
+    aggregate_type: "program",
+    aggregate_id: "program-2",
+    operation: "upsert",
+    payload: { name: "Alpha program page two" },
+    idempotency_key: "alpha-second-page-event-002",
+  }, auth(keyA));
+  assert.equal(alphaSecond.status, 202, "second Alpha event is accepted for pagination");
+
   const alphaChanges = await fetch(baseUrl + "/v1/sync/changes?limit=1", { headers: auth(keyA) });
   assert.equal(alphaChanges.status, 200, "authenticated device can pull its tenant changes");
   const alphaPage = await alphaChanges.json();
@@ -131,7 +141,7 @@ try {
   const alphaNextBody = await alphaNext.json();
   assert.equal(alphaNext.status, 200);
   assert.equal(alphaNextBody.changes.length, 1);
-  assert.equal(alphaNextBody.changes[0].payload.name, "Alpha program");
+  assert.equal(alphaNextBody.changes[0].payload.name, "Alpha program page two");
 
   const betaChanges = await fetch(baseUrl + "/v1/sync/changes", { headers: auth(keyB) });
   const betaBody = await betaChanges.json();
