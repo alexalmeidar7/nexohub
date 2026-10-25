@@ -32,6 +32,11 @@ public sealed class TenantRuntimeCredentialStoreTests : IDisposable
     {
         if (!OperatingSystem.IsWindows()) return;
         await CreateStore(TenantA).SaveAsync(CreateCredential(TenantA));
+        var sourcePath = Path.Combine(_root, TenantA, "credentials", "postgres-runtime-credential.bin");
+        var targetDirectory = Path.Combine(_root, TenantB, "credentials");
+        Directory.CreateDirectory(targetDirectory);
+        var targetPath = Path.Combine(targetDirectory, "postgres-runtime-credential.bin");
+        File.Copy(sourcePath, targetPath);
 
         await Assert.ThrowsAsync<CryptographicException>(() => CreateStore(TenantB).LoadAsync());
     }
