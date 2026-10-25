@@ -163,10 +163,13 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
     if (cursor) {
       const probe = await db`
         SELECT id, created_at::text AS created_at_text,
-               created_at > ${cursor.created_at}::timestamptz AS timestamp_after,
-               created_at = ${cursor.created_at}::timestamptz AS timestamp_equal,
-               id > ${cursor.id}::uuid AS id_after,
-               (created_at, id) > (${cursor.created_at}::timestamptz, ${cursor.id}::uuid) AS tuple_after
+               pg_typeof(created_at)::text AS created_at_type,
+               CAST(${cursor.created_at} AS timestamptz)::text AS cursor_cast_text,
+               created_at::text = CAST(${cursor.created_at} AS timestamptz)::text AS text_equal,
+               created_at > CAST(${cursor.created_at} AS timestamptz) AS timestamp_after,
+               created_at = CAST(${cursor.created_at} AS timestamptz) AS timestamp_equal,
+               id > CAST(${cursor.id} AS uuid) AS id_after,
+               (created_at, id) > (CAST(${cursor.created_at} AS timestamptz), CAST(${cursor.id} AS uuid)) AS tuple_after
         FROM sync_outbox
         WHERE tenant_id = ${req.device.tenant_id}
         ORDER BY created_at ASC, id ASC
