@@ -160,6 +160,19 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
     return res.status(400).json({ error: "invalid_page_limit" });
   }
   try {
+    if (cursor) {
+      const probe = await db`
+        SELECT id, created_at::text AS created_at_text,
+               created_at > ${cursor.created_at}::timestamptz AS timestamp_after,
+               created_at = ${cursor.created_at}::timestamptz AS timestamp_equal,
+               id > ${cursor.id}::uuid AS id_after,
+               (created_at, id) > (${cursor.created_at}::timestamptz, ${cursor.id}::uuid) AS tuple_after
+        FROM sync_outbox
+        WHERE tenant_id = ${req.device.tenant_id}
+        ORDER BY created_at ASC, id ASC
+      `;
+      console.log("SYNC_CURSOR_COMPARISON_PROBE", JSON.stringify(probe));
+    }
     const rows = cursor
       ? await db`
           SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
