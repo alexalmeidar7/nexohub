@@ -65,6 +65,18 @@ public sealed class TenantRuntimeCredentialStore
         }
     }
 
+    /// <summary>
+    /// Loads a credential and rejects it if its validity window has elapsed.
+    /// Use this method at the point of acquiring a database connection.
+    /// </summary>
+    public async Task<TenantRuntimeCredential?> LoadUsableAsync(CancellationToken cancellationToken = default)
+    {
+        var credential = await LoadAsync(cancellationToken).ConfigureAwait(false);
+        if (credential is not null)
+            TenantRuntimeCredentialPolicy.EnsureUsable(credential);
+        return credential;
+    }
+
     public async Task SaveAsync(TenantRuntimeCredential credential, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(credential);
