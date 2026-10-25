@@ -127,3 +127,15 @@ The activation gate rechecks the tenant UUID/database mapping, deterministic own
 The API runtime can now resolve a tenant-specific PostgreSQL client using only the tenant UUID from the authenticated request context. It checks the control-plane registry is `active`, recomputes the deterministic database and runtime-role names, retrieves the matching secret through an injected local secret-vault provider, and builds the connection URL from the configured loopback PostgreSQL origin. Client-supplied tenant slugs, database names, passwords, and connection URLs are never used for routing.
 
 The resolver is a tested integration boundary, not yet wired into the HTTP request handlers. The secret-vault provider must be backed by the per-radio protected credential store before runtime use; do not use an in-memory placeholder or expose secrets to logs. The current host policy is loopback-only and must remain so until the separately gated TLS/LAN acceptance work is complete.
+
+## Control-plane tenant registry adapter
+
+`createTenantRegistryLookup(controlPlaneDb)` implements the registry provider used by the tenant runtime router. It accepts only the authenticated tenant UUID, performs a parameterized lookup in `tenant_database_registry`, and verifies that the stored database key matches the deterministic key for that UUID. It returns the registry status unchanged; the runtime router remains responsible for rejecting anything other than `active`.
+
+This adapter does not retrieve or persist runtime passwords and does not create database connections by itself. The protected server-side secret-vault integration and request-handler wiring remain separate gated steps.
+
+## Compose the per-radio runtime service
+
+`createTenantRuntimeService` composes the control-plane registry adapter and the authenticated-tenant database resolver. The caller supplies a protected secret-vault implementation and a PostgreSQL client factory. Each open operation accepts only the tenant UUID already established by server-side device authentication; it verifies the active registry mapping, retrieves that tenant's runtime secret, and only then creates a tenant-scoped PostgreSQL client.
+
+The service deliberately has no default vault, environment-variable password fallback, or in-memory secret store. Construction fails unless an explicit protected vault provider is supplied, and no PostgreSQL client is created when the tenant is inactive or its secret is invalid. This is a tested composition boundary; it is not yet wired into HTTP handlers. Keep the existing control-plane endpoints unchanged until the OS-protected server vault and request lifecycle integration are reviewed.
