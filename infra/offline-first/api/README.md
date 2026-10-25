@@ -107,3 +107,7 @@ node infra/offline-first/api/scripts/rotate-tenant-runtime-credentials.mjs <tena
 ```
 
 The command accepts only an active tenant whose database mapping matches its UUID. It verifies database ownership and least-privilege role flags, replaces the password on that radio's dedicated runtime role, and displays the new random secret once. **The old password stops working immediately.** Securely save the new secret in that radio's local DPAPI credential vault before reconnecting its House Mix Desktop instances. This prototype command does not remotely distribute the new secret, provide zero-downtime dual-password rotation, or update workstation vaults automatically. If the one-time output is lost, run rotation again and securely store the newly issued password.
+
+## PostgreSQL cross-radio connection isolation
+
+Each provisioned radio database removes PostgreSQL's default `CONNECT` privilege from `PUBLIC`, then explicitly preserves access for the local provisioning operator. The radio's dedicated runtime login receives `CONNECT` only on its own database. Runtime credential provisioning also removes any existing role memberships in either direction and verifies that none remain, preventing unexpected inherited or delegated role access. These safeguards apply when a database is provisioned or its runtime credentials are provisioned again; they do not retroactively harden databases that have not passed through these steps. Run this only against disposable local test databases until the full acceptance suite is complete.
