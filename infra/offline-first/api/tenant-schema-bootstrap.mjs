@@ -11,6 +11,7 @@ const migrations = [
   { version: 2, name: "tenant_sync", path: resolve(here, "../schema/tenant/002_sync.sql") },
   { version: 3, name: "tenant_sync_checkpoints", path: resolve(here, "../schema/tenant/003_sync_checkpoints.sql") },
   { version: 4, name: "tenant_sync_inbox", path: resolve(here, "../schema/tenant/004_sync_inbox.sql") },
+  { version: 5, name: "tenant_sync_inbox_leases", path: resolve(here, "../schema/tenant/005_sync_inbox_leases.sql") },
 ];
 const quoteIdentifier = (value) => `"${value.replaceAll('"', '""')}"`;
 
