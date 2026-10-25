@@ -1,5 +1,6 @@
 import postgres from "postgres";
 import { createDatabaseKey } from "../database-provisioning.mjs";
+import { buildTenantDatabaseUrl } from "../tenant-schema-bootstrap.mjs";
 import { provisionTenantRuntimeCredentials } from "../tenant-runtime-credentials.mjs";
 
 const [tenantSlug] = process.argv.slice(2);
@@ -11,6 +12,7 @@ if (!process.env.DATABASE_URL || !process.env.DATABASE_ADMIN_URL) {
 }
 const catalog = postgres(process.env.DATABASE_URL, { max: 1, connect_timeout: 5 });
 const admin = postgres(process.env.DATABASE_ADMIN_URL, { max: 1, connect_timeout: 5 });
+let tenantDb;
 try {
   const tenants = await catalog`
     SELECT t.id, t.slug, r.database_key, r.status
@@ -22,8 +24,9 @@ try {
   if (tenant.status !== "provisioning" || createDatabaseKey(tenant.id) !== tenant.database_key) {
     throw new Error("tenant_database_not_ready_for_credentials");
   }
+  tenantDb = postgres(buildTenantDatabaseUrl(process.env.DATABASE_ADMIN_URL, tenant.database_key), { max: 1, connect_timeout: 5 });
   const result = await provisionTenantRuntimeCredentials({
-    admin, tenant, databaseKey: tenant.database_key
+    admin, tenantDb, tenant, databaseKey: tenant.database_key
   });
   // This secret is displayed once. Do not redirect stdout or save it in logs.
   console.log(JSON.stringify({
@@ -35,5 +38,5 @@ try {
     warning: "Copy this secret directly into the approved local secret store. It cannot be recovered from PostgreSQL."
   }, null, 2));
 } finally {
-  await Promise.all([catalog.end(), admin.end()]);
+  await Promise.all([catalog.end(), admin.end(), tenantDb?.end()]);
 }
