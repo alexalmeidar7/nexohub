@@ -39,14 +39,14 @@ test("returns null when the tenant has no provisioned credential", async (t) => 
   assert.equal(await vault.getTenantRuntimeSecret(tenantId), null);
 });
 
-test("rejects invalid tenant identity before starting the helper", () => {
+test("rejects invalid tenant identity before starting the helper", async () => {
   let spawned = false;
   const vault = createDpapiTenantSecretVault({
     executablePath: resolve(process.execPath),
     credentialsRoot: resolve(tmpdir()),
     spawnProcess: () => { spawned = true; throw new Error("must_not_spawn"); },
   });
-  assert.rejects(() => vault.getTenantRuntimeSecret("radio-positiva"), /authenticated tenant UUID/);
+  await assert.rejects(() => vault.getTenantRuntimeSecret("radio-positiva"), /authenticated tenant UUID/);
   assert.equal(spawned, false);
 });
 
