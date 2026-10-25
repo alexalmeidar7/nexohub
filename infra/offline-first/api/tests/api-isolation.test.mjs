@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import postgres from "postgres";
 
 const port = 18787 + Math.floor(Math.random() * 1000);
@@ -128,10 +128,49 @@ try {
   assert.equal(betaBody.changes.length, 1, "Beta cannot pull Alpha tenant events");
   assert.equal(betaBody.changes[0].payload.name, "Beta program");
 
+  const scriptPath = "infra/offline-first/api/scripts/manage-devices.mjs";
+  const list = spawnSync(process.execPath, [scriptPath, "list", tenantB], {
+    env: { ...process.env, DATABASE_URL: databaseUrl }, encoding: "utf8"
+  });
+  assert.equal(list.status, 0, list.stderr);
+  const listed = JSON.parse(list.stdout);
+  assert.equal(listed.devices.length, 1, "operator list is scoped to the requested tenant");
+  assert.equal(listed.devices[0].id, bodyB.device.id);
+  assert.equal("device_key_hash" in listed.devices[0], false, "device credentials are never listed");
+
+  const crossTenantRevoke = spawnSync(process.execPath, [scriptPath, "revoke", tenantA, bodyB.device.id], {
+    env: { ...process.env, DATABASE_URL: databaseUrl }, encoding: "utf8"
+  });
+  assert.notEqual(crossTenantRevoke.status, 0, "operator cannot revoke a device through another tenant slug");
+  const stillActive = await fetch(baseUrl + "/v1/me", { headers: auth(keyB) });
+  assert.equal(stillActive.status, 200, "cross-tenant revoke attempt leaves device active");
+
+  const revoke = spawnSync(process.execPath, [scriptPath, "revoke", tenantB, bodyB.device.id], {
+    env: { ...process.env, DATABASE_URL: databaseUrl }, encoding: "utf8"
+  });
+  assert.equal(revoke.status, 0, revoke.stderr);
+  assert.equal(JSON.parse(revoke.stdout).status, "revoked");
+  const revoked = await fetch(baseUrl + "/v1/me", { headers: auth(keyB) });
+  assert.equal(revoked.status, 401, "CLI revocation disables device credentials immediately");
+  const audit = await sql`
+    SELECT event_type FROM local_audit_events
+    WHERE tenant_id = ${idB} AND device_id = ${bodyB.device.id} AND event_type = 'device.revoked'
+  `;
+  assert.equal(audit.length, 1, "device revocation is audited exactly once");
+  const revokeAgain = spawnSync(process.execPath, [scriptPath, "revoke", tenantB, bodyB.device.id], {
+    env: { ...process.env, DATABASE_URL: databaseUrl }, encoding: "utf8"
+  });
+  assert.equal(revokeAgain.status, 0, revokeAgain.stderr);
+  assert.equal(JSON.parse(revokeAgain.stdout).status, "already_revoked");
+  assert.equal((await sql`
+    SELECT id FROM local_audit_events
+    WHERE tenant_id = ${idB} AND device_id = ${bodyB.device.id} AND event_type = 'device.revoked'
+  `).length, 1, "repeated revocation does not duplicate audit events");
+
   await sql`UPDATE local_devices SET status = 'revoked' WHERE id = ${bodyA.device.id}`;
-  const revoked = await fetch(baseUrl + "/v1/me", { headers: auth(keyA) });
-  assert.equal(revoked.status, 401, "revoked device credentials stop working immediately");
-  console.log("PASS: one-time enrollment, expiry, tenant/role binding, safe retry, revocation, tenant isolation, idempotency and pagination");
+  const revokedA = await fetch(baseUrl + "/v1/me", { headers: auth(keyA) });
+  assert.equal(revokedA.status, 401, "revoked device credentials stop working immediately");
+  console.log("PASS: one-time enrollment, expiry, tenant/role binding, safe retry, device listing, tenant-scoped revocation, audit, tenant isolation, idempotency and pagination");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => server.once("exit", resolve));
