@@ -10,9 +10,10 @@ for (const key of required) {
 
 const host = resolveApiHost(process.env);
 const port = Number(process.env.HOUSEMIX_API_PORT || 8787);
+const db = postgres(process.env.DATABASE_URL, { max: 10, idle_timeout: 20, connect_timeout: 5 });
+const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "64kb", strict: true }));
-
 
 const hash = (value) => crypto.createHash("sha256").update(value, "utf8").digest();
 const constantTimeEqual = (a, b) => {
