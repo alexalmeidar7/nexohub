@@ -36,6 +36,8 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Build Desktop HTTPS transport
         run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.Transport/HouseMix.OfflineFirst.Transport.csproj --configuration Release
+      - name: Build Windows DPAPI vault host
+        run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.VaultHost/HouseMix.OfflineFirst.VaultHost.csproj --configuration Release
       - uses: oven-sh/setup-bun@v2
       - name: Test per-radio database provisioning primitives
         run: node --test infra/offline-first/api/tests/database-provisioning.test.mjs
@@ -55,6 +57,8 @@ jobs:
         run: node --test infra/offline-first/api/tests/tenant-registry-adapter.test.mjs
       - name: Test tenant runtime service composition
         run: node --test infra/offline-first/api/tests/tenant-runtime-service.test.mjs
+      - name: Test DPAPI tenant secret vault host adapter
+        run: node --test infra/offline-first/api/tests/dpapi-tenant-secret-vault.test.mjs
       - name: Verify LAN binding remains hard-disabled
         run: node --test infra/offline-first/api/tests/network-config.test.mjs infra/offline-first/api/tests/tls-config.test.mjs infra/offline-first/api/tests/https-handshake.test.mjs
       - name: Apply local schema
