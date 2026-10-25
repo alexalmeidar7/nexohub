@@ -25,6 +25,20 @@ node infra/offline-first/api/scripts/issue-enrollment-token.mjs <tenant-slug> <p
 
 The command creates a cryptographically random 256-bit token, stores only its SHA-256 hash, binds it to one active tenant and one device role, and defaults to a 60-minute expiry. TTL is limited to 5–1440 minutes. The plaintext token is displayed once; deliver it through a secure channel and do not log or commit it.
 
+## Manage enrolled devices
+
+Run these commands only on the local server/administrator machine with DATABASE_URL set:
+
+```powershell
+# List devices belonging to one tenant (credential hashes are never displayed)
+node infra/offline-first/api/scripts/manage-devices.mjs list <tenant-slug>
+
+# Revoke a device immediately
+node infra/offline-first/api/scripts/manage-devices.mjs revoke <tenant-slug> <device-uuid>
+```
+
+The revoke command requires both the tenant slug and device UUID, rejects cross-tenant identifiers, runs in a transaction, and writes one `device.revoked` audit event. Repeating the command is safe and reports `already_revoked`. Revoked device keys stop authenticating immediately. This is a local operator CLI, not a remote admin endpoint or user-facing management screen.
+
 ## Endpoints
 
 - `GET /health`: process/database health; no customer data.
