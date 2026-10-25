@@ -60,7 +60,7 @@ Enrollment tokens are single-use, expire, can be revoked by setting `revoked_at`
 ## Current limitations — do not use with customer data
 
 - Token issuance is a local operator/DB action, not yet an authenticated admin UI or remote identity system.
-- No LAN binding, TLS, workstation pairing UX, operator login, full credential rotation UX, conflict resolution, backup scheduler, or standby failover yet.
+- No LAN binding, Desktop certificate trust/hostname validation, workstation pairing UX, operator login, full credential rotation UX, conflict resolution, backup scheduler, or standby failover yet.
 - Device keys must be generated with a cryptographically secure random generator and stored securely by the future Desktop shell; never hardcode them.
 - SHA-256 is used only to hash high-entropy random tokens and device keys, not human passwords.
 - API is not exposed to browsers and must not receive requests from untrusted origins.
