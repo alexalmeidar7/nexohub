@@ -137,7 +137,8 @@
           ]
         }
       ],
-      "artifactName": "House-Mix-Desktop-Setup-${version}.${ext}"
+      "artifactName": "House-Mix-Desktop-Setup-${version}.${ext}",
+      "icon": "desktop/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -145,7 +146,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "House Mix Desktop"
+      "shortcutName": "House Mix Desktop",
+      "installerIcon": "desktop/icon.ico",
+      "uninstallerIcon": "desktop/icon.ico"
     }
   },
   "main": "desktop/main.cjs"
