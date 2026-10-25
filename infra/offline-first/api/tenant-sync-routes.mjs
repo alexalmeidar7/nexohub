@@ -145,4 +145,60 @@ export function mountTenantSyncRoutes(app, { authenticateDevice, tenantRuntime }
       return res.status(500).json({ error: "sync_ack_failed" });
     }
   }));
+  app.post("/v1/sync/inbox", authenticateDevice, run(async (req, res) => {
+    const body = req.body || {};
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const { mutation_id, source, aggregate_type, aggregate_id, operation, payload, base_version, schema_version } = body;
+    if (typeof mutation_id !== "string" || !uuid.test(mutation_id) ||
+        typeof source !== "string" || source.trim().length < 1 || source.length > 40 ||
+        typeof aggregate_type !== "string" || aggregate_type.trim().length < 1 || aggregate_type.length > 80 ||
+        typeof aggregate_id !== "string" || aggregate_id.trim().length < 1 || aggregate_id.length > 160 ||
+        !["upsert", "delete"].includes(operation) ||
+        !Number.isInteger(schema_version) || schema_version < 1 ||
+        (base_version !== undefined && base_version !== null &&
+          (!Number.isSafeInteger(base_version) || base_version < 0)) ||
+        (operation === "upsert" && (!payload || typeof payload !== "object" || Array.isArray(payload))) ||
+        (operation === "delete" && payload !== undefined && payload !== null)) {
+      return res.status(400).json({ error: "invalid_inbox_mutation" });
+    }
+    try {
+      const db = req.tenantRuntime.db;
+      const inserted = await db`
+        INSERT INTO housemix.sync_inbox
+          (mutation_id, received_by_device_id, source, aggregate_type, aggregate_id,
+           operation, payload, base_version, schema_version)
+        VALUES
+          (${mutation_id}::uuid, ${req.device.id}, ${source.trim()}, ${aggregate_type.trim()},
+           ${aggregate_id.trim()}, ${operation}, ${operation === "upsert" ? db.json(payload) : null},
+           ${base_version ?? null}, ${schema_version})
+        ON CONFLICT (mutation_id) DO NOTHING
+        RETURNING id, mutation_id, status, received_at
+      `;
+      if (inserted.length) return res.status(202).json({ accepted: true, duplicate: false, mutation: inserted[0] });
+      const existing = await db`
+        SELECT id, mutation_id, status, received_at,
+               received_by_device_id = ${req.device.id} AS same_device,
+               source = ${source.trim()} AS same_source,
+               aggregate_type = ${aggregate_type.trim()} AS same_type,
+               aggregate_id = ${aggregate_id.trim()} AS same_aggregate,
+               operation = ${operation} AS same_operation,
+               payload IS NOT DISTINCT FROM ${operation === "upsert" ? db.json(payload) : null} AS same_payload,
+               base_version IS NOT DISTINCT FROM ${base_version ?? null} AS same_base_version,
+               schema_version = ${schema_version} AS same_schema_version
+        FROM housemix.sync_inbox WHERE mutation_id = ${mutation_id}::uuid
+      `;
+      if (!existing.length) return res.status(409).json({ error: "inbox_mutation_conflict" });
+      const row = existing[0];
+      const same = ["same_device", "same_source", "same_type", "same_aggregate", "same_operation",
+        "same_payload", "same_base_version", "same_schema_version"].every((key) => row[key] === true);
+      if (!same) return res.status(409).json({ error: "mutation_id_reused_with_different_content" });
+      return res.status(200).json({
+        accepted: true, duplicate: true,
+        mutation: { id: row.id, mutation_id: row.mutation_id, status: row.status, received_at: row.received_at },
+      });
+    } catch {
+      return res.status(500).json({ error: "inbox_write_failed" });
+    }
+  }));
+
 }
