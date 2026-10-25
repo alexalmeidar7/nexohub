@@ -26,7 +26,7 @@ try
 
     var vault = new DpapiTenantRuntimeSecretVault(_ => tenantDirectory);
     var secret = await vault.GetTenantRuntimeSecretAsync(canonicalTenantId);
-    var output = JsonSerializer.Serialize(new { secret });
+    var output = JsonSerializer.Serialize(new { secret }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
     await Console.Out.WriteAsync(output);
     await Console.Out.FlushAsync();
     return 0;
