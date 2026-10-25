@@ -7,6 +7,14 @@ export function buildTenantOwnerRole(tenantId) {
   return `hm_owner_${databaseKey.slice(3)}`;
 }
 
+export function buildTenantDatabaseConnectIsolationStatements(databaseKey) {
+  const safeDatabase = validateDatabaseKey(databaseKey);
+  return [
+    `REVOKE CONNECT ON DATABASE ${quoteIdentifier(safeDatabase)} FROM PUBLIC`,
+    `GRANT CONNECT ON DATABASE ${quoteIdentifier(safeDatabase)} TO CURRENT_USER`,
+  ];
+}
+
 export function buildCreateDatabaseStatement(databaseKey, ownerRole) {
   const safeDatabase = validateDatabaseKey(databaseKey);
   if (typeof ownerRole !== "string" || !/^hm_owner_[a-f0-9]{32}$/.test(ownerRole)) {
@@ -80,6 +88,12 @@ export async function provisionTenantDatabase({ catalog, admin, tenantId, tenant
     `;
     if (verified.length !== 1 || verified[0].owner !== ownerRole) {
       throw new Error("database_creation_verification_failed");
+    }
+
+    // PostgreSQL grants CONNECT to PUBLIC by default. Remove that cross-tenant
+    // entry point and retain access for the local provisioning operator.
+    for (const statement of buildTenantDatabaseConnectIsolationStatements(databaseKey)) {
+      await admin.unsafe(statement);
     }
 
     await catalog`
