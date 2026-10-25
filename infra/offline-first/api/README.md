@@ -13,7 +13,7 @@ $env:DATABASE_URL = "postgres://housemix_dev:YOUR_DB_PASSWORD@127.0.0.1:55432/ho
 node infra/offline-first/api/server.mjs
 ```
 
-Apply control-plane migrations 001–003 and initialize each radio database using `bootstrap-tenant-schema.mjs` before starting sync traffic. The tenant bootstrap now applies the baseline (001) and sync (002) migrations in order. The service binds only to 127.0.0.1. LAN access is deliberately hard-disabled in code.
+Apply control-plane migrations 001–003 and initialize each radio database using `bootstrap-tenant-schema.mjs` before starting sync traffic. The tenant bootstrap now applies the baseline (001), sync (002), and durable checkpoint (003) migrations in order. The service binds only to 127.0.0.1. LAN access is deliberately hard-disabled in code.
 
 ## Network exposure safety gate
 
@@ -54,7 +54,8 @@ The revoke command requires both the tenant slug and device UUID, rejects cross-
 - `GET /v1/me`: requires `Authorization: Bearer <device_key>`.
 - `GET /v1/tenant/diagnostics`: requires device authentication and, when the protected Windows DPAPI vault is configured, opens only that device's active radio database and runs a read-only `SELECT 1`. It returns readiness only, never database credentials or connection details.
 - `POST /v1/sync/outbox`: opens the authenticated radio's isolated database and writes to `housemix.sync_outbox`; repeated idempotency keys do not create duplicate events.
-- `GET /v1/sync/changes`: reads and paginates only that radio's `housemix.sync_outbox` using an opaque cursor; page size is limited to 1–250. Both routes fail closed with 503 until the protected DPAPI tenant runtime is configured.
+- `GET /v1/sync/changes`: reads only that radio's outbox using a durable per-device checkpoint; page size is limited to 1–250. The server records the issued acknowledgement cursor before returning a page.
+- `POST /v1/sync/ack`: accepts only the exact cursor previously issued to that authenticated device, then advances that device's checkpoint. Replayed, forged, or cross-device acknowledgements are rejected. Both routes fail closed with 503 until the protected DPAPI tenant runtime is configured.
 
 Enrollment tokens are single-use, expire, can be revoked by setting `revoked_at`, and cannot enroll a second device. If the enrollment response is lost, the same token + same device key safely returns the already-created device; a different key is rejected.
 
