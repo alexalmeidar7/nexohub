@@ -31,6 +31,11 @@ jobs:
           --health-retries 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build Desktop HTTPS transport
+        run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.Transport/HouseMix.OfflineFirst.Transport.csproj --configuration Release
       - uses: oven-sh/setup-bun@v2
       - name: Verify LAN binding remains hard-disabled
         run: node --test infra/offline-first/api/tests/network-config.test.mjs infra/offline-first/api/tests/tls-config.test.mjs infra/offline-first/api/tests/https-handshake.test.mjs
