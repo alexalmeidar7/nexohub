@@ -137,7 +137,7 @@ try {
   assert.equal(alphaPage.has_more, true, "pull endpoint indicates another page exists");
   assert.ok(alphaPage.next_cursor, "pull endpoint returns a continuation cursor");
 
-  const alphaNext = await fetch(baseUrl + "/v1/sync/changes?cursor=" + encodeURIComponent(alphaPage.next_cursor), { headers: auth(keyA) });
+  const alphaNext = await fetch(baseUrl + "/v1/sync/changes?limit=1&cursor=" + encodeURIComponent(alphaPage.next_cursor), { headers: auth(keyA) });
   const alphaNextBody = await alphaNext.json();
   assert.equal(alphaNext.status, 200);
   assert.equal(alphaNextBody.changes.length, 1);
