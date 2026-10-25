@@ -2,7 +2,7 @@ import { withAuthenticatedTenantRuntime } from "./tenant-runtime-http.mjs";
 
 function encodeCursor(row) {
   return Buffer.from(JSON.stringify({
-    version: 3,
+    version: 4,
     created_at_us: row.created_at_cursor_us,
     id: row.id,
   })).toString("base64url");
@@ -12,9 +12,9 @@ function decodeCursor(value) {
   if (typeof value !== "string" || value.length > 512) return undefined;
   try {
     const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
-    if (!parsed || parsed.version !== 3 ||
+    if (!parsed || parsed.version !== 4 ||
         typeof parsed.created_at_us !== "string" ||
-        !/^-?\d{1,20}$/.test(parsed.created_at_us) ||
+        !/^\d{1,20}$/.test(parsed.created_at_us) ||
         typeof parsed.id !== "string" ||
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.id)) return undefined;
     return { created_at_us: parsed.created_at_us, id: parsed.id };
@@ -67,39 +67,82 @@ export function mountTenantSyncRoutes(app, { authenticateDevice, tenantRuntime }
   }));
 
   app.get("/v1/sync/changes", authenticateDevice, run(async (req, res) => {
-    const cursor = decodeCursor(req.query.cursor);
-    if (cursor === undefined) return res.status(400).json({ error: "invalid_sync_cursor" });
+    if (req.query.cursor !== undefined) return res.status(400).json({ error: "server_managed_checkpoint_required" });
     const limit = req.query.limit === undefined ? 100 : Number(req.query.limit);
     if (!Number.isInteger(limit) || limit < 1 || limit > 250) {
       return res.status(400).json({ error: "invalid_page_limit" });
     }
     try {
       const db = req.tenantRuntime.db;
-      const rows = cursor
-        ? await db`
-            SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
-                   (extract(epoch FROM created_at) * 1000000)::bigint::text AS created_at_cursor_us
-            FROM housemix.sync_outbox
-            WHERE ((extract(epoch FROM created_at) * 1000000)::bigint, id) >
-                  (${cursor.created_at_us}::bigint, ${cursor.id}::uuid)
-            ORDER BY created_at ASC, id ASC LIMIT ${limit + 1}
-          `
-        : await db`
-            SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
-                   (extract(epoch FROM created_at) * 1000000)::bigint::text AS created_at_cursor_us
-            FROM housemix.sync_outbox
-            ORDER BY created_at ASC, id ASC LIMIT ${limit + 1}
+      const result = await db.begin(async (tx) => {
+        await tx`
+          INSERT INTO housemix.sync_checkpoints (device_id, stream_name)
+          VALUES (${req.device.id}, 'outbox')
+          ON CONFLICT (device_id, stream_name) DO NOTHING
+        `;
+        const checkpoints = await tx`
+          SELECT cursor_value, issued_cursor_value
+          FROM housemix.sync_checkpoints
+          WHERE device_id = ${req.device.id} AND stream_name = 'outbox'
+          FOR UPDATE
+        `;
+        const checkpoint = checkpoints[0];
+        const committed = decodeCursor(checkpoint.cursor_value);
+        if (checkpoint.cursor_value && !committed) throw new Error("stored_sync_checkpoint_invalid");
+        const rows = committed
+          ? await tx`
+              SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
+                     (extract(epoch FROM created_at) * 1000000)::bigint::text AS created_at_cursor_us
+              FROM housemix.sync_outbox
+              WHERE ((extract(epoch FROM created_at) * 1000000)::bigint, id) >
+                    (${committed.created_at_us}::bigint, ${committed.id}::uuid)
+              ORDER BY created_at ASC, id ASC LIMIT ${limit + 1}
+            `
+          : await tx`
+              SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
+                     (extract(epoch FROM created_at) * 1000000)::bigint::text AS created_at_cursor_us
+              FROM housemix.sync_outbox
+              ORDER BY created_at ASC, id ASC LIMIT ${limit + 1}
+            `;
+        const hasMore = rows.length > limit;
+        const page = hasMore ? rows.slice(0, limit) : rows;
+        const last = page[page.length - 1];
+        let ackCursor = checkpoint.issued_cursor_value;
+        if (ackCursor && !decodeCursor(ackCursor)) throw new Error("stored_issued_sync_checkpoint_invalid");
+        if (!ackCursor && last) {
+          ackCursor = encodeCursor(last);
+          await tx`
+            UPDATE housemix.sync_checkpoints
+            SET issued_cursor_value = ${ackCursor}, updated_at = now()
+            WHERE device_id = ${req.device.id} AND stream_name = 'outbox'
           `;
-      const hasMore = rows.length > limit;
-      const page = hasMore ? rows.slice(0, limit) : rows;
-      const last = page[page.length - 1];
-      return res.json({
-        changes: page,
-        has_more: hasMore,
-        next_cursor: hasMore && last ? encodeCursor(last) : null,
+        }
+        return { changes: page, has_more: hasMore, ack_cursor: ackCursor || null };
       });
+      return res.json(result);
     } catch {
       return res.status(500).json({ error: "sync_pull_failed" });
+    }
+  }));
+
+  app.post("/v1/sync/ack", authenticateDevice, run(async (req, res) => {
+    const cursor = req.body?.ack_cursor;
+    if (typeof cursor !== "string" || !decodeCursor(cursor)) {
+      return res.status(400).json({ error: "invalid_sync_ack" });
+    }
+    try {
+      const db = req.tenantRuntime.db;
+      const updated = await db`
+        UPDATE housemix.sync_checkpoints
+        SET cursor_value = issued_cursor_value, issued_cursor_value = NULL, updated_at = now()
+        WHERE device_id = ${req.device.id} AND stream_name = 'outbox'
+          AND issued_cursor_value = ${cursor}
+        RETURNING cursor_value
+      `;
+      if (!updated.length) return res.status(409).json({ error: "sync_ack_not_issued" });
+      return res.json({ acknowledged: true });
+    } catch {
+      return res.status(500).json({ error: "sync_ack_failed" });
     }
   }));
 }
