@@ -9,7 +9,12 @@ namespace HouseMix.OfflineFirst.Transport;
 /// Authenticates an enrolled Desktop station against GET /v1/me and verifies
 /// that the server identity still matches the locally protected enrollment.
 /// </summary>
-public sealed class DeviceIdentityClient(HttpClient httpClient, DeviceCredentialStore credentialStore)
+public interface IDeviceIdentityProvider
+{
+    Task<DeviceIdentity> GetCurrentAsync(CancellationToken cancellationToken = default);
+}
+
+public sealed class DeviceIdentityClient(HttpClient httpClient, DeviceCredentialStore credentialStore) : IDeviceIdentityProvider
 {
     public async Task<DeviceIdentity> GetCurrentAsync(CancellationToken cancellationToken = default)
     {

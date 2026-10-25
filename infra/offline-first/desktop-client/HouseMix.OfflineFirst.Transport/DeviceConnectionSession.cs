@@ -9,7 +9,7 @@ namespace HouseMix.OfflineFirst.Transport;
 /// </summary>
 public sealed class DeviceConnectionSession
 {
-    private readonly DeviceIdentityClient _identityClient;
+    private readonly IDeviceIdentityProvider _identityClient;
     private readonly DeviceConnectionRetryOptions _retryOptions;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private DeviceIdentity? _identity;
@@ -17,7 +17,7 @@ public sealed class DeviceConnectionSession
     private bool _disposed;
 
     public DeviceConnectionSession(
-        DeviceIdentityClient identityClient,
+        IDeviceIdentityProvider identityClient,
         DeviceConnectionRetryOptions? retryOptions = null)
     {
         _identityClient = identityClient ?? throw new ArgumentNullException(nameof(identityClient));
