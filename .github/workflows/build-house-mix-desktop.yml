@@ -39,6 +39,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm install
+      - name: Test client registry
+        run: node --test desktop/clientRegistry.test.cjs
       - name: Build desktop frontend
         run: npm run desktop:build
       - name: Package Windows installer
