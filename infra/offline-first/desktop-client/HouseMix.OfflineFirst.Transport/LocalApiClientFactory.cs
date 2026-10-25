@@ -19,7 +19,8 @@ public static class LocalApiClientFactory
             !string.Equals(endpoint.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
             string.IsNullOrWhiteSpace(endpoint.Host) ||
             !string.IsNullOrEmpty(endpoint.UserInfo) ||
-            !string.IsNullOrEmpty(endpoint.Fragment))
+            !string.IsNullOrEmpty(endpoint.Fragment) ||
+            !string.IsNullOrEmpty(endpoint.Query))
         {
             throw new ArgumentException(
                 "The House Mix local API endpoint must be an absolute HTTPS URI without user-info or fragments.",
@@ -38,7 +39,9 @@ public static class LocalApiClientFactory
         // into the appropriate trusted OS certificate store by an administrator.
         var client = new HttpClient(handler, disposeHandler: true)
         {
-            BaseAddress = new Uri(endpoint.GetLeftPart(UriPartial.Authority) + "/"),
+            BaseAddress = endpoint.AbsoluteUri.EndsWith("/", StringComparison.Ordinal)
+                ? endpoint
+                : new Uri(endpoint.AbsoluteUri + "/"),
             Timeout = timeout ?? TimeSpan.FromSeconds(10)
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd("HouseMix-Desktop-OfflineFirst/1.0");
