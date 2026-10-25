@@ -4,7 +4,7 @@ import { buildTenantOwnerRole } from "./postgres-tenant-provisioner.mjs";
 import { buildTenantRuntimeRole } from "./tenant-runtime-credentials.mjs";
 
 export function validateTenantDatabaseActivationSnapshot({
-  tenant, databaseKey, databaseOwner, migration, runtimeRole, memberships,
+  tenant, databaseKey, databaseOwner, migration, expectedMigrationChecksum, runtimeRole, memberships,
   publicCanConnect, runtimeCanConnect, runtimeCanUseSchema,
 }) {
   if (!tenant || tenant.status !== "active" || createDatabaseKey(tenant.id) !== databaseKey) {
@@ -15,6 +15,10 @@ export function validateTenantDatabaseActivationSnapshot({
   }
   if (!migration || migration.version !== 1 || !/^[a-f0-9]{64}$/.test(migration.checksum_sha256 ?? "")) {
     throw new Error("tenant_schema_not_initialized");
+  }
+  if (!/^[a-f0-9]{64}$/.test(expectedMigrationChecksum ?? "") ||
+      migration.checksum_sha256 !== expectedMigrationChecksum) {
+    throw new Error("tenant_schema_checksum_verification_failed");
   }
   if (!runtimeRole || runtimeRole.rolname !== buildTenantRuntimeRole(tenant.id) ||
       !runtimeRole.rolcanlogin || runtimeRole.rolsuper || runtimeRole.rolcreatedb ||
@@ -73,7 +77,8 @@ export async function activateTenantDatabase({ catalog, admin, tenantDb, tenant,
   `;
   validateTenantDatabaseActivationSnapshot({
     tenant, databaseKey, databaseOwner: databases[0].owner,
-    migration: migrations[0], runtimeRole: roles[0], memberships,
+    migration: migrations[0], expectedMigrationChecksum: expectedChecksum,
+    runtimeRole: roles[0], memberships,
     publicCanConnect: databases[0].public_can_connect,
     runtimeCanConnect: grants[0]?.can_connect,
     runtimeCanUseSchema: grants[0]?.can_use_schema,
