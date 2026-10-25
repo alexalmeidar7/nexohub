@@ -129,7 +129,7 @@ app.post("/v1/sync/outbox", authenticateDevice, async (req, res) => {
 
 
 function encodeCursor(row) {
-  return Buffer.from(JSON.stringify({ created_at: row.created_at.toISOString(), id: row.id })).toString("base64url");
+  return Buffer.from(JSON.stringify({ created_at: row.created_at_cursor, id: row.id })).toString("base64url");
 }
 function decodeCursor(value) {
   if (!value) return null;
@@ -156,10 +156,11 @@ app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
   try {
     const rows = cursor
       ? await db`
-          SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at
+          SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at,
+                 created_at::text AS created_at_cursor
           FROM sync_outbox
           WHERE tenant_id = ${req.device.tenant_id}
-            AND (created_at, id) > (${cursor.created_at}, ${cursor.id}::uuid)
+            AND (created_at, id) > (${cursor.created_at}::timestamptz, ${cursor.id}::uuid)
           ORDER BY created_at ASC, id ASC
           LIMIT ${rawLimit + 1}
         `
