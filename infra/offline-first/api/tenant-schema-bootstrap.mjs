@@ -9,6 +9,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const migrations = [
   { version: 1, name: "tenant_baseline", path: resolve(here, "../schema/tenant/001_tenant_baseline.sql") },
   { version: 2, name: "tenant_sync", path: resolve(here, "../schema/tenant/002_sync.sql") },
+  { version: 3, name: "tenant_sync_checkpoints", path: resolve(here, "../schema/tenant/003_sync_checkpoints.sql") },
 ];
 const quoteIdentifier = (value) => `"${value.replaceAll('"', '""')}"`;
 
