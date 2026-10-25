@@ -121,3 +121,9 @@ node infra/offline-first/api/scripts/activate-tenant-database.mjs <tenant-slug>
 ```
 
 The activation gate rechecks the tenant UUID/database mapping, deterministic owner, exact baseline migration checksum, dedicated runtime login and its restricted role flags, absence of role memberships, removal of PUBLIC CONNECT, and the runtime login's database/schema grants. It changes the registry from `provisioning` to `active` only after every check succeeds. This marks the isolated database infrastructure as provisioned; it does not mean application tables, data migration, workstation connectivity, backups, or failover are ready. Run only against disposable local test databases until the full acceptance suite is complete.
+
+## Resolve the runtime database for an authenticated radio
+
+The API runtime can now resolve a tenant-specific PostgreSQL client using only the tenant UUID from the authenticated request context. It checks the control-plane registry is `active`, recomputes the deterministic database and runtime-role names, retrieves the matching secret through an injected local secret-vault provider, and builds the connection URL from the configured loopback PostgreSQL origin. Client-supplied tenant slugs, database names, passwords, and connection URLs are never used for routing.
+
+The resolver is a tested integration boundary, not yet wired into the HTTP request handlers. The secret-vault provider must be backed by the per-radio protected credential store before runtime use; do not use an in-memory placeholder or expose secrets to logs. The current host policy is loopback-only and must remain so until the separately gated TLS/LAN acceptance work is complete.
