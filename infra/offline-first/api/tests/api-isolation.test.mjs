@@ -119,6 +119,32 @@ try {
   assert.equal(count.length, 2, "events remain separated by tenant");
   assert.ok(count.every((row) => row.total === 1), "each tenant has exactly one event");
 
+  const alphaChanges = await fetch(baseUrl + "/v1/sync/changes?limit=1", { headers: auth(keyA) });
+  assert.equal(alphaChanges.status, 200, "authenticated device can pull its tenant changes");
+  const alphaPage = await alphaChanges.json();
+  assert.equal(alphaPage.changes.length, 1, "pull endpoint enforces the requested page size");
+  assert.equal(alphaPage.changes[0].payload.name, "Alpha program");
+  assert.equal(alphaPage.has_more, true, "pull endpoint indicates another page exists");
+  assert.ok(alphaPage.next_cursor, "pull endpoint returns a continuation cursor");
+
+  const alphaNext = await fetch(baseUrl + "/v1/sync/changes?cursor=" + encodeURIComponent(alphaPage.next_cursor), { headers: auth(keyA) });
+  const alphaNextBody = await alphaNext.json();
+  assert.equal(alphaNext.status, 200);
+  assert.equal(alphaNextBody.changes.length, 1);
+  assert.equal(alphaNextBody.changes[0].payload.name, "Alpha program");
+
+  const betaChanges = await fetch(baseUrl + "/v1/sync/changes", { headers: auth(keyB) });
+  const betaBody = await betaChanges.json();
+  assert.equal(betaChanges.status, 200);
+  assert.equal(betaBody.changes.length, 1, "Beta cannot pull Alpha tenant events");
+  assert.equal(betaBody.changes[0].payload.name, "Beta program");
+
+  const invalidCursor = await fetch(baseUrl + "/v1/sync/changes?cursor=not-a-cursor", { headers: auth(keyA) });
+  assert.equal(invalidCursor.status, 400, "malformed sync cursors are rejected");
+
+  const invalidLimit = await fetch(baseUrl + "/v1/sync/changes?limit=999", { headers: auth(keyA) });
+  assert.equal(invalidLimit.status, 400, "oversized sync pages are rejected");
+
   await sql`UPDATE local_devices SET status = 'revoked' WHERE tenant_id = ${bodyA.device.tenant_id} AND id = ${bodyA.device.id}`;
   const revoked = await fetch(baseUrl + "/v1/me", { headers: auth(keyA) });
   assert.equal(revoked.status, 401, "revoked device credentials stop working immediately");

@@ -127,6 +127,62 @@ app.post("/v1/sync/outbox", authenticateDevice, async (req, res) => {
   }
 });
 
+
+function encodeCursor(row) {
+  return Buffer.from(JSON.stringify({ created_at: row.created_at.toISOString(), id: row.id })).toString("base64url");
+}
+function decodeCursor(value) {
+  if (!value) return null;
+  if (typeof value !== "string" || value.length > 512) return undefined;
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+    if (!parsed || typeof parsed.created_at !== "string" ||
+        Number.isNaN(Date.parse(parsed.created_at)) ||
+        typeof parsed.id !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.id)) return undefined;
+    return { created_at: new Date(parsed.created_at), id: parsed.id };
+  } catch {
+    return undefined;
+  }
+}
+
+app.get("/v1/sync/changes", authenticateDevice, async (req, res) => {
+  const cursor = decodeCursor(req.query.cursor);
+  if (cursor === undefined) return res.status(400).json({ error: "invalid_sync_cursor" });
+  const rawLimit = req.query.limit === undefined ? 100 : Number(req.query.limit);
+  if (!Number.isInteger(rawLimit) || rawLimit < 1 || rawLimit > 250) {
+    return res.status(400).json({ error: "invalid_page_limit" });
+  }
+  try {
+    const rows = cursor
+      ? await db`
+          SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at
+          FROM sync_outbox
+          WHERE tenant_id = ${req.device.tenant_id}
+            AND (created_at, id) > (${cursor.created_at}, ${cursor.id}::uuid)
+          ORDER BY created_at ASC, id ASC
+          LIMIT ${rawLimit + 1}
+        `
+      : await db`
+          SELECT id, origin_device_id, aggregate_type, aggregate_id, operation, payload, created_at
+          FROM sync_outbox
+          WHERE tenant_id = ${req.device.tenant_id}
+          ORDER BY created_at ASC, id ASC
+          LIMIT ${rawLimit + 1}
+        `;
+    const hasMore = rows.length > rawLimit;
+    const page = hasMore ? rows.slice(0, rawLimit) : rows;
+    const last = page[page.length - 1];
+    return res.json({
+      changes: page,
+      has_more: hasMore,
+      next_cursor: hasMore && last ? encodeCursor(last) : null,
+    });
+  } catch {
+    return res.status(500).json({ error: "sync_pull_failed" });
+  }
+});
+
 app.use((err, _req, res, _next) => {
   if (err instanceof SyntaxError) return res.status(400).json({ error: "invalid_json" });
   return res.status(500).json({ error: "internal_error" });
