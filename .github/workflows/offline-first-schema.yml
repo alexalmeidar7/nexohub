@@ -1,0 +1,59 @@
+name: Offline First schema smoke test
+
+on:
+  pull_request:
+    paths:
+      - 'infra/offline-first/**'
+      - '.github/workflows/offline-first-schema.yml'
+  push:
+    branches:
+      - architecture/house-mix-offline-first
+    paths:
+      - 'infra/offline-first/**'
+      - '.github/workflows/offline-first-schema.yml'
+
+jobs:
+  schema-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: housemix_test
+          POSTGRES_USER: housemix_test
+          POSTGRES_PASSWORD: test-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U housemix_test -d housemix_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build Desktop HTTPS transport
+        run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.Transport/HouseMix.OfflineFirst.Transport.csproj --configuration Release
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify LAN binding remains hard-disabled
+        run: node --test infra/offline-first/api/tests/network-config.test.mjs infra/offline-first/api/tests/tls-config.test.mjs infra/offline-first/api/tests/https-handshake.test.mjs
+      - name: Apply local schema
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/001_local_control_plane.sql
+      - name: Apply one-time enrollment migration
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/002_one_time_device_enrollment.sql
+      - name: Verify tenant isolation constraints
+        env:
+          PGPASSWORD: test-only-password
+        run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/tests/tenant_isolation_smoke.sql
+      - name: Install API dependencies
+        run: bun install --frozen-lockfile
+      - name: Test local API tenant isolation
+        env:
+          DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
+        run: node infra/offline-first/api/tests/api-isolation.test.mjs
