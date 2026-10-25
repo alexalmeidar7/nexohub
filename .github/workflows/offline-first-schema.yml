@@ -31,6 +31,7 @@ jobs:
           --health-retries 20
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
       - name: Apply local schema
         env:
           PGPASSWORD: test-only-password
@@ -39,3 +40,9 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/tests/tenant_isolation_smoke.sql
+      - name: Install API dependencies
+        run: bun install --frozen-lockfile
+      - name: Test local API tenant isolation
+        env:
+          DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
+        run: node infra/offline-first/api/tests/api-isolation.test.mjs
