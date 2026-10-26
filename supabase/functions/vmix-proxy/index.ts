@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
       );
     }
     const targetUrl = target.toString();
-    console.log(\`Proxying request to: \${targetUrl}\`);
+    console.log("Proxying request to: " + targetUrl);
 
     const fetchHeaders: Record<string, string> = {
       "User-Agent": "Mozilla/5.0 (compatible; VmixProxy/1.0)",
