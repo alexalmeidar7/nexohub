@@ -13,7 +13,7 @@ $env:DATABASE_URL = "postgres://housemix_dev:YOUR_DB_PASSWORD@127.0.0.1:55432/ho
 node infra/offline-first/api/server.mjs
 ```
 
-Apply control-plane migrations 001–003 and initialize each radio database using `bootstrap-tenant-schema.mjs` before starting sync traffic. The tenant bootstrap now applies the baseline (001), sync (002), durable checkpoint (003), inbox (004), and inbox lease (005) migrations in order. The service binds only to 127.0.0.1. LAN access is deliberately hard-disabled in code.
+Apply control-plane migrations 001–003 and initialize each radio database using `bootstrap-tenant-schema.mjs` before starting sync traffic. The tenant bootstrap now applies the baseline (001), sync (002), durable checkpoint (003), inbox (004),  inbox lease (005), and isolated Programas/Agenda domain (006) migrations in order. The service binds only to 127.0.0.1. LAN access is deliberately hard-disabled in code.
 
 ## Network exposure safety gate
 
