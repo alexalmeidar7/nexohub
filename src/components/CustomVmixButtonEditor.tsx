@@ -555,7 +555,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
           if (data) {
             setNome(data.nome || "");
             // Prioriza o metadado legado do comando: a migração antiga preencheu AUDIO por padrão em todas as linhas.
-            setButtonCategory(data.commands?.[0]?._buttonCategory || data.category || "");
+            setButtonCategory(data.commands?.[0]?._buttonCategory || (data.category !== "AUDIO" ? data.category : "") || "");
             const savedButtonColor = data.color && data.color.toUpperCase() !== "#C6F03C" ? data.color : "#0756C9";
             setColor(savedButtonColor);
             setCustomColorMode(!["#0756C9", ...PRESET_BUTTON_COLORS.map(option => option.value)].includes(savedButtonColor.toUpperCase()));
@@ -664,8 +664,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
     const commandsWithCategory = savedCommands.map((command, index) => index === 0 ? { ...command, _buttonCategory: buttonCategory || null } : command);
     const payload = {
       nome: nome.trim(),
-      // A categoria é persistida no JSON da primeira ação (_buttonCategory).
-      // Nem todas as instâncias do banco possuem a coluna category.
+      category: buttonCategory || "OUTROS",
       color,
       dias_semana: diasSemana,
       data_especifica: dataEspecifica || null,

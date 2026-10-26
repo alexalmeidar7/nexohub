@@ -205,7 +205,6 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       capa: p.capa || "",
       thumb: p.thumb || "",
     }));
-    const ownProgramIds = new Set(progs.map((p) => p.id));
     const ownGroupRows = ((gruposRes.data as any[]) || []).filter((g) => g.user_id === ownerId);
     const ownGroupIds = new Set(ownGroupRows.map((g) => g.id));
     const tvsByGrupo: Record<string, TV[]> = {};
@@ -213,28 +212,21 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       tvsByGrupo[t.grupo_id] = tvsByGrupo[t.grupo_id] || [];
       tvsByGrupo[t.grupo_id].push({ id: t.id, posicao: t.posicao, imagem_url: t.imagem_url || "" });
     });
-    // Program-linked templates are valid only when every linked program belongs to
-    // this same account. Legacy local caches are intentionally not read here:
-    // earlier fallback logic could cache another station's program artwork under this account.
-    let gs: Grupo[] = ownGroupRows
-      .filter((g) => {
-        const ids = Array.isArray(g.programa_ids) ? g.programa_ids : [];
-        return ids.length === 0 || ids.every((id: string) => ownProgramIds.has(id));
-      })
-      .map((g) => ({
-        id: g.id,
-        user_id: ownerId,
-        nome: g.nome,
-        rows: g.rows,
-        cols: g.cols,
-        programa_ids: Array.isArray(g.programa_ids) ? g.programa_ids : [],
-        tvs: tvsByGrupo[g.id] || [],
-      }));
+    // Render every group owned by this account, even when a linked program is
+    // inactive or has been deleted. Keep the original IDs so the group remains editable.
+    let gs: Grupo[] = ownGroupRows.map((g) => ({
+      id: g.id,
+      user_id: ownerId,
+      nome: g.nome,
+      rows: g.rows,
+      cols: g.cols,
+      programa_ids: Array.isArray(g.programa_ids) ? g.programa_ids : [],
+      tvs: tvsByGrupo[g.id] || [],
+    }));
 
-    // Generate defaults only from programs fetched by the authenticated owner's ID.
-    // Never use cross-account/station fallback services for this page.
-    const hasValidTemplates = gs.some((g) => g.tvs.some((tv) => tv.posicao === 0 && !!tv.imagem_url));
-    if (!hasValidTemplates) {
+    // Create defaults only when this account has no saved groups at all.
+    // Missing artwork must not replace or hide existing user-owned records.
+    if (gs.length === 0) {
       gs = getDefaultCenariosEstudioGrupos(ownerId, progs);
     }
 
