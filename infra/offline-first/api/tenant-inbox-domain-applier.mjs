@@ -88,21 +88,27 @@ export function createTenantInboxDomainApplier(db) {
           }
         } else {
           const columns = normalized.fields;
-          const insertColumns = ["id", ...columns, "row_version", "created_at", "updated_at"];
-          const insertValues = [item.aggregate_id, ...normalized.values];
-          const placeholders = insertValues.map((_, index) => `$${index + 1}`);
-          const updates = columns.map((column) => `${column} = EXCLUDED.${column}`);
-          updates.push("row_version = target.row_version + 1", "updated_at = now()", "deleted_at = NULL");
-          if (item.aggregate_type === "agenda_evento") updates.pop();
           const version = item.base_version ?? 0;
-          const conflictWhere = version === 0 ? "false" : `target.row_version = $${insertValues.length + 1}`;
-          const sql = `INSERT INTO ${normalized.domain.table} AS target (${insertColumns.join(", ")})
-            VALUES (${placeholders.join(", ")}, 1, now(), now())
-            ON CONFLICT (id) DO UPDATE SET ${updates.join(", ")}
-            WHERE ${conflictWhere}
-            RETURNING id, row_version`;
-          const values = version === 0 ? insertValues : [...insertValues, version];
-          changed = await tx.unsafe(sql, values);
+          const setValues = [...normalized.values, item.aggregate_id, version];
+          const assignments = columns.map((column, index) => `${column} = $${index + 1}`);
+          assignments.push("row_version = row_version + 1", "updated_at = now()");
+          if (normalized.domain.softDelete) assignments.push("deleted_at = NULL");
+          if (version === 0) {
+            const insertColumns = ["id", ...columns, "row_version", "created_at", "updated_at"];
+            const insertValues = [item.aggregate_id, ...normalized.values];
+            const placeholders = insertValues.map((_, index) => `$${index + 1}`);
+            const sql = `INSERT INTO ${normalized.domain.table} (${insertColumns.join(", ")})
+              VALUES (${placeholders.join(", ")}, 1, now(), now())
+              ON CONFLICT (id) DO NOTHING RETURNING id, row_version`;
+            changed = await tx.unsafe(sql, insertValues);
+          } else {
+            const sql = `UPDATE ${normalized.domain.table} SET ${assignments.join(", ")}
+              WHERE id = $${normalized.values.length + 1}
+                AND row_version = $${normalized.values.length + 2}
+                ${normalized.domain.softDelete ? "AND deleted_at IS NULL" : ""}
+              RETURNING id, row_version`;
+            changed = await tx.unsafe(sql, setValues);
+          }
         }
 
         const terminalStatus = changed.length ? "applied" : "conflict";
