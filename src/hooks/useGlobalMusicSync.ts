@@ -20,6 +20,7 @@ import { fetchArtistImageCached } from "@/lib/artistImageCache";
 import { matchesMusicException } from "@/lib/musicExceptions";
 import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { startMusicSyncPolling } from "@/lib/musicSyncPolling";
 
 
 
@@ -160,9 +161,19 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
   useEffect(() => {
     if (!user || !enabled) return;
     const targetId = stationUserId || user.id;
-    const MUSIC_DATA_KEY = musicDataKey(targetId)!;
-    const MUSIC_START_KEY = musicStartKey(targetId)!;
-    const BOT_XML_LAST_RUN_KEY = botXmlLastRunKey(targetId)!;
+    const MUSIC_DATA_KEY = musicDataKey(targetId);
+    const MUSIC_START_KEY = musicStartKey(targetId);
+    if (!MUSIC_DATA_KEY || !MUSIC_START_KEY) return;
+    settingsFetchedRef.current = false;
+    lastRecordedRef.current = "";
+    lastLocalSyncAtRef.current = 0;
+    directFetchOkRef.current = null;
+    cachedSettingsRef.current = { url: null, mode: "online", localFileName: null, localStoragePath: null };
+    let settingsReadAt = 0;
+    let disposed = false;
+    let realtimeConnected = false;
+    const enrichmentDone = new Set<string>();
+    const enrichmentPending = new Set<string>();
 
     // Quando o XML devolve "STANDBY MUSICAL" (título ou artista), usamos a
     // foto do locutor do programa que está no ar como capa/imagem do artista.
@@ -389,6 +400,8 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
     const fetchCoverAndArtistImg = (data: { titulo: string; artista: string; capa: string }) => {
       const cacheKey = `${data.artista}-${data.titulo}`;
+      if (enrichmentDone.has(cacheKey) || enrichmentPending.has(cacheKey)) return;
+      enrichmentPending.add(cacheKey);
       
       const fetchAll = async () => {
         try {
@@ -416,16 +429,19 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           }
 
           if (targetId) {
-            void mergeUserDashboardItems(targetId, {
+            await mergeUserDashboardItems(targetId, {
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
               music_current_excecao: null,
               music_deezer_artist_img: artistImg || "",
-            }).catch(() => {});
+            });
           }
+          enrichmentDone.add(cacheKey);
         } catch (e) {
           console.warn("[MusicSync] fetchAll error:", e);
+        } finally {
+          enrichmentPending.delete(cacheKey);
         }
       };
       
@@ -463,9 +479,10 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
     };
 
     const fetchAndSync = async () => {
+      if (disposed) return;
       fetchCountRef.current++;
 
-      if (!settingsFetchedRef.current) {
+      if (!settingsFetchedRef.current || Date.now() - settingsReadAt >= 60_000) {
         const [settingsRes, exceptionsRes] = await Promise.all([
           supabase
             .from("user_settings")
@@ -478,6 +495,9 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
             .eq("user_id", targetId)
         ]);
 
+        if (settingsRes.error) throw settingsRes.error;
+        if (exceptionsRes.error) throw exceptionsRes.error;
+        if (disposed) return;
         const settings = settingsRes.data;
         const dashboardItems = settings?.dashboard_items as { local_xml_filename?: string; local_xml_storage_path?: string } | null;
         
@@ -499,6 +519,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
         }));
 
         settingsFetchedRef.current = true;
+        settingsReadAt = Date.now();
       }
 
       // Se este navegador estiver monitorando ativamente um arquivo local (MusicaNoAr),
@@ -631,11 +652,13 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
           // 3a. Verificar primeiro user_settings (dashboard_items) que armazena a faixa ativa em tempo real com capa
           for (const targetUid of targetUids) {
-            const { data: settings } = await supabase
+            const { data: settings, error: settingsError } = await supabase
               .from("user_settings")
               .select("dashboard_items")
               .eq("user_id", targetUid)
               .maybeSingle();
+            if (settingsError) throw settingsError;
+            if (disposed) return;
 
             const di = (settings?.dashboard_items || {}) as Record<string, any>;
             const curTitle = (di.music_current_title || "").toString().trim();
@@ -674,13 +697,15 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           let foundTrack: { titulo: string; artista: string; created_at?: string } | null = null;
 
           for (const targetUid of targetUids) {
-            const { data: lastPlayed } = await supabase
+            const { data: lastPlayed, error: historyError } = await supabase
               .from("musicas_tocadas")
               .select("musica, artista, horario, dia, created_at")
               .eq("user_id", targetUid)
               .order("created_at", { ascending: false })
               .limit(1)
               .maybeSingle();
+            if (historyError) throw historyError;
+            if (disposed) return;
 
             let dbMusica = (lastPlayed?.musica || "").trim();
             let dbArtista = (lastPlayed?.artista || "").trim();
@@ -742,7 +767,10 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
             }
             return;
           }
-        } catch {}
+        } catch (error) {
+          // Let the scheduler back off instead of hammering a paused backend.
+          throw error;
+        }
       }
 
       // When both sources agree there's no song playing (or the only active
@@ -788,7 +816,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
       .channel(`music-live-sync:${targetId}`)
       .on("broadcast", { event: "track_change" }, (payload: any) => {
         const d = payload.payload || payload;
-        if (d && (d.titulo || d.excecao)) {
+        if (!disposed && d && (d.titulo || d.excecao)) {
           void processTrackData({
             titulo: d.titulo || "",
             artista: d.artista || "",
@@ -797,16 +825,23 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           });
         }
       })
-      .subscribe();
+      .subscribe((status) => { realtimeConnected = status === "SUBSCRIBED"; });
 
-    fetchAndSync();
-    const interval = setInterval(fetchAndSync, 2000);
-    const urlRefresh = setInterval(() => { settingsFetchedRef.current = false; }, 15000);
+    const polling = startMusicSyncPolling(fetchAndSync, () => realtimeConnected);
+    const resume = () => {
+      if (document.visibilityState === "hidden") return;
+      settingsFetchedRef.current = false;
+      polling.refresh();
+    };
+    window.addEventListener("online", resume);
+    document.addEventListener("visibilitychange", resume);
 
     return () => {
-      clearInterval(interval);
-      clearInterval(urlRefresh);
-      supabase.removeChannel(liveSyncChannel);
+      disposed = true;
+      polling.stop();
+      window.removeEventListener("online", resume);
+      document.removeEventListener("visibilitychange", resume);
+      void supabase.removeChannel(liveSyncChannel).catch(() => {});
     };
-  }, [user, enabled]);
+  }, [user?.id, stationUserId, userSlug, enabled]);
 }

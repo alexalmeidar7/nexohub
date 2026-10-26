@@ -418,3 +418,4 @@ NUNCA inserir:
 
 Ambientes de desenvolvimento ou testes que precisem de mocks devem operar isolados em memória local, mocks de código ou bancos de dados locais e descartáveis, NUNCA no banco real de usuários.
 - GitHub Action `.github/workflows/build-check.yml` typechecks and builds every push; keep it passing so broken GitHub commits are caught before they freeze the Lovable preview.
+- Global music synchronization uses completion-based polling with failure backoff and immediate realtime events; never overlap requests or repeat successful track enrichment, to bound Cloud traffic while preserving live updates.
