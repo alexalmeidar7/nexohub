@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using HouseMix.OfflineFirst.Transport;
 
 namespace HouseMix.OfflineFirst.Host;

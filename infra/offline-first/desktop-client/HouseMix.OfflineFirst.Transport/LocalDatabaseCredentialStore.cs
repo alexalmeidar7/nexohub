@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -7,6 +8,7 @@ namespace HouseMix.OfflineFirst.Transport;
 /// Protects the local PostgreSQL connection URL with Windows DPAPI CurrentUser.
 /// The protected file is bound to the Windows account that provisions the station.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class LocalDatabaseCredentialStore
 {
     private static readonly byte[] Entropy = "HouseMix.OfflineFirst.LocalDatabaseCredential.v1"u8.ToArray();

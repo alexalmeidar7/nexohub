@@ -1,9 +1,11 @@
 using System.Security.Cryptography;
+using System.Runtime.Versioning;
 using HouseMix.OfflineFirst.Transport;
 using Xunit;
 
 namespace HouseMix.OfflineFirst.Transport.Tests;
 
+[SupportedOSPlatform("windows")]
 public sealed class LocalDatabaseCredentialStoreTests : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), "HouseMix-Dpapi-Tests", Guid.NewGuid().ToString("N"));
