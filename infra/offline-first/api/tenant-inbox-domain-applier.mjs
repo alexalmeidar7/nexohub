@@ -19,13 +19,17 @@ const DOMAINS = Object.freeze({
 });
 
 export function normalizeDomainMutation(item) {
+  // postgres.js can return PostgreSQL BIGINT columns as decimal strings.
+  // Normalize before validating so base_version=0 remains a valid create mutation.
+  const baseVersion = item?.base_version == null ? 0 : Number(item.base_version);
   if (!item || !UUID.test(item.id || "") || !UUID.test(item.lease_token || "") ||
       !UUID.test(item.mutation_id || "") || typeof item.aggregate_id !== "string" ||
       !UUID.test(item.aggregate_id) || !Number.isSafeInteger(item.schema_version) ||
-      item.schema_version !== 1 || !Number.isSafeInteger(item.base_version ?? 0) ||
-      (item.base_version ?? 0) < 0 || !["upsert","delete"].includes(item.operation)) {
+      item.schema_version !== 1 || !Number.isSafeInteger(baseVersion) ||
+      baseVersion < 0 || !["upsert","delete"].includes(item.operation)) {
     return { valid: false, reason: "invalid_mutation_envelope" };
   }
+  item = { ...item, base_version: baseVersion };
   const domain = DOMAINS[item.aggregate_type];
   if (!domain) return { valid: false, reason: "unsupported_aggregate_type" };
   if (item.operation === "delete") {

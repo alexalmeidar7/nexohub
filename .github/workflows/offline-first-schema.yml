@@ -125,6 +125,10 @@ jobs:
         env:
           DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
         run: node --test infra/offline-first/api/tests/tenant-inbox-postgres.integration.test.mjs
+      - name: Test real PostgreSQL inbox worker lifecycle
+        env:
+          DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
+        run: node --test infra/offline-first/api/tests/tenant-inbox-worker-postgres.integration.test.mjs
       - name: Test inbox worker domain integration
         run: node --test infra/offline-first/api/tests/tenant-inbox-worker-domain-integration.test.mjs
       - name: Test local API tenant isolation

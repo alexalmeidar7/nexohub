@@ -74,3 +74,10 @@ test("applier locks the leased inbox row before applying", async () => {
   assert.equal(locked, true);
   assert.deepEqual(result, { status: "conflict", aggregate_id: item.aggregate_id });
 });
+
+test("domain mutation normalizes PostgreSQL BIGINT base_version strings", () => {
+  const normalized = normalizeDomainMutation({ ...item, base_version: "0" });
+  assert.equal(normalized.valid, true);
+  assert.equal(normalizeDomainMutation({ ...item, base_version: "not-a-number" }).reason,
+    "invalid_mutation_envelope");
+});
