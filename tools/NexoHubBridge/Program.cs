@@ -17,6 +17,7 @@ internal sealed class BridgeConfig
     public string SupabaseUrl { get; set; } = "https://zzjfzxxvxbspbdkodoix.supabase.co";
     public string PairingCode { get; set; } = "";
     public string BridgeToken { get; set; } = "";
+    public bool SecretsProtected { get; set; }
     public string VmixUrl { get; set; } = "http://127.0.0.1:8088";
     public string VmixUsername { get; set; } = "";
     public string VmixPassword { get; set; } = "";
@@ -45,6 +46,7 @@ internal sealed class BridgeForm : Form
 {
     private static readonly Version CurrentVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
     private static readonly Uri UpdateManifestUri = new("https://housemix.nexobrasil.net/downloads/nexohub-bridge/latest.json");
+    private static readonly byte[] SecretEntropy = Encoding.UTF8.GetBytes("NexoHubBridge:LocalSecrets:v1");
 
     private readonly string _configPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NexoBrasil", "NexoHubBridge", "appsettings.json");
@@ -191,7 +193,23 @@ internal sealed class BridgeForm : Form
             }
             Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
             if (File.Exists(_configPath))
+            {
                 _config = JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(_configPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new BridgeConfig();
+                if (_config.SecretsProtected)
+                {
+                    _config.BridgeToken = UnprotectSecret(_config.BridgeToken);
+                    _config.VmixPassword = UnprotectSecret(_config.VmixPassword);
+                    _config.PairingCode = UnprotectSecret(_config.PairingCode);
+                    _config.SecretsProtected = false;
+                }
+                else if (!string.IsNullOrEmpty(_config.BridgeToken) ||
+                         !string.IsNullOrEmpty(_config.VmixPassword) ||
+                         !string.IsNullOrEmpty(_config.PairingCode))
+                {
+                    // Migrate legacy plaintext secrets to current-user DPAPI without changing the in-memory values.
+                    await SaveConfigAsync(_config);
+                }
+            }
             FillFields();
             _startup.Checked = IsStartupEnabled();
             StartNdiDiscovery();
@@ -401,10 +419,46 @@ internal sealed class BridgeForm : Form
         finally { _busy = false; _connect.Enabled = true; _save.Enabled = true; }
     }
 
+    private static string ProtectSecret(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        var protectedBytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(value), SecretEntropy, DataProtectionScope.CurrentUser);
+        return Convert.ToBase64String(protectedBytes);
+    }
+
+    private static string UnprotectSecret(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        try
+        {
+            var protectedBytes = Convert.FromBase64String(value);
+            var plainBytes = ProtectedData.Unprotect(protectedBytes, SecretEntropy, DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(plainBytes);
+        }
+        catch (Exception ex) when (ex is FormatException or CryptographicException)
+        {
+            throw new InvalidOperationException(
+                "Não foi possível desbloquear as credenciais salvas neste usuário do Windows. Gere um novo código de pareamento e conecte novamente.",
+                ex);
+        }
+    }
+
     private async Task SaveConfigAsync(BridgeConfig config)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
-        var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+        var persisted = new BridgeConfig
+        {
+            SupabaseUrl = config.SupabaseUrl,
+            PairingCode = ProtectSecret(config.PairingCode),
+            BridgeToken = ProtectSecret(config.BridgeToken),
+            SecretsProtected = true,
+            VmixUrl = config.VmixUrl,
+            VmixUsername = config.VmixUsername,
+            VmixPassword = ProtectSecret(config.VmixPassword),
+            DeviceName = config.DeviceName,
+            PollIntervalMs = config.PollIntervalMs,
+        };
+        var json = JsonSerializer.Serialize(persisted, new JsonSerializerOptions { WriteIndented = true });
         var temp = _configPath + ".tmp";
         await File.WriteAllTextAsync(temp, json);
         File.Move(temp, _configPath, true);
