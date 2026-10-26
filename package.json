@@ -153,6 +153,22 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "desktop/runtime/node",
+        "to": "runtime/node",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "infra/offline-first/api",
+        "to": "runtime/api",
+        "filter": [
+          "**/*",
+          "!tests/**",
+          "!scripts/**"
+        ]
       }
     ]
   }
