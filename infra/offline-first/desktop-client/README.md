@@ -34,3 +34,24 @@ dotnet build .\HouseMix.OfflineFirst.Transport\HouseMix.OfflineFirst.Transport.c
 ```
 
 See `CONNECTION-SECURITY.md` and `HouseMix.OfflineFirst.Transport/DeviceCredentialStore.Tests.md` for acceptance and Windows test requirements.
+
+
+## Local API host lifecycle (Windows integration primitive)
+
+LocalApiHostManager starts the Node.js local API as a child process from the Desktop host, forces the bind address to 127.0.0.1, supplies the local PostgreSQL URL through the child environment (never command-line arguments), and waits for GET /health before reporting startup success. It rejects relative runtime/script paths, non-PostgreSQL database URLs, unsafe ports and unbounded startup timeouts. It drains child output and terminates the child process tree when disposed.
+
+Example:
+
+```csharp
+var options = new LocalApiHostOptions(
+    nodeExecutablePath,
+    apiServerScriptPath,
+    applicationInstallDirectory,
+    localDatabaseUrl);
+
+await using var localApi = new LocalApiHostManager(options);
+await localApi.StartAsync(cancellationToken);
+// Keep the manager alive for the Desktop session.
+```
+
+This is a process-lifecycle building block only. The installer must still provision Node.js/runtime files and a local PostgreSQL service, resolve the database URL from the protected per-station credential/configuration store, and wire this manager into the actual Desktop shell. LAN remains hard-disabled; this manager does not install, migrate, or modify a database.
