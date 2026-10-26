@@ -76,7 +76,7 @@ integration("PostgreSQL reports optimistic concurrency conflicts and rejects rep
   const created = await enqueue();
   assert.equal((await applier.apply(created)).status, "applied");
   const stale = await enqueue({ aggregate_id: created.aggregate_id, base_version: 0,
-    payload: { nome: "Versão antiga" } });
+    payload: { nome: "Versão antiga", horario_inicio: "08:00", horario_fim: "09:00" } });
   assert.equal((await applier.apply(stale)).status, "conflict");
   assert.equal((await applier.apply(created)).status, "stale_lease");
   const rows = await sql`SELECT nome, row_version FROM housemix.programas WHERE id = ${created.aggregate_id}::uuid`;
