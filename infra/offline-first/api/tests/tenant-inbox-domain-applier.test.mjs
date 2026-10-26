@@ -44,15 +44,19 @@ test("applier does not open a transaction for an invalid mutation", async () => 
 
 test("applier locks the leased inbox row before applying", async () => {
   let locked = false;
-  const db = { begin: async (callback) => callback(async (strings) => {
-    const sql = strings.join(" ");
-    if (sql.includes("SELECT id, mutation_id")) {
-      locked = true;
-      return [{ status: "processing", lease_token: item.lease_token, lease_until: new Date(Date.now() + 60000).toISOString() }];
-    }
-    if (sql.includes("UPDATE housemix.sync_inbox SET status")) return [{ id: item.id }];
-    throw new Error("unexpected query");
-  }) };
+  const db = { begin: async (callback) => {
+    const tx = async (strings) => {
+      const sql = strings.join(" ");
+      if (sql.includes("SELECT id, mutation_id")) {
+        locked = true;
+        return [{ status: "processing", lease_token: item.lease_token, lease_until: new Date(Date.now() + 60000).toISOString() }];
+      }
+      if (sql.includes("UPDATE housemix.sync_inbox SET status")) return [{ id: item.id }];
+      throw new Error("unexpected query");
+    };
+    tx.unsafe = async () => [];
+    return callback(tx);
+  } };
   db.begin = db.begin.bind(db);
   const applier = createTenantInboxDomainApplier(db);
   const result = await applier.apply(item);
