@@ -6,6 +6,7 @@ const { startLocalApiHost } = require("./local-api-host.cjs");
 
 function fakeChild() {
   const child = new EventEmitter();
+  child.stdin = { write: () => true };
   child.stdout = new EventEmitter();
   child.stderr = new EventEmitter();
   child.exitCode = null;
