@@ -10,6 +10,7 @@ on:
       - "vite.config.ts"
       - "package.json"
       - "package-lock.json"
+      - "infra/offline-first/api/**"
       - "infra/offline-first/desktop-client/**"
       - ".github/workflows/build-house-mix-desktop.yml"
   push:
@@ -21,6 +22,7 @@ on:
       - "vite.config.ts"
       - "package.json"
       - "package-lock.json"
+      - "infra/offline-first/api/**"
       - "infra/offline-first/desktop-client/**"
       - ".github/workflows/build-house-mix-desktop.yml"
 
@@ -41,6 +43,14 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Install local API production dependencies
+        run: npm install --prefix infra/offline-first/api --omit=dev --no-audit --no-fund
+      - name: Bundle portable Node runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "desktop/runtime/node" | Out-Null
+          Copy-Item (Get-Command node).Source "desktop/runtime/node/node.exe" -Force
+          if (-not (Test-Path "desktop/runtime/node/node.exe")) { throw "Portable Node runtime is missing." }
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
@@ -51,13 +61,16 @@ jobs:
         run: node --test desktop/runtime.test.cjs desktop/local-api-host.test.cjs
       - name: Build Desktop frontend
         run: npm run desktop:build
-      - name: Verify packaged entry points
+      - name: Verify packaged runtime
         shell: pwsh
         run: |
           if (-not (Test-Path "dist/index.html")) { throw "Desktop frontend output is missing." }
           if (-not (Test-Path "desktop/main.cjs")) { throw "Electron main process is missing." }
           if (-not (Test-Path "desktop/preload.cjs")) { throw "Electron preload is missing." }
           if (-not (Test-Path "desktop/runtime/local-api-host/HouseMix.OfflineFirst.Host.exe")) { throw "Published local API host executable is missing." }
+          if (-not (Test-Path "desktop/runtime/node/node.exe")) { throw "Bundled Node runtime is missing." }
+          if (-not (Test-Path "infra/offline-first/api/node_modules/express/package.json")) { throw "Local API Express dependency is missing." }
+          if (-not (Test-Path "infra/offline-first/api/node_modules/postgres/package.json")) { throw "Local API PostgreSQL client is missing." }
       - name: Package Windows installer
         run: npx electron-builder --win nsis --x64 --publish never
       - name: Upload installer
