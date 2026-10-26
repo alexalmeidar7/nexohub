@@ -28,5 +28,7 @@ jobs:
         run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.Transport/HouseMix.OfflineFirst.Transport.csproj --configuration Release
       - name: Build local API host
         run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.Host/HouseMix.OfflineFirst.Host.csproj --configuration Release
+      - name: Build database provisioner
+        run: dotnet build infra/offline-first/desktop-client/HouseMix.OfflineFirst.Provisioner/HouseMix.OfflineFirst.Provisioner.csproj --configuration Release
       - name: Run connection tests
         run: dotnet test infra/offline-first/desktop-client/HouseMix.OfflineFirst.Transport.Tests/HouseMix.OfflineFirst.Transport.Tests.csproj --configuration Release --logger "trx;LogFileName=offline-first-desktop.trx"

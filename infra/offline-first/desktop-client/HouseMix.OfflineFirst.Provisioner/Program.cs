@@ -57,9 +57,8 @@ internal static class Program
             await using (var admin = new NpgsqlConnection(adminBuilder.ConnectionString))
             {
                 await admin.OpenAsync();
-                await EnsureFreshTargetAsync(admin);
-                await CreateRuntimeRoleAsync(admin, runtimePassword);
-                await CreateDatabaseAsync(admin);
+                await EnsureRuntimeRoleAsync(admin, runtimePassword);
+                await EnsureDatabaseAsync(admin);
             }
 
             var runtimeBuilder = new NpgsqlConnectionStringBuilder
@@ -107,25 +106,17 @@ internal static class Program
         }
     }
 
-    private static async Task EnsureFreshTargetAsync(NpgsqlConnection admin)
+    private static async Task EnsureRuntimeRoleAsync(NpgsqlConnection admin, string password)
     {
-        await using var roleExists = new NpgsqlCommand(
+        await using var exists = new NpgsqlCommand(
             "SELECT 1 FROM pg_roles WHERE rolname = @role", admin);
-        roleExists.Parameters.AddWithValue("role", RuntimeRole);
-        if (await roleExists.ExecuteScalarAsync() is not null)
-            throw new InvalidOperationException("A conta housemix_runtime já existe; provisionamento interrompido.");
-
-        await using var databaseExists = new NpgsqlCommand(
-            "SELECT 1 FROM pg_database WHERE datname = @database", admin);
-        databaseExists.Parameters.AddWithValue("database", DatabaseName);
-        if (await databaseExists.ExecuteScalarAsync() is not null)
-            throw new InvalidOperationException("O banco housemix_local já existe; nenhum dado foi alterado.");
-    }
-
-    private static async Task CreateRuntimeRoleAsync(NpgsqlConnection admin, string password)
-    {
-        await using var formatted = new NpgsqlCommand(
-            "SELECT format('CREATE ROLE housemix_runtime WITH LOGIN PASSWORD %L', @password)", admin);
+        exists.Parameters.AddWithValue("role", RuntimeRole);
+        var found = await exists.ExecuteScalarAsync() is not null;
+        var sql = found
+            ? "ALTER ROLE housemix_runtime WITH LOGIN PASSWORD " 
+            : "CREATE ROLE housemix_runtime WITH LOGIN PASSWORD ";
+        await using var formatted = new NpgsqlCommand("SELECT format(@statement || '%L', @password)", admin);
+        formatted.Parameters.AddWithValue("statement", sql);
         formatted.Parameters.AddWithValue("password", password);
         var commandText = (string?)await formatted.ExecuteScalarAsync()
             ?? throw new InvalidOperationException("Não foi possível preparar a credencial do banco.");
@@ -133,11 +124,23 @@ internal static class Program
         await command.ExecuteNonQueryAsync();
     }
 
-    private static async Task CreateDatabaseAsync(NpgsqlConnection admin)
+    private static async Task EnsureDatabaseAsync(NpgsqlConnection admin)
     {
-        await using var create = new NpgsqlCommand(
-            "CREATE DATABASE housemix_local OWNER housemix_runtime", admin);
-        await create.ExecuteNonQueryAsync();
+        await using var exists = new NpgsqlCommand(
+            "SELECT 1 FROM pg_database WHERE datname = @database", admin);
+        exists.Parameters.AddWithValue("database", DatabaseName);
+        if (await exists.ExecuteScalarAsync() is null)
+        {
+            await using var create = new NpgsqlCommand(
+                "CREATE DATABASE housemix_local OWNER housemix_runtime", admin);
+            await create.ExecuteNonQueryAsync();
+        }
+        else
+        {
+            await using var alter = new NpgsqlCommand(
+                "ALTER DATABASE housemix_local OWNER TO housemix_runtime", admin);
+            await alter.ExecuteNonQueryAsync();
+        }
     }
 
     private static async Task ApplySchemaAsync(NpgsqlConnection runtime)
