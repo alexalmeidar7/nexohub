@@ -10,6 +10,7 @@ on:
       - "vite.config.ts"
       - "package.json"
       - "package-lock.json"
+      - "infra/offline-first/desktop-client/**"
       - ".github/workflows/build-house-mix-desktop.yml"
   push:
     branches: [main]
@@ -39,8 +40,14 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Publish local API host for Windows
+        run: dotnet publish infra/offline-first/desktop-client/HouseMix.OfflineFirst.Host/HouseMix.OfflineFirst.Host.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o desktop/runtime/local-api-host
       - name: Test Desktop shell security
-        run: node --test desktop/runtime.test.cjs
+        run: node --test desktop/runtime.test.cjs desktop/local-api-host.test.cjs
       - name: Build Desktop frontend
         run: npm run desktop:build
       - name: Verify packaged entry points
