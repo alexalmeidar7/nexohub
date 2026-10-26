@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { applyTrackChangeWithCuriosityGuard } from "./musicTrackUpdate";
 
 /**
@@ -11,12 +11,14 @@ import { applyTrackChangeWithCuriosityGuard } from "./musicTrackUpdate";
  * NEVER overwrite the current track's state.
  */
 describe("applyTrackChangeWithCuriosityGuard", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
   const trackA = { titulo: "Song A", artista: "Artist A", capa: "coverA.jpg" };
   const trackB = { titulo: "Song B", artista: "Artist B", capa: "coverB.jpg" };
 
   it("immediately clears old curiosity and publishes new track before AI resolves", async () => {
     const merge = vi.fn().mockResolvedValue(undefined);
-    let resolveCuriosity!: (v: { curiosidade: string }) => void;
+    let resolveCuriosity: ((v: { curiosidade: string }) => void) | undefined;
     const fetchCuriosity = vi.fn(
       () => new Promise<{ curiosidade: string }>((res) => { resolveCuriosity = res; })
     );
@@ -45,7 +47,8 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
     }));
 
     // Now resolve the AI response; the follow-up merge must write the curiosity.
-    resolveCuriosity({ curiosidade: "Fun fact about A" });
+    expect(resolveCuriosity).toBeDefined();
+    resolveCuriosity?.({ curiosidade: "Fun fact about A" });
     await promise;
 
     expect(merge).toHaveBeenCalledTimes(2);
@@ -59,7 +62,7 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
     let currentStart = 1000;
 
     // Slow fetch for track A that resolves AFTER track B has started.
-    let resolveA!: (v: { curiosidade: string }) => void;
+    let resolveA: ((v: { curiosidade: string }) => void) | undefined;
     const fetchA = vi.fn(
       () => new Promise<{ curiosidade: string }>((res) => { resolveA = res; })
     );
@@ -91,7 +94,8 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
     await runB; // B resolves fully
 
     // Now the delayed A response arrives — MUST be ignored.
-    resolveA({ curiosidade: "Stale fact about A" });
+    expect(resolveA).toBeDefined();
+    resolveA?.({ curiosidade: "Stale fact about A" });
     await runA;
 
     // Extract only the calls that touched music_current_curiosity as a non-empty write.
@@ -99,7 +103,11 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
       .map(([, patch]) => patch as Record<string, unknown>)
       .filter((p) => typeof p.music_current_curiosity === "string" && p.music_current_curiosity !== "");
 
-    expect(curiosityWrites).toEqual([{ music_current_curiosity: "Fact about B" }]);
+    expect(curiosityWrites).toHaveLength(1);
+    expect(curiosityWrites[0]).toEqual(expect.objectContaining({
+      music_current_curiosity: "Fact about B",
+      music_current_curiosity_track: "artist b|song b",
+    }));
     expect(curiosityWrites.some((p) => p.music_current_curiosity === "Stale fact about A")).toBe(false);
   });
 
@@ -107,7 +115,7 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
     const merge = vi.fn().mockResolvedValue(undefined);
     const fetchCuriosity = vi.fn().mockResolvedValue({ curiosidade: "" });
 
-    await applyTrackChangeWithCuriosityGuard({
+    const pending = applyTrackChangeWithCuriosityGuard({
       userId: "u1",
       now: 1000,
       data: trackA,
@@ -115,8 +123,11 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
       fetchCuriosity,
       isStillCurrent: () => true,
     });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await pending;
 
     expect(merge).toHaveBeenCalledTimes(1); // only the immediate merge
+    expect(fetchCuriosity).toHaveBeenCalledTimes(3);
   });
 
   it("swallows fetch errors via onError and does not merge a curiosity", async () => {
@@ -124,7 +135,7 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
     const onError = vi.fn();
     const fetchCuriosity = vi.fn().mockRejectedValue(new Error("network down"));
 
-    await applyTrackChangeWithCuriosityGuard({
+    const pending = applyTrackChangeWithCuriosityGuard({
       userId: "u1",
       now: 1000,
       data: trackA,
@@ -133,8 +144,10 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
       isStillCurrent: () => true,
       onError,
     });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await pending;
 
     expect(merge).toHaveBeenCalledTimes(1);
-    expect(onError).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledTimes(3);
   });
 });
