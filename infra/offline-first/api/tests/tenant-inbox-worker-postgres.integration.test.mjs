@@ -1,4 +1,4 @@
-import test, { before, after } from "node:test";
+import test, { before, after, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import postgres from "postgres";
 import { randomUUID } from "node:crypto";
@@ -15,6 +15,7 @@ before(async () => {
   await sql`SELECT 1 FROM housemix.sync_inbox LIMIT 0`;
   await sql`SELECT 1 FROM housemix.programas LIMIT 0`;
 });
+afterEach(async () => { if (sql) await sql`DELETE FROM housemix.sync_inbox WHERE source = 'worker-integration'`; });
 after(async () => { if (sql) await sql.end({ timeout: 5 }); });
 
 function integration(name, fn) {
