@@ -42,6 +42,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Keep proxy requests inside the vMix API path; reject traversal and encoded separators.
+    const rawPath = path.split("?", 1)[0];
+    let decodedPath: string;
+    try {
+      decodedPath = decodeURIComponent(rawPath);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid path encoding" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (
+      path.includes("\\") ||
+      path.includes("#") ||
+      /[\u0000-\u001f\u007f]/.test(path) ||
+      /%(?:2f|5c|25(?:2e|2f|5c))/i.test(rawPath) ||
+      decodedPath.split("/").some((segment) => segment === "." || segment === "..")
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Rejected: only normalized vMix /api/ paths are allowed." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     let settings: { vmix_url?: string | null; vmix_user?: string | null; vmix_pass?: string | null } | null = null;
 
     if (connectionId) {
@@ -122,8 +146,16 @@ Deno.serve(async (req) => {
       return new Response(body, { status: statusCode >= 200 && statusCode < 600 ? statusCode : 502, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } });
     }
 
-    const targetUrl = vmixBaseUrl.replace(/\/+$/, "") + path;
-    console.log(`Proxying request to: ${targetUrl}`);
+    const baseUrl = new URL(vmixBaseUrl);
+    const target = new URL(vmixBaseUrl.replace(/\/+$/, "") + path);
+    if (target.origin !== baseUrl.origin || !target.pathname.startsWith("/api/")) {
+      return new Response(
+        JSON.stringify({ error: "Rejected: destination must remain within the configured vMix /api/ endpoint." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const targetUrl = target.toString();
+    console.log(\`Proxying request to: \${targetUrl}\`);
 
     const fetchHeaders: Record<string, string> = {
       "User-Agent": "Mozilla/5.0 (compatible; VmixProxy/1.0)",
