@@ -18,7 +18,7 @@ public sealed class LocalDatabaseCredentialStoreTests : IDisposable
 
         await store.SaveAsync(connectionUrl);
         var persisted = await File.ReadAllBytesAsync(path);
-        Assert.DoesNotContain(System.Text.Encoding.UTF8.GetBytes("secret"), persisted);
+        Assert.DoesNotContain("secret", Convert.ToBase64String(persisted));
         Assert.Equal(connectionUrl, await store.LoadAsync());
     }
 
