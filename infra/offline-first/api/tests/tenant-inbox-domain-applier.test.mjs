@@ -49,7 +49,19 @@ test("applier locks the leased inbox row before applying", async () => {
       const sql = strings.join(" ");
       if (sql.includes("SELECT id, mutation_id")) {
         locked = true;
-        return [{ status: "processing", lease_token: item.lease_token, lease_until: new Date(Date.now() + 60000).toISOString() }];
+        return [{
+          id: item.id,
+          mutation_id: item.mutation_id,
+          aggregate_type: item.aggregate_type,
+          aggregate_id: item.aggregate_id,
+          operation: item.operation,
+          payload: item.payload,
+          base_version: item.base_version,
+          schema_version: item.schema_version,
+          status: "processing",
+          lease_token: item.lease_token,
+          lease_until: new Date(Date.now() + 60000).toISOString(),
+        }];
       }
       if (sql.includes("UPDATE housemix.sync_inbox SET status")) return [{ id: item.id }];
       throw new Error("unexpected query");
@@ -57,7 +69,6 @@ test("applier locks the leased inbox row before applying", async () => {
     tx.unsafe = async () => [];
     return callback(tx);
   } };
-  db.begin = db.begin.bind(db);
   const applier = createTenantInboxDomainApplier(db);
   const result = await applier.apply(item);
   assert.equal(locked, true);

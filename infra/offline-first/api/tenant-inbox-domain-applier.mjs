@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DOMAINS = Object.freeze({
   programa: {
@@ -70,32 +72,45 @@ export function createTenantInboxDomainApplier(db) {
           return { status: "stale_lease" };
         }
 
+        // A claimed object is not authoritative after the inbox row is locked.
+        const row = locked[0];
+        if (row.aggregate_type !== item.aggregate_type ||
+            row.aggregate_id !== item.aggregate_id ||
+            row.operation !== item.operation ||
+            Number(row.base_version ?? 0) !== Number(item.base_version ?? 0) ||
+            Number(row.schema_version) !== Number(item.schema_version) ||
+            !isDeepStrictEqual(row.payload ?? null, item.payload ?? null)) {
+          return { status: "stale_lease" };
+        }
+
         let changed;
-        if (item.operation === "delete") {
+        if (row.operation === "delete") {
           if (normalized.domain.softDelete) {
             changed = await tx`
               UPDATE housemix.programas SET deleted_at = now(), ativo = false,
                 row_version = row_version + 1, updated_at = now()
-              WHERE id = ${item.aggregate_id}::uuid AND row_version = ${item.base_version}
+              WHERE id = ${row.aggregate_id}::uuid AND row_version = ${row.base_version}
                 AND deleted_at IS NULL RETURNING id
             `;
           } else {
             changed = await tx`
               DELETE FROM housemix.agenda_eventos
-              WHERE id = ${item.aggregate_id}::uuid AND row_version = ${item.base_version}
+              WHERE id = ${row.aggregate_id}::uuid AND row_version = ${row.base_version}
               RETURNING id
             `;
           }
         } else {
           const columns = normalized.fields;
-          const version = item.base_version ?? 0;
-          const setValues = [...normalized.values, item.aggregate_id, version];
+          // PostgreSQL BIGINT values may be returned as strings by postgres.js.
+          // Normalize before the create-vs-update branch so base_version '0' is treated as 0.
+          const version = Number(row.base_version ?? 0);
+          const setValues = [...normalized.values, row.aggregate_id, version];
           const assignments = columns.map((column, index) => `${column} = $${index + 1}`);
           assignments.push("row_version = row_version + 1", "updated_at = now()");
           if (normalized.domain.softDelete) assignments.push("deleted_at = NULL");
           if (version === 0) {
             const insertColumns = ["id", ...columns, "row_version", "created_at", "updated_at"];
-            const insertValues = [item.aggregate_id, ...normalized.values];
+            const insertValues = [row.aggregate_id, ...normalized.values];
             const placeholders = insertValues.map((_, index) => `$${index + 1}`);
             const sql = `INSERT INTO ${normalized.domain.table} (${insertColumns.join(", ")})
               VALUES (${placeholders.join(", ")}, 1, now(), now())
@@ -115,12 +130,12 @@ export function createTenantInboxDomainApplier(db) {
         const terminal = await tx`
           UPDATE housemix.sync_inbox SET status = ${terminalStatus}, processed_at = now(),
             lease_token = NULL, lease_until = NULL, last_error_code = NULL
-          WHERE id = ${item.id}::uuid AND status = 'processing'
+          WHERE id = ${row.id}::uuid AND status = 'processing'
             AND lease_token = ${item.lease_token}::uuid AND lease_until > now()
           RETURNING id
         `;
         if (terminal.length !== 1) throw new Error("inbox_lease_lost_during_apply");
-        return { status: terminalStatus, aggregate_id: item.aggregate_id };
+        return { status: terminalStatus, aggregate_id: row.aggregate_id };
       });
     },
   };

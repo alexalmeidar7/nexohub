@@ -111,10 +111,22 @@ jobs:
         run: node --test infra/offline-first/api/tests/tenant-sync-inbox.test.mjs
       - name: Test idempotent tenant inbox domain application
         run: node --test infra/offline-first/api/tests/tenant-inbox-domain-applier.test.mjs
-      - name: Test inbox worker domain integration
-        run: node --test infra/offline-first/api/tests/tenant-inbox-worker-domain-integration.test.mjs
+      - name: Prepare isolated PostgreSQL tables for domain transaction integration tests
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -c "CREATE SCHEMA IF NOT EXISTS housemix"
+          psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/tenant/004_sync_inbox.sql
+          psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/tenant/005_sync_inbox_leases.sql
+          psql -h localhost -U housemix_test -d housemix_test -v ON_ERROR_STOP=1 -f infra/offline-first/schema/tenant/006_programas_agenda.sql
       - name: Install API dependencies
         run: bun install --no-save
+      - name: Test real PostgreSQL inbox/domain transactions
+        env:
+          DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
+        run: node --test infra/offline-first/api/tests/tenant-inbox-postgres.integration.test.mjs
+      - name: Test inbox worker domain integration
+        run: node --test infra/offline-first/api/tests/tenant-inbox-worker-domain-integration.test.mjs
       - name: Test local API tenant isolation
         env:
           DATABASE_URL: postgres://housemix_test:test-only-password@localhost:5432/housemix_test
