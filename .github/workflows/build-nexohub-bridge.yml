@@ -41,6 +41,7 @@ jobs:
             supabase/functions/vmix-proxy/index.ts \
             supabase/functions/execute-vmix-commands/index.ts
   build:
+    needs: validate-edge
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
