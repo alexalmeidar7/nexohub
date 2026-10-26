@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using HouseMix.OfflineFirst.Transport;
 
 namespace HouseMix.OfflineFirst.Host;
@@ -6,6 +7,12 @@ internal static class Program
 {
     private static async Task<int> Main()
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            Console.Error.WriteLine("HOUSEMIX_LOCAL_API_START_FAILED:windows_required");
+            return 1;
+        }
+
         using var shutdown = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) =>
         {
