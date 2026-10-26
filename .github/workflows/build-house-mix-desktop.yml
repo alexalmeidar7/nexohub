@@ -7,9 +7,14 @@ on:
       - "desktop/**"
       - "src/**"
       - "public/**"
+      - "index.html"
       - "package.json"
       - "package-lock.json"
       - "vite.config.ts"
+      - "tsconfig*.json"
+      - "postcss.config.*"
+      - "tailwind.config.*"
+      - ".npmrc"
       - ".github/workflows/build-house-mix-desktop.yml"
   push:
     branches: [feature/house-mix-desktop]
@@ -17,9 +22,14 @@ on:
       - "desktop/**"
       - "src/**"
       - "public/**"
+      - "index.html"
       - "package.json"
       - "package-lock.json"
       - "vite.config.ts"
+      - "tsconfig*.json"
+      - "postcss.config.*"
+      - "tailwind.config.*"
+      - ".npmrc"
       - ".github/workflows/build-house-mix-desktop.yml"
 permissions:
   contents: read
