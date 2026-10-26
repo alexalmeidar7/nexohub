@@ -5,8 +5,8 @@ on:
   pull_request:
     paths:
       - "desktop/**"
-      - "src/App.tsx"
-      - "src/lib/oauthReturn.ts"
+      - "src/**"
+      - "index.html"
       - "vite.config.ts"
       - "package.json"
       - "package-lock.json"
@@ -15,8 +15,8 @@ on:
     branches: [main]
     paths:
       - "desktop/**"
-      - "src/App.tsx"
-      - "src/lib/oauthReturn.ts"
+      - "src/**"
+      - "index.html"
       - "vite.config.ts"
       - "package.json"
       - "package-lock.json"
@@ -28,7 +28,7 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -38,11 +38,17 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm install
-      - name: Test client profile isolation
-        run: node --test desktop/clientProfile.test.cjs
-      - name: Build desktop frontend
+        run: npm install --no-audit --no-fund
+      - name: Test Desktop shell security
+        run: node --test desktop/runtime.test.cjs
+      - name: Build Desktop frontend
         run: npm run desktop:build
+      - name: Verify packaged entry points
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/index.html")) { throw "Desktop frontend output is missing." }
+          if (-not (Test-Path "desktop/main.cjs")) { throw "Electron main process is missing." }
+          if (-not (Test-Path "desktop/preload.cjs")) { throw "Electron preload is missing." }
       - name: Package Windows installer
         run: npx electron-builder --win nsis --x64 --publish never
       - name: Upload installer
