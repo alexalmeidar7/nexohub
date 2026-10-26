@@ -12,6 +12,7 @@ on:
       - "package-lock.json"
       - "infra/offline-first/api/**"
       - "infra/offline-first/desktop-client/**"
+      - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
   push:
     branches: [main]
@@ -57,6 +58,13 @@ jobs:
           dotnet-version: "8.0.x"
       - name: Publish local API host for Windows
         run: dotnet publish infra/offline-first/desktop-client/HouseMix.OfflineFirst.Host/HouseMix.OfflineFirst.Host.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o desktop/runtime/local-api-host
+      - name: Publish database provisioner for Windows
+        run: dotnet publish infra/offline-first/desktop-client/HouseMix.OfflineFirst.Provisioner/HouseMix.OfflineFirst.Provisioner.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o desktop/runtime/provisioner
+      - name: Bundle local database schema
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "desktop/runtime/provisioner/schema" | Out-Null
+          Copy-Item "infra/offline-first/schema/*.sql" "desktop/runtime/provisioner/schema/" -Force
       - name: Test Desktop shell security
         run: node --test desktop/runtime.test.cjs desktop/local-api-host.test.cjs
       - name: Build Desktop frontend
@@ -68,6 +76,9 @@ jobs:
           if (-not (Test-Path "desktop/main.cjs")) { throw "Electron main process is missing." }
           if (-not (Test-Path "desktop/preload.cjs")) { throw "Electron preload is missing." }
           if (-not (Test-Path "desktop/runtime/local-api-host/HouseMix.OfflineFirst.Host.exe")) { throw "Published local API host executable is missing." }
+          if (-not (Test-Path "desktop/runtime/provisioner/HouseMix.OfflineFirst.Provisioner.exe")) { throw "Database provisioner executable is missing." }
+          if (-not (Test-Path "desktop/runtime/provisioner/schema/001_local_control_plane.sql")) { throw "Local database schema is missing." }
+          if (-not (Test-Path "desktop/runtime/provisioner/schema/002_one_time_device_enrollment.sql")) { throw "Device enrollment schema is missing." }
           if (-not (Test-Path "desktop/runtime/node/node.exe")) { throw "Bundled Node runtime is missing." }
           if (-not (Test-Path "infra/offline-first/api/node_modules/express/package.json")) { throw "Local API Express dependency is missing." }
           if (-not (Test-Path "infra/offline-first/api/node_modules/postgres/package.json")) { throw "Local API PostgreSQL client is missing." }
