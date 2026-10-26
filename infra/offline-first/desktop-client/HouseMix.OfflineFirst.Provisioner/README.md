@@ -7,8 +7,8 @@ already installed and running on the same computer.
 
 - Connects only to `127.0.0.1:5432` as the local PostgreSQL administrator.
 - Reads the administrator password without echoing it and never saves it.
-- Creates or rotates the dedicated `housemix_runtime` login with a fresh random password.
-- Creates (or reassigns ownership of) the `housemix_local` database.
+- Creates the dedicated `housemix_runtime` login with a fresh random password; it refuses to run if that role or database already exists.
+- Creates the new, empty `housemix_local` database.
 - Applies the checked-in control-plane schema migrations.
 - Creates one initial radio tenant.
 - Stores the runtime PostgreSQL URI using Windows DPAPI CurrentUser.

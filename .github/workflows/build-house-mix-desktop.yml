@@ -25,6 +25,7 @@ on:
       - "package-lock.json"
       - "infra/offline-first/api/**"
       - "infra/offline-first/desktop-client/**"
+      - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
 
 permissions:
