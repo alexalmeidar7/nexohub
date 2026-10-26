@@ -111,6 +111,8 @@ jobs:
         run: node --test infra/offline-first/api/tests/tenant-sync-inbox.test.mjs
       - name: Test idempotent tenant inbox domain application
         run: node --test infra/offline-first/api/tests/tenant-inbox-domain-applier.test.mjs
+      - name: Test inbox worker domain integration
+        run: node --test infra/offline-first/api/tests/tenant-inbox-worker-domain-integration.test.mjs
       - name: Install API dependencies
         run: bun install --no-save
       - name: Test local API tenant isolation
