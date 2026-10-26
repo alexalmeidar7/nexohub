@@ -12,6 +12,17 @@ internal static class Program
             eventArgs.Cancel = true;
             shutdown.Cancel();
         };
+        _ = Task.Run(async () =>
+        {
+            while (await Console.In.ReadLineAsync().ConfigureAwait(false) is { } command)
+            {
+                if (command == "STOP")
+                {
+                    shutdown.Cancel();
+                    return;
+                }
+            }
+        });
 
         try
         {
