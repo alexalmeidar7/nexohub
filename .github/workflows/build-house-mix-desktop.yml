@@ -21,6 +21,7 @@ on:
       - "vite.config.ts"
       - "package.json"
       - "package-lock.json"
+      - "infra/offline-first/desktop-client/**"
       - ".github/workflows/build-house-mix-desktop.yml"
 
 permissions:
