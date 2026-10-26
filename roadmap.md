@@ -1,4 +1,5 @@
-- [ ] Aplicar sincronização musical econômica, sem consultas sobrepostas, e verificar testes.
+- [x] Aplicar sincronização musical econômica, sem consultas sobrepostas, e verificar testes (9 passaram).
+- [ ] Medir tráfego e validar sincronização com conta real após reativação (bloqueado: banco pausado).
 - [ ] Revisar agendamentos e dimensionamento quando o Lovable Cloud for reativado (bloqueado: banco pausado).
 - [ ] Corrigir a gravação do roteiro sem falso sucesso nem sobrescrita por salvamento automático.
 - [ ] Garantir que os XMLs públicos consultem dados atuais da conta e estúdio corretos, sem cópias antigas.
