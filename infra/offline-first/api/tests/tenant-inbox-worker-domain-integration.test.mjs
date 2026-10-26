@@ -11,13 +11,13 @@ const inboxItem = {
   operation: "upsert", payload: { nome: "Nexo" }, base_version: 0, schema_version: 1,
 };
 
-function fakeDb(items = [inboxItem]) {
+function fakeDb(items = [inboxItem], options = {}) {
   const calls = [];
   const db = async (strings, ...values) => {
     const sql = strings.join(" ");
     calls.push({ sql, values });
+    if (sql.includes("SET status = 'pending'")) return options.retryEmpty ? [] : [{ id: inboxItem.id, status: "pending" }];
     if (sql.includes("SET status =") && sql.includes("RETURNING id, status")) return [{ id: inboxItem.id, status: values[1] }];
-    if (sql.includes("SET status = 'pending'")) return [{ id: inboxItem.id, status: "pending" }];
     return [];
   };
   db.begin = async (callback) => callback(async (strings, ...values) => {
@@ -77,4 +77,17 @@ test("worker refuses processing without a domain applier", async () => {
   const { db } = fakeDb();
   const worker = createTenantInboxWorker(db);
   await assert.rejects(() => worker.processBatch(), /domain_applier_not_configured/);
+});
+
+test("worker rejects an item immediately when its final allowed attempt fails", async () => {
+  const exhaustedItem = { ...inboxItem, attempt_count: 3 };
+  const { db, calls } = fakeDb([exhaustedItem], { retryEmpty: true });
+  const worker = createTenantInboxWorker(db, {
+    maxAttempts: 3,
+    domainApplier: { async apply() { throw new Error("temporary database outage"); } },
+  });
+  const summary = await worker.processBatch();
+  assert.equal(summary.rejected, 1);
+  assert.equal(summary.stale, 0);
+  assert.ok(calls.some(({ sql }) => sql.includes("max_attempts_exceeded")));
 });

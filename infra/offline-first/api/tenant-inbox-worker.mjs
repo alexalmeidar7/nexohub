@@ -29,11 +29,13 @@ export function createTenantInboxWorker(db, { leaseSeconds = 60, maxAttempts = 1
           else {
             const retried = await this.retry(item.id, item.lease_token, "unexpected_domain_result", retryDelaySeconds);
             if (retried) summary.retried += 1;
+            else if (await this.rejectExhausted(item.id, item.lease_token)) summary.rejected += 1;
             else summary.stale += 1;
           }
         } catch {
           const retried = await this.retry(item.id, item.lease_token, "domain_apply_failed", retryDelaySeconds);
           if (retried) summary.retried += 1;
+          else if (await this.rejectExhausted(item.id, item.lease_token)) summary.rejected += 1;
           else summary.stale += 1;
         }
       }
@@ -71,6 +73,16 @@ export function createTenantInboxWorker(db, { leaseSeconds = 60, maxAttempts = 1
             lease_until = NULL, last_error_code = NULL
         WHERE id = ${id}::uuid AND status = 'processing'
           AND lease_token = ${leaseToken}::uuid AND lease_until > now()
+        RETURNING id, status`;
+      return rows.length === 1;
+    },
+    async rejectExhausted(id, leaseToken) {
+      const rows = await db`UPDATE housemix.sync_inbox
+        SET status = 'rejected', processed_at = now(), lease_token = NULL,
+            lease_until = NULL, last_error_code = 'max_attempts_exceeded'
+        WHERE id = ${id}::uuid AND status = 'processing'
+          AND lease_token = ${leaseToken}::uuid AND lease_until > now()
+          AND attempt_count >= ${maxAttempts}
         RETURNING id, status`;
       return rows.length === 1;
     },
