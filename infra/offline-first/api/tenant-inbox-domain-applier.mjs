@@ -101,7 +101,9 @@ export function createTenantInboxDomainApplier(db) {
           }
         } else {
           const columns = normalized.fields;
-          const version = row.base_version ?? 0;
+          // PostgreSQL BIGINT values may be returned as strings by postgres.js.
+          // Normalize before the create-vs-update branch so base_version '0' is treated as 0.
+          const version = Number(row.base_version ?? 0);
           const setValues = [...normalized.values, row.aggregate_id, version];
           const assignments = columns.map((column, index) => `${column} = $${index + 1}`);
           assignments.push("row_version = row_version + 1", "updated_at = now()");
