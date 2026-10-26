@@ -1,12 +1,44 @@
 const ERROR_CODE = /^[a-z][a-z0-9_]{0,63}$/;
 const TERMINAL = new Set(["applied", "conflict", "rejected"]);
 
-export function createTenantInboxWorker(db, { leaseSeconds = 60, maxAttempts = 12 } = {}) {
+export function createTenantInboxWorker(db, { leaseSeconds = 60, maxAttempts = 12, domainApplier = null } = {}) {
   if (typeof db !== "function" || !Number.isInteger(leaseSeconds) || leaseSeconds < 5 || leaseSeconds > 900 ||
       !Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 100) {
     throw new TypeError("Invalid inbox worker configuration");
   }
   return {
+    async processBatch(limit = 20, { retryDelaySeconds = 30 } = {}) {
+      if (!domainApplier || typeof domainApplier.apply !== "function") {
+        throw new Error("tenant_inbox_domain_applier_not_configured");
+      }
+      if (!Number.isInteger(retryDelaySeconds) || retryDelaySeconds < 1 || retryDelaySeconds > 86400) {
+        throw new RangeError("invalid_retry_delay");
+      }
+      const items = await this.claimBatch(limit);
+      const summary = { claimed: items.length, applied: 0, conflicts: 0, rejected: 0, retried: 0, stale: 0 };
+      for (const item of items) {
+        try {
+          const result = await domainApplier.apply(item);
+          if (result.status === "applied") summary.applied += 1;
+          else if (result.status === "conflict") summary.conflicts += 1;
+          else if (result.status === "rejected") {
+            const finished = await this.finish(item.id, item.lease_token, "rejected");
+            if (finished) summary.rejected += 1;
+            else summary.stale += 1;
+          } else if (result.status === "stale_lease") summary.stale += 1;
+          else {
+            const retried = await this.retry(item.id, item.lease_token, "unexpected_domain_result", retryDelaySeconds);
+            if (retried) summary.retried += 1;
+            else summary.stale += 1;
+          }
+        } catch {
+          const retried = await this.retry(item.id, item.lease_token, "domain_apply_failed", retryDelaySeconds);
+          if (retried) summary.retried += 1;
+          else summary.stale += 1;
+        }
+      }
+      return summary;
+    },
     async claimBatch(limit = 20) {
       if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new RangeError("invalid_claim_limit");
       return db.begin(async (tx) => {
