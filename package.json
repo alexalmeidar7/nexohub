@@ -124,7 +124,8 @@
     "files": [
       "dist/**/*",
       "desktop/**/*.cjs",
-      "package.json"
+      "package.json",
+      "desktop/runtime/**/*"
     ],
     "win": {
       "target": [
