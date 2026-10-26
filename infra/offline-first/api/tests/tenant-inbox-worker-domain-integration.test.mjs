@@ -16,8 +16,8 @@ function fakeDb(items = [inboxItem], options = {}) {
   const db = async (strings, ...values) => {
     const sql = strings.join(" ");
     calls.push({ sql, values });
-    if (sql.includes("SET status =") && sql.includes("RETURNING id, status")) return [{ id: inboxItem.id, status: values[1] }];
     if (sql.includes("SET status = 'pending'")) return options.retryEmpty ? [] : [{ id: inboxItem.id, status: "pending" }];
+    if (sql.includes("SET status =") && sql.includes("RETURNING id, status")) return [{ id: inboxItem.id, status: values[1] }];
     return [];
   };
   db.begin = async (callback) => callback(async (strings, ...values) => {
