@@ -34,7 +34,7 @@ async function enqueue({ aggregate_type = "programa", aggregate_id = randomUUID(
     (id, mutation_id, received_by_device_id, source, aggregate_type, aggregate_id,
      operation, payload, base_version, schema_version, status, lease_token, lease_until)
     VALUES (${id}::uuid, ${mutation_id}::uuid, ${deviceId}::uuid, 'integration-test',
-      ${aggregate_type}, ${aggregate_id}, ${operation}, ${sql.json(body)},
+      ${aggregate_type}, ${aggregate_id}, ${operation}, ${body === null ? null : sql.json(body)},
       ${base_version}, ${schema_version}, 'processing', ${lease_token}::uuid, now() + interval '2 minutes')`;
   return { id, mutation_id, lease_token, aggregate_type, aggregate_id, operation,
     payload: body, base_version, schema_version };
@@ -44,12 +44,12 @@ integration("PostgreSQL applies create and versioned update for Programas", asyn
   const item = await enqueue();
   assert.equal((await applier.apply(item)).status, "applied");
   let rows = await sql`SELECT nome, row_version FROM housemix.programas WHERE id = ${item.aggregate_id}::uuid`;
-  assert.deepEqual(rows[0], { nome: "Programa integração", row_version: 1 });
+  assert.equal(rows[0].nome, "Programa integração");\n  assert.equal(Number(rows[0].row_version), 1);
   const update = await enqueue({ aggregate_id: item.aggregate_id, base_version: 1,
     payload: { nome: "Programa atualizado" } });
   assert.equal((await applier.apply(update)).status, "applied");
   rows = await sql`SELECT nome, row_version FROM housemix.programas WHERE id = ${item.aggregate_id}::uuid`;
-  assert.deepEqual(rows[0], { nome: "Programa atualizado", row_version: 2 });
+  assert.equal(rows[0].nome, "Programa atualizado");\n  assert.equal(Number(rows[0].row_version), 2);
 });
 
 integration("PostgreSQL soft-deletes Programas and physically deletes Agenda events", async () => {
@@ -60,7 +60,7 @@ integration("PostgreSQL soft-deletes Programas and physically deletes Agenda eve
   const rows = await sql`SELECT ativo, deleted_at, row_version FROM housemix.programas WHERE id = ${program.aggregate_id}::uuid`;
   assert.equal(rows[0].ativo, false);
   assert.ok(rows[0].deleted_at);
-  assert.equal(rows[0].row_version, 2);
+  assert.equal(Number(rows[0].row_version), 2);
 
   const event = await enqueue({ aggregate_type: "agenda_evento" });
   assert.equal((await applier.apply(event)).status, "applied");
@@ -78,7 +78,7 @@ integration("PostgreSQL reports optimistic concurrency conflicts and rejects rep
   assert.equal((await applier.apply(stale)).status, "conflict");
   assert.equal((await applier.apply(created)).status, "stale_lease");
   const rows = await sql`SELECT nome, row_version FROM housemix.programas WHERE id = ${created.aggregate_id}::uuid`;
-  assert.deepEqual(rows[0], { nome: "Programa integração", row_version: 1 });
+  assert.equal(rows[0].nome, "Programa integração");\n  assert.equal(Number(rows[0].row_version), 1);
 });
 
 integration("PostgreSQL rolls back domain writes when a constraint fails", async () => {
