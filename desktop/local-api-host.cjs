@@ -22,7 +22,7 @@ function startLocalApiHost({
   const child = spawnProcess(executablePath, [], {
     windowsHide: true,
     shell: false,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["pipe", "pipe", "pipe"],
     env: { ...env }
   });
 
@@ -78,7 +78,10 @@ function startLocalApiHost({
           clearTimeout(forceTimer);
           resolve();
         });
-        try { child.kill(); } catch {
+        try {
+          child.stdin?.write("STOP\\n");
+        } catch {
+          try { child.kill(); } catch {}
           clearTimeout(forceTimer);
           resolve();
         }
