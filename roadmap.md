@@ -1,3 +1,5 @@
+- [ ] Aplicar sincronização musical econômica, sem consultas sobrepostas, e verificar testes.
+- [ ] Revisar agendamentos e dimensionamento quando o Lovable Cloud for reativado (bloqueado: banco pausado).
 - [ ] Corrigir a gravação do roteiro sem falso sucesso nem sobrescrita por salvamento automático.
 - [ ] Garantir que os XMLs públicos consultem dados atuais da conta e estúdio corretos, sem cópias antigas.
 - [ ] Testar os feeds reais e confirmar o comportamento do editor.
