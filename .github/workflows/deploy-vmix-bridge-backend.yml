@@ -124,7 +124,7 @@ jobs:
           BEGIN
             -- Refuse to deploy if the Supabase migration ledger is absent or the
             -- already-provisioned Bridge baseline is not recorded. The workflow
-            -- applies only the two additive follow-up migrations below.
+            -- applies only the three additive follow-up migrations below.
             IF to_regclass('supabase_migrations.schema_migrations') IS NULL THEN
               RAISE EXCEPTION 'Supabase migration history is missing. Stop and reconcile the existing schema before deployment.';
             END IF;
@@ -242,6 +242,25 @@ jobs:
           applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261026214100')")"
           if [ "$applied" != "t" ]; then
             supabase migration repair 20261026214100 --status applied --db-url "$DATABASE_URL"
+          fi
+
+      - name: Apply atomic Bridge pairing migration
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261027123000_vmix_bridge_atomic_pairing.sql
+
+      - name: Record atomic Bridge pairing migration in Supabase history
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261027123000')")"
+          if [ "$applied" != "t" ]; then
+            supabase migration repair 20261027123000 --status applied --db-url "$DATABASE_URL"
           fi
 
       - name: Deploy Bridge and vMix Edge Functions

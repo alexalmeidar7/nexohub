@@ -25,37 +25,16 @@ Deno.serve(async (req) => {
     const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!url || !service) return new Response(JSON.stringify({ error: "Bridge backend is not configured" }), { status: 500, headers });
     const admin = createClient(url, service, { auth: { persistSession: false } });
-    const now = new Date().toISOString();
-    const { data: pairing, error } = await admin.from("vmix_bridge_pairings")
-      .select("id,user_id,expires_at,used_at")
-      .eq("code_hash", await hash(pairingCode))
-      .is("used_at", null)
-      .gt("expires_at", now)
-      .maybeSingle();
-    if (error) throw error;
-    if (!pairing) return new Response(JSON.stringify({ error: "Pairing code invalid, expired, or already used" }), { status: 401, headers });
-
-    // Re-check expiry at the atomic consume step so a code cannot be paired after its deadline.
-    const consumedAt = new Date().toISOString();
-    const { data: consumed, error: consumeError } = await admin.from("vmix_bridge_pairings")
-      .update({ used_at: consumedAt })
-      .eq("id", pairing.id)
-      .is("used_at", null)
-      .gt("expires_at", consumedAt)
-      .select("id")
-      .maybeSingle();
-    if (consumeError) throw consumeError;
-    if (!consumed) return new Response(JSON.stringify({ error: "Pairing code expired or already used; generate a new code" }), { status: 409, headers });
-
     const token = randomToken();
-    const { error: deviceError } = await admin.from("vmix_bridge_devices").insert({
-      user_id: pairing.user_id,
-      device_name: deviceName || "vMix Studio",
-      token_hash: await hash(token),
-      revoked: false,
-      last_seen_at: now,
+    const { data: paired, error: pairingError } = await admin.rpc("connect_vmix_bridge_device", {
+      p_code_hash: await hash(pairingCode),
+      p_device_name: deviceName || "vMix Studio",
+      p_token_hash: await hash(token),
     });
-    if (deviceError) throw deviceError;
+    if (pairingError) throw pairingError;
+    if (paired !== true) {
+      return new Response(JSON.stringify({ error: "Pairing code invalid, expired, or already used; generate a new code" }), { status: 409, headers });
+    }
     return new Response(JSON.stringify({ token }), { headers });
   } catch (e) {
     console.error("vmix-bridge-connect", e);
