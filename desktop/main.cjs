@@ -36,7 +36,9 @@ async function registerRendererProtocol() {
 }
 
 function createMainWindow() {
-  mainWindow = new BrowserWindow(createWindowOptions(path.join(__dirname, "preload.cjs")));
+  const windowOptions = createWindowOptions(path.join(__dirname, "preload.cjs"));
+  windowOptions.icon = path.join(__dirname, "assets", "house-mix.ico");
+  mainWindow = new BrowserWindow(windowOptions);
   mainWindow.once("ready-to-show", () => mainWindow.show());
   mainWindow.on("closed", () => { mainWindow = null; });
 
