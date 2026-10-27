@@ -26,6 +26,9 @@ jobs:
       - name: Verificar tipos (erros de sintaxe e JSX)
         run: bunx --bun -p @typescript/native-preview tsgo -p tsconfig.app.json --noEmit
 
+      - name: Testar resolução de imagens do Desktop
+        run: bunx vitest run src/lib/programImageResolver.test.ts
+
       - name: Montar a prévia
         run: bun run build
 
