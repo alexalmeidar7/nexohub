@@ -12,17 +12,21 @@ afterEach(() => {
 
 describe("program image paths in Electron", () => {
   it("resolves bundled Positiva artwork relative to the packaged renderer", () => {
-    vi.stubGlobal("window", { location: { protocol: "file:" } });
+    vi.stubGlobal("window", { location: { protocol: "file:", href: "file:///C:/Program%20Files/House%20Mix/dist/index.html" } });
 
-    const image = resolveProgramBadge({ nome: "Primeira Hora Positiva" });
+    const program = { nome: "Primeira Hora Positiva" };
+    const image = resolveProgramBadge(program);
+    const cover = resolveProgramCover(program);
 
     expect(image.startsWith("file:")).toBe(true);
-    expect(image.endsWith("/programas/primeira-hora.png")).toBe(true);
+    expect(image.endsWith("/selos/primeira-hora.png")).toBe(true);
+    expect(cover.startsWith("file:")).toBe(true);
+    expect(cover.endsWith("/programas/primeira-hora.png")).toBe(true);
     expect(isSafeImageUrl(image)).toBe(true);
   });
 
   it("maps Modão Sertanejo to the existing local artwork", () => {
-    vi.stubGlobal("window", { location: { protocol: "file:" } });
+    vi.stubGlobal("window", { location: { protocol: "file:", href: "file:///C:/Program%20Files/House%20Mix/dist/index.html" } });
 
     const image = resolveProgramBadge({ nome: "Modão Sertanejo" });
 
@@ -30,7 +34,7 @@ describe("program image paths in Electron", () => {
   });
 
   it("normalizes stored cover and thumbnail paths in Electron", () => {
-    vi.stubGlobal("window", { location: { protocol: "file:" } });
+    vi.stubGlobal("window", { location: { protocol: "file:", href: "file:///C:/Program%20Files/House%20Mix/dist/index.html" } });
 
     const cover = resolveProgramCover({ nome: "Teste", capa: "/programas/bom-dia.png" });
     const thumb = resolveProgramThumb({ nome: "Teste", thumb: "/programas/flashback.png" });
