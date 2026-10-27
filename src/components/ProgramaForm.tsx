@@ -230,37 +230,42 @@ async function getWritableProgramSession(fallbackSession?: Session | null): Prom
   const isSynthetic = (token?: string | null) =>
     !!token && (token.startsWith("client-token-") || token.startsWith("admin-token-") || token.startsWith("sim-"));
 
-  const { data: currentData } = await supabase.auth.getSession();
-  let activeSession = currentData.session;
+  try {
+    const { data: currentData } = await supabase.auth.getSession();
+    let activeSession = currentData.session;
 
-  // O AuthProvider pode manter a sessão de backup na interface enquanto o
-  // cliente Supabase ainda está hidratando o storage do Desktop.
-  if (!activeSession && fallbackSession?.access_token && fallbackSession.refresh_token && !isSynthetic(fallbackSession.access_token)) {
-    const restored = await supabase.auth.setSession({
-      access_token: fallbackSession.access_token,
-      refresh_token: fallbackSession.refresh_token,
-    });
-    if (!restored.error) activeSession = restored.data.session;
-  }
-
-  if (!activeSession) {
-    const refreshed = await supabase.auth.refreshSession();
-    if (!refreshed.error) activeSession = refreshed.data.session;
-  }
-  if (!activeSession) return null;
-
-  // Tokens prestes a expirar não devem ser usados para iniciar uma gravação.
-  // Sessões simuladas/de cliente não são JWTs Supabase e não devem ser renovadas.
-  if (!isSynthetic(activeSession.access_token)) {
-    const expiresAtMs = Number(activeSession.expires_at || 0) * 1000;
-    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now() + 60_000) {
-      const refreshed = await supabase.auth.refreshSession();
-      if (refreshed.error || !refreshed.data.session) return null;
-      activeSession = refreshed.data.session;
+    // O AuthProvider pode manter a sessão de backup na interface enquanto o
+    // cliente Supabase ainda está hidratando o storage do Desktop.
+    if (!activeSession && fallbackSession?.access_token && fallbackSession.refresh_token && !isSynthetic(fallbackSession.access_token)) {
+      const restored = await supabase.auth.setSession({
+        access_token: fallbackSession.access_token,
+        refresh_token: fallbackSession.refresh_token,
+      });
+      if (!restored.error) activeSession = restored.data.session;
     }
-  }
 
-  return activeSession;
+    if (!activeSession) {
+      const refreshed = await supabase.auth.refreshSession();
+      if (!refreshed.error) activeSession = refreshed.data.session;
+    }
+    if (!activeSession) return null;
+
+    // Tokens prestes a expirar não devem ser usados para iniciar uma gravação.
+    // Sessões simuladas/de cliente não são JWTs Supabase e não devem ser renovadas.
+    if (!isSynthetic(activeSession.access_token)) {
+      const expiresAtMs = Number(activeSession.expires_at || 0) * 1000;
+      if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now() + 60_000) {
+        const refreshed = await supabase.auth.refreshSession();
+        if (refreshed.error || !refreshed.data.session) return null;
+        activeSession = refreshed.data.session;
+      }
+    }
+
+    return activeSession;
+  } catch (error) {
+    console.warn("Não foi possível restaurar/renovar a sessão antes de salvar o programa:", error);
+    return null;
+  }
 }
 
 async function persistPrograma(opts: {
