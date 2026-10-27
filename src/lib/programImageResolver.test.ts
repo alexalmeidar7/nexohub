@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   isSafeImageUrl,
   resolveProgramBadge,
+  resolveProgramCover,
+  resolveProgramThumb,
 } from "./programImageResolver";
 
 afterEach(() => {
@@ -25,6 +27,18 @@ describe("program image paths in Electron", () => {
     const image = resolveProgramBadge({ nome: "Modão Sertanejo" });
 
     expect(image.endsWith("/selos/modao.png")).toBe(true);
+  });
+
+  it("normalizes stored cover and thumbnail paths in Electron", () => {
+    vi.stubGlobal("window", { location: { protocol: "file:" } });
+
+    const cover = resolveProgramCover({ nome: "Teste", capa: "/programas/bom-dia.png" });
+    const thumb = resolveProgramThumb({ nome: "Teste", thumb: "/programas/flashback.png" });
+
+    expect(cover.startsWith("file:")).toBe(true);
+    expect(cover.endsWith("/programas/bom-dia.png")).toBe(true);
+    expect(thumb.startsWith("file:")).toBe(true);
+    expect(thumb.endsWith("/programas/flashback.png")).toBe(true);
   });
 
   it("keeps root-relative paths unchanged in the web app", () => {
