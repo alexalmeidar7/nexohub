@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { isPrivateOrLocalUrl } from "../_shared/auth.ts";
+import { shouldRouteVmixThroughBridge } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (isPrivateOrLocalUrl(vmixBaseUrl)) {
+    if (shouldRouteVmixThroughBridge(vmixBaseUrl)) {
       const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       const { data: bridge, error: bridgeError } = await admin.from("vmix_bridge_devices")
         .select("id").eq("user_id", userId).eq("revoked", false)

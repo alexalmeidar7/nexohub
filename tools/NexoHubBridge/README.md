@@ -27,6 +27,7 @@ Não é necessário editar o JSON para usar a interface, e não compartilhe o ar
 ## Segurança e dependências
 
 - A conexão com a nuvem usa HTTPS.
+- O proxy Edge só acessa diretamente endereços IPv4 públicos literais. Nomes DNS e endereços IPv6 são encaminhados pelo Bridge pareado, evitando que uma resolução DNS diferente entre a validação e o `fetch` contorne a proteção contra SSRF/DNS rebinding.
 - O Bridge só executa caminhos sob `/api/` no host/porta configurado.
 - O token do Bridge, a senha do vMix e o código temporário de pareamento são protegidos pelo DPAPI do Windows para o usuário atual. Mover a configuração para outra conta do Windows exige parear novamente.
 - Não exponha diretamente a porta 8088 do vMix à internet.

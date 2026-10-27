@@ -31,6 +31,8 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - name: Test vMix URL routing security guard
+        run: deno test supabase/functions/_shared/vmix-url-routing_test.ts
       - name: Type-check NexoHub Bridge Edge Functions
         run: |
           deno check \

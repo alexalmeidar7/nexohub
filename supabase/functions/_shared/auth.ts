@@ -48,47 +48,4 @@ export async function requireUser(
   }
 }
 
-// Block SSRF against internal/private/loopback/metadata addresses.
-// Matches the check used in vmix-proxy.
-export function isPrivateOrLocalUrl(input: string): boolean {
-  try {
-    const u = new URL(input);
-    if ((u.protocol !== "http:" && u.protocol !== "https:") || u.username || u.password) return true;
-    let host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-    if (!host || (!host.includes(".") && !host.includes(":"))) return true;
-
-    if (
-      host === "localhost" || host.endsWith(".localhost") ||
-      host.endsWith(".local") || host.endsWith(".lan") || host.endsWith(".home") || host.endsWith(".internal") ||
-      host === "metadata.google.internal" || host === "metadata" ||
-      host === "0.0.0.0" || host === "::" || host === "::1"
-    ) return true;
-
-    // Block IPv4-mapped IPv6 rather than risk bypassing IPv4 private-range checks.
-    if (host.startsWith("::ffff:")) return true;
-
-    // IPv6 local, link-local, multicast, and unique-local ranges.
-    if (/^(fc|fd)/i.test(host) || /^fe[89ab]/i.test(host) || /^ff/i.test(host)) return true;
-
-    // IPv4 private, loopback, link-local, carrier-grade NAT, and reserved ranges.
-    const match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-    if (match) {
-      const octets = match.slice(1).map(Number);
-      if (octets.some((n) => n < 0 || n > 255)) return true;
-      const [a, b, c] = octets;
-      if (a === 0 || a === 10 || a === 127 || a >= 224) return true;
-      if (a === 169 && b === 254) return true;
-      if (a === 172 && b >= 16 && b <= 31) return true;
-      if (a === 192 && b === 168) return true;
-      if (a === 100 && b >= 64 && b <= 127) return true;
-      if (a === 192 && b === 0 && c === 0) return true;
-      if (a === 198 && (b === 18 || b === 19)) return true;
-      if (a === 192 && b === 0 && c === 2) return true;
-      if (a === 198 && b === 51 && c === 100) return true;
-      if (a === 203 && b === 0 && c === 113) return true;
-    }
-    return false;
-  } catch {
-    return true;
-  }
-}
+export { shouldRouteVmixThroughBridge } from "./vmix-url-routing.ts";
