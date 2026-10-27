@@ -228,10 +228,38 @@ jobs:
               WHEN to_regprocedure('public.claim_next_vmix_bridge_job(uuid)') IS NOT NULL
                 THEN 'claim RPC: present'
               ELSE 'claim RPC: missing; migration 20261023180000 will create it if approved'
+            END,
+            CASE
+              WHEN EXISTS (
+                SELECT 1 FROM supabase_migrations.schema_migrations
+                WHERE version = '20261016090000'
+              ) THEN 'legacy baseline 20261016090000: already recorded'
+              ELSE 'legacy baseline 20261016090000: absent; superseded by 20261022185000 and will be reconciled only if changes are approved'
             END;
           SQL
           echo "Read-only preflight completed for the explicitly confirmed project."
           echo "No migration was applied and no Edge Function was deployed."
+
+      # The current main baseline (20261022185000) supersedes the original PR baseline.
+      # Reconcile only the migration ledger so a later Supabase db push cannot replay
+      # the older queued/revoked_at schema over the already-validated current schema.
+      # This does not execute the legacy SQL and runs only after explicit apply approval.
+      - name: Record superseded legacy baseline in migration history (ledger only)
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          legacy_applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261016090000')")"
+          if [ "$legacy_applied" != "t" ]; then
+            supabase migration repair 20261016090000 --status applied --db-url "$DATABASE_URL"
+          fi
+          verified="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261016090000')")"
+          if [ "$verified" != "t" ]; then
+            echo "::error::Could not reconcile superseded legacy Bridge migration history. No schema migration was started."
+            exit 1
+          fi
 
       - name: Apply additive expiry-column reconciliation migration
         if: ${{ inputs.apply_changes }}
