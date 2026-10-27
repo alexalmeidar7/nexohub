@@ -1,3 +1,4 @@
+const path = require("node:path");
 const { URL } = require("node:url");
 
 function isAllowedExternalUrl(rawUrl) {
@@ -6,6 +7,24 @@ function isAllowedExternalUrl(rawUrl) {
     return parsed.protocol === "https:" || parsed.protocol === "http:";
   } catch {
     return false;
+  }
+}
+
+function resolveRendererRequestPath(rawUrl, rendererRoot, fileExists = (candidate) => require("node:fs").existsSync(candidate)) {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== "housemix:") return null;
+    const pathname = decodeURIComponent(parsed.pathname || "/");
+    const requestedPath = pathname === "/" ? "/index.html" : pathname;
+    const root = path.resolve(rendererRoot);
+    const target = path.resolve(root, "." + requestedPath);
+    if (target !== root && !target.startsWith(root + path.sep)) return null;
+    if (fileExists(target)) return target;
+    if (path.extname(pathname)) return null;
+    const entry = path.join(root, "index.html");
+    return fileExists(entry) ? entry : null;
+  } catch {
+    return null;
   }
 }
 
@@ -29,4 +48,4 @@ function createWindowOptions(preloadPath) {
   };
 }
 
-module.exports = { createWindowOptions, isAllowedExternalUrl };
+module.exports = { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath };
