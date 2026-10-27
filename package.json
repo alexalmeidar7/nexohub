@@ -169,6 +169,20 @@
           "!tests/**",
           "!scripts/**"
         ]
+      },
+      {
+        "from": "desktop/runtime/provisioner",
+        "to": "runtime/provisioner",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "infra/offline-first/schema",
+        "to": "runtime/provisioner/schema",
+        "filter": [
+          "*.sql"
+        ]
       }
     ]
   }

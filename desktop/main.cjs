@@ -1,12 +1,39 @@
 const path = require("node:path");
-const { app, BrowserWindow, dialog, shell } = require("electron");
+const fs = require("node:fs");
+const { pathToFileURL } = require("node:url");
+const { app, BrowserWindow, dialog, shell, protocol, net } = require("electron");
 const { spawn } = require("node:child_process");
-const { createWindowOptions, isAllowedExternalUrl } = require("./runtime.cjs");
+const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
+
+// A standard custom scheme gives BrowserRouter a real "/" origin in Electron.
+// Register privileges before app readiness, as required by Electron.
+protocol.registerSchemesAsPrivileged([{
+  scheme: "housemix",
+  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+}]);
 
 let mainWindow;
 let localApiHost;
 let isQuitting = false;
+
+async function registerRendererProtocol() {
+  const rendererRoot = path.join(app.getAppPath(), "dist");
+  protocol.handle("housemix", (request) => {
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    const filePath = resolveRendererRequestPath(
+      request.url,
+      rendererRoot,
+      (candidate) => fs.existsSync(candidate)
+    );
+
+    if (!filePath) return new Response("Not found", { status: 404 });
+    return net.fetch(pathToFileURL(filePath).toString());
+  });
+}
 
 function createMainWindow() {
   mainWindow = new BrowserWindow(createWindowOptions(path.join(__dirname, "preload.cjs")));
@@ -19,13 +46,12 @@ function createMainWindow() {
   });
 
   mainWindow.webContents.on("will-navigate", (event, targetUrl) => {
-    if (targetUrl !== mainWindow.webContents.getURL()) {
-      event.preventDefault();
-      if (isAllowedExternalUrl(targetUrl)) void shell.openExternal(targetUrl);
-    }
+    if (targetUrl.startsWith("housemix://desktop/")) return;
+    event.preventDefault();
+    if (isAllowedExternalUrl(targetUrl)) void shell.openExternal(targetUrl);
   });
 
-  void mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+  void mainWindow.loadURL("housemix://desktop/");
 }
 
 function resolveLocalApiHostPath() {
@@ -54,6 +80,7 @@ async function startLocalRuntime() {
 
 app.whenReady().then(async () => {
   try {
+    await registerRendererProtocol();
     await startLocalRuntime();
     createMainWindow();
     app.on("activate", () => {
@@ -62,7 +89,7 @@ app.whenReady().then(async () => {
   } catch {
     dialog.showErrorBox(
       "House Mix Desktop",
-      "Não foi possível iniciar o serviço local do House Mix. Verifique a instalação e a configuração do banco de dados."
+      "Não foi possível iniciar o House Mix Desktop. Verifique a instalação e a configuração do ambiente local."
     );
     app.quit();
   }
