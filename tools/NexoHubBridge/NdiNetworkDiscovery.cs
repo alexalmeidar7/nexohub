@@ -11,6 +11,7 @@ internal static class NdiNetworkDiscovery
     private static readonly string[] AllowedOrigins =
     [
         "https://housemix.nexobrasil.net",
+        "https://nexohub.lovable.app",
         "http://localhost:5173",
         "http://127.0.0.1:5173"
     ];
@@ -138,10 +139,10 @@ internal static class NdiNetworkDiscovery
     private static bool IsAllowedOrigin(string? origin)
     {
         if (string.IsNullOrWhiteSpace(origin)) return false;
-        if (AllowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase)) return true;
-        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return false;
-        return uri.Host.EndsWith(".lovable.app", StringComparison.OrdinalIgnoreCase)
-            || uri.Host.EndsWith(".lovable.dev", StringComparison.OrdinalIgnoreCase);
+        // NDI exposes local studio device names. Allow only the known House Mix
+        // production origins and local development hosts; never trust arbitrary
+        // subdomains of shared Lovable zones.
+        return AllowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase);
     }
 
     private static SourcesDto DiscoverSources()
