@@ -9,11 +9,43 @@
  * 4. Ensures clean, elegant degradation so broken image icons never appear.
  */
 
+/**
+ * Resolve root-relative public assets when the app is loaded with Electron
+ * loadFile(). In a file:// document, "/programas/..." points to the drive root,
+ * not to the packaged dist folder. The bundled module lives in dist/assets,
+ * so ../ resolves to the packaged dist root.
+ */
+function normalizeProgramImageUrl(url: string): string {
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith("/") &&
+    typeof window !== "undefined" &&
+    window.location.protocol === "file:"
+  ) {
+    try {
+      return new URL(`..${trimmed}`, import.meta.url).href;
+    } catch {
+      return trimmed;
+    }
+  }
+  return trimmed;
+}
+
+function isBundledFileImageUrl(url: string): boolean {
+  if (typeof window === "undefined" || window.location.protocol !== "file:") return false;
+  try {
+    const appRoot = new URL("../", import.meta.url).href;
+    return new URL(url).href.startsWith(appRoot);
+  } catch {
+    return false;
+  }
+}
+
 export function isSafeImageUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
   const trimmed = url.trim();
   if (!trimmed) return false;
-  return trimmed.startsWith("data:image/") || trimmed.startsWith("/") || trimmed.startsWith("http://") || trimmed.startsWith("https://");
+  return trimmed.startsWith("data:image/") || trimmed.startsWith("/") || trimmed.startsWith("http://") || trimmed.startsWith("https://") || (trimmed.startsWith("file:") && isBundledFileImageUrl(trimmed));
 }
 
 export function normalizeProgramLookupKey(name?: string | null): string {
@@ -37,6 +69,7 @@ const POSITIVA_LOCAL_ASSETS: Record<string, { capa: string; selo: string }> = {
   palcopositiva: { capa: "/programas/palco-positiva.png", selo: "/selos/palco-positiva.png" },
   energiapositiva: { capa: "/programas/energia-positiva.png", selo: "/selos/energia-positiva.png" },
   modaopositiva: { capa: "/programas/modao.png", selo: "/selos/modao.png" },
+  modaosertanejo: { capa: "/programas/modao.png", selo: "/selos/modao.png" },
   domingaopositiva: { capa: "/programas/domingao.png", selo: "/selos/domingao.png" },
   madrugadapositiva: { capa: "/programas/madrugada.png", selo: "/selos/madrugada.png" },
   madrugapositiva: { capa: "/programas/madrugada.png", selo: "/selos/madrugada.png" },
@@ -58,12 +91,12 @@ export function resolveProgramSelo(
   p?: { selo?: string | null; capa?: string | null; thumb?: string | null; nome?: string | null } | null
 ): string {
   if (!p) return "";
-  if (isSafeImageUrl(p.selo)) return p.selo!.trim();
-  if (isSafeImageUrl(p.capa)) return p.capa!.trim();
-  if (isSafeImageUrl(p.thumb)) return p.thumb!.trim();
+  if (isSafeImageUrl(p.selo)) return normalizeProgramImageUrl(p.selo!);
+  if (isSafeImageUrl(p.capa)) return normalizeProgramImageUrl(p.capa!);
+  if (isSafeImageUrl(p.thumb)) return normalizeProgramImageUrl(p.thumb!);
 
   const local = getLocalStationAsset(p.nome);
-  if (local?.selo) return local.selo;
+  if (local?.selo) return normalizeProgramImageUrl(local.selo);
 
   return "";
 }
@@ -77,7 +110,7 @@ export function resolveProgramCover(
   if (isSafeImageUrl(p.thumb)) return p.thumb!.trim();
 
   const local = getLocalStationAsset(p.nome);
-  if (local?.capa) return local.capa;
+  if (local?.capa) return normalizeProgramImageUrl(local.capa);
 
   return "";
 }
