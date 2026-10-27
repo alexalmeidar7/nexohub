@@ -288,7 +288,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for fn in vmix-bridge-pairing vmix-bridge-connect vmix-bridge-poll vmix-bridge-result execute-vmix-commands vmix-proxy; do
+          for fn in vmix-bridge-pairing vmix-bridge-connect vmix-bridge-poll vmix-bridge-result vmix-bridge-status execute-vmix-commands vmix-proxy; do
             supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --use-api
           done
 

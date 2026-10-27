@@ -112,3 +112,8 @@ verify_jwt = false
 
 [functions.vmix-bridge-result]
 verify_jwt = false
+
+# Reports the online Bridge device for the authenticated user.
+# JWT verification is performed inside the function via requireUser.
+[functions.vmix-bridge-status]
+verify_jwt = false

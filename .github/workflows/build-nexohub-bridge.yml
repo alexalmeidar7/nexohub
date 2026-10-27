@@ -38,6 +38,7 @@ jobs:
             supabase/functions/vmix-bridge-connect/index.ts \
             supabase/functions/vmix-bridge-poll/index.ts \
             supabase/functions/vmix-bridge-result/index.ts \
+            supabase/functions/vmix-bridge-status/index.ts \
             supabase/functions/vmix-proxy/index.ts \
             supabase/functions/execute-vmix-commands/index.ts
   build:
