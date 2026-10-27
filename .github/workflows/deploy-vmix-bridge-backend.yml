@@ -192,25 +192,6 @@ jobs:
           $preflight$;
           SQL
 
-      - name: Apply additive pending-status default migration
-        env:
-          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261026214100_vmix_bridge_jobs_pending_default.sql
-
-      - name: Record pending-status migration in Supabase history
-        env:
-          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261026214100')")"
-          if [ "$applied" != "t" ]; then
-            supabase migration repair 20261026214100 --status applied --db-url "$DATABASE_URL"
-          fi
-
       - name: Apply additive expired-job claim-function migration
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
@@ -228,6 +209,25 @@ jobs:
           applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261023180000')")"
           if [ "$applied" != "t" ]; then
             supabase migration repair 20261023180000 --status applied --db-url "$DATABASE_URL"
+          fi
+
+      - name: Apply additive pending-status default migration
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261026214100_vmix_bridge_jobs_pending_default.sql
+
+      - name: Record pending-status migration in Supabase history
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261026214100')")"
+          if [ "$applied" != "t" ]; then
+            supabase migration repair 20261026214100 --status applied --db-url "$DATABASE_URL"
           fi
 
       - name: Deploy Bridge and vMix Edge Functions
