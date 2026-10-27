@@ -1,5 +1,7 @@
 -- NexoHub Bridge backend schema, compatible with the legacy PR #23 migration.
--- Additive and idempotent: preserve legacy columns/data while exposing the current API contract.
+-- Idempotent compatibility migration, but not strictly additive: it replaces
+-- Bridge-specific constraints/indexes and normalizes existing Bridge rows.
+-- It does not drop Bridge tables or delete pairing, device, or job rows.
 
 create extension if not exists pgcrypto;
 
