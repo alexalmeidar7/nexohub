@@ -15,28 +15,35 @@
  * not to the packaged dist folder. The bundled module lives in dist/assets,
  * so ../ resolves to the packaged dist root.
  */
+function getElectronAppRoot(): URL | null {
+  if (typeof window === "undefined" || window.location.protocol !== "file:") return null;
+  try {
+    // loadFile() opens dist/index.html, so ./ is the packaged dist directory.
+    return new URL("./", window.location.href);
+  } catch {
+    return null;
+  }
+}
+
 function normalizeProgramImageUrl(url: string): string {
   const trimmed = url.trim();
-  if (
-    trimmed.startsWith("/") &&
-    typeof window !== "undefined" &&
-    window.location.protocol === "file:"
-  ) {
-    try {
-      const appRoot = new URL("../", import.meta.url);
-      return new URL(trimmed.replace(/^\/+/, ""), appRoot).href;
-    } catch {
-      return trimmed;
-    }
+  if (!trimmed.startsWith("/")) return trimmed;
+
+  const appRoot = getElectronAppRoot();
+  if (!appRoot) return trimmed;
+
+  try {
+    return new URL(trimmed.replace(/^\\/+/, ""), appRoot).href;
+  } catch {
+    return trimmed;
   }
-  return trimmed;
 }
 
 function isBundledFileImageUrl(url: string): boolean {
-  if (typeof window === "undefined" || window.location.protocol !== "file:") return false;
+  const appRoot = getElectronAppRoot();
+  if (!appRoot) return false;
   try {
-    const appRoot = new URL("../", import.meta.url).href;
-    return new URL(url).href.startsWith(appRoot);
+    return new URL(url).href.startsWith(appRoot.href);
   } catch {
     return false;
   }
@@ -120,9 +127,9 @@ export function resolveProgramThumb(
   p?: { thumb?: string | null; capa?: string | null; selo?: string | null; nome?: string | null } | null
 ): string {
   if (!p) return "";
-  if (isSafeImageUrl(p.thumb)) return p.thumb!.trim();
-  if (isSafeImageUrl(p.capa)) return p.capa!.trim();
-  if (isSafeImageUrl(p.selo)) return p.selo!.trim();
+  if (isSafeImageUrl(p.thumb)) return normalizeProgramImageUrl(p.thumb!);
+  if (isSafeImageUrl(p.capa)) return normalizeProgramImageUrl(p.capa!);
+  if (isSafeImageUrl(p.selo)) return normalizeProgramImageUrl(p.selo!);
 
   const local = getLocalStationAsset(p.nome);
   if (local?.capa) return normalizeProgramImageUrl(local.capa);
