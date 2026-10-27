@@ -106,9 +106,9 @@ export function resolveProgramCover(
   p?: { capa?: string | null; selo?: string | null; thumb?: string | null; nome?: string | null } | null
 ): string {
   if (!p) return "";
-  if (isSafeImageUrl(p.capa)) return p.capa!.trim();
-  if (isSafeImageUrl(p.selo)) return p.selo!.trim();
-  if (isSafeImageUrl(p.thumb)) return p.thumb!.trim();
+  if (isSafeImageUrl(p.capa)) return normalizeProgramImageUrl(p.capa!);
+  if (isSafeImageUrl(p.selo)) return normalizeProgramImageUrl(p.selo!);
+  if (isSafeImageUrl(p.thumb)) return normalizeProgramImageUrl(p.thumb!);
 
   const local = getLocalStationAsset(p.nome);
   if (local?.capa) return normalizeProgramImageUrl(local.capa);
@@ -125,7 +125,7 @@ export function resolveProgramThumb(
   if (isSafeImageUrl(p.selo)) return p.selo!.trim();
 
   const local = getLocalStationAsset(p.nome);
-  if (local?.capa) return local.capa;
+  if (local?.capa) return normalizeProgramImageUrl(local.capa);
 
   return "";
 }
