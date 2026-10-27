@@ -33,7 +33,9 @@ function normalizeProgramImageUrl(url: string): string {
   if (!appRoot) return trimmed;
 
   try {
-    return new URL(trimmed.replace(/^\\/+/, ""), appRoot).href;
+    let relativePath = trimmed;
+    while (relativePath.startsWith("/")) relativePath = relativePath.slice(1);
+    return new URL(relativePath, appRoot).href;
   } catch {
     return trimmed;
   }
