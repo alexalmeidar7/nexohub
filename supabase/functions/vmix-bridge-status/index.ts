@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
       .select("device_name,last_seen_at")
       .eq("user_id", auth.sub)
       .eq("revoked", false)
+      .gte("last_seen_at", new Date(Date.now() - 45_000).toISOString())
       .order("last_seen_at", { ascending: false })
       .limit(10);
 
