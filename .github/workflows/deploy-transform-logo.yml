@@ -2,6 +2,11 @@ name: Deploy sponsor logo transformation
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_project_ref:
+        description: "Digite exatamente o Project Ref do backend atual para confirmar o destino"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -18,22 +23,33 @@ jobs:
         with:
           version: latest
 
-      - name: Validate required secrets
+      - name: Validate target project and required secrets
         shell: bash
         env:
+          INPUT_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          EXPECTED_PROJECT_REF: qazvgmgdidjhbvcuinpy
+          SECRET_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::Add SUPABASE_ACCESS_TOKEN in GitHub Actions secrets."; exit 1; }
-          test -n "$OPENAI_API_KEY" || { echo "::error::Add OPENAI_API_KEY in GitHub Actions secrets."; exit 1; }
+          set -euo pipefail
+          test -n "${SECRET_PROJECT_REF}" || { echo "::error::Configure SUPABASE_PROJECT_REF nos GitHub Actions secrets."; exit 1; }
+          test -n "${SUPABASE_ACCESS_TOKEN}" || { echo "::error::Configure SUPABASE_ACCESS_TOKEN nos GitHub Actions secrets."; exit 1; }
+          test -n "${OPENAI_API_KEY}" || { echo "::error::Configure OPENAI_API_KEY nos GitHub Actions secrets."; exit 1; }
+          if [ "${INPUT_PROJECT_REF}" != "${EXPECTED_PROJECT_REF}" ] || [ "${SECRET_PROJECT_REF}" != "${EXPECTED_PROJECT_REF}" ]; then
+            echo "::error::O Project Ref confirmado e o segredo SUPABASE_PROJECT_REF precisam corresponder ao backend restaurado. Nada foi publicado."
+            exit 1
+          fi
 
-      - name: Configure OpenAI key in the target Supabase project
+      - name: Configure OpenAI key in the confirmed Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref zzjfzxxvxbspbdkodoix
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref "$PROJECT_REF"
 
       - name: Deploy transform-logo
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase functions deploy transform-logo --project-ref zzjfzxxvxbspbdkodoix --no-verify-jwt
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy transform-logo --project-ref "$PROJECT_REF" --no-verify-jwt
