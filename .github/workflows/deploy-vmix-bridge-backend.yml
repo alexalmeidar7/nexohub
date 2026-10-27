@@ -31,12 +31,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Fail closed: this Bridge workflow is bound to the project configured in supabase/config.toml.
+          EXPECTED_PROJECT_REF="zzjfzxxvxbspbdkodoix"
           if [ -z "$SECRET_PROJECT_REF" ]; then
             echo "::error::Configure SUPABASE_PROJECT_REF for the verified active backend."
             exit 1
           fi
-          if [ "$INPUT_PROJECT_REF" != "$SECRET_PROJECT_REF" ]; then
-            echo "::error::The confirmed Project Ref does not match SUPABASE_PROJECT_REF. Nothing was changed."
+          if [ "$SECRET_PROJECT_REF" != "$EXPECTED_PROJECT_REF" ]; then
+            echo "::error::SUPABASE_PROJECT_REF does not match the repository's configured backend project. Nothing was changed."
+            exit 1
+          fi
+          if [ "$INPUT_PROJECT_REF" != "$EXPECTED_PROJECT_REF" ]; then
+            echo "::error::The manually confirmed Project Ref does not match the repository's configured backend project. Nothing was changed."
             exit 1
           fi
           if ! python3 - "$DATABASE_URL" "$SECRET_PROJECT_REF" <<'PY'
