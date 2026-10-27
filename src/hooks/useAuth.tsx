@@ -70,23 +70,7 @@ const AuthContext = createContext<AuthContextType>({
 
 });
 
-const isLocalhostEnvironment = () => {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  return host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host.startsWith("192.168.") || host.startsWith("10.");
-};
-
-const getInitialBackupSession = (): Session | null => {
-  try {
-    if (typeof window === "undefined") return null;
-    if (localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
-    const raw = localStorage.getItem('nexohub_backup_session');
-    if (!raw) return null;
-    return JSON.parse(raw) as Session;
-  } catch {
-    return null;
-  }
-};
+const getInitialBackupSession = (): Session | null => null;
 
 const isSimulatedAccessToken = (token?: string | null) => {
   if (!token) return false;
@@ -98,18 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(() => initialBackup?.user || null);
   const [session, setSession] = useState<Session | null>(() => initialBackup || null);
   const [loading, setLoading] = useState(() => !initialBackup);
-  const [role, setRole] = useState<AppRole | null>(() => {
-    try {
-      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") return null;
-      const forceRole = localStorage.getItem("nexohub_force_role");
-      if (forceRole === "admin") return "admin";
-      if (forceRole === "user") return "user";
-      const metaRole = initialBackup?.user?.user_metadata?.role as AppRole;
-      if (metaRole === "admin" || metaRole === "user") return metaRole;
-    } catch {}
-    if (isLocalhostEnvironment() && !(typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true")) return "admin";
-    return null;
-  });
+  const [role, setRole] = useState<AppRole | null>(null);
   const prevUserIdRef = useRef<string | null>(initialBackup?.user?.id || null);
   const manualSignOutRef = useRef(false);
   const loadingRef = useRef(!initialBackup);
@@ -169,44 +142,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted && loadingRef.current) {
         console.warn("Auth: safety timeout reached (5s), forcing load complete");
         finishLoading();
-        if (!user && lastGoodSessionRef.current) {
-          updateAuth(lastGoodSessionRef.current);
-        }
       }
     }, 5000);
 
-    const fetchRole = async (userId: string, email?: string): Promise<AppRole> => {
-      if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
-        return "user";
-      }
-      try {
-        const forceRole = localStorage.getItem("nexohub_force_role");
-        if (forceRole === "admin") return "admin";
-        if (forceRole === "user") return "user";
-      } catch {}
-
-      if (email && (email.toLowerCase() === "alex@nexobrasil.net" || email.toLowerCase().includes("alex"))) {
-        return "admin";
-      }
-
+    const fetchRole = async (userId: string): Promise<AppRole> => {
       try {
         const { data, error } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", userId);
-        if (!error && data && data.length > 0) {
-          return data.some((r: any) => r.role === "admin") ? "admin" : "user";
-        }
-      } catch { /* silent */ }
-
-      if (isLocalhostEnvironment()) {
-        return "admin";
+        if (error || !data) return "user";
+        return data.some((entry: any) => entry.role === "admin") ? "admin" : "user";
+      } catch {
+        // Falha de consulta nunca concede privilégios administrativos.
+        return "user";
       }
-      return "user";
     };
 
     const updateAuth = async (newSession: Session | null) => {
       if (!mounted) return;
+
+      if (newSession && isSimulatedAccessToken(newSession.access_token)) {
+        purgeStoredAuth();
+        lastGoodSessionRef.current = null;
+        setUser(null);
+        setSession(null);
+        setRole(null);
+        finishLoading();
+        return;
+      }
 
       if (typeof window !== "undefined" && localStorage.getItem(EXPLICIT_LOGOUT_KEY) === "true") {
         lastGoodSessionRef.current = null;
@@ -224,54 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const newUser = newSession?.user ?? null;
 
-      if (!newUser && !manualSignOutRef.current) {
-        if (lastGoodSessionRef.current?.user && lastGoodSessionRef.current.access_token) {
-          const restored = lastGoodSessionRef.current;
-          if (prevUserIdRef.current !== restored.user.id) {
-            prevUserIdRef.current = restored.user.id;
-            ensureMusicScopeForUser(restored.user.id);
-            setUser(restored.user);
-          }
-          setSession(restored);
-
-          const isSim = isSimulatedAccessToken(restored.access_token);
-
-          // Determine role
-          const roleFromMeta = (restored.user.user_metadata?.role as AppRole) || null;
-          const roleResult = roleFromMeta || (await fetchRole(restored.user.id, restored.user.email));
-          if (mounted) setRole(roleResult);
-          finishLoading();
-
-          // Only attempt supabase.auth.setSession for real Supabase JWT tokens
-          if (!isSim) {
-            supabase.auth.setSession({
-              access_token: restored.access_token,
-              refresh_token: restored.refresh_token,
-            }).then(({ data: setRes, error: setErr }) => {
-              if (setErr) {
-                console.warn("Auth: setSession failed with restored tokens", setErr.message);
-                if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
-                  localStorage.removeItem('nexohub_backup_session');
-                  lastGoodSessionRef.current = null;
-                  if (mounted) {
-                    setUser(null);
-                    setSession(null);
-                    setRole(null);
-                  }
-                }
-              } else if (setRes.session && mounted) {
-                lastGoodSessionRef.current = setRes.session;
-                setSession(setRes.session);
-                setUser(setRes.session.user);
-                try {
-                  localStorage.setItem('nexohub_backup_session', JSON.stringify(setRes.session));
-                } catch {}
-              }
-            }).catch(() => { /* keep current state */ });
-          }
-          return;
-        }
-        // No prior session at all -> treat as logged out
+      if (!newUser) {
         prevUserIdRef.current = null;
         setUser(null);
         setSession(null);
@@ -280,7 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const newId = newUser?.id ?? null;
+      const newId = newUser.id;
       if (newId !== prevUserIdRef.current) {
         prevUserIdRef.current = newId;
         ensureMusicScopeForUser(newId);
@@ -288,17 +205,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setSession(newSession);
 
-      if (!newUser) {
-        setRole(null);
-        finishLoading();
-        return;
-      }
-
       // Race role fetch against a 5s timeout so we never hang
-      const roleFromMeta = (newUser.user_metadata?.role as AppRole) || null;
-      const roleResult = roleFromMeta || await Promise.race([
-        fetchRole(newUser.id, newUser.email),
-        new Promise<AppRole>((resolve) => addTimer(() => resolve(isLocalhostEnvironment() ? "admin" : "user"), 5000)),
+      const roleResult = await Promise.race([
+        fetchRole(newUser.id),
+        new Promise<AppRole>((resolve) => addTimer(() => resolve("user"), 5000)),
       ]);
 
       if (!mounted) return;
@@ -333,13 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
       // hard refresh keeps the user on the welcome screen.
-      if (event === "INITIAL_SESSION" && !session) {
-        if (lastGoodSessionRef.current) {
-          console.log("Auth: Restoring session from backup on INITIAL_SESSION.");
-          void updateAuth(lastGoodSessionRef.current);
-          return;
-        }
-      }
+      // Uma sessão de backup só pode ser restaurada após validação por setSession.
 
       if (event === "SIGNED_OUT") {
         // Manual logout should always work (flag stays set until the reload)
@@ -404,8 +308,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (lastGoodSessionRef.current?.access_token) {
               const isSim = isSimulatedAccessToken(lastGoodSessionRef.current.access_token);
               if (isSim) {
-                console.log("Auth: Restored simulated client/admin session on start.");
-                void updateAuth(lastGoodSessionRef.current);
+                purgeStoredAuth();
+                lastGoodSessionRef.current = null;
+                void updateAuth(null);
                 return;
               }
 
@@ -415,24 +320,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 refresh_token: lastGoodSessionRef.current.refresh_token,
               }).then(({ data: setRes, error: setErr }) => {
                 if (!mounted) return;
-                if (setErr) {
-                  console.warn("Auth: initial setSession failed", setErr.message);
-                  if (setErr.message?.toLowerCase().includes("invalid") || setErr.message?.toLowerCase().includes("expired")) {
-                    localStorage.removeItem('nexohub_backup_session');
-                    lastGoodSessionRef.current = null;
-                    void updateAuth(null);
-                    return;
-                  }
+                if (setErr || !setRes?.session) {
+                  localStorage.removeItem("nexohub_backup_session");
+                  lastGoodSessionRef.current = null;
+                  void updateAuth(null);
+                  return;
                 }
-                void updateAuth(setRes?.session || lastGoodSessionRef.current);
+                void updateAuth(setRes.session);
               }).catch(() => {
-                if (mounted) void updateAuth(lastGoodSessionRef.current);
+                if (!mounted) return;
+                lastGoodSessionRef.current = null;
+                void updateAuth(null);
               });
-              return;
-            }
-
-            if (user && lastGoodSessionRef.current) {
-              void updateAuth(lastGoodSessionRef.current);
               return;
             }
 
