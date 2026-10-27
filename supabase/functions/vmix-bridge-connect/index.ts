@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
-const headers = { ...corsHeaders, "Content-Type": "application/json" };
+const headers = { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" };
 const hash = async (value: string) => {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
