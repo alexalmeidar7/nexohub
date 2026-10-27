@@ -10,8 +10,8 @@ export function shouldRouteVmixThroughBridge(input: string): boolean {
       return true;
     }
 
-    const host = url.hostname.toLowerCase().replace(/^\\[|\\]$/g, "");
-    const match = host.match(/^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/);
+    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    const match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
 
     // Hostnames and all IPv6 literals are intentionally routed through the
     // Bridge, where the destination is reached from the studio computer.
