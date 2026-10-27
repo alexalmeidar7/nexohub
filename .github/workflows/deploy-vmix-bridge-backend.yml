@@ -197,8 +197,10 @@ jobs:
 
             IF status_constraint IS NULL
                OR position('pending' IN status_constraint) = 0
+               OR position('running' IN status_constraint) = 0
+               OR position('succeeded' IN status_constraint) = 0
                OR position('failed' IN status_constraint) = 0 THEN
-              RAISE EXCEPTION 'Bridge job status constraint is not compatible with the pending/failed contract.';
+              RAISE EXCEPTION 'Bridge job status constraint is not compatible with the pending/running/succeeded/failed contract.';
             END IF;
           END;
           $preflight$;
