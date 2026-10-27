@@ -166,6 +166,14 @@ jobs:
           $preflight$;
           SQL
 
+      - name: Apply additive pending-status default migration
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261026214100_vmix_bridge_jobs_pending_default.sql
+
       - name: Apply additive expired-job claim-function migration
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
