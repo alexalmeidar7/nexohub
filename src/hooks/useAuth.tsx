@@ -142,9 +142,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted && loadingRef.current) {
         console.warn("Auth: safety timeout reached (5s), forcing load complete");
         finishLoading();
-        if (!user && lastGoodSessionRef.current) {
-          updateAuth(lastGoodSessionRef.current);
-        }
       }
     }, 5000);
 
@@ -207,12 +204,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(newUser);
       }
       setSession(newSession);
-
-      if (!newUser) {
-        setRole(null);
-        finishLoading();
-        return;
-      }
 
       // Race role fetch against a 5s timeout so we never hang
       const roleResult = await Promise.race([
@@ -341,11 +332,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 lastGoodSessionRef.current = null;
                 void updateAuth(null);
               });
-              return;
-            }
-
-            if (user && lastGoodSessionRef.current) {
-              void updateAuth(lastGoodSessionRef.current);
               return;
             }
 
