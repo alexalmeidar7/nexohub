@@ -7,6 +7,11 @@ on:
         description: "Digite exatamente o Project Ref do backend ativo; nada será publicado se não corresponder ao segredo configurado."
         required: true
         type: string
+      apply_changes:
+        description: "Marque somente após aprovação explícita para aplicar migrações e publicar as funções Edge."
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -206,7 +211,14 @@ jobs:
           $preflight$;
           SQL
 
+      - name: Read-only preflight summary
+        if: ${{ !inputs.apply_changes }}
+        run: |
+          echo "Read-only preflight completed for the explicitly confirmed project."
+          echo "No migration was applied and no Edge Function was deployed."
+
       - name: Apply additive expired-job claim-function migration
+        if: ${{ inputs.apply_changes }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
@@ -215,6 +227,7 @@ jobs:
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261023180000_expire_vmix_bridge_jobs_in_claim_function.sql
 
       - name: Record expired-job migration in Supabase history
+        if: ${{ inputs.apply_changes }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
@@ -226,6 +239,7 @@ jobs:
           fi
 
       - name: Apply additive pending-status default migration
+        if: ${{ inputs.apply_changes }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
@@ -234,6 +248,7 @@ jobs:
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261026214100_vmix_bridge_jobs_pending_default.sql
 
       - name: Record pending-status migration in Supabase history
+        if: ${{ inputs.apply_changes }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
@@ -245,6 +260,7 @@ jobs:
           fi
 
       - name: Apply atomic Bridge pairing migration
+        if: ${{ inputs.apply_changes }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
@@ -253,6 +269,7 @@ jobs:
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261027123000_vmix_bridge_atomic_pairing.sql
 
       - name: Record atomic Bridge pairing migration in Supabase history
+        if: ${{ inputs.apply_changes }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
@@ -264,6 +281,7 @@ jobs:
           fi
 
       - name: Deploy Bridge and vMix Edge Functions
+        if: ${{ inputs.apply_changes }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -275,6 +293,7 @@ jobs:
           done
 
       - name: Deployment summary
+        if: ${{ inputs.apply_changes }}
         run: |
           echo "Bridge backend workflow completed for the explicitly confirmed project."
           echo "No production deployment is triggered automatically; this workflow runs only by manual dispatch."
