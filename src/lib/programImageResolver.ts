@@ -23,7 +23,8 @@ function normalizeProgramImageUrl(url: string): string {
     window.location.protocol === "file:"
   ) {
     try {
-      return new URL(`..${trimmed}`, import.meta.url).href;
+      const appRoot = new URL("../", import.meta.url);
+      return new URL(trimmed.replace(/^\/+/, ""), appRoot).href;
     } catch {
       return trimmed;
     }
