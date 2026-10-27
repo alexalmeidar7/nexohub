@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { uploadProgramImage } from "@/lib/uploadProgramImage";
 import { useAuth } from "@/hooks/useAuth";
@@ -225,11 +226,54 @@ import { fetchStationDatabaseData, getStationDatabaseSync } from "@/lib/stationD
  * Grava o programa no banco confirmando que a linha foi realmente persistida.
  * Retorna uma mensagem de erro quando nada foi gravado (ex.: RLS bloqueando).
  */
+async function getWritableProgramSession(fallbackSession?: Session | null): Promise<Session | null> {
+  const isSynthetic = (token?: string | null) =>
+    !!token && (token.startsWith("client-token-") || token.startsWith("admin-token-") || token.startsWith("sim-"));
+
+  try {
+    const { data: currentData } = await supabase.auth.getSession();
+    let activeSession = currentData.session;
+
+    // O AuthProvider pode manter a sessão de backup na interface enquanto o
+    // cliente Supabase ainda está hidratando o storage do Desktop.
+    if (!activeSession && fallbackSession?.access_token && fallbackSession.refresh_token && !isSynthetic(fallbackSession.access_token)) {
+      const restored = await supabase.auth.setSession({
+        access_token: fallbackSession.access_token,
+        refresh_token: fallbackSession.refresh_token,
+      });
+      if (!restored.error) activeSession = restored.data.session;
+    }
+
+    if (!activeSession) {
+      const refreshed = await supabase.auth.refreshSession();
+      if (!refreshed.error) activeSession = refreshed.data.session;
+    }
+    if (!activeSession) return null;
+
+    // Tokens prestes a expirar não devem ser usados para iniciar uma gravação.
+    // Sessões simuladas/de cliente não são JWTs Supabase e não devem ser renovadas.
+    if (!isSynthetic(activeSession.access_token)) {
+      const expiresAtMs = Number(activeSession.expires_at || 0) * 1000;
+      if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now() + 60_000) {
+        const refreshed = await supabase.auth.refreshSession();
+        if (refreshed.error || !refreshed.data.session) return null;
+        activeSession = refreshed.data.session;
+      }
+    }
+
+    return activeSession;
+  } catch (error) {
+    console.warn("Não foi possível restaurar/renovar a sessão antes de salvar o programa:", error);
+    return null;
+  }
+}
+
 async function persistPrograma(opts: {
   targetId: string;
   ownerId: string | null | undefined;
   payload: Record<string, unknown>;
   isUpdate: boolean;
+  fallbackSession?: Session | null;
 }): Promise<string | null> {
   const { targetId, ownerId, payload, isUpdate } = opts;
   const friendly = (msg?: string | null) => {
@@ -243,13 +287,9 @@ async function persistPrograma(opts: {
   try {
     // Garante uma sessão real e válida antes de gravar (evita gravar como anônimo
     // quando o token de renovação expirou e a tela manteve o usuário "logado").
-    let { data: sess } = await supabase.auth.getSession();
-    if (!sess?.session) {
-      const r = await supabase.auth.refreshSession();
-      sess = { session: r.data.session } as any;
-    }
-    if (!sess?.session) {
-      return "Sua sessão expirou. Saia e entre novamente com seu e-mail e senha para salvar o programa.";
+    const validSession = await getWritableProgramSession(opts.fallbackSession);
+    if (!validSession) {
+      return "Sua sessão expirou ou não pôde ser renovada. Entre novamente com seu e-mail e senha para salvar o programa.";
     }
     if (isUpdate) {
       const { data, error } = await supabase
@@ -604,7 +644,7 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
 }
 
 export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const targetUserId = effectiveUserId || user?.id;
   const [nome, setNome] = useState("");
@@ -1254,6 +1294,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         ownerId: effectiveOwnerId,
         payload: programPayload,
         isUpdate: isExistingDbUuid,
+        fallbackSession: session,
       });
       if (persistErrVar) {
         setSaving(false);
@@ -1346,6 +1387,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
       ownerId: effectiveOwnerId,
       payload: programPayload,
       isUpdate: isExistingDbUuid,
+      fallbackSession: session,
     });
     if (persistErr) {
       setSaving(false);
@@ -1414,8 +1456,8 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
 
   const updateProgramaRow = async (id: string, patch: Record<string, any>): Promise<string | null> => {
     if (!isUuid(id)) return null; // programa só local
-    const { data: s } = await supabase.auth.getSession();
-    if (!s.session) await supabase.auth.refreshSession().catch(() => null);
+    const validSession = await getWritableProgramSession(session);
+    if (!validSession) return "Sua sessão expirou ou não pôde ser renovada. Entre novamente para continuar.";
     const { data, error } = await supabase.from("programas").update(patch as any).eq("id", id).select("id");
     if (error) return error.message;
     if (!data || data.length === 0) return "Nenhum registro foi alterado. Sua sessão pode ter expirado — saia e entre novamente.";
