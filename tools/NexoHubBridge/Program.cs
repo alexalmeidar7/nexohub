@@ -14,7 +14,7 @@ namespace NexoHubBridge;
 
 internal sealed class BridgeConfig
 {
-    public string SupabaseUrl { get; set; } = "https://zzjfzxxvxbspbdkodoix.supabase.co";
+    public string SupabaseUrl { get; set; } = "https://qazvgmgdidjhbvcuinpy.supabase.co";
     public string PairingCode { get; set; } = "";
     public string BridgeToken { get; set; } = "";
     public bool SecretsProtected { get; set; }
