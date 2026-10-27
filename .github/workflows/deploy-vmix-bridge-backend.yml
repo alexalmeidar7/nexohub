@@ -32,7 +32,19 @@ jobs:
         run: |
           set -euo pipefail
           # Fail closed: this Bridge workflow is bound to the project configured in supabase/config.toml.
-          EXPECTED_PROJECT_REF="zzjfzxxvxbspbdkodoix"
+          if ! EXPECTED_PROJECT_REF="$(python3 - <<'PY'
+          import tomllib
+          with open("supabase/config.toml", "rb") as config_file:
+              print(tomllib.load(config_file).get("project_id", ""))
+          PY
+          )"; then
+            echo "::error::Could not read project_id from supabase/config.toml. Nothing was changed."
+            exit 1
+          fi
+          if [ -z "$EXPECTED_PROJECT_REF" ]; then
+            echo "::error::supabase/config.toml does not define project_id. Nothing was changed."
+            exit 1
+          fi
           if [ -z "$SECRET_PROJECT_REF" ]; then
             echo "::error::Configure SUPABASE_PROJECT_REF for the verified active backend."
             exit 1
