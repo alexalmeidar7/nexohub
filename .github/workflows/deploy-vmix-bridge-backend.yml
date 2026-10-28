@@ -278,6 +278,16 @@ jobs:
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
           SELECT
             'House Mix restoration migrations: verified',
+            (SELECT count(*)::text FROM auth.users) || ' Auth users',
+            (SELECT count(*)::text FROM storage.buckets) || ' Storage buckets',
+            COALESCE((
+              SELECT string_agg(c.relname, ', ' ORDER BY c.relname)
+              FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public'
+                AND c.relkind = 'r'
+                AND NOT c.relrowsecurity
+            ), 'none') || ' public tables without RLS',
             CASE
               WHEN (
                 SELECT count(*)
@@ -314,6 +324,25 @@ jobs:
           SQL
           echo "Read-only preflight completed for the explicitly confirmed project."
           echo "No migration was applied and no Edge Function was deployed."
+
+      - name: Require restored Auth users and public-table RLS before writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          auth_user_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT count(*) FROM auth.users")"
+          if [ "$auth_user_count" -lt 1 ]; then
+            echo "::error::No Supabase Auth users are restored. Restore the House Mix Auth users before applying Bridge migrations or deploying Edge Functions."
+            exit 1
+          fi
+
+          rls_disabled_tables="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT COALESCE(string_agg(c.relname, ', ' ORDER BY c.relname), '') FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity")"
+          if [ -n "$rls_disabled_tables" ]; then
+            echo "::error::Public tables without RLS: $rls_disabled_tables. Define appropriate table policies and enable RLS before Bridge backend changes."
+            exit 1
+          fi
 
       - name: Apply initial additive Bridge baseline (explicit approval only)
         if: ${{ inputs.apply_changes }}
