@@ -115,92 +115,154 @@ jobs:
         with:
           version: latest
 
-      - name: Preflight existing Bridge schema (read-only)
+      - name: Preflight restored House Mix baseline and Bridge schema (read-only)
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
         run: |
           set -euo pipefail
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
           DO $preflight$
           DECLARE
+            missing_house_mix_migrations text;
+            missing_core_tables text;
+            bridge_table_count integer;
+            bridge_migration_applied boolean;
             missing_columns text;
             status_constraint text;
+            rls_missing text;
           BEGIN
-            -- Accept the current main baseline (20261022185000) and the older PR
-            -- baseline when it is also recorded. The schema checks below are authoritative.
             IF to_regclass('supabase_migrations.schema_migrations') IS NULL THEN
-              RAISE EXCEPTION 'Supabase migration history is missing. Stop and reconcile the existing schema before deployment.';
+              RAISE EXCEPTION 'Supabase migration history is missing. Stop and restore/reconcile the House Mix database first.';
             END IF;
 
-            IF NOT EXISTS (
-              SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261022185000'
-            ) THEN
-              RAISE EXCEPTION 'Bridge baseline migration 20261022185000 is not recorded as applied. Review the backend history before deployment.';
-            END IF;
-
-            IF to_regclass('public.vmix_bridge_pairings') IS NULL
-               OR to_regclass('public.vmix_bridge_devices') IS NULL
-               OR to_regclass('public.vmix_bridge_jobs') IS NULL THEN
-              RAISE EXCEPTION 'Bridge tables are missing. Stop and review the schema before deployment.';
-            END IF;
-
-            WITH required(table_name, column_name) AS (
+            -- Require the six House Mix restoration phases observed on the configured project.
+            WITH required(version) AS (
               VALUES
-                ('vmix_bridge_pairings', 'id'),
-                ('vmix_bridge_pairings', 'user_id'),
-                ('vmix_bridge_pairings', 'code_hash'),
-                ('vmix_bridge_pairings', 'expires_at'),
-                ('vmix_bridge_pairings', 'used_at'),
-                ('vmix_bridge_pairings', 'created_at'),
-                ('vmix_bridge_devices', 'id'),
-                ('vmix_bridge_devices', 'user_id'),
-                ('vmix_bridge_devices', 'device_name'),
-                ('vmix_bridge_devices', 'token_hash'),
-                ('vmix_bridge_devices', 'revoked'),
-                ('vmix_bridge_devices', 'last_seen_at'),
-                ('vmix_bridge_devices', 'created_at'),
-                ('vmix_bridge_jobs', 'id'),
-                ('vmix_bridge_jobs', 'user_id'),
-                ('vmix_bridge_jobs', 'device_id'),
-                ('vmix_bridge_jobs', 'status'),
-                ('vmix_bridge_jobs', 'result_status'),
-                ('vmix_bridge_jobs', 'result_body'),
-                ('vmix_bridge_jobs', 'created_at'),
-                ('vmix_bridge_jobs', 'started_at'),
-                ('vmix_bridge_jobs', 'completed_at'),
-                ('vmix_bridge_jobs', 'path'),
-                ('vmix_bridge_jobs', 'method'),
-                ('vmix_bridge_jobs', 'body')
+                ('20261028003932'),
+                ('20261028025459'),
+                ('20261028025525'),
+                ('20261028030056'),
+                ('20261028030116'),
+                ('20261028030144')
             )
-            SELECT string_agg(r.table_name || '.' || r.column_name, ', ')
-              INTO missing_columns
+            SELECT string_agg(r.version, ', ' ORDER BY r.version)
+              INTO missing_house_mix_migrations
             FROM required r
-            LEFT JOIN information_schema.columns c
-              ON c.table_schema = 'public'
-             AND c.table_name = r.table_name
-             AND c.column_name = r.column_name
-            WHERE c.column_name IS NULL;
+            WHERE NOT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations m
+              WHERE m.version = r.version
+            );
 
-            IF missing_columns IS NOT NULL THEN
-              RAISE EXCEPTION 'Bridge schema is incomplete; missing columns: %', missing_columns;
+            IF missing_house_mix_migrations IS NOT NULL THEN
+              RAISE EXCEPTION 'House Mix restoration history is incomplete; missing migration versions: %. Nothing was changed.', missing_house_mix_migrations;
             END IF;
 
-            -- The current main baseline does not include this RPC.
-            -- Migration 20261023180000 creates/replaces it after the expiry reconciliation.
+            WITH required(table_name) AS (
+              VALUES ('profiles'), ('programas'), ('user_settings'), ('empresa_config')
+            )
+            SELECT string_agg(r.table_name, ', ' ORDER BY r.table_name)
+              INTO missing_core_tables
+            FROM required r
+            WHERE to_regclass('public.' || r.table_name) IS NULL;
 
-            SELECT pg_get_constraintdef(oid)
-              INTO status_constraint
-            FROM pg_constraint
-            WHERE conrelid = 'public.vmix_bridge_jobs'::regclass
-              AND conname = 'vmix_bridge_jobs_status_check';
+            IF missing_core_tables IS NOT NULL THEN
+              RAISE EXCEPTION 'House Mix core tables are missing: %. Restore the House Mix schema before Bridge setup.', missing_core_tables;
+            END IF;
 
-            IF status_constraint IS NULL
-               OR position('pending' IN status_constraint) = 0
-               OR position('running' IN status_constraint) = 0
-               OR position('succeeded' IN status_constraint) = 0
-               OR position('failed' IN status_constraint) = 0 THEN
-              RAISE EXCEPTION 'Bridge job status constraint is not compatible with the pending/running/succeeded/failed contract.';
+            SELECT count(*)
+              INTO bridge_table_count
+            FROM (VALUES
+              ('vmix_bridge_pairings'),
+              ('vmix_bridge_devices'),
+              ('vmix_bridge_jobs')
+            ) AS required(table_name)
+            WHERE to_regclass('public.' || required.table_name) IS NOT NULL;
+
+            SELECT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations
+              WHERE version = '20261022185000'
+            ) INTO bridge_migration_applied;
+
+            IF bridge_table_count NOT IN (0, 3) THEN
+              RAISE EXCEPTION 'Partial Bridge schema detected (% of 3 tables). Stop and reconcile manually; no automatic repair is safe.', bridge_table_count;
+            END IF;
+
+            IF bridge_migration_applied AND bridge_table_count <> 3 THEN
+              RAISE EXCEPTION 'Bridge baseline is recorded as applied but one or more Bridge tables are missing. Stop and reconcile manually.';
+            END IF;
+
+            -- A fresh backend may have all House Mix restoration phases but no Bridge
+            -- tables yet. That is a valid read-only preflight state. The Bridge baseline
+            -- is created only by the separately gated apply_changes=true step below.
+            IF bridge_table_count = 3 THEN
+              WITH required(table_name, column_name) AS (
+                VALUES
+                  ('vmix_bridge_pairings', 'id'),
+                  ('vmix_bridge_pairings', 'user_id'),
+                  ('vmix_bridge_pairings', 'code_hash'),
+                  ('vmix_bridge_pairings', 'expires_at'),
+                  ('vmix_bridge_pairings', 'used_at'),
+                  ('vmix_bridge_pairings', 'created_at'),
+                  ('vmix_bridge_devices', 'id'),
+                  ('vmix_bridge_devices', 'user_id'),
+                  ('vmix_bridge_devices', 'device_name'),
+                  ('vmix_bridge_devices', 'token_hash'),
+                  ('vmix_bridge_devices', 'revoked'),
+                  ('vmix_bridge_devices', 'last_seen_at'),
+                  ('vmix_bridge_devices', 'created_at'),
+                  ('vmix_bridge_jobs', 'id'),
+                  ('vmix_bridge_jobs', 'user_id'),
+                  ('vmix_bridge_jobs', 'device_id'),
+                  ('vmix_bridge_jobs', 'status'),
+                  ('vmix_bridge_jobs', 'result_status'),
+                  ('vmix_bridge_jobs', 'result_body'),
+                  ('vmix_bridge_jobs', 'created_at'),
+                  ('vmix_bridge_jobs', 'started_at'),
+                  ('vmix_bridge_jobs', 'completed_at'),
+                  ('vmix_bridge_jobs', 'path'),
+                  ('vmix_bridge_jobs', 'method'),
+                  ('vmix_bridge_jobs', 'body')
+              )
+              SELECT string_agg(r.table_name || '.' || r.column_name, ', ' ORDER BY r.table_name, r.column_name)
+                INTO missing_columns
+              FROM required r
+              LEFT JOIN information_schema.columns c
+                ON c.table_schema = 'public'
+               AND c.table_name = r.table_name
+               AND c.column_name = r.column_name
+              WHERE c.column_name IS NULL;
+
+              IF missing_columns IS NOT NULL THEN
+                RAISE EXCEPTION 'Bridge schema is incomplete; missing columns: %', missing_columns;
+              END IF;
+
+              SELECT pg_get_constraintdef(oid)
+                INTO status_constraint
+              FROM pg_constraint
+              WHERE conrelid = 'public.vmix_bridge_jobs'::regclass
+                AND conname = 'vmix_bridge_jobs_status_check';
+
+              IF status_constraint IS NULL
+                 OR position('pending' IN status_constraint) = 0
+                 OR position('running' IN status_constraint) = 0
+                 OR position('succeeded' IN status_constraint) = 0
+                 OR position('failed' IN status_constraint) = 0 THEN
+                RAISE EXCEPTION 'Bridge job status constraint is not compatible with the pending/running/succeeded/failed contract.';
+              END IF;
+
+              SELECT string_agg(c.relname, ', ' ORDER BY c.relname)
+                INTO rls_missing
+              FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public'
+                AND c.relname IN ('vmix_bridge_pairings', 'vmix_bridge_devices', 'vmix_bridge_jobs')
+                AND c.relkind = 'r'
+                AND NOT c.relrowsecurity;
+
+              IF rls_missing IS NOT NULL THEN
+                RAISE EXCEPTION 'RLS is not enabled on Bridge tables: %. Stop before deploying Edge Functions.', rls_missing;
+              END IF;
             END IF;
           END;
           $preflight$;
@@ -215,6 +277,19 @@ jobs:
           set -euo pipefail
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
           SELECT
+            'House Mix restoration migrations: verified',
+            CASE
+              WHEN (
+                SELECT count(*)
+                FROM (VALUES
+                  ('vmix_bridge_pairings'),
+                  ('vmix_bridge_devices'),
+                  ('vmix_bridge_jobs')
+                ) AS required(table_name)
+                WHERE to_regclass('public.' || required.table_name) IS NOT NULL
+              ) = 3 THEN 'Bridge baseline schema: present'
+              ELSE 'Bridge baseline schema: absent; it will be created only if apply_changes=true'
+            END,
             CASE
               WHEN EXISTS (
                 SELECT 1 FROM information_schema.columns
@@ -234,11 +309,87 @@ jobs:
                 SELECT 1 FROM supabase_migrations.schema_migrations
                 WHERE version = '20261016090000'
               ) THEN 'legacy baseline 20261016090000: already recorded'
-              ELSE 'legacy baseline 20261016090000: absent; superseded by 20261022185000 and will be reconciled only if changes are approved'
+              ELSE 'legacy baseline 20261016090000: absent; superseded and reconciled only if changes are approved'
             END;
           SQL
           echo "Read-only preflight completed for the explicitly confirmed project."
           echo "No migration was applied and no Edge Function was deployed."
+
+      - name: Apply initial additive Bridge baseline (explicit approval only)
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge_table_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT count(*) FROM (VALUES ('vmix_bridge_pairings'), ('vmix_bridge_devices'), ('vmix_bridge_jobs')) AS required(table_name) WHERE to_regclass('public.' || required.table_name) IS NOT NULL")"
+          if [ "$bridge_table_count" = "0" ]; then
+            echo "Bridge tables are absent. Applying only the additive Bridge baseline approved by apply_changes=true."
+            psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261022185000_vmix_bridge_backend.sql
+          elif [ "$bridge_table_count" = "3" ]; then
+            echo "All Bridge tables already exist and passed the read-only schema preflight; no baseline SQL is needed."
+          else
+            echo "::error::Partial Bridge schema detected after preflight. Nothing was applied."
+            exit 1
+          fi
+
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
+          DO $verify$
+          DECLARE
+            missing_tables text;
+            status_constraint text;
+          BEGIN
+            SELECT string_agg(required.table_name, ', ' ORDER BY required.table_name)
+              INTO missing_tables
+            FROM (VALUES
+              ('vmix_bridge_pairings'),
+              ('vmix_bridge_devices'),
+              ('vmix_bridge_jobs')
+            ) AS required(table_name)
+            WHERE to_regclass('public.' || required.table_name) IS NULL;
+
+            IF missing_tables IS NOT NULL THEN
+              RAISE EXCEPTION 'Bridge baseline did not create the required tables: %', missing_tables;
+            END IF;
+
+            SELECT pg_get_constraintdef(oid)
+              INTO status_constraint
+            FROM pg_constraint
+            WHERE conrelid = 'public.vmix_bridge_jobs'::regclass
+              AND conname = 'vmix_bridge_jobs_status_check';
+
+            IF status_constraint IS NULL
+               OR position('pending' IN status_constraint) = 0
+               OR position('running' IN status_constraint) = 0
+               OR position('succeeded' IN status_constraint) = 0
+               OR position('failed' IN status_constraint) = 0 THEN
+              RAISE EXCEPTION 'Bridge baseline created an incompatible job status constraint.';
+            END IF;
+
+            IF EXISTS (
+              SELECT 1
+              FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public'
+                AND c.relname IN ('vmix_bridge_pairings', 'vmix_bridge_devices', 'vmix_bridge_jobs')
+                AND c.relkind = 'r'
+                AND NOT c.relrowsecurity
+            ) THEN
+              RAISE EXCEPTION 'RLS must be enabled on all Bridge tables before deployment.';
+            END IF;
+          END;
+          $verify$;
+          SQL
+
+          applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261022185000')")"
+          if [ "$applied" != "t" ]; then
+            supabase migration repair 20261022185000 --status applied --db-url "$DATABASE_URL"
+          fi
+          verified="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261022185000')")"
+          if [ "$verified" != "t" ]; then
+            echo "::error::Bridge baseline migration was not recorded after schema verification."
+            exit 1
+          fi
 
       # The current main baseline (20261022185000) supersedes the original PR baseline.
       # Reconcile only the migration ledger so a later Supabase db push cannot replay
