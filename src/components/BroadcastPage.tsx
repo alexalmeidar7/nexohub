@@ -1167,11 +1167,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     const syncTicker = async () => {
       try {
         await loadInitialData();
-        const { data: cur } = await supabase
+        const { data: cur, error: readError } = await supabase
           .from("user_settings")
           .select("cenario_config")
           .eq("user_id", stationUid)
           .maybeSingle();
+        if (readError) throw readError;
         const existing = (cur?.cenario_config && typeof cur.cenario_config === "object")
           ? cur.cenario_config as Record<string, any>
           : {};
@@ -1180,10 +1181,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           ...latestDataRef.current,
           tickerUpdatedAt: new Date().toISOString(),
         };
-        await supabase
+        const { error: saveError } = await supabase
           .from("user_settings")
-          .update({ cenario_config: { ...existing, broadcast } as any })
-          .eq("user_id", stationUid);
+          .upsert({ user_id: stationUid, cenario_config: { ...existing, broadcast } as any }, { onConflict: "user_id" });
+        if (saveError) throw saveError;
         setTickerSyncedAt(new Date());
       } catch {
         /* silencioso — próxima janela de 5min tenta de novo */
@@ -1207,7 +1208,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     const push = async () => {
       try {
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${stationUid}&aseguir=1&t=${Date.now()}`;
-        await fetch(url, { cache: "no-store" });
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error("HTTP " + response.status);
         if (!cancelled) setASeguirSentAt(new Date());
       } catch {
         /* silencioso — próximo ciclo tenta de novo */
@@ -1376,10 +1378,14 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     }
   }, [user, handleSave]);
 
-  const removeBgImage = useCallback(() => {
-    const next = { ...latestDataRef.current, assuntoBgUrl: "", useCustomAssuntoBg: false };
-    setData(next);
-    void handleSave(next);
+  const removeBgImage = useCallback(async () => {
+    const previous = latestDataRef.current;
+    const next = { ...previous, assuntoBgUrl: "", useCustomAssuntoBg: false };
+    if (await handleSave(next)) {
+      setData(next);
+    } else {
+      setData(previous);
+    }
   }, [handleSave]);
 
   const NAVY = "#002132";
@@ -1471,7 +1477,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     return () => { cancelled = true; };
   }, [user, nextProgId]);
 
-  const BLANK_PNG_ASEGUIR = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+  const BLANK_PNG_ASEGUIR = (import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "") + "/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
   const aSeguirActive = !!data.aSeguirEnabled && !!nextProgramInfo;
   const aSeguirXmlPreview = (() => {
     const horario = aSeguirActive && data.aSeguirShowHorario !== false ? (nextProgramInfo?.next?.horario_inicio || "").toString().slice(0, 5) : "";
