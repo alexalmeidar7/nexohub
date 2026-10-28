@@ -746,7 +746,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         ndi_sources: ndiSnapshot as any,
         last_synced_at: new Date().toISOString(),
       })
-      .eq("id", selectedConnectionId);
+      .eq("id", selectedConnectionId)
+      .eq("user_id", user?.id);
   }, [selectedConnectionId]);
 
   // Programas from DB
@@ -814,7 +815,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     localStorage.setItem("vmix_input_shortcuts", JSON.stringify(inputShortcuts));
     // Also persist to DB
     if (user) {
-      supabase.from("user_settings").update({ vmix_shortcuts: inputShortcuts as any }).eq("user_id", user.id);
+      void supabase.from("user_settings")
+        .upsert({ user_id: user.id, vmix_shortcuts: inputShortcuts as any }, { onConflict: "user_id" })
+        .then(({ error }) => { if (error) console.warn("Falha ao persistir atalhos vMix:", error); });
     }
   }, [inputShortcuts, user]);
   // Persist HLS URLs
@@ -1118,14 +1121,23 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       localStorage.setItem(`vmix_last_connected_${user.id}`, connId);
     } catch {}
     try {
-      await (supabase.from("vmix_connections" as any) as any)
+      const { error: clearError } = await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: false })
         .eq("user_id", user.id)
         .neq("id", connId);
-      await (supabase.from("vmix_connections" as any) as any)
+      if (clearError) throw clearError;
+      const { data, error } = await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: true })
-        .eq("id", connId);
-    } catch {}
+        .eq("id", connId)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("A conexão selecionada não foi confirmada pelo banco.");
+    } catch (err: any) {
+      console.warn("Falha ao marcar conexão vMix padrão:", err);
+      toast({ title: "Conexão selecionada localmente", description: err?.message || "Não foi possível salvar a conexão padrão no banco.", variant: "destructive" });
+    }
   }, [user]);
 
   const handleSelectConnection = (conn: any) => {
@@ -1638,8 +1650,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         // Also persist to DB
         if (user) {
           supabase.from("user_settings")
-            .update({ vmix_input_mapping: next as any })
-            .eq("user_id", user.id)
+            .upsert({ user_id: user.id, vmix_input_mapping: next as any }, { onConflict: "user_id" })
             .then(({ error }) => {
               if (error) console.error("Error saving input mapping to DB:", error);
             });
