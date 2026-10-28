@@ -736,12 +736,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           updateData.logo_url = await uploadLogo(pendingFiles[0].file);
         }
 
-        try {
-          const { error } = await supabase.from("logos_patrocinadores").update(updateData).eq("id", editingFullId);
-          if (error) console.warn("[handleSubmit] Supabase update notice:", error.message);
-        } catch (dbErr) {
-          console.warn("[handleSubmit] Supabase update notice:", dbErr);
-        }
+        const { data: updatedRows, error: updateError } = await supabase.from("logos_patrocinadores")
+          .update(updateData).eq("id", editingFullId).eq("user_id", activeUid).select("id");
+        if (updateError) throw updateError;
+        if (!updatedRows?.length) throw new Error("O banco não confirmou a atualização da logo.");
 
         if (activeUid) {
           const localList = getLocalLogos(activeUid);
@@ -809,13 +807,11 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
               nome: nomeFinal,
             } as any).select().maybeSingle();
 
-            if (!error && insData?.id) {
-              newLogo.id = insData.id;
-            } else if (error) {
-              console.warn("[handleSubmit] Supabase insert warning:", error.message);
-            }
+            if (error) throw error;
+            if (!insData?.id) throw new Error("O banco não confirmou o cadastro da logo.");
+            newLogo.id = insData.id;
           } catch (dbErr) {
-            console.warn("[handleSubmit] Supabase insert notice:", dbErr);
+            throw dbErr;
           }
 
           newItems.push(newLogo);
@@ -1016,15 +1012,18 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       user?.id ||
       "";
     try {
-      await supabase.from("logos_patrocinadores").delete().eq("id", id);
-    } catch (e) {
-      console.warn("[handlePermanentDelete] Supabase notice:", e);
+      const { data, error } = await supabase.from("logos_patrocinadores").delete()
+        .eq("id", id).eq("user_id", activeUid).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("O banco não confirmou a exclusão permanente.");
+      if (activeUid) {
+        const local = getLocalLogos(activeUid).filter((l) => l.id !== id);
+        saveLocalLogos(activeUid, local);
+      }
+      await loadData();
+    } catch (e: any) {
+      toast({ title: "Não foi possível excluir a logo", description: e?.message || "Falha ao excluir no servidor.", variant: "destructive" });
     }
-    if (activeUid) {
-      const local = getLocalLogos(activeUid).filter((l) => l.id !== id);
-      saveLocalLogos(activeUid, local);
-    }
-    await loadData();
   };
 
   const startEditDate = (logo: Logo) => {
@@ -1041,22 +1040,24 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       user?.id ||
       "";
     try {
-      const { error } = await supabase.from("logos_patrocinadores").update({ data_final: editDate, ativo: true }).eq("id", editingLogoId);
-      if (error) console.warn("[saveEditDate] Supabase notice:", error.message);
-    } catch (e) {
-      console.warn("[saveEditDate] notice:", e);
+      const { data, error } = await supabase.from("logos_patrocinadores")
+        .update({ data_final: editDate, ativo: true })
+        .eq("id", editingLogoId).eq("user_id", activeUid).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("O banco não confirmou a alteração da validade.");
+      if (activeUid) {
+        const local = getLocalLogos(activeUid).map((l) =>
+          l.id === editingLogoId ? { ...l, data_final: editDate, ativo: true } : l
+        );
+        saveLocalLogos(activeUid, local);
+      }
+      toast({ title: "Validade atualizada!" });
+      setEditingLogoId(null);
+      setEditDate("");
+      await loadData();
+    } catch (e: any) {
+      toast({ title: "Validade não foi atualizada", description: e?.message || "Falha ao atualizar no servidor.", variant: "destructive" });
     }
-    if (activeUid) {
-      const local = getLocalLogos(activeUid).map((l) =>
-        l.id === editingLogoId ? { ...l, data_final: editDate, ativo: true } : l
-      );
-      saveLocalLogos(activeUid, local);
-    }
-
-    toast({ title: "Validade atualizada!" });
-    setEditingLogoId(null);
-    setEditDate("");
-    await loadData();
   };
 
   // Drag handlers for restoring excluded logos
