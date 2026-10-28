@@ -58,13 +58,16 @@ export default function CenariosEstudioWebPage({ effectiveUserId }: { effectiveU
         supabase.from("cenario_estudio_web" as any).select("*").eq("user_id", targetUserId).order("created_at"),
         supabase.from("profiles").select("nome, email").eq("user_id", targetUserId).maybeSingle(),
       ]);
-      if (scenesRes.data) {
-        rows = scenesRes.data as any[];
-      }
+      if (scenesRes.error) throw scenesRes.error;
+      rows = (scenesRes.data || []) as any[];
+      if (profileRes.error) console.warn("Falha ao carregar perfil para o link do cenário web:", profileRes.error);
       const nome = (profileRes.data as any)?.nome || (profileRes.data as any)?.email || "";
       const slug = String(nome).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 32) || targetUserId.slice(0, 8);
       setUserSlug(slug);
-    } catch {}
+    } catch (err: any) {
+      console.error("Falha ao carregar cenários web:", err);
+      toast.error("Não foi possível carregar os cenários web: " + (err?.message || "verifique a conexão."));
+    }
 
     setScenes(rows);
     setLoading(false);
