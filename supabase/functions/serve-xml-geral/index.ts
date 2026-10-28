@@ -90,12 +90,18 @@ serve(async (req) => {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      weekday: "long",
       hour12: false,
     });
     const parts = formatter.formatToParts(new Date());
     const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "";
     const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
     const currentHourStr = `${getPart("hour")}:${getPart("minute")}`;
+    const weekdayMap: Record<string, string> = {
+      monday: "Segunda", tuesday: "Terça", wednesday: "Quarta",
+      thursday: "Quinta", friday: "Sexta", saturday: "Sábado", sunday: "Domingo",
+    };
+    const currentDayName = weekdayMap[(getPart("weekday") || "").toLowerCase()] || "Domingo";
 
     // Resolve sub-user parent if needed
     const { data: subUser } = await sb
@@ -158,7 +164,7 @@ serve(async (req) => {
 
     // Calculate current time & on-air program
     const now = new Date();
-    const currentDayName = DIAS_MAP[now.getDay()];
+    // Dia da semana já foi calculado no fuso de Brasília acima.
 
     let currentProgram: any = programas.find((p: any) => {
       const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
