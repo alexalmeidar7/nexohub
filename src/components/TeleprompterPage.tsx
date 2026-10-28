@@ -73,17 +73,41 @@ export default function TeleprompterPage() {
   }
 
   async function handleToggle(tp: TP) {
-    await (supabase as any)
-      .from("teleprompters")
-      .update({ ativo: !tp.ativo })
-      .eq("id", tp.id);
-    loadTPs();
+    if (!user) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from("teleprompters")
+        .update({ ativo: !tp.ativo })
+        .eq("id", tp.id)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a alteração do teleprompter.");
+      toast({ title: tp.ativo ? "Teleprompter desativado" : "Teleprompter ativado" });
+      await loadTPs();
+    } catch (err: any) {
+      toast({ title: "Não foi possível alterar o teleprompter", description: err?.message || "Falha ao atualizar no servidor.", variant: "destructive" });
+    }
   }
 
   async function handleDelete(id: string) {
-    if (!(await confirmDialog("Remover este TP?"))) return;
-    await (supabase as any).from("teleprompters").delete().eq("id", id);
-    loadTPs();
+    if (!user || !(await confirmDialog("Remover este TP?"))) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from("teleprompters")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a exclusão do teleprompter.");
+      toast({ title: "Teleprompter removido" });
+      await loadTPs();
+    } catch (err: any) {
+      toast({ title: "Não foi possível remover o teleprompter", description: err?.message || "Falha ao excluir no servidor.", variant: "destructive" });
+    }
   }
 
   const inputStyle = "w-full rounded-lg px-3 py-2 text-sm border focus:outline-none focus:ring-2";
