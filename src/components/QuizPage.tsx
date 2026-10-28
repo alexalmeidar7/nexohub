@@ -118,48 +118,41 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
 
   const fetchQuizzes = async () => {
     if (!targetUserId) return;
-
-    let rows: any[] = [];
+    let rows: QuizAgendado[] = [];
+    let databaseLoaded = false;
     try {
-      const { data } = await supabase
-        .from("quiz_agendados")
-        .select("*")
-        .eq("user_id", targetUserId)
-        .order("data_quiz", { ascending: false });
-
-      if (data) {
-        rows = data;
-      }
+      const { data, error } = await supabase.from("quiz_agendados")
+        .select("*").eq("user_id", targetUserId).order("data_quiz", { ascending: false });
+      if (error) throw error;
+      rows = (data || []) as QuizAgendado[];
+      databaseLoaded = true;
     } catch (err) {
       console.warn("Supabase fetch quizzes warning:", err);
     }
 
-    // Tenta carregar do servidor local caso o browser tenha sido limpo
-    let serverQuizzes: QuizAgendado[] = [];
-    try {
-      const resp = await fetch(`/api/sync-xml-quiz?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
-      if (resp.ok) {
-        const json = await resp.json();
-        if (Array.isArray(json?.quizzes)) {
-          serverQuizzes = json.quizzes;
+    let merged: QuizAgendado[] = [];
+    if (databaseLoaded) {
+      merged = rows;
+    } else {
+      let serverQuizzes: QuizAgendado[] = [];
+      try {
+        const resp = await fetch("/api/sync-xml-quiz?slug=" + encodeURIComponent(targetSlug) + "&userId=" + encodeURIComponent(targetUserId));
+        if (resp.ok) {
+          const json = await resp.json();
+          if (Array.isArray(json?.quizzes)) serverQuizzes = json.quizzes;
         }
-      }
-    } catch {}
-
-    const localList = getStoredQuizzes(targetUserId);
-    const map = new Map<string, QuizAgendado>();
-
-    serverQuizzes.forEach(q => q?.id && map.set(q.id, q));
-    rows.forEach(q => q?.id && map.set(q.id, q));
-    localList.forEach(q => q?.id && map.set(q.id, { ...(map.get(q.id) || {}), ...q }));
-
-    // Não descartamos quizzes anteriores: mantemos todos para histórico e exibição de status no painel
-    const merged = Array.from(map.values()).sort((a, b) => {
+      } catch {}
+      const localList = getStoredQuizzes(targetUserId);
+      const map = new Map<string, QuizAgendado>();
+      serverQuizzes.forEach(item => item?.id && map.set(item.id, item));
+      localList.forEach(item => item?.id && map.set(item.id, { ...(map.get(item.id) || {}), ...item }));
+      merged = Array.from(map.values());
+    }
+    merged.sort((a, b) => {
       const dateCmp = (b.data_quiz || "").localeCompare(a.data_quiz || "");
       if (dateCmp !== 0) return dateCmp;
       return (b.horario_inicio || "").localeCompare(a.horario_inicio || "");
     });
-
     setQuizzes(merged);
     saveStoredQuizzes(targetUserId, merged);
     setLoading(false);
