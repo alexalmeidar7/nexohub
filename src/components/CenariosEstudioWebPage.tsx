@@ -79,13 +79,6 @@ export default function CenariosEstudioWebPage({ effectiveUserId }: { effectiveU
   const createScene = async () => {
     if (!targetUserId) return;
     setSavingId("__new__");
-    let newScene: WebScene = {
-      id: `webscene_${Date.now()}`,
-      nome: wizard.nome || "Novo cenário web",
-      orientation: wizard.orientation,
-      tv_count: wizard.tv_count,
-      content: wizard.content,
-    };
     try {
       const { data, error } = await (supabase as any)
         .from("cenario_estudio_web")
@@ -98,52 +91,69 @@ export default function CenariosEstudioWebPage({ effectiveUserId }: { effectiveU
         })
         .select()
         .single();
-      if (data) newScene = data as WebScene;
-    } catch (e) {
-      console.warn("Supabase cenario web save warning:", e);
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a criação do cenário.");
+      const newScene = data as WebScene;
+      setScenes(prev => {
+        const updated = [...prev, newScene];
+        try { localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+      setShowWizard(false);
+      setWizard({ nome: "Novo cenário web", orientation: "horizontal", tv_count: 2, content: { gradient: true, presenter: true, artist: true, sponsors: true } });
+      toast.success("Cenário web criado");
+    } catch (err: any) {
+      console.error("Falha ao criar cenário web:", err);
+      toast.error("Não foi possível criar o cenário: " + (err?.message || "falha no servidor."));
+    } finally {
+      setSavingId(null);
     }
-    setSavingId(null);
-    setScenes((prev) => {
-      const updated = [...prev, newScene];
-      try { localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(updated)); } catch {}
-      return updated;
-    });
-    setShowWizard(false);
-    setWizard({ nome: "Novo cenário web", orientation: "horizontal", tv_count: 2, content: { gradient: true, presenter: true, artist: true, sponsors: true } });
-    toast.success("Cenário web criado");
   };
 
-  const saveScene = async (s: WebScene) => {
+  const saveScene = async (scene: WebScene) => {
     if (!targetUserId) return;
-    setSavingId(s.id);
+    setSavingId(scene.id);
     try {
-      await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("cenario_estudio_web")
-        .update({ nome: s.nome, orientation: s.orientation, tv_count: s.tv_count, content: s.content })
-        .eq("id", s.id);
-    } catch {}
-    setSavingId(null);
-    setScenes((prev) => {
-      const updated = prev.map(item => item.id === s.id ? s : item);
-      try { localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(updated)); } catch {}
-      return updated;
-    });
-    toast.success("Cenário salvo");
-    setEditingId(null);
+        .update({ nome: scene.nome, orientation: scene.orientation, tv_count: scene.tv_count, content: scene.content })
+        .eq("id", scene.id)
+        .eq("user_id", targetUserId)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a atualização do cenário.");
+      setScenes(prev => {
+        const updated = prev.map(item => item.id === scene.id ? scene : item);
+        try { localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+      toast.success("Cenário salvo");
+      setEditingId(null);
+    } catch (err: any) {
+      toast.error("Não foi possível salvar o cenário: " + (err?.message || "falha no servidor."));
+    } finally {
+      setSavingId(null);
+    }
   };
 
   const removeScene = async (id: string) => {
     if (!targetUserId) return;
     if (!(await confirmDialog("Excluir este cenário web?"))) return;
     try {
-      await (supabase as any).from("cenario_estudio_web").delete().eq("id", id);
-    } catch {}
-    setScenes((prev) => {
-      const updated = prev.filter((s) => s.id !== id);
-      try { localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(updated)); } catch {}
-      return updated;
-    });
-    toast.success("Cenário excluído");
+      const { data, error } = await (supabase as any).from("cenario_estudio_web")
+        .delete().eq("id", id).eq("user_id", targetUserId).select("id").maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a exclusão do cenário.");
+      setScenes(prev => {
+        const updated = prev.filter(scene => scene.id !== id);
+        try { localStorage.setItem(getLocalStorageKey(targetUserId), JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+      toast.success("Cenário excluído");
+    } catch (err: any) {
+      toast.error("Não foi possível excluir o cenário: " + (err?.message || "falha no servidor."));
+    }
   };
 
   const updateLocal = (id: string, patch: Partial<WebScene>) => {
