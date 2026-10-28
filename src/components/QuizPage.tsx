@@ -106,12 +106,13 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
       }).catch(() => {});
 
       // Sincroniza imediatamente com a Supabase Edge Function para vMix remoto
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      fetch(`${supabaseUrl}/functions/v1/serve-xml-quiz`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, quizzes: list }),
-      }).catch(() => {});
+      if (import.meta.env.VITE_SUPABASE_URL) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-quiz`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, quizzes: list }),
+        }).catch(() => {});
+      }
     } catch {}
   };
 
@@ -174,71 +175,32 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
       toast.error("Preencha a pergunta e pelo menos as duas primeiras respostas.");
       return;
     }
-
     setSaving(true);
-    const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const newQuiz: QuizAgendado = {
-      id,
-      ...formData,
-    };
-
-    // Atualiza imediatamente localmente
-    const currentList = getStoredQuizzes(targetUserId);
-    const updated = [newQuiz, ...currentList.filter(q => q.id !== id)];
-    setQuizzes(updated);
-    saveStoredQuizzes(targetUserId, updated);
-
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      const insertPayload: any = {
-        ...formData,
-        user_id: targetUserId,
-      };
-      if (isUuid) {
-        insertPayload.id = id;
-      }
+      const { data, error } = await supabase.from("quiz_agendados")
+        .insert([{ ...formData, user_id: targetUserId }])
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou o cadastro do quiz.");
 
-      const { error } = await supabase
-        .from("quiz_agendados")
-        .insert([insertPayload]);
-
-      if (error) {
-        console.warn("Supabase quiz insert warning:", error.message);
-      }
-
-      // Envia diretamente para a Edge Function via POST (com service role) para garantir atualização no vMix
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      await fetch(`${supabaseUrl}/functions/v1/serve-xml-quiz`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "save",
-          slug: targetSlug,
-          user_id: targetUserId,
-          quiz: newQuiz,
-          quizzes: updated,
-        }),
-      }).catch((e) => console.warn("Erro ao sincronizar quiz com Edge Function:", e));
-    } catch (err) {
-      console.warn("Supabase quiz save network error:", err);
+      const newQuiz: QuizAgendado = { id: data.id, ...formData };
+      const updated = [newQuiz, ...quizzes.filter(q => q.id !== data.id)];
+      setQuizzes(updated);
+      saveStoredQuizzes(targetUserId, updated);
+      setFormData({
+        pergunta: "", resposta1: "", resposta2: "", resposta3: "", resposta4: "",
+        resposta_correta: 1, data_quiz: todayInBrasilia(), horario_inicio: "00:00",
+        horario_fim: "23:59", explicacao: "",
+      });
+      setShowForm(false);
+      toast.success("Quiz cadastrado no banco com sucesso!");
+    } catch (err: any) {
+      console.error("Falha ao salvar quiz:", err);
+      toast.error("Quiz não foi salvo: " + (err?.message || "falha ao gravar no banco."));
     } finally {
       setSaving(false);
     }
-
-    toast.success("Quiz agendado com sucesso!");
-    setFormData({
-      pergunta: "",
-      resposta1: "",
-      resposta2: "",
-      resposta3: "",
-      resposta4: "",
-      resposta_correta: 1,
-      data_quiz: todayInBrasilia(),
-      horario_inicio: "00:00",
-      horario_fim: "23:59",
-      explicacao: ""
-    });
-    setShowForm(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -246,39 +208,24 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
       title: "Excluir Quiz",
       message: "Tem certeza que deseja excluir este quiz?",
       confirmLabel: "Excluir",
-      destructive: true
+      destructive: true,
     });
     if (!confirmed || !targetUserId) return;
-    
-    // Atualiza localmente imediatamente
-    const currentList = getStoredQuizzes(targetUserId);
-    const updated = currentList.filter(q => q.id !== id);
-    setQuizzes(updated);
-    saveStoredQuizzes(targetUserId, updated);
-
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
-        await supabase
-          .from("quiz_agendados")
-          .delete()
-          .eq("id", id);
+        const { data, error } = await supabase.from("quiz_agendados")
+          .delete().eq("id", id).eq("user_id", targetUserId).select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a exclusão do quiz.");
       }
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      await fetch(`${supabaseUrl}/functions/v1/serve-xml-quiz`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "delete",
-          slug: targetSlug,
-          user_id: targetUserId,
-          id,
-        }),
-      }).catch(() => {});
-    } catch (err) {
-      console.warn("Erro ao excluir quiz no Supabase:", err);
+      const updated = quizzes.filter(q => q.id !== id);
+      setQuizzes(updated);
+      saveStoredQuizzes(targetUserId, updated);
+      toast.success("Quiz excluído com sucesso.");
+    } catch (err: any) {
+      toast.error("Quiz não foi excluído: " + (err?.message || "falha ao excluir no banco."));
     }
-    toast.success("Quiz excluído com sucesso.");
   };
 
   if (loading) return <ModulePageSkeleton variant="form" />;
