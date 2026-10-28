@@ -275,21 +275,7 @@ export default function OuvintesPage({ effectiveUserId }: { effectiveUserId?: st
       banido_motivo: existingRecord?.banido_motivo || null,
     };
 
-    // Update state and localStorage immediately (guarantees record is saved and visible)
-    const currentStored = getStoredOuvintes(ownerId);
-    const map = new Map<string, Ouvinte>();
-    ouvintes.forEach(o => map.set(o.id, o));
-    currentStored.forEach(o => map.set(o.id, o));
-    map.set(id, newRecord);
-
-    const updatedList = editingId
-      ? Array.from(map.values()).map(o => o.id === editingId ? newRecord : o)
-      : [newRecord, ...Array.from(map.values()).filter(o => o.id !== id)];
-
-    setOuvintes(updatedList);
-    saveStoredOuvintes(ownerId, updatedList);
-
-    // Sync to Supabase in background
+    // Persist first. Never report success or update the local cache when the database rejected the write.
     const payload: any = {
       user_id: ownerId,
       nome: newRecord.nome,
@@ -303,25 +289,54 @@ export default function OuvintesPage({ effectiveUserId }: { effectiveUserId?: st
       renda: newRecord.renda,
       sexo: newRecord.sexo,
       pontuacao: newRecord.pontuacao,
+      banido: newRecord.banido,
+      banido_at: newRecord.banido_at,
+      banido_motivo: newRecord.banido_motivo,
     };
     if (!editingId) payload.origem_cadastro = "manual";
 
     try {
+      let savedRecord: Ouvinte;
       if (editingId && isUuid(editingId)) {
-        const { error } = await supabase.from("ouvintes").update(payload).eq("id", editingId);
-        if (error) console.warn("Aviso ao atualizar ouvinte no Supabase:", error.message);
+        const { data, error } = await supabase
+          .from("ouvintes")
+          .update(payload)
+          .eq("id", editingId)
+          .eq("user_id", ownerId)
+          .select("*")
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error("O registro não foi encontrado para atualização.");
+        savedRecord = data as Ouvinte;
       } else {
         if (isUuid(id)) payload.id = id;
-        const { error } = await supabase.from("ouvintes").insert(payload);
-        if (error) console.warn("Aviso ao salvar ouvinte no Supabase (mantido com sucesso no cache local):", error.message);
+        const { data, error } = await supabase
+          .from("ouvintes")
+          .insert(payload)
+          .select("*")
+          .single();
+        if (error) throw error;
+        if (!data) throw new Error("O banco não retornou o registro cadastrado.");
+        savedRecord = data as Ouvinte;
       }
-    } catch (err) {
-      console.warn("Exceção ao sincronizar ouvinte com Supabase:", err);
-    }
 
-    toast({ title: editingId ? "Ouvinte atualizado com sucesso" : "Ouvinte cadastrado com sucesso" });
-    resetForm();
-    setSaving(false);
+      const updatedList = editingId
+        ? ouvintes.map(o => o.id === editingId ? savedRecord : o)
+        : [savedRecord, ...ouvintes.filter(o => o.id !== savedRecord.id)];
+      setOuvintes(updatedList);
+      saveStoredOuvintes(ownerId, updatedList);
+      toast({ title: editingId ? "Ouvinte atualizado no banco" : "Ouvinte cadastrado no banco" });
+      resetForm();
+    } catch (err: any) {
+      console.error("Falha ao persistir ouvinte:", err);
+      toast({
+        title: "Não foi possível salvar o ouvinte",
+        description: err?.message || "O banco de dados recusou a operação.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (o: Ouvinte) => {
