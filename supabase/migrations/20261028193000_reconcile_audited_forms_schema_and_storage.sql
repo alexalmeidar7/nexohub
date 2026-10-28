@@ -1,7 +1,6 @@
 -- Reconcile production schema with the forms and workflows audited in House Mix.
--- All changes are additive and idempotent; existing rows and IDs are preserved.
+-- Additive/idempotent only: existing rows and IDs are preserved.
 
--- Presenters/listeners/programs
 alter table public.ouvintes
   add column if not exists origem_cadastro text not null default 'manual',
   add column if not exists sexo text,
@@ -9,10 +8,8 @@ alter table public.ouvintes
   add column if not exists banido_at timestamptz,
   add column if not exists banido_motivo text;
 
-alter table public.programas
-  add column if not exists deleted_at timestamptz;
+alter table public.programas add column if not exists deleted_at timestamptz;
 
--- Client records shown in Cadastro > Clientes.
 alter table public.logos_patrocinadores
   add column if not exists nome text,
   add column if not exists excluido boolean not null default false,
@@ -39,7 +36,6 @@ alter table public.empresa_config
   add column if not exists video_stream_api_url text,
   add column if not exists video_stream_xpath text;
 
--- Preferences used by Cadastro > Cidade/Tempo and Música no Ar.
 alter table public.user_settings
   add column if not exists cenario_config jsonb,
   add column if not exists dashboard_items jsonb,
@@ -62,7 +58,6 @@ alter table public.user_settings
   add column if not exists weather_lat double precision,
   add column if not exists weather_lon double precision;
 
--- Roteiro editor, scheduling and publication fields.
 alter table public.roteiros
   add column if not exists agendado_para_envio timestamptz,
   add column if not exists apresentador_editado boolean,
@@ -74,7 +69,6 @@ alter table public.roteiros
   add column if not exists tickertitulos text,
   add column if not exists xml_pushed_at timestamptz;
 
--- Sorteio winner delivery, PIN and photo workflow.
 alter table public.sorteio_sorteios
   add column if not exists apresentador_nome text,
   add column if not exists programa_id uuid,
@@ -84,24 +78,16 @@ alter table public.sorteio_sorteios
   add column if not exists foto_entrega_url text,
   add column if not exists entrega_registrada_em timestamptz;
 
-update public.sorteio_sorteios
-set entrega_token = gen_random_uuid()
-where entrega_token is null;
-
+update public.sorteio_sorteios set entrega_token = gen_random_uuid() where entrega_token is null;
 alter table public.sorteio_sorteios
   alter column entrega_token set default gen_random_uuid(),
   alter column entrega_token set not null;
+create unique index if not exists sorteio_sorteios_entrega_token_key on public.sorteio_sorteios(entrega_token);
 
-create unique index if not exists sorteio_sorteios_entrega_token_key
-  on public.sorteio_sorteios(entrega_token);
-
--- Music history records displayed by the Music on Air module.
 alter table public.xml_upload_history
   add column if not exists artista text,
   add column if not exists musica text;
 
--- Buckets used by the audited image/XML flows. Public image/XML buckets retain
--- public read access; proof-of-delivery photos stay private and use signed URLs.
 insert into storage.buckets (id, name, public)
 values
   ('empresa-assets', 'empresa-assets', true),
@@ -111,42 +97,51 @@ values
   ('entregas', 'entregas', false)
 on conflict (id) do nothing;
 
--- Scope authenticated writes to the user's own first-level storage folder.
--- Parent-account IDs are accepted for authorized sub-user sessions.
+-- Authenticated uploads are restricted to the account's own first-level folder.
+-- Sub-users may also write to their parent account's folder.
 do $$
 declare
   bucket_name text;
-  policy_record record;
+  policy_suffix text;
+  policy_command text;
+  policy_clause text;
+  policy_name text;
+  folder_check text;
 begin
   foreach bucket_name in array array['empresa-assets', 'comercial', 'programas', 'xml-files', 'entregas']
   loop
-    for policy_record in
-      select *
-      from (values
-        ('select', 'SELECT'),
-        ('insert', 'INSERT'),
-        ('update', 'UPDATE'),
-        ('delete', 'DELETE')
-      ) as p(suffix, command_name)
+    folder_check := format(
+      'bucket_id = %L and (storage.foldername(name))[1] in (auth.uid()::text, coalesce(public.current_parent_user_id()::text, ''''))',
+      bucket_name
+    );
+    foreach policy_suffix in array array['select', 'insert', 'update', 'delete']
     loop
-      if not exists (
+      policy_name := 'house_mix_' || bucket_name || '_' || policy_suffix;
+      if exists (
         select 1 from pg_policies
-        where schemaname = 'storage'
-          and tablename = 'objects'
-          and policyname = 'house_mix_' || bucket_name || '_' || policy_record.suffix
+        where schemaname = 'storage' and tablename = 'objects' and policyname = policy_name
       ) then
-        execute format(
-          'create policy %I on storage.objects for %s to authenticated %s using (bucket_id = %L and (storage.foldername(name))[1] in (auth.uid()::text, coalesce(public.current_parent_user_id()::text, ''''))) %s',
-          'house_mix_' || bucket_name || '_' || policy_record.suffix,
-          policy_record.command_name,
-          case when policy_record.command_name = 'INSERT' then '' else '' end,
-          bucket_name,
-          case when policy_record.command_name in ('INSERT', 'UPDATE')
-            then format('with check (bucket_id = %L and (storage.foldername(name))[1] in (auth.uid()::text, coalesce(public.current_parent_user_id()::text, '''')))', bucket_name)
-            else ''
-          end
-        );
+        continue;
       end if;
+
+      if policy_suffix = 'select' then
+        policy_command := 'SELECT';
+        policy_clause := 'using (' || folder_check || ')';
+      elsif policy_suffix = 'insert' then
+        policy_command := 'INSERT';
+        policy_clause := 'with check (' || folder_check || ')';
+      elsif policy_suffix = 'update' then
+        policy_command := 'UPDATE';
+        policy_clause := 'using (' || folder_check || ') with check (' || folder_check || ')';
+      else
+        policy_command := 'DELETE';
+        policy_clause := 'using (' || folder_check || ')';
+      end if;
+
+      execute format(
+        'create policy %I on storage.objects for %s to authenticated %s',
+        policy_name, policy_command, policy_clause
+      );
     end loop;
   end loop;
 end $$;
