@@ -435,42 +435,69 @@ export default function BlitzPage({ effectiveUserId }: { effectiveUserId?: strin
 
     try {
       const agendaPayload = await buildAgendaPayload(targetUserId, payload);
-      let newId = editingId || `blitz_${Date.now()}`;
+      let newId = editingId || "";
       let evtId: string | null = null;
 
-      try {
-        if (editingId) {
-          const current = items.find(i => i.id === editingId);
-          await supabase.from("blitz_promocionais").update(payload).eq("id", editingId);
-          if (current?.agenda_evento_id) {
-            await supabase.from("agenda_eventos").update(agendaPayload).eq("id", current.agenda_evento_id);
-          } else {
-            const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").maybeSingle();
-            if (evt?.id) {
-              evtId = evt.id;
-              await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
-            }
-          }
-          void logBlitzHistorico({
-            userId: targetUserId, blitzId: editingId, cliente: payload.cliente, acao: "editada",
-            dadosAntes: current, dadosDepois: payload,
-          });
+      if (editingId) {
+        const current = items.find(i => i.id === editingId);
+        const { error: blitzError } = await supabase
+          .from("blitz_promocionais")
+          .update(payload)
+          .eq("id", editingId)
+          .eq("user_id", targetUserId);
+        if (blitzError) throw blitzError;
+
+        if (current?.agenda_evento_id) {
+          const { error: agendaError } = await supabase
+            .from("agenda_eventos")
+            .update(agendaPayload)
+            .eq("id", current.agenda_evento_id)
+            .eq("user_id", targetUserId);
+          if (agendaError) throw agendaError;
+          evtId = current.agenda_evento_id;
         } else {
-          const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").maybeSingle();
-          evtId = evt?.id || null;
-          const { data: created } = await supabase
-            .from("blitz_promocionais")
-            .insert({ ...payload, agenda_evento_id: evtId })
+          const { data: evt, error: agendaError } = await supabase
+            .from("agenda_eventos")
+            .insert(agendaPayload)
             .select("id")
-            .maybeSingle();
-          if (created?.id) newId = created.id;
-          void logBlitzHistorico({
-            userId: targetUserId, blitzId: newId, cliente: payload.cliente, acao: "criada",
-            dadosDepois: payload,
-          });
+            .single();
+          if (agendaError) throw agendaError;
+          if (!evt?.id) throw new Error("A agenda não retornou o evento criado.");
+          evtId = evt.id;
+          const { error: linkError } = await supabase
+            .from("blitz_promocionais")
+            .update({ agenda_evento_id: evt.id })
+            .eq("id", editingId)
+            .eq("user_id", targetUserId);
+          if (linkError) throw linkError;
         }
-      } catch (err) {
-        console.warn("Supabase blitz save warning:", err);
+
+        void logBlitzHistorico({
+          userId: targetUserId, blitzId: editingId, cliente: payload.cliente, acao: "editada",
+          dadosAntes: current, dadosDepois: payload,
+        });
+      } else {
+        const { data: evt, error: agendaError } = await supabase
+          .from("agenda_eventos")
+          .insert(agendaPayload)
+          .select("id")
+          .single();
+        if (agendaError) throw agendaError;
+        if (!evt?.id) throw new Error("A agenda não retornou o evento criado.");
+        evtId = evt.id;
+
+        const { data: created, error: blitzError } = await supabase
+          .from("blitz_promocionais")
+          .insert({ ...payload, agenda_evento_id: evtId })
+          .select("id")
+          .single();
+        if (blitzError) throw blitzError;
+        if (!created?.id) throw new Error("O banco não retornou a blitz cadastrada.");
+        newId = created.id;
+        void logBlitzHistorico({
+          userId: targetUserId, blitzId: newId, cliente: payload.cliente, acao: "criada",
+          dadosDepois: payload,
+        });
       }
 
       // Update local storage fallback
