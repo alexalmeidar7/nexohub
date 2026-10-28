@@ -1875,15 +1875,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         participantes: validParts.map((p, idx) => ({ id: p.id || `part_${Date.now()}_${idx}`, nome: p.nome, instagram: p.instagram })),
       };
 
-      // Salva localmente primeiro para garantir que o usuário nunca perca dados nem trave com erro de rede
-      saveStoredAgendaEvent(baseEventData, targetUserId);
-      saveStoredEventColor(finalEventId, selectedEventColor);
-      if (validProgId) saveStoredEventColor(`prog_${validProgId}`, selectedEventColor);
-      setEventos(prev => {
-        const filtered = prev.filter(e => e.id !== finalEventId);
-        return [baseEventData, ...filtered];
-      });
-
+      // O cache só é atualizado depois da confirmação do Supabase.
       try {
         const existingEvent = editingId ? eventos.find(e => e.id === editingId) : null;
         const existingExcecoes = (Array.isArray(existingEvent?.excecoes) ? existingEvent.excecoes : []).filter((x: any) => x && x.data !== "__meta__");
@@ -1919,21 +1911,24 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           saveStoredEventColor(editingId, selectedEventColor);
           const { data: updRows, error: updErr } = await supabase.from("agenda_eventos").update(payload).eq("id", editingId).select("id");
           if (updErr || !updRows?.length) throw updErr || new Error("Nenhum registro foi atualizado (sessão expirada ou sem permissão)");
-          {
-            try {
-              await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
-              if (validParts.length) {
-                await supabase.from("agenda_participantes").insert(
-                  validParts.map((p) => ({
-                    evento_id: editingId,
-                    user_id: targetUserId || user?.id,
-                    nome: p.nome,
-                    instagram: p.instagram,
-                  }))
-                );
-              }
-            } catch {}
+          const { error: deletePartsError } = await supabase.from("agenda_participantes")
+            .delete().eq("evento_id", editingId).eq("user_id", targetUserId || user?.id);
+          if (deletePartsError) throw deletePartsError;
+          if (validParts.length) {
+            const { error: insertPartsError } = await supabase.from("agenda_participantes").insert(
+              validParts.map((p) => ({
+                evento_id: editingId,
+                user_id: targetUserId || user?.id,
+                nome: p.nome,
+                instagram: p.instagram,
+              }))
+            );
+            if (insertPartsError) throw insertPartsError;
           }
+          saveStoredAgendaEvent(baseEventData, targetUserId);
+          saveStoredEventColor(editingId, selectedEventColor);
+          if (validProgId) saveStoredEventColor(`prog_${validProgId}`, selectedEventColor);
+          setEventos(prev => [baseEventData, ...prev.filter(e => e.id !== editingId)]);
         } else {
           const { data: evt, error } = await supabase
             .from("agenda_eventos")
@@ -1957,16 +1952,17 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
             });
 
             if (validParts.length) {
-              try {
-                await supabase.from("agenda_participantes").insert(
-                  validParts.map((p) => ({
-                    evento_id: evt.id,
-                    user_id: targetUserId || user?.id,
-                    nome: p.nome,
-                    instagram: p.instagram,
-                  }))
-                );
-              } catch {}
+              const { error: insertPartsError } = await supabase.from("agenda_participantes").insert(
+                validParts.map((p) => ({
+                  evento_id: evt.id,
+                  user_id: targetUserId || user?.id,
+                  nome: p.nome,
+                  instagram: p.instagram,
+                }))
+              );
+              if (insertPartsError) {
+                toast({ title: "Evento salvo, mas os participantes não foram vinculados", description: insertPartsError.message, variant: "destructive" });
+              }
             }
           }
         }
