@@ -87,7 +87,6 @@ const ProdutosPage = lazyRetry(() => import("./ProdutosPage"));
 const PacotesPage = lazyRetry(() => import("./PacotesPage"));
 const IntercomWidget = lazyRetry(() => import("./IntercomWidget"));
 const FloatingMiniPlayer = lazyRetry(() => import("./FloatingMiniPlayer"));
-const HomeGradientBackground = lazyRetry(() => import("./HomeGradientBackground"));
 const FloatingOnAirPresenter = lazyRetry(() => import("./FloatingOnAirPresenter"));
 const BackupPage = lazyRetry(() => import("./BackupPage"));
 
@@ -1269,15 +1268,8 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
   const isDashboard = currentPage === "dashboard";
  
   return (
-    <div data-app-shell className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "transparent" }}>
+    <div data-app-shell className="h-screen flex flex-col animate-fade-in overflow-hidden relative" style={{ backgroundColor: isAdmin ? "#f4f6fa" : "#080d18", backgroundImage: !isAdmin && currentPage === "dashboard" ? "radial-gradient(ellipse at 15% 0%, rgba(0,101,249,0.22), transparent 42%), radial-gradient(ellipse at 100% 100%, rgba(0,66,163,0.18), transparent 45%)" : "none" }}>
       <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} effectiveUserId={effectiveUserId} />
-
-      {/* Dynamic ambient gradient background reacting to the playing album art (persists across all pages behind header) */}
-      {!isAdmin && (
-        <Suspense fallback={null}>
-          <HomeGradientBackground />
-        </Suspense>
-      )}
 
       {/* Floating player dock: sits at root level; when currentPage !== 'dashboard', sits behind pages (z-[2]); on dashboard sits at z-30 */}
       {!isAdmin && (
