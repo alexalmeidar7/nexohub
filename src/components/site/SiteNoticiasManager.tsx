@@ -58,8 +58,9 @@ export default function SiteNoticiasManager({ effectiveUserId }: Props) {
   };
 
   const remove = async (id: string) => {
-    await supabase.from("site_noticias").delete().eq("id", id);
-    reload();
+    const { error } = await supabase.from("site_noticias").delete().eq("id", id).eq("user_id", effectiveUserId);
+    if (error) return toast({ title: "Erro ao excluir notícia", description: error.message, variant: "destructive" });
+    await reload();
     postSiteSync({ type: "noticias" });
   };
 
