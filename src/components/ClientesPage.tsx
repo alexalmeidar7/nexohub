@@ -883,23 +883,22 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
         // 1. Atualização no banco de dados Supabase
         if (!oldId.startsWith("local_")) {
           if (isUuid(oldId)) {
-            await supabase
+            const { error: logoUpdateError } = await supabase
               .from("logos_patrocinadores")
-              .update({
-                nome: cleanName,
-                ativo: novo.ativo,
-              } as any)
+              .update({ nome: cleanName, ativo: novo.ativo } as any)
               .eq("id", oldId);
+            if (logoUpdateError) throw logoUpdateError;
 
             if (!isScopedToStation) {
-              await supabase
+              const { error: companyUpdateError } = await supabase
                 .from("empresa_config")
                 .update({
                   nome: cleanName,
                   ativo: novo.ativo,
                   telefone_comercial: novo.telefone.trim(),
                 } as any)
-                .eq("user_id", oldId);
+                .eq("user_id", editingClient?.user_id || targetUserId || oldId);
+              if (companyUpdateError) throw companyUpdateError;
             }
           } else {
             const nameToMatch = oldName || oldId;
@@ -914,7 +913,8 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
             if (isScopedToStation && targetUserId) {
               updateQuery = updateQuery.eq("user_id", targetUserId);
             }
-            await updateQuery;
+            const { error: logoUpdateError } = await updateQuery;
+            if (logoUpdateError) throw logoUpdateError;
           }
         }
 
@@ -953,19 +953,16 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
       } else {
         // Novo cadastro
         let newId: string | null = null;
-        try {
-          const { data: insertedData } = await supabase.from("logos_patrocinadores").insert({
+        const { data: insertedData, error: insertError } = await supabase.from("logos_patrocinadores").insert({
             nome: cleanName,
             user_id: targetUserId || user?.id,
             ativo: novo.ativo,
             excluido: false,
-            data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
+            data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0]
           } as any).select().maybeSingle();
-
-          if (insertedData?.id) {
-            newId = insertedData.id;
-          }
-        } catch { /* se offline ou sem permissão na tabela, mantém em storedMeta */ }
+          if (insertError) throw insertError;
+          if (!insertedData?.id) throw new Error("O banco não retornou o cliente cadastrado.");
+          newId = insertedData.id;
 
         saveStoredMetadata(cleanName, metaToSave, [], targetUserId, !isScopedToStation);
         if (newId) {
@@ -1049,16 +1046,18 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
     try {
       if (cliente.id && !cliente.id.startsWith("local_")) {
         // Tenta atualizar em logos_patrocinadores
-        await supabase
+        const { error: logoUpdateError } = await supabase
           .from("logos_patrocinadores")
           .update({ ativo: novoStatus } as any)
           .eq("id", cliente.id);
+        if (logoUpdateError) throw logoUpdateError;
 
         if (!isScopedToStation) {
-          await supabase
+          const { error: companyUpdateError } = await supabase
             .from("empresa_config")
             .update({ ativo: novoStatus } as any)
             .eq("user_id", cliente.user_id || cliente.id);
+          if (companyUpdateError) throw companyUpdateError;
         }
       }
 
@@ -1090,10 +1089,11 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
     try {
       // 1. Mark as excluded in Supabase if exists
       if (cliente.id && !cliente.id.startsWith("local_")) {
-        await supabase
+        const { error: logoDeleteError } = await supabase
           .from("logos_patrocinadores")
-          .update({ excluido: true } as any)
+          .update({ excluido: true, excluido_at: new Date().toISOString() } as any)
           .eq("id", cliente.id);
+        if (logoDeleteError) throw logoDeleteError;
         
         // In case it was inserted with nome = cliente.nome
         if (cliente.nome) {
@@ -1105,7 +1105,8 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
           if (isScopedToStation && targetUserId) {
             delQuery = delQuery.eq("user_id", targetUserId);
           }
-          await delQuery;
+          const { error: logoDeleteError } = await delQuery;
+          if (logoDeleteError) throw logoDeleteError;
         }
       }
 

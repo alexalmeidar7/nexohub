@@ -445,16 +445,8 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
       programa_id: null,
     };
 
-    // 1) Grava imediatamente no storage local da emissora
-    const currentList = getStoredPremios(userId);
-    const updatedList = editingId
-      ? currentList.map(p => p.id === editingId ? payload : p)
-      : [payload, ...currentList.filter(p => p.id !== targetId)];
-    saveStoredPremios(userId, updatedList);
-
-    // 2) Tenta sincronizar com o Supabase silenciosamente
     try {
-      const dbPayload = {
+      const dbPayload: any = {
         user_id: userId,
         nome: payload.nome,
         descricao: payload.descricao,
@@ -462,19 +454,47 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
         quantidade_estoque: payload.quantidade_estoque,
         dias_validade: payload.dias_validade,
       };
+      let savedId = targetId;
       if (editingId) {
-        await supabase.from("sorteio_premios").update(dbPayload).eq("id", editingId);
+        const { data, error } = await supabase
+          .from("sorteio_premios")
+          .update(dbPayload)
+          .eq("id", editingId)
+          .eq("user_id", userId)
+          .select("id")
+          .maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O prêmio não foi encontrado para atualização.");
+        savedId = data.id;
       } else {
-        await supabase.from("sorteio_premios").insert({ id: targetId, ...dbPayload });
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId)) {
+          dbPayload.id = targetId;
+        }
+        const { data, error } = await supabase
+          .from("sorteio_premios")
+          .insert(dbPayload)
+          .select("id")
+          .single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não retornou o prêmio cadastrado.");
+        savedId = data.id;
       }
-    } catch (err) {
-      console.warn("Aviso ao salvar sorteio_premios no Supabase:", err);
-    }
 
-    setSaving(false);
-    toast({ title: editingId ? "Prêmio atualizado com sucesso!" : "Prêmio cadastrado com sucesso!" });
-    reset();
-    onReload();
+      const persistedPayload = { ...payload, id: savedId };
+      const currentList = getStoredPremios(userId);
+      const updatedList = editingId
+        ? currentList.map(p => p.id === editingId ? persistedPayload : p)
+        : [persistedPayload, ...currentList.filter(p => p.id !== savedId)];
+      saveStoredPremios(userId, updatedList);
+      setSaving(false);
+      toast({ title: editingId ? "Prêmio atualizado no banco!" : "Prêmio cadastrado no banco!" });
+      reset();
+      onReload();
+    } catch (err: any) {
+      console.error("Falha ao salvar prêmio:", err);
+      setSaving(false);
+      toast({ title: "Não foi possível salvar o prêmio", description: err?.message || "O banco recusou a operação.", variant: "destructive" });
+    }
   };
 
   const handleUpload = async (file: File) => {
@@ -512,25 +532,20 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
   const del = async (id: string) => {
     if (!(await confirmDialog("Excluir este prêmio?"))) return;
 
-    // 1) Remove do storage local
-    const currentList = getStoredPremios(userId);
-    const updatedList = currentList.filter(p => p.id !== id);
-    saveStoredPremios(userId, updatedList);
-
-    const currentLinks = getStoredLinks(userId);
-    const updatedLinks = currentLinks.filter(l => l.premio_id !== id);
-    saveStoredLinks(userId, updatedLinks);
-
-    // 2) Tenta remover no Supabase silenciosamente
     try {
-      await supabase.from("sorteio_premios").delete().eq("id", id);
-      await supabase.from("sorteio_premio_programas").delete().eq("premio_id", id);
-    } catch (err) {
-      console.warn("Aviso ao excluir prêmio no Supabase:", err);
-    }
+      const { error: linkError } = await supabase.from("sorteio_premio_programas").delete().eq("premio_id", id);
+      if (linkError) throw linkError;
+      const { error } = await supabase.from("sorteio_premios").delete().eq("id", id).eq("user_id", userId);
+      if (error) throw error;
 
-    toast({ title: "Prêmio excluído" });
-    onReload();
+      saveStoredPremios(userId, getStoredPremios(userId).filter(p => p.id !== id));
+      saveStoredLinks(userId, getStoredLinks(userId).filter(l => l.premio_id !== id));
+      toast({ title: "Prêmio excluído do banco" });
+      onReload();
+    } catch (err: any) {
+      console.error("Falha ao excluir prêmio:", err);
+      toast({ title: "Não foi possível excluir o prêmio", description: err?.message || "O banco recusou a operação.", variant: "destructive" });
+    }
   };
 
   const edit = (p: Premio) => {
@@ -1350,54 +1365,19 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
     const obsFinal = [obs.trim(), ctxParts.join(" · ")].filter(Boolean).join("\n");
 
     const newId = generateId("sorteio");
-    const token = (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10));
+    const token = typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+        });
     const pin = String(Math.floor(1000 + Math.random() * 9000));
     const premioObj = premioMap[premioId];
     const validadeDias = premioObj?.dias_validade ?? 7;
     const dataExpiracao = new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString();
 
-    const newRecord: Sorteio = {
-      id: newId,
-      premio_id: premioId,
-      ouvinte_id: ganhador?.id || null,
-      nome_ganhador: nome,
-      telefone_ganhador: tel,
-      data_sorteio: new Date().toISOString(),
-      entregue: false,
-      data_entrega: null,
-      observacoes: obsFinal || null,
-      expirado: false,
-      data_expiracao: dataExpiracao,
-      entrega_token: token,
-      entrega_pin: pin,
-      programa_nome: programaNoAr?.nome || null,
-    };
-
-    // 1) Grava localmente
-    const currentSorteios = getStoredSorteios(userId);
-    saveStoredSorteios(userId, [newRecord, ...currentSorteios]);
-
-    // 2) Dá baixa no vínculo do programa ou no estoque geral
-    const currentLinks = getStoredLinks(userId);
-    const prgLink = currentLinks.find(l => l.programa_id === programaNoAr?.id && l.premio_id === premioId);
-    if (prgLink) {
-      if (prgLink.quantidade > 1) {
-        saveStoredLinks(userId, currentLinks.map(l => l.id === prgLink.id ? { ...l, quantidade: l.quantidade - 1 } : l));
-      } else {
-        saveStoredLinks(userId, currentLinks.filter(l => l.id !== prgLink.id));
-      }
-    } else {
-      const currentPremios = getStoredPremios(userId);
-      const pr = currentPremios.find(p => p.id === premioId);
-      if (pr && (pr.quantidade_estoque ?? 0) > 0) {
-        saveStoredPremios(userId, currentPremios.map(p => p.id === premioId ? { ...p, quantidade_estoque: p.quantidade_estoque - 1 } : p));
-      }
-    }
-
-    // 3) Sincroniza silenciosamente com o Supabase
     try {
-      await supabase.from("sorteio_sorteios").insert({
-        id: newId,
+      const { data: saved, error } = await supabase.from("sorteio_sorteios").insert({
         user_id: userId,
         premio_id: premioId,
         ouvinte_id: ganhador?.id || null,
@@ -1410,13 +1390,49 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
         entrega_token: token,
         entrega_pin: pin,
         data_expiracao: dataExpiracao,
-      } as any);
-    } catch (err) {
-      console.warn("Aviso ao salvar sorteio no Supabase:", err);
-    }
+      } as any).select("*").single();
+      if (error) throw error;
+      if (!saved?.id) throw new Error("O banco não retornou o sorteio registrado.");
 
-    setSaving(false);
+      const newRecord: Sorteio = {
+        ...saved,
+        id: saved.id,
+        premio_id: premioId,
+        nome_ganhador: nome,
+        telefone_ganhador: tel,
+        entrega_token: token,
+        entrega_pin: pin,
+        data_expiracao: dataExpiracao,
+      } as Sorteio;
+
+      const currentSorteios = getStoredSorteios(userId);
+      saveStoredSorteios(userId, [newRecord, ...currentSorteios]);
+
+      // Update local stock cache only after the raffle exists in the database.
+      const currentLinks = getStoredLinks(userId);
+      const prgLink = currentLinks.find(l => l.programa_id === programaNoAr?.id && l.premio_id === premioId);
+      if (prgLink) {
+        if (prgLink.quantidade > 1) {
+          saveStoredLinks(userId, currentLinks.map(l => l.id === prgLink.id ? { ...l, quantidade: l.quantidade - 1 } : l));
+        } else {
+          saveStoredLinks(userId, currentLinks.filter(l => l.id !== prgLink.id));
+        }
+      } else {
+        const currentPremios = getStoredPremios(userId);
+        const pr = currentPremios.find(p => p.id === premioId);
+        if (pr && (pr.quantidade_estoque ?? 0) > 0) {
+          saveStoredPremios(userId, currentPremios.map(p => p.id === premioId ? { ...p, quantidade_estoque: p.quantidade_estoque - 1 } : p));
+        }
+      }
+
+      setSaving(false);
     toast({ title: "Sorteio registrado", description: "Acompanhe a entrega na aba Entregas." });
+    } catch (err: any) {
+      console.error("Falha ao registrar sorteio:", err);
+      setSaving(false);
+      toast({ title: "Não foi possível registrar o sorteio", description: err?.message || "O banco recusou a operação.", variant: "destructive" });
+      return;
+    }
     setGanhador(null); setManual({ nome: "", telefone: "" }); setObs("");
     onReload();
   };
