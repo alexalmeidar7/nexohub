@@ -257,7 +257,7 @@ jobs:
               JOIN pg_namespace n ON n.oid = c.relnamespace
               WHERE n.nspname = 'public'
                 AND c.relname IN ('vmix_bridge_pairings', 'vmix_bridge_devices', 'vmix_bridge_jobs')
-                AND c.relkind = 'r'
+                AND c.relkind IN ('r', 'p')
                 AND NOT c.relrowsecurity;
 
               IF rls_missing IS NOT NULL THEN
@@ -285,9 +285,23 @@ jobs:
               FROM pg_class c
               JOIN pg_namespace n ON n.oid = c.relnamespace
               WHERE n.nspname = 'public'
-                AND c.relkind = 'r'
+                AND c.relkind IN ('r', 'p')
                 AND NOT c.relrowsecurity
             ), 'none') || ' public tables without RLS',
+            (
+              SELECT count(*)::text
+              FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public'
+                AND c.relkind IN ('r', 'p')
+                AND c.relrowsecurity
+                AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_policies p
+                  WHERE p.schemaname = n.nspname
+                    AND p.tablename = c.relname
+                )
+            ) || ' public tables with RLS but no policies',
             CASE
               WHEN (
                 SELECT count(*)
@@ -338,7 +352,7 @@ jobs:
             exit 1
           fi
 
-          rls_disabled_tables="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT COALESCE(string_agg(c.relname, ', ' ORDER BY c.relname), '') FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity")"
+          rls_disabled_tables="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT COALESCE(string_agg(c.relname, ', ' ORDER BY c.relname), '') FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND NOT c.relrowsecurity")"
           if [ -n "$rls_disabled_tables" ]; then
             echo "::error::Public tables without RLS: $rls_disabled_tables. Define appropriate table policies and enable RLS before Bridge backend changes."
             exit 1
@@ -401,7 +415,7 @@ jobs:
               JOIN pg_namespace n ON n.oid = c.relnamespace
               WHERE n.nspname = 'public'
                 AND c.relname IN ('vmix_bridge_pairings', 'vmix_bridge_devices', 'vmix_bridge_jobs')
-                AND c.relkind = 'r'
+                AND c.relkind IN ('r', 'p')
                 AND NOT c.relrowsecurity
             ) THEN
               RAISE EXCEPTION 'RLS must be enabled on all Bridge tables before deployment.';
