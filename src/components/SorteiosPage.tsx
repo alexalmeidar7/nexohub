@@ -1365,54 +1365,19 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
     const obsFinal = [obs.trim(), ctxParts.join(" · ")].filter(Boolean).join("\n");
 
     const newId = generateId("sorteio");
-    const token = (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10));
+    const token = typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+        });
     const pin = String(Math.floor(1000 + Math.random() * 9000));
     const premioObj = premioMap[premioId];
     const validadeDias = premioObj?.dias_validade ?? 7;
     const dataExpiracao = new Date(Date.now() + validadeDias * 24 * 60 * 60 * 1000).toISOString();
 
-    const newRecord: Sorteio = {
-      id: newId,
-      premio_id: premioId,
-      ouvinte_id: ganhador?.id || null,
-      nome_ganhador: nome,
-      telefone_ganhador: tel,
-      data_sorteio: new Date().toISOString(),
-      entregue: false,
-      data_entrega: null,
-      observacoes: obsFinal || null,
-      expirado: false,
-      data_expiracao: dataExpiracao,
-      entrega_token: token,
-      entrega_pin: pin,
-      programa_nome: programaNoAr?.nome || null,
-    };
-
-    // 1) Grava localmente
-    const currentSorteios = getStoredSorteios(userId);
-    saveStoredSorteios(userId, [newRecord, ...currentSorteios]);
-
-    // 2) Dá baixa no vínculo do programa ou no estoque geral
-    const currentLinks = getStoredLinks(userId);
-    const prgLink = currentLinks.find(l => l.programa_id === programaNoAr?.id && l.premio_id === premioId);
-    if (prgLink) {
-      if (prgLink.quantidade > 1) {
-        saveStoredLinks(userId, currentLinks.map(l => l.id === prgLink.id ? { ...l, quantidade: l.quantidade - 1 } : l));
-      } else {
-        saveStoredLinks(userId, currentLinks.filter(l => l.id !== prgLink.id));
-      }
-    } else {
-      const currentPremios = getStoredPremios(userId);
-      const pr = currentPremios.find(p => p.id === premioId);
-      if (pr && (pr.quantidade_estoque ?? 0) > 0) {
-        saveStoredPremios(userId, currentPremios.map(p => p.id === premioId ? { ...p, quantidade_estoque: p.quantidade_estoque - 1 } : p));
-      }
-    }
-
-    // 3) Sincroniza silenciosamente com o Supabase
     try {
-      await supabase.from("sorteio_sorteios").insert({
-        id: newId,
+      const { data: saved, error } = await supabase.from("sorteio_sorteios").insert({
         user_id: userId,
         premio_id: premioId,
         ouvinte_id: ganhador?.id || null,
@@ -1425,13 +1390,49 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
         entrega_token: token,
         entrega_pin: pin,
         data_expiracao: dataExpiracao,
-      } as any);
-    } catch (err) {
-      console.warn("Aviso ao salvar sorteio no Supabase:", err);
-    }
+      } as any).select("*").single();
+      if (error) throw error;
+      if (!saved?.id) throw new Error("O banco não retornou o sorteio registrado.");
 
-    setSaving(false);
+      const newRecord: Sorteio = {
+        ...saved,
+        id: saved.id,
+        premio_id: premioId,
+        nome_ganhador: nome,
+        telefone_ganhador: tel,
+        entrega_token: token,
+        entrega_pin: pin,
+        data_expiracao: dataExpiracao,
+      } as Sorteio;
+
+      const currentSorteios = getStoredSorteios(userId);
+      saveStoredSorteios(userId, [newRecord, ...currentSorteios]);
+
+      // Update local stock cache only after the raffle exists in the database.
+      const currentLinks = getStoredLinks(userId);
+      const prgLink = currentLinks.find(l => l.programa_id === programaNoAr?.id && l.premio_id === premioId);
+      if (prgLink) {
+        if (prgLink.quantidade > 1) {
+          saveStoredLinks(userId, currentLinks.map(l => l.id === prgLink.id ? { ...l, quantidade: l.quantidade - 1 } : l));
+        } else {
+          saveStoredLinks(userId, currentLinks.filter(l => l.id !== prgLink.id));
+        }
+      } else {
+        const currentPremios = getStoredPremios(userId);
+        const pr = currentPremios.find(p => p.id === premioId);
+        if (pr && (pr.quantidade_estoque ?? 0) > 0) {
+          saveStoredPremios(userId, currentPremios.map(p => p.id === premioId ? { ...p, quantidade_estoque: p.quantidade_estoque - 1 } : p));
+        }
+      }
+
+      setSaving(false);
     toast({ title: "Sorteio registrado", description: "Acompanhe a entrega na aba Entregas." });
+    } catch (err: any) {
+      console.error("Falha ao registrar sorteio:", err);
+      setSaving(false);
+      toast({ title: "Não foi possível registrar o sorteio", description: err?.message || "O banco recusou a operação.", variant: "destructive" });
+      return;
+    }
     setGanhador(null); setManual({ nome: "", telefone: "" }); setObs("");
     onReload();
   };
