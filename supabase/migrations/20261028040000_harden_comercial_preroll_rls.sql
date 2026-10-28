@@ -122,7 +122,7 @@ BEGIN
     );
 
   IF policy_count <> 5 THEN
-    RAISE EXCEPTION 'Expected six comercial_preroll policies, found %.', policy_count;
+    RAISE EXCEPTION 'Expected five comercial_preroll policies, found %.', policy_count;
   END IF;
 
   IF has_table_privilege('anon', 'public.comercial_preroll', 'SELECT')
