@@ -71,6 +71,7 @@ jobs:
             20261028124413
             20261028124449
             20261028125121
+            20261028132309
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -110,7 +111,8 @@ jobs:
                 ('20261028124350'),
                 ('20261028124413'),
                 ('20261028124449'),
-                ('20261028125121')
+                ('20261028125121'),
+                ('20261028132309')
             )
             SELECT string_agg(r.version, ', ' ORDER BY r.version)
               INTO missing_migrations
