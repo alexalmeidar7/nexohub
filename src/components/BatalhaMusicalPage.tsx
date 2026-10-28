@@ -390,83 +390,55 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
   const loadBatalhas = async () => {
     if (!targetUserId) return;
-    let rows: any[] = [];
+    let rows: BatalhaAgendada[] = [];
+    let databaseLoaded = false;
     try {
-      const { data } = await supabase
-        .from("batalhas_agendadas")
-        .select("*")
-        .eq("user_id", targetUserId)
+      const { data, error } = await supabase.from("batalhas_agendadas")
+        .select("*").eq("user_id", targetUserId)
         .order("data_batalha", { ascending: true })
         .order("horario_inicio", { ascending: true });
-      if (data && Array.isArray(data)) {
-        rows = data;
-      }
+      if (error) throw error;
+      rows = (data || []) as BatalhaAgendada[];
+      databaseLoaded = true;
     } catch (err) {
       console.warn("Supabase load batalhas warning:", err);
     }
 
-    // Busca também do endpoint de sincronização do servidor
-    let serverList: BatalhaAgendada[] = [];
-    try {
-      const res = await fetch(`/api/sync-xml-batalha?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json.batalhas)) {
-          serverList = json.batalhas;
+    let merged: BatalhaAgendada[] = [];
+    if (databaseLoaded) {
+      merged = rows;
+    } else {
+      let serverList: BatalhaAgendada[] = [];
+      try {
+        const res = await fetch("/api/sync-xml-batalha?slug=" + encodeURIComponent(targetSlug) + "&userId=" + encodeURIComponent(targetUserId));
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json.batalhas)) serverList = json.batalhas;
         }
-      }
-    } catch {}
+      } catch {}
+      const localList = getStoredBatalhas(targetUserId);
+      const fallbackList = serverList.length ? serverList : localList;
+      const staticList = fallbackList.length ? [] : (
+        (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
+        (initialBatalhasSync as Record<string, any[]>)[targetUserId] || []
+      );
+      const map = new Map<string, BatalhaAgendada>();
+      [...staticList, ...fallbackList].forEach((item: any) => {
+        if (item && (item.artista1_nome || item.artista2_nome)) {
+          const key = item.id || item.data_batalha + "_" + item.horario_inicio + "_" + item.artista1_nome;
+          map.set(key, item);
+        }
+      });
+      merged = Array.from(map.values());
+    }
 
-    const localList = getStoredBatalhas(targetUserId);
-    // Lista de exemplo é apenas semente inicial: com qualquer dado real presente,
-    // não reinserir (batalhas excluídas não devem reaparecer).
-    const hasRealData = rows.length > 0 || serverList.length > 0 || localList.length > 0;
-    const staticList = hasRealData ? [] : (
-      (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
-      (initialBatalhasSync as Record<string, any[]>)[targetUserId] || []
-    );
-
-    const map = new Map<string, BatalhaAgendada>();
-
-    // Mescla todas as fontes preservando o ID
-    staticList.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-    rows.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-    serverList.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-    localList.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-
-    const merged = Array.from(map.values()).sort((a, b) => {
-      if (a.data_batalha !== b.data_batalha) {
-        return a.data_batalha.localeCompare(b.data_batalha);
-      }
+    merged.sort((a, b) => {
+      if (a.data_batalha !== b.data_batalha) return a.data_batalha.localeCompare(b.data_batalha);
       return a.horario_inicio.localeCompare(b.horario_inicio);
     });
-
-    // Mantém todas as batalhas (ativas, agendadas e encerradas) na tabela.
-    // O formulário permanece sempre limpo — sem preenchimento automático.
     setBatalhas(merged);
     saveStoredBatalhas(targetUserId, merged);
   };
-
 
   useEffect(() => {
     editingIdRef.current = editingId;
