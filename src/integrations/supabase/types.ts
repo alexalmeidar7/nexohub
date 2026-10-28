@@ -993,7 +993,6 @@ export type Database = {
           cliente_desde?: string | null
           cnpj?: string | null
           created_at?: string
-          created_at?: string
           endereco?: string | null
           executiva_venda?: string | null
           facebook?: string | null
@@ -1026,6 +1025,7 @@ export type Database = {
           background_url?: string | null
           cliente_desde?: string | null
           cnpj?: string | null
+          created_at?: string
           endereco?: string | null
           executiva_venda?: string | null
           facebook?: string | null
