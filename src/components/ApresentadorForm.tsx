@@ -384,9 +384,14 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
     if (error) {
       console.error("Erro ao salvar apresentador:", error);
       const m = String(error.message || "");
-      toast.error(/row-level security|jwt|permission/i.test(m)
-        ? "Sua sessão expirou. Saia e entre novamente com seu e-mail e senha para salvar."
-        : `Não foi possível salvar: ${m || "erro no servidor"}`);
+      const code = String(error.code || "");
+      if (code === "42501" || /row-level security|permission denied|violates row-level security/i.test(m)) {
+        toast.error("Sem permissão para salvar este cadastro. Verifique o acesso da emissora ou o vínculo do usuário.");
+      } else if (code === "401" || /jwt expired|invalid jwt|token is expired/i.test(m)) {
+        toast.error("Sua sessão expirou. Entre novamente para continuar.");
+      } else {
+        toast.error(`Não foi possível salvar: ${m || "erro no servidor"}`);
+      }
       setSaving(false);
       return;
     }
