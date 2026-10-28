@@ -90,9 +90,9 @@ jobs:
           fi
 
       - name: Require frontend and Bridge backend to target the same project before writes
-        if: \${{ inputs.apply_changes }}
+        if: ${{ inputs.apply_changes }}
         env:
-          EXPECTED_PROJECT_REF: \${{ secrets.SUPABASE_PROJECT_REF }}
+          EXPECTED_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         shell: bash
         run: |
           set -euo pipefail
