@@ -427,24 +427,26 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
       };
       if (finalMediaUrl) { payload.video_url = finalMediaUrl; payload.media_type = finalMediaType; }
 
-      try {
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-        if (editingId && isUuid) {
-          const { error } = await supabase.from("comercial_preroll").update(payload).eq("id", editingId);
-          if (error) console.warn("Supabase update ads warning:", error.message);
-        } else {
-          const insertPayload = isUuid ? { id, ...payload, video_url: finalMediaUrl || "" } : { ...payload, video_url: finalMediaUrl || "" };
-          const { error } = await supabase.from("comercial_preroll").insert(insertPayload);
-          if (error) console.warn("Supabase insert ads warning:", error.message);
-        }
-      } catch (err) {
-        console.warn("Supabase ads network error:", err);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (editingId && isUuid) {
+        const { data, error } = await supabase.from("comercial_preroll").update(payload)
+          .eq("id", editingId).eq("user_id", targetUserId).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a atualização da campanha.");
+      } else {
+        const insertPayload = isUuid ? { id, ...payload, video_url: finalMediaUrl || "" } : { ...payload, video_url: finalMediaUrl || "" };
+        const { data, error } = await supabase.from("comercial_preroll").insert(insertPayload).select("id").single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou o cadastro da campanha.");
       }
 
       toast({ title: editingId ? "Campanha atualizada com sucesso" : "Campanha salva com sucesso", description: "Já disponível para o player e streamings." });
       resetForm();
     } catch (e: any) {
-      console.warn("Exceção ao salvar campanha:", e);
+      console.error("Falha ao salvar campanha:", e);
+      setCampanhas(campanhas);
+      saveStoredCampanhas(targetUserId, campanhas);
+      toast({ title: "Campanha não foi salva", description: e?.message || "Falha ao gravar no servidor.", variant: "destructive" });
     } finally {
       setSalvandoCampanha(false);
     }
@@ -455,32 +457,40 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
     const nextActive = c.status !== "Ativa";
     const nextStatus: Campanha["status"] = nextActive ? "Ativa" : "Pausada";
 
-    const updated = campanhas.map(item => item.id === c.id ? { ...item, status: nextStatus } : item);
-    setCampanhas(updated);
-    saveStoredCampanhas(targetUserId, updated);
-
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.id);
       if (isUuid) {
-        await supabase.from("comercial_preroll").update({ active: nextActive }).eq("id", c.id);
+        const { data, error } = await supabase.from("comercial_preroll").update({ active: nextActive })
+          .eq("id", c.id).eq("user_id", targetUserId).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a alteração de status.");
       }
-    } catch {}
-    toast({ title: nextActive ? "Campanha ativada" : "Campanha pausada" });
+      const updated = campanhas.map(item => item.id === c.id ? { ...item, status: nextStatus } : item);
+      setCampanhas(updated);
+      saveStoredCampanhas(targetUserId, updated);
+      toast({ title: nextActive ? "Campanha ativada" : "Campanha pausada" });
+    } catch (err: any) {
+      toast({ title: "Status não foi alterado", description: err?.message || "Falha ao atualizar no servidor.", variant: "destructive" });
+    }
   }
 
   async function excluirCampanha(c: Campanha) {
     if (!targetUserId) return;
-    const updated = campanhas.filter(item => item.id !== c.id);
-    setCampanhas(updated);
-    saveStoredCampanhas(targetUserId, updated);
-
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.id);
       if (isUuid) {
-        await supabase.from("comercial_preroll").delete().eq("id", c.id);
+        const { data, error } = await supabase.from("comercial_preroll").delete()
+          .eq("id", c.id).eq("user_id", targetUserId).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a exclusão da campanha.");
       }
-    } catch {}
-    toast({ title: "Campanha excluída" });
+      const updated = campanhas.filter(item => item.id !== c.id);
+      setCampanhas(updated);
+      saveStoredCampanhas(targetUserId, updated);
+      toast({ title: "Campanha excluída" });
+    } catch (err: any) {
+      toast({ title: "Campanha não foi excluída", description: err?.message || "Falha ao excluir no servidor.", variant: "destructive" });
+    }
   }
 
   function editCampanha(c: Campanha) {
