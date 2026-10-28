@@ -953,8 +953,7 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
       } else {
         // Novo cadastro
         let newId: string | null = null;
-        try {
-          const { data: insertedData, error: insertError } = await supabase.from("logos_patrocinadores").insert({
+        const { data: insertedData, error: insertError } = await supabase.from("logos_patrocinadores").insert({
             nome: cleanName,
             user_id: targetUserId || user?.id,
             ativo: novo.ativo,
