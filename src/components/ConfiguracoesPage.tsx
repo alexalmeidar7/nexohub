@@ -2482,14 +2482,16 @@ function EventTypesConfigSection() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ event_types_config: config })
-      .eq("user_id", user.id);
-    
+      .eq("user_id", user.id)
+      .select("user_id")
+      .maybeSingle();
+
     setSaving(false);
-    if (error) {
-      toast.error("Erro ao salvar configurações.");
+    if (error || !data?.user_id) {
+      toast.error(error?.message || "O banco não confirmou o salvamento das configurações.");
     } else {
       toast.success("Configurações de eventos salvas!");
       // Dispatch event to update other components
@@ -2580,14 +2582,16 @@ function JournalisticPromptSection() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ journalistic_prompt: prompt })
-      .eq("user_id", user.id);
-    
+      .eq("user_id", user.id)
+      .select("user_id")
+      .maybeSingle();
+
     setSaving(false);
-    if (error) {
-      toast.error("Erro ao salvar diretrizes.");
+    if (error || !data?.user_id) {
+      toast.error(error?.message || "O banco não confirmou o salvamento das diretrizes.");
     } else {
       toast.success("Diretrizes jornalísticas salvas!");
     }
