@@ -105,60 +105,50 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
 
   const fetchEnquetes = async () => {
     if (!targetUserId) return;
-    
-    let rows: any[] = [];
+    let rows: EnqueteAgendada[] = [];
+    let databaseLoaded = false;
     try {
-      const { data } = await supabase
-        .from("enquetes_agendadas")
-        .select("*")
-        .eq("user_id", targetUserId)
-        .order("data_enquete", { ascending: false });
-
-      if (data) {
-        rows = data;
-      }
+      const { data, error } = await supabase.from("enquetes_agendadas")
+        .select("*").eq("user_id", targetUserId).order("data_enquete", { ascending: false });
+      if (error) throw error;
+      rows = (data || []) as EnqueteAgendada[];
+      databaseLoaded = true;
     } catch (err) {
       console.warn("Supabase fetch enquetes warning:", err);
     }
 
-    // Tenta carregar do servidor local caso o browser tenha sido limpo
-    let serverEnquetes: EnqueteAgendada[] = [];
-    try {
-      const resp = await fetch(`/api/sync-xml-enquete?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
-      if (resp.ok) {
-        const json = await resp.json();
-        if (Array.isArray(json?.enquetes)) {
-          serverEnquetes = json.enquetes;
+    let merged: EnqueteAgendada[] = [];
+    if (databaseLoaded) {
+      merged = rows;
+    } else {
+      let serverEnquetes: EnqueteAgendada[] = [];
+      try {
+        const resp = await fetch("/api/sync-xml-enquete?slug=" + encodeURIComponent(targetSlug) + "&userId=" + encodeURIComponent(targetUserId));
+        if (resp.ok) {
+          const json = await resp.json();
+          if (Array.isArray(json?.enquetes)) serverEnquetes = json.enquetes;
         }
-      }
-    } catch {}
+      } catch {}
+      const localList = getStoredEnquetes(targetUserId);
+      const hasFallbackData = serverEnquetes.length > 0 || localList.length > 0;
+      const staticList = hasFallbackData ? [] : (
+        (initialEnquetesSync as Record<string, any[]>)[targetSlug] ||
+        (initialEnquetesSync as Record<string, any[]>)[targetUserId] || []
+      );
+      const map = new Map<string, EnqueteAgendada>();
+      staticList.forEach(item => item?.id && map.set(item.id, item));
+      serverEnquetes.forEach(item => item?.id && map.set(item.id, item));
+      localList.forEach(item => item?.id && map.set(item.id, { ...(map.get(item.id) || {}), ...item }));
+      merged = Array.from(map.values());
+    }
 
-    const localList = getStoredEnquetes(targetUserId);
-    // Lista de exemplo serve apenas como semente inicial: se já existe qualquer
-    // dado real (banco, servidor ou local), nunca reinserir — itens excluídos
-    // não devem voltar sozinhos.
-    const hasRealData = rows.length > 0 || serverEnquetes.length > 0 || localList.length > 0;
-    const staticList = hasRealData ? [] : (
-      (initialEnquetesSync as Record<string, any[]>)[targetSlug] ||
-      (initialEnquetesSync as Record<string, any[]>)[targetUserId] || []
-    );
-
-    const map = new Map<string, EnqueteAgendada>();
-    staticList.forEach(s => s?.id && map.set(s.id, s));
-    serverEnquetes.forEach(e => e?.id && map.set(e.id, e));
-    rows.forEach(r => r?.id && map.set(r.id, r));
-    localList.forEach(l => l?.id && map.set(l.id, { ...(map.get(l.id) || {}), ...l }));
-
-    const merged = Array.from(map.values()).sort((a, b) => {
+    merged.sort((a, b) => {
       const dateCmp = (b.data_enquete || "").localeCompare(a.data_enquete || "");
       if (dateCmp !== 0) return dateCmp;
       return (b.horario_inicio || "").localeCompare(a.horario_inicio || "");
     });
-
-    setEnquetes(merged as EnqueteAgendada[]);
-    if (merged.length > 0) {
-      saveStoredEnquetes(targetUserId, merged as EnqueteAgendada[]);
-    }
+    setEnquetes(merged);
+    saveStoredEnquetes(targetUserId, merged);
     setLoading(false);
   };
 
@@ -198,124 +188,68 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       toast.error("Preencha a pergunta e pelo menos as duas primeiras respostas.");
       return;
     }
-
     setSaving(true);
-    const id = `enq_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const newEnquete: EnqueteAgendada = {
-      id,
-      ...formData,
-    };
-
-    // Atualiza imediatamente localmente
-    const currentList = getStoredEnquetes(targetUserId);
-    const updated = [newEnquete, ...currentList.filter(e => e.id !== id)];
-    setEnquetes(updated);
-    saveStoredEnquetes(targetUserId, updated);
-
     try {
-      const { error } = await supabase
-        .from("enquetes_agendadas")
-        .insert([{
-          ...formData,
-          user_id: targetUserId,
-        }]);
+      const { data, error } = await supabase.from("enquetes_agendadas")
+        .insert([{ ...formData, user_id: targetUserId }])
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou o cadastro da enquete.");
 
-      if (error) {
-        console.warn("Supabase enquete insert warning:", error.message);
-      }
-
-      // Envia diretamente para a Edge Function via POST para garantir atualização no vMix
-      await postEnqueteFn({
-        action: "save",
-        slug: targetSlug,
-        user_id: targetUserId,
-        enquete: newEnquete,
-        enquetes: updated,
+      const newEnquete: EnqueteAgendada = { id: data.id, ...formData };
+      const updated = [newEnquete, ...enquetes.filter(e => e.id !== data.id)];
+      setEnquetes(updated);
+      saveStoredEnquetes(targetUserId, updated);
+      setFormData({
+        pergunta: "", resposta1: "", resposta2: "", resposta3: "", resposta4: "",
+        resposta_correta: 1, data_enquete: todayInBrasilia(),
+        horario_inicio: "00:00", horario_fim: "23:59",
       });
-    } catch (err) {
-      console.warn("Supabase enquete save network error:", err);
+      toast.success("Enquete cadastrada no banco com sucesso!");
+    } catch (err: any) {
+      console.error("Falha ao salvar enquete:", err);
+      toast.error("Enquete não foi salva: " + (err?.message || "falha ao gravar no banco."));
     } finally {
       setSaving(false);
     }
-
-    toast.success("Enquete agendada com sucesso!");
-    // Mantém o formulário aberto e totalmente limpo após salvar
-    setFormData({
-      pergunta: "",
-      resposta1: "",
-      resposta2: "",
-      resposta3: "",
-      resposta4: "",
-      resposta_correta: 1,
-      data_enquete: todayInBrasilia(),
-      horario_inicio: "00:00",
-      horario_fim: "23:59"
-    });
   };
 
   const handlePutOnAir = async (item: EnqueteAgendada) => {
     if (!targetUserId) return;
     const { today, currentTime } = getBrasiliaDateTime();
-    
-    // Encerra qualquer outra enquete que esteja ativa hoje para garantir exclusividade no ar
-    const currentList = getStoredEnquetes(targetUserId);
+    const currentList = enquetes;
     const updated = currentList.map(e => {
-      if (e.id === item.id) {
-        return {
-          ...e,
-          data_enquete: today,
-          horario_inicio: "00:00",
-          horario_fim: "23:59",
-        };
-      }
-      const st = getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim);
-      if (st === "active") {
-        return {
-          ...e,
-          horario_fim: currentTime,
-        };
-      }
+      if (e.id === item.id) return { ...e, data_enquete: today, horario_inicio: "00:00", horario_fim: "23:59" };
+      if (getScheduleStatus(e.data_enquete, e.horario_inicio, e.horario_fim) === "active") return { ...e, horario_fim: currentTime };
       return e;
     });
-
-    if (!updated.some(e => e.id === item.id)) {
-      updated.unshift({
-        ...item,
-        data_enquete: today,
-        horario_inicio: "00:00",
-        horario_fim: "23:59",
-      });
-    }
-
-    setEnquetes(updated);
-    saveStoredEnquetes(targetUserId, updated);
-
+    if (!updated.some(e => e.id === item.id)) updated.unshift({ ...item, data_enquete: today, horario_inicio: "00:00", horario_fim: "23:59" });
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id);
-      if (isUuid) {
-        await supabase
-          .from("enquetes_agendadas")
-          .update({
-            data_enquete: today,
-            horario_inicio: "00:00",
-            horario_fim: "23:59",
-          })
-          .eq("id", item.id);
+      for (const next of updated) {
+        const previous = currentList.find(e => e.id === next.id);
+        if (!previous || (previous.data_enquete === next.data_enquete && previous.horario_inicio === next.horario_inicio && previous.horario_fim === next.horario_fim)) continue;
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(next.id);
+        if (!isUuid) continue;
+        const { data, error } = await supabase.from("enquetes_agendadas")
+          .update({ data_enquete: next.data_enquete, horario_inicio: next.horario_inicio, horario_fim: next.horario_fim })
+          .eq("id", next.id).eq("user_id", targetUserId).select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a alteração de horário da enquete.");
       }
-    } catch (err) {
-      console.warn("Erro ao colocar enquete no ar:", err);
+      setEnquetes(updated);
+      saveStoredEnquetes(targetUserId, updated);
+      toast.success("Enquete colocada no ar agora! XML atualizado no vMix.");
+    } catch (err: any) {
+      toast.error("Não foi possível colocar a enquete no ar: " + (err?.message || "falha ao atualizar o banco."));
     }
-
-    toast.success("Enquete colocada no ar agora! XML atualizado no vMix.");
   };
 
   const handleTakeOffAir = async (item: EnqueteAgendada) => {
     if (!targetUserId) return;
     const { today, currentTime } = getBrasiliaDateTime();
-    
-    // Calcula 1 minuto antes do horário atual para encerrar imediatamente a janela ativa
-    const [h, m] = currentTime.split(":").map(Number);
-    let totalMin = (h || 0) * 60 + (m || 0) - 1;
+    const parts = currentTime.split(":").map(Number);
+    const totalMin = (parts[0] || 0) * 60 + (parts[1] || 0) - 1;
     let newEnd = "00:00";
     let newDate = today;
     if (totalMin <= 0) {
@@ -324,38 +258,25 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       newDate = d.toISOString().slice(0, 10);
       newEnd = "23:59";
     } else {
-      const endH = String(Math.floor(totalMin / 60)).padStart(2, "0");
-      const endM = String(totalMin % 60).padStart(2, "0");
-      newEnd = `${endH}:${endM}`;
+      newEnd = String(Math.floor(totalMin / 60)).padStart(2, "0") + ":" + String(totalMin % 60).padStart(2, "0");
     }
-
-    const updatedItem: EnqueteAgendada = {
-      ...item,
-      data_enquete: newDate,
-      horario_fim: newEnd,
-    };
-
-    const currentList = getStoredEnquetes(targetUserId);
-    const updated = currentList.map(e => e.id === item.id ? updatedItem : e);
-    setEnquetes(updated);
-    saveStoredEnquetes(targetUserId, updated);
-
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id);
       if (isUuid) {
-        await supabase
-          .from("enquetes_agendadas")
-          .update({
-            data_enquete: newDate,
-            horario_fim: newEnd,
-          })
-          .eq("id", item.id);
+        const { data, error } = await supabase.from("enquetes_agendadas")
+          .update({ data_enquete: newDate, horario_fim: newEnd })
+          .eq("id", item.id).eq("user_id", targetUserId).select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou o encerramento da enquete.");
       }
-    } catch (err) {
-      console.warn("Erro ao tirar enquete do ar:", err);
+      const updatedItem = { ...item, data_enquete: newDate, horario_fim: newEnd };
+      const updated = enquetes.map(e => e.id === item.id ? updatedItem : e);
+      setEnquetes(updated);
+      saveStoredEnquetes(targetUserId, updated);
+      toast.success("Enquete tirada do ar! XML desativado no vMix.");
+    } catch (err: any) {
+      toast.error("Não foi possível tirar a enquete do ar: " + (err?.message || "falha ao atualizar o banco."));
     }
-
-    toast.success("Enquete tirada do ar! XML desativado no vMix.");
   };
 
   const handleDelete = async (id: string) => {
@@ -364,34 +285,24 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
       message: "Tem certeza que deseja excluir esta enquete?",
       destructive: true,
       confirmLabel: "Excluir",
-      cancelLabel: "Cancelar"
+      cancelLabel: "Cancelar",
     });
     if (!confirmed || !targetUserId) return;
-    
-    // Atualiza localmente imediatamente
-    const currentList = getStoredEnquetes(targetUserId);
-    const updated = currentList.filter(e => e.id !== id);
-    setEnquetes(updated);
-    saveStoredEnquetes(targetUserId, updated);
-
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
-        await supabase
-          .from("enquetes_agendadas")
-          .delete()
-          .eq("id", id);
+        const { data, error } = await supabase.from("enquetes_agendadas")
+          .delete().eq("id", id).eq("user_id", targetUserId).select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a exclusão da enquete.");
       }
-      await postEnqueteFn({
-        action: "delete",
-        slug: targetSlug,
-        user_id: targetUserId,
-        id,
-      });
-    } catch (err) {
-      console.warn("Erro ao excluir enquete no Supabase:", err);
+      const updated = enquetes.filter(e => e.id !== id);
+      setEnquetes(updated);
+      saveStoredEnquetes(targetUserId, updated);
+      toast.success("Enquete excluída com sucesso.");
+    } catch (err: any) {
+      toast.error("Enquete não foi excluída: " + (err?.message || "falha ao excluir no banco."));
     }
-    toast.success("Enquete excluída com sucesso.");
   };
 
   const handleReuse = (item: EnqueteAgendada) => {

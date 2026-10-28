@@ -1587,7 +1587,6 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
         return;
       }
 
-      prevSaveRef.current = serialized;
       pendingSaveRef.current = null;
       setSaving(true);
       
@@ -1599,7 +1598,9 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
 
         if (error) {
           console.error("Erro ao salvar cenário:", error);
+          toast.error("Não foi possível salvar as configurações do cenário. Tente novamente.");
         } else {
+          prevSaveRef.current = serialized;
           setSavedFlash(true);
           if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
           savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
@@ -1614,6 +1615,7 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
         }
       } catch (err) {
         console.error("Critical save error:", err);
+        toast.error("Falha de conexão ao salvar o cenário. A alteração ainda não foi confirmada.");
       } finally {
         setSaving(false);
       }

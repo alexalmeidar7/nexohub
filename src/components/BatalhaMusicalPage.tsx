@@ -378,94 +378,67 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       }).catch(() => {});
 
       // Sincroniza imediatamente com a Supabase Edge Function para vMix remoto
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      fetch(`${supabaseUrl}/functions/v1/serve-xml-batalha`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, batalhas: list }),
-      }).catch(() => {});
+      if (import.meta.env.VITE_SUPABASE_URL) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-batalha`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, batalhas: list }),
+        }).catch(() => {});
+      }
     } catch {}
   };
 
   const loadBatalhas = async () => {
     if (!targetUserId) return;
-    let rows: any[] = [];
+    let rows: BatalhaAgendada[] = [];
+    let databaseLoaded = false;
     try {
-      const { data } = await supabase
-        .from("batalhas_agendadas")
-        .select("*")
-        .eq("user_id", targetUserId)
+      const { data, error } = await supabase.from("batalhas_agendadas")
+        .select("*").eq("user_id", targetUserId)
         .order("data_batalha", { ascending: true })
         .order("horario_inicio", { ascending: true });
-      if (data && Array.isArray(data)) {
-        rows = data;
-      }
+      if (error) throw error;
+      rows = (data || []) as BatalhaAgendada[];
+      databaseLoaded = true;
     } catch (err) {
       console.warn("Supabase load batalhas warning:", err);
     }
 
-    // Busca também do endpoint de sincronização do servidor
-    let serverList: BatalhaAgendada[] = [];
-    try {
-      const res = await fetch(`/api/sync-xml-batalha?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json.batalhas)) {
-          serverList = json.batalhas;
+    let merged: BatalhaAgendada[] = [];
+    if (databaseLoaded) {
+      merged = rows;
+    } else {
+      let serverList: BatalhaAgendada[] = [];
+      try {
+        const res = await fetch("/api/sync-xml-batalha?slug=" + encodeURIComponent(targetSlug) + "&userId=" + encodeURIComponent(targetUserId));
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json.batalhas)) serverList = json.batalhas;
         }
-      }
-    } catch {}
+      } catch {}
+      const localList = getStoredBatalhas(targetUserId);
+      const fallbackList = serverList.length ? serverList : localList;
+      const staticList = fallbackList.length ? [] : (
+        (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
+        (initialBatalhasSync as Record<string, any[]>)[targetUserId] || []
+      );
+      const map = new Map<string, BatalhaAgendada>();
+      [...staticList, ...fallbackList].forEach((item: any) => {
+        if (item && (item.artista1_nome || item.artista2_nome)) {
+          const key = item.id || item.data_batalha + "_" + item.horario_inicio + "_" + item.artista1_nome;
+          map.set(key, item);
+        }
+      });
+      merged = Array.from(map.values());
+    }
 
-    const localList = getStoredBatalhas(targetUserId);
-    // Lista de exemplo é apenas semente inicial: com qualquer dado real presente,
-    // não reinserir (batalhas excluídas não devem reaparecer).
-    const hasRealData = rows.length > 0 || serverList.length > 0 || localList.length > 0;
-    const staticList = hasRealData ? [] : (
-      (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
-      (initialBatalhasSync as Record<string, any[]>)[targetUserId] || []
-    );
-
-    const map = new Map<string, BatalhaAgendada>();
-
-    // Mescla todas as fontes preservando o ID
-    staticList.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-    rows.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-    serverList.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-    localList.forEach((r: any) => {
-      if (r && (r.artista1_nome || r.artista2_nome)) {
-        const key = r.id || `${r.data_batalha}_${r.horario_inicio}_${r.artista1_nome}`;
-        map.set(key, r);
-      }
-    });
-
-    const merged = Array.from(map.values()).sort((a, b) => {
-      if (a.data_batalha !== b.data_batalha) {
-        return a.data_batalha.localeCompare(b.data_batalha);
-      }
+    merged.sort((a, b) => {
+      if (a.data_batalha !== b.data_batalha) return a.data_batalha.localeCompare(b.data_batalha);
       return a.horario_inicio.localeCompare(b.horario_inicio);
     });
-
-    // Mantém todas as batalhas (ativas, agendadas e encerradas) na tabela.
-    // O formulário permanece sempre limpo — sem preenchimento automático.
     setBatalhas(merged);
     saveStoredBatalhas(targetUserId, merged);
   };
-
 
   useEffect(() => {
     editingIdRef.current = editingId;
@@ -507,15 +480,6 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       horario_fim: schedEnd,
     };
 
-    // Atualiza imediatamente localmente
-    const currentList = getStoredBatalhas(targetUserId);
-    const updated = [newBatalha, ...currentList.filter(b => b.id !== id)].sort((a, b) => {
-      if (a.data_batalha !== b.data_batalha) return a.data_batalha.localeCompare(b.data_batalha);
-      return a.horario_inicio.localeCompare(b.horario_inicio);
-    });
-    setBatalhas(updated);
-    saveStoredBatalhas(targetUserId, updated);
-
     const payload = {
       user_id: targetUserId,
       artista1_nome: artista1.nome,
@@ -532,37 +496,49 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
     };
 
     try {
+      let savedBatalha = newBatalha;
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (editingId && isUuid) {
-        const { error } = await supabase.from("batalhas_agendadas").update(payload).eq("id", editingId);
-        if (error) console.warn("Supabase update batalha warning:", error.message);
+        const { data, error } = await supabase.from("batalhas_agendadas")
+          .update(payload).eq("id", editingId).eq("user_id", targetUserId)
+          .select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a atualização da batalha.");
       } else {
         const insertPayload = isUuid ? { id, ...payload } : payload;
-        const { error } = await supabase.from("batalhas_agendadas").insert([insertPayload]);
-        if (error) console.warn("Supabase insert batalha warning:", error.message);
+        const { data, error } = await supabase.from("batalhas_agendadas")
+          .insert([insertPayload]).select("id").single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou o agendamento da batalha.");
+        savedBatalha = { ...newBatalha, id: data.id };
       }
 
-      // Envia diretamente para a Edge Function via POST (com service role) para garantir atualização no vMix
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      await fetch(`${supabaseUrl}/functions/v1/serve-xml-batalha`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "save",
-          slug: targetSlug,
-          user_id: targetUserId,
-          batalha: newBatalha,
-          batalhas: updated,
-        }),
-      }).catch((e) => console.warn("Erro ao sincronizar batalha com Edge Function:", e));
-    } catch (err) {
-      console.warn("Supabase batalha network warning:", err);
+      const currentList = getStoredBatalhas(targetUserId);
+      const updated = [savedBatalha, ...currentList.filter(b => b.id !== savedBatalha.id)].sort((a, b) => {
+        if (a.data_batalha !== b.data_batalha) return a.data_batalha.localeCompare(b.data_batalha);
+        return a.horario_inicio.localeCompare(b.horario_inicio);
+      });
+      setBatalhas(updated);
+      saveStoredBatalhas(targetUserId, updated);
+
+      try {
+        const { error: syncError } = await supabase.functions.invoke("serve-xml-batalha", {
+          body: { action: "save", slug: targetSlug, user_id: targetUserId, batalha: savedBatalha, batalhas: updated },
+        });
+        if (syncError) console.warn("Falha na sincronização XML da batalha:", syncError);
+      } catch (syncError) {
+        console.warn("Falha na sincronização XML da batalha:", syncError);
+      }
+    } catch (err: any) {
+      console.error("Falha ao salvar batalha:", err);
+      toast.error("Batalha não foi salva: " + (err?.message || "falha ao gravar no banco."));
+      setSaving(false);
+      return;
     } finally {
       setSaving(false);
     }
 
     toast.success(editingId ? "Batalha atualizada com sucesso" : "Batalha agendada com sucesso");
-    // Limpa completamente o formulário após salvar/agendar
     setEditingId(null);
     setArtista1({ ...EMPTY_ARTIST });
     setArtista2({ ...EMPTY_ARTIST });
@@ -576,32 +552,29 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
 
   const handleDeleteBatalha = async (id: string) => {
     if (!targetUserId) return;
-    const currentList = getStoredBatalhas(targetUserId);
-    const updated = currentList.filter(b => b.id !== id);
-    setBatalhas(updated);
-    saveStoredBatalhas(targetUserId, updated);
-
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
-        const { error } = await supabase.from("batalhas_agendadas").delete().eq("id", id);
-        if (error) console.warn("Supabase delete batalha warning:", error.message);
+        const { data, error } = await supabase.from("batalhas_agendadas")
+          .delete().eq("id", id).eq("user_id", targetUserId).select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a exclusão da batalha.");
       }
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      await fetch(`${supabaseUrl}/functions/v1/serve-xml-batalha`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "delete",
-          slug: targetSlug,
-          user_id: targetUserId,
-          id,
-        }),
-      }).catch(() => {});
-    } catch (err) {
-      console.warn("Erro ao excluir batalha no Supabase:", err);
+      const updated = getStoredBatalhas(targetUserId).filter(b => b.id !== id);
+      setBatalhas(updated);
+      saveStoredBatalhas(targetUserId, updated);
+      try {
+        const { error: syncError } = await supabase.functions.invoke("serve-xml-batalha", {
+          body: { action: "delete", slug: targetSlug, user_id: targetUserId, id },
+        });
+        if (syncError) console.warn("Falha ao sincronizar exclusão da batalha:", syncError);
+      } catch (syncError) {
+        console.warn("Falha ao sincronizar exclusão da batalha:", syncError);
+      }
+      toast.success("Batalha excluída com sucesso");
+    } catch (err: any) {
+      toast.error("Batalha não foi excluída: " + (err?.message || "falha ao excluir no banco."));
     }
-    toast.success("Batalha excluída com sucesso");
   };
 
   const handleEditBatalha = (b: BatalhaAgendada) => {

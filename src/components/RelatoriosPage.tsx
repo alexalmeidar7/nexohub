@@ -104,10 +104,13 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
     const localDraws = readLocal("sorteios", userId);
     const localBlitz = readLocal("blitz", userId);
     const localPromos = readLocal("promocoes", userId);
-    setPrizes(p.data?.length ? p.data as AnyRow[] : localPrizes);
-    setDraws(d.data?.length ? d.data as AnyRow[] : localDraws);
-    setBlitzes(b.data?.length ? b.data as AnyRow[] : localBlitz);
-    setPromos(c.data?.length ? c.data as AnyRow[] : localPromos);
+    // A consulta online bem-sucedida é autoritativa, inclusive quando retorna
+    // uma lista vazia. Usar cache antigo nesse caso fazia itens excluídos
+    // reaparecerem nos relatórios.
+    setPrizes(p.error ? localPrizes : (p.data || []) as AnyRow[]);
+    setDraws(d.error ? localDraws : (d.data || []) as AnyRow[]);
+    setBlitzes(b.error ? localBlitz : (b.data || []) as AnyRow[]);
+    setPromos(c.error ? localPromos : (c.data || []) as AnyRow[]);
     setSponsorLogos((logos.data || []) as AnyRow[]);
     setProgramCatalog((programRows.data || []) as AnyRow[]);
     setCommercialAudience((audienceHistory.data || []) as AnyRow[]);

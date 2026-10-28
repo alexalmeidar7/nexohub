@@ -328,76 +328,54 @@ export default function ConfiguracoesPage({
 
   const loadCanais = async () => {
     const tid = targetUid || user?.id;
-    if (!tid && !user) return;
+    if (!tid) return;
     setLoadingCanais(true);
-    let channelsList: any[] = [];
     try {
-      try {
-        const { data } = await supabase.from("streaming_channels").select("*").eq("user_id", tid).order("numero_canal", { ascending: true });
-        if (data && data.length > 0) {
-          channelsList = data;
-        }
-      } catch (err) {
-        console.warn("Supabase fetch streaming_channels warning:", err);
-      }
+      const { data, error } = await supabase
+        .from("streaming_channels")
+        .select("*")
+        .eq("user_id", tid)
+        .order("numero_canal", { ascending: true });
+      if (error) throw error;
 
-      if (!channelsList || channelsList.length === 0) {
-        const syncData = getStationDatabaseSync(tid || user?.email);
-        if (syncData?.channels && syncData.channels.length > 0) {
-          channelsList = syncData.channels;
-        }
-      }
-
-      if (!channelsList || channelsList.length === 0) {
-        const stationData = await fetchStationDatabaseData(tid || user?.email);
-        if (stationData?.channels && stationData.channels.length > 0) {
-          channelsList = stationData.channels;
-        }
-      }
-
-      const localList = tid ? getStoredStreamingChannels(tid) : [];
-      const map = new Map<string, Canal>();
-
-      if (channelsList && channelsList.length > 0) {
-        const seen = new Map<string, string>();
-        for (const c of channelsList) {
-          const num = String(c.numero_canal ?? "");
-          const key = c.url || c.name;
-          if (!seen.has(key)) {
-            seen.set(key, c.id);
-            map.set(c.id, {
-              id: c.id,
-              numero_canal: num,
-              name: c.name || "",
-              logo_url: c.logo_url || "",
-              cover_url: c.cover_url || "",
-              background_url: c.background_url || "",
-              url: c.url || "",
-              type: c.type || "audio_live",
-              active: c.active !== false,
-              catalog_name: c.catalog_name || "",
-              is_hd: !!c.is_hd,
-              is_stereo: !!c.is_stereo,
-              classificacao_etaria: c.classificacao_etaria || "L",
-              estudio: c.estudio || "",
-            });
-          }
+      // Uma consulta bem-sucedida torna o banco a fonte da verdade,
+      // inclusive quando não há canais. Não mesclar cache antigo aqui:
+      // isso fazia canais excluídos reaparecerem.
+      const channels = (data || []).map((c: any): Canal => ({
+        id: c.id,
+        numero_canal: String(c.numero_canal ?? ""),
+        name: c.name || "",
+        logo_url: c.logo_url || "",
+        cover_url: c.cover_url || "",
+        background_url: c.background_url || "",
+        url: c.url || "",
+        type: c.type || "audio_live",
+        active: c.active !== false,
+        catalog_name: c.catalog_name || "",
+        is_hd: !!c.is_hd,
+        is_stereo: !!c.is_stereo,
+        classificacao_etaria: c.classificacao_etaria || "L",
+        horario_inicio: c.horario_inicio || "",
+        horario_fim: c.horario_fim || "",
+        descricao: c.descricao || "",
+        estudio: c.estudio || "",
+      }));
+      setCanais(channels);
+      saveStoredStreamingChannels(tid, channels);
+    } catch (err) {
+      console.warn("Supabase fetch streaming_channels failed; using fallback:", err);
+      const syncData = getStationDatabaseSync(tid || user?.email);
+      let fallback = (syncData?.channels || []) as Canal[];
+      if (!fallback.length) {
+        try {
+          const stationData = await fetchStationDatabaseData(tid || user?.email);
+          fallback = (stationData?.channels || []) as Canal[];
+        } catch (fallbackError) {
+          console.warn("Station database channel fallback failed:", fallbackError);
         }
       }
-
-      for (const c of localList) {
-        if (!map.has(c.id)) {
-          map.set(c.id, c);
-        }
-      }
-
-      const merged = Array.from(map.values()).sort((a, b) =>
-        (a.numero_canal || "").localeCompare(b.numero_canal || "", undefined, { numeric: true })
-      );
-      setCanais(merged);
-      if (tid) saveStoredStreamingChannels(tid, merged);
-    } catch (e) {
-      console.warn("loadCanais error:", e);
+      if (!fallback.length) fallback = tid ? getStoredStreamingChannels(tid) : [];
+      setCanais(fallback);
     } finally {
       setLoadingCanais(false);
     }
@@ -468,7 +446,7 @@ export default function ConfiguracoesPage({
         return isNaN(n) ? null : n;
       };
       try {
-        await supabase.from("empresa_config").upsert({
+        const { error: configSaveError } = await supabase.from("empresa_config").upsert({
           user_id: saveId,
           nome: (newConfig.nome || "").trim(),
           cnpj: newConfig.cnpj || "",
@@ -491,8 +469,10 @@ export default function ConfiguracoesPage({
           audio_sources: extraToSave as any,
           updated_at: new Date().toISOString(),
         } as any, { onConflict: "user_id" });
-      } catch (err) {
-        console.warn("Supabase empresa_config upsert warning (salvo localmente):", err);
+        if (configSaveError) throw configSaveError;
+      } catch (err: any) {
+        console.error("Supabase empresa_config upsert failed:", err);
+        toast.error("As alterações ficaram no navegador, mas não foram confirmadas no banco: " + (err?.message || "falha ao salvar."));
       }
     }, 500);
   };
@@ -903,7 +883,6 @@ export default function ConfiguracoesPage({
       if (!canalForm.name || !canalForm.url) { toast.error("Preencha Nome e URL."); return; }
     }
     const selectedProg = programas.find(p => p.id === selectedProgramaId);
-    // When editing, preserve existing channel values if no program is selected
     const existingCanal = editingCanal ? canais.find(c => c.id === editingCanal) : null;
     const payload: any = {
       name: canalMode === "catalog" ? (canalForm.name || canalForm.catalog_name) : canalForm.name,
@@ -922,45 +901,50 @@ export default function ConfiguracoesPage({
     };
     setSavingCanal(true);
     const tid = targetUid || user.id;
-    const id = editingCanal || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `canal_${Date.now()}`);
-
-    const newCanal: Canal = {
-      id,
-      ...payload,
-    };
-
-    // Atualiza imediatamente o estado e o cache local
-    const currentList = getStoredStreamingChannels(tid);
-    const map = new Map<string, Canal>();
-    canais.forEach(c => map.set(c.id, c));
-    currentList.forEach(c => map.set(c.id, c));
-    map.set(id, newCanal);
-
-    const updatedList = editingCanal
-      ? Array.from(map.values()).map(c => c.id === editingCanal ? newCanal : c)
-      : [newCanal, ...Array.from(map.values()).filter(c => c.id !== id)];
-
-    setCanais(updatedList);
-    saveStoredStreamingChannels(tid, updatedList);
+    const requestedId = editingCanal || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : null);
 
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      if (editingCanal && isUuid) {
-        const { error } = await supabase.from("streaming_channels").update(payload).eq("id", editingCanal);
-        if (error) console.warn("Supabase update streaming_channels warning (salvo localmente):", error.message);
+      let persistedId = requestedId || "";
+      if (editingCanal) {
+        const { data, error } = await supabase.from("streaming_channels")
+          .update(payload)
+          .eq("id", editingCanal)
+          .eq("user_id", tid)
+          .select("id")
+          .maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a atualização do canal.");
+        persistedId = data.id;
       } else {
-        const insertPayload = isUuid ? { ...payload, id, user_id: tid } : { ...payload, user_id: tid };
-        const { error } = await supabase.from("streaming_channels").insert([insertPayload]);
-        if (error) console.warn("Supabase insert streaming_channels warning (salvo localmente):", error.message);
+        const insertPayload = { ...payload, user_id: tid, ...(requestedId ? { id: requestedId } : {}) };
+        const { data, error } = await supabase.from("streaming_channels")
+          .insert([insertPayload])
+          .select("id")
+          .single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou o cadastro do canal.");
+        persistedId = data.id;
       }
-    } catch (err) {
-      console.warn("Supabase streaming_channels network warning:", err);
+
+      const newCanal: Canal = { id: persistedId, ...payload };
+      const currentList = getStoredStreamingChannels(tid);
+      const map = new Map<string, Canal>();
+      canais.forEach(c => map.set(c.id, c));
+      currentList.forEach(c => map.set(c.id, c));
+      map.set(persistedId, newCanal);
+      const updatedList = editingCanal
+        ? Array.from(map.values()).map(c => c.id === editingCanal ? newCanal : c)
+        : [newCanal, ...Array.from(map.values()).filter(c => c.id !== persistedId)];
+      setCanais(updatedList);
+      saveStoredStreamingChannels(tid, updatedList);
+      toast.success(editingCanal ? "Canal atualizado com sucesso!" : "Canal adicionado com sucesso!");
+      resetCanalForm();
+    } catch (err: any) {
+      console.error("Falha ao salvar canal:", err);
+      toast.error("Canal não foi salvo: " + (err?.message || "falha ao gravar no servidor."));
     } finally {
       setSavingCanal(false);
     }
-
-    toast.success(editingCanal ? "Canal atualizado com sucesso!" : "Canal adicionado com sucesso!");
-    resetCanalForm();
   };
 
   const resetCanalForm = () => {
@@ -999,24 +983,26 @@ export default function ConfiguracoesPage({
 
   const handleRemoveCanal = async (id: string) => {
     const tid = targetUid || user?.id;
-    if (tid) {
-      const currentList = getStoredStreamingChannels(tid);
-      const updated = currentList.filter(c => c.id !== id);
-      setCanais(prev => prev.filter(c => c.id !== id));
-      saveStoredStreamingChannels(tid, updated);
-    } else {
-      setCanais(prev => prev.filter(c => c.id !== id));
-    }
-
+    if (!tid) return;
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
-        await supabase.from("streaming_channels").delete().eq("id", id);
+        const { data, error } = await supabase.from("streaming_channels")
+          .delete()
+          .eq("id", id)
+          .eq("user_id", tid)
+          .select("id")
+          .maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a exclusão do canal.");
       }
-    } catch (err) {
-      console.warn("Erro ao remover canal no Supabase:", err);
+      const updated = canais.filter(c => c.id !== id);
+      setCanais(updated);
+      saveStoredStreamingChannels(tid, updated);
+      toast.success("Canal removido.");
+    } catch (err: any) {
+      toast.error("Canal não foi removido: " + (err?.message || "falha ao excluir no servidor."));
     }
-    toast.success("Canal removido.");
   };
 
   const field = (label: string, key: keyof EmpresaConfig, placeholder: string) => (
@@ -2496,14 +2482,16 @@ function EventTypesConfigSection() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ event_types_config: config })
-      .eq("user_id", user.id);
-    
+      .eq("user_id", user.id)
+      .select("user_id")
+      .maybeSingle();
+
     setSaving(false);
-    if (error) {
-      toast.error("Erro ao salvar configurações.");
+    if (error || !data?.user_id) {
+      toast.error(error?.message || "O banco não confirmou o salvamento das configurações.");
     } else {
       toast.success("Configurações de eventos salvas!");
       // Dispatch event to update other components
@@ -2594,14 +2582,16 @@ function JournalisticPromptSection() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ journalistic_prompt: prompt })
-      .eq("user_id", user.id);
-    
+      .eq("user_id", user.id)
+      .select("user_id")
+      .maybeSingle();
+
     setSaving(false);
-    if (error) {
-      toast.error("Erro ao salvar diretrizes.");
+    if (error || !data?.user_id) {
+      toast.error(error?.message || "O banco não confirmou o salvamento das diretrizes.");
     } else {
       toast.success("Diretrizes jornalísticas salvas!");
     }

@@ -317,19 +317,20 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
         .insert({ id: newId, user_id: ownerId, nome: "Novo template", rows: 1, cols: 2, programa_ids: [] })
         .select()
         .single();
-      if (data?.id) newGrupo.id = data.id;
-      if (error) console.warn("Notice inserting grupo:", error);
-    } catch (e) {
-      console.warn("Error inserting grupo:", e);
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a criação do template.");
+      newGrupo.id = data.id;
+      setGrupos(prev => {
+        const next = [...prev, newGrupo];
+        try { localStorage.setItem("nexohub_cenarios_grupos_" + ownerId, JSON.stringify(next)); } catch {}
+        return next;
+      });
+      setEditingIds(prev => new Set(prev).add(newGrupo.id));
+      toast.success("Template criado");
+    } catch (err: any) {
+      console.error("Erro ao criar template:", err);
+      toast.error("Não foi possível criar o template: " + (err?.message || "falha no servidor."));
     }
-
-    setGrupos((prev) => {
-      const next = [...prev, newGrupo];
-      try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next)); } catch {}
-      return next;
-    });
-    setEditingIds((prev) => new Set(prev).add(newGrupo.id));
-    toast.success("Template criado");
   };
 
   const updateGrupo = (id: string, patch: Partial<Grupo>) => {
@@ -346,26 +347,28 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
   const removeGrupo = async (id: string) => {
     if (!(await confirmDialog("Excluir este template e todas as suas TVs?"))) return;
     const ownerId = targetUserId || user?.id;
-    if (isValidUuid(id)) {
-      try {
-        await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
-      } catch (e) {
-        console.warn("Notice deleting grupo in supabase:", e);
+    if (!ownerId) return;
+    try {
+      if (isValidUuid(id)) {
+        const { data, error } = await (supabase as any).from("cenario_estudio_grupos")
+          .delete().eq("id", id).eq("user_id", ownerId).select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a exclusão do template.");
       }
+      setGrupos(prev => {
+        const next = prev.filter(g => g.id !== id);
+        try { localStorage.setItem("nexohub_cenarios_grupos_" + ownerId, JSON.stringify(next)); } catch {}
+        return next;
+      });
+      setEditingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      toast.success("Template excluído");
+    } catch (err: any) {
+      toast.error("Não foi possível excluir o template: " + (err?.message || "falha no servidor."));
     }
-    setGrupos((prev) => {
-      const next = prev.filter((g) => g.id !== id);
-      if (ownerId) {
-        try { localStorage.setItem(`nexohub_cenarios_grupos_${ownerId}`, JSON.stringify(next)); } catch {}
-      }
-      return next;
-    });
-    setEditingIds((prev) => {
-      const n = new Set(prev);
-      n.delete(id);
-      return n;
-    });
-    toast.success("Template excluído");
   };
 
   // Single artwork per group: stored at posicao=0

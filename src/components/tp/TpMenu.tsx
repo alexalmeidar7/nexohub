@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import logoNexo from "@/assets/logo-nexo.png";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { toast } from "sonner";
 
 interface TpMenuProps {
   onMessage: () => void;
@@ -58,11 +59,19 @@ export default function TpMenu({ onMessage, onControl, onOpenTp, onLogout }: TpM
   async function handleClearText() {
     if (!user) return;
     if (!(await confirmDialog("Limpar o texto salvo no TP?"))) return;
-    await (supabase as any)
-      .from("teleprompters")
-      .update({ texto_atual: "", is_html: false })
-      .eq("user_id", user.id)
-      .eq("ativo", true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("teleprompters")
+        .update({ texto_atual: "", is_html: false })
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("Nenhum teleprompter ativo foi atualizado.");
+      toast.success("Texto do TP limpo.");
+    } catch (err: any) {
+      toast.error("Não foi possível limpar o texto: " + (err?.message || "falha ao salvar no banco."));
+    }
   }
 
   const items = [

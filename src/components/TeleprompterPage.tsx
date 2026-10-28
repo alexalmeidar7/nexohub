@@ -31,25 +31,36 @@ export default function TeleprompterPage() {
 
   async function loadEstudios() {
     if (!user) return;
-    const { data } = await supabase
-      .from("programas")
-      .select("estudio")
-      .eq("user_id", user.id);
-    if (data) {
-      const unique = [...new Set(data.map((p) => p.estudio).filter(Boolean))] as string[];
+    try {
+      const { data, error } = await supabase
+        .from("programas")
+        .select("estudio")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      const unique = [...new Set((data || []).map((p) => p.estudio).filter(Boolean))] as string[];
       setEstudios(unique);
+    } catch (err: any) {
+      console.warn("Não foi possível carregar os estúdios:", err);
+      toast({ title: "Não foi possível carregar os estúdios", description: err?.message || "Verifique a conexão.", variant: "destructive" });
     }
   }
 
   async function loadTPs() {
-    if (!user) return;
-    const { data } = await (supabase as any)
-      .from("teleprompters")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    if (data) setTps(data);
-    setInitialLoading(false);
+    if (!user) { setInitialLoading(false); return; }
+    try {
+      const { data, error } = await (supabase as any)
+        .from("teleprompters")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setTps(data || []);
+    } catch (err: any) {
+      console.error("Falha ao carregar teleprompters:", err);
+      toast({ title: "Não foi possível carregar os teleprompters", description: err?.message || "Verifique a conexão.", variant: "destructive" });
+    } finally {
+      setInitialLoading(false);
+    }
   }
 
   async function handleAdd() {
@@ -73,17 +84,41 @@ export default function TeleprompterPage() {
   }
 
   async function handleToggle(tp: TP) {
-    await (supabase as any)
-      .from("teleprompters")
-      .update({ ativo: !tp.ativo })
-      .eq("id", tp.id);
-    loadTPs();
+    if (!user) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from("teleprompters")
+        .update({ ativo: !tp.ativo })
+        .eq("id", tp.id)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a alteração do teleprompter.");
+      toast({ title: tp.ativo ? "Teleprompter desativado" : "Teleprompter ativado" });
+      await loadTPs();
+    } catch (err: any) {
+      toast({ title: "Não foi possível alterar o teleprompter", description: err?.message || "Falha ao atualizar no servidor.", variant: "destructive" });
+    }
   }
 
   async function handleDelete(id: string) {
-    if (!(await confirmDialog("Remover este TP?"))) return;
-    await (supabase as any).from("teleprompters").delete().eq("id", id);
-    loadTPs();
+    if (!user || !(await confirmDialog("Remover este TP?"))) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from("teleprompters")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a exclusão do teleprompter.");
+      toast({ title: "Teleprompter removido" });
+      await loadTPs();
+    } catch (err: any) {
+      toast({ title: "Não foi possível remover o teleprompter", description: err?.message || "Falha ao excluir no servidor.", variant: "destructive" });
+    }
   }
 
   const inputStyle = "w-full rounded-lg px-3 py-2 text-sm border focus:outline-none focus:ring-2";

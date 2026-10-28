@@ -746,7 +746,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         ndi_sources: ndiSnapshot as any,
         last_synced_at: new Date().toISOString(),
       })
-      .eq("id", selectedConnectionId);
+      .eq("id", selectedConnectionId)
+      .eq("user_id", user?.id);
   }, [selectedConnectionId]);
 
   // Programas from DB
@@ -814,7 +815,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     localStorage.setItem("vmix_input_shortcuts", JSON.stringify(inputShortcuts));
     // Also persist to DB
     if (user) {
-      supabase.from("user_settings").update({ vmix_shortcuts: inputShortcuts as any }).eq("user_id", user.id);
+      void supabase.from("user_settings")
+        .upsert({ user_id: user.id, vmix_shortcuts: inputShortcuts as any }, { onConflict: "user_id" })
+        .then(({ error }) => { if (error) console.warn("Falha ao persistir atalhos vMix:", error); });
     }
   }, [inputShortcuts, user]);
   // Persist HLS URLs
@@ -957,30 +960,38 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     }
   }, [user, studioName]);
 
-  const assignCustomButtonCategory = useCallback((buttonId: string, category: string) => {
+  const assignCustomButtonCategory = useCallback(async (buttonId: string, category: string) => {
     if (!user || !buttonId || !category) return;
-    const storageKey = `vmix_custom_button_categories:${user.id}:${normStudio(studioName) || "all"}`;
-    try {
-      const overrides = JSON.parse(localStorage.getItem(storageKey) || "{}") as Record<string, string>;
-      overrides[buttonId] = category;
-      localStorage.setItem(storageKey, JSON.stringify(overrides));
-    } catch { /* no-op */ }
+    const currentButton = customButtons.find(button => button.id === buttonId);
+    if (!currentButton) return;
     const targetColor = customButtons.find(button =>
       String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() === category &&
       button.id !== buttonId && typeof button.color === "string" && /^#[0-9a-f]{6}$/i.test(button.color)
     )?.color;
-    const currentButton = customButtons.find(button => button.id === buttonId);
-    const commands = Array.isArray(currentButton?.commands) ? [...currentButton.commands] : [];
+    const commands = Array.isArray(currentButton.commands) ? [...currentButton.commands] : [];
     if (commands.length) commands[0] = { ...commands[0], _buttonCategory: category };
-    // Não gravar `category` como coluna: persistir no JSON evita erro em bancos
-    // que ainda não receberam a migração dessa coluna.
-    void (supabase.from("custom_vmix_buttons" as any) as any)
-      .update({ commands, ...(targetColor ? { color: targetColor } : {}) })
-      .eq("id", buttonId);
-    setCustomButtons(prev => prev.map(button => {
-      if (button.id !== buttonId) return button;
-      return { ...button, category, color: targetColor || button.color, commands };
-    }));
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(buttonId);
+      if (isUuid) {
+        const { data, error } = await (supabase.from("custom_vmix_buttons" as any) as any)
+          .update({ commands, ...(targetColor ? { color: targetColor } : {}) })
+          .eq("id", buttonId).eq("user_id", user.id).select("id").maybeSingle();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a alteração da categoria.");
+      }
+      const storageKey = "vmix_custom_button_categories:" + user.id + ":" + (normStudio(studioName) || "all");
+      try {
+        const overrides = JSON.parse(localStorage.getItem(storageKey) || "{}") as Record<string, string>;
+        overrides[buttonId] = category;
+        localStorage.setItem(storageKey, JSON.stringify(overrides));
+      } catch {}
+      setCustomButtons(prev => prev.map(button => button.id === buttonId
+        ? { ...button, category, color: targetColor || button.color, commands }
+        : button
+      ));
+    } catch (err: any) {
+      toast({ title: "Não foi possível alterar a categoria", description: err?.message || "Falha ao salvar no servidor.", variant: "destructive" });
+    }
   }, [user, studioName, customButtons]);
 
   const reorderCustomCategory = useCallback((draggedCategory: string, targetCategory: string) => {
@@ -1110,14 +1121,23 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       localStorage.setItem(`vmix_last_connected_${user.id}`, connId);
     } catch {}
     try {
-      await (supabase.from("vmix_connections" as any) as any)
+      const { error: clearError } = await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: false })
         .eq("user_id", user.id)
         .neq("id", connId);
-      await (supabase.from("vmix_connections" as any) as any)
+      if (clearError) throw clearError;
+      const { data, error } = await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: true })
-        .eq("id", connId);
-    } catch {}
+        .eq("id", connId)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("A conexão selecionada não foi confirmada pelo banco.");
+    } catch (err: any) {
+      console.warn("Falha ao marcar conexão vMix padrão:", err);
+      toast({ title: "Conexão selecionada localmente", description: err?.message || "Não foi possível salvar a conexão padrão no banco.", variant: "destructive" });
+    }
   }, [user]);
 
   const handleSelectConnection = (conn: any) => {
@@ -1145,87 +1165,103 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   }, [connectionMode]);
 
   const saveUrl = async () => {
-    if (!user || !vmixUrl.trim()) return;
+    if (!user || !vmixUrl.trim()) return null;
     let trimmed = vmixUrl.trim();
-    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
-      trimmed = "http://" + trimmed;
-    }
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) trimmed = "http://" + trimmed;
     try {
       const urlObj = new URL(trimmed);
       if (!urlObj.port && (/^[0-9.]+$/.test(urlObj.hostname) || urlObj.hostname === "localhost")) {
         urlObj.port = "8088";
         trimmed = urlObj.toString().replace(/\/$/, "");
       }
-    } catch {}
+    } catch (error: any) {
+      toast({ title: "Endereço do vMix inválido", description: error?.message || "Confira o endereço informado.", variant: "destructive" });
+      return null;
+    }
 
-    const payload = { 
+    const payload = {
       user_id: user.id,
       name: studioName || "vMix Studio",
-      url: trimmed, 
-      username: vmixUser.trim(), 
+      url: trimmed,
+      username: vmixUser.trim(),
       password: vmixPass,
-      is_default: true 
+      is_default: true,
     };
 
-    let savedConn;
-    if (selectedConnectionId) {
-      const { data } = await (supabase.from("vmix_connections" as any) as any)
-        .update(payload)
-        .eq("id", selectedConnectionId)
-        .select()
-        .single();
-      savedConn = data;
-    } else {
-      const { data } = await (supabase.from("vmix_connections" as any) as any)
-        .insert(payload)
-        .select()
-        .single();
-      savedConn = data;
-      if (data) setSelectedConnectionId(data.id);
-    }
-    
-    // Also update global settings for backward compatibility if needed
-    await supabase.from("user_settings").upsert({ 
-      user_id: user.id, 
-      vmix_url: trimmed, 
-      vmix_user: vmixUser.trim(), 
-      vmix_pass: vmixPass 
-    });
+    try {
+      let savedConn: any;
+      if (selectedConnectionId) {
+        const { data, error } = await (supabase.from("vmix_connections" as any) as any)
+          .update(payload)
+          .eq("id", selectedConnectionId)
+          .eq("user_id", user.id)
+          .select()
+          .single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a atualização da conexão.");
+        savedConn = data;
+      } else {
+        const { data, error } = await (supabase.from("vmix_connections" as any) as any)
+          .insert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou o cadastro da conexão.");
+        savedConn = data;
+        setSelectedConnectionId(data.id);
+      }
 
-    setSavedUrl(trimmed);
-    loadConnections();
+      const { error: legacyError } = await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        vmix_url: trimmed,
+        vmix_user: vmixUser.trim(),
+        vmix_pass: vmixPass,
+      }, { onConflict: "user_id" });
+      if (legacyError) console.warn("Falha ao atualizar compatibilidade vMix em user_settings:", legacyError);
 
-    if (isPrivateIp(trimmed) && connectionMode === "proxy") {
-      setConnectionMode("direct");
-      toast({ title: "Modo alterado para Direto", description: "IP local detectado." });
-    } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
-      setConnectionMode("proxy");
-      toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
+      setSavedUrl(trimmed);
+      await loadConnections();
+
+      if (isPrivateIp(trimmed) && connectionMode === "proxy") {
+        setConnectionMode("direct");
+        toast({ title: "Modo alterado para Direto", description: "IP local detectado." });
+      } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
+        setConnectionMode("proxy");
+        toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
+      }
+      toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
+      return savedConn;
+    } catch (err: any) {
+      console.error("Falha ao salvar conexão vMix:", err);
+      toast({ title: "Conexão não foi salva", description: err?.message || "Falha ao gravar no servidor.", variant: "destructive" });
+      return null;
     }
-    toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
-    return savedConn;
   };
 
   const deleteConnection = async (id: string) => {
     if (!user || !id) return;
-    const { error } = await (supabase.from("vmix_connections" as any) as any)
-      .delete()
-      .eq("id", id);
-    
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      const { data, error } = await (supabase.from("vmix_connections" as any) as any)
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a exclusão da conexão.");
+
       toast({ title: "Conexão excluída" });
-      loadConnections();
+      await loadConnections();
       if (selectedConnectionId === id) {
         setSelectedConnectionId(null);
         setVmixUrl("");
         setSavedUrl("");
         setStudioName("");
       }
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir", description: err?.message || "Falha ao excluir no servidor.", variant: "destructive" });
     }
   };
-
 
   useEffect(() => {
     directBaseUrlRef.current = null;
@@ -1614,8 +1650,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         // Also persist to DB
         if (user) {
           supabase.from("user_settings")
-            .update({ vmix_input_mapping: next as any })
-            .eq("user_id", user.id)
+            .upsert({ user_id: user.id, vmix_input_mapping: next as any }, { onConflict: "user_id" })
             .then(({ error }) => {
               if (error) console.error("Error saving input mapping to DB:", error);
             });
@@ -3647,9 +3682,10 @@ function SwitcherUI({
       destructive: true,
     });
     if (!confirmed) return;
-    const { error } = await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", button.id);
-    if (error) {
-      toast({ title: "Erro ao excluir monitor", description: error.message, variant: "destructive" });
+    const { data, error } = await (supabase.from("custom_vmix_buttons" as any) as any)
+      .delete().eq("id", button.id).eq("user_id", user?.id).select("id").maybeSingle();
+    if (error || !data?.id) {
+      toast({ title: "Erro ao excluir monitor", description: error?.message || "O banco não confirmou a exclusão.", variant: "destructive" });
       return;
     }
     await loadCustomButtons();
@@ -5426,7 +5462,7 @@ function SwitcherUI({
 
                             <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1 opacity-0 group-hover/custom:opacity-100 transition-all duration-200 translate-y-full group-hover/custom:translate-y-0" style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
                               <button onClick={(e) => { e.stopPropagation(); setEditingCustomButtonId(btn.id); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-white/20 transition-colors" style={{ color: "#ccc" }} title="Editar"><Wand2 size={9} /></button>
-                              <button onClick={async (e) => { e.stopPropagation(); await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id); loadCustomButtons(); toast({ title: "Botão excluído" }); }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
+                              <button onClick={async (e) => { e.stopPropagation(); try { const { data, error } = await (supabase.from("custom_vmix_buttons" as any) as any).delete().eq("id", btn.id).eq("user_id", user?.id).select("id").maybeSingle(); if (error) throw error; if (!data?.id) throw new Error("O banco não confirmou a exclusão do botão."); await loadCustomButtons(); toast({ title: "Botão excluído" }); } catch (err: any) { toast({ title: "Não foi possível excluir o botão", description: err?.message || "Falha ao excluir no servidor.", variant: "destructive" }); } }} className="w-4 h-4 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors" style={{ color: "#f87171" }} title="Excluir"><Trash2 size={9} /></button>
                             </div>
                           </div>
                         );

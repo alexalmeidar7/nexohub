@@ -1111,49 +1111,47 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     return lines.join("\n");
   }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo, sponsorLogos]);
 
-  const handleSave = useCallback(async (payload?: BroadcastData) => {
-    if (!stationUid) return;
+  const handleSave = useCallback(async (payload?: BroadcastData): Promise<boolean> => {
+    if (!stationUid) return false;
     setSaving(true);
-    const toastId = toast("Atualizando XML...", { icon: <RefreshCw size={14} className="animate-spin" /> });
+    const toastId = toast("Salvando configurações do Broadcast...", { icon: <RefreshCw size={14} className="animate-spin" /> });
     try {
       const nextData = payload || latestDataRef.current;
+      const { data: current, error: readError } = await supabase.from("user_settings")
+        .select("cenario_config").eq("user_id", stationUid).maybeSingle();
+      if (readError) throw readError;
+      const existing = (current?.cenario_config && typeof current.cenario_config === "object")
+        ? current.cenario_config as Record<string, any> : {};
+      const { error: saveError } = await supabase.from("user_settings").upsert({
+        user_id: stationUid,
+        cenario_config: { ...existing, broadcast: { ...(existing.broadcast || {}), ...nextData } } as any,
+      }, { onConflict: "user_id" });
+      if (saveError) throw saveError;
 
-      // 1. Save locally for instant persistence
+      // Só propaga cache e XML depois da confirmação do banco.
       try {
-        localStorage.setItem(`nexohub_broadcast_config_${stationUid}`, JSON.stringify(nextData));
-        if (userSlug) {
-          localStorage.setItem(`nexohub_broadcast_config_${userSlug}`, JSON.stringify(nextData));
-        }
+        localStorage.setItem("nexohub_broadcast_config_" + stationUid, JSON.stringify(nextData));
+        if (userSlug) localStorage.setItem("nexohub_broadcast_config_" + userSlug, JSON.stringify(nextData));
       } catch {}
-
-      // 2. Synchronize with Vite server for real-time XML regeneration
       try {
-        await fetch("/api/sync-broadcast", {
+        const response = await fetch("/api/sync-broadcast", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug: userSlug || stationUid,
-            stationUid,
-            data: nextData,
-          }),
+          body: JSON.stringify({ slug: userSlug || stationUid, stationUid, data: nextData }),
         });
-      } catch {}
-
-      // 3. Persist to Supabase if reachable
-      try {
-        const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
-        const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
-        
-        await supabase.from("user_settings").update({
-          cenario_config: { ...existing, broadcast: { ...(existing.broadcast || {}), ...nextData } } as any,
-        }).eq("user_id", stationUid);
-      } catch {}
-
+        if (!response.ok) console.warn("Servidor local não confirmou sincronização Broadcast:", response.status);
+      } catch (syncError) {
+        console.warn("Servidor local indisponível para sincronização Broadcast:", syncError);
+      }
       toast.success("XML atualizado!", { id: toastId });
-    } catch {
-      toast.error("Erro ao salvar", { id: toastId });
+      return true;
+    } catch (error: any) {
+      console.error("Falha ao salvar Broadcast:", error);
+      toast.error("Configurações do Broadcast não foram salvas: " + (error?.message || "falha no banco."), { id: toastId });
+      return false;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }, [stationUid, userSlug]);
 
   const onFieldBlur = useCallback(() => {
@@ -1169,11 +1167,12 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     const syncTicker = async () => {
       try {
         await loadInitialData();
-        const { data: cur } = await supabase
+        const { data: cur, error: readError } = await supabase
           .from("user_settings")
           .select("cenario_config")
           .eq("user_id", stationUid)
           .maybeSingle();
+        if (readError) throw readError;
         const existing = (cur?.cenario_config && typeof cur.cenario_config === "object")
           ? cur.cenario_config as Record<string, any>
           : {};
@@ -1182,10 +1181,10 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
           ...latestDataRef.current,
           tickerUpdatedAt: new Date().toISOString(),
         };
-        await supabase
+        const { error: saveError } = await supabase
           .from("user_settings")
-          .update({ cenario_config: { ...existing, broadcast } as any })
-          .eq("user_id", stationUid);
+          .upsert({ user_id: stationUid, cenario_config: { ...existing, broadcast } as any }, { onConflict: "user_id" });
+        if (saveError) throw saveError;
         setTickerSyncedAt(new Date());
       } catch {
         /* silencioso — próxima janela de 5min tenta de novo */
@@ -1209,7 +1208,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     const push = async () => {
       try {
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${stationUid}&aseguir=1&t=${Date.now()}`;
-        await fetch(url, { cache: "no-store" });
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error("HTTP " + response.status);
         if (!cancelled) setASeguirSentAt(new Date());
       } catch {
         /* silencioso — próximo ciclo tenta de novo */
@@ -1326,14 +1326,19 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     if (!stationUid || !insertLiveArt) return;
     setInsertingNow(true);
     try {
-      const { data: cur } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
+      const { data: cur, error: readError } = await supabase.from("user_settings")
+        .select("cenario_config").eq("user_id", stationUid).maybeSingle();
+      if (readError) throw readError;
       const existing = (cur?.cenario_config && typeof cur.cenario_config === "object") ? cur.cenario_config as Record<string, any> : {};
       const broadcast = { ...(existing.broadcast || {}), insertLiveManualUntil: new Date(Date.now() + 30_000).toISOString() };
-      await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", stationUid);
+      const { error } = await supabase.from("user_settings")
+        .upsert({ user_id: stationUid, cenario_config: { ...existing, broadcast } as any }, { onConflict: "user_id" });
+      if (error) throw error;
       toast.success("Insert Live ativo por 30 segundos!");
       setTimeout(() => setInsertingNow(false), 30_000);
-    } catch {
-      toast.error("Erro ao inserir");
+    } catch (err: any) {
+      console.error("Falha ao ativar Insert Live:", err);
+      toast.error("Insert Live não foi ativado: " + (err?.message || "falha ao gravar no banco."));
       setInsertingNow(false);
     }
   }, [stationUid, insertLiveArt]);
@@ -1346,29 +1351,41 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       return;
     }
     setUploadingBg(true);
+    const previousData = latestDataRef.current;
+    let uploadedPath: string | null = null;
     try {
-      const path = `broadcast/${stationUid}/assunto-bg-${Date.now()}.png`;
+      uploadedPath = `broadcast/${stationUid}/assunto-bg-${Date.now()}.png`;
       const { error } = await supabase.storage
         .from("empresa-assets")
-        .upload(path, file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+        .upload(uploadedPath, file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
       if (error) throw error;
-      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(uploadedPath);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;
-      const next = { ...latestDataRef.current, assuntoBgUrl: url, useCustomAssuntoBg: true };
+      const next = { ...previousData, assuntoBgUrl: url, useCustomAssuntoBg: true };
+      if (!(await handleSave(next))) {
+        setData(previousData);
+        await supabase.storage.from("empresa-assets").remove([uploadedPath]);
+        return;
+      }
       setData(next);
-      await handleSave(next);
       toast.success("Fundo do assunto atualizado!");
     } catch (e) {
       console.error(e);
+      if (uploadedPath) await supabase.storage.from("empresa-assets").remove([uploadedPath]);
       toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploadingBg(false);
     }
-    setUploadingBg(false);
   }, [user, handleSave]);
 
-  const removeBgImage = useCallback(() => {
-    const next = { ...latestDataRef.current, assuntoBgUrl: "", useCustomAssuntoBg: false };
-    setData(next);
-    void handleSave(next);
+  const removeBgImage = useCallback(async () => {
+    const previous = latestDataRef.current;
+    const next = { ...previous, assuntoBgUrl: "", useCustomAssuntoBg: false };
+    if (await handleSave(next)) {
+      setData(next);
+    } else {
+      setData(previous);
+    }
   }, [handleSave]);
 
   const NAVY = "#002132";
@@ -1460,7 +1477,7 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     return () => { cancelled = true; };
   }, [user, nextProgId]);
 
-  const BLANK_PNG_ASEGUIR = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+  const BLANK_PNG_ASEGUIR = (import.meta.env.VITE_SUPABASE_URL || "").replace(/\/$/, "") + "/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
   const aSeguirActive = !!data.aSeguirEnabled && !!nextProgramInfo;
   const aSeguirXmlPreview = (() => {
     const horario = aSeguirActive && data.aSeguirShowHorario !== false ? (nextProgramInfo?.next?.horario_inicio || "").toString().slice(0, 5) : "";

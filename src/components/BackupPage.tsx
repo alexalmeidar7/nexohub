@@ -318,6 +318,8 @@ export default function BackupPage({ effectiveUserId }: { effectiveUserId?: stri
 
     const payload: any[] = [];
     const unknownFolders = new Set<string>();
+    const uploadedPaths: string[] = [];
+    try {
     for (const entry of entries) {
       const parts = entry.name.split("/").filter(Boolean);
       const filename = parts.pop() as string;
@@ -331,6 +333,7 @@ export default function BackupPage({ effectiveUserId }: { effectiveUserId?: stri
       const { error: upErr } = await supabase.storage.from("comercial")
         .upload(path, blob, { upsert: true, contentType: blob.type || `image/${ext}` });
       if (upErr) throw upErr;
+      uploadedPaths.push(path);
       const { data: pub } = supabase.storage.from("comercial").getPublicUrl(path);
 
       const info = meta.get(`${folder}/${filename}`);
@@ -347,6 +350,15 @@ export default function BackupPage({ effectiveUserId }: { effectiveUserId?: stri
     if (payload.length) {
       const { error } = await supabase.from("logos_patrocinadores").insert(payload);
       if (error) throw error;
+    }
+    } catch (error) {
+      // Roll back uploaded files when the metadata insert fails, preventing
+      // orphaned Storage objects after a partial ZIP import.
+      if (uploadedPaths.length) {
+        const { error: cleanupError } = await supabase.storage.from("comercial").remove(uploadedPaths);
+        if (cleanupError) console.warn("Falha ao limpar imagens após importação cancelada:", cleanupError);
+      }
+      throw error;
     }
     const extra = unknownFolders.size ? ` · pastas sem programa correspondente: ${[...unknownFolders].join(", ")}` : "";
     return `${payload.length} logos importadas${extra}.`;
