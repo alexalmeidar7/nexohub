@@ -1349,23 +1349,31 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
       return;
     }
     setUploadingBg(true);
+    const previousData = latestDataRef.current;
+    let uploadedPath: string | null = null;
     try {
-      const path = `broadcast/${stationUid}/assunto-bg-${Date.now()}.png`;
+      uploadedPath = `broadcast/${stationUid}/assunto-bg-${Date.now()}.png`;
       const { error } = await supabase.storage
         .from("empresa-assets")
-        .upload(path, file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+        .upload(uploadedPath, file, { upsert: true, contentType: "image/png", cacheControl: "3600" });
       if (error) throw error;
-      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(uploadedPath);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;
-      const next = { ...latestDataRef.current, assuntoBgUrl: url, useCustomAssuntoBg: true };
+      const next = { ...previousData, assuntoBgUrl: url, useCustomAssuntoBg: true };
+      if (!(await handleSave(next))) {
+        setData(previousData);
+        await supabase.storage.from("empresa-assets").remove([uploadedPath]);
+        return;
+      }
       setData(next);
-      await handleSave(next);
       toast.success("Fundo do assunto atualizado!");
     } catch (e) {
       console.error(e);
+      if (uploadedPath) await supabase.storage.from("empresa-assets").remove([uploadedPath]);
       toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploadingBg(false);
     }
-    setUploadingBg(false);
   }, [user, handleSave]);
 
   const removeBgImage = useCallback(() => {
