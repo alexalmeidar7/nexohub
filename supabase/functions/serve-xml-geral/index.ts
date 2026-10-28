@@ -29,10 +29,6 @@ const KNOWN_SLUG_MAP: Record<string, string> = {
   default: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
 };
 
-const DIAS_MAP: Record<number, string> = {
-  1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
-};
-
 function normTime(t: any, def = "00:00"): string {
   const str = String(t ?? def).trim();
   const [h, m] = str.split(":");
