@@ -268,30 +268,27 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
   };
 
   const loadCampanhas = async () => {
-    if (!targetUserId) return;
-    let list: Campanha[] = [];
+    if (!targetUserId) {
+      setCampanhas([]);
+      return;
+    }
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("comercial_preroll")
         .select("*")
         .eq("user_id", targetUserId)
         .order("created_at", { ascending: false });
-      if (data && data.length > 0) {
-        list = data.map(rowToCampanha);
-      }
+      if (error) throw error;
+
+      // Quando a consulta online funciona, o banco é a fonte da verdade.
+      // Não mesclar cache antigo por cima: isso ressuscitava campanhas excluídas
+      // e sobrescrevia alterações recentes com dados locais desatualizados.
+      const list = (data || []).map(rowToCampanha);
+      setCampanhas(list);
+      saveStoredCampanhas(targetUserId, list);
     } catch (e) {
       console.warn("Supabase fetch comercial_preroll warning:", e);
-    }
-
-    const localList = getStoredCampanhas(targetUserId);
-    const map = new Map<string, Campanha>();
-    list.forEach(c => map.set(c.id, c));
-    localList.forEach(c => map.set(c.id, c));
-    const merged = Array.from(map.values());
-
-    setCampanhas(merged);
-    if (merged.length > 0) {
-      saveStoredCampanhas(targetUserId, merged);
+      setCampanhas(getStoredCampanhas(targetUserId));
     }
   };
 
