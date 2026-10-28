@@ -955,8 +955,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const fetchClientes = useCallback(async () => {
     try {
       const storedMeta = getStoredMetadata();
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
-      const queryPromise = Promise.all([
+      const [logosRes, empRes] = await Promise.all([
         supabase
           .from("logos_patrocinadores")
           .select("id, user_id, nome, logo_url, ativo")
@@ -967,9 +966,6 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           .select("user_id, nome, logo, ativo")
           .order("nome"),
       ]);
-
-      const res = await Promise.race([queryPromise, timeoutPromise]);
-      const [logosRes, empRes] = (res || [ { data: [] }, { data: [] } ]) as any;
 
       const rawList: AgendaCliente[] = [];
 
