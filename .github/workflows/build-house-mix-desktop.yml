@@ -14,6 +14,7 @@ on:
       - "infra/offline-first/desktop-client/**"
       - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
+      - ".env"
   push:
     branches: [main]
     paths:
@@ -27,6 +28,7 @@ on:
       - "infra/offline-first/desktop-client/**"
       - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
+      - ".env"
 
 permissions:
   contents: read
@@ -67,7 +69,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "desktop/runtime/provisioner/schema" | Out-Null
           Copy-Item "infra/offline-first/schema/*.sql" "desktop/runtime/provisioner/schema/" -Force
       - name: Test Desktop shell security
-        run: node --test desktop/runtime.test.cjs desktop/local-api-host.test.cjs
+        run: node --test desktop/runtime.test.cjs desktop/local-api-host.test.cjs desktop/clientProfile.test.cjs desktop/clientRegistry.test.cjs
       - name: Build Desktop frontend
         run: npm run desktop:build
       - name: Verify packaged runtime

@@ -1,13 +1,19 @@
 const path = require("node:path");
 const fs = require("node:fs");
 const { pathToFileURL } = require("node:url");
-const { app, BrowserWindow, dialog, shell, protocol, net } = require("electron");
+const { app, BrowserWindow, dialog, shell, protocol, net, ipcMain } = require("electron");
 const { spawn } = require("node:child_process");
 const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
+const { resolveClientProfile, parseClientId } = require("./clientProfile.cjs");
+const { listClients, createClient } = require("./clientRegistry.cjs");
 
-// A standard custom scheme gives BrowserRouter a real "/" origin in Electron.
-// Register privileges before app readiness, as required by Electron.
+const clientArgPresent = process.argv.some((arg) => arg.startsWith("--client-id="));
+const profile = clientArgPresent
+  ? resolveClientProfile(process.argv, app.getPath("appData"))
+  : null;
+if (profile) app.setPath("userData", profile.userDataPath);
+
 protocol.registerSchemesAsPrivileged([{
   scheme: "housemix",
   privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
@@ -23,36 +29,36 @@ async function registerRendererProtocol() {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return new Response("Method not allowed", { status: 405 });
     }
-
     const filePath = resolveRendererRequestPath(
       request.url,
       rendererRoot,
       (candidate) => fs.existsSync(candidate)
     );
-
     if (!filePath) return new Response("Not found", { status: 404 });
     return net.fetch(pathToFileURL(filePath).toString());
   });
 }
 
-function createMainWindow() {
-  const windowOptions = createWindowOptions(path.join(__dirname, "preload.cjs"));
-  windowOptions.icon = path.join(__dirname, "assets", "house-mix.ico");
-  mainWindow = new BrowserWindow(windowOptions);
-  mainWindow.once("ready-to-show", () => mainWindow.show());
-  mainWindow.on("closed", () => { mainWindow = null; });
+function openExternalSafely(rawUrl) {
+  if (isAllowedExternalUrl(rawUrl)) void shell.openExternal(rawUrl);
+}
 
+function createClientWindow() {
+  const options = createWindowOptions(path.join(__dirname, "preload.cjs"));
+  options.icon = path.join(__dirname, "assets", "house-mix.ico");
+  options.title = `House Mix Desktop — ${profile.clientId}`;
+  mainWindow = new BrowserWindow(options);
+  mainWindow.once("ready-to-show", () => mainWindow?.show());
+  mainWindow.on("closed", () => { mainWindow = null; });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (isAllowedExternalUrl(url)) void shell.openExternal(url);
+    openExternalSafely(url);
     return { action: "deny" };
   });
-
   mainWindow.webContents.on("will-navigate", (event, targetUrl) => {
     if (targetUrl.startsWith("housemix://desktop/")) return;
     event.preventDefault();
-    if (isAllowedExternalUrl(targetUrl)) void shell.openExternal(targetUrl);
+    openExternalSafely(targetUrl);
   });
-
   void mainWindow.loadURL("housemix://desktop/");
 }
 
@@ -66,7 +72,10 @@ function resolveLocalApiHostPath() {
 async function startLocalRuntime() {
   const host = startLocalApiHost({
     executablePath: resolveLocalApiHostPath(),
-    env: process.env,
+    env: {
+      ...process.env,
+      ...(profile ? { HOUSEMIX_CLIENT_ID: profile.clientId } : {})
+    },
     spawnProcess: spawn
   });
   if (!host.configured) return;
@@ -80,13 +89,65 @@ async function startLocalRuntime() {
   }
 }
 
+function createManagerWindow() {
+  ipcMain.handle("client-manager:list", () => listClients(app.getPath("appData")));
+  ipcMain.handle("client-manager:create", (_event, payload) => {
+    if (!payload || typeof payload.name !== "string") {
+      throw new Error("Informe o nome do cliente.");
+    }
+    return createClient(app.getPath("appData"), payload.name);
+  });
+  ipcMain.handle("client-manager:open", (_event, rawId) => {
+    const id = parseClientId([`--client-id=${String(rawId || "")}`]);
+    if (!listClients(app.getPath("appData")).some((client) => client.id === id)) {
+      throw new Error("Cliente não cadastrado neste computador.");
+    }
+    const args = app.isPackaged
+      ? [`--client-id=${id}`]
+      : [app.getAppPath(), `--client-id=${id}`];
+    const child = spawn(process.execPath, args, {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: false
+    });
+    child.unref();
+    return { opened: true, clientId: id };
+  });
+
+  const manager = new BrowserWindow({
+    width: 900,
+    height: 680,
+    minWidth: 680,
+    minHeight: 560,
+    show: false,
+    title: "House Mix Desktop — Clientes",
+    autoHideMenuBar: true,
+    backgroundColor: "#0b1020",
+    webPreferences: {
+      preload: path.join(__dirname, "client-manager-preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
+  });
+  manager.once("ready-to-show", () => manager.show());
+  manager.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  manager.webContents.on("will-navigate", (event) => event.preventDefault());
+  void manager.loadFile(path.join(__dirname, "client-manager.html"));
+}
+
 app.whenReady().then(async () => {
   try {
+    app.setAppUserModelId("br.com.nexobrasil.housemix");
+    if (!profile) {
+      createManagerWindow();
+      return;
+    }
     await registerRendererProtocol();
     await startLocalRuntime();
-    createMainWindow();
+    createClientWindow();
     app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+      if (BrowserWindow.getAllWindows().length === 0) createClientWindow();
     });
   } catch {
     dialog.showErrorBox(
