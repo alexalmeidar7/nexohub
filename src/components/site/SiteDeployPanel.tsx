@@ -63,18 +63,26 @@ export default function SiteDeployPanel({ effectiveUserId }: { effectiveUserId: 
     })();
   }, [effectiveUserId]);
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     setSaving(true);
-    const { error } = await supabase.from("site_deploy_config").upsert({ user_id: effectiveUserId, ...cfg });
-    setSaving(false);
-    if (error) toast.error("Erro ao salvar: " + error.message);
-    else toast.success("Credenciais salvas");
+    try {
+      const { error } = await supabase.from("site_deploy_config")
+        .upsert({ user_id: effectiveUserId, ...cfg }, { onConflict: "user_id" });
+      if (error) throw error;
+      toast.success("Credenciais salvas");
+      return true;
+    } catch (err: any) {
+      toast.error("Erro ao salvar: " + (err?.message || "Falha ao gravar as credenciais."));
+      return false;
+    } finally {
+      setSaving(false);
+    }
   };
 
   const test = async () => {
     setTesting(true);
     try {
-      await save();
+      if (!(await save())) return;
       const { data, error } = await supabase.functions.invoke("site-publish", { body: { action: "test" } });
       if (error) throw error;
       if (data?.ok) toast.success(`Conexão OK · ${data.entries || 0} itens no diretório`);
@@ -89,7 +97,7 @@ export default function SiteDeployPanel({ effectiveUserId }: { effectiveUserId: 
   const publish = async () => {
     setPublishing(true);
     try {
-      await save();
+      if (!(await save())) return;
       const { data, error } = await supabase.functions.invoke("site-publish", { body: { action: "publish" } });
       if (error) throw error;
       if (data?.ok) toast.success(`Site publicado · ${data.files} arquivo(s) enviado(s)`);
