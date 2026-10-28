@@ -1145,87 +1145,103 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   }, [connectionMode]);
 
   const saveUrl = async () => {
-    if (!user || !vmixUrl.trim()) return;
+    if (!user || !vmixUrl.trim()) return null;
     let trimmed = vmixUrl.trim();
-    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
-      trimmed = "http://" + trimmed;
-    }
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) trimmed = "http://" + trimmed;
     try {
       const urlObj = new URL(trimmed);
       if (!urlObj.port && (/^[0-9.]+$/.test(urlObj.hostname) || urlObj.hostname === "localhost")) {
         urlObj.port = "8088";
         trimmed = urlObj.toString().replace(/\/$/, "");
       }
-    } catch {}
+    } catch (error: any) {
+      toast({ title: "Endereço do vMix inválido", description: error?.message || "Confira o endereço informado.", variant: "destructive" });
+      return null;
+    }
 
-    const payload = { 
+    const payload = {
       user_id: user.id,
       name: studioName || "vMix Studio",
-      url: trimmed, 
-      username: vmixUser.trim(), 
+      url: trimmed,
+      username: vmixUser.trim(),
       password: vmixPass,
-      is_default: true 
+      is_default: true,
     };
 
-    let savedConn;
-    if (selectedConnectionId) {
-      const { data } = await (supabase.from("vmix_connections" as any) as any)
-        .update(payload)
-        .eq("id", selectedConnectionId)
-        .select()
-        .single();
-      savedConn = data;
-    } else {
-      const { data } = await (supabase.from("vmix_connections" as any) as any)
-        .insert(payload)
-        .select()
-        .single();
-      savedConn = data;
-      if (data) setSelectedConnectionId(data.id);
-    }
-    
-    // Also update global settings for backward compatibility if needed
-    await supabase.from("user_settings").upsert({ 
-      user_id: user.id, 
-      vmix_url: trimmed, 
-      vmix_user: vmixUser.trim(), 
-      vmix_pass: vmixPass 
-    });
+    try {
+      let savedConn: any;
+      if (selectedConnectionId) {
+        const { data, error } = await (supabase.from("vmix_connections" as any) as any)
+          .update(payload)
+          .eq("id", selectedConnectionId)
+          .eq("user_id", user.id)
+          .select()
+          .single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou a atualização da conexão.");
+        savedConn = data;
+      } else {
+        const { data, error } = await (supabase.from("vmix_connections" as any) as any)
+          .insert(payload)
+          .select()
+          .single();
+        if (error) throw error;
+        if (!data?.id) throw new Error("O banco não confirmou o cadastro da conexão.");
+        savedConn = data;
+        setSelectedConnectionId(data.id);
+      }
 
-    setSavedUrl(trimmed);
-    loadConnections();
+      const { error: legacyError } = await supabase.from("user_settings").upsert({
+        user_id: user.id,
+        vmix_url: trimmed,
+        vmix_user: vmixUser.trim(),
+        vmix_pass: vmixPass,
+      }, { onConflict: "user_id" });
+      if (legacyError) console.warn("Falha ao atualizar compatibilidade vMix em user_settings:", legacyError);
 
-    if (isPrivateIp(trimmed) && connectionMode === "proxy") {
-      setConnectionMode("direct");
-      toast({ title: "Modo alterado para Direto", description: "IP local detectado." });
-    } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
-      setConnectionMode("proxy");
-      toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
+      setSavedUrl(trimmed);
+      await loadConnections();
+
+      if (isPrivateIp(trimmed) && connectionMode === "proxy") {
+        setConnectionMode("direct");
+        toast({ title: "Modo alterado para Direto", description: "IP local detectado." });
+      } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
+        setConnectionMode("proxy");
+        toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
+      }
+      toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
+      return savedConn;
+    } catch (err: any) {
+      console.error("Falha ao salvar conexão vMix:", err);
+      toast({ title: "Conexão não foi salva", description: err?.message || "Falha ao gravar no servidor.", variant: "destructive" });
+      return null;
     }
-    toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
-    return savedConn;
   };
 
   const deleteConnection = async (id: string) => {
     if (!user || !id) return;
-    const { error } = await (supabase.from("vmix_connections" as any) as any)
-      .delete()
-      .eq("id", id);
-    
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      const { data, error } = await (supabase.from("vmix_connections" as any) as any)
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.id) throw new Error("O banco não confirmou a exclusão da conexão.");
+
       toast({ title: "Conexão excluída" });
-      loadConnections();
+      await loadConnections();
       if (selectedConnectionId === id) {
         setSelectedConnectionId(null);
         setVmixUrl("");
         setSavedUrl("");
         setStudioName("");
       }
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir", description: err?.message || "Falha ao excluir no servidor.", variant: "destructive" });
     }
   };
-
 
   useEffect(() => {
     directBaseUrlRef.current = null;
