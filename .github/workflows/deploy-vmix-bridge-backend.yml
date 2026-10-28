@@ -350,6 +350,9 @@ jobs:
             'House Mix restoration migrations: verified',
             (SELECT count(*)::text FROM auth.users) || ' Auth users',
             (SELECT count(*)::text FROM storage.buckets) || ' Storage buckets',
+            (SELECT count(*)::text FROM storage.objects) || ' Storage objects',
+            (SELECT count(*)::text FROM public.programas) || ' programs',
+            (SELECT count(*)::text FROM public.apresentadores) || ' presenters',
             COALESCE((
               SELECT string_agg(c.relname, ', ' ORDER BY c.relname)
               FROM pg_class c
@@ -427,6 +430,48 @@ jobs:
             echo "::error::Public tables without RLS: $rls_disabled_tables. Define appropriate table policies and enable RLS before Bridge backend changes."
             exit 1
           fi
+
+      - name: Require restored House Mix business data and Storage before writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          missing_buckets="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            WITH required(bucket_name) AS (
+              VALUES ('empresa-assets'), ('comercial')
+            )
+            SELECT COALESCE(string_agg(r.bucket_name, ', ' ORDER BY r.bucket_name), '')
+            FROM required r
+            LEFT JOIN storage.buckets b ON b.name = r.bucket_name
+            WHERE b.id IS NULL
+               OR NOT EXISTS (
+                 SELECT 1
+                 FROM storage.objects o
+                 WHERE o.bucket_id = b.id
+               )
+          ")"
+
+          if [ -n "$missing_buckets" ]; then
+            echo "::error::Restored Storage buckets with objects are missing: $missing_buckets. Restore and verify the House Mix Storage objects before Bridge migrations or Edge deployment."
+            exit 1
+          fi
+
+          business_counts="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT
+              (SELECT count(*) FROM public.programas),
+              (SELECT count(*) FROM public.apresentadores)
+          ")"
+          IFS='|' read -r program_count presenter_count <<< "$business_counts"
+
+          if [ "$program_count" -lt 1 ] || [ "$presenter_count" -lt 1 ]; then
+            echo "::error::House Mix business data is incomplete (programas=$program_count, apresentadores=$presenter_count). Restore verified program and presenter records before Bridge migrations or Edge deployment."
+            exit 1
+          fi
+
+          echo "House Mix business data and both Storage buckets are present."
 
       - name: Apply initial additive Bridge baseline (explicit approval only)
         if: ${{ inputs.apply_changes }}
