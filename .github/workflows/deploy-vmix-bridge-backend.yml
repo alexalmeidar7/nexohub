@@ -53,6 +53,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes postgresql-client
 
+      - name: Require restored migration source files before writes
+        if: ${{ inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_versions=(
+            20261028003932
+            20261028025459
+            20261028025525
+            20261028030056
+            20261028030116
+            20261028030144
+          )
+          for version in "${required_versions[@]}"; do
+            matches=(supabase/migrations/"${version}"_*.sql)
+            if [ "${#matches[@]}" -ne 1 ] || [ ! -s "${matches[0]}" ]; then
+              echo "::error::Missing or ambiguous source migration for ${version}. Recover and commit the original SQL under supabase/migrations before any Bridge write."
+              exit 1
+            fi
+          done
+
       - name: Read-only backend preflight
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
