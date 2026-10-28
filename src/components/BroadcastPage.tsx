@@ -1111,49 +1111,47 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     return lines.join("\n");
   }, [data.assunto, displayLocutor, locutorInstagram, empresaSocials, data.showQrCode, whatsappNumber, composedTicker, programaNome, programaLogo, sponsorLogos]);
 
-  const handleSave = useCallback(async (payload?: BroadcastData) => {
-    if (!stationUid) return;
+  const handleSave = useCallback(async (payload?: BroadcastData): Promise<boolean> => {
+    if (!stationUid) return false;
     setSaving(true);
-    const toastId = toast("Atualizando XML...", { icon: <RefreshCw size={14} className="animate-spin" /> });
+    const toastId = toast("Salvando configurações do Broadcast...", { icon: <RefreshCw size={14} className="animate-spin" /> });
     try {
       const nextData = payload || latestDataRef.current;
+      const { data: current, error: readError } = await supabase.from("user_settings")
+        .select("cenario_config").eq("user_id", stationUid).maybeSingle();
+      if (readError) throw readError;
+      const existing = (current?.cenario_config && typeof current.cenario_config === "object")
+        ? current.cenario_config as Record<string, any> : {};
+      const { error: saveError } = await supabase.from("user_settings").upsert({
+        user_id: stationUid,
+        cenario_config: { ...existing, broadcast: { ...(existing.broadcast || {}), ...nextData } } as any,
+      }, { onConflict: "user_id" });
+      if (saveError) throw saveError;
 
-      // 1. Save locally for instant persistence
+      // Só propaga cache e XML depois da confirmação do banco.
       try {
-        localStorage.setItem(`nexohub_broadcast_config_${stationUid}`, JSON.stringify(nextData));
-        if (userSlug) {
-          localStorage.setItem(`nexohub_broadcast_config_${userSlug}`, JSON.stringify(nextData));
-        }
+        localStorage.setItem("nexohub_broadcast_config_" + stationUid, JSON.stringify(nextData));
+        if (userSlug) localStorage.setItem("nexohub_broadcast_config_" + userSlug, JSON.stringify(nextData));
       } catch {}
-
-      // 2. Synchronize with Vite server for real-time XML regeneration
       try {
-        await fetch("/api/sync-broadcast", {
+        const response = await fetch("/api/sync-broadcast", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            slug: userSlug || stationUid,
-            stationUid,
-            data: nextData,
-          }),
+          body: JSON.stringify({ slug: userSlug || stationUid, stationUid, data: nextData }),
         });
-      } catch {}
-
-      // 3. Persist to Supabase if reachable
-      try {
-        const { data: current } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
-        const existing = (current?.cenario_config && typeof current.cenario_config === "object") ? current.cenario_config as Record<string, any> : {};
-        
-        await supabase.from("user_settings").update({
-          cenario_config: { ...existing, broadcast: { ...(existing.broadcast || {}), ...nextData } } as any,
-        }).eq("user_id", stationUid);
-      } catch {}
-
+        if (!response.ok) console.warn("Servidor local não confirmou sincronização Broadcast:", response.status);
+      } catch (syncError) {
+        console.warn("Servidor local indisponível para sincronização Broadcast:", syncError);
+      }
       toast.success("XML atualizado!", { id: toastId });
-    } catch {
-      toast.error("Erro ao salvar", { id: toastId });
+      return true;
+    } catch (error: any) {
+      console.error("Falha ao salvar Broadcast:", error);
+      toast.error("Configurações do Broadcast não foram salvas: " + (error?.message || "falha no banco."), { id: toastId });
+      return false;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }, [stationUid, userSlug]);
 
   const onFieldBlur = useCallback(() => {
@@ -1326,14 +1324,19 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
     if (!stationUid || !insertLiveArt) return;
     setInsertingNow(true);
     try {
-      const { data: cur } = await supabase.from("user_settings").select("cenario_config").eq("user_id", stationUid).maybeSingle();
+      const { data: cur, error: readError } = await supabase.from("user_settings")
+        .select("cenario_config").eq("user_id", stationUid).maybeSingle();
+      if (readError) throw readError;
       const existing = (cur?.cenario_config && typeof cur.cenario_config === "object") ? cur.cenario_config as Record<string, any> : {};
       const broadcast = { ...(existing.broadcast || {}), insertLiveManualUntil: new Date(Date.now() + 30_000).toISOString() };
-      await supabase.from("user_settings").update({ cenario_config: { ...existing, broadcast } as any }).eq("user_id", stationUid);
+      const { error } = await supabase.from("user_settings")
+        .upsert({ user_id: stationUid, cenario_config: { ...existing, broadcast } as any }, { onConflict: "user_id" });
+      if (error) throw error;
       toast.success("Insert Live ativo por 30 segundos!");
       setTimeout(() => setInsertingNow(false), 30_000);
-    } catch {
-      toast.error("Erro ao inserir");
+    } catch (err: any) {
+      console.error("Falha ao ativar Insert Live:", err);
+      toast.error("Insert Live não foi ativado: " + (err?.message || "falha ao gravar no banco."));
       setInsertingNow(false);
     }
   }, [stationUid, insertLiveArt]);
