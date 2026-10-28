@@ -34,10 +34,12 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy serve-xml-broadcast
+      - name: Deploy XML feed functions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          supabase functions deploy serve-xml-broadcast --project-ref "$PROJECT_REF" --use-api
+          for function_name in serve-xml-geral serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast update-weather-xml; do
+            supabase functions deploy "$function_name" --project-ref "$PROJECT_REF" --use-api
+          done
