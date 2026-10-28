@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { postSiteSync, subscribeSiteSync } from "@/lib/siteSync";
+import { toast } from "@/hooks/use-toast";
 
 export interface SiteConfig {
   user_id: string;
@@ -147,24 +148,40 @@ export function useSiteConfig(userId: string | null | undefined) {
   const update = useCallback(
     (patch: Partial<SiteConfig>) => {
       if (!config || !userId) return;
+      const previous = config;
       const next = { ...config, ...patch };
       setConfig(next);
       saveStoredSiteConfig(userId, next);
 
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      localPatchRef.current += 1;
+      // One pending debounced write at a time. A counter here leaked on every
+      // keystroke whose previous timer was cancelled, disabling cross-tab sync.
+      localPatchRef.current = 1;
       saveTimer.current = setTimeout(async () => {
+        let saved = false;
         try {
-          const { user_id, ...rest } = next;
-          await supabase.from("site_config").update(rest).eq("user_id", userId);
-        } catch (err) {
-          console.warn("Supabase site_config update warning (mantido localmente):", err);
+          const { data, error } = await supabase
+            .from("site_config")
+            .upsert(next, { onConflict: "user_id" })
+            .select("user_id")
+            .single();
+          if (error) throw error;
+          if (!data?.user_id) throw new Error("O banco não confirmou a gravação das configurações do site.");
+          saved = true;
+        } catch (err: any) {
+          console.error("Supabase site_config save failed:", err);
+          setConfig(previous);
+          saveStoredSiteConfig(userId, previous);
+          toast({
+            title: "Configuração do site não foi salva",
+            description: err?.message || "Verifique sua conexão e tente novamente.",
+            variant: "destructive",
+          });
+        } finally {
+          saveTimer.current = null;
+          localPatchRef.current = 0;
         }
-        postSiteSync({ type: "config" });
-        // release echo guard after a tick so the broadcast we just posted is ignored
-        setTimeout(() => {
-          localPatchRef.current = Math.max(0, localPatchRef.current - 1);
-        }, 300);
+        if (saved) postSiteSync({ type: "config" });
       }, 400);
     },
     [config, userId]
