@@ -326,22 +326,22 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     });
     if (!confirmed || !ownerId) return;
 
-    // Atualiza localmente imediatamente
-    const currentStored = getStoredPromos(ownerId);
-    const updated = currentStored.filter(i => i.id !== id);
-    saveStoredPromos(ownerId, updated);
-    setItems(prev => prev.filter(i => i.id !== id));
-
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
-        const { error } = await supabase.from("promocoes").delete().eq("id", id);
-        if (error) console.warn("Supabase delete promo warning:", error.message);
+        const { data, error } = await supabase.from("promocoes").delete()
+          .eq("id", id).eq("user_id", ownerId).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a exclusão da promoção.");
       }
-    } catch (e) {
-      console.warn("Erro ao excluir promoção no Supabase:", e);
+      const updated = items.filter(item => item.id !== id);
+      setItems(updated);
+      saveStoredPromos(ownerId, updated);
+      toast({ title: "Promoção excluída" });
+    } catch (e: any) {
+      console.error("Erro ao excluir promoção:", e);
+      toast({ title: "Promoção não foi excluída", description: e?.message || "Falha ao excluir no servidor.", variant: "destructive" });
     }
-    toast({ title: "Promoção excluída" });
   };
 
   if (loading) return <ModulePageSkeleton variant="form" />;
