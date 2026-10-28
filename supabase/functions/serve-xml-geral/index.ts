@@ -29,10 +29,6 @@ const KNOWN_SLUG_MAP: Record<string, string> = {
   default: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
 };
 
-const DIAS_MAP: Record<number, string> = {
-  1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo",
-};
-
 function normTime(t: any, def = "00:00"): string {
   const str = String(t ?? def).trim();
   const [h, m] = str.split(":");
@@ -90,12 +86,18 @@ serve(async (req) => {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      weekday: "long",
       hour12: false,
     });
     const parts = formatter.formatToParts(new Date());
     const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "";
     const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
     const currentHourStr = `${getPart("hour")}:${getPart("minute")}`;
+    const weekdayMap: Record<string, string> = {
+      monday: "Segunda", tuesday: "Terça", wednesday: "Quarta",
+      thursday: "Quinta", friday: "Sexta", saturday: "Sábado", sunday: "Domingo",
+    };
+    const currentDayName = weekdayMap[(getPart("weekday") || "").toLowerCase()] || "Domingo";
 
     // Resolve sub-user parent if needed
     const { data: subUser } = await sb
@@ -115,14 +117,14 @@ serve(async (req) => {
       return r;
     };
 
-    const empresaRes = await step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle());
+    const empresaRes = await step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site, cidade, frequencia").eq("user_id", ownerId).maybeSingle());
     const programasRes = await step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"));
     const apresentadoresRes = await step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true));
     // Alguns registros de historico possuem campos gigantes (dezenas de MB) e estouram
     // a memoria da funcao. A RPC devolve apenas os primeiros caracteres de cada campo.
     const musicHistoryRes = await step("musicHistory", sb.rpc("get_music_history_light", { _user_id: ownerId, _limit: 6 }));
     const logosRes = await step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false));
-    const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo, updated_at").eq("user_id", ownerId).ilike("estudio", "%fm%").order("updated_at", { ascending: false }).limit(10));
+    const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo, participantes, xml_pushed_at, created_at, updated_at").eq("user_id", ownerId).ilike("estudio", "%fm%").order("updated_at", { ascending: false }).limit(10));
     if (roteiroRes.error) throw roteiroRes.error;
     const batalhaRes = await step("batalha", sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }));
     const enquetesRes = await step("enquetes", sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }));
@@ -158,7 +160,7 @@ serve(async (req) => {
 
     // Calculate current time & on-air program
     const now = new Date();
-    const currentDayName = DIAS_MAP[now.getDay()];
+    // Dia da semana já foi calculado no fuso de Brasília acima.
 
     let currentProgram: any = programas.find((p: any) => {
       const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
@@ -376,21 +378,73 @@ serve(async (req) => {
     xmlParts.push('  </previsao_tempo>');
 
     // 4. ROTEIRO
-    const activeRoteiro = roteiros[0] || null;
-    xmlParts.push('  <roteiro>');
-    xmlParts.push(`    <programa>${esc(activeRoteiro?.programa_nome || currentProgram?.nome || "Programa ao Vivo")}</programa>`);
-    xmlParts.push(`    <estudio>${esc(activeRoteiro?.estudio || "Estúdio FM")}</estudio>`);
-    xmlParts.push(`    <data>${esc(activeRoteiro?.data_programa || now.toISOString().slice(0, 10))}</data>`);
-    xmlParts.push(`    <horario>${esc(activeRoteiro?.horario || currentHourStr)}</horario>`);
-    xmlParts.push('    <itens>');
+    const activeRoteiro = roteiros.find((r: any) => String(r.data_programa || "").slice(0, 10) === today) || null;
+    let roteiroData: any = {};
     if (activeRoteiro) {
-      xmlParts.push('      <item>');
-      xmlParts.push(`        <titulo>${esc(activeRoteiro.subtitulo || "Bloco Principal")}</titulo>`);
-      xmlParts.push('        <tipo>bloco</tipo>');
-      xmlParts.push('        <status>executando</status>');
-      xmlParts.push('      </item>');
+      try {
+        let raw: any = activeRoteiro.participantes;
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        if (typeof raw === "string") raw = JSON.parse(raw);
+        roteiroData = Array.isArray(raw) ? { participantes: raw } : (raw || {});
+      } catch { roteiroData = {}; }
     }
-    xmlParts.push('    </itens>');
+    xmlParts.push(`  <roteiro ativo="${activeRoteiro ? "1" : "0"}">`);
+    xmlParts.push(`    <programa>${esc(activeRoteiro?.programa_nome || "")}</programa>`);
+    xmlParts.push(`    <estudio>${esc(activeRoteiro?.estudio || "")}</estudio>`);
+    xmlParts.push(`    <data>${esc(activeRoteiro?.data_programa || today)}</data>`);
+    xmlParts.push(`    <horario>${esc(activeRoteiro?.horario || "")}</horario>`);
+    xmlParts.push(`    <subtitulo>${esc(activeRoteiro?.subtitulo || "")}</subtitulo>`);
+    xmlParts.push(`    <atualizado_em>${esc(activeRoteiro?.updated_at || activeRoteiro?.created_at || "")}</atualizado_em>`);
+    xmlParts.push(`    <publicado_em>${esc(activeRoteiro?.xml_pushed_at || "")}</publicado_em>`);
+    xmlParts.push('    <participantes>');
+    (Array.isArray(roteiroData.participantes) ? roteiroData.participantes : []).forEach((p: any) => {
+      xmlParts.push('      <participante>');
+      xmlParts.push(`        <nome>${esc(p.nome || "")}</nome>`);
+      xmlParts.push(`        <cargo>${esc(p.cargo || "")}</cargo>`);
+      xmlParts.push(`        <instagram>${esc(p.instagram || "")}</instagram>`);
+      xmlParts.push('      </participante>');
+    });
+    xmlParts.push('    </participantes>');
+    xmlParts.push('    <escalada>');
+    (Array.isArray(roteiroData.escaladaList) ? roteiroData.escaladaList : []).forEach((item: any, i: number) => {
+      xmlParts.push(`      <item ordem="${i + 1}">`);
+      xmlParts.push(`        <titulo>${esc(typeof item === "string" ? item : item.titulo || "")}</titulo>`);
+      xmlParts.push(`        <imagem_url>${esc(typeof item === "string" ? "" : item.imagemUrl || "")}</imagem_url>`);
+      xmlParts.push('      </item>');
+    });
+    xmlParts.push('    </escalada>');
+    xmlParts.push('    <blocos>');
+    (Array.isArray(roteiroData.blocos) ? roteiroData.blocos : []).forEach((bloco: any, bi: number) => {
+      xmlParts.push(`      <bloco numero="${bi + 1}">`);
+      (Array.isArray(bloco.noticias) ? bloco.noticias : []).forEach((noticia: any, ni: number) => {
+        xmlParts.push(`        <noticia ordem="${ni + 1}">`);
+        xmlParts.push(`          <titulo>${esc(noticia.titulo || "")}</titulo>`);
+        xmlParts.push(`          <imagem_url>${esc(noticia.imagemUrl || "")}</imagem_url>`);
+        xmlParts.push(`          <escalada>${noticia.escalada ? "1" : "0"}</escalada>`);
+        xmlParts.push('        </noticia>');
+      });
+      xmlParts.push('      </bloco>');
+    });
+    xmlParts.push('    </blocos>');
+    const podcastData = roteiroData.podcastData || null;
+    xmlParts.push('    <podcast>');
+    xmlParts.push(`      <ativo>${podcastData ? "1" : "0"}</ativo>`);
+    xmlParts.push(`      <titulo_tarja>${esc(podcastData?.tituloTarja || "")}</titulo_tarja>`);
+    xmlParts.push(`      <subtitulo_tarja>${esc(podcastData?.subtituloTarja || "")}</subtitulo_tarja>`);
+    xmlParts.push(`      <introducao>${esc(podcastData?.introducao || "")}</introducao>`);
+    xmlParts.push('      <perguntas>');
+    (Array.isArray(podcastData?.perguntas) ? podcastData.perguntas : []).forEach((pergunta: string, i: number) => {
+      xmlParts.push(`        <pergunta ordem="${i + 1}">${esc(pergunta)}</pergunta>`);
+    });
+    xmlParts.push('      </perguntas>');
+    xmlParts.push(`      <concluindo>${esc(podcastData?.concluindo || "")}</concluindo>`);
+    xmlParts.push('      <imagens_apoio>');
+    (Array.isArray(podcastData?.apoioImagens) ? podcastData.apoioImagens : []).forEach((u: string) => xmlParts.push(`        <imagem>${esc(u)}</imagem>`));
+    xmlParts.push('      </imagens_apoio>');
+    xmlParts.push('      <videos_apoio>');
+    (Array.isArray(podcastData?.apoioVideos) ? podcastData.apoioVideos : []).forEach((u: string) => xmlParts.push(`        <video>${esc(u)}</video>`));
+    xmlParts.push('      </videos_apoio>');
+    xmlParts.push('    </podcast>');
     xmlParts.push('  </roteiro>');
 
     // 5. INTERATIVIDADE (Batalha, Enquete, Quiz)
