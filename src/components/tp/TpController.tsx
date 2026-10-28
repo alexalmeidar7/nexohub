@@ -384,7 +384,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
       .update({ texto_atual: normalized, is_html: html });
 
     const { error } = activeTpId
-      ? await updateQuery.eq("id", activeTpId)
+      ? await updateQuery.eq("id", activeTpId).eq("user_id", user.id)
       : await updateQuery.eq("user_id", user.id).eq("ativo", true);
 
     if (error) {
