@@ -110,13 +110,18 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
   const getLocalStorageKey = (uId: string) => `nexohub_ads_${uId}`;
 
   const loadClientes = async () => {
+    if (!targetUserId) {
+      setClientes([]);
+      setLoadingClientes(false);
+      return;
+    }
     setLoadingClientes(true);
     try {
-      let query = supabase
+      const query = supabase
         .from("logos_patrocinadores")
         .select("id, nome")
-        .eq("excluido", false);
-      if (targetUserId) query = query.eq("user_id", targetUserId);
+        .eq("excluido", false)
+        .eq("user_id", targetUserId);
       const { data, error } = await query.order("nome");
       if (error) throw error;
       const seen = new Set<string>();
@@ -131,7 +136,7 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
     }
   };
 
-  useEffect(() => { loadClientes(); }, []);
+  useEffect(() => { void loadClientes(); }, [targetUserId]);
 
   async function salvarNovoCliente() {
     if (!novoCliente.nome.trim()) {
