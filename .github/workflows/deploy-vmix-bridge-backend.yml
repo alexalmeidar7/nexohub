@@ -167,6 +167,7 @@ jobs:
             20261028172338
             20261028180000
             20261028193000
+            20261028205300
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -351,7 +352,7 @@ jobs:
           set -euo pipefail
           missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             WITH required(version) AS (
-              VALUES ('20261028180000'), ('20261028193000')
+              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300')
             )
             SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
             FROM required r
@@ -365,6 +366,27 @@ jobs:
             exit 1
           fi
           echo "Current House Mix schema reconciliation migrations are recorded."
+
+      - name: Require House Mix music-history upsert key before Bridge writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          key_present="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT EXISTS (
+              SELECT 1 FROM pg_constraint
+              WHERE conrelid = 'public.musicas_tocadas'::regclass
+                AND conname = 'musicas_tocadas_user_musica_artista_dia_key'
+                AND pg_get_constraintdef(oid) = 'UNIQUE (user_id, musica, artista, dia)'
+            )
+          ")"
+          if [ "$key_present" != "t" ]; then
+            echo "::error::House Mix musicas_tocadas upsert key is missing. Apply the reviewed additive migration 20261028205300 before Bridge writes."
+            exit 1
+          fi
+          echo "House Mix musicas_tocadas upsert key is present."
 
       - name: Read-only preflight summary
         if: ${{ !inputs.apply_changes }}
@@ -384,6 +406,13 @@ jobs:
               SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261028193000'
             ) THEN 'forms/storage schema 20261028193000: applied'
               ELSE 'forms/storage schema 20261028193000: pending' END,
+            CASE WHEN EXISTS (
+              SELECT 1 FROM pg_constraint
+              WHERE conrelid = 'public.musicas_tocadas'::regclass
+                AND conname = 'musicas_tocadas_user_musica_artista_dia_key'
+                AND pg_get_constraintdef(oid) = 'UNIQUE (user_id, musica, artista, dia)'
+            ) THEN 'musicas_tocadas upsert key: present'
+              ELSE 'musicas_tocadas upsert key: pending' END,
             (SELECT count(*)::text FROM auth.users) || ' Auth users',
             (SELECT count(*)::text FROM storage.buckets) || ' Storage buckets',
             (SELECT count(*)::text FROM storage.objects) || ' Storage objects',
