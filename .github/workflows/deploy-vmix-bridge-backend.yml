@@ -110,6 +110,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes postgresql-client
 
+      - name: Require restored migration source files before writes
+        if: ${{ inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_versions=(
+            20261028003932
+            20261028025459
+            20261028025525
+            20261028030056
+            20261028030116
+            20261028030144
+            20261028104022
+          )
+          for version in "${required_versions[@]}"; do
+            matches=(supabase/migrations/"${version}"_*.sql)
+            if [ "${#matches[@]}" -ne 1 ] || [ ! -s "${matches[0]}" ]; then
+              echo "::error::Missing or ambiguous source migration for ${version}. Recover and commit the original SQL under supabase/migrations before any Bridge write."
+              exit 1
+            fi
+          done
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -136,7 +158,7 @@ jobs:
               RAISE EXCEPTION 'Supabase migration history is missing. Stop and restore/reconcile the House Mix database first.';
             END IF;
 
-            -- Require the six House Mix restoration phases observed on the configured project.
+            -- Require the seven House Mix restoration phases observed on the configured project.
             WITH required(version) AS (
               VALUES
                 ('20261028003932'),
@@ -144,7 +166,8 @@ jobs:
                 ('20261028025525'),
                 ('20261028030056'),
                 ('20261028030116'),
-                ('20261028030144')
+                ('20261028030144'),
+                ('20261028104022')
             )
             SELECT string_agg(r.version, ', ' ORDER BY r.version)
               INTO missing_house_mix_migrations
