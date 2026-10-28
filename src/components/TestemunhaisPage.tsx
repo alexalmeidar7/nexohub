@@ -371,21 +371,21 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     });
     if (!confirmed || !ownerId) return;
 
-    // Immediately remove from local state and localStorage
-    const updated = items.filter(item => item.id !== id);
-    setItems(updated);
-    saveStoredTestemunhais(ownerId, updated);
-
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
-        const { error } = await supabase.from("testemunhais").delete().eq("id", id);
-        if (error) console.warn("Supabase delete warning (testemunhais):", error);
+        const { data, error } = await supabase.from("testemunhais").delete()
+          .eq("id", id).eq("user_id", ownerId).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a exclusão da citação.");
       }
+      const updated = items.filter(item => item.id !== id);
+      setItems(updated);
+      saveStoredTestemunhais(ownerId, updated);
       toast({ title: "Citação excluída" });
-    } catch (e) {
-      console.warn("Erro ao excluir citação no Supabase:", e);
-      toast({ title: "Citação excluída" });
+    } catch (e: any) {
+      console.error("Erro ao excluir citação:", e);
+      toast({ title: "Citação não foi excluída", description: e?.message || "Falha ao excluir no servidor.", variant: "destructive" });
     }
   };
 
