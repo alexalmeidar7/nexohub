@@ -165,6 +165,8 @@ jobs:
             20261028125121
             20261028132309
             20261028172338
+            20261028180000
+            20261028193000
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -340,6 +342,30 @@ jobs:
           $preflight$;
           SQL
 
+      - name: Require current main schema reconciliation migrations before Bridge writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            WITH required(version) AS (
+              VALUES ('20261028180000'), ('20261028193000')
+            )
+            SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
+            FROM required r
+            WHERE NOT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations m
+              WHERE m.version = r.version
+            );
+          ")"
+          if [ -n "$missing" ]; then
+            echo "::error::Current House Mix schema migrations are not applied: $missing. Apply them separately only after approval; Bridge writes remain blocked."
+            exit 1
+          fi
+          echo "Current House Mix schema reconciliation migrations are recorded."
+
       - name: Read-only preflight summary
         if: ${{ !inputs.apply_changes }}
         env:
@@ -350,6 +376,14 @@ jobs:
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
           SELECT
             'House Mix restoration migrations: verified',
+            CASE WHEN EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261028180000'
+            ) THEN 'agenda schema 20261028180000: applied'
+              ELSE 'agenda schema 20261028180000: pending' END,
+            CASE WHEN EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261028193000'
+            ) THEN 'forms/storage schema 20261028193000: applied'
+              ELSE 'forms/storage schema 20261028193000: pending' END,
             (SELECT count(*)::text FROM auth.users) || ' Auth users',
             (SELECT count(*)::text FROM storage.buckets) || ' Storage buckets',
             (SELECT count(*)::text FROM storage.objects) || ' Storage objects',
