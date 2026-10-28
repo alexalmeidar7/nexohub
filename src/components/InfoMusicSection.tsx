@@ -932,11 +932,15 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                             const url = await uploadExcecaoImage(file, `excecao-${kind}-${exc.id}`);
                             if (!url) return;
                             const column = kind === "capa" ? "capa_url" : "artista_url";
-                            const { error } = await supabase
+                            const { data, error } = await supabase
                               .from("infomusic_excecoes")
                               .update({ [column]: url } as any)
-                              .eq("id", exc.id);
+                              .eq("id", exc.id)
+                              .eq("user_id", user?.id)
+                              .select("id")
+                              .maybeSingle();
                             if (error) throw error;
+                            if (!data?.id) throw new Error("O banco não confirmou a atualização da imagem.");
                             invalidateMusicExceptionsCache(user?.id);
                             loadExcecoes();
                             toast.success(kind === "capa" ? "Capa específica atualizada!" : "Foto específica do artista atualizada!");
@@ -946,11 +950,14 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                         };
                         const clearOwn = async (kind: "capa" | "artista") => {
                           const column = kind === "capa" ? "capa_url" : "artista_url";
-                          const { error } = await supabase
+                          const { data, error } = await supabase
                             .from("infomusic_excecoes")
                             .update({ [column]: null } as any)
-                            .eq("id", exc.id);
-                          if (error) { toast.error("Erro ao remover"); return; }
+                            .eq("id", exc.id)
+                            .eq("user_id", user?.id)
+                            .select("id")
+                            .maybeSingle();
+                          if (error || !data?.id) { toast.error(error?.message || "O banco não confirmou a remoção."); return; }
                           invalidateMusicExceptionsCache(user?.id);
                           loadExcecoes();
                           toast.success("Voltou a usar a imagem geral da lista");
@@ -1006,8 +1013,10 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                         className="h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50" 
                         onClick={async () => {
                           try {
-                            const { error } = await supabase.from("infomusic_excecoes").delete().eq("id", exc.id);
+                            const { data, error } = await supabase.from("infomusic_excecoes")
+                              .delete().eq("id", exc.id).eq("user_id", user?.id).select("id").maybeSingle();
                             if (error) throw error;
+                            if (!data?.id) throw new Error("O banco não confirmou a exclusão da exceção.");
                             loadExcecoes();
                             toast.success("Exceção removida");
                           } catch (e) {
