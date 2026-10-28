@@ -310,9 +310,12 @@ export default function PermissoesSection() {
           .eq("email", newEmail)
           .maybeSingle();
         if (rows?.id) {
-          await supabase.functions.invoke("manage-sub-users", {
+          const { data: permissionData, error: permissionError } = await supabase.functions.invoke("manage-sub-users", {
             body: { action: "update_modules", sub_user_id: rows.id, allowed_modules: modules },
           });
+          if (permissionError || permissionData?.error) {
+            toast.error(permissionData?.error || permissionError?.message || "Usuário criado, mas não foi possível aplicar o perfil automaticamente.");
+          }
           setPerfilMap(prev => {
             const next = { ...prev, [rows.id as string]: formPerfil };
             writePerfilMap(next);
@@ -406,8 +409,11 @@ export default function PermissoesSection() {
     const targets = subUsers.filter(s => perfilMap[s.id] === perfil);
     if (!targets.length) { toast.info("Nenhum usuário nesta categoria"); return; }
     const mods = (perfilModules[perfil] || []).filter(k => ALL_MODULE_KEYS.includes(k));
-    const results = await Promise.all(targets.map(target => persistModules(target, mods)));
-    const failed = results.filter(ok => !ok).length;
+    let failed = 0;
+    for (const target of targets) {
+      const ok = await persistModules(target, mods);
+      if (!ok) failed += 1;
+    }
     if (failed) {
       toast.error(`Não foi possível aplicar as funções a ${failed} de ${targets.length} usuário(s).`);
     } else {
