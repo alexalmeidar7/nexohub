@@ -1228,7 +1228,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     try {
       const { data } = await supabase
         .from("apresentadores")
-        .select("id, nome, foto, foto_url, instagram, cargo, whatsapp")
+        .select("id, nome, foto, instagram, cargo, whatsapp")
         .eq("user_id", targetUserId);
       if (data && data.length > 0) {
         const merged = data.map((item: any) => {
