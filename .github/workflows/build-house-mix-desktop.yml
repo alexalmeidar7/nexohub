@@ -14,6 +14,7 @@ on:
       - "infra/offline-first/desktop-client/**"
       - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
+      - ".env"
   push:
     branches: [main]
     paths:
@@ -27,6 +28,7 @@ on:
       - "infra/offline-first/desktop-client/**"
       - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
+      - ".env"
 
 permissions:
   contents: read
