@@ -26,7 +26,8 @@ function slugify(name) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 64);
+    .slice(0, 64)
+    .replace(/-+$/g, "");
 }
 
 function createClient(appDataPath, rawName) {

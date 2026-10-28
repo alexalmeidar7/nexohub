@@ -35,6 +35,18 @@ test("normalizes accents and punctuation", () => {
   assert.equal(slugify(" Rádio Cultura FM! "), "radio-cultura-fm");
 });
 
+test("keeps a truncated client id valid when the length limit falls on a separator", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "housemix-registry-"));
+  try {
+    const longName = `${"a".repeat(63)} b`;
+    const clients = createClient(root, longName);
+    assert.equal(clients[0].id, "a".repeat(63));
+    assert.equal(listClients(root)[0].id, "a".repeat(63));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("stores registry outside client profiles", () => {
   assert.equal(
     registryPath("C:/Users/Operator/AppData/Roaming"),
