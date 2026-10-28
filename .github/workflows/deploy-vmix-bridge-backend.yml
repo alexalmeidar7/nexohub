@@ -7,6 +7,11 @@ on:
         description: "Digite exatamente o Project Ref do backend ativo para evitar publicar no projeto errado"
         required: true
         type: string
+      apply_changes:
+        description: "Marque somente após aprovação explícita para aplicar a migration e publicar as funções Edge."
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -22,6 +27,7 @@ jobs:
         env:
           INPUT_PROJECT_REF: ${{ inputs.confirm_project_ref }}
           SECRET_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          EXPECTED_PROJECT_REF: qazvgmgdidjhbvcuinpy
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
@@ -29,8 +35,8 @@ jobs:
             echo "::error::Configure o segredo SUPABASE_PROJECT_REF com o ref do backend ativo."
             exit 1
           fi
-          if [ "${INPUT_PROJECT_REF}" != "${SECRET_PROJECT_REF}" ]; then
-            echo "::error::O ref digitado não corresponde ao segredo SUPABASE_PROJECT_REF. Nada foi publicado."
+          if [ "${INPUT_PROJECT_REF}" != "${EXPECTED_PROJECT_REF}" ] || [ "${SECRET_PROJECT_REF}" != "${EXPECTED_PROJECT_REF}" ]; then
+            echo "::error::O Project Ref confirmado e o segredo precisam corresponder ao backend restaurado. Nada foi publicado."
             exit 1
           fi
           if [ -z "${DATABASE_URL}" ] || [[ "${DATABASE_URL}" != *"${SECRET_PROJECT_REF}"* ]]; then
@@ -47,7 +53,137 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes postgresql-client
 
+      - name: Require restored migration source files before writes
+        if: ${{ inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_versions=(
+            20261028003932
+            20261028025459
+            20261028025525
+            20261028030056
+            20261028030116
+            20261028030144
+            20261028104022
+            20261028123803
+            20261028124350
+            20261028124413
+            20261028124449
+            20261028125121
+            20261028132309
+          )
+          for version in "${required_versions[@]}"; do
+            matches=(supabase/migrations/"${version}"_*.sql)
+            if [ "${#matches[@]}" -ne 1 ] || [ ! -s "${matches[0]}" ]; then
+              echo "::error::Missing or ambiguous source migration for ${version}. Recover and commit the original SQL under supabase/migrations before any Bridge write."
+              exit 1
+            fi
+          done
+
+      - name: Read-only backend preflight
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
+          DO $preflight$
+          DECLARE
+            missing_migrations text;
+            missing_tables text;
+            bridge_table_count integer;
+            bridge_migration_applied boolean;
+          BEGIN
+            IF to_regclass('supabase_migrations.schema_migrations') IS NULL THEN
+              RAISE EXCEPTION 'Supabase migration history is missing. No changes were made.';
+            END IF;
+            WITH required(version) AS (
+              VALUES
+                ('20261028003932'),
+                ('20261028025459'),
+                ('20261028025525'),
+                ('20261028030056'),
+                ('20261028030116'),
+                ('20261028030144'),
+                ('20261028104022'),
+                ('20261028123803'),
+                ('20261028124350'),
+                ('20261028124413'),
+                ('20261028124449'),
+                ('20261028125121'),
+                ('20261028132309')
+            )
+            SELECT string_agg(r.version, ', ' ORDER BY r.version)
+              INTO missing_migrations
+            FROM required r
+            WHERE NOT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations m
+              WHERE m.version = r.version
+            );
+            IF missing_migrations IS NOT NULL THEN
+              RAISE EXCEPTION 'House Mix restoration history is incomplete: %. No changes were made.', missing_migrations;
+            END IF;
+            WITH required(table_name) AS (
+              VALUES ('profiles'), ('programas'), ('user_settings'), ('empresa_config')
+            )
+            SELECT string_agg(r.table_name, ', ' ORDER BY r.table_name)
+              INTO missing_tables
+            FROM required r
+            WHERE to_regclass('public.' || r.table_name) IS NULL;
+            IF missing_tables IS NOT NULL THEN
+              RAISE EXCEPTION 'House Mix core tables are missing: %. No changes were made.', missing_tables;
+            END IF;
+            SELECT count(*) INTO bridge_table_count
+            FROM (VALUES
+              ('vmix_bridge_pairings'),
+              ('vmix_bridge_devices'),
+              ('vmix_bridge_jobs')
+            ) AS required(table_name)
+            WHERE to_regclass('public.' || required.table_name) IS NOT NULL;
+            SELECT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations
+              WHERE version = '20261022185000'
+            ) INTO bridge_migration_applied;
+            IF bridge_table_count NOT IN (0, 3) THEN
+              RAISE EXCEPTION 'Partial Bridge schema detected (% of 3 tables). Stop for manual reconciliation.', bridge_table_count;
+            END IF;
+            IF bridge_migration_applied AND bridge_table_count <> 3 THEN
+              RAISE EXCEPTION 'Bridge migration is recorded but its tables are incomplete. Stop for manual reconciliation.';
+            END IF;
+          END;
+          $preflight$;
+          SELECT
+            (SELECT count(*) FROM auth.users) AS auth_users,
+            (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND NOT c.relrowsecurity) AS public_tables_without_rls,
+            (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND c.relrowsecurity AND NOT EXISTS (SELECT 1 FROM pg_policies p WHERE p.schemaname = n.nspname AND p.tablename = c.relname)) AS public_tables_without_policies;
+          SQL
+
+      - name: Require restored Auth users, RLS and an absent Bridge baseline before writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          auth_user_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT count(*) FROM auth.users")"
+          if [ "$auth_user_count" -lt 1 ]; then
+            echo "::error::No Supabase Auth users are restored. Restore the legitimate House Mix users before any Bridge write."
+            exit 1
+          fi
+          rls_disabled_tables="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT COALESCE(string_agg(c.relname, ', ' ORDER BY c.relname), '') FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND NOT c.relrowsecurity")"
+          if [ -n "$rls_disabled_tables" ]; then
+            echo "::error::Public tables without RLS: $rls_disabled_tables. Enable RLS and validate policies before any Bridge write."
+            exit 1
+          fi
+          bridge_table_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT count(*) FROM (VALUES ('vmix_bridge_pairings'), ('vmix_bridge_devices'), ('vmix_bridge_jobs')) AS required(table_name) WHERE to_regclass('public.' || required.table_name) IS NOT NULL")"
+          bridge_migration_applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261022185000')")"
+          if [ "$bridge_table_count" != "0" ] || [ "$bridge_migration_applied" = "t" ]; then
+            echo "::error::Bridge schema already exists or is recorded. Stop for manual reconciliation; this workflow will not replay the baseline."
+            exit 1
+          fi
       - name: Apply only the vMix Bridge schema migration
+        if: ${{ inputs.apply_changes }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
@@ -55,11 +191,13 @@ jobs:
           psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -f supabase/migrations/20261022185000_vmix_bridge_backend.sql
 
       - name: Setup Supabase CLI
+        if: ${{ inputs.apply_changes }}
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Deploy Bridge Edge Functions
+        if: ${{ inputs.apply_changes }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -68,3 +206,9 @@ jobs:
           for fn in vmix-bridge-pairing vmix-bridge-connect vmix-bridge-poll vmix-bridge-result vmix-bridge-status; do
             supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --use-api
           done
+
+      - name: Confirm read-only preflight
+        if: ${{ inputs.apply_changes == false }}
+        run: |
+          echo "Read-only backend preflight completed for the confirmed project."
+          echo "No migration was applied and no Edge Function was deployed."
