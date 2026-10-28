@@ -12,6 +12,9 @@ alter table public.programas add column if not exists deleted_at timestamptz;
 
 alter table public.logos_patrocinadores
   add column if not exists nome text,
+  add column if not exists cnpj text,
+  add column if not exists telefone text,
+  add column if not exists endereco text,
   add column if not exists excluido boolean not null default false,
   add column if not exists excluido_at timestamptz;
 
