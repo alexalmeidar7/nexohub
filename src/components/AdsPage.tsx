@@ -112,11 +112,13 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
   const loadClientes = async () => {
     setLoadingClientes(true);
     try {
-      const { data } = await supabase
+      let query = supabase
         .from("logos_patrocinadores")
         .select("id, nome")
-        .eq("excluido", false)
-        .order("nome");
+        .eq("excluido", false);
+      if (targetUserId) query = query.eq("user_id", targetUserId);
+      const { data, error } = await query.order("nome");
+      if (error) throw error;
       const seen = new Set<string>();
       const list: { id: string; nome: string }[] = [];
       (data || []).forEach((c: any) => {
