@@ -1996,8 +1996,9 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   };
 
   const handleDelete = async (id: string): Promise<boolean> => {
+    const ownerId = targetUserId || user?.id;
     const isLocalOnly = !isUuidId(id);
-    if (!isLocalOnly && !targetUserId) {
+    if (!isLocalOnly && !ownerId) {
       toast({ title: "Não foi possível identificar a emissora", variant: "destructive" });
       return false;
     }
@@ -2008,20 +2009,20 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           .from("agenda_participantes")
           .delete()
           .eq("evento_id", id)
-          .eq("user_id", targetUserId);
+          .eq("user_id", ownerId);
         if (participantError) throw participantError;
 
         const { data, error } = await supabase
           .from("agenda_eventos")
           .delete()
           .eq("id", id)
-          .eq("user_id", targetUserId)
+          .eq("user_id", ownerId)
           .select("id");
         if (error) throw error;
         if (!data?.length) throw new Error("O banco não confirmou a exclusão. Verifique a sessão e as permissões da emissora.");
       }
 
-      deleteStoredAgendaEvent(id, targetUserId);
+      deleteStoredAgendaEvent(id, ownerId);
       setEventos(prev => prev.filter(e => e.id !== id));
       try {
         window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: id } }));
@@ -2037,6 +2038,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
   // Adiciona uma exceção (skip/substituir/automatico/manter) numa ocorrência específica
   const upsertExcecao = async (evt: Evento, exc: EventoExcecao) => {
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) {
+      toast({ title: "Não foi possível identificar a emissora", variant: "destructive" });
+      return false;
+    }
     const current: EventoExcecao[] = Array.isArray(evt.excecoes) ? [...evt.excecoes] : [];
     const idx = current.findIndex(x => x && x.data === exc.data);
     if (idx >= 0) current[idx] = exc; else current.push(exc);
@@ -2046,11 +2052,11 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         .from("agenda_eventos")
         .update({ excecoes: current as any })
         .eq("id", evt.id)
-        .eq("user_id", targetUserId)
+        .eq("user_id", ownerId)
         .select("id");
       if (error) throw error;
       if (!data?.length) throw new Error("O banco não confirmou a alteração desta ocorrência.");
-      saveStoredAgendaEvent(updatedEvt, targetUserId);
+      saveStoredAgendaEvent(updatedEvt, ownerId);
       setEventos(prev => prev.map(e => e.id === evt.id ? updatedEvt : e));
       try {
         window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: evt.id } }));
@@ -2224,7 +2230,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
 
   const handleClearAllPast = async () => {
-    if (!user && !targetUserId) return;
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) return;
     const pastIds = pastEventos.map(e => e.id);
     if (!pastIds.length) return;
     try {
@@ -2233,14 +2240,14 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         const { error: partsError } = await supabase.from("agenda_participantes").delete().in("evento_id", dbIds);
         if (partsError) throw partsError;
         const { data, error } = await supabase.from("agenda_eventos").delete()
-          .eq("user_id", targetUserId || user?.id)
+          .eq("user_id", ownerId)
           .in("id", dbIds)
           .select("id");
         if (error) throw error;
         if (data?.length !== dbIds.length) throw new Error("O banco não confirmou a exclusão de todos os eventos do histórico.");
       }
-      pastIds.filter(id => !isUuidId(id)).forEach(id => deleteStoredAgendaEvent(id, targetUserId));
-      dbIds.forEach(id => deleteStoredAgendaEvent(id, targetUserId));
+      pastIds.filter(id => !isUuidId(id)).forEach(id => deleteStoredAgendaEvent(id, ownerId));
+      dbIds.forEach(id => deleteStoredAgendaEvent(id, ownerId));
       setEventos(prev => prev.filter(e => !pastIds.includes(e.id)));
       try { window.dispatchEvent(new CustomEvent("nexohub:agenda-updated")); } catch {}
       toast({ title: "Histórico limpo", description: `${pastIds.length} evento(s) removido(s).` });
