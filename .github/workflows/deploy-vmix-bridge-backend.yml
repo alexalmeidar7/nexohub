@@ -89,6 +89,41 @@ jobs:
             exit 1
           fi
 
+      - name: Require frontend and Bridge backend to target the same project before writes
+        if: \${{ inputs.apply_changes }}
+        env:
+          EXPECTED_PROJECT_REF: \${{ secrets.SUPABASE_PROJECT_REF }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$EXPECTED_PROJECT_REF" <<'PY'
+          import sys
+          from pathlib import Path
+
+          expected_project = sys.argv[1]
+          values = {}
+          for raw_line in Path(".env").read_text(encoding="utf-8").splitlines():
+              line = raw_line.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              key, value = line.split("=", 1)
+              key = key.strip()
+              if key in {"VITE_SUPABASE_PROJECT_ID", "VITE_SUPABASE_URL"}:
+                  values[key] = value.strip().strip('"').strip("'").rstrip("/")
+
+          expected_url = f"https://{expected_project}.supabase.co"
+          actual_project = values.get("VITE_SUPABASE_PROJECT_ID", "")
+          actual_url = values.get("VITE_SUPABASE_URL", "")
+          if actual_project != expected_project or actual_url != expected_url:
+              print("::error::The browser Supabase client and Bridge backend target different projects.")
+              print(f"Frontend VITE_SUPABASE_PROJECT_ID: {actual_project or 'missing'}")
+              print(f"Frontend VITE_SUPABASE_URL: {actual_url or 'missing'}")
+              print(f"Bridge backend project: {expected_project}")
+              print("Align the frontend .env and supabase/config.toml with the approved backend before any write or Edge deployment.")
+              sys.exit(1)
+          print(f"Frontend and Bridge backend both target {expected_project}.")
+          PY
+
       - name: Verify Supabase access token can read the confirmed project (read-only)
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -123,6 +158,12 @@ jobs:
             20261028030116
             20261028030144
             20261028104022
+            20261028123803
+            20261028124350
+            20261028124413
+            20261028124449
+            20261028125121
+            20261028132309
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -158,7 +199,7 @@ jobs:
               RAISE EXCEPTION 'Supabase migration history is missing. Stop and restore/reconcile the House Mix database first.';
             END IF;
 
-            -- Require the seven House Mix restoration phases observed on the configured project.
+            -- Require every House Mix restoration/security migration currently recorded on the configured project.
             WITH required(version) AS (
               VALUES
                 ('20261028003932'),
@@ -167,7 +208,13 @@ jobs:
                 ('20261028030056'),
                 ('20261028030116'),
                 ('20261028030144'),
-                ('20261028104022')
+                ('20261028104022'),
+                ('20261028123803'),
+                ('20261028124350'),
+                ('20261028124413'),
+                ('20261028124449'),
+                ('20261028125121'),
+                ('20261028132309')
             )
             SELECT string_agg(r.version, ', ' ORDER BY r.version)
               INTO missing_house_mix_migrations
