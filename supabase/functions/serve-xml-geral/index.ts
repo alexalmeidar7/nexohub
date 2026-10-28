@@ -63,6 +63,13 @@ serve(async (req) => {
       alex: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
     };
 
+    if (rawSlug && !SLUG_TO_UID[rawSlug.toLowerCase()]) {
+      return new Response(
+        `<?xml version="1.0" encoding="UTF-8"?><error>slug de emissora não cadastrado</error>`,
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" } },
+      );
+    }
+
     if (rawSlug && SLUG_TO_UID[rawSlug.toLowerCase()]) {
       userId = SLUG_TO_UID[rawSlug.toLowerCase()];
     } else if (userId && SLUG_TO_UID[userId.toLowerCase()]) {
@@ -345,22 +352,24 @@ serve(async (req) => {
       const matchVento = weatherXml.match(/<vento>([^<]+)<\/vento>/i);
 
       xmlParts.push('    <atual>');
-      xmlParts.push(`      <temperatura>${esc(matchTemp ? matchTemp[1] : "27ºC")}</temperatura>`);
-      xmlParts.push(`      <descricao>${esc(matchDesc ? matchDesc[1] : "Ensolarado")}</descricao>`);
-      xmlParts.push(`      <minima>${esc(matchMin ? matchMin[1] : "21ºC")}</minima>`);
-      xmlParts.push(`      <maxima>${esc(matchMax ? matchMax[1] : "32ºC")}</maxima>`);
-      xmlParts.push(`      <umidade>${esc(matchUmidade ? matchUmidade[1] : "50%")}</umidade>`);
-      xmlParts.push(`      <vento>${esc(matchVento ? matchVento[1] : "10 km/h")}</vento>`);
+      xmlParts.push('      <disponivel>1</disponivel>');
+      xmlParts.push(`      <temperatura>${esc(matchTemp ? matchTemp[1] : "")}</temperatura>`);
+      xmlParts.push(`      <descricao>${esc(matchDesc ? matchDesc[1] : "")}</descricao>`);
+      xmlParts.push(`      <minima>${esc(matchMin ? matchMin[1] : "")}</minima>`);
+      xmlParts.push(`      <maxima>${esc(matchMax ? matchMax[1] : "")}</maxima>`);
+      xmlParts.push(`      <umidade>${esc(matchUmidade ? matchUmidade[1] : "")}</umidade>`);
+      xmlParts.push(`      <vento>${esc(matchVento ? matchVento[1] : "")}</vento>`);
       xmlParts.push(`      <icone_url>${esc(matchIcon ? matchIcon[1] : "")}</icone_url>`);
       xmlParts.push('    </atual>');
     } else {
       xmlParts.push('    <atual>');
-      xmlParts.push('      <temperatura>27ºC</temperatura>');
-      xmlParts.push('      <descricao>Tempo Firme e Ensolarado</descricao>');
-      xmlParts.push('      <minima>21ºC</minima>');
-      xmlParts.push('      <maxima>32ºC</maxima>');
-      xmlParts.push('      <umidade>52%</umidade>');
-      xmlParts.push('      <vento>11 km/h</vento>');
+      xmlParts.push('      <disponivel>0</disponivel>');
+      xmlParts.push('      <temperatura></temperatura>');
+      xmlParts.push('      <descricao></descricao>');
+      xmlParts.push('      <minima></minima>');
+      xmlParts.push('      <maxima></maxima>');
+      xmlParts.push('      <umidade></umidade>');
+      xmlParts.push('      <vento></vento>');
       xmlParts.push('      <icone_url></icone_url>');
       xmlParts.push('    </atual>');
     }
