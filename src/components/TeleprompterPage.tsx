@@ -31,25 +31,36 @@ export default function TeleprompterPage() {
 
   async function loadEstudios() {
     if (!user) return;
-    const { data } = await supabase
-      .from("programas")
-      .select("estudio")
-      .eq("user_id", user.id);
-    if (data) {
-      const unique = [...new Set(data.map((p) => p.estudio).filter(Boolean))] as string[];
+    try {
+      const { data, error } = await supabase
+        .from("programas")
+        .select("estudio")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      const unique = [...new Set((data || []).map((p) => p.estudio).filter(Boolean))] as string[];
       setEstudios(unique);
+    } catch (err: any) {
+      console.warn("Não foi possível carregar os estúdios:", err);
+      toast({ title: "Não foi possível carregar os estúdios", description: err?.message || "Verifique a conexão.", variant: "destructive" });
     }
   }
 
   async function loadTPs() {
-    if (!user) return;
-    const { data } = await (supabase as any)
-      .from("teleprompters")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    if (data) setTps(data);
-    setInitialLoading(false);
+    if (!user) { setInitialLoading(false); return; }
+    try {
+      const { data, error } = await (supabase as any)
+        .from("teleprompters")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setTps(data || []);
+    } catch (err: any) {
+      console.error("Falha ao carregar teleprompters:", err);
+      toast({ title: "Não foi possível carregar os teleprompters", description: err?.message || "Verifique a conexão.", variant: "destructive" });
+    } finally {
+      setInitialLoading(false);
+    }
   }
 
   async function handleAdd() {
