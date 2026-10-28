@@ -329,14 +329,14 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
     let fotoUrl = showFoto ? foto : "";
     if (fotoUrl && fotoUrl.startsWith("data:")) {
       const targetId = editingId || crypto.randomUUID();
-      const path = `apresentadores/${ownerId}/${targetId}.webp`;
+      const path = `${ownerId}/apresentadores/${targetId}.webp`;
       fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", path);
     }
 
     let finalBackgroundUrl = backgroundUrl;
     if (finalBackgroundUrl && finalBackgroundUrl.startsWith("data:")) {
       const targetId = editingId || crypto.randomUUID();
-      const path = `apresentadores/${ownerId}/${targetId}-bg.webp`;
+      const path = `${ownerId}/apresentadores/${targetId}-bg.webp`;
       finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", path);
     }
 
