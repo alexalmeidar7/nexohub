@@ -168,6 +168,7 @@ jobs:
             20261028180000
             20261028193000
             20261028205300
+            20261028223300
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -352,7 +353,7 @@ jobs:
           set -euo pipefail
           missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             WITH required(version) AS (
-              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300')
+              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300')
             )
             SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
             FROM required r
@@ -366,6 +367,47 @@ jobs:
             exit 1
           fi
           echo "Current House Mix schema reconciliation migrations are recorded."
+
+      - name: Require remaining House Mix columns before Bridge writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing_columns="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            WITH required(table_name, column_name) AS (
+              VALUES
+                ('infomusic', 'user_id'),
+                ('infomusic_excecoes', 'artista_url'),
+                ('streaming_channels', 'numero_canal'),
+                ('profiles', 'event_types_config')
+            )
+            SELECT COALESCE(string_agg(r.table_name || '.' || r.column_name, ', ' ORDER BY r.table_name, r.column_name), '')
+            FROM required r
+            LEFT JOIN information_schema.columns c
+              ON c.table_schema = 'public'
+             AND c.table_name = r.table_name
+             AND c.column_name = r.column_name
+            WHERE c.column_name IS NULL
+          ")"
+          if [ -n "$missing_columns" ]; then
+            echo "::error::Additional House Mix columns are missing: $missing_columns. Apply the reviewed additive migration 20261028223300 before Bridge writes."
+            exit 1
+          fi
+
+          user_id_not_null="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT NOT is_nullable = 'YES'
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'infomusic'
+              AND column_name = 'user_id'
+          ")"
+          if [ "$user_id_not_null" != "t" ]; then
+            echo "::error::infomusic.user_id is not enforced as NOT NULL. Resolve ownership safely before Bridge writes."
+            exit 1
+          fi
+          echo "Remaining House Mix columns and infomusic ownership constraint are present."
 
       - name: Require House Mix music-history upsert key before Bridge writes
         if: ${{ inputs.apply_changes }}
@@ -413,6 +455,10 @@ jobs:
                 AND pg_get_constraintdef(oid) = 'UNIQUE (user_id, musica, artista, dia)'
             ) THEN 'musicas_tocadas upsert key: present'
               ELSE 'musicas_tocadas upsert key: pending' END,
+            CASE WHEN EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261028223300'
+            ) THEN 'remaining House Mix columns 20261028223300: applied'
+              ELSE 'remaining House Mix columns 20261028223300: pending' END,
             (SELECT count(*)::text FROM auth.users) || ' Auth users',
             (SELECT count(*)::text FROM storage.buckets) || ' Storage buckets',
             (SELECT count(*)::text FROM storage.objects) || ' Storage objects',
