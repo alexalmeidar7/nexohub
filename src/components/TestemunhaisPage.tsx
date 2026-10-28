@@ -340,11 +340,14 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     } finally {
       setSaving(false);
       if (saveError) {
+        // Do not discard the draft or report a successful save when the database rejected it.
+        setItems(items);
+        saveStoredTestemunhais(ownerId, items);
         toast({ title: "Erro ao salvar citação no banco", description: saveError, variant: "destructive" });
       } else {
         toast({ title: editingId ? "Citação atualizada com sucesso" : "Citação cadastrada com sucesso" });
+        reset();
       }
-      reset();
     }
   };
 
