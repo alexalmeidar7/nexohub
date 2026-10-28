@@ -1107,136 +1107,16 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     return () => clearInterval(interval);
   }, [user, initialLoading, findCurrentOnAirThumb]);
 
-  const isModuleEnabled = (page: Page): boolean => {
-    // Pages that are always accessible regardless of plan
-    if (page === "dashboard" || page === "nexoplugins") return true;
+  // TEMPORÁRIO: liberar todas as páginas e menus para todos os usuários.
+  // O controle granular por plano e subusuário será reativado em uma etapa posterior.
+  const isModuleEnabled = (_page: Page): boolean => true;
 
-    // Sub-users: only allow modules explicitly assigned + always-accessible pages
-    if (subUserModules !== null) {
-      if (page === "configuracoes") return false;
-      if (
-        page === "programas" ||
-        page === "apresentadores" ||
-        page === "ouvintes" ||
-        page === "clientes" ||
-        page === "previsao"
-      ) {
-        return (
-          subUserModules.has(page) ||
-          subUserModules.has(`c:cadastros:${page}`) ||
-          subUserModules.has("g:cadastros") ||
-          subUserModules.has("cadastros")
-        );
-      }
-      if (page === "logos") {
-        return (
-          subUserModules.has("logos") ||
-          subUserModules.has("comercial") ||
-          subUserModules.has("g:comercial") ||
-          subUserModules.has("c:comercial:logos") ||
-          subUserModules.has("vmix") ||
-          subUserModules.has("g:vmix") ||
-          subUserModules.has("c:vmix:logos")
-        );
-      }
-      if (page === "broadcast" || page === "cenario" || page === "vmix") {
-        return (
-          subUserModules.has(page) ||
-          subUserModules.has("vmix") ||
-          subUserModules.has("g:vmix") ||
-          subUserModules.has(`c:vmix:${page}`) ||
-          subUserModules.has("comercial") ||
-          subUserModules.has("producao") ||
-          true
-        );
-      }
-      // Granular check: the page key itself is stored in allowed_modules
-      return subUserModules.has(page);
-    }
-
-    // Normal user flow
-    if (
-      page === "configuracoes" ||
-      page === "playerconfig" ||
-      page === "cortevideo" ||
-      page === "tp" ||
-      page === "fans" ||
-      page === "apresentadores" ||
-      page === "ouvintes" ||
-      page === "programas" ||
-      page === "previsao" ||
-      page === "site" ||
-      page === "sorteios" ||
-      page === "clientes" ||
-      page === "logos" ||
-      page === "agenda" ||
-      page === "broadcast" ||
-      page === "cenario" ||
-      page === "vmix"
-    ) {
-      return true;
-    }
-
-    const modulesSource = planModules ?? enabledModules;
-    if (!modulesSource) return true;
-
-    if (page === "testemunhais" || page === "promocoes" || page === "configtelapromo" || page === "preroll" || page === "shopping" || page === "propostas") {
-      return modulesSource.has("comercial") || modulesSource.has(page) || modulesSource.has("logos");
-    }
-
-    if (page === "batalha" || page === "enquete" || page === "quiz") {
-      return modulesSource.has("vmix") || modulesSource.has(page);
-    }
-
-    return modulesSource.has(page);
-  };
-
-  // ---- Menu visibility driven by the plan (pacote) linked to the client ----
-  const planKeyAllowed = (node: { label: string; page?: unknown }): boolean => {
-    // If it's a sub-user, we follow the granular subUserModules set (already filtered in isModuleEnabled for pages)
-    // But for the sidebar layout itself, we still check the master plan for consistency
-    const src = planModules ?? enabledModules;
-    
-    const key = moduleKeyOfNode(node);
-    
-    // IF the module is part of the controlled set (KNOWN_MODULE_KEYS),
-    // and the plan/manual-enable doesn't have it, we block it.
-    if (src && KNOWN_MODULE_KEYS.has(key) && !src.has(key)) {
-      // EXCEPT for 'clientes' which should be available if the user has it in their assigned package.
-      if (key === "clientes") return true;
-      return false;
-    }
-    
-    return true;
-
-  };
+  const planKeyAllowed = (_node: { label: string; page?: unknown }): boolean => true;
 
   const filterMenuChildren = (children: MenuChild[]): MenuChild[] =>
-    children
-      .filter(c => {
-        if (subUserModules !== null) {
-          return c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page));
-        }
-        if (isAdmin) return true;
-        return planKeyAllowed(c);
-      })
-      .map(c => (c.children ? { ...c, children: filterMenuChildren(c.children) } : c));
+    children.map(c => (c.children ? { ...c, children: filterMenuChildren(c.children) } : c));
 
-  const isMenuItemVisible = (item: MenuItem): boolean => {
-    if (item.label === "home") return true;
-    if (subUserModules !== null) {
-      if (item.children) {
-        return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
-      }
-      return item.page ? subUserModules.has(item.page) : false;
-    }
-    if (isAdmin) return true;
-    if (!planKeyAllowed(item)) return false;
-    if (item.children) return filterMenuChildren(item.children).length > 0;
-    return true;
-  };
-
-
+  const isMenuItemVisible = (_item: MenuItem): boolean => true;
 
   useEffect(() => {
     // Only redirect if initial loading is complete and modules are loaded
@@ -1446,7 +1326,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
             empresaLogo={empresa.logo}
             empresaTimezone={empresaTimezone}
             playerState={playerState}
-            allowedPages={subUserModules !== null ? subUserModules : (planModules ?? enabledModules)}
+            allowedPages={null}
             showBots={subUserModules === null}
             pageTitle={currentPage !== "dashboard" && !isWindowMode ? pageTitle[currentPage] : undefined}
             onGoBack={() => {
