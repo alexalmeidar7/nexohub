@@ -36,11 +36,12 @@ const isTimeInRange = (start: string, end: string, current: string, delayMinutes
 // then append a stable cache-buster derived from updated_at so vMix reloads on change.
 const withCacheBuster = (rawUrl: string, version?: string | null) => {
   if (!rawUrl) return "";
-  const clean = rawUrl.split("?")[0];
-  if (!version) return clean;
-  // Use a short hash of the timestamp to keep URL tidy
+  const [base, ...queryParts] = rawUrl.split("?");
+  if (!version) return rawUrl;
+  // Preserve signed URLs and append the cache version without discarding auth parameters.
   const v = String(new Date(version).getTime() || version).slice(-10);
-  return `${clean}?v=${v}`;
+  const query = [...queryParts, "v=" + encodeURIComponent(v)].filter(Boolean).join("&");
+  return base + "?" + query;
 };
 
 Deno.serve(async (req) => {
