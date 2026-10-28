@@ -955,8 +955,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
   const fetchClientes = useCallback(async () => {
     try {
       const storedMeta = getStoredMetadata();
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
-      const queryPromise = Promise.all([
+      const [logosRes, empRes] = await Promise.all([
         supabase
           .from("logos_patrocinadores")
           .select("id, user_id, nome, logo_url, ativo")
@@ -967,9 +966,6 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           .select("user_id, nome, logo, ativo")
           .order("nome"),
       ]);
-
-      const res = await Promise.race([queryPromise, timeoutPromise]);
-      const [logosRes, empRes] = (res || [ { data: [] }, { data: [] } ]) as any;
 
       const rawList: AgendaCliente[] = [];
 
@@ -1875,15 +1871,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         participantes: validParts.map((p, idx) => ({ id: p.id || `part_${Date.now()}_${idx}`, nome: p.nome, instagram: p.instagram })),
       };
 
-      // Salva localmente primeiro para garantir que o usuário nunca perca dados nem trave com erro de rede
-      saveStoredAgendaEvent(baseEventData, targetUserId);
-      saveStoredEventColor(finalEventId, selectedEventColor);
-      if (validProgId) saveStoredEventColor(`prog_${validProgId}`, selectedEventColor);
-      setEventos(prev => {
-        const filtered = prev.filter(e => e.id !== finalEventId);
-        return [baseEventData, ...filtered];
-      });
-
+      // O cache só é atualizado depois da confirmação do Supabase.
       try {
         const existingEvent = editingId ? eventos.find(e => e.id === editingId) : null;
         const existingExcecoes = (Array.isArray(existingEvent?.excecoes) ? existingEvent.excecoes : []).filter((x: any) => x && x.data !== "__meta__");
@@ -1919,21 +1907,24 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
           saveStoredEventColor(editingId, selectedEventColor);
           const { data: updRows, error: updErr } = await supabase.from("agenda_eventos").update(payload).eq("id", editingId).select("id");
           if (updErr || !updRows?.length) throw updErr || new Error("Nenhum registro foi atualizado (sessão expirada ou sem permissão)");
-          {
-            try {
-              await supabase.from("agenda_participantes").delete().eq("evento_id", editingId);
-              if (validParts.length) {
-                await supabase.from("agenda_participantes").insert(
-                  validParts.map((p) => ({
-                    evento_id: editingId,
-                    user_id: targetUserId || user?.id,
-                    nome: p.nome,
-                    instagram: p.instagram,
-                  }))
-                );
-              }
-            } catch {}
+          const { error: deletePartsError } = await supabase.from("agenda_participantes")
+            .delete().eq("evento_id", editingId).eq("user_id", targetUserId || user?.id);
+          if (deletePartsError) throw deletePartsError;
+          if (validParts.length) {
+            const { error: insertPartsError } = await supabase.from("agenda_participantes").insert(
+              validParts.map((p) => ({
+                evento_id: editingId,
+                user_id: targetUserId || user?.id,
+                nome: p.nome,
+                instagram: p.instagram,
+              }))
+            );
+            if (insertPartsError) throw insertPartsError;
           }
+          saveStoredAgendaEvent(baseEventData, targetUserId);
+          saveStoredEventColor(editingId, selectedEventColor);
+          if (validProgId) saveStoredEventColor(`prog_${validProgId}`, selectedEventColor);
+          setEventos(prev => [baseEventData, ...prev.filter(e => e.id !== editingId)]);
         } else {
           const { data: evt, error } = await supabase
             .from("agenda_eventos")
@@ -1957,16 +1948,17 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
             });
 
             if (validParts.length) {
-              try {
-                await supabase.from("agenda_participantes").insert(
-                  validParts.map((p) => ({
-                    evento_id: evt.id,
-                    user_id: targetUserId || user?.id,
-                    nome: p.nome,
-                    instagram: p.instagram,
-                  }))
-                );
-              } catch {}
+              const { error: insertPartsError } = await supabase.from("agenda_participantes").insert(
+                validParts.map((p) => ({
+                  evento_id: evt.id,
+                  user_id: targetUserId || user?.id,
+                  nome: p.nome,
+                  instagram: p.instagram,
+                }))
+              );
+              if (insertPartsError) {
+                toast({ title: "Evento salvo, mas os participantes não foram vinculados", description: insertPartsError.message, variant: "destructive" });
+              }
             }
           }
         }
@@ -1995,43 +1987,79 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     }
   };
 
-  const handleDelete = async (id: string) => {
-    deleteStoredAgendaEvent(id, targetUserId);
-    setEventos(prev => prev.filter(e => e.id !== id));
-    try {
-      await supabase.from("agenda_participantes").delete().eq("evento_id", id);
-      await supabase.from("agenda_eventos").delete().eq("id", id);
-    } catch (err) {
-      console.warn("Supabase delete failed:", err);
+  const handleDelete = async (id: string): Promise<boolean> => {
+    const ownerId = targetUserId || user?.id;
+    const isLocalOnly = !isUuidId(id);
+    if (!isLocalOnly && !ownerId) {
+      toast({ title: "Não foi possível identificar a emissora", variant: "destructive" });
+      return false;
     }
+
     try {
-      window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: id } }));
-    } catch {}
-    fetchEventos();
+      if (!isLocalOnly) {
+        const { error: participantError } = await supabase
+          .from("agenda_participantes")
+          .delete()
+          .eq("evento_id", id)
+          .eq("user_id", ownerId);
+        if (participantError) throw participantError;
+
+        const { data, error } = await supabase
+          .from("agenda_eventos")
+          .delete()
+          .eq("id", id)
+          .eq("user_id", ownerId)
+          .select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a exclusão. Verifique a sessão e as permissões da emissora.");
+      }
+
+      deleteStoredAgendaEvent(id, ownerId);
+      setEventos(prev => prev.filter(e => e.id !== id));
+      try {
+        window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: id } }));
+      } catch {}
+      await fetchEventos();
+      return true;
+    } catch (err: any) {
+      console.error("[Agenda] Falha ao excluir evento:", err);
+      toast({ title: "Evento não foi excluído", description: err?.message || "Falha ao excluir no servidor.", variant: "destructive" });
+      return false;
+    }
   };
 
   // Adiciona uma exceção (skip/substituir/automatico/manter) numa ocorrência específica
   const upsertExcecao = async (evt: Evento, exc: EventoExcecao) => {
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) {
+      toast({ title: "Não foi possível identificar a emissora", variant: "destructive" });
+      return false;
+    }
     const current: EventoExcecao[] = Array.isArray(evt.excecoes) ? [...evt.excecoes] : [];
     const idx = current.findIndex(x => x && x.data === exc.data);
     if (idx >= 0) current[idx] = exc; else current.push(exc);
     const updatedEvt: Evento = { ...evt, excecoes: current };
-    saveStoredAgendaEvent(updatedEvt, targetUserId);
-    setEventos(prev => prev.map(e => e.id === evt.id ? updatedEvt : e));
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("agenda_eventos")
         .update({ excecoes: current as any })
-        .eq("id", evt.id);
-      if (error) {
-        console.warn("Supabase update excecao aviso:", error.message);
-      }
-    } catch {}
-    try {
-      window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: evt.id } }));
-    } catch {}
-    await fetchEventos();
-    return true;
+        .eq("id", evt.id)
+        .eq("user_id", ownerId)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("O banco não confirmou a alteração desta ocorrência.");
+      saveStoredAgendaEvent(updatedEvt, ownerId);
+      setEventos(prev => prev.map(e => e.id === evt.id ? updatedEvt : e));
+      try {
+        window.dispatchEvent(new CustomEvent("nexohub:agenda-updated", { detail: { eventId: evt.id } }));
+      } catch {}
+      await fetchEventos();
+      return true;
+    } catch (err: any) {
+      console.error("[Agenda] Falha ao salvar exceção:", err);
+      toast({ title: "Alteração da ocorrência não foi salva", description: err?.message || "Falha ao atualizar no servidor.", variant: "destructive" });
+      return false;
+    }
   };
 
   // Solicita a exclusão — se recorrente, abre diálogo de escolha; se único, confirmação direta
@@ -2049,8 +2077,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
         destructive: true,
         icon: "trash",
       });
-      if (confirmed) {
-        await handleDelete(evt.id);
+      if (confirmed && await handleDelete(evt.id)) {
         toast({ title: "Evento excluído com sucesso" });
       }
       return;
@@ -2195,24 +2222,32 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
 
 
   const handleClearAllPast = async () => {
-    if (!user && !targetUserId) return;
+    const ownerId = targetUserId || user?.id;
+    if (!ownerId) return;
     const pastIds = pastEventos.map(e => e.id);
     if (!pastIds.length) return;
-    for (const id of pastIds) {
-      deleteStoredAgendaEvent(id, targetUserId);
-      try {
-        await supabase.from("agenda_participantes").delete().eq("evento_id", id);
-      } catch {}
+    try {
+      const dbIds = pastIds.filter(isUuidId);
+      if (dbIds.length) {
+        const { error: partsError } = await supabase.from("agenda_participantes").delete().in("evento_id", dbIds);
+        if (partsError) throw partsError;
+        const { data, error } = await supabase.from("agenda_eventos").delete()
+          .eq("user_id", ownerId)
+          .in("id", dbIds)
+          .select("id");
+        if (error) throw error;
+        if (data?.length !== dbIds.length) throw new Error("O banco não confirmou a exclusão de todos os eventos do histórico.");
+      }
+      pastIds.filter(id => !isUuidId(id)).forEach(id => deleteStoredAgendaEvent(id, ownerId));
+      dbIds.forEach(id => deleteStoredAgendaEvent(id, ownerId));
+      setEventos(prev => prev.filter(e => !pastIds.includes(e.id)));
+      try { window.dispatchEvent(new CustomEvent("nexohub:agenda-updated")); } catch {}
+      toast({ title: "Histórico limpo", description: `${pastIds.length} evento(s) removido(s).` });
+      await fetchEventos();
+    } catch (err: any) {
+      console.error("[Agenda] Falha ao limpar histórico:", err);
+      toast({ title: "Histórico não foi limpo", description: err?.message || "Falha ao excluir os eventos.", variant: "destructive" });
     }
-    setEventos(prev => prev.filter(e => !pastIds.includes(e.id)));
-    try {
-      await supabase.from("agenda_eventos").delete().in("id", pastIds);
-    } catch {}
-    try {
-      window.dispatchEvent(new CustomEvent("nexohub:agenda-updated"));
-    } catch {}
-    toast({ title: "Histórico limpo", description: `${pastIds.length} evento(s) removido(s).` });
-    fetchEventos();
   };
 
   const handleClearCurrentMonth = async () => {

@@ -340,11 +340,14 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     } finally {
       setSaving(false);
       if (saveError) {
+        // Do not discard the draft or report a successful save when the database rejected it.
+        setItems(items);
+        saveStoredTestemunhais(ownerId, items);
         toast({ title: "Erro ao salvar citação no banco", description: saveError, variant: "destructive" });
       } else {
         toast({ title: editingId ? "Citação atualizada com sucesso" : "Citação cadastrada com sucesso" });
+        reset();
       }
-      reset();
     }
   };
 
@@ -371,21 +374,21 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     });
     if (!confirmed || !ownerId) return;
 
-    // Immediately remove from local state and localStorage
-    const updated = items.filter(item => item.id !== id);
-    setItems(updated);
-    saveStoredTestemunhais(ownerId, updated);
-
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
-        const { error } = await supabase.from("testemunhais").delete().eq("id", id);
-        if (error) console.warn("Supabase delete warning (testemunhais):", error);
+        const { data, error } = await supabase.from("testemunhais").delete()
+          .eq("id", id).eq("user_id", ownerId).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a exclusão da citação.");
       }
+      const updated = items.filter(item => item.id !== id);
+      setItems(updated);
+      saveStoredTestemunhais(ownerId, updated);
       toast({ title: "Citação excluída" });
-    } catch (e) {
-      console.warn("Erro ao excluir citação no Supabase:", e);
-      toast({ title: "Citação excluída" });
+    } catch (e: any) {
+      console.error("Erro ao excluir citação:", e);
+      toast({ title: "Citação não foi excluída", description: e?.message || "Falha ao excluir no servidor.", variant: "destructive" });
     }
   };
 

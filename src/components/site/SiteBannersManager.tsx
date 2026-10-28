@@ -60,14 +60,24 @@ export default function SiteBannersManager({ effectiveUserId }: { effectiveUserI
   };
 
   const update = async (id: string, patch: Partial<Banner>) => {
-    setBanners((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-    await supabase.from("site_banners").update(patch).eq("id", id);
+    const previous = banners.find((item) => item.id === id);
+    if (!previous) return;
+    const { error } = await supabase.from("site_banners").update(patch).eq("id", id).eq("user_id", effectiveUserId);
+    if (error) {
+      toast.error("Não foi possível atualizar o banner: " + error.message);
+      return;
+    }
+    setBanners((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
   const remove = async (id: string) => {
     if (!(await confirmDialog("Excluir este banner?"))) return;
-    await supabase.from("site_banners").delete().eq("id", id);
-    setBanners((p) => p.filter((b) => b.id !== id));
+    const { error } = await supabase.from("site_banners").delete().eq("id", id).eq("user_id", effectiveUserId);
+    if (error) {
+      toast.error("Não foi possível excluir o banner: " + error.message);
+      return;
+    }
+    setBanners((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
