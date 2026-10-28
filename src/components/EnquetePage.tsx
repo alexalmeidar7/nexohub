@@ -105,60 +105,50 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
 
   const fetchEnquetes = async () => {
     if (!targetUserId) return;
-    
-    let rows: any[] = [];
+    let rows: EnqueteAgendada[] = [];
+    let databaseLoaded = false;
     try {
-      const { data } = await supabase
-        .from("enquetes_agendadas")
-        .select("*")
-        .eq("user_id", targetUserId)
-        .order("data_enquete", { ascending: false });
-
-      if (data) {
-        rows = data;
-      }
+      const { data, error } = await supabase.from("enquetes_agendadas")
+        .select("*").eq("user_id", targetUserId).order("data_enquete", { ascending: false });
+      if (error) throw error;
+      rows = (data || []) as EnqueteAgendada[];
+      databaseLoaded = true;
     } catch (err) {
       console.warn("Supabase fetch enquetes warning:", err);
     }
 
-    // Tenta carregar do servidor local caso o browser tenha sido limpo
-    let serverEnquetes: EnqueteAgendada[] = [];
-    try {
-      const resp = await fetch(`/api/sync-xml-enquete?slug=${encodeURIComponent(targetSlug)}&userId=${encodeURIComponent(targetUserId)}`);
-      if (resp.ok) {
-        const json = await resp.json();
-        if (Array.isArray(json?.enquetes)) {
-          serverEnquetes = json.enquetes;
+    let merged: EnqueteAgendada[] = [];
+    if (databaseLoaded) {
+      merged = rows;
+    } else {
+      let serverEnquetes: EnqueteAgendada[] = [];
+      try {
+        const resp = await fetch("/api/sync-xml-enquete?slug=" + encodeURIComponent(targetSlug) + "&userId=" + encodeURIComponent(targetUserId));
+        if (resp.ok) {
+          const json = await resp.json();
+          if (Array.isArray(json?.enquetes)) serverEnquetes = json.enquetes;
         }
-      }
-    } catch {}
+      } catch {}
+      const localList = getStoredEnquetes(targetUserId);
+      const hasFallbackData = serverEnquetes.length > 0 || localList.length > 0;
+      const staticList = hasFallbackData ? [] : (
+        (initialEnquetesSync as Record<string, any[]>)[targetSlug] ||
+        (initialEnquetesSync as Record<string, any[]>)[targetUserId] || []
+      );
+      const map = new Map<string, EnqueteAgendada>();
+      staticList.forEach(item => item?.id && map.set(item.id, item));
+      serverEnquetes.forEach(item => item?.id && map.set(item.id, item));
+      localList.forEach(item => item?.id && map.set(item.id, { ...(map.get(item.id) || {}), ...item }));
+      merged = Array.from(map.values());
+    }
 
-    const localList = getStoredEnquetes(targetUserId);
-    // Lista de exemplo serve apenas como semente inicial: se já existe qualquer
-    // dado real (banco, servidor ou local), nunca reinserir — itens excluídos
-    // não devem voltar sozinhos.
-    const hasRealData = rows.length > 0 || serverEnquetes.length > 0 || localList.length > 0;
-    const staticList = hasRealData ? [] : (
-      (initialEnquetesSync as Record<string, any[]>)[targetSlug] ||
-      (initialEnquetesSync as Record<string, any[]>)[targetUserId] || []
-    );
-
-    const map = new Map<string, EnqueteAgendada>();
-    staticList.forEach(s => s?.id && map.set(s.id, s));
-    serverEnquetes.forEach(e => e?.id && map.set(e.id, e));
-    rows.forEach(r => r?.id && map.set(r.id, r));
-    localList.forEach(l => l?.id && map.set(l.id, { ...(map.get(l.id) || {}), ...l }));
-
-    const merged = Array.from(map.values()).sort((a, b) => {
+    merged.sort((a, b) => {
       const dateCmp = (b.data_enquete || "").localeCompare(a.data_enquete || "");
       if (dateCmp !== 0) return dateCmp;
       return (b.horario_inicio || "").localeCompare(a.horario_inicio || "");
     });
-
-    setEnquetes(merged as EnqueteAgendada[]);
-    if (merged.length > 0) {
-      saveStoredEnquetes(targetUserId, merged as EnqueteAgendada[]);
-    }
+    setEnquetes(merged);
+    saveStoredEnquetes(targetUserId, merged);
     setLoading(false);
   };
 
