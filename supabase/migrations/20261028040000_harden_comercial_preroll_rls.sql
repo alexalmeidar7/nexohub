@@ -7,7 +7,8 @@ BEGIN;
 ALTER TABLE public.comercial_preroll ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL PRIVILEGES ON TABLE public.comercial_preroll FROM PUBLIC, anon, authenticated;
-GRANT SELECT ON TABLE public.comercial_preroll TO anon;
+-- Anonymous player reads use public-player-data, which resolves a station slug
+-- before querying with the service role. Do not expose this table directly to anon.
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.comercial_preroll TO authenticated;
 
 DROP POLICY IF EXISTS "Users manage own comercial_preroll" ON public.comercial_preroll;
@@ -18,12 +19,9 @@ CREATE POLICY "Users manage own comercial_preroll"
   USING ((SELECT auth.uid()) = user_id)
   WITH CHECK ((SELECT auth.uid()) = user_id);
 
+-- Remove the legacy broad active-row policy. Public player reads go through
+-- public-player-data, which scopes campaigns to the requested station slug.
 DROP POLICY IF EXISTS "Anyone authenticated can view active prerolls" ON public.comercial_preroll;
-CREATE POLICY "Anyone authenticated can view active prerolls"
-  ON public.comercial_preroll
-  FOR SELECT
-  TO anon, authenticated
-  USING (active = true);
 
 DROP POLICY IF EXISTS "Sub-users can view parent comercial_preroll" ON public.comercial_preroll;
 CREATE POLICY "Sub-users can view parent comercial_preroll"
@@ -117,26 +115,25 @@ BEGIN
     AND tablename = 'comercial_preroll'
     AND policyname IN (
       'Users manage own comercial_preroll',
-      'Anyone authenticated can view active prerolls',
       'Sub-users can view parent comercial_preroll',
       'Sub-users can insert parent comercial_preroll',
       'Sub-users can update parent comercial_preroll',
       'Sub-users can delete parent comercial_preroll'
     );
 
-  IF policy_count <> 6 THEN
+  IF policy_count <> 5 THEN
     RAISE EXCEPTION 'Expected six comercial_preroll policies, found %.', policy_count;
   END IF;
 
-  IF has_table_privilege('anon', 'public.comercial_preroll', 'INSERT')
+  IF has_table_privilege('anon', 'public.comercial_preroll', 'SELECT')
+     OR has_table_privilege('anon', 'public.comercial_preroll', 'INSERT')
      OR has_table_privilege('anon', 'public.comercial_preroll', 'UPDATE')
      OR has_table_privilege('anon', 'public.comercial_preroll', 'DELETE')
      OR has_table_privilege('anon', 'public.comercial_preroll', 'TRUNCATE') THEN
     RAISE EXCEPTION 'anon still has write or truncate privileges on comercial_preroll.';
   END IF;
 
-  IF NOT has_table_privilege('anon', 'public.comercial_preroll', 'SELECT')
-     OR NOT has_table_privilege('authenticated', 'public.comercial_preroll', 'SELECT')
+  IF NOT has_table_privilege('authenticated', 'public.comercial_preroll', 'SELECT')
      OR NOT has_table_privilege('authenticated', 'public.comercial_preroll', 'INSERT')
      OR NOT has_table_privilege('authenticated', 'public.comercial_preroll', 'UPDATE')
      OR NOT has_table_privilege('authenticated', 'public.comercial_preroll', 'DELETE')
