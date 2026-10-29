@@ -726,9 +726,9 @@ jobs:
           echo "No migration was applied and no Edge Function was deployed."
 
       - name: Report detailed reconciliation gaps (read-only)
-        if: \${{ !inputs.apply_changes }}
+        if: ${{ !inputs.apply_changes }}
         env:
-          DATABASE_URL: \${{ secrets.SUPABASE_DB_URL }}
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         shell: bash
         run: |
           set -euo pipefail
