@@ -70,18 +70,21 @@ jobs:
           parsed = urlparse(database_url)
           host = (parsed.hostname or "").lower()
           username = unquote(parsed.username or "")
-          direct_database_host = host == f"db.{project_ref}.supabase.co"
+          # GitHub-hosted runners may be IPv4-only. Supabase direct database
+          # endpoints are IPv6-only unless the project has the IPv4 add-on.
+          # Require the project's Supavisor session pooler (IPv4, port 5432)
+          # so the read-only preflight and approved psql migrations fail early
+          # with a clear message instead of a network-level IPv6 error.
           project_pooler_host = (
               host.endswith(".pooler.supabase.com")
               and username == f"postgres.{project_ref}"
+              and parsed.port == 5432
           )
-          if parsed.scheme not in ("postgres", "postgresql") or not (
-              direct_database_host or project_pooler_host
-          ):
+          if parsed.scheme not in ("postgres", "postgresql") or not project_pooler_host:
               sys.exit(1)
           PY
           then
-            echo "::error::SUPABASE_DB_URL must use the confirmed project's direct database host or its project-specific Supabase pooler. Nothing was changed."
+            echo "::error::SUPABASE_DB_URL must use the confirmed project's Supavisor session pooler (IPv4, port 5432) with username postgres.<project_ref>. Direct IPv6 endpoints are not accepted on GitHub-hosted runners. Nothing was changed."
             exit 1
           fi
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
