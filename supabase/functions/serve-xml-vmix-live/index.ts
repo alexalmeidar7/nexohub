@@ -187,7 +187,6 @@ Deno.serve(async (req) => {
     const liveTitle = String(items.music_current_title || musicData.musica || musicData.titulo || "").trim();
     const liveArtist = String(items.music_current_artist || musicData.artista || "").trim();
     const liveCover = String(items.music_current_cover || musicData.capa || musicData.cover || musicData.imagem || "").trim();
-    const liveStart = Number(items.music_start_time || musicData.startedAt || musicData.startTime || 0);
     // updated_at acompanha a gravação do snapshot; music_start_time é o início da faixa.
     const snapshotUpdatedAt = userSettings?.updated_at ? new Date(userSettings.updated_at).getTime() : 0;
     const isLive = Boolean(liveTitle) && snapshotUpdatedAt > 0 && Date.now() - snapshotUpdatedAt < 5 * 60 * 1000;
