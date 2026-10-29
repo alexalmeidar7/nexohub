@@ -112,7 +112,11 @@ serve(async (req) => {
 
     // Fetch all related entities in parallel
     const step = async <T>(name: string, p: PromiseLike<T>): Promise<T> => {
-      const r = await p;
+      const r: any = await p;
+      if (r?.error) {
+        console.error(`[serve-xml-geral] step ${name} failed:`, r.error);
+        throw r.error;
+      }
       console.log(`[serve-xml-geral] step ${name} ok`);
       return r;
     };
