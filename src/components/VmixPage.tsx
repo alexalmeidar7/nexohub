@@ -1051,9 +1051,14 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
 
       // Load all connections
+      let ownerIds: string[] = [user.id];
+      try {
+        const { data: parentId } = await (supabase.rpc as any)("current_parent_user_id");
+        if (parentId && typeof parentId === "string" && parentId !== user.id) ownerIds.push(parentId);
+      } catch {}
       const { data: connections } = await (supabase.from("vmix_connections" as any) as any)
         .select("*")
-        .eq("user_id", user.id)
+        .in("user_id", ownerIds)
         .order("created_at", { ascending: false });
 
       if (connections && connections.length > 0) {
@@ -1109,12 +1114,23 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     loadSettings();
   }, [user]);
 
+  const resolveConnectionOwnerIds = async (): Promise<string[]> => {
+    if (!user) return [];
+    const ids = [user.id];
+    try {
+      const { data } = await (supabase.rpc as any)("current_parent_user_id");
+      if (data && typeof data === "string" && data !== user.id) ids.push(data);
+    } catch {}
+    return ids;
+  };
+
   const loadConnections = async () => {
     if (!user) return;
+    const ownerIds = await resolveConnectionOwnerIds();
     const { data } = await supabase
       .from("vmix_connections" as any)
       .select("*")
-      .eq("user_id", user.id)
+      .in("user_id", ownerIds)
       .order("created_at", { ascending: false });
     if (data) setVmixConnections(data);
   };
