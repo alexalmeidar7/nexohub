@@ -382,7 +382,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
         body: { action: "sync", slug: targetSlug, userId: uId, batalhas: list },
       }).then(({ error }) => {
         if (error) console.warn("Falha na sincronização remota da batalha:", error);
-      });
+      }).catch((error) => console.warn("Falha na chamada de sincronização da batalha:", error));
     } catch {}
   };
 
