@@ -137,6 +137,8 @@ Deno.serve(async (req) => {
           imagem_resposta: qz.imagem_resposta || "",
         };
         if (isUUID(qz.id)) row.id = qz.id;
+        const ownershipError = await assertOwnedRecordIds(sb, "quiz_agendados", [row.id], targetUid);
+        if (ownershipError) return ownershipError;
         const { data, error } = await sb.from("quiz_agendados").upsert(row).select();
         if (error) {
           console.error("[serve-xml-quiz] Save error:", error);
