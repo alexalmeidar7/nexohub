@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
 
     // Programa no ar conforme grade (fuso America/Sao_Paulo)
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const now = new Date();
     const tzParts = new Intl.DateTimeFormat("en-US", {
       timeZone: "America/Sao_Paulo",
       weekday: "short",
@@ -85,13 +86,15 @@ Deno.serve(async (req) => {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-    }).formatToParts(new Date());
+    }).formatToParts(now);
     const wkShort = tzParts.find((p) => p.type === "weekday")?.value || "Sun";
     const hh = tzParts.find((p) => p.type === "hour")?.value || "00";
     const mm = tzParts.find((p) => p.type === "minute")?.value || "00";
     const ss = tzParts.find((p) => p.type === "second")?.value || "00";
     const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const today = dayNames[dayMap[wkShort] ?? 0];
+    const todayIndex = dayMap[wkShort] ?? 0;
+    const today = dayNames[todayIndex];
+    const yesterday = dayNames[(todayIndex + 6) % 7];
     const nowTime = `${hh}:${mm}:${ss}`;
 
     const { data: progs } = await supabase
@@ -102,11 +105,23 @@ Deno.serve(async (req) => {
       .ilike("estudio", "%fm%")
       .order("horario_inicio", { ascending: false });
 
-    const onAir = (progs || []).find(
-      (p: any) =>
+    // Prioriza programas iniciados ontem que atravessam a meia-noite;
+    // em seguida considera a grade normal do dia atual.
+    const onAir =
+      (progs || []).find((p: any) => {
+        const start = toSeconds(p.horario_inicio);
+        const end = toSeconds(p.horario_fim);
+        const current = toSeconds(nowTime);
+        return (
+          end <= start &&
+          (p.dias_semana || []).includes(yesterday) &&
+          current < end
+        );
+      }) ||
+      (progs || []).find((p: any) =>
         (p.dias_semana || []).includes(today) &&
         isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
-    );
+      );
 
     // Apresentador (foto)
     let apresentadorNome = "";
