@@ -1,0 +1,1 @@
+alter table public.promocoes add column if not exists botao_url text, add column if not exists banner_l_url text, add column if not exists nome text, add column if not exists programa_ids uuid[] not null default '{}'::uuid[];
