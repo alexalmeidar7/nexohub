@@ -8,9 +8,6 @@ const corsHeaders = {
 const esc = (s: string) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
-// Último XML bom por user+estúdio: usado SOMENTE como fallback quando o banco falha.
-const lastGood = new Map<string, string>();
-
 async function withRetry<T>(fn: () => PromiseLike<{ data: T; error: any }>, tries = 3): Promise<T> {
   let lastErr: any;
   for (let i = 0; i < tries; i++) {
@@ -37,13 +34,10 @@ const xmlHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  let cacheKey = "";
-  let estudioParam = "";
   try {
     const url = new URL(req.url);
     const userId = url.searchParams.get("user_id");
     const estudio = url.searchParams.get("estudio");
-    estudioParam = estudio || "";
 
     if (!userId || !estudio) {
       return new Response("<error>user_id and estudio required</error>", {
@@ -51,7 +45,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" },
       });
     }
-    cacheKey = `${userId}|${estudio}`;
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const subUser: any = await withRetry(() => sb.from("sub_users")
@@ -74,13 +67,12 @@ Deno.serve(async (req) => {
         .trim();
 
     const targetEst = norm(estudio);
+    const nowLocal = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const todayLocal = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
     let candidates = (allUserRoteiros || []).filter((r: any) => {
-      if (!targetEst) return true;
       const rEst = norm(r.estudio);
-      return (
-        rEst === targetEst ||
-        (targetEst.includes("FM") && rEst.includes("FM"))
-      );
+      const rDate = String(r.data_programa || "").slice(0, 10);
+      return rEst === targetEst && rDate === todayLocal;
     });
 
     // Carrega horarios dos programas para fallback
@@ -91,7 +83,7 @@ Deno.serve(async (req) => {
     const progMap = new Map<string, string>();
     (progs || []).forEach((p: any) => { if (p.nome) progMap.set(p.nome, (p.horario_inicio || "").slice(0, 5)); });
 
-    // Uma republicação antiga não pode superar uma edição mais recente.
+    // Entre os roteiros do dia e estúdio exatos, prevalece a edição mais recente.
     candidates.sort((a: any, b: any) => {
       const tsA = new Date(a.updated_at || a.created_at || 0).getTime();
       const tsB = new Date(b.updated_at || b.created_at || 0).getTime();
@@ -183,17 +175,13 @@ Deno.serve(async (req) => {
     }
 
     xml += `</programaExpress>`;
-    lastGood.set(cacheKey, xml);
-
     return new Response(xml, { status: 200, headers: { ...xmlHeaders, "Vary": "user_id, estudio" } });
   } catch (err) {
-    console.error("[serve-xml-roteiro-estudio] db failure, serving fallback:", String(err));
-    const cached = cacheKey ? lastGood.get(cacheKey) : undefined;
-    const body = cached ??
-      `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n  <estudio>${esc(estudioParam)}</estudio>\n  <indisponivel>true</indisponivel>\n</programaExpress>`;
+    console.error("[serve-xml-roteiro-estudio] database failure:", String(err));
+    const body = `<?xml version="1.0" encoding="UTF-8"?>\n<programaExpress>\n  <indisponivel>true</indisponivel>\n  <erro>dados temporariamente indisponiveis</erro>\n</programaExpress>`;
     return new Response(body, {
-      status: 200,
-      headers: { ...xmlHeaders, "X-Fallback": cached ? "last-good" : "empty" },
+      status: 503,
+      headers: { ...xmlHeaders, "X-Data-Stale": "0", "Retry-After": "15" },
     });
   }
 });

@@ -117,3 +117,15 @@ verify_jwt = false
 # Reports the online bridge device for the authenticated user.
 [functions.vmix-bridge-status]
 verify_jwt = false
+
+[functions.serve-xml-broadcast]
+verify_jwt = false
+
+[functions.serve-xml-tempo]
+verify_jwt = false
+
+[functions.serve-xml-cenarios-estudio]
+verify_jwt = false
+
+[functions.serve-xml-vmix-live]
+verify_jwt = false

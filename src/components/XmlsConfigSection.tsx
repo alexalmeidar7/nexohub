@@ -22,7 +22,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
 
   const envSupabase = import.meta.env.VITE_SUPABASE_URL || "";
   
-  const effectiveSupabaseUrl = envSupabase || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+  const effectiveSupabaseUrl = envSupabase || "https://qazvgmgdidjhbvcuinpy.supabase.co";
 
   const feeds = useMemo(() => {
     const liveUrl = (feed: string, extra = "") => `${effectiveSupabaseUrl}/functions/v1/${feed}?user_id=${encodeURIComponent(resolvedUid)}${extra}`;

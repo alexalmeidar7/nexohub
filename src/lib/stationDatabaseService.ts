@@ -113,10 +113,12 @@ export async function fetchStationDatabaseData(
 
   const promise = (async (): Promise<StationDatabaseData | null> => {
     try {
-      const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
-      const ANON_KEY =
-        (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6amZ6eHh2eGJzcGJka29kb2l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyOTUxNDEsImV4cCI6MjA4Njg3MTE0MX0.isUmXafM1scN8AogofAEw5ffcVZSZX4ff-WVusaB1OU";
+      const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || "https://qazvgmgdidjhbvcuinpy.supabase.co";
+      const ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+      if (!ANON_KEY) {
+        console.warn("[stationDatabaseService] Missing VITE_SUPABASE_PUBLISHABLE_KEY; using local station cache.");
+        return getStationDatabaseSync(userIdOrEmailOrSlug);
+      }
 
       const url = `${SUPABASE_URL}/functions/v1/public-player-data?slug=${encodeURIComponent(targetSlug)}`;
       const res = await fetch(url, {

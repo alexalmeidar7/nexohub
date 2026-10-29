@@ -1902,7 +1902,7 @@ export function dynamicXmlPlugin(): Plugin {
             const uid = SLUG_TO_UID[slug] || (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(rawSlug) ? rawSlug : "");
             if (feed && uid) {
               try {
-                const upstream = new URL(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/${feed}`);
+                const upstream = new URL(`https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/${feed}`);
                 upstream.searchParams.set("user_id", uid);
                 if (file === "roteiro.xml") upstream.searchParams.set("estudio", "Estudio FM");
                 if (["musica.xml", "music.xml", "local.xml", "musica-agora.xml"].includes(file)) upstream.searchParams.set("tipo", "musica");
