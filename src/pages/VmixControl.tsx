@@ -45,23 +45,38 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
       return;
     }
     let cancelled = false;
+    let nextRefresh: number | undefined;
+
     const refreshBridgeStatus = async () => {
+      // The backend is deliberately staged. Back off while it is not ready or
+      // temporarily unavailable, then return to the 10-second heartbeat cadence.
+      let nextDelay = 60_000;
       try {
         const { data, error } = await supabase.functions.invoke("vmix-bridge-status");
         if (!cancelled && !error && data) {
-          setBridgeDeviceStatus({ connected: Boolean(data.connected), deviceName: data.deviceName || null, backendReady: data.backendReady === true });
-        } else if (!cancelled && error) {
+          const backendReady = data.backendReady === true;
+          setBridgeDeviceStatus({
+            connected: backendReady && Boolean(data.connected),
+            deviceName: data.deviceName || null,
+            backendReady,
+          });
+          nextDelay = backendReady ? 10_000 : 60_000;
+        } else if (!cancelled) {
           setBridgeDeviceStatus({ connected: false, backendReady: false });
         }
       } catch {
         if (!cancelled) setBridgeDeviceStatus({ connected: false, backendReady: false });
       }
+
+      if (!cancelled) {
+        nextRefresh = window.setTimeout(() => void refreshBridgeStatus(), nextDelay);
+      }
     };
+
     void refreshBridgeStatus();
-    const interval = window.setInterval(() => void refreshBridgeStatus(), 10000);
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
+      if (nextRefresh !== undefined) window.clearTimeout(nextRefresh);
     };
   }, [user?.id, automationMode, isButtonDevicePreview]);
 
