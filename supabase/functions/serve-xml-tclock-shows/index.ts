@@ -179,10 +179,32 @@ serve(async (req) => {
     let tempAtual = "";
     let descAtual = "";
     let iconAtual = "";
-    if (settings?.weather_lat && settings?.weather_lon) {
+    let weatherLat = Number(settings?.weather_lat);
+    let weatherLon = Number(settings?.weather_lon);
+
+    // Se a emissora configurou apenas a cidade, resolve as coordenadas
+    // automaticamente para não deixar o XML sem clima.
+    if ((!Number.isFinite(weatherLat) || !Number.isFinite(weatherLon) || (!weatherLat && !weatherLon)) && settings?.weather_city) {
       try {
-        const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${settings.weather_lat}&longitude=${settings.weather_lon}&current=temperature_2m,weather_code&timezone=America/Sao_Paulo`;
-        const wxRes = await fetch(wxUrl);
+        const cityQuery = encodeURIComponent(settings.weather_city);
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${cityQuery}&count=5&language=pt&format=json`;
+        const geoRes = await fetch(geoUrl, { signal: AbortSignal.timeout(3500) });
+        if (geoRes.ok) {
+          const geo = await geoRes.json();
+          const candidates = Array.isArray(geo.results) ? geo.results : [];
+          const match = candidates.find((item: any) => item.country_code === "BR") || candidates[0];
+          if (match && Number.isFinite(Number(match.latitude)) && Number.isFinite(Number(match.longitude))) {
+            weatherLat = Number(match.latitude);
+            weatherLon = Number(match.longitude);
+          }
+        }
+      } catch { /* mantém o XML funcional mesmo se geocoding falhar */ }
+    }
+
+    if (Number.isFinite(weatherLat) && Number.isFinite(weatherLon) && (weatherLat !== 0 || weatherLon !== 0)) {
+      try {
+        const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${weatherLat}&longitude=${weatherLon}&current=temperature_2m,weather_code&timezone=America/Sao_Paulo`;
+        const wxRes = await fetch(wxUrl, { signal: AbortSignal.timeout(4500) });
         if (wxRes.ok) {
           const d = await wxRes.json();
           const code = d.current?.weather_code as number;
