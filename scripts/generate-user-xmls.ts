@@ -834,7 +834,10 @@ export async function generateAllUserXmls() {
       return null;
     };
 
-    const tempoContent = tempoRemote || readExistingIfValid("tempo.xml") || generateFallbackTempo(st);
+    // Sem previsão remota, preserva um XML válido sem inventar temperatura,
+    // condição climática ou datas. O consumidor pode identificar indisponibilidade.
+    const tempoContent = tempoRemote || readExistingIfValid("tempo.xml") ||
+      `<?xml version="1.0" encoding="UTF-8"?>\n<previsao><disponivel>0</disponivel><cidade>${escapeXml(st.city)}</cidade></previsao>`;
     let roteiroContent = roteiroRemote || readExistingIfValid("roteiro.xml");
     if (!roteiroContent) {
       try {
