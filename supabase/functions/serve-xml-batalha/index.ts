@@ -180,8 +180,22 @@ Deno.serve(async (req) => {
     const rawUserId = url.searchParams.get("user_id") || "";
     const rawSlug = url.searchParams.get("slug") || "";
 
-    const cleanInput = (rawUserId || rawSlug).toLowerCase().trim();
-    const resolvedUid = SLUG_TO_UID[cleanInput] || (isUUID(rawUserId) ? rawUserId : "");
+    const normalizedUserId = rawUserId.toLowerCase().trim();
+    const normalizedSlug = rawSlug.toLowerCase().trim();
+    const userIdFromParam = isUUID(rawUserId)
+      ? rawUserId
+      : (SLUG_TO_UID[normalizedUserId] || "");
+    const userIdFromSlug = isUUID(rawSlug)
+      ? rawSlug
+      : (SLUG_TO_UID[normalizedSlug] || "");
+    const cleanInput = normalizedSlug || normalizedUserId;
+    if (userIdFromParam && userIdFromSlug && userIdFromParam !== userIdFromSlug) {
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>Identificadores da emissora conflitantes</error>`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+    const resolvedUid = userIdFromParam || userIdFromSlug;
     if (!resolvedUid) {
       return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`, {
         status: 400,
