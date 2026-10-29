@@ -6,6 +6,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+const normStudio = (value: unknown): string =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .trim()
+    .toLocaleUpperCase("pt-BR");
+
 export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   folder: Folder,
   camera: Camera,
@@ -47,7 +54,7 @@ export function useVmixCategories(userId?: string | null, estudio?: string | nul
       .order("ordem");
     const { data } = await q;
     const list = ((data as any[]) || [])
-      .filter(c => !estudio || !c.estudio || c.estudio === estudio)
+      .filter(c => !estudio || !c.estudio || normStudio(c.estudio) === normStudio(estudio))
       .map(c => ({ ...c, inputs: Array.isArray(c.inputs) ? c.inputs.map(String) : [] })) as VmixCategoria[];
     setCategorias(list);
   }, [userId, estudio]);

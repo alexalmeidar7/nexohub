@@ -132,7 +132,7 @@ serve(async (req) => {
     // Alguns registros de historico possuem campos gigantes (dezenas de MB) e estouram
     // a memoria da funcao. A RPC devolve apenas os primeiros caracteres de cada campo.
     const musicHistoryRes = await step("musicHistory", sb.rpc("get_music_history_light", { _user_id: ownerId, _limit: 6 }));
-    const logosRes = await step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false));
+    const logosRes = await step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url, programa_id").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false));
     const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo, participantes, xml_pushed_at, created_at, updated_at").eq("user_id", ownerId).ilike("estudio", "%fm%").order("updated_at", { ascending: false }).limit(10));
     if (roteiroRes.error) throw roteiroRes.error;
     const batalhaRes = await step("batalha", sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }));
@@ -147,6 +147,28 @@ serve(async (req) => {
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
+    // Compatibilidade com o Browser Input do vMix: converter referências WebP
+    // para PNG sem alterar o cadastro original nem a URL armazenada no banco.
+    const toVmixImageUrl = (value: string) => /\.webp(?:$|[?#])/i.test(value || "")
+      ? "https://wsrv.nl/?url=" + encodeURIComponent(value) + "&output=png"
+      : (value || "");
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const currentSeconds = Number(currentHourStr.slice(0, 2)) * 3600 + Number(currentHourStr.slice(3, 5)) * 60;
+    const onAirProgram = programas.find((p: any) => {
+      const start = normTime(p.horario_inicio), end = normTime(p.horario_fim);
+      const startSeconds = Number(start.slice(0, 2)) * 3600 + Number(start.slice(3, 5)) * 60;
+      const endSeconds = Number(end.slice(0, 2)) * 3600 + Number(end.slice(3, 5)) * 60;
+      const days = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+      if (endSeconds <= startSeconds) {
+        const yesterdayName = dayNames[(dayNames.indexOf(currentDayName) + 6) % 7];
+        return (days.includes(currentDayName) && currentSeconds >= startSeconds) ||
+          (days.includes(yesterdayName) && currentSeconds < endSeconds);
+      }
+      return days.includes(currentDayName) && currentSeconds >= startSeconds && currentSeconds <= endSeconds;
+    }) || null;
+    const onAirProgramLogos = onAirProgram
+      ? logos.filter((logo: any) => logo.programa_id === onAirProgram.id || logo.programa_id === null)
+      : logos.filter((logo: any) => logo.programa_id === null);
     const roteiros = roteiroRes.data || [];
     const activeBatalha = (batalhaRes.data || []).find((b: any) => {
       const ini = normTime(b.horario_inicio, "00:00");
@@ -554,10 +576,20 @@ serve(async (req) => {
 
     // 6. PATROCINADORES / LOGOS
     xmlParts.push('  <patrocinadores>');
+    xmlParts.push('    <programa_no_ar>');
+    xmlParts.push(`      <programa_id>${esc(onAirProgram?.id || "")}</programa_id>`);
+    xmlParts.push(`      <programa_nome>${esc(onAirProgram?.nome || "")}</programa_nome>`);
+    onAirProgramLogos.forEach((l: any) => {
+      xmlParts.push('      <patrocinador>');
+      xmlParts.push(`        <nome>${esc(l.nome || "Patrocinador")}</nome>`);
+      xmlParts.push(`        <logo_url>${esc(toVmixImageUrl(l.logo_url || ""))}</logo_url>`);
+      xmlParts.push('      </patrocinador>');
+    });
+    xmlParts.push('    </programa_no_ar>');
     logos.forEach((l: any) => {
       xmlParts.push('    <patrocinador>');
       xmlParts.push(`      <nome>${esc(l.nome || "Patrocinador")}</nome>`);
-      xmlParts.push(`      <logo_url>${esc(l.logo_url || "")}</logo_url>`);
+      xmlParts.push(`      <logo_url>${esc(toVmixImageUrl(l.logo_url || ""))}</logo_url>`);
       xmlParts.push('    </patrocinador>');
     });
     xmlParts.push('  </patrocinadores>');

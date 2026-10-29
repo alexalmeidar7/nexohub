@@ -285,6 +285,14 @@ serve(async (req) => {
         await supabase.storage
           .from("xml-files")
           .upload(`xml-tempo-${s.user_id}.xml`, previsaoFile, { upsert: true, contentType: "application/xml" });
+        // Compatibilidade com o UUID antigo da Positiva ainda usado em URLs do vMix.
+        if (s.user_id === "452ebd1e-61a0-42dd-bf80-231a3f426c83") {
+          await supabase.storage.from("xml-files").upload(
+            "xml-tempo-d17e65af-e407-466f-9b60-b55c43399513.xml",
+            previsaoFile,
+            { upsert: true, contentType: "application/xml" },
+          );
+        }
         // Não publicar um XML compartilhado: o processamento percorre várias
         // emissoras e um único arquivo global faria a última emissora sobrescrever
         // a previsão das demais. O feed oficial é sempre individual por user_id.

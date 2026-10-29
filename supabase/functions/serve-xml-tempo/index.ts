@@ -16,7 +16,10 @@ Deno.serve(async (req) => {
     interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
     interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
   };
-  const userId = url.searchParams.get("user_id") || url.searchParams.get("uid") || slugToUserId[slug] || null;
+  const requestedUserId = url.searchParams.get("user_id") || url.searchParams.get("uid") || slugToUserId[slug] || null;
+  const userId = requestedUserId === "d17e65af-e407-466f-9b60-b55c43399513"
+    ? "452ebd1e-61a0-42dd-bf80-231a3f426c83"
+    : requestedUserId;
   if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
     return new Response(
       '<?xml version="1.0" encoding="UTF-8"?><previsao><disponivel>0</disponivel><erro>user_id obrigatório</erro></previsao>',

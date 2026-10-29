@@ -38,6 +38,13 @@ import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
 const normStudio = (s?: string | null) =>
   (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 
+const getCustomButtonCategory = (button: any): string => {
+  const stored = String(button?.category || "").trim();
+  if (stored && stored.toUpperCase() !== "AUDIO") return stored;
+  const commands = Array.isArray(button?.commands) ? button.commands : [];
+  return commands.map((command: any) => String(command?._buttonCategory || "").trim()).find(Boolean) || stored || "OUTROS";
+};
+
 /** true quando um estúdio específico foi selecionado na conexão */
 export const isStudioScoped = (studioName?: string | null) => {
   const n = normStudio(studioName);
@@ -935,7 +942,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
     const { data } = await query.order("created_at");
     if (data) {
-      let filtered = (data as any[]).filter(b => matchesStudio(b.estudio, studioName));
+      let filtered = (data as any[]).filter(b => matchesStudio(b.estudio, studioName)).map(b => ({ ...b, category: getCustomButtonCategory(b) }));
       try {
         const categoryKey = `vmix_custom_button_categories:${user?.id}:${normStudio(studioName) || "all"}`;
         const overrides = JSON.parse(localStorage.getItem(categoryKey) || "{}") as Record<string, string>;
@@ -965,7 +972,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     const currentButton = customButtons.find(button => button.id === buttonId);
     if (!currentButton) return;
     const targetColor = customButtons.find(button =>
-      String(button.category || button.commands?.[0]?._buttonCategory || "OUTROS").trim() === category &&
+      getCustomButtonCategory(button).trim() === category &&
       button.id !== buttonId && typeof button.color === "string" && /^#[0-9a-f]{6}$/i.test(button.color)
     )?.color;
     const commands = Array.isArray(currentButton.commands) ? [...currentButton.commands] : [];
@@ -974,7 +981,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(buttonId);
       if (isUuid) {
         const { data, error } = await (supabase.from("custom_vmix_buttons" as any) as any)
-          .update({ commands, ...(targetColor ? { color: targetColor } : {}) })
+          .update({ commands, category, ...(targetColor ? { color: targetColor } : {}) })
           .eq("id", buttonId).eq("user_id", user.id).select("id").maybeSingle();
         if (error) throw error;
         if (!data?.id) throw new Error("O banco não confirmou a alteração da categoria.");
@@ -2149,7 +2156,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       console.warn("Clique vMix via atalho sem usuário autenticado; registro não enviado");
       return;
     }
-    const category = String(btn.category || btn.commands?.[0]?._buttonCategory || "OUTROS").trim().toLocaleUpperCase("pt-BR");
+    const category = getCustomButtonCategory(btn).trim().toLocaleUpperCase("pt-BR");
     void (supabase.from("vmix_button_interactions" as any) as any).insert({
       user_id: userId,
       locutor_nome: program?.apresentador_nome || null,

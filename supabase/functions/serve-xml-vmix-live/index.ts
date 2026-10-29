@@ -159,6 +159,9 @@ Deno.serve(async (req) => {
         const escolhida = list[slot];
         patrocinadorNome = escolhida.nome || "";
         patrocinadorUrl = escolhida.logo_url || "";
+        if (/\.webp(?:$|[?#])/i.test(patrocinadorUrl)) {
+          patrocinadorUrl = "https://wsrv.nl/?url=" + encodeURIComponent(patrocinadorUrl) + "&output=png";
+        }
       }
     }
 
@@ -171,19 +174,22 @@ Deno.serve(async (req) => {
     let capa = "";
     const { data: userSettings } = await supabase
       .from("user_settings")
-      .select("dashboard_items")
+      .select("dashboard_items, updated_at")
       .eq("user_id", userId)
       .maybeSingle();
-    const items = (userSettings?.dashboard_items || {}) as Record<string, any>;
+    const rawDashboard = userSettings?.dashboard_items;
+    const items = (typeof rawDashboard === "string"
+      ? (() => { try { return JSON.parse(rawDashboard); } catch { return {}; } })()
+      : (rawDashboard || {})) as Record<string, any>;
     // Compatibilidade com o formato estruturado usado pelo Broadcast JSON.
     // Algumas versões do sincronizador publicam musicData em vez dos campos planos.
     const musicData = (items.musicData || {}) as Record<string, unknown>;
     const liveTitle = String(items.music_current_title || musicData.musica || musicData.titulo || "").trim();
     const liveArtist = String(items.music_current_artist || musicData.artista || "").trim();
     const liveCover = String(items.music_current_cover || musicData.capa || musicData.cover || musicData.imagem || "").trim();
-    const liveStart = Number(items.music_start_time || musicData.startedAt || musicData.startTime || 0);
-    // Considera o snapshot "vivo" se foi atualizado nos últimos 3 minutos.
-    const isLive = liveStart > 0 && Date.now() - liveStart < 3 * 60 * 1000;
+    // updated_at acompanha a gravação do snapshot; music_start_time é o início da faixa.
+    const snapshotUpdatedAt = userSettings?.updated_at ? new Date(userSettings.updated_at).getTime() : 0;
+    const isLive = Boolean(liveTitle) && snapshotUpdatedAt > 0 && Date.now() - snapshotUpdatedAt < 5 * 60 * 1000;
     if (isLive && liveTitle) {
       titulo = liveTitle;
       artista = liveArtist;
