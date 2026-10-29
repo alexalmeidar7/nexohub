@@ -725,6 +725,188 @@ jobs:
           echo "Read-only preflight completed for the explicitly confirmed project."
           echo "No migration was applied and no Edge Function was deployed."
 
+      - name: Report detailed reconciliation gaps (read-only)
+        if: \${{ !inputs.apply_changes }}
+        env:
+          DATABASE_URL: \${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -P pager=off <<'SQL'
+          -- This report is intentionally non-blocking and read-only. It exposes
+          -- the exact gaps before an operator considers a separately approved write.
+          WITH required(group_name, table_name, column_name) AS (
+            VALUES
+              ('agenda/20261028180000', 'agenda_eventos', 'artes_urls'),
+              ('agenda/20261028180000', 'agenda_eventos', 'edicao_concluida'),
+              ('agenda/20261028180000', 'agenda_eventos', 'edicao_notas'),
+              ('agenda/20261028180000', 'agenda_eventos', 'excecoes'),
+              ('agenda/20261028180000', 'agenda_eventos', 'horario_gravacao'),
+              ('agenda/20261028180000', 'agenda_eventos', 'horario_gravacao_fim'),
+              ('agenda/20261028180000', 'agenda_eventos', 'periodo_inicio'),
+              ('agenda/20261028180000', 'agenda_eventos', 'periodo_fim'),
+              ('agenda/20261028180000', 'agenda_eventos', 'status'),
+              ('agenda/20261028180000', 'agenda_eventos', 'tipo_evento'),
+              ('agenda/20261028180000', 'agenda_eventos', 'youtube_descricao'),
+              ('agenda/20261028180000', 'agenda_eventos', 'youtube_titulo'),
+              ('agenda/20261028180000', 'agenda_eventos', 'youtube_url'),
+              ('forms-storage/20261028193000', 'ouvintes', 'origem_cadastro'),
+              ('forms-storage/20261028193000', 'ouvintes', 'sexo'),
+              ('forms-storage/20261028193000', 'ouvintes', 'banido'),
+              ('forms-storage/20261028193000', 'ouvintes', 'banido_at'),
+              ('forms-storage/20261028193000', 'ouvintes', 'banido_motivo'),
+              ('forms-storage/20261028193000', 'programas', 'deleted_at'),
+              ('forms-storage/20261028193000', 'logos_patrocinadores', 'nome'),
+              ('forms-storage/20261028193000', 'logos_patrocinadores', 'cnpj'),
+              ('forms-storage/20261028193000', 'logos_patrocinadores', 'telefone'),
+              ('forms-storage/20261028193000', 'logos_patrocinadores', 'endereco'),
+              ('forms-storage/20261028193000', 'logos_patrocinadores', 'excluido'),
+              ('forms-storage/20261028193000', 'logos_patrocinadores', 'excluido_at'),
+              ('forms-storage/20261028193000', 'empresa_config', 'ativo'),
+              ('forms-storage/20261028193000', 'empresa_config', 'created_at'),
+              ('forms-storage/20261028193000', 'empresa_config', 'cnpj'),
+              ('forms-storage/20261028193000', 'empresa_config', 'executiva_venda'),
+              ('forms-storage/20261028193000', 'empresa_config', 'cliente_desde'),
+              ('forms-storage/20261028193000', 'empresa_config', 'plano'),
+              ('forms-storage/20261028193000', 'empresa_config', 'timezone'),
+              ('forms-storage/20261028193000', 'empresa_config', 'background_url'),
+              ('forms-storage/20261028193000', 'empresa_config', 'instagram_subs'),
+              ('forms-storage/20261028193000', 'empresa_config', 'facebook_subs'),
+              ('forms-storage/20261028193000', 'empresa_config', 'youtube_subs'),
+              ('forms-storage/20261028193000', 'empresa_config', 'youtube_api_key'),
+              ('forms-storage/20261028193000', 'empresa_config', 'youtube_channel_id'),
+              ('forms-storage/20261028193000', 'empresa_config', 'audio_sources'),
+              ('forms-storage/20261028193000', 'empresa_config', 'video_sources'),
+              ('forms-storage/20261028193000', 'empresa_config', 'audio_stream_api_url'),
+              ('forms-storage/20261028193000', 'empresa_config', 'audio_stream_xpath'),
+              ('forms-storage/20261028193000', 'empresa_config', 'video_stream_api_url'),
+              ('forms-storage/20261028193000', 'empresa_config', 'video_stream_xpath'),
+              ('forms-storage/20261028193000', 'user_settings', 'cenario_config'),
+              ('forms-storage/20261028193000', 'user_settings', 'dashboard_items'),
+              ('forms-storage/20261028193000', 'user_settings', 'infomusic_ai_enabled'),
+              ('forms-storage/20261028193000', 'user_settings', 'infomusic_ai_last_reset'),
+              ('forms-storage/20261028193000', 'user_settings', 'infomusic_ai_monthly_count'),
+              ('forms-storage/20261028193000', 'user_settings', 'infomusic_excecoes'),
+              ('forms-storage/20261028193000', 'user_settings', 'infomusic_excecoes_artista_url'),
+              ('forms-storage/20261028193000', 'user_settings', 'infomusic_excecoes_capa_url'),
+              ('forms-storage/20261028193000', 'user_settings', 'last_manual_curiosity_id'),
+              ('forms-storage/20261028193000', 'user_settings', 'music_source_device'),
+              ('forms-storage/20261028193000', 'user_settings', 'music_source_mode'),
+              ('forms-storage/20261028193000', 'user_settings', 'shopping_active'),
+              ('forms-storage/20261028193000', 'user_settings', 'vmix_input_mapping'),
+              ('forms-storage/20261028193000', 'user_settings', 'vmix_pass'),
+              ('forms-storage/20261028193000', 'user_settings', 'vmix_shortcuts'),
+              ('forms-storage/20261028193000', 'user_settings', 'vmix_url'),
+              ('forms-storage/20261028193000', 'user_settings', 'vmix_user'),
+              ('forms-storage/20261028193000', 'user_settings', 'weather_city'),
+              ('forms-storage/20261028193000', 'user_settings', 'weather_lat'),
+              ('forms-storage/20261028193000', 'user_settings', 'weather_lon'),
+              ('forms-storage/20261028193000', 'roteiros', 'agendado_para_envio'),
+              ('forms-storage/20261028193000', 'roteiros', 'apresentador_editado'),
+              ('forms-storage/20261028193000', 'roteiros', 'configuracoes'),
+              ('forms-storage/20261028193000', 'roteiros', 'editado_at'),
+              ('forms-storage/20261028193000', 'roteiros', 'enviado_agendamento'),
+              ('forms-storage/20261028193000', 'roteiros', 'share_login'),
+              ('forms-storage/20261028193000', 'roteiros', 'share_token'),
+              ('forms-storage/20261028193000', 'roteiros', 'tickertitulos'),
+              ('forms-storage/20261028193000', 'roteiros', 'xml_pushed_at'),
+              ('forms-storage/20261028193000', 'sorteio_sorteios', 'apresentador_nome'),
+              ('forms-storage/20261028193000', 'sorteio_sorteios', 'programa_id'),
+              ('forms-storage/20261028193000', 'sorteio_sorteios', 'programa_nome'),
+              ('forms-storage/20261028193000', 'sorteio_sorteios', 'entrega_pin'),
+              ('forms-storage/20261028193000', 'sorteio_sorteios', 'entrega_token'),
+              ('forms-storage/20261028193000', 'sorteio_sorteios', 'foto_entrega_url'),
+              ('forms-storage/20261028193000', 'sorteio_sorteios', 'entrega_registrada_em'),
+              ('forms-storage/20261028193000', 'xml_upload_history', 'artista'),
+              ('forms-storage/20261028193000', 'xml_upload_history', 'musica'),
+              ('remaining/20261028223300', 'infomusic', 'user_id'),
+              ('remaining/20261028223300', 'infomusic_excecoes', 'artista_url'),
+              ('remaining/20261028223300', 'streaming_channels', 'numero_canal'),
+              ('remaining/20261028223300', 'profiles', 'event_types_config'),
+              ('custom-vmix/20261029025000', 'custom_vmix_buttons', 'shortcut'),
+              ('custom-vmix/20261029025000', 'custom_vmix_buttons', 'icon'),
+              ('custom-vmix/20261029025000', 'custom_vmix_buttons', 'category'),
+              ('custom-vmix/20261029025000', 'custom_vmix_buttons', 'estudio'),
+              ('custom-vmix/20261029025000', 'custom_vmix_buttons', 'color'),
+              ('custom-vmix/20261029025000', 'custom_vmix_buttons', 'data_especifica')
+          )
+          SELECT
+            r.group_name AS reconciliation,
+            count(*) FILTER (WHERE c.column_name IS NULL) AS missing_count,
+            COALESCE(
+              string_agg(r.table_name || '.' || r.column_name, ', ' ORDER BY r.table_name, r.column_name)
+                FILTER (WHERE c.column_name IS NULL),
+              'none'
+            ) AS missing_columns
+          FROM required r
+          LEFT JOIN information_schema.columns c
+            ON c.table_schema = 'public'
+           AND c.table_name = r.table_name
+           AND c.column_name = r.column_name
+          GROUP BY r.group_name
+          ORDER BY r.group_name;
+          
+          WITH required(bucket_id, expected_public) AS (
+            VALUES
+              ('empresa-assets', true),
+              ('comercial', true),
+              ('programas', true),
+              ('xml-files', true),
+              ('entregas', false)
+          )
+          SELECT
+            r.bucket_id,
+            CASE
+              WHEN b.id IS NULL THEN 'missing'
+              WHEN b.public IS DISTINCT FROM r.expected_public
+                THEN 'visibility mismatch (expected public=' || r.expected_public::text || ', actual=' || b.public::text || ')'
+              ELSE 'ok'
+            END AS status
+          FROM required r
+          LEFT JOIN storage.buckets b ON b.id = r.bucket_id
+          ORDER BY r.bucket_id;
+          
+          SELECT
+            'sorteio_sorteios.entrega_token NOT NULL' AS requirement,
+            CASE
+              WHEN NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'sorteio_sorteios'
+                  AND column_name = 'entrega_token'
+              ) THEN 'missing'
+              WHEN EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'sorteio_sorteios'
+                  AND column_name = 'entrega_token' AND is_nullable = 'NO'
+              ) THEN 'ok'
+              ELSE 'nullable'
+            END AS status
+          UNION ALL
+          SELECT
+            'sorteio_sorteios_entrega_token_key unique index',
+            CASE WHEN EXISTS (
+              SELECT 1
+              FROM pg_index i
+              JOIN pg_class idx ON idx.oid = i.indexrelid
+              JOIN pg_class tbl ON tbl.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = tbl.relnamespace
+              WHERE n.nspname = 'public'
+                AND tbl.relname = 'sorteio_sorteios'
+                AND idx.relname = 'sorteio_sorteios_entrega_token_key'
+                AND i.indisunique
+            ) THEN 'ok' ELSE 'missing' END
+          UNION ALL
+          SELECT
+            'musicas_tocadas_user_musica_artista_dia_key',
+            CASE WHEN EXISTS (
+              SELECT 1 FROM pg_constraint
+              WHERE conrelid = to_regclass('public.musicas_tocadas')
+                AND conname = 'musicas_tocadas_user_musica_artista_dia_key'
+                AND pg_get_constraintdef(oid) = 'UNIQUE (user_id, musica, artista, dia)'
+            ) THEN 'ok' ELSE 'missing' END;
+          SQL
+          echo "Detailed reconciliation report completed without writes."
+          
       - name: Require restored Auth users and public-table RLS before writes
         if: ${{ inputs.apply_changes }}
         env:
