@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { shouldRouteVmixThroughBridge } from "../_shared/auth.ts";
+import { resolveTenantUserId, shouldRouteVmixThroughBridge } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const userId = userData.user.id;
+    const tenantUserId = await resolveTenantUserId(authHeader);
     const { commands, connectionId } = await req.json();
 
     let settings: { vmix_url?: string | null; vmix_user?: string | null; vmix_pass?: string | null } | null = null;
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       const { data: connection } = await supabase
         .from("vmix_connections")
         .select("url, username, password")
-        .eq("user_id", userId)
+        .eq("user_id", tenantUserId)
         .eq("id", connectionId)
         .maybeSingle();
 
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       const { data: fallbackSettings } = await supabase
         .from("user_settings")
         .select("vmix_url, vmix_user, vmix_pass")
-        .eq("user_id", userId)
+        .eq("user_id", tenantUserId)
         .maybeSingle();
       settings = fallbackSettings;
     }
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (shouldRouteVmixThroughBridge(vmixBaseUrl)) {
       const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       const { data: bridge, error: bridgeError } = await admin.from("vmix_bridge_devices")
-        .select("id").eq("user_id", userId).eq("revoked", false)
+        .select("id").eq("user_id", tenantUserId).eq("revoked", false)
         .gte("last_seen_at", new Date(Date.now() - 45000).toISOString())
         .order("last_seen_at", { ascending: false }).limit(1).maybeSingle();
       if (bridgeError) throw bridgeError;
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
         if (input) params.set("Input", String(input));
         if (value) params.set("Value", String(value));
         const { data: job, error: queueError } = await admin.from("vmix_bridge_jobs").insert({
-          device_id: bridge.id, user_id: userId, path: `/api/?${params.toString()}`, method: "GET",
+          device_id: bridge.id, user_id: tenantUserId, path: `/api/?${params.toString()}`, method: "GET",
           status: "pending",
         }).select("id").single();
         if (queueError || !job) throw queueError || new Error("Could not queue Bridge command");
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         while (Date.now() < deadline) {
           await new Promise((resolve) => setTimeout(resolve, 250));
           const { data: current, error: readError } = await admin.from("vmix_bridge_jobs")
-            .select("status,result_status,result_body").eq("id", job.id).eq("user_id", userId).maybeSingle();
+            .select("status,result_status,result_body").eq("id", job.id).eq("user_id", tenantUserId).maybeSingle();
           if (readError) throw readError;
           if (current && (current.status === "succeeded" || current.status === "failed")) { completed = current; break; }
         }

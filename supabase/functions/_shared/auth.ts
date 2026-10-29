@@ -48,4 +48,28 @@ export async function requireUser(
   }
 }
 
+
+/**
+ * Resolve the authenticated user's tenant owner from the database.
+ * Active sub-users share the parent tenant's vMix connections and Bridge device.
+ * The caller JWT is sent to the SECURITY DEFINER RPC; tenant ownership is never
+ * accepted from request data or inferred from a client-supplied user ID.
+ */
+export async function resolveTenantUserId(authorization: string): Promise<string> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!authorization.toLowerCase().startsWith("bearer ") || !url || !anonKey) {
+    throw new Error("Tenant identity could not be resolved.");
+  }
+
+  const client = createClient(url, anonKey, {
+    global: { headers: { Authorization: authorization } },
+  });
+  const { data, error } = await client.rpc("current_tenant_user_id");
+  if (error || typeof data !== "string" || !data.trim()) {
+    throw new Error("Tenant identity could not be resolved.");
+  }
+  return data;
+}
+
 export { shouldRouteVmixThroughBridge } from "./vmix-url-routing.ts";

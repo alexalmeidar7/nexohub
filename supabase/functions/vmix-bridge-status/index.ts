@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { requireUser } from "../_shared/auth.ts";
+import { requireUser, resolveTenantUserId } from "../_shared/auth.ts";
 
 const jsonHeaders = {
   ...corsHeaders,
@@ -23,11 +23,12 @@ Deno.serve(async (req) => {
   if (!url || !service) return json({ error: "Bridge backend is not configured" }, 500);
 
   try {
+    const tenantUserId = await resolveTenantUserId(req.headers.get("Authorization") || "");
     const admin = createClient(url, service, { auth: { persistSession: false } });
     const { data: devices, error } = await admin
       .from("vmix_bridge_devices")
       .select("device_name,last_seen_at")
-      .eq("user_id", auth.sub)
+      .eq("user_id", tenantUserId)
       .eq("revoked", false)
       .gte("last_seen_at", new Date(Date.now() - 45_000).toISOString())
       .order("last_seen_at", { ascending: false })

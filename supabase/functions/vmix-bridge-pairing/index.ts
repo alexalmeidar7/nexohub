@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { resolveTenantUserId } from "../_shared/auth.ts";
 
 const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" };
 const sha256 = async (value: string) => {
@@ -21,10 +22,11 @@ Deno.serve(async (req) => {
     const { data: { user }, error } = await userClient.auth.getUser();
     if (error || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: jsonHeaders });
 
+    const tenantUserId = await resolveTenantUserId(auth);
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const code = randomCode();
     const { error: insertError } = await admin.from("vmix_bridge_pairings").insert({
-      user_id: user.id, code_hash: await sha256(code), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      user_id: tenantUserId, code_hash: await sha256(code), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });
     if (insertError) throw insertError;
     return new Response(JSON.stringify({ pairingCode: code, expiresInSeconds: 600 }), { headers: jsonHeaders });
