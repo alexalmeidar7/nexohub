@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const userId = url.searchParams.get("user_id") || url.searchParams.get("uid");
-  if (!userId) {
+  if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
     return new Response(
       '<?xml version="1.0" encoding="UTF-8"?><previsao><disponivel>0</disponivel><erro>user_id obrigatório</erro></previsao>',
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" } },
