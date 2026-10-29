@@ -94,7 +94,7 @@ jobs:
           python3 -m json.tool dist/downloads/nexohub-bridge/latest.json > /dev/null
 
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -103,6 +103,7 @@ jobs:
           local-dir: ./dist/
           protocol: ftps
           port: 21
+          timeout: 120000
           exclude: |
             **/.git*
             **/.git*/**
