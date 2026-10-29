@@ -978,7 +978,7 @@ jobs:
           bridge_table_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT count(*) FROM (VALUES ('vmix_bridge_pairings'), ('vmix_bridge_devices'), ('vmix_bridge_jobs')) AS required(table_name) WHERE to_regclass('public.' || required.table_name) IS NOT NULL")"
           if [ "$bridge_table_count" = "0" ]; then
             echo "Bridge tables are absent. Applying only the additive Bridge baseline approved by apply_changes=true."
-            psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261022185000_vmix_bridge_backend.sql
+            psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261022185000_vmix_bridge_backend.sql
           elif [ "$bridge_table_count" = "3" ]; then
             echo "All Bridge tables already exist and passed the read-only schema preflight; no baseline SQL is needed."
           else
@@ -1072,7 +1072,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261022200000_vmix_bridge_jobs_expiry_column.sql
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261022200000_vmix_bridge_jobs_expiry_column.sql
 
       - name: Record expiry-column reconciliation migration in Supabase history
         if: ${{ inputs.apply_changes }}
@@ -1117,7 +1117,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261023180000_expire_vmix_bridge_jobs_in_claim_function.sql
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261023180000_expire_vmix_bridge_jobs_in_claim_function.sql
 
       - name: Record expired-job migration in Supabase history
         if: ${{ inputs.apply_changes }}
@@ -1155,7 +1155,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261026214100_vmix_bridge_jobs_pending_default.sql
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261026214100_vmix_bridge_jobs_pending_default.sql
 
       - name: Record pending-status migration in Supabase history
         if: ${{ inputs.apply_changes }}
@@ -1176,7 +1176,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261027123000_vmix_bridge_atomic_pairing.sql
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261027123000_vmix_bridge_atomic_pairing.sql
 
       - name: Record atomic Bridge pairing migration in Supabase history
         if: ${{ inputs.apply_changes }}
