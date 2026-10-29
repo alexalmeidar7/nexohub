@@ -518,7 +518,30 @@ jobs:
             echo "::error::Storage buckets created by migration 20261028193000 are missing: $missing_buckets."
             exit 1
           fi
-          echo "Agenda, forms, delivery-token constraints, and all five Storage buckets are verified."
+
+          bucket_visibility_mismatches="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            WITH required(bucket_id, expected_public) AS (
+              VALUES
+                ('empresa-assets', true),
+                ('comercial', true),
+                ('programas', true),
+                ('xml-files', true),
+                ('entregas', false)
+            )
+            SELECT COALESCE(string_agg(
+              r.bucket_id || ' (expected public=' || r.expected_public::text || ', actual public=' || b.public::text || ')',
+              ', ' ORDER BY r.bucket_id
+            ), '')
+            FROM required r
+            JOIN storage.buckets b ON b.id = r.bucket_id
+            WHERE b.public IS DISTINCT FROM r.expected_public
+          ")"
+          if [ -n "$bucket_visibility_mismatches" ]; then
+            echo "::error::Storage bucket visibility does not match the reviewed House Mix policy: $bucket_visibility_mismatches. Correct the bucket configuration separately; no automatic visibility change is safe."
+            exit 1
+          fi
+
+          echo "Agenda, forms, delivery-token constraints, all five Storage buckets, and their public/private visibility are verified."
 
       - name: Require remaining House Mix columns before Bridge writes
         if: ${{ inputs.apply_changes }}
