@@ -49,7 +49,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
       try {
         const { data, error } = await supabase.functions.invoke("vmix-bridge-status");
         if (!cancelled && !error && data) {
-          setBridgeDeviceStatus({ connected: Boolean(data.connected), deviceName: data.deviceName || null, backendReady: data.backendReady !== false });
+          setBridgeDeviceStatus({ connected: Boolean(data.connected), deviceName: data.deviceName || null, backendReady: data.backendReady === true });
         } else if (!cancelled && error) {
           setBridgeDeviceStatus({ connected: false, backendReady: false });
         }
