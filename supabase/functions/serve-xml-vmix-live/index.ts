@@ -159,6 +159,9 @@ Deno.serve(async (req) => {
         const escolhida = list[slot];
         patrocinadorNome = escolhida.nome || "";
         patrocinadorUrl = escolhida.logo_url || "";
+        if (/\.webp(?:$|[?#])/i.test(patrocinadorUrl)) {
+          patrocinadorUrl = "https://wsrv.nl/?url=" + encodeURIComponent(patrocinadorUrl) + "&output=png";
+        }
       }
     }
 
@@ -174,7 +177,10 @@ Deno.serve(async (req) => {
       .select("dashboard_items")
       .eq("user_id", userId)
       .maybeSingle();
-    const items = (userSettings?.dashboard_items || {}) as Record<string, any>;
+    const rawDashboard = userSettings?.dashboard_items;
+    const items = (typeof rawDashboard === "string"
+      ? (() => { try { return JSON.parse(rawDashboard); } catch { return {}; } })()
+      : (rawDashboard || {})) as Record<string, any>;
     // Compatibilidade com o formato estruturado usado pelo Broadcast JSON.
     // Algumas versões do sincronizador publicam musicData em vez dos campos planos.
     const musicData = (items.musicData || {}) as Record<string, unknown>;
@@ -183,7 +189,11 @@ Deno.serve(async (req) => {
     const liveCover = String(items.music_current_cover || musicData.capa || musicData.cover || musicData.imagem || "").trim();
     const liveStart = Number(items.music_start_time || musicData.startedAt || musicData.startTime || 0);
     // Considera o snapshot "vivo" se foi atualizado nos últimos 3 minutos.
-    const isLive = liveStart > 0 && Date.now() - liveStart < 3 * 60 * 1000;
+    const normalizedStart = liveStart > 0 && liveStart < 10_000_000_000 ? liveStart * 1000 : liveStart;
+    // music_start_time indica o início da faixa; não é um heartbeat.
+    // Não descartar músicas com duração superior a três minutos.
+    const isLive = Boolean(liveTitle) && (!normalizedStart ||
+      (normalizedStart <= Date.now() + 60_000 && Date.now() - normalizedStart < 12 * 60 * 60 * 1000));
     if (isLive && liveTitle) {
       titulo = liveTitle;
       artista = liveArtist;
