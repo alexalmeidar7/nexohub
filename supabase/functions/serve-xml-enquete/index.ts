@@ -157,6 +157,8 @@ Deno.serve(async (req) => {
           horario_fim: eq.horario_fim || "23:59",
         };
         if (isUUID(eq.id)) row.id = eq.id;
+        const ownershipError = await assertOwnedRecordIds(sb, "enquetes_agendadas", [row.id], targetUid);
+        if (ownershipError) return ownershipError;
         const { data, error } = await sb.from("enquetes_agendadas").upsert(row).select();
         if (error) {
           console.error("[serve-xml-enquete] Save error:", error);
