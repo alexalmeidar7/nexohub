@@ -50,6 +50,13 @@ export async function authorizeStationWrite(
   const mappedUid = slugToUid[rawSlug] || slugToUid[rawUser.toLowerCase()] || "";
   const explicitUid = isUuid(rawUser) ? rawUser : "";
 
+  if (rawUser && !explicitUid && !slugToUid[rawUser.toLowerCase()]) {
+    return { ok: false, response: jsonError("Identificador da emissora inválido.", 400) };
+  }
+  if (rawSlug && !slugToUid[rawSlug] && !explicitUid) {
+    return { ok: false, response: jsonError("Slug da emissora não reconhecido.", 400) };
+  }
+
   if (explicitUid && mappedUid && explicitUid !== mappedUid) {
     return { ok: false, response: jsonError("A emissora informada não corresponde ao identificador enviado.", 403) };
   }
