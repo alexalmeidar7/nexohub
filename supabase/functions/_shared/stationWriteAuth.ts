@@ -47,16 +47,22 @@ export async function authorizeStationWrite(
 
   const rawUser = String(body.user_id ?? body.userId ?? "").trim();
   const rawSlug = String(body.slug ?? "").trim().toLowerCase();
-  const mappedUid = slugToUid[rawSlug] || slugToUid[rawUser.toLowerCase()] || "";
+  const normalizedUser = rawUser.toLowerCase();
+  const mappedFromSlug = rawSlug ? (slugToUid[rawSlug] || "") : "";
+  const mappedFromUser = rawUser && !isUuid(rawUser) ? (slugToUid[normalizedUser] || "") : "";
   const explicitUid = isUuid(rawUser) ? rawUser : "";
 
-  if (rawUser && !explicitUid && !slugToUid[rawUser.toLowerCase()]) {
+  if (rawUser && !explicitUid && !mappedFromUser) {
     return { ok: false, response: jsonError("Identificador da emissora inválido.", 400) };
   }
-  if (rawSlug && !slugToUid[rawSlug] && !explicitUid) {
+  if (rawSlug && !mappedFromSlug) {
     return { ok: false, response: jsonError("Slug da emissora não reconhecido.", 400) };
   }
+  if (mappedFromSlug && mappedFromUser && mappedFromSlug !== mappedFromUser) {
+    return { ok: false, response: jsonError("Os identificadores informados apontam para emissoras diferentes.", 403) };
+  }
 
+  const mappedUid = mappedFromSlug || mappedFromUser;
   if (explicitUid && mappedUid && explicitUid !== mappedUid) {
     return { ok: false, response: jsonError("A emissora informada não corresponde ao identificador enviado.", 403) };
   }
