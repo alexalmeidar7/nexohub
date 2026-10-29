@@ -168,7 +168,11 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (queryErr) {
-      console.warn("[serve-xml-quiz] query error:", queryErr.message);
+      console.error("[serve-xml-quiz] query error:", queryErr.message);
+      return new Response('<?xml version="1.0" encoding="UTF-8"?><items><dados><erro>Não foi possível carregar o quiz</erro></dados></items>', {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
     }
 
     // Filter by time window (including cross-midnight)
