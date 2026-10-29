@@ -918,15 +918,42 @@ jobs:
             exit 1
           fi
 
-      - name: Require restored House Mix business data and Storage before writes
-        if: ${{ inputs.apply_changes }}
+      - name: Report and require complete Positiva restoration before writes
         shell: bash
+        env:
+          APPLY_CHANGES: ${{ inputs.apply_changes }}
         run: |
           set -euo pipefail
 
-          # The verified Positiva manifest contains 182 empresa-assets objects
-          # and 110 comercial objects. Exclude the temporary staging prefix so
-          # partial uploads cannot satisfy the production-write gate.
+          # Read-only counts from the verified 13-table Positiva restore manifest.
+          # Counts are tenant-scoped; rows belonging to other accounts cannot satisfy the gate.
+          business_counts="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT 'auth_owner', count(*)::bigint, 1 FROM auth.users WHERE id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'apresentadores', count(*)::bigint, 77 FROM public.apresentadores WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'programas', count(*)::bigint, 24 FROM public.programas WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'agenda_eventos', count(*)::bigint, 139 FROM public.agenda_eventos WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'agenda_participantes', count(*)::bigint, 135 FROM public.agenda_participantes WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'logos_patrocinadores', count(*)::bigint, 153 FROM public.logos_patrocinadores WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'batalhas_agendadas', count(*)::bigint, 334 FROM public.batalhas_agendadas WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'enquetes_agendadas', count(*)::bigint, 73 FROM public.enquetes_agendadas WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'custom_vmix_buttons', count(*)::bigint, 17 FROM public.custom_vmix_buttons WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'preset_commands', count(*)::bigint, 15 FROM public.preset_commands WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'vmix_connections', count(*)::bigint, 2 FROM public.vmix_connections WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'vmix_switcher_categorias', count(*)::bigint, 9 FROM public.vmix_switcher_categorias WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'promocoes', count(*)::bigint, 10 FROM public.promocoes WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+            UNION ALL SELECT 'testemunhais', count(*)::bigint, 7 FROM public.testemunhais WHERE user_id = '452ebd1e-61a0-42dd-bf80-231a3f426c83'::uuid
+          ")"
+
+          business_incomplete=""
+          while IFS='|' read -r table_name actual_count minimum_count; do
+            [ -z "$table_name" ] && continue
+            echo "Positiva $table_name: $actual_count/$minimum_count"
+            if [ -z "$actual_count" ] || [ "$actual_count" -lt "$minimum_count" ]; then
+              business_incomplete+="${table_name} (${actual_count:-0}/${minimum_count}), "
+            fi
+          done <<< "$business_counts"
+
+          # Exclude the staging prefix so partial uploads cannot satisfy the write gate.
           storage_counts="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
             WITH required(bucket_name, minimum_objects) AS (
               VALUES ('empresa-assets', 182), ('comercial', 110)
@@ -947,29 +974,23 @@ jobs:
 
           storage_incomplete=""
           while IFS='|' read -r bucket_name actual_count minimum_count; do
+            [ -z "$bucket_name" ] && continue
+            echo "Storage $bucket_name: ${actual_count:-0}/$minimum_count"
             if [ -z "$actual_count" ] || [ "$actual_count" -lt "$minimum_count" ]; then
               storage_incomplete+="${bucket_name} (${actual_count:-0}/${minimum_count}), "
             fi
           done <<< "$storage_counts"
 
-          if [ -n "$storage_incomplete" ]; then
-            echo "::error::Storage restore is incomplete: ${storage_incomplete%, }. The verified Positiva manifest requires at least 182 final empresa-assets objects and 110 final comercial objects. Objects under positiva-restauracao/ do not count. Restore the full manifest before Bridge migrations or Edge deployment."
-            exit 1
+          if [ -n "$business_incomplete" ] || [ -n "$storage_incomplete" ]; then
+            message="Positiva restore is incomplete. Business data: ${business_incomplete%, } Storage: ${storage_incomplete%, }"
+            if [ "$APPLY_CHANGES" = "true" ]; then
+              echo "::error::${message} Restore the verified 995-row tenant dataset and all 292 final Storage objects before Bridge migrations or Edge deployment."
+              exit 1
+            fi
+            echo "::warning::${message} Read-only preflight may continue; no writes are allowed."
+          else
+            echo "All 995 Positiva business rows and 292 final Storage objects meet the reviewed minimums."
           fi
-
-          business_counts="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
-            SELECT
-              (SELECT count(*) FROM public.programas),
-              (SELECT count(*) FROM public.apresentadores)
-          ")"
-          IFS='|' read -r program_count presenter_count <<< "$business_counts"
-
-          if [ "$program_count" -lt 1 ] || [ "$presenter_count" -lt 1 ]; then
-            echo "::error::House Mix business data is incomplete (programas=$program_count, apresentadores=$presenter_count). Restore verified program and presenter records before Bridge migrations or Edge deployment."
-            exit 1
-          fi
-
-          echo "House Mix business data and both Storage buckets are present."
 
       - name: Apply initial additive Bridge baseline (explicit approval only)
         if: ${{ inputs.apply_changes }}
