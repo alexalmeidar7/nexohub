@@ -223,12 +223,19 @@ Deno.serve(async (req) => {
     // Única exceção fora da data atual: uma enquete de ontem que atravessa
     // a meia-noite e ainda está dentro do seu horário final.
     if (!scheduled) {
-      const { data: yesterdayList } = await sb
+      const { data: yesterdayList, error: yesterdayErr } = await sb
         .from("enquetes_agendadas")
         .select("*")
         .eq("user_id", resolvedUid)
         .eq("data_enquete", yesterday)
         .order("horario_inicio", { ascending: false });
+      if (yesterdayErr) {
+        console.error("[serve-xml-enquete] previous-day query error:", yesterdayErr.message);
+        return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>${esc("Não foi possível carregar a enquete")}</error>`, {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+        });
+      }
       scheduled = (yesterdayList || []).find((e: any) => {
         const start = normTime(e.horario_inicio, "00:00");
         const end = normTime(e.horario_fim, "23:59");
