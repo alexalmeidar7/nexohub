@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Apply XML migrations and deploy feeds
+    name: Apply pending XML migrations and deploy feeds
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -47,12 +47,38 @@ jobs:
         with:
           version: latest
 
-      - name: Apply pending database migrations through IPv4 Session Pooler
+      - name: Apply only the two pending audited migrations
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
-          supabase db push --db-url "$SUPABASE_DB_URL"
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+
+          apply_migration() {
+            local version="$1"
+            local name="$2"
+            local file="$3"
+
+            local already_applied
+            already_applied="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -Atc \
+              "select 1 from supabase_migrations.schema_migrations where version = '$version' limit 1")"
+
+            if [ "$already_applied" = "1" ]; then
+              echo "Migration $version already recorded; skipping."
+              return
+            fi
+
+            echo "Applying $file"
+            psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$file"
+            psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c \
+              "insert into supabase_migrations.schema_migrations(version, name) values ('$version', '$name') on conflict (version) do nothing"
+          }
+
+          apply_migration "20261028180000" "fix_agenda_eventos_schema" "supabase/migrations/20261028180000_fix_agenda_eventos_schema.sql"
+          apply_migration "20261028193000" "reconcile_audited_forms_schema_and_storage" "supabase/migrations/20261028193000_reconcile_audited_forms_schema_and_storage.sql"
 
       - name: Deploy XML Edge Functions
         env:
