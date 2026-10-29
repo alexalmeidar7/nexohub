@@ -49,9 +49,17 @@ export default function GoogleCalendarSync() {
       const { data, error } = await supabase.functions.invoke("google-calendar-auth");
       if (error || !data?.url) throw error || new Error("Sem URL");
       const popup = window.open(data.url, "google-cal", "width=520,height=640");
+      if (!popup) {
+        toast({
+          title: "Autorização aberta no navegador",
+          description: "Conclua o acesso à sua conta Google no navegador e clique em Atualizar no House Mix.",
+        });
+        setConnecting(false);
+        return;
+      }
       // Poll for completion
       const t = setInterval(async () => {
-        if (popup?.closed) {
+        if (popup.closed) {
           clearInterval(t);
           setConnecting(false);
           await fetchEvents();
