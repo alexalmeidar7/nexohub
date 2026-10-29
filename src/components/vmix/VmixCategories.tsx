@@ -6,6 +6,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+const normStudio = (value: unknown): string =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .trim()
+    .toLocaleUpperCase("pt-BR");
+
 export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   folder: Folder,
   camera: Camera,
