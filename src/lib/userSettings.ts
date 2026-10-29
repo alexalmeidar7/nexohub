@@ -43,6 +43,37 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const TENANT_USER_ID_CACHE_TTL_MS = 30_000;
+const tenantUserIdCache = new Map<string, { tenantUserId: string; expiresAt: number }>();
+
+/**
+ * Resolve the tenant owner only when the requested ID is the current auth user.
+ * This keeps explicit cross-tenant IDs unchanged and aligns sub-user writes with
+ * the current_tenant_user_id() RLS policy.
+ */
+export async function resolveTenantUserId(userId: string): Promise<string> {
+  if (!userId) return userId;
+
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  const authUserId = session?.user.id;
+  if (!authUserId || authUserId !== userId) return userId;
+
+  const cached = tenantUserIdCache.get(authUserId);
+  if (cached && cached.expiresAt > Date.now()) return cached.tenantUserId;
+
+  const { data, error } = await (supabase as any).rpc("current_tenant_user_id");
+  if (error) throw error;
+
+  const tenantUserId = typeof data === "string" && data.trim() ? data : authUserId;
+  tenantUserIdCache.set(authUserId, {
+    tenantUserId,
+    expiresAt: Date.now() + TENANT_USER_ID_CACHE_TTL_MS,
+  });
+  return tenantUserId;
+}
+
 /**
  * Faz merge seguro de dashboard_items com retry otimista para evitar perda de chaves
  * quando múltiplas telas atualizam o mesmo registro ao mesmo tempo.
@@ -50,6 +81,7 @@ function sleep(ms: number): Promise<void> {
 export async function mergeUserDashboardItems(userId: string, patch: JsonRecord): Promise<void> {
   if (!userId) return;
 
+  const settingsUserId = await resolveTenantUserId(userId);
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < MAX_MERGE_RETRIES; attempt += 1) {
@@ -61,7 +93,7 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
     const { data: existing, error: readError } = await supabase
       .from("user_settings")
       .select("updated_at, dashboard_items")
-      .eq("user_id", userId)
+      .eq("user_id", settingsUserId)
       .maybeSingle();
 
     if (readError) {
@@ -80,7 +112,7 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
         .from("user_settings")
         .upsert(
           {
-            user_id: userId,
+            user_id: settingsUserId,
             dashboard_items: mergedDashboardItems as any,
             updated_at: nowIso,
           },
@@ -99,7 +131,7 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
         dashboard_items: mergedDashboardItems as any,
         updated_at: nowIso,
       })
-      .eq("user_id", userId);
+      .eq("user_id", settingsUserId);
 
     if (existing.updated_at) {
       updateQuery = updateQuery.eq("updated_at", existing.updated_at);
@@ -126,7 +158,7 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
           dashboard_items: mergedDashboardItems as any,
           updated_at: nowIso,
         })
-        .eq("user_id", userId)
+        .eq("user_id", settingsUserId)
         .select("user_id")
         .limit(1);
 
