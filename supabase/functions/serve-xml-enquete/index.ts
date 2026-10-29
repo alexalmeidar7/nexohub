@@ -183,7 +183,11 @@ Deno.serve(async (req) => {
       .order("horario_inicio", { ascending: false });
 
     if (queryErr) {
-      console.warn("[serve-xml-enquete] query error:", queryErr.message);
+      console.error("[serve-xml-enquete] query error:", queryErr.message);
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>${esc("Não foi possível carregar a enquete")}</error>`, {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
     }
 
     // Filter by time window (including cross-midnight)
