@@ -446,6 +446,32 @@ Deno.serve(async (req) => {
         .eq("tipo_evento", "live"),
     ]);
 
+    // O endpoint de música é consumido em alta frequência pelo vMix.
+    // Retorna imediatamente após carregar o snapshot, sem executar RSS,
+    // clima, cotações, curiosidades ou processamento de imagens do Broadcast.
+    if (url.searchParams.get("tipo") === "musica") {
+      const dashboard = (settingsRes.data?.dashboard_items || {}) as Record<string, any>;
+      const musicData = (dashboard.musicData || {}) as Record<string, any>;
+      const musicaAtual = String(musicData.musica || dashboard.music_current_title || "").trim();
+      const artistaAtual = String(musicData.artista || dashboard.music_current_artist || "").trim();
+      const musicaCapa = String(musicData.capa || dashboard.music_current_cover || "").trim();
+      const deezerArtistImg = String(musicData.deezer_artist_img || dashboard.music_deezer_artist_img || "").trim();
+      const curiosidade = String(dashboard.music_current_curiosity || "");
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<items>
+  <dados>
+    <musica_atual>${esc(musicaAtual)}</musica_atual>
+    <artista_atual>${esc(artistaAtual)}</artista_atual>
+    <musica_capa>${esc(ensurePngExtension(musicaCapa))}</musica_capa>
+    <deezer_artist_img>${esc(ensurePngExtension(deezerArtistImg))}</deezer_artist_img>
+    <info_music>${esc(curiosidade)}</info_music>
+  </dados>
+</items>`;
+      return new Response(xml, {
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" },
+      });
+    }
+
     const emp = empRes.data;
     // Broadcast XML is FM-only: never surface Podcast studio programs.
     const isFmStudio = (studio: string | null | undefined): boolean => {
