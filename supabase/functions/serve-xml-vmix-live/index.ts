@@ -97,13 +97,14 @@ Deno.serve(async (req) => {
     const yesterday = dayNames[(todayIndex + 6) % 7];
     const nowTime = `${hh}:${mm}:${ss}`;
 
-    const { data: progs } = await supabase
+    const { data: progs, error: programsError } = await supabase
       .from("programas")
       .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, apresentador_id, apresentadores_ids, capa, thumb, estudio")
       .eq("user_id", userId)
       .eq("ativo", true)
       .ilike("estudio", "%fm%")
       .order("horario_inicio", { ascending: false });
+    if (programsError) throw programsError;
 
     // Prioriza programas iniciados ontem que atravessam a meia-noite;
     // em seguida considera a grade normal do dia atual.
