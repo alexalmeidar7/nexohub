@@ -9,7 +9,14 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const url = new URL(req.url);
-  const userId = url.searchParams.get("user_id") || url.searchParams.get("uid");
+  const slug = (url.searchParams.get("slug") || "").toLowerCase();
+  const slugToUserId: Record<string, string> = {
+    positivafm: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+    positiva: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+    interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+    interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+  };
+  const userId = url.searchParams.get("user_id") || url.searchParams.get("uid") || slugToUserId[slug] || null;
   if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
     return new Response(
       '<?xml version="1.0" encoding="UTF-8"?><previsao><disponivel>0</disponivel><erro>user_id obrigatório</erro></previsao>',

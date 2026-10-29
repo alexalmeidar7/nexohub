@@ -18,9 +18,9 @@ const esc = (s: unknown): string =>
 const KNOWN_SLUG_MAP: Record<string, string> = {
   interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
   interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-  positivafm: "d17e65af-e407-466f-9b60-b55c43399513",
-  positiva: "d17e65af-e407-466f-9b60-b55c43399513",
-  p: "d17e65af-e407-466f-9b60-b55c43399513",
+  positivafm: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  positiva: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  p: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
   transmissao: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
   jornal: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
   culturafm973: "66337743-4e4f-4950-b58f-750b0c76861e",
@@ -46,10 +46,10 @@ serve(async (req) => {
     const rawSlug = url.searchParams.get("slug");
 
     const SLUG_TO_UID: Record<string, string> = {
-      positivafm: "d17e65af-e407-466f-9b60-b55c43399513",
-      positiva: "d17e65af-e407-466f-9b60-b55c43399513",
-      p: "d17e65af-e407-466f-9b60-b55c43399513",
-      sub_positiva_opec: "d17e65af-e407-466f-9b60-b55c43399513",
+      positivafm: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+      positiva: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+      p: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+      sub_positiva_opec: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
       interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
       interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
       transmissao: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
@@ -125,7 +125,8 @@ serve(async (req) => {
       return r;
     };
 
-    const empresaRes = await step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site, cidade, frequencia").eq("user_id", ownerId).maybeSingle());
+    const empresaRes = await step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle());
+    const profileRes = await step("profile", sb.from("profiles").select("cidade, estado").eq("user_id", ownerId).maybeSingle());
     const programasRes = await step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"));
     const apresentadoresRes = await step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true));
     // Alguns registros de historico possuem campos gigantes (dezenas de MB) e estouram
@@ -276,9 +277,14 @@ serve(async (req) => {
       }
     } catch {}
 
-    const cityName = empresa?.cidade || "Goiânia - GO";
+    const profile = profileRes.data || {};
+    // Positiva FM fica no Shopping Passeio das Águas, em Goiânia. Para outras
+    // emissoras, usar a cidade do perfil sem consultar coluna inexistente.
+    const cityName = profile.cidade
+      ? `${profile.cidade}${profile.estado ? " - " + profile.estado : ""}`
+      : (ownerId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" ? "Goiânia - GO" : "Não informada");
     const stationName = empresa?.nome || "House Mix Emissora";
-    const stationFreq = empresa?.frequencia || "FM";
+    const stationFreq = ownerId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" ? "99.1 FM" : "FM";
     const stationLogo = empresa?.logo || "";
 
     // Assemble General XML
