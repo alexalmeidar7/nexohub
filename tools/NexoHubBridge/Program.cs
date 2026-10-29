@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace NexoHubBridge;
 internal sealed class BridgeConfig {
- public string SupabaseUrl {get;set;}="https://zzjfzxxvxbspbdkodoix.supabase.co";
+ public string SupabaseUrl {get;set;}="https://qazvgmgdidjhbvcuinpy.supabase.co";
  public string PairingCode {get;set;}=""; public string BridgeToken {get;set;}="";
  public string VmixUrl {get;set;}="http://127.0.0.1:8088"; public string VmixUsername {get;set;}="";
  public string VmixPassword {get;set;}=""; public string DeviceName {get;set;}=Environment.MachineName; public int PollIntervalMs {get;set;}=1000;
