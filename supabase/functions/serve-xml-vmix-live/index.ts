@@ -188,12 +188,9 @@ Deno.serve(async (req) => {
     const liveArtist = String(items.music_current_artist || musicData.artista || "").trim();
     const liveCover = String(items.music_current_cover || musicData.capa || musicData.cover || musicData.imagem || "").trim();
     const liveStart = Number(items.music_start_time || musicData.startedAt || musicData.startTime || 0);
-    // Considera o snapshot "vivo" se foi atualizado nos últimos 3 minutos.
-    const normalizedStart = liveStart > 0 && liveStart < 10_000_000_000 ? liveStart * 1000 : liveStart;
-    // music_start_time indica o início da faixa; não é um heartbeat.
-    // Não descartar músicas com duração superior a três minutos.
-    const isLive = Boolean(liveTitle) && (!normalizedStart ||
-      (normalizedStart <= Date.now() + 60_000 && Date.now() - normalizedStart < 12 * 60 * 60 * 1000));
+    // updated_at acompanha a gravação do snapshot; music_start_time é o início da faixa.
+    const snapshotUpdatedAt = userSettings?.updated_at ? new Date(userSettings.updated_at).getTime() : 0;
+    const isLive = Boolean(liveTitle) && snapshotUpdatedAt > 0 && Date.now() - snapshotUpdatedAt < 5 * 60 * 1000;
     if (isLive && liveTitle) {
       titulo = liveTitle;
       artista = liveArtist;
