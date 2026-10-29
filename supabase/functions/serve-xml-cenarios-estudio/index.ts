@@ -155,11 +155,12 @@ Deno.serve(async (req) => {
     }
 
     // Carrega TODOS os templates do usuário (para encontrar 2TVs e 4TVs vinculados ao programa no ar)
-    const { data: grupos } = await supabase
+    const { data: grupos, error: gruposError } = await supabase
       .from("cenario_estudio_grupos")
       .select("id, nome, programa_ids, rows, cols, updated_at")
       .eq("user_id", userId)
       .order("created_at");
+    if (gruposError) throw gruposError;
 
     const grupoIds = (grupos || []).map((g: any) => g.id);
     const arteByGrupo: Record<string, { url: string; updatedAt: string }> = {};
