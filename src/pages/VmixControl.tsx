@@ -30,7 +30,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
   const [bridgePairingCode, setBridgePairingCode] = useState("");
   const [bridgePairingError, setBridgePairingError] = useState("");
   const [bridgePairingLoading, setBridgePairingLoading] = useState(false);
-  const [bridgeDeviceStatus, setBridgeDeviceStatus] = useState<{ connected: boolean; deviceName?: string | null }>({ connected: false });
+  const [bridgeDeviceStatus, setBridgeDeviceStatus] = useState<{ connected: boolean; deviceName?: string | null; backendReady: boolean }>({ connected: false, backendReady: false });
   const createBridgePairing = async () => {
     setBridgePairingLoading(true); setBridgePairingError(""); setBridgePairingCode(""); setShowBridgePairing(true);
     const { data, error } = await supabase.functions.invoke("vmix-bridge-pairing");
@@ -41,7 +41,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
 
   useEffect(() => {
     if (!user || !automationMode || isButtonDevicePreview) {
-      setBridgeDeviceStatus({ connected: false });
+      setBridgeDeviceStatus({ connected: false, backendReady: false });
       return;
     }
     let cancelled = false;
@@ -49,12 +49,12 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
       try {
         const { data, error } = await supabase.functions.invoke("vmix-bridge-status");
         if (!cancelled && !error && data) {
-          setBridgeDeviceStatus({ connected: Boolean(data.connected), deviceName: data.deviceName || null });
+          setBridgeDeviceStatus({ connected: Boolean(data.connected), deviceName: data.deviceName || null, backendReady: data.backendReady !== false });
         } else if (!cancelled && error) {
-          setBridgeDeviceStatus({ connected: false });
+          setBridgeDeviceStatus({ connected: false, backendReady: false });
         }
       } catch {
-        if (!cancelled) setBridgeDeviceStatus({ connected: false });
+        if (!cancelled) setBridgeDeviceStatus({ connected: false, backendReady: false });
       }
     };
     void refreshBridgeStatus();
@@ -109,6 +109,8 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
                   <span className="h-2 w-2 shrink-0 rounded-full bg-white animate-pulse" />
                   <span className="truncate">Ponte remota conectado ao {bridgeDeviceStatus.deviceName || "computador do estúdio"}</span>
                 </div>
+              ) : automationMode && !bridgeDeviceStatus.backendReady ? (
+                <span role="status" title="O backend da Ponte remota ainda não foi liberado neste projeto." className="mr-3 inline-flex items-center rounded-lg bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white/60">Ponte remota em preparação</span>
               ) : (
                 <button type="button" onClick={createBridgePairing} className="mr-3 inline-flex items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
               )
@@ -222,6 +224,8 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
                 <span className="h-2 w-2 shrink-0 rounded-full bg-white animate-pulse" />
                 <span className="truncate">Ponte remota conectado ao {bridgeDeviceStatus.deviceName || "computador do estúdio"}</span>
               </div>
+            ) : automationMode && !bridgeDeviceStatus.backendReady ? (
+              <span role="status" title="O backend da Ponte remota ainda não foi liberado neste projeto." className="ml-auto mr-3 inline-flex shrink-0 items-center rounded-lg bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white/60">Ponte remota em preparação</span>
             ) : (
               <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
             )
