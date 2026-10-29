@@ -149,7 +149,7 @@ serve(async (req) => {
     const logos = logosRes.data || [];
     // Compatibilidade com o Browser Input do vMix: converter referências WebP
     // para PNG sem alterar o cadastro original nem a URL armazenada no banco.
-    const toVmixImageUrl = (value: string) => /\\.webp(?:$|[?#])/i.test(value || "")
+    const toVmixImageUrl = (value: string) => /\.webp(?:$|[?#])/i.test(value || "")
       ? "https://wsrv.nl/?url=" + encodeURIComponent(value) + "&output=png"
       : (value || "");
     const roteiros = roteiroRes.data || [];
