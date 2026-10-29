@@ -181,7 +181,13 @@ Deno.serve(async (req) => {
     const rawSlug = url.searchParams.get("slug") || "";
 
     const cleanInput = (rawUserId || rawSlug).toLowerCase().trim();
-    const resolvedUid = SLUG_TO_UID[cleanInput] || rawUserId || "d17e65af-e407-466f-9b60-b55c43399513";
+    const resolvedUid = SLUG_TO_UID[cleanInput] || (isUUID(rawUserId) ? rawUserId : "");
+    if (!resolvedUid) {
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
 
     console.log(`[serve-xml-batalha] GET for userId: ${resolvedUid}, Date: ${today}, Time: ${currentTime}`);
 
