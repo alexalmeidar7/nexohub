@@ -165,11 +165,12 @@ Deno.serve(async (req) => {
     const grupoIds = (grupos || []).map((g: any) => g.id);
     const arteByGrupo: Record<string, { url: string; updatedAt: string }> = {};
     if (grupoIds.length > 0) {
-      const { data: tvs } = await supabase
+      const { data: tvs, error: tvsError } = await supabase
         .from("cenario_estudio_tvs")
         .select("grupo_id, posicao, imagem_url, updated_at")
         .in("grupo_id", grupoIds)
         .eq("posicao", 0);
+      if (tvsError) throw tvsError;
       (tvs || []).forEach((t: any) => {
         arteByGrupo[t.grupo_id] = { url: t.imagem_url || "", updatedAt: t.updated_at };
       });
