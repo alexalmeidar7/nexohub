@@ -57,23 +57,9 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
 
   const getLocalStorageKey = (uId: string) => `nexohub_enquetes_${uId}`;
 
-  const SUPABASE_FN_URL = import.meta.env.VITE_SUPABASE_URL || "";
-  const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
-
   const postEnqueteFn = async (payload: Record<string, unknown>) => {
-    if (!SUPABASE_FN_URL) return;
-    try {
-      await fetch(`${SUPABASE_FN_URL}/functions/v1/serve-xml-enquete`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(SUPABASE_ANON ? { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } : {}),
-        },
-        body: JSON.stringify(payload),
-      });
-    } catch (e) {
-      console.warn("Erro ao sincronizar enquete com a Edge Function:", e);
-    }
+    const { error } = await supabase.functions.invoke("serve-xml-enquete", { body: payload });
+    if (error) throw error;
   };
 
   const getStoredEnquetes = (uId: string): EnqueteAgendada[] => {
