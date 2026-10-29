@@ -6,6 +6,8 @@ on:
     paths:
       - "desktop/**"
       - "src/**"
+      - "public/**"
+      - ".env"
       - "index.html"
       - "vite.config.ts"
       - "package.json"
@@ -19,6 +21,8 @@ on:
     paths:
       - "desktop/**"
       - "src/**"
+      - "public/**"
+      - ".env"
       - "index.html"
       - "vite.config.ts"
       - "package.json"
