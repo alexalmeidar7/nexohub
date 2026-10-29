@@ -152,6 +152,7 @@ serve(async (req) => {
     const toVmixImageUrl = (value: string) => /\.webp(?:$|[?#])/i.test(value || "")
       ? "https://wsrv.nl/?url=" + encodeURIComponent(value) + "&output=png"
       : (value || "");
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const currentSeconds = Number(currentHourStr.slice(0, 2)) * 3600 + Number(currentHourStr.slice(3, 5)) * 60;
     const onAirProgram = programas.find((p: any) => {
       const start = normTime(p.horario_inicio), end = normTime(p.horario_fim);
