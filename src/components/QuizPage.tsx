@@ -105,14 +105,12 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
         body: JSON.stringify({ slug: targetSlug, userId: uId, quizzes: list }),
       }).catch(() => {});
 
-      // Sincroniza imediatamente com a Supabase Edge Function para vMix remoto
-      if (import.meta.env.VITE_SUPABASE_URL) {
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-quiz`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "sync", slug: targetSlug, userId: uId, quizzes: list }),
-        }).catch(() => {});
-      }
+      // O invoke envia o JWT da sessão atual; a Edge Function valida a emissora antes de usar Service Role.
+      void supabase.functions.invoke("serve-xml-quiz", {
+        body: { action: "sync", slug: targetSlug, userId: uId, quizzes: list },
+      }).then(({ error }) => {
+        if (error) console.warn("Falha na sincronização remota do quiz:", error);
+      });
     } catch {}
   };
 
