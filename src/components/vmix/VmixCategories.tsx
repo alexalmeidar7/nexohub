@@ -47,7 +47,7 @@ export function useVmixCategories(userId?: string | null, estudio?: string | nul
       .order("ordem");
     const { data } = await q;
     const list = ((data as any[]) || [])
-      .filter(c => !estudio || !c.estudio || c.estudio === estudio)
+      .filter(c => !estudio || !c.estudio || normStudio(c.estudio) === normStudio(estudio))
       .map(c => ({ ...c, inputs: Array.isArray(c.inputs) ? c.inputs.map(String) : [] })) as VmixCategoria[];
     setCategorias(list);
   }, [userId, estudio]);
