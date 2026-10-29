@@ -100,11 +100,12 @@ serve(async (req) => {
     const currentDayName = weekdayMap[(getPart("weekday") || "").toLowerCase()] || "Domingo";
 
     // Resolve sub-user parent if needed
-    const { data: subUser } = await sb
+    const { data: subUser, error: subUserError } = await sb
       .from("sub_users")
       .select("parent_user_id, ativo")
       .eq("auth_user_id", userId)
       .maybeSingle();
+    if (subUserError) throw subUserError;
 
     const ownerId = (subUser?.ativo && subUser.parent_user_id) ? subUser.parent_user_id : userId;
     console.log(`[serve-xml-geral] start owner=${ownerId}`);
