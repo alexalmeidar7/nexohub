@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { authorizeStationWrite, assertOwnedRecordIds } from "../_shared/stationWriteAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -75,23 +76,30 @@ Deno.serve(async (req) => {
       }
 
       const action = body.action || "save";
-      const rawUser = (body.user_id || body.userId || "").trim();
-      const rawSlug = (body.slug || "").trim().toLowerCase();
-      const targetUid = SLUG_TO_UID[rawSlug] || SLUG_TO_UID[rawUser.toLowerCase()] || (isUUID(rawUser) ? rawUser : "d17e65af-e407-466f-9b60-b55c43399513");
+      if (!["save", "sync", "delete"].includes(action)) {
+        return new Response(JSON.stringify({ ok: false, error: "Ação inválida." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const authorization = await authorizeStationWrite(req, body, SLUG_TO_UID, sb);
+      if (!authorization.ok) return authorization.response;
+      const targetUid = authorization.targetUid;
 
       if (action === "delete") {
         const idToDelete = body.id || body.enqueteId;
-        if (idToDelete && isUUID(idToDelete)) {
-          await sb.from("enquetes_agendadas").delete().eq("id", idToDelete);
-        } else if (body.pergunta) {
-          await sb.from("enquetes_agendadas").delete().eq("user_id", targetUid).eq("pergunta", body.pergunta);
-        }
-        return new Response(JSON.stringify({ ok: true, action: "deleted" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        let query = sb.from("enquetes_agendadas").delete().eq("user_id", targetUid);
+        if (isUUID(idToDelete)) query = query.eq("id", idToDelete);
+        else if (typeof body.pergunta === "string" && body.pergunta.trim()) query = query.eq("pergunta", body.pergunta);
+        else return new Response(JSON.stringify({ ok: false, error: "Informe um ID ou pergunta válida para excluir." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data, error } = await query.select("id");
+        if (error) throw error;
+        if (!data?.length) return new Response(JSON.stringify({ ok: false, error: "Enquete não encontrada nesta emissora." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ ok: true, action: "deleted", count: data.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       if (action === "sync" && Array.isArray(body.enquetes)) {
+        if (body.enquetes.length > 500) return new Response(JSON.stringify({ ok: false, error: "Limite de 500 enquetes por sincronização." }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const ownershipError = await assertOwnedRecordIds(sb, "enquetes_agendadas", body.enquetes.map((item: any) => item?.id), targetUid);
+        if (ownershipError) return ownershipError;
+        let synced = 0;
         for (const item of body.enquetes) {
           if (!item?.pergunta) continue;
           const row: any = {
@@ -108,25 +116,29 @@ Deno.serve(async (req) => {
           };
           if (isUUID(item.id)) {
             row.id = item.id;
-            await sb.from("enquetes_agendadas").upsert(row);
+            const { error } = await sb.from("enquetes_agendadas").upsert(row);
+            if (error) throw error;
+            synced++;
             continue;
           }
-          // IDs locais (enq_...) nao existem no banco: casa pela pergunta para evitar duplicidade
-          const { data: existing } = await sb
+          // IDs locais (enq_...) não existem no banco: casa pela pergunta para evitar duplicidade.
+          const { data: existing, error: lookupError } = await sb
             .from("enquetes_agendadas")
             .select("id")
             .eq("user_id", targetUid)
             .eq("pergunta", row.pergunta)
             .limit(1);
-          if (existing && existing.length > 0) {
-            await sb.from("enquetes_agendadas").update(row).eq("id", existing[0].id);
+          if (lookupError) throw lookupError;
+          if (existing?.length) {
+            const { error } = await sb.from("enquetes_agendadas").update(row).eq("id", existing[0].id).eq("user_id", targetUid);
+            if (error) throw error;
           } else {
-            await sb.from("enquetes_agendadas").insert(row);
+            const { error } = await sb.from("enquetes_agendadas").insert(row);
+            if (error) throw error;
           }
+          synced++;
         }
-        return new Response(JSON.stringify({ ok: true, action: "synced", count: body.enquetes.length }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ ok: true, action: "synced", count: synced }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       // Default: save single enquete
@@ -145,6 +157,8 @@ Deno.serve(async (req) => {
           horario_fim: eq.horario_fim || "23:59",
         };
         if (isUUID(eq.id)) row.id = eq.id;
+        const ownershipError = await assertOwnedRecordIds(sb, "enquetes_agendadas", [row.id], targetUid);
+        if (ownershipError) return ownershipError;
         const { data, error } = await sb.from("enquetes_agendadas").upsert(row).select();
         if (error) {
           console.error("[serve-xml-enquete] Save error:", error);
@@ -169,8 +183,28 @@ Deno.serve(async (req) => {
     const rawUserId = url.searchParams.get("user_id") || "";
     const rawSlug = url.searchParams.get("slug") || "";
 
-    const cleanInput = (rawUserId || rawSlug).toLowerCase().trim();
-    const resolvedUid = SLUG_TO_UID[cleanInput] || rawUserId || "d17e65af-e407-466f-9b60-b55c43399513";
+    const normalizedUserId = rawUserId.toLowerCase().trim();
+    const normalizedSlug = rawSlug.toLowerCase().trim();
+    const userIdFromParam = isUUID(rawUserId)
+      ? rawUserId
+      : (SLUG_TO_UID[normalizedUserId] || "");
+    const userIdFromSlug = isUUID(rawSlug)
+      ? rawSlug
+      : (SLUG_TO_UID[normalizedSlug] || "");
+    const cleanInput = normalizedSlug || normalizedUserId;
+    if (userIdFromParam && userIdFromSlug && userIdFromParam !== userIdFromSlug) {
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>Identificadores da emissora conflitantes</error>`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+    const resolvedUid = userIdFromParam || userIdFromSlug;
+    if (!resolvedUid) {
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
 
     console.log(`[serve-xml-enquete] GET for userId: ${resolvedUid}, Date: ${today}, Time: ${currentTime}`);
 
@@ -183,7 +217,11 @@ Deno.serve(async (req) => {
       .order("horario_inicio", { ascending: false });
 
     if (queryErr) {
-      console.warn("[serve-xml-enquete] query error:", queryErr.message);
+      console.error("[serve-xml-enquete] query error:", queryErr.message);
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>${esc("Não foi possível carregar a enquete")}</error>`, {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
     }
 
     // Filter by time window (including cross-midnight)
@@ -205,12 +243,19 @@ Deno.serve(async (req) => {
     // Única exceção fora da data atual: uma enquete de ontem que atravessa
     // a meia-noite e ainda está dentro do seu horário final.
     if (!scheduled) {
-      const { data: yesterdayList } = await sb
+      const { data: yesterdayList, error: yesterdayErr } = await sb
         .from("enquetes_agendadas")
         .select("*")
         .eq("user_id", resolvedUid)
         .eq("data_enquete", yesterday)
         .order("horario_inicio", { ascending: false });
+      if (yesterdayErr) {
+        console.error("[serve-xml-enquete] previous-day query error:", yesterdayErr.message);
+        return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>${esc("Não foi possível carregar a enquete")}</error>`, {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+        });
+      }
       scheduled = (yesterdayList || []).find((e: any) => {
         const start = normTime(e.horario_inicio, "00:00");
         const end = normTime(e.horario_fim, "23:59");

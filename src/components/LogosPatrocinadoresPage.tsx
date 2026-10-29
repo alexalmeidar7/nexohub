@@ -304,7 +304,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           `/xml/${stationSlug.replace(/fm$/i, "")}/logos.xml`,
           `/functions/v1/serve-xml-logos?user_id=${stationUid}&slug=${stationSlug}`,
           `/xml/logos.xml`,
-          `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-logos?user_id=${stationUid}`,
+          `https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-logos?user_id=${stationUid}`,
         ];
 
         const xmlResponses = await Promise.all(candidateUrls.map(async (url) => {

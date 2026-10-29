@@ -70,8 +70,11 @@ serve(async (req) => {
       userId = SLUG_TO_UID[rawSlug.toLowerCase()];
     } else if (userId && SLUG_TO_UID[userId.toLowerCase()]) {
       userId = SLUG_TO_UID[userId.toLowerCase()];
-    } else if (!userId) {
-      userId = "b2f70324-d086-4a5d-a407-cbc4acf98dce"; // Default
+    } else if (!userId || !isUUID(userId)) {
+      return new Response(
+        `<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`,
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" } },
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -100,11 +103,12 @@ serve(async (req) => {
     const currentDayName = weekdayMap[(getPart("weekday") || "").toLowerCase()] || "Domingo";
 
     // Resolve sub-user parent if needed
-    const { data: subUser } = await sb
+    const { data: subUser, error: subUserError } = await sb
       .from("sub_users")
       .select("parent_user_id, ativo")
       .eq("auth_user_id", userId)
       .maybeSingle();
+    if (subUserError) throw subUserError;
 
     const ownerId = (subUser?.ativo && subUser.parent_user_id) ? subUser.parent_user_id : userId;
     console.log(`[serve-xml-geral] start owner=${ownerId}`);
@@ -112,7 +116,11 @@ serve(async (req) => {
 
     // Fetch all related entities in parallel
     const step = async <T>(name: string, p: PromiseLike<T>): Promise<T> => {
-      const r = await p;
+      const r: any = await p;
+      if (r?.error) {
+        console.error(`[serve-xml-geral] step ${name} failed:`, r.error);
+        throw r.error;
+      }
       console.log(`[serve-xml-geral] step ${name} ok`);
       return r;
     };
