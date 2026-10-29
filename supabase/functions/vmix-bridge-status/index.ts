@@ -45,13 +45,30 @@ Deno.serve(async (req) => {
       })
       .sort((a, b) => Date.parse(b.last_seen_at!) - Date.parse(a.last_seen_at!));
 
-    if (!online.length) return json({ connected: false, deviceName: null, lastSeenAt: null });
+    if (!online.length) return json({ connected: false, deviceName: null, lastSeenAt: null, backendReady: true });
     return json({
       connected: true,
       deviceName: online[0].device_name || "Computador do estúdio",
       lastSeenAt: online[0].last_seen_at,
+      backendReady: true,
     });
   } catch (error) {
+    const errorCode = typeof error === "object" && error !== null && "code" in error
+      ? String((error as { code?: unknown }).code ?? "")
+      : "";
+
+    // During a staged rollout, the status endpoint can be published before the
+    // additive Bridge baseline. A missing devices table means "not connected",
+    // not an application failure; keep the UI in its not-ready state until setup.
+    if (errorCode === "PGRST205") {
+      return json({
+        connected: false,
+        deviceName: null,
+        lastSeenAt: null,
+        backendReady: false,
+      });
+    }
+
     console.error("vmix-bridge-status", error);
     return json({ error: "Não foi possível consultar o status da Ponte remota." }, 500);
   }
