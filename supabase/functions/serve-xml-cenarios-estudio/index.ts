@@ -94,12 +94,13 @@ Deno.serve(async (req) => {
     const nowSeconds = toSeconds(nowTime);
 
     // Programa atualmente no ar (de acordo com a grade) — inclui capa, thumb, apresentadores
-    const { data: progs } = await supabase
+    const { data: progs, error: programsError } = await supabase
       .from("programas")
       .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio, capa, thumb, apresentador_id, apresentadores_ids, created_at")
       .eq("user_id", userId)
       .eq("ativo", true)
       .order("horario_inicio", { ascending: false });
+    if (programsError) throw programsError;
 
     // Try to find a match prioritizing Estudio FM (as it's the primary broadcast)
     const findOnAir = (allProgs: any[]) => {
