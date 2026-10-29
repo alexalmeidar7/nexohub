@@ -58,8 +58,12 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
   const getLocalStorageKey = (uId: string) => `nexohub_enquetes_${uId}`;
 
   const postEnqueteFn = async (payload: Record<string, unknown>) => {
-    const { error } = await supabase.functions.invoke("serve-xml-enquete", { body: payload });
-    if (error) throw error;
+    try {
+      const { error } = await supabase.functions.invoke("serve-xml-enquete", { body: payload });
+      if (error) console.warn("Erro ao sincronizar enquete com a Edge Function:", error);
+    } catch (error) {
+      console.warn("Erro ao chamar a Edge Function da enquete:", error);
+    }
   };
 
   const getStoredEnquetes = (uId: string): EnqueteAgendada[] => {
