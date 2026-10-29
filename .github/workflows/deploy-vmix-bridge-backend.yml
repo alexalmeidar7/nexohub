@@ -169,6 +169,7 @@ jobs:
             20261028193000
             20261028205300
             20261028223300
+            20261029025000
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -353,7 +354,7 @@ jobs:
           set -euo pipefail
           missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             WITH required(version) AS (
-              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300')
+              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000')
             )
             SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
             FROM required r
@@ -420,6 +421,39 @@ jobs:
           fi
           echo "House Mix musicas_tocadas upsert key is present."
 
+      - name: Require custom vMix button compatibility columns before Bridge writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing_or_wrong_columns="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            WITH required(column_name, data_type, is_nullable) AS (
+              VALUES
+                ('shortcut', 'text', 'YES'),
+                ('icon', 'text', 'YES'),
+                ('estudio', 'text', 'YES'),
+                ('color', 'text', 'YES'),
+                ('category', 'text', 'NO'),
+                ('data_especifica', 'date', 'YES')
+            )
+            SELECT COALESCE(string_agg(r.column_name, ', ' ORDER BY r.column_name), '')
+            FROM required r
+            LEFT JOIN information_schema.columns c
+              ON c.table_schema = 'public'
+             AND c.table_name = 'custom_vmix_buttons'
+             AND c.column_name = r.column_name
+            WHERE c.column_name IS NULL
+               OR c.data_type <> r.data_type
+               OR c.is_nullable <> r.is_nullable
+          ")"
+          if [ -n "$missing_or_wrong_columns" ]; then
+            echo "::error::custom_vmix_buttons is missing compatible columns: $missing_or_wrong_columns. Apply the reviewed additive migration 20261029025000 before Bridge writes."
+            exit 1
+          fi
+          echo "All custom vMix button compatibility columns are present."
+
       - name: Read-only preflight summary
         if: ${{ !inputs.apply_changes }}
         env:
@@ -449,6 +483,10 @@ jobs:
               SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261028223300'
             ) THEN 'remaining House Mix columns 20261028223300: applied'
               ELSE 'remaining House Mix columns 20261028223300: pending' END,
+            CASE WHEN EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261029025000'
+            ) THEN 'custom vMix button columns 20261029025000: applied'
+              ELSE 'custom vMix button columns 20261029025000: pending' END,
             (SELECT count(*)::text FROM auth.users) || ' Auth users',
             (SELECT count(*)::text FROM storage.buckets) || ' Storage buckets',
             (SELECT count(*)::text FROM storage.objects) || ' Storage objects',
