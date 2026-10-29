@@ -1,0 +1,4 @@
+-- Historical migration marker.
+-- This version is already recorded as applied in the production database.
+-- Its original SQL is not present in the current repository history.
+-- Intentionally empty: do not re-run or reconstruct this migration here.
