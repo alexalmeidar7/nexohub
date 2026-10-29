@@ -937,23 +937,36 @@ jobs:
         run: |
           set -euo pipefail
 
-          missing_buckets="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
-            WITH required(bucket_name) AS (
-              VALUES ('empresa-assets'), ('comercial')
+          # The verified Positiva manifest contains 182 empresa-assets objects
+          # and 110 comercial objects. Exclude the temporary staging prefix so
+          # partial uploads cannot satisfy the production-write gate.
+          storage_counts="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            WITH required(bucket_name, minimum_objects) AS (
+              VALUES ('empresa-assets', 182), ('comercial', 110)
             )
-            SELECT COALESCE(string_agg(r.bucket_name, ', ' ORDER BY r.bucket_name), '')
+            SELECT
+              r.bucket_name,
+              count(o.id) FILTER (
+                WHERE o.id IS NOT NULL
+                  AND o.name NOT LIKE 'positiva-restauracao/%'
+              ),
+              r.minimum_objects
             FROM required r
             LEFT JOIN storage.buckets b ON b.name = r.bucket_name
-            WHERE b.id IS NULL
-               OR NOT EXISTS (
-                 SELECT 1
-                 FROM storage.objects o
-                 WHERE o.bucket_id = b.id
-               )
+            LEFT JOIN storage.objects o ON o.bucket_id = b.id
+            GROUP BY r.bucket_name, r.minimum_objects
+            ORDER BY r.bucket_name
           ")"
 
-          if [ -n "$missing_buckets" ]; then
-            echo "::error::Restored Storage buckets with objects are missing: $missing_buckets. Restore and verify the House Mix Storage objects before Bridge migrations or Edge deployment."
+          storage_incomplete=""
+          while IFS='|' read -r bucket_name actual_count minimum_count; do
+            if [ -z "$actual_count" ] || [ "$actual_count" -lt "$minimum_count" ]; then
+              storage_incomplete+="${bucket_name} (${actual_count:-0}/${minimum_count}), "
+            fi
+          done <<< "$storage_counts"
+
+          if [ -n "$storage_incomplete" ]; then
+            echo "::error::Storage restore is incomplete: ${storage_incomplete%, }. The verified Positiva manifest requires at least 182 final empresa-assets objects and 110 final comercial objects. Objects under positiva-restauracao/ do not count. Restore the full manifest before Bridge migrations or Edge deployment."
             exit 1
           fi
 
