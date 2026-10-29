@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { authorizeStationWrite, assertOwnedRecordIds } from "../_shared/stationWriteAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -93,42 +94,46 @@ Deno.serve(async (req) => {
       }
 
       const action = body.action || "save";
-      const rawUser = (body.user_id || body.userId || "").trim();
-      const rawSlug = (body.slug || "").trim().toLowerCase();
-      const targetUid = SLUG_TO_UID[rawSlug] || SLUG_TO_UID[rawUser.toLowerCase()] || (isUUID(rawUser) ? rawUser : "d17e65af-e407-466f-9b60-b55c43399513");
+      if (!["save", "sync", "delete"].includes(action)) {
+        return new Response(JSON.stringify({ ok: false, error: "Ação inválida." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const authorization = await authorizeStationWrite(req, body, SLUG_TO_UID, sb);
+      if (!authorization.ok) return authorization.response;
+      const targetUid = authorization.targetUid;
 
       if (action === "delete") {
         const idToDelete = body.id || body.batalhaId;
-        if (idToDelete && isUUID(idToDelete)) {
-          await sb.from("batalhas_agendadas").delete().eq("id", idToDelete);
-        }
-        return new Response(JSON.stringify({ ok: true, action: "deleted" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        if (!isUUID(idToDelete)) return new Response(JSON.stringify({ ok: false, error: "ID da batalha inválido." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data, error } = await sb.from("batalhas_agendadas").delete().eq("id", idToDelete).eq("user_id", targetUid).select("id");
+        if (error) throw error;
+        if (!data?.length) return new Response(JSON.stringify({ ok: false, error: "Batalha não encontrada nesta emissora." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ ok: true, action: "deleted" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       if (action === "sync" && Array.isArray(body.batalhas)) {
-        for (const item of body.batalhas) {
-          const row: any = {
-            user_id: targetUid,
-            artista1_nome: item.artista1_nome || "",
-            artista1_musica: item.artista1_musica || "",
-            artista1_porcentagem: Number(item.artista1_porcentagem ?? 50),
-            artista1_imagem: item.artista1_imagem || "",
-            artista2_nome: item.artista2_nome || "",
-            artista2_musica: item.artista2_musica || "",
-            artista2_porcentagem: Number(item.artista2_porcentagem ?? 50),
-            artista2_imagem: item.artista2_imagem || "",
-            data_batalha: item.data_batalha || today,
-            horario_inicio: item.horario_inicio || "00:00",
-            horario_fim: item.horario_fim || "23:59",
-          };
-          if (isUUID(item.id)) row.id = item.id;
-          await sb.from("batalhas_agendadas").upsert(row);
+        if (body.batalhas.length > 500) return new Response(JSON.stringify({ ok: false, error: "Limite de 500 batalhas por sincronização." }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const ownershipError = await assertOwnedRecordIds(sb, "batalhas_agendadas", body.batalhas.map((item: any) => item?.id), targetUid);
+        if (ownershipError) return ownershipError;
+        const rows = body.batalhas.map((item: any) => ({
+          ...(isUUID(item?.id) ? { id: item.id } : {}),
+          user_id: targetUid,
+          artista1_nome: item?.artista1_nome || "",
+          artista1_musica: item?.artista1_musica || "",
+          artista1_porcentagem: Number(item?.artista1_porcentagem ?? 50),
+          artista1_imagem: item?.artista1_imagem || "",
+          artista2_nome: item?.artista2_nome || "",
+          artista2_musica: item?.artista2_musica || "",
+          artista2_porcentagem: Number(item?.artista2_porcentagem ?? 50),
+          artista2_imagem: item?.artista2_imagem || "",
+          data_batalha: item?.data_batalha || today,
+          horario_inicio: item?.horario_inicio || "00:00",
+          horario_fim: item?.horario_fim || "23:59",
+        }));
+        if (rows.length) {
+          const { error } = await sb.from("batalhas_agendadas").upsert(rows);
+          if (error) throw error;
         }
-        return new Response(JSON.stringify({ ok: true, action: "synced", count: body.batalhas.length }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ ok: true, action: "synced", count: rows.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       // Default: save single batalha
@@ -149,6 +154,8 @@ Deno.serve(async (req) => {
           horario_fim: bt.horario_fim || "23:59",
         };
         if (isUUID(bt.id)) row.id = bt.id;
+        const ownershipError = await assertOwnedRecordIds(sb, "batalhas_agendadas", [row.id], targetUid);
+        if (ownershipError) return ownershipError;
         const { data, error } = await sb.from("batalhas_agendadas").upsert(row).select();
         if (error) {
           console.error("[serve-xml-batalha] Save error:", error);
@@ -173,8 +180,28 @@ Deno.serve(async (req) => {
     const rawUserId = url.searchParams.get("user_id") || "";
     const rawSlug = url.searchParams.get("slug") || "";
 
-    const cleanInput = (rawUserId || rawSlug).toLowerCase().trim();
-    const resolvedUid = SLUG_TO_UID[cleanInput] || rawUserId || "d17e65af-e407-466f-9b60-b55c43399513";
+    const normalizedUserId = rawUserId.toLowerCase().trim();
+    const normalizedSlug = rawSlug.toLowerCase().trim();
+    const userIdFromParam = isUUID(rawUserId)
+      ? rawUserId
+      : (SLUG_TO_UID[normalizedUserId] || "");
+    const userIdFromSlug = isUUID(rawSlug)
+      ? rawSlug
+      : (SLUG_TO_UID[normalizedSlug] || "");
+    const cleanInput = normalizedSlug || normalizedUserId;
+    if (userIdFromParam && userIdFromSlug && userIdFromParam !== userIdFromSlug) {
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>Identificadores da emissora conflitantes</error>`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+    const resolvedUid = userIdFromParam || userIdFromSlug;
+    if (!resolvedUid) {
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`, {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
 
     console.log(`[serve-xml-batalha] GET for userId: ${resolvedUid}, Date: ${today}, Time: ${currentTime}`);
 
@@ -187,7 +214,11 @@ Deno.serve(async (req) => {
       .order("horario_inicio", { ascending: false });
 
     if (queryErr) {
-      console.warn("[serve-xml-batalha] query error:", queryErr.message);
+      console.error("[serve-xml-batalha] query error:", queryErr.message);
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?><error>${esc("Não foi possível carregar a batalha")}</error>`, {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
+      });
     }
 
     // Filter by time window (supporting midnight crossing)

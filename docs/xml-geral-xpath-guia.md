@@ -12,6 +12,12 @@ https://<PROJECT_REF>.supabase.co/functions/v1/serve-xml-geral?slug=<SLUG_DA_EMI
 
 Não fixe um Project Ref de ambiente de cópia nem use o slug `default` em produção. Cada emissora deve ter um slug cadastrado e único.
 
+## Feeds específicos
+
+- Clima por emissora: `/functions/v1/serve-xml-tempo?user_id=<ID_DA_EMISSORA>`.
+- O endpoint lê exclusivamente `xml-tempo-<user_id>.xml`; não existe arquivo compartilhado entre emissoras.
+- XML geral: clima é incorporado somente quando existe previsão individual disponível.
+
 ## Regras de atualização
 
 - O XML é gerado sob demanda; respostas usam cabeçalhos sem cache.
