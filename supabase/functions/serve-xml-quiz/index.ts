@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { authorizeStationWrite, assertOwnedRecordIds } from "../_shared/stationWriteAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,44 +74,49 @@ Deno.serve(async (req) => {
       }
 
       const action = body.action || "save";
-      const rawUser = (body.user_id || body.userId || "").trim();
-      const rawSlug = (body.slug || "").trim().toLowerCase();
-      const targetUid = SLUG_TO_UID[rawSlug] || SLUG_TO_UID[rawUser.toLowerCase()] || (isUUID(rawUser) ? rawUser : "d17e65af-e407-466f-9b60-b55c43399513");
+      if (!["save", "sync", "delete"].includes(action)) {
+        return new Response(JSON.stringify({ ok: false, error: "Ação inválida." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const authorization = await authorizeStationWrite(req, body, SLUG_TO_UID, sb);
+      if (!authorization.ok) return authorization.response;
+      const targetUid = authorization.targetUid;
 
       if (action === "delete") {
         const idToDelete = body.id || body.quizId;
-        if (idToDelete && isUUID(idToDelete)) {
-          await sb.from("quiz_agendados").delete().eq("id", idToDelete);
-        } else if (body.pergunta) {
-          await sb.from("quiz_agendados").delete().eq("user_id", targetUid).eq("pergunta", body.pergunta);
-        }
-        return new Response(JSON.stringify({ ok: true, action: "deleted" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        let query = sb.from("quiz_agendados").delete().eq("user_id", targetUid);
+        if (isUUID(idToDelete)) query = query.eq("id", idToDelete);
+        else if (typeof body.pergunta === "string" && body.pergunta.trim()) query = query.eq("pergunta", body.pergunta);
+        else return new Response(JSON.stringify({ ok: false, error: "Informe um ID ou pergunta válida para excluir." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { data, error } = await query.select("id");
+        if (error) throw error;
+        if (!data?.length) return new Response(JSON.stringify({ ok: false, error: "Quiz não encontrado nesta emissora." }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ ok: true, action: "deleted", count: data.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       if (action === "sync" && Array.isArray(body.quizzes)) {
-        for (const item of body.quizzes) {
-          const row: any = {
-            user_id: targetUid,
-            pergunta: item.pergunta || "",
-            resposta1: item.resposta1 || "",
-            resposta2: item.resposta2 || "",
-            resposta3: item.resposta3 || "",
-            resposta4: item.resposta4 || "",
-            resposta_correta: Number(item.resposta_correta) || 1,
-            data_quiz: item.data_quiz || today,
-            horario_inicio: item.horario_inicio || "00:00",
-            horario_fim: item.horario_fim || "23:59",
-            explicacao: item.explicacao || "",
-            imagem_resposta: item.imagem_resposta || "",
-          };
-          if (isUUID(item.id)) row.id = item.id;
-          await sb.from("quiz_agendados").upsert(row);
+        if (body.quizzes.length > 500) return new Response(JSON.stringify({ ok: false, error: "Limite de 500 quizzes por sincronização." }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const ownershipError = await assertOwnedRecordIds(sb, "quiz_agendados", body.quizzes.map((item: any) => item?.id), targetUid);
+        if (ownershipError) return ownershipError;
+        const rows = body.quizzes.map((item: any) => ({
+          ...(isUUID(item?.id) ? { id: item.id } : {}),
+          user_id: targetUid,
+          pergunta: item?.pergunta || "",
+          resposta1: item?.resposta1 || "",
+          resposta2: item?.resposta2 || "",
+          resposta3: item?.resposta3 || "",
+          resposta4: item?.resposta4 || "",
+          resposta_correta: Number(item?.resposta_correta) || 1,
+          data_quiz: item?.data_quiz || today,
+          horario_inicio: item?.horario_inicio || "00:00",
+          horario_fim: item?.horario_fim || "23:59",
+          explicacao: item?.explicacao || "",
+          imagem_resposta: item?.imagem_resposta || "",
+        }));
+        if (rows.length) {
+          const { error } = await sb.from("quiz_agendados").upsert(rows);
+          if (error) throw error;
         }
-        return new Response(JSON.stringify({ ok: true, action: "synced", count: body.quizzes.length }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify({ ok: true, action: "synced", count: rows.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       // Default: save single quiz
