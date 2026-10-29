@@ -545,7 +545,7 @@ export default function PromocoesKiosk() {
       try {
         const { data } = await supabase
           .from("logos_patrocinadores")
-          .select("programa_id, programa_nome, logo_url, data_final, ativo, excluido")
+          .select("programa_id, logo_url, data_final, ativo, excluido")
           .eq("user_id", audienceUserId)
           .order("created_at", { ascending: false });
         if (cancelled || !data) return;
@@ -561,10 +561,6 @@ export default function PromocoesKiosk() {
           const url = typeof l.logo_url === "string" ? l.logo_url.trim() : "";
           if (!url || !isRealImageRef(url)) continue;
           if (l.programa_id && !map[l.programa_id]) map[l.programa_id] = url;
-          if (l.programa_nome) {
-            const key = `n:${normalizeProgramName(l.programa_nome)}`;
-            if (!map[key]) map[key] = url;
-          }
         }
         setProgramLogos(map);
       } catch { /* fallback: usa o selo do programa */ }
