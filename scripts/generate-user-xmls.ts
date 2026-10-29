@@ -146,49 +146,6 @@ async function fetchRemoteXml(url: string): Promise<string | null> {
   }
 }
 
-function generateFallbackTempo(st: StationConfig): string {
-  const now = new Date().toISOString();
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<previsao>
-  <emissora>${st.name}</emissora>
-  <cidade>${st.city}</cidade>
-  <atualizacao>${now}</atualizacao>
-  <atual date="Agora">
-    <cidade>${st.city}</cidade>
-    <temperatura>${st.tempDefault}</temperatura>
-    <descricao>Tempo Firme e Ensolarado</descricao>
-    <umidade>52%</umidade>
-    <vento>11 km/h</vento>
-  </atual>
-  <hoje>
-    <temperatura_atual>${st.tempDefault}</temperatura_atual>
-    <maxima>32°</maxima>
-    <minima>21°</minima>
-    <descricao_tempo>Ensolarado</descricao_tempo>
-    <umidade>52%</umidade>
-    <vento>11 km/h</vento>
-  </hoje>
-  <amanha>
-    <maxima>31°</maxima>
-    <minima>20°</minima>
-    <descricao_tempo>Parcialmente Nublado</descricao_tempo>
-  </amanha>
-  <proximos_dias>
-    <dia data="2026-09-16" dia_semana="Quarta">
-      <maxima>30°</maxima>
-      <minima>20°</minima>
-      <descricao>Pancadas Isoladas</descricao>
-    </dia>
-    <dia data="2026-09-17" dia_semana="Quinta">
-      <maxima>29°</maxima>
-      <minima>19°</minima>
-      <descricao>Sol entre Nuvens</descricao>
-    </dia>
-  </proximos_dias>
-</previsao>
-`;
-}
-
 function generateFallbackRoteiro(st: StationConfig): string {
   const today = new Date().toISOString().slice(0, 10);
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -648,11 +605,11 @@ function generateCombinedGeralXml(
   const aSeguirFoto = extractTag(broadcastXml, "locutor_foto") || "";
 
   const tempAtual = extractTag(tempoXml, "temperatura") || extractTag(broadcastXml, "temperatura") || st.tempDefault;
-  const tempDesc = extractTag(tempoXml, "descricao") || extractTag(tempoXml, "descricao_tempo") || "Tempo Firme e Ensolarado";
-  const tempMin = extractTag(tempoXml, "minima") || "20°C";
-  const tempMax = extractTag(tempoXml, "maxima") || "31°C";
-  const tempUmidade = extractTag(tempoXml, "umidade") || extractTag(tempoXml, "humidade") || "50%";
-  const tempVento = extractTag(tempoXml, "vento") || "10 km/h";
+  const tempDesc = extractTag(tempoXml, "descricao") || extractTag(tempoXml, "descricao_tempo");
+  const tempMin = extractTag(tempoXml, "minima");
+  const tempMax = extractTag(tempoXml, "maxima");
+  const tempUmidade = extractTag(tempoXml, "umidade") || extractTag(tempoXml, "humidade");
+  const tempVento = extractTag(tempoXml, "vento");
   const tempIcone = extractTag(tempoXml, "icone_url") || extractTag(tempoXml, "url_imagem_icone") || "";
 
   const roteiroProg = extractTag(roteiroXml, "programa") || programaNome;
@@ -834,7 +791,10 @@ export async function generateAllUserXmls() {
       return null;
     };
 
-    const tempoContent = tempoRemote || readExistingIfValid("tempo.xml") || generateFallbackTempo(st);
+    // Sem previsão remota, preserva um XML válido sem inventar temperatura,
+    // condição climática ou datas. O consumidor pode identificar indisponibilidade.
+    const tempoContent = tempoRemote ||
+      `<?xml version="1.0" encoding="UTF-8"?>\n<previsao><disponivel>0</disponivel><cidade>${escapeXml(st.city)}</cidade></previsao>`;
     let roteiroContent = roteiroRemote || readExistingIfValid("roteiro.xml");
     if (!roteiroContent) {
       try {

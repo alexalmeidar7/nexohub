@@ -285,10 +285,9 @@ serve(async (req) => {
         await supabase.storage
           .from("xml-files")
           .upload(`xml-tempo-${s.user_id}.xml`, previsaoFile, { upsert: true, contentType: "application/xml" });
-        // Legacy shared file (kept in sync for clients still pointing to xml-tempo.xml)
-        await supabase.storage
-          .from("xml-files")
-          .upload(`xml-tempo.xml`, previsaoFile, { upsert: true, contentType: "application/xml" });
+        // Não publicar um XML compartilhado: o processamento percorre várias
+        // emissoras e um único arquivo global faria a última emissora sobrescrever
+        // a previsão das demais. O feed oficial é sempre individual por user_id.
 
         updated++;
       } catch (err) {

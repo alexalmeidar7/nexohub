@@ -61,6 +61,8 @@ Deno.serve(async (req) => {
   const getPart = (type: string) => parts.find(p => p.type === type)?.value;
   const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
   const currentTime = `${getPart("hour")}:${getPart("minute")}`;
+  const [year, month, day] = today.split("-").map(Number);
+  const yesterday = new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
 
   try {
     // ── POST: SALVAR / EXCLUIR / SINCRONIZAR ENQUETES VIA SERVICE ROLE (IGNORA RLS) ──
@@ -200,21 +202,20 @@ Deno.serve(async (req) => {
       scheduled = (list || [])[0];
     }
 
-    // Fallback adicional: nenhuma enquete para hoje -> usa a mais recente cujo horario bate agora
+    // Única exceção fora da data atual: uma enquete de ontem que atravessa
+    // a meia-noite e ainda está dentro do seu horário final.
     if (!scheduled) {
-      const { data: recent } = await sb
+      const { data: yesterdayList } = await sb
         .from("enquetes_agendadas")
         .select("*")
         .eq("user_id", resolvedUid)
-        .lte("data_enquete", today)
-        .order("data_enquete", { ascending: false })
-        .limit(20);
-      scheduled =
-        (recent || []).find((e: any) => {
-          const start = normTime(e.horario_inicio, "00:00");
-          const end = normTime(e.horario_fim, "23:59");
-          return start <= end ? currentTime >= start && currentTime <= end : currentTime >= start || currentTime <= end;
-        }) || (allowLatest ? (recent || [])[0] : undefined);
+        .eq("data_enquete", yesterday)
+        .order("horario_inicio", { ascending: false });
+      scheduled = (yesterdayList || []).find((e: any) => {
+        const start = normTime(e.horario_inicio, "00:00");
+        const end = normTime(e.horario_fim, "23:59");
+        return start > end && currentTime <= end;
+      });
     }
 
 
