@@ -55,7 +55,7 @@ export async function authorizeStationWrite(
   if (rawUser && !explicitUid && !mappedFromUser) {
     return { ok: false, response: jsonError("Identificador da emissora inválido.", 400) };
   }
-  if (rawSlug && !mappedFromSlug) {
+  if (rawSlug && !mappedFromSlug && !explicitUid && !mappedFromUser) {
     return { ok: false, response: jsonError("Slug da emissora não reconhecido.", 400) };
   }
   if (mappedFromSlug && mappedFromUser && mappedFromSlug !== mappedFromUser) {
