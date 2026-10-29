@@ -118,7 +118,15 @@ internal static class Program {
 
  static async Task<BridgeConfig> LoadConfigAsync() {
   if(!File.Exists(ConfigPath)) await SaveAsync(new BridgeConfig());
-  return JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(ConfigPath),JsonOptions)??new BridgeConfig();
+  var config = JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(ConfigPath),JsonOptions)??new BridgeConfig();
+  // Migrate installations that still point to the retired Supabase project.
+  if(Uri.TryCreate(config.SupabaseUrl,UriKind.Absolute,out var configuredCloud) &&
+     string.Equals(configuredCloud.Host,"zzjfzxxvxbspbdkodoix.supabase.co",StringComparison.OrdinalIgnoreCase)) {
+   config.SupabaseUrl="https://qazvgmgdidjhbvcuinpy.supabase.co";
+   await SaveAsync(config);
+   Console.WriteLine("Backend do NexoHub Bridge atualizado para o projeto ativo.");
+  }
+  return config;
  }
  static Task SaveAsync(BridgeConfig c)=>File.WriteAllTextAsync(ConfigPath,JsonSerializer.Serialize(c,new JsonSerializerOptions{WriteIndented=true}));
  static void Validate(BridgeConfig c) {
