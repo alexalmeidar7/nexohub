@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { findCurrentProgram } from "./OnAirWidget";
 import { getApresentadores } from "./ApresentadorForm";
 import { normalizeMusicText } from "@/lib/textEncoding";
-import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { mergeUserDashboardItems, resolveTenantUserId } from "@/lib/userSettings";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import { matchesMusicException, getMusicExceptions, MusicException } from "@/lib/musicExceptions";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
@@ -312,10 +312,11 @@ async function fetchCoverFromiTunes(titulo: string, artista: string): Promise<st
 
 async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]> {
   try {
+    const tenantUserId = await resolveTenantUserId(userId);
     const { data } = await supabase
       .from("xml_upload_history")
       .select("id, source, created_at, artista, musica")
-      .eq("user_id", userId)
+      .eq("user_id", tenantUserId)
       .order("created_at", { ascending: false })
       .limit(3);
     if (!data) return [];
@@ -341,9 +342,10 @@ async function addUploadLogToDb(
   artista?: string,
   musica?: string,
 ): Promise<UploadLogEntry[]> {
+  const tenantUserId = await resolveTenantUserId(userId);
   const sourceValue = source === "pasta" && deviceName ? `pasta|${deviceName}` : source;
   await supabase.from("xml_upload_history").insert({
-    user_id: userId,
+    user_id: tenantUserId,
     source: sourceValue,
     artista: artista || null,
     musica: musica || null,
@@ -353,7 +355,7 @@ async function addUploadLogToDb(
     const { data: keep } = await supabase
       .from("xml_upload_history")
       .select("id")
-      .eq("user_id", userId)
+      .eq("user_id", tenantUserId)
       .order("created_at", { ascending: false })
       .limit(3);
     const keepIds = (keep || []).map((r: any) => r.id);
@@ -361,11 +363,11 @@ async function addUploadLogToDb(
       await supabase
         .from("xml_upload_history")
         .delete()
-        .eq("user_id", userId)
+        .eq("user_id", tenantUserId)
         .not("id", "in", `(${keepIds.map((id) => `"${id}"`).join(",")})`);
     }
   } catch {}
-  return loadUploadHistoryFromDb(userId);
+  return loadUploadHistoryFromDb(tenantUserId);
 }
 
 export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: string | null }) {
