@@ -959,7 +959,6 @@ export type Database = {
           background_url: string | null
           cliente_desde: string | null
           cnpj: string | null
-          created_at: string
           endereco: string | null
           executiva_venda: string | null
           facebook: string | null
@@ -992,7 +991,6 @@ export type Database = {
           background_url?: string | null
           cliente_desde?: string | null
           cnpj?: string | null
-          created_at?: string
           endereco?: string | null
           executiva_venda?: string | null
           facebook?: string | null
@@ -1025,7 +1023,6 @@ export type Database = {
           background_url?: string | null
           cliente_desde?: string | null
           cnpj?: string | null
-          created_at?: string
           endereco?: string | null
           executiva_venda?: string | null
           facebook?: string | null
@@ -1229,47 +1226,38 @@ export type Database = {
       logos_patrocinadores: {
         Row: {
           ativo: boolean
-          cnpj: string | null
           created_at: string
           data_final: string
-          endereco: string | null
           excluido: boolean
           excluido_at: string | null
           id: string
           logo_url: string
           nome: string
           programa_id: string | null
-          telefone: string | null
           user_id: string
         }
         Insert: {
           ativo?: boolean
-          cnpj?: string | null
           created_at?: string
           data_final: string
-          endereco?: string | null
           excluido?: boolean
           excluido_at?: string | null
           id?: string
           logo_url?: string
           nome?: string
           programa_id?: string | null
-          telefone?: string | null
           user_id: string
         }
         Update: {
           ativo?: boolean
-          cnpj?: string | null
           created_at?: string
           data_final?: string
-          endereco?: string | null
           excluido?: boolean
           excluido_at?: string | null
           id?: string
           logo_url?: string
           nome?: string
           programa_id?: string | null
-          telefone?: string | null
           user_id?: string
         }
         Relationships: [
