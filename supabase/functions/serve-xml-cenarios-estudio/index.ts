@@ -84,7 +84,14 @@ Deno.serve(async (req) => {
     const ss = tzParts.find((p) => p.type === "second")?.value || "00";
     const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
     const today = dayNames[dayMap[wkShort] ?? 0];
+    const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const yesterdayShort = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+    }).format(yesterdayDate);
+    const yesterday = dayNames[dayMap[yesterdayShort] ?? 0];
     const nowTime = `${hh}:${mm}:${ss}`;
+    const nowSeconds = toSeconds(nowTime);
 
     // Programa atualmente no ar (de acordo com a grade) — inclui capa, thumb, apresentadores
     const { data: progs } = await supabase
@@ -96,19 +103,25 @@ Deno.serve(async (req) => {
 
     // Try to find a match prioritizing Estudio FM (as it's the primary broadcast)
     const findOnAir = (allProgs: any[]) => {
-      const candidates = (allProgs || []).filter(
-        (p: any) =>
-          (p.dias_semana || []).includes(today) &&
-          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1),
-      );
-      
+      const candidates = (allProgs || []).filter((p: any) => {
+        const startSeconds = toSeconds(p.horario_inicio);
+        const endSeconds = toSeconds(p.horario_fim);
+        const crossesMidnight = endSeconds <= startSeconds;
+
+        // Depois da meia-noite, mantém no ar o programa iniciado no dia anterior.
+        if (crossesMidnight && nowSeconds < endSeconds) {
+          return (p.dias_semana || []).includes(yesterday);
+        }
+
+        return (p.dias_semana || []).includes(today) &&
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1);
+      });
+
       if (candidates.length === 0) return null;
       if (candidates.length === 1) return candidates[0];
-      
-      // If multiple (overlapping), prioritize Estudio FM
+
       const fmMatch = candidates.find(p => p.estudio?.toLowerCase().includes("fm"));
       if (fmMatch) return fmMatch;
-
       return candidates[0];
     };
 
