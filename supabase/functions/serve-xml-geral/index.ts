@@ -70,8 +70,11 @@ serve(async (req) => {
       userId = SLUG_TO_UID[rawSlug.toLowerCase()];
     } else if (userId && SLUG_TO_UID[userId.toLowerCase()]) {
       userId = SLUG_TO_UID[userId.toLowerCase()];
-    } else if (!userId) {
-      userId = "b2f70324-d086-4a5d-a407-cbc4acf98dce"; // Default
+    } else if (!userId || !isUUID(userId)) {
+      return new Response(
+        `<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`,
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" } },
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
