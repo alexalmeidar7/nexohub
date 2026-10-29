@@ -1,7 +1,7 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync, copyFileSync } from "fs";
 import { resolve, join } from "path";
 
-const SUPABASE_BASE = "https://zzjfzxxvxbspbdkodoix.supabase.co";
+const SUPABASE_BASE = "https://qazvgmgdidjhbvcuinpy.supabase.co";
 
 interface StationConfig {
   slug: string;
