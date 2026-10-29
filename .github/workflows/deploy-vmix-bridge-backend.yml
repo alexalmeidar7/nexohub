@@ -369,6 +369,157 @@ jobs:
           fi
           echo "Current House Mix schema reconciliation migrations are recorded."
 
+      - name: Verify Agenda and forms/Storage schema before Bridge writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing_columns="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            WITH required(table_name, column_name) AS (
+              VALUES
+                ('agenda_eventos', 'artes_urls'),
+                ('agenda_eventos', 'edicao_concluida'),
+                ('agenda_eventos', 'edicao_notas'),
+                ('agenda_eventos', 'excecoes'),
+                ('agenda_eventos', 'horario_gravacao'),
+                ('agenda_eventos', 'horario_gravacao_fim'),
+                ('agenda_eventos', 'periodo_inicio'),
+                ('agenda_eventos', 'periodo_fim'),
+                ('agenda_eventos', 'status'),
+                ('agenda_eventos', 'tipo_evento'),
+                ('agenda_eventos', 'youtube_descricao'),
+                ('agenda_eventos', 'youtube_titulo'),
+                ('agenda_eventos', 'youtube_url'),
+                ('ouvintes', 'origem_cadastro'),
+                ('ouvintes', 'sexo'),
+                ('ouvintes', 'banido'),
+                ('ouvintes', 'banido_at'),
+                ('ouvintes', 'banido_motivo'),
+                ('programas', 'deleted_at'),
+                ('logos_patrocinadores', 'nome'),
+                ('logos_patrocinadores', 'cnpj'),
+                ('logos_patrocinadores', 'telefone'),
+                ('logos_patrocinadores', 'endereco'),
+                ('logos_patrocinadores', 'excluido'),
+                ('logos_patrocinadores', 'excluido_at'),
+                ('empresa_config', 'ativo'),
+                ('empresa_config', 'created_at'),
+                ('empresa_config', 'cnpj'),
+                ('empresa_config', 'executiva_venda'),
+                ('empresa_config', 'cliente_desde'),
+                ('empresa_config', 'plano'),
+                ('empresa_config', 'timezone'),
+                ('empresa_config', 'background_url'),
+                ('empresa_config', 'instagram_subs'),
+                ('empresa_config', 'facebook_subs'),
+                ('empresa_config', 'youtube_subs'),
+                ('empresa_config', 'youtube_api_key'),
+                ('empresa_config', 'youtube_channel_id'),
+                ('empresa_config', 'audio_sources'),
+                ('empresa_config', 'video_sources'),
+                ('empresa_config', 'audio_stream_api_url'),
+                ('empresa_config', 'audio_stream_xpath'),
+                ('empresa_config', 'video_stream_api_url'),
+                ('empresa_config', 'video_stream_xpath'),
+                ('user_settings', 'cenario_config'),
+                ('user_settings', 'dashboard_items'),
+                ('user_settings', 'infomusic_ai_enabled'),
+                ('user_settings', 'infomusic_ai_last_reset'),
+                ('user_settings', 'infomusic_ai_monthly_count'),
+                ('user_settings', 'infomusic_excecoes'),
+                ('user_settings', 'infomusic_excecoes_artista_url'),
+                ('user_settings', 'infomusic_excecoes_capa_url'),
+                ('user_settings', 'last_manual_curiosity_id'),
+                ('user_settings', 'music_source_device'),
+                ('user_settings', 'music_source_mode'),
+                ('user_settings', 'shopping_active'),
+                ('user_settings', 'vmix_input_mapping'),
+                ('user_settings', 'vmix_pass'),
+                ('user_settings', 'vmix_shortcuts'),
+                ('user_settings', 'vmix_url'),
+                ('user_settings', 'vmix_user'),
+                ('user_settings', 'weather_city'),
+                ('user_settings', 'weather_lat'),
+                ('user_settings', 'weather_lon'),
+                ('roteiros', 'agendado_para_envio'),
+                ('roteiros', 'apresentador_editado'),
+                ('roteiros', 'configuracoes'),
+                ('roteiros', 'editado_at'),
+                ('roteiros', 'enviado_agendamento'),
+                ('roteiros', 'share_login'),
+                ('roteiros', 'share_token'),
+                ('roteiros', 'tickertitulos'),
+                ('roteiros', 'xml_pushed_at'),
+                ('sorteio_sorteios', 'apresentador_nome'),
+                ('sorteio_sorteios', 'programa_id'),
+                ('sorteio_sorteios', 'programa_nome'),
+                ('sorteio_sorteios', 'entrega_pin'),
+                ('sorteio_sorteios', 'entrega_token'),
+                ('sorteio_sorteios', 'foto_entrega_url'),
+                ('sorteio_sorteios', 'entrega_registrada_em'),
+                ('xml_upload_history', 'artista'),
+                ('xml_upload_history', 'musica')
+            )
+            SELECT COALESCE(string_agg(r.table_name || '.' || r.column_name, ', ' ORDER BY r.table_name, r.column_name), '')
+            FROM required r
+            LEFT JOIN information_schema.columns c
+              ON c.table_schema = 'public'
+             AND c.table_name = r.table_name
+             AND c.column_name = r.column_name
+            WHERE c.column_name IS NULL
+          ")"
+          if [ -n "$missing_columns" ]; then
+            echo "::error::Agenda/forms schema is incomplete: $missing_columns. Apply and verify the reviewed additive migrations 20261028180000 and 20261028193000 before Bridge writes."
+            exit 1
+          fi
+
+          delivery_token_nullable="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT is_nullable
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'sorteio_sorteios'
+              AND column_name = 'entrega_token'
+          ")"
+          if [ "$delivery_token_nullable" != "NO" ]; then
+            echo "::error::sorteio_sorteios.entrega_token must be NOT NULL after migration 20261028193000."
+            exit 1
+          fi
+
+          delivery_token_unique="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT EXISTS (
+              SELECT 1
+              FROM pg_index i
+              JOIN pg_class idx ON idx.oid = i.indexrelid
+              JOIN pg_class tbl ON tbl.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = tbl.relnamespace
+              WHERE n.nspname = 'public'
+                AND tbl.relname = 'sorteio_sorteios'
+                AND idx.relname = 'sorteio_sorteios_entrega_token_key'
+                AND i.indisunique
+            )
+          ")"
+          if [ "$delivery_token_unique" != "t" ]; then
+            echo "::error::The unique delivery-token index from migration 20261028193000 is missing."
+            exit 1
+          fi
+
+          missing_buckets="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            WITH required(bucket_id) AS (
+              VALUES ('empresa-assets'), ('comercial'), ('programas'), ('xml-files'), ('entregas')
+            )
+            SELECT COALESCE(string_agg(r.bucket_id, ', ' ORDER BY r.bucket_id), '')
+            FROM required r
+            LEFT JOIN storage.buckets b ON b.id = r.bucket_id
+            WHERE b.id IS NULL
+          ")"
+          if [ -n "$missing_buckets" ]; then
+            echo "::error::Storage buckets created by migration 20261028193000 are missing: $missing_buckets."
+            exit 1
+          fi
+          echo "Agenda, forms, delivery-token constraints, and all five Storage buckets are verified."
+
       - name: Require remaining House Mix columns before Bridge writes
         if: ${{ inputs.apply_changes }}
         env:
