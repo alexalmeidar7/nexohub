@@ -30,6 +30,12 @@ on:
       - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
 
+# Keep only the newest Windows installer build for each PR/ref.
+# Older builds for the same PR/ref are superseded and can be cancelled safely.
+concurrency:
+  group: house-mix-desktop-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
