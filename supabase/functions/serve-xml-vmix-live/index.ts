@@ -13,8 +13,6 @@ const esc = (s: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-const stripQuery = (u: string) => (u ? u.split("?")[0] : "");
-
 const toSeconds = (time: string) => {
   const [hour = "0", minute = "0", second = "0"] = String(time ?? "").split(":");
   return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
@@ -78,6 +76,7 @@ Deno.serve(async (req) => {
 
     // Programa no ar conforme grade (fuso America/Sao_Paulo)
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const now = new Date();
     const tzParts = new Intl.DateTimeFormat("en-US", {
       timeZone: "America/Sao_Paulo",
       weekday: "short",
@@ -85,28 +84,43 @@ Deno.serve(async (req) => {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-    }).formatToParts(new Date());
+    }).formatToParts(now);
     const wkShort = tzParts.find((p) => p.type === "weekday")?.value || "Sun";
     const hh = tzParts.find((p) => p.type === "hour")?.value || "00";
     const mm = tzParts.find((p) => p.type === "minute")?.value || "00";
     const ss = tzParts.find((p) => p.type === "second")?.value || "00";
     const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const today = dayNames[dayMap[wkShort] ?? 0];
+    const todayIndex = dayMap[wkShort] ?? 0;
+    const today = dayNames[todayIndex];
+    const yesterday = dayNames[(todayIndex + 6) % 7];
     const nowTime = `${hh}:${mm}:${ss}`;
 
-    const { data: progs } = await supabase
+    const { data: progs, error: programsError } = await supabase
       .from("programas")
       .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, apresentador_id, apresentadores_ids, capa, thumb, estudio")
       .eq("user_id", userId)
       .eq("ativo", true)
       .ilike("estudio", "%fm%")
       .order("horario_inicio", { ascending: false });
+    if (programsError) throw programsError;
 
-    const onAir = (progs || []).find(
-      (p: any) =>
+    // Prioriza programas iniciados ontem que atravessam a meia-noite;
+    // em seguida considera a grade normal do dia atual.
+    const onAir =
+      (progs || []).find((p: any) => {
+        const start = toSeconds(p.horario_inicio);
+        const end = toSeconds(p.horario_fim);
+        const current = toSeconds(nowTime);
+        return (
+          end <= start &&
+          (p.dias_semana || []).includes(yesterday) &&
+          current < end
+        );
+      }) ||
+      (progs || []).find((p: any) =>
         (p.dias_semana || []).includes(today) &&
         isTimeInRange(p.horario_inicio, p.horario_fim, nowTime),
-    );
+      );
 
     // Apresentador (foto)
     let apresentadorNome = "";
@@ -122,15 +136,14 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (apres) {
           apresentadorNome = apres.nome || "";
-          apresentadorFoto = stripQuery(apres.foto || "");
+          apresentadorFoto = apres.foto || "";
         }
       }
     }
 
     // Logo do patrocinador (1 por vez, rotação a cada 10s)
-    const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let patrocinadorNome = "";
-    let patrocinadorUrl = BLANK_LOGO_URL;
+    let patrocinadorUrl = "";
     if (onAir) {
       const { data: logos } = await supabase
         .from("logos_patrocinadores")
@@ -145,7 +158,7 @@ Deno.serve(async (req) => {
         const slot = Math.floor(Date.now() / 10000) % list.length;
         const escolhida = list[slot];
         patrocinadorNome = escolhida.nome || "";
-        patrocinadorUrl = stripQuery(escolhida.logo_url || "") || BLANK_LOGO_URL;
+        patrocinadorUrl = escolhida.logo_url || "";
       }
     }
 
@@ -220,7 +233,7 @@ Deno.serve(async (req) => {
     <nome>${esc(onAir?.nome || "")}</nome>
     <horario_inicio>${esc(onAir?.horario_inicio || "")}</horario_inicio>
     <horario_fim>${esc(onAir?.horario_fim || "")}</horario_fim>
-    <capa>${esc(stripQuery((onAir as any)?.capa || (onAir as any)?.thumb || ""))}</capa>
+    <capa>${esc((onAir as any)?.capa || (onAir as any)?.thumb || "")}</capa>
   </programa>
   <apresentador>
     <nome>${esc(apresentadorNome)}</nome>

@@ -36,11 +36,12 @@ const isTimeInRange = (start: string, end: string, current: string, delayMinutes
 // then append a stable cache-buster derived from updated_at so vMix reloads on change.
 const withCacheBuster = (rawUrl: string, version?: string | null) => {
   if (!rawUrl) return "";
-  const clean = rawUrl.split("?")[0];
-  if (!version) return clean;
-  // Use a short hash of the timestamp to keep URL tidy
+  const [base, ...queryParts] = rawUrl.split("?");
+  if (!version) return rawUrl;
+  // Preserve signed URLs and append the cache version without discarding auth parameters.
   const v = String(new Date(version).getTime() || version).slice(-10);
-  return `${clean}?v=${v}`;
+  const query = [...queryParts, "v=" + encodeURIComponent(v)].filter(Boolean).join("&");
+  return base + "?" + query;
 };
 
 Deno.serve(async (req) => {
@@ -83,31 +84,45 @@ Deno.serve(async (req) => {
     const ss = tzParts.find((p) => p.type === "second")?.value || "00";
     const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
     const today = dayNames[dayMap[wkShort] ?? 0];
+    const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const yesterdayShort = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+    }).format(yesterdayDate);
+    const yesterday = dayNames[dayMap[yesterdayShort] ?? 0];
     const nowTime = `${hh}:${mm}:${ss}`;
+    const nowSeconds = toSeconds(nowTime);
 
     // Programa atualmente no ar (de acordo com a grade) — inclui capa, thumb, apresentadores
-    const { data: progs } = await supabase
+    const { data: progs, error: programsError } = await supabase
       .from("programas")
       .select("id, nome, dias_semana, horario_inicio, horario_fim, ativo, estudio, capa, thumb, apresentador_id, apresentadores_ids, created_at")
       .eq("user_id", userId)
       .eq("ativo", true)
       .order("horario_inicio", { ascending: false });
+    if (programsError) throw programsError;
 
     // Try to find a match prioritizing Estudio FM (as it's the primary broadcast)
     const findOnAir = (allProgs: any[]) => {
-      const candidates = (allProgs || []).filter(
-        (p: any) =>
-          (p.dias_semana || []).includes(today) &&
-          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1),
-      );
-      
+      const candidates = (allProgs || []).filter((p: any) => {
+        const startSeconds = toSeconds(p.horario_inicio);
+        const endSeconds = toSeconds(p.horario_fim);
+        const crossesMidnight = endSeconds <= startSeconds;
+
+        // Depois da meia-noite, mantém no ar o programa iniciado no dia anterior.
+        if (crossesMidnight && nowSeconds < endSeconds) {
+          return (p.dias_semana || []).includes(yesterday);
+        }
+
+        return (p.dias_semana || []).includes(today) &&
+          isTimeInRange(p.horario_inicio, p.horario_fim, nowTime, 1);
+      });
+
       if (candidates.length === 0) return null;
       if (candidates.length === 1) return candidates[0];
-      
-      // If multiple (overlapping), prioritize Estudio FM
+
       const fmMatch = candidates.find(p => p.estudio?.toLowerCase().includes("fm"));
       if (fmMatch) return fmMatch;
-
       return candidates[0];
     };
 
@@ -140,20 +155,22 @@ Deno.serve(async (req) => {
     }
 
     // Carrega TODOS os templates do usuário (para encontrar 2TVs e 4TVs vinculados ao programa no ar)
-    const { data: grupos } = await supabase
+    const { data: grupos, error: gruposError } = await supabase
       .from("cenario_estudio_grupos")
       .select("id, nome, programa_ids, rows, cols, updated_at")
       .eq("user_id", userId)
       .order("created_at");
+    if (gruposError) throw gruposError;
 
     const grupoIds = (grupos || []).map((g: any) => g.id);
     const arteByGrupo: Record<string, { url: string; updatedAt: string }> = {};
     if (grupoIds.length > 0) {
-      const { data: tvs } = await supabase
+      const { data: tvs, error: tvsError } = await supabase
         .from("cenario_estudio_tvs")
         .select("grupo_id, posicao, imagem_url, updated_at")
         .in("grupo_id", grupoIds)
         .eq("posicao", 0);
+      if (tvsError) throw tvsError;
       (tvs || []).forEach((t: any) => {
         arteByGrupo[t.grupo_id] = { url: t.imagem_url || "", updatedAt: t.updated_at };
       });

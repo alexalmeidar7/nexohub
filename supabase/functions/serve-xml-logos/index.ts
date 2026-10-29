@@ -44,7 +44,7 @@ serve(async (req) => {
 
     // Fetch ALL active programs for the user, ordered by creation date
     // to ensure stable XML positions (programa 1, programa 2, etc never change)
-    const { data: programas } = await supabase
+    const { data: programas, error: programasErr } = await supabase
       .from("programas")
       .select("id, nome, created_at")
       .eq("user_id", userId)
@@ -52,8 +52,16 @@ serve(async (req) => {
       .order("created_at", { ascending: true })
       .order("id", { ascending: true });
 
+    if (programasErr) {
+      return new Response(
+        '<?xml version="1.0" encoding="UTF-8"?><error>Não foi possível carregar os programas</error>',
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } }
+      );
+    }
+
     const origin = `${url.protocol}//${url.host}`;
-    const DEFAULT_LOGO_URL = `https://nexohub.lovable.app/default-sponsor-logo.png`;
+    // Sem imagem padrão: não referenciar o domínio legado Lovable.
+    const DEFAULT_LOGO_URL = "";
 
     // Group logos by programa, using default when none exist
     const grouped: { programaId: string; programaNome: string; logos: { nome: string; logo_url: string }[] }[] = [];
@@ -71,7 +79,12 @@ serve(async (req) => {
     }
 
     const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/\'/g, "&apos;");
 
     const items = grouped
       .map(
