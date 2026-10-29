@@ -110,7 +110,7 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
         body: { action: "sync", slug: targetSlug, userId: uId, quizzes: list },
       }).then(({ error }) => {
         if (error) console.warn("Falha na sincronização remota do quiz:", error);
-      });
+      }).catch((error) => console.warn("Falha na chamada de sincronização do quiz:", error));
     } catch {}
   };
 
