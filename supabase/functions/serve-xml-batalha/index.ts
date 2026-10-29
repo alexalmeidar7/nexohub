@@ -154,6 +154,8 @@ Deno.serve(async (req) => {
           horario_fim: bt.horario_fim || "23:59",
         };
         if (isUUID(bt.id)) row.id = bt.id;
+        const ownershipError = await assertOwnedRecordIds(sb, "batalhas_agendadas", [row.id], targetUid);
+        if (ownershipError) return ownershipError;
         const { data, error } = await sb.from("batalhas_agendadas").upsert(row).select();
         if (error) {
           console.error("[serve-xml-batalha] Save error:", error);
