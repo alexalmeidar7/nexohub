@@ -861,10 +861,12 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     if (!current) return null;
 
     if ((current as any)?.selo) return (current as any).selo;
+    const currentProgramId = (current as any)?.id as string | undefined;
+    if (!isUuid(currentProgramId)) return null;
     const { data: thumbData } = await supabase
       .from("programas")
       .select("selo")
-      .eq("id", (current as any).id)
+      .eq("id", currentProgramId)
       .maybeSingle();
     if ((thumbData as any)?.selo) return (thumbData as any).selo;
     return null;
