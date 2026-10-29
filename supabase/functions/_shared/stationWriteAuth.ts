@@ -60,6 +60,7 @@ export async function authorizeStationWrite(
     .from("sub_users")
     .select("parent_user_id, ativo")
     .eq("auth_user_id", caller.id)
+    .limit(1)
     .maybeSingle();
 
   if (subError) {
@@ -79,6 +80,7 @@ export async function authorizeStationWrite(
     .select("role")
     .eq("user_id", caller.id)
     .eq("role", "admin")
+    .limit(1)
     .maybeSingle();
 
   if (roleError) {
