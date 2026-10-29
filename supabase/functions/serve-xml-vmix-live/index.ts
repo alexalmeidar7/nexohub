@@ -174,11 +174,14 @@ Deno.serve(async (req) => {
       .select("dashboard_items")
       .eq("user_id", userId)
       .maybeSingle();
-    const items = (userSettings?.dashboard_items || {}) as Record<string, unknown>;
-    const liveTitle = String(items.music_current_title || "").trim();
-    const liveArtist = String(items.music_current_artist || "").trim();
-    const liveCover = String(items.music_current_cover || "").trim();
-    const liveStart = Number(items.music_start_time || 0);
+    const items = (userSettings?.dashboard_items || {}) as Record<string, any>;
+    // Compatibilidade com o formato estruturado usado pelo Broadcast JSON.
+    // Algumas versões do sincronizador publicam musicData em vez dos campos planos.
+    const musicData = (items.musicData || {}) as Record<string, unknown>;
+    const liveTitle = String(items.music_current_title || musicData.musica || musicData.titulo || "").trim();
+    const liveArtist = String(items.music_current_artist || musicData.artista || "").trim();
+    const liveCover = String(items.music_current_cover || musicData.capa || musicData.cover || musicData.imagem || "").trim();
+    const liveStart = Number(items.music_start_time || musicData.startedAt || musicData.startTime || 0);
     // Considera o snapshot "vivo" se foi atualizado nos últimos 3 minutos.
     const isLive = liveStart > 0 && Date.now() - liveStart < 3 * 60 * 1000;
     if (isLive && liveTitle) {
