@@ -147,6 +147,11 @@ serve(async (req) => {
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
+    // Compatibilidade com o Browser Input do vMix: converter referências WebP
+    // para PNG sem alterar o cadastro original nem a URL armazenada no banco.
+    const toVmixImageUrl = (value: string) => /\\.webp(?:$|[?#])/i.test(value || "")
+      ? "https://wsrv.nl/?url=" + encodeURIComponent(value) + "&output=png"
+      : (value || "");
     const roteiros = roteiroRes.data || [];
     const activeBatalha = (batalhaRes.data || []).find((b: any) => {
       const ini = normTime(b.horario_inicio, "00:00");
@@ -557,7 +562,7 @@ serve(async (req) => {
     logos.forEach((l: any) => {
       xmlParts.push('    <patrocinador>');
       xmlParts.push(`      <nome>${esc(l.nome || "Patrocinador")}</nome>`);
-      xmlParts.push(`      <logo_url>${esc(l.logo_url || "")}</logo_url>`);
+      xmlParts.push(`      <logo_url>${esc(toVmixImageUrl(l.logo_url || ""))}</logo_url>`);
       xmlParts.push('    </patrocinador>');
     });
     xmlParts.push('  </patrocinadores>');
