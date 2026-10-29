@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
     let capa = "";
     const { data: userSettings } = await supabase
       .from("user_settings")
-      .select("dashboard_items")
+      .select("dashboard_items, updated_at")
       .eq("user_id", userId)
       .maybeSingle();
     const rawDashboard = userSettings?.dashboard_items;
