@@ -13,8 +13,6 @@ const esc = (s: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-const stripQuery = (u: string) => (u ? u.split("?")[0] : "");
-
 const toSeconds = (time: string) => {
   const [hour = "0", minute = "0", second = "0"] = String(time ?? "").split(":");
   return Number(hour) * 3600 + Number(minute) * 60 + Number(second);
@@ -138,15 +136,14 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (apres) {
           apresentadorNome = apres.nome || "";
-          apresentadorFoto = stripQuery(apres.foto || "");
+          apresentadorFoto = apres.foto || "";
         }
       }
     }
 
     // Logo do patrocinador (1 por vez, rotação a cada 10s)
-    const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let patrocinadorNome = "";
-    let patrocinadorUrl = BLANK_LOGO_URL;
+    let patrocinadorUrl = "";
     if (onAir) {
       const { data: logos } = await supabase
         .from("logos_patrocinadores")
@@ -161,7 +158,7 @@ Deno.serve(async (req) => {
         const slot = Math.floor(Date.now() / 10000) % list.length;
         const escolhida = list[slot];
         patrocinadorNome = escolhida.nome || "";
-        patrocinadorUrl = stripQuery(escolhida.logo_url || "") || BLANK_LOGO_URL;
+        patrocinadorUrl = escolhida.logo_url || "";
       }
     }
 
@@ -236,7 +233,7 @@ Deno.serve(async (req) => {
     <nome>${esc(onAir?.nome || "")}</nome>
     <horario_inicio>${esc(onAir?.horario_inicio || "")}</horario_inicio>
     <horario_fim>${esc(onAir?.horario_fim || "")}</horario_fim>
-    <capa>${esc(stripQuery((onAir as any)?.capa || (onAir as any)?.thumb || ""))}</capa>
+    <capa>${esc((onAir as any)?.capa || (onAir as any)?.thumb || "")}</capa>
   </programa>
   <apresentador>
     <nome>${esc(apresentadorNome)}</nome>
