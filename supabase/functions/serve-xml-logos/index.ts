@@ -60,6 +60,10 @@ serve(async (req) => {
     }
 
     const origin = `${url.protocol}//${url.host}`;
+    // vMix não renderiza WebP em várias versões do Browser Input.
+    const toVmixImageUrl = (value: string) => /\\.webp(?:$|[?#])/i.test(value || "")
+      ? "https://wsrv.nl/?url=" + encodeURIComponent(value) + "&output=png"
+      : (value || "");
     // Sem imagem padrão: não referenciar o domínio legado Lovable.
     const DEFAULT_LOGO_URL = "";
 
@@ -96,7 +100,7 @@ ${g.logos!
     (l) =>
       `    <logo>
       <nome>${esc(l.nome)}</nome>
-      <url>${esc(l.logo_url)}</url>
+      <url>${esc(toVmixImageUrl(l.logo_url))}</url>
     </logo>`
   )
   .join("\n")}
