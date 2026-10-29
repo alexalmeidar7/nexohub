@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - ".env"
+      - "public/**"
       - "desktop/**"
       - "src/**"
       - "index.html"
@@ -19,6 +20,7 @@ on:
     branches: [main]
     paths:
       - ".env"
+      - "public/**"
       - "desktop/**"
       - "src/**"
       - "index.html"
