@@ -13,7 +13,12 @@ on:
         default: false
         type: boolean
       confirm_edge_functions_read_write:
-        description: "Confirme que o token do ambiente production tem Edge Functions Read-write no projeto e que a conta possui esse privilégio. Exigido antes de qualquer escrita no banco."
+        description: "Confirme que o token do ambiente production tem Edge Functions Read-write no projeto e que a conta possui esse privilégio. Exigido para o fluxo completo Bridge; não é necessário no modo RPC isolado."
+        required: true
+        default: false
+        type: boolean
+      apply_music_history_rpc_security:
+        description: "Aplique somente a restrição da RPC get_music_history_light; mantém service_role e não cria tabelas nem publica Edge Functions."
         required: true
         default: false
         type: boolean
@@ -32,6 +37,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Reject conflicting backend apply modes
+        if: ${{ inputs.apply_music_history_rpc_security && inputs.apply_changes }}
+        shell: bash
+        run: |
+          echo "::error::Use apply_music_history_rpc_security=true only with apply_changes=false. The standalone RPC security path must not run together with the full Bridge rollout."
+          exit 1
 
       - name: Validate target project and credentials
         env:
@@ -387,6 +399,54 @@ jobs:
           $preflight$;
           SQL
 
+      - name: Apply standalone music-history RPC security migration (explicit approval only)
+        if: ${{ inputs.apply_music_history_rpc_security && !inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          migration="supabase/migrations/20261030005500_restrict_music_history_light_rpc_execution.sql"
+          if [ ! -s "$migration" ]; then
+            echo "::error::The reviewed RPC security migration source is missing or empty. Nothing was changed."
+            exit 1
+          fi
+
+          function_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT to_regprocedure('public.get_music_history_light(uuid,integer)') IS NOT NULL")"
+          if [ "$function_exists" != "t" ]; then
+            echo "::error::public.get_music_history_light(uuid,integer) is missing. Stop and reconcile the XML RPC before changing privileges."
+            exit 1
+          fi
+
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f "$migration"
+
+          privileges="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT
+              has_function_privilege('anon', 'public.get_music_history_light(uuid,integer)', 'EXECUTE')::text,
+              has_function_privilege('authenticated', 'public.get_music_history_light(uuid,integer)', 'EXECUTE')::text,
+              has_function_privilege('service_role', 'public.get_music_history_light(uuid,integer)', 'EXECUTE')::text
+          ")"
+          IFS='|' read -r anon_execute authenticated_execute service_execute <<< "$privileges"
+          if [ "$anon_execute" != "false" ] || [ "$authenticated_execute" != "false" ] || [ "$service_execute" != "true" ]; then
+            echo "::error::RPC privileges are not restricted to service_role. Stop for manual review."
+            exit 1
+          fi
+
+          recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261030005500')")"
+          if [ "$recorded" != "t" ]; then
+            supabase migration repair 20261030005500 --status applied --db-url "$DATABASE_URL"
+          fi
+          verified="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261030005500')")"
+          if [ "$verified" != "t" ]; then
+            echo "::error::RPC security migration was applied but its migration-ledger record could not be verified."
+            exit 1
+          fi
+
+      - name: Standalone RPC security summary
+        if: ${{ inputs.apply_music_history_rpc_security && !inputs.apply_changes }}
+        run: |
+          echo "Only get_music_history_light execution privileges were restricted."
+          echo "service_role retains EXECUTE; anon and authenticated are denied."
+          echo "No Bridge schema migration or Edge Function deployment was run."
+
       - name: Require current main schema reconciliation migrations before Bridge writes
         if: ${{ inputs.apply_changes }}
         shell: bash
@@ -676,7 +736,7 @@ jobs:
           echo "All custom vMix button compatibility columns are present."
 
       - name: Read-only preflight summary
-        if: ${{ !inputs.apply_changes }}
+        if: ${{ !inputs.apply_changes && !inputs.apply_music_history_rpc_security }}
         shell: bash
         run: |
           set -euo pipefail
