@@ -12,6 +12,11 @@ on:
         required: true
         default: false
         type: boolean
+      confirm_edge_functions_read_write:
+        description: "Confirme que o token do ambiente production tem Edge Functions Read-write no projeto e que a conta possui esse privilégio. Exigido antes de qualquer escrita no banco."
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -149,6 +154,29 @@ jobs:
             echo "::error::Supabase API token cannot read the confirmed project (HTTP ${status}). Nothing was changed."
             exit 1
           fi
+
+      - name: Confirm Edge Functions deployment permission before database writes
+        if: ${{ inputs.apply_changes }}
+        env:
+          CONFIRM_EDGE_FUNCTIONS_READ_WRITE: ${{ inputs.confirm_edge_functions_read_write }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_EDGE_FUNCTIONS_READ_WRITE" != "true" ]; then
+            echo "::error::Before any database write, verify that the production SUPABASE_ACCESS_TOKEN has Edge Functions Read-write and that its Supabase account role permits deployment. Set confirm_edge_functions_read_write=true only after that verification. Nothing was changed."
+            exit 1
+          fi
+          status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --header "Accept: application/json" \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/functions")"
+          if [ "$status" != "200" ]; then
+            echo "::error::The token cannot list Edge Functions (HTTP ${status}). Check the project's Edge Functions permission before any database write. Nothing was changed."
+            exit 1
+          fi
+          echo "Edge Functions read access verified. Read-write deployment permission was explicitly confirmed by the operator; no write probe was attempted."
 
       - name: Install PostgreSQL client
         run: |
