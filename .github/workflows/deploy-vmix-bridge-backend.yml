@@ -180,6 +180,7 @@ jobs:
             20261028205300
             20261028223300
             20261029025000
+            20261030005500
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -229,7 +230,8 @@ jobs:
                 ('20261028124449'),
                 ('20261028125121'),
                 ('20261028132309'),
-                ('20261028172338')
+                ('20261028172338'),
+                ('20261029165528')
             )
             SELECT string_agg(r.version, ', ' ORDER BY r.version)
               INTO missing_house_mix_migrations
@@ -241,6 +243,10 @@ jobs:
 
             IF missing_house_mix_migrations IS NOT NULL THEN
               RAISE EXCEPTION 'House Mix restoration history is incomplete; missing migration versions: %. Nothing was changed.', missing_house_mix_migrations;
+            END IF;
+
+            IF to_regprocedure('public.get_music_history_light(uuid,integer)') IS NULL THEN
+              RAISE EXCEPTION 'Music history RPC migration is recorded but public.get_music_history_light(uuid,integer) is missing.';
             END IF;
 
             WITH required(table_name) AS (
@@ -360,7 +366,7 @@ jobs:
           set -euo pipefail
           missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             WITH required(version) AS (
-              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000')
+              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029165528')
             )
             SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
             FROM required r
@@ -1190,6 +1196,35 @@ jobs:
             supabase migration repair 20261027123000 --status applied --db-url "$DATABASE_URL"
           fi
 
+      - name: Restrict public execution of music-history RPC
+        if: ${{ inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261030005500_restrict_music_history_light_rpc_execution.sql
+
+          privileges="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT
+              has_function_privilege('anon', 'public.get_music_history_light(uuid,integer)', 'EXECUTE')::text,
+              has_function_privilege('authenticated', 'public.get_music_history_light(uuid,integer)', 'EXECUTE')::text,
+              has_function_privilege('service_role', 'public.get_music_history_light(uuid,integer)', 'EXECUTE')::text
+          ")"
+          IFS='|' read -r anon_execute authenticated_execute service_execute <<< "$privileges"
+          if [ "$anon_execute" != "false" ] || [ "$authenticated_execute" != "false" ] || [ "$service_execute" != "true" ]; then
+            echo "::error::Music history RPC privileges are not restricted to service_role. Stop before Edge deployment."
+            exit 1
+          fi
+
+          applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261030005500')")"
+          if [ "$applied" != "t" ]; then
+            supabase migration repair 20261030005500 --status applied --db-url "$DATABASE_URL"
+          fi
+          recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261030005500')")"
+          if [ "$recorded" != "t" ]; then
+            echo "::error::Music history RPC security migration was not recorded."
+            exit 1
+          fi
+
       - name: Deploy Bridge and vMix Edge Functions
         if: ${{ inputs.apply_changes }}
         env:
@@ -1206,4 +1241,5 @@ jobs:
         if: ${{ inputs.apply_changes }}
         run: |
           echo "Bridge backend workflow completed for the explicitly confirmed project."
+          echo "Music history RPC is restricted to service_role."
           echo "No production deployment is triggered automatically; this workflow runs only by manual dispatch."
