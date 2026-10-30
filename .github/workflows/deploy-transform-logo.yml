@@ -18,22 +18,29 @@ jobs:
         with:
           version: latest
 
-      - name: Validate required secrets
+      - name: Validate target project and required secrets
         shell: bash
         env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
+          set -euo pipefail
+          EXPECTED_PROJECT_REF="qazvgmgdidjhbvcuinpy"
+          test -n "$SUPABASE_PROJECT_REF" || { echo "::error::Add SUPABASE_PROJECT_REF in GitHub Actions secrets."; exit 1; }
+          test "$SUPABASE_PROJECT_REF" = "$EXPECTED_PROJECT_REF" || { echo "::error::SUPABASE_PROJECT_REF does not match the active House Mix backend. No deployment performed."; exit 1; }
           test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::Add SUPABASE_ACCESS_TOKEN in GitHub Actions secrets."; exit 1; }
           test -n "$OPENAI_API_KEY" || { echo "::error::Add OPENAI_API_KEY in GitHub Actions secrets."; exit 1; }
 
-      - name: Configure OpenAI key in the target Supabase project
+      - name: Configure OpenAI key in the validated Supabase project
         env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref zzjfzxxvxbspbdkodoix
+        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref "$SUPABASE_PROJECT_REF"
 
-      - name: Deploy transform-logo
+      - name: Deploy transform-logo to the validated project
         env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase functions deploy transform-logo --project-ref zzjfzxxvxbspbdkodoix --no-verify-jwt
+        run: supabase functions deploy transform-logo --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
