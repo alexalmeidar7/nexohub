@@ -43,6 +43,10 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function isNonRetryableAuthorizationError(error: unknown): boolean {
+  return isPlainObject(error) && error.code === "42501";
+}
+
 const TENANT_USER_ID_CACHE_TTL_MS = 30_000;
 const tenantUserIdCache = new Map<string, { tenantUserId: string; expiresAt: number }>();
 
@@ -120,6 +124,8 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
         );
 
       if (!insertError) return;
+      // RLS/permission failures are deterministic; retrying only multiplies 403 traffic.
+      if (isNonRetryableAuthorizationError(insertError)) throw insertError;
 
       lastError = insertError;
       continue;
@@ -144,6 +150,8 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
       .limit(1);
 
     if (updateError) {
+      // A tenant/RLS denial cannot be fixed by an optimistic-lock retry.
+      if (isNonRetryableAuthorizationError(updateError)) throw updateError;
       lastError = updateError;
       continue;
     }
@@ -163,7 +171,10 @@ export async function mergeUserDashboardItems(userId: string, patch: JsonRecord)
         .limit(1);
 
       if (!directError && (directRows?.length ?? 0) > 0) return;
-      if (directError) lastError = directError;
+      if (directError) {
+        if (isNonRetryableAuthorizationError(directError)) throw directError;
+        lastError = directError;
+      }
     }
   }
 
