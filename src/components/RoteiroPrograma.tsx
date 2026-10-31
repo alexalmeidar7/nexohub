@@ -838,7 +838,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         if (files.length === 0) {
           try {
             const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
-            const sbUrl = (import.meta as any).env?.VITE_SUPABASE_URL || "https://zzjfzxxvxbspbdkodoix.supabase.co";
+            const sbUrl = (import.meta as any).env?.VITE_SUPABASE_URL || "https://qazvgmgdidjhbvcuinpy.supabase.co";
             const res = await fetch(`${sbUrl}/storage/v1/object/list/empresa-assets`, {
               method: "POST",
               headers: {
@@ -928,13 +928,13 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         const serverRoteiros: any[] = [];
         for (const est of candidateEstudios) {
           try {
-            const res = await fetch(`https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${effectiveUserId}&estudio=${encodeURIComponent(est)}`);
+            const res = await fetch(`https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${effectiveUserId}&estudio=${encodeURIComponent(est)}`);
             if (res.ok) {
               const xmlText = await res.text();
               if (xmlText.includes("<programaExpress>") && !xmlText.includes("<error>")) {
                 const parsed = parseXmlToRoteiro(
                   xmlText,
-                  `https://zzjfzxxvxbspbdkodoix.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${effectiveUserId}&estudio=${encodeURIComponent(est)}`,
+                  `https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-roteiro-estudio?user_id=${effectiveUserId}&estudio=${encodeURIComponent(est)}`,
                   `srv_${effectiveUserId}_${est.replace(/\s+/g, "_")}`,
                   effectiveUserId,
                   new Date().toISOString(),
@@ -1222,7 +1222,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
       if (isUuid) {
         try {
-          const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID || "zzjfzxxvxbspbdkodoix";
+          const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID || "qazvgmgdidjhbvcuinpy";
           const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
           const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${cleanId}&force=1&persist=1&t=${Date.now()}`;
           await fetch(fnUrl, {
