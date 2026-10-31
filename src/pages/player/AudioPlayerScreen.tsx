@@ -1417,7 +1417,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div className="flex flex-col gap-1">
             <button
               onClick={() => navigateChannel(-1)}
-              className="w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition"
+              className={`${isTvExperience ? "hidden" : ""} w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition`}
               aria-label="Canal anterior"
               data-focusable
             >
