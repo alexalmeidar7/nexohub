@@ -243,17 +243,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     setTimeout(() => onBackHome(), FADE_MS);
   }, [exiting, onBackHome, audioRef, videoRef]);
 
-  useEffect(() => {
-    if (!isTvExperience) return;
-    const handleTvBack = (event: Event) => {
-      event.preventDefault();
-      if (!controlsVisible) setControlsVisible(true);
-      else handleBackHome();
-    };
-    window.addEventListener("nexo:tv-back", handleTvBack as EventListener);
-    return () => window.removeEventListener("nexo:tv-back", handleTvBack as EventListener);
-  }, [isTvExperience, controlsVisible, handleBackHome]);
-
 
   // ---- Curtir PROGRAMA (independente do like da música) ----
   const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
@@ -279,6 +268,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       evs.forEach(e => window.removeEventListener(e, show));
     };
   }, [isVideoChannel, isTvExperience]);
+
+  useEffect(() => {
+    if (!isTvExperience) return;
+    const handleTvBack = (event: Event) => {
+      event.preventDefault();
+      if (!controlsVisible) setControlsVisible(true);
+      else handleBackHome();
+    };
+    window.addEventListener("nexo:tv-back", handleTvBack as EventListener);
+    return () => window.removeEventListener("nexo:tv-back", handleTvBack as EventListener);
+  }, [isTvExperience, controlsVisible, handleBackHome]);
 
   // ---- Relógio (elegante, com segundos) ----
   const [now, setNow] = useState<Date>(() => new Date());
