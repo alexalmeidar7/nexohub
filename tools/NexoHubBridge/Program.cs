@@ -195,6 +195,16 @@ internal sealed class BridgeForm : Form
             if (File.Exists(_configPath))
             {
                 _config = JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(_configPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new BridgeConfig();
+
+                var configNeedsSave = false;
+                if (Uri.TryCreate(_config.SupabaseUrl, UriKind.Absolute, out var configuredBackend) &&
+                    string.Equals(configuredBackend.Host, "zzjfzxxvxbspbdkodoix.supabase.co", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Migrate only the retired project host; preserve every other local setting and credential.
+                    _config.SupabaseUrl = "https://qazvgmgdidjhbvcuinpy.supabase.co";
+                    configNeedsSave = true;
+                }
+
                 if (_config.SecretsProtected)
                 {
                     _config.BridgeToken = UnprotectSecret(_config.BridgeToken);
@@ -207,6 +217,12 @@ internal sealed class BridgeForm : Form
                          !string.IsNullOrEmpty(_config.PairingCode))
                 {
                     // Migrate legacy plaintext secrets to current-user DPAPI without changing the in-memory values.
+                    configNeedsSave = true;
+                }
+
+                if (configNeedsSave)
+                {
+                    // Persist backend and/or secret migration using the existing protected config format.
                     await SaveConfigAsync(_config);
                 }
             }
