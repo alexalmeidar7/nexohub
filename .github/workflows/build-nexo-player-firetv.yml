@@ -2,6 +2,12 @@ name: Build Nexo Player Fire TV APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - "feature/nexo-player-fire-tv"
+    paths:
+      - "firetv/**"
+      - ".github/workflows/build-nexo-player-firetv.yml"
   pull_request:
     paths:
       - "firetv/**"
