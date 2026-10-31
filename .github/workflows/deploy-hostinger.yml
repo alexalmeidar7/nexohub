@@ -31,6 +31,48 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate frontend and backend Supabase targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys
+          import tomllib
+          from pathlib import Path
+
+          values = {}
+          for raw_line in Path(".env").read_text(encoding="utf-8").splitlines():
+              line = raw_line.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              key, value = line.split("=", 1)
+              values[key.strip()] = value.strip().strip('"').strip("'")
+
+          config = tomllib.loads(Path("supabase/config.toml").read_text(encoding="utf-8"))
+          project_ref = config.get("project_id", "")
+          expected_url = f"https://{project_ref}.supabase.co" if project_ref else ""
+
+          checks = {
+              "SUPABASE_URL": values.get("SUPABASE_URL", "").rstrip("/"),
+              "VITE_SUPABASE_URL": values.get("VITE_SUPABASE_URL", "").rstrip("/"),
+              "VITE_SUPABASE_PROJECT_ID": values.get("VITE_SUPABASE_PROJECT_ID", ""),
+          }
+          if (
+              not project_ref
+              or checks["SUPABASE_URL"] != expected_url
+              or checks["VITE_SUPABASE_URL"] != expected_url
+              or checks["VITE_SUPABASE_PROJECT_ID"] != project_ref
+              or not values.get("VITE_SUPABASE_PUBLISHABLE_KEY")
+          ):
+              print("::error::Frontend and backend Supabase targets do not match. Production deployment stopped before build/upload.")
+              print(f"supabase/config.toml project_id: {project_ref or 'missing'}")
+              print("Expected SUPABASE_URL and VITE_SUPABASE_URL to use that project,")
+              print("VITE_SUPABASE_PROJECT_ID to match it, and the frontend publishable key to be present.")
+              sys.exit(1)
+
+          print(f"Supabase target consistency verified for project {project_ref}.")
+          PY
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
