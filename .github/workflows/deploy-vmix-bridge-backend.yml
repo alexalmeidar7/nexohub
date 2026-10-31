@@ -1304,7 +1304,7 @@ jobs:
           fi
 
       - name: Restrict public execution of music-history RPC
-        if: ${{ inputs.apply_changes || inputs.apply_music_history_rpc_security }}
+        if: ${{ inputs.apply_changes }}
         shell: bash
         run: |
           set -euo pipefail
