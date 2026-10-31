@@ -9,9 +9,9 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.firetv"
         minSdk = 23
         targetSdk = 28
-        versionCode = 1
-        versionName = "1.0.0"
-        buildConfigField("String", "PLAYER_START_URL", "\"https://nexohub.lovable.app/positivafm/player/app?tv=1\"")
+        versionCode = 2
+        versionName = "1.1.0"
+        buildConfigField("String", "PLAYER_START_URL", "\"https://nexohub.lovable.app/positivafm/player/tv\"")
     }
     buildFeatures { buildConfig = true }
     compileOptions {
