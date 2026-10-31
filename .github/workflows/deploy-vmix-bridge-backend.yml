@@ -648,15 +648,18 @@ jobs:
             SELECT COALESCE(string_agg(r.bucket_id, ', ' ORDER BY r.bucket_id), '')
             FROM required r
             WHERE NOT EXISTS (
-              SELECT 1 FROM storage.objects o WHERE o.bucket_id = r.bucket_id
+              SELECT 1
+              FROM storage.objects o
+              WHERE o.bucket_id = r.bucket_id
+                AND (r.bucket_id <> 'empresa-assets' OR o.name NOT LIKE 'positiva-restauracao/%')
             )
           ")"
           if [ -n "$empty_restore_buckets" ]; then
-            echo "::error::Storage restoration is incomplete; required buckets contain no objects: $empty_restore_buckets. Restore the reviewed assets before any Bridge write."
+            echo "::error::Storage restoration is incomplete; required buckets have no definitive restored objects (positiva-restauracao/ staging is excluded): $empty_restore_buckets. Restore the reviewed assets before any Bridge write."
             exit 1
           fi
 
-          echo "Agenda, forms, delivery-token constraints, and all five Storage buckets are verified; both required media buckets contain restored objects."
+          echo "Agenda, forms, delivery-token constraints, and all five Storage buckets are verified; both required media buckets contain definitive restored objects; the empresa-assets staging prefix is excluded."
 
       - name: Require remaining House Mix columns before Bridge writes
         if: ${{ inputs.apply_changes }}
@@ -771,7 +774,8 @@ jobs:
             (SELECT count(*)::text FROM auth.users) || ' Auth users',
             (SELECT count(*)::text FROM storage.buckets) || ' Storage buckets',
             (SELECT count(*)::text FROM storage.objects) || ' Storage objects',
-            (SELECT count(*)::text FROM storage.objects WHERE bucket_id = 'empresa-assets') || ' empresa-assets objects',
+            (SELECT count(*)::text FROM storage.objects WHERE bucket_id = 'empresa-assets' AND name NOT LIKE 'positiva-restauracao/%') || ' empresa-assets definitive objects',
+            (SELECT count(*)::text FROM storage.objects WHERE bucket_id = 'empresa-assets' AND name LIKE 'positiva-restauracao/%') || ' empresa-assets staging objects',
             (SELECT count(*)::text FROM storage.objects WHERE bucket_id = 'comercial') || ' comercial objects',
             (SELECT count(*)::text FROM public.programas) || ' programs',
             (SELECT count(*)::text FROM public.apresentadores) || ' presenters',
