@@ -2468,8 +2468,8 @@ export default function PlayerPage() {
       if (e.key === "ArrowDown") { e.preventDefault(); navigateChannel(1); return; }
 
       // Hardware keys — always active
-      if (e.key === "ChannelUp") { e.preventDefault(); navigateChannel(-1); }
-      else if (e.key === "ChannelDown") { e.preventDefault(); navigateChannel(1); }
+      if (e.key === "ChannelUp" || e.keyCode === 166) { e.preventDefault(); navigateChannel(-1); }
+      else if (e.key === "ChannelDown" || e.keyCode === 167) { e.preventDefault(); navigateChannel(1); }
       else if (e.key === "VolumeUp") {
         e.preventDefault();
         handleVolumeChangeWithOsd(Math.min(100, volume + 10));
