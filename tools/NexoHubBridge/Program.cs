@@ -192,12 +192,12 @@ internal sealed class BridgeForm : Form
                 return;
             }
             Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
+            var backendWasMigrated = false;
             if (File.Exists(_configPath))
             {
                 _config = JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(_configPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new BridgeConfig();
 
                 var configNeedsSave = false;
-                var backendWasMigrated = false;
                 if (Uri.TryCreate(_config.SupabaseUrl, UriKind.Absolute, out var configuredBackend) &&
                     string.Equals(configuredBackend.Host, "zzjfzxxvxbspbdkodoix.supabase.co", StringComparison.OrdinalIgnoreCase))
                 {
