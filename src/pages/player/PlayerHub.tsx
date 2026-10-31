@@ -49,9 +49,9 @@ export default function PlayerHub() {
   // Persistência: `?step=home` sobrevive a login/reload via localStorage por slug.
   const storageKey = `player-step-home:${userSlug || "root"}`;
   const skipToHome =
-    !tvGuestMode &&
-    (searchParams.get("step") === "home" ||
-      (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1"));
+    tvGuestMode ||
+    searchParams.get("step") === "home" ||
+    (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "login");
 
   // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
