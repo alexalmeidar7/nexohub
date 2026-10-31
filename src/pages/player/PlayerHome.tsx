@@ -2016,6 +2016,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const params = new URLSearchParams();
     if (channelId) params.set("ch", channelId);
     if (videoId) params.set("vid", videoId);
+    // Carry TV mode from the QR/guest entry screen into the actual player route.
+    if (new URLSearchParams(location.search).get("tvGuest") === "1") params.set("tv", "1");
     const qs = params.toString() ? `?${params.toString()}` : "";
     
     // Mostramos o loading overlay imediatamente se possível, ou apenas aguardamos o fadeOut

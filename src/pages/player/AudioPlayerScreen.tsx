@@ -210,6 +210,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
+  const isTvExperience = new URLSearchParams(window.location.search).get("tv") === "1";
 
   // ---- Pré-roll comercial para o streaming de áudio ----
   // Campanhas de áudio são independentes dos anúncios de vídeo e precisam ser
@@ -250,9 +251,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   // Auto-hide controls (video channel): fade out after 3s of inactivity
-  const [controlsVisible, setControlsVisible] = useState<boolean>(true);
+  const [controlsVisible, setControlsVisible] = useState<boolean>(() => !isTvExperience || isVideoChannel);
   useEffect(() => {
-    if (!isVideoChannel) { setControlsVisible(true); return; }
+    if (!isVideoChannel) { setControlsVisible(!isTvExperience); return; }
     let t: number | undefined;
     const show = () => {
       setControlsVisible(true);
@@ -266,7 +267,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       if (t) window.clearTimeout(t);
       evs.forEach(e => window.removeEventListener(e, show));
     };
-  }, [isVideoChannel]);
+  }, [isVideoChannel, isTvExperience]);
+
+  useEffect(() => {
+    if (!isTvExperience) return;
+    const handleTvBack = (event: Event) => {
+      event.preventDefault();
+      if (!controlsVisible) setControlsVisible(true);
+      else handleBackHome();
+    };
+    window.addEventListener("nexo:tv-back", handleTvBack as EventListener);
+    return () => window.removeEventListener("nexo:tv-back", handleTvBack as EventListener);
+  }, [isTvExperience, controlsVisible, handleBackHome]);
 
   // ---- Relógio (elegante, com segundos) ----
   const [now, setNow] = useState<Date>(() => new Date());
@@ -593,10 +605,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [showArtistBg, setShowArtistBg] = useState(false);
   useEffect(() => {
     if (!artistBgImage) { setShowArtistBg(false); return; }
+    if (isTvExperience) { setShowArtistBg(true); return; }
     setShowArtistBg(false);
     const id = setInterval(() => setShowArtistBg((v) => !v), 15000);
     return () => clearInterval(id);
-  }, [artistBgImage]);
+  }, [artistBgImage, isTvExperience]);
 
   // ---- Progresso do programa no ar ----
   const [progPct, setProgPct] = useState(0);
@@ -1396,7 +1409,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         />
       )}
       <header
-        className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6"
+        className={`absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6 ${isTvExperience && !isVideoChannel ? "hidden" : ""}`}
         style={isVideoChannel ? controlsStyle : undefined}
       >
         {/* Channel switcher */}
@@ -1404,7 +1417,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div className="flex flex-col gap-1">
             <button
               onClick={() => navigateChannel(-1)}
-              className="w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition"
+              className={`${isTvExperience ? "hidden" : ""} w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition`}
               aria-label="Canal anterior"
               data-focusable
             >
@@ -1412,7 +1425,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             </button>
             <button
               onClick={() => navigateChannel(1)}
-              className="w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition"
+              className={`${isTvExperience ? "hidden" : ""} w-9 h-6 rounded-md flex items-center justify-center bg-white/10 hover:bg-white/20 transition`}
               aria-label="Próximo canal"
               data-focusable
             >
@@ -1425,7 +1438,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             {(canal?.background_url || canal?.logo_url) && (
               <div key={`logo-${canal.id}`} className="animate-slide-up-down">
                 <img
-                  src={canal.background_url || canal.logo_url}
+                  src={empresaLogo || canal.background_url || canal.logo_url}
                   alt=""
                   className="h-14 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
                 />
@@ -1577,7 +1590,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* ============== CENTER STAGE ============== */}
       <main className={`absolute inset-0 flex items-center justify-center pt-28 pb-40 ${isVideoChannel ? "pointer-events-none z-[2]" : ""}`}>
-        {isVideoChannel ? null : (
+        {isVideoChannel ? null : isTvExperience ? null : (
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
           {/* HISTORY CAROUSEL — navegação por setas e swipe */}
@@ -2062,6 +2075,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         )}
       </main>
 
+      {isTvExperience && !isVideoChannel && (
+        <div className="absolute left-10 bottom-10 z-30 flex items-center gap-5 max-w-[620px] pointer-events-none" aria-live="polite">
+          {(musicCover || resolvedMusicCover || musicData?.capa) && (
+            <img src={musicCover || resolvedMusicCover || musicData?.capa} alt="" className="w-24 h-24 object-cover shrink-0" />
+          )}
+          <div className="min-w-0 text-white" style={{ textShadow: "0 2px 16px rgba(0,0,0,.65)" }}>
+            <div className="text-2xl font-semibold truncate">{musicData?.titulo || canal?.name || "Rádio ao vivo"}</div>
+            <div className="text-lg text-white/75 truncate">{musicData?.artista || empresaNome || ""}</div>
+          </div>
+        </div>
+      )}
+
       {/* ============== BOTTOM — TIMESHIFT + PLAY ============== */}
       {isVideoChannel && (
         <div
@@ -2076,8 +2101,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         />
       )}
       <footer
-        className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6"
-        style={isVideoChannel ? controlsStyle : undefined}
+        className={`absolute bottom-0 left-0 right-0 z-30 px-8 pb-6 ${isTvExperience ? "transition-opacity duration-300" : ""}`}
+        style={isTvExperience || isVideoChannel ? controlsStyle : undefined}
       >
         {/* Timeshift — barra intuitiva de "voltar no tempo" (áudio + vídeo) */}
         {(() => {
@@ -2091,7 +2116,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             : `-${Math.floor(currentOffset / 60)}:${String(Math.round(currentOffset % 60)).padStart(2, "0")}`;
           void _offsetLabel;
           return (
-            <div className="w-full">
+            <div className={isTvExperience ? "hidden" : "w-full"}>
               {/* Header: hint + return-to-live (só quando afastado do vivo) */}
               <div className="flex items-center justify-between mb-1.5 h-5">
                 <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-white/45">
@@ -2200,7 +2225,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               const expanded = volHover;
               return (
                 <div
-                  className="relative flex items-center"
+                  className={`relative flex items-center ${isTvExperience ? "hidden" : ""}`}
                   onMouseEnter={() => setVolHover(true)}
                   onMouseLeave={() => setVolHover(false)}
                 >
@@ -2271,9 +2296,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 </div>
               </div>
               <img
-                src={nexoPlayerLogo.url}
-                alt="Nexo Player"
-                className="h-4"
+                src={empresaLogo || nexoPlayerLogo.url}
+                alt={empresaNome || "Rádio"}
+                className="h-5"
                 style={{ opacity: 0.55 }}
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
@@ -2283,7 +2308,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* Right: DJ, fullscreen, músicas tocadas, interatividade */}
           <div className="flex items-center gap-2 justify-self-end">
             {/* DJ Mode button */}
-            <div className="relative">
+            <div className={isTvExperience ? "hidden" : "relative"}>
                 <button
                   type="button"
                   onClick={() => setDjModeOn((v) => !v)}
@@ -2387,7 +2412,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <button
               type="button"
               onClick={toggleFullscreen}
-              className={`w-16 h-16 rounded-full flex items-center justify-center border transition-all shrink-0 ${isFullscreen ? "" : "hover:bg-white/15"}`}
+              className={`${isTvExperience ? "hidden" : ""} w-16 h-16 rounded-full flex items-center justify-center border transition-all shrink-0 ${isFullscreen ? "" : "hover:bg-white/15"}`}
               style={
                 isFullscreen
                   ? {
@@ -2408,7 +2433,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             >
               {isFullscreen ? <Minimize2 size={22} /> : <Maximize2 size={22} />}
             </button>
-            <div className="relative">
+            <div className={isTvExperience ? "hidden" : "relative"}>
               <button
                 type="button"
                 onClick={() => setPlayedListOpen((v) => !v)}

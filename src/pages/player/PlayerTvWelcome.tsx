@@ -73,7 +73,7 @@ export default function PlayerTvWelcome() {
     } catch { /* ignore */ }
     setClaimedName(isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado");
     setTimeout(() => {
-      navigate(`/${userSlug}/player${isGuestClaim ? "?tvGuest=1" : ""}`, { replace: true });
+      navigate(`/${userSlug}/player?tvGuest=1&step=home`, { replace: true });
     }, 900);
   }, [navigate, userSlug]);
 
@@ -572,13 +572,13 @@ export default function PlayerTvWelcome() {
             <img
               src={radioLogo}
               alt={radioName}
-              className="h-24 w-24 rounded-2xl object-contain bg-white/10 backdrop-blur-md p-2 border border-white/10 shadow-xl"
+              className="h-20 w-auto max-w-[220px] object-contain"
             />
           ) : null}
           <button
             type="button"
             onClick={() => navigate(`${userSlug ? `/${userSlug}` : ""}/player?tvGuest=1`)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-5 py-3 text-white hover:bg-white/20 transition shadow-lg"
+            className="inline-flex items-center gap-2 px-2 py-2 text-white/90 hover:text-white transition"
             aria-label="Acessar player sem login"
           >
             <Home className="h-5 w-5" />
@@ -670,7 +670,7 @@ export default function PlayerTvWelcome() {
             <div className="relative flex flex-col items-center w-full max-w-md">
               {/* QR — apenas o QR sobre fundo branco mínimo (necessário para leitura), sem cantos decorativos */}
               <div className="relative mb-8">
-                <div className="relative bg-white p-5 rounded-2xl shadow-2xl">
+                <div className="relative bg-white p-4 rounded-sm">
                   {code ? (
                     <>
                       <div className={expired ? "opacity-30 grayscale transition-opacity" : "transition-opacity"}>
