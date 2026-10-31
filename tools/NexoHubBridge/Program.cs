@@ -197,11 +197,16 @@ internal sealed class BridgeForm : Form
                 _config = JsonSerializer.Deserialize<BridgeConfig>(await File.ReadAllTextAsync(_configPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new BridgeConfig();
 
                 var configNeedsSave = false;
+                var backendWasMigrated = false;
                 if (Uri.TryCreate(_config.SupabaseUrl, UriKind.Absolute, out var configuredBackend) &&
                     string.Equals(configuredBackend.Host, "zzjfzxxvxbspbdkodoix.supabase.co", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Migrate only the retired project host; preserve every other local setting and credential.
+                    // A Bridge token and pairing code belong to the old backend's device records.
+                    // Never carry them across projects: preserve local vMix settings, but require a fresh pairing.
                     _config.SupabaseUrl = "https://qazvgmgdidjhbvcuinpy.supabase.co";
+                    _config.BridgeToken = "";
+                    _config.PairingCode = "";
+                    backendWasMigrated = true;
                     configNeedsSave = true;
                 }
 
@@ -235,7 +240,12 @@ internal sealed class BridgeForm : Form
                 StartService();
                 SetStatus("Bridge iniciado", "Credencial salva. Verificando conexão com o House Mix e o vMix…", Color.FromArgb(0, 125, 65));
             }
-            else SetStatus("Configuração necessária", "Cole o código gerado no House Mix e clique em “Salvar e conectar”.", Color.FromArgb(180, 120, 0));
+            else SetStatus(
+                backendWasMigrated ? "Novo pareamento necessário" : "Configuração necessária",
+                backendWasMigrated
+                    ? "O backend foi atualizado. Gere um novo código no House Mix e conecte novamente; endereço e credenciais locais do vMix foram preservados."
+                    : "Cole o código gerado no House Mix e clique em “Salvar e conectar”.",
+                Color.FromArgb(180, 120, 0));
             if (startHidden) HideToTray();
         }
         catch (Exception ex) { SetStatus("Não foi possível iniciar", ex.Message, Color.Firebrick); }
