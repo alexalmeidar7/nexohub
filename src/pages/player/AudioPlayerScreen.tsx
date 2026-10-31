@@ -1438,7 +1438,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             {(canal?.background_url || canal?.logo_url) && (
               <div key={`logo-${canal.id}`} className="animate-slide-up-down">
                 <img
-                  src={canal.background_url || canal.logo_url}
+                  src={empresaLogo || canal.background_url || canal.logo_url}
                   alt=""
                   className="h-14 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
                 />
