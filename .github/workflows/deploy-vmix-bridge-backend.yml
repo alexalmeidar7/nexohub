@@ -1304,7 +1304,7 @@ jobs:
           fi
 
       - name: Restrict public execution of music-history RPC
-        if: ${{ inputs.apply_changes }}
+        if: ${{ inputs.apply_changes || inputs.apply_music_history_rpc_security }}
         shell: bash
         run: |
           set -euo pipefail
@@ -1345,8 +1345,18 @@ jobs:
           done
 
       - name: Deployment summary
-        if: ${{ inputs.apply_changes }}
+        if: ${{ inputs.apply_changes || inputs.apply_music_history_rpc_security }}
+        env:
+          APPLY_CHANGES: ${{ inputs.apply_changes }}
+          APPLY_RPC_SECURITY: ${{ inputs.apply_music_history_rpc_security }}
+        shell: bash
         run: |
-          echo "Bridge backend workflow completed for the explicitly confirmed project."
-          echo "Music history RPC is restricted to service_role."
-          echo "No production deployment is triggered automatically; this workflow runs only by manual dispatch."
+          if [ "$APPLY_CHANGES" = "true" ]; then
+            echo "Bridge backend workflow completed for the explicitly confirmed project."
+            echo "Music history RPC is restricted to service_role."
+            echo "No production deployment is triggered automatically; this workflow runs only by manual dispatch."
+          elif [ "$APPLY_RPC_SECURITY" = "true" ]; then
+            echo "Standalone music-history RPC security hardening completed."
+            echo "No Bridge tables were created and no Edge Functions were deployed."
+            echo "No production frontend deployment was triggered."
+          fi
