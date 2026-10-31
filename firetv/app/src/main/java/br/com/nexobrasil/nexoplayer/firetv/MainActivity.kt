@@ -91,8 +91,14 @@ class MainActivity : Activity() {
             webChromeClientHideFullscreen()
             return true
         }
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack()
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            webView.evaluateJavascript(
+                "(function(){var e=new Event('nexo:tv-back',{cancelable:true});window.dispatchEvent(e);return e.defaultPrevented;})()"
+            ) { handled ->
+                if (handled != "true") {
+                    if (webView.canGoBack()) webView.goBack() else finish()
+                }
+            }
             return true
         }
         return super.onKeyDown(keyCode, event)
