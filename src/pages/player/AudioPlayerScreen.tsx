@@ -245,7 +245,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   useEffect(() => {
     if (!isTvExperience) return;
-    const handleTvBack = () => {
+    const handleTvBack = (event: Event) => {
+      event.preventDefault();
       if (!controlsVisible) setControlsVisible(true);
       else handleBackHome();
     };
