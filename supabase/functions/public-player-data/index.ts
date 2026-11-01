@@ -379,6 +379,7 @@ Deno.serve(async (req) => {
         musicData: musicResult?.musicData || null,
         musicStartTime: musicResult?.musicStartTime || null,
         musicDeezerArtistImg: musicResult?.deezerArtistImg || deezerArtistImgFromDash || null,
+        playerTvColor: String(dashboardItems?.player_colors?.tvPrimaryColor || "#dc2626"),
         currentProgram: currentProgram || null,
         currentPresenter: currentPresenter ? { id: currentPresenter.id, nome: currentPresenter.nome, foto: currentPresenter.foto } : null,
       }),
