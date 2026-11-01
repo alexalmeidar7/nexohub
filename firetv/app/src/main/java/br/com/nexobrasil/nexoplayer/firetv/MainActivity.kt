@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -58,7 +59,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Screen { SPLASH, LOGIN, PROFILE }
+private enum class Screen { SPLASH, LOGIN, PROFILE, HOME }
 
 private data class StationLive(
     val stationName: String = BuildConfig.STATION_NAME,
@@ -82,6 +83,8 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
     var error by remember { mutableStateOf("") }
     var visitorFocused by remember { mutableStateOf(false) }
     var retry by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    val bundledStationLogo = remember { BitmapFactory.decodeResource(context.resources, R.drawable.positiva_logo) }
     val backgroundUrl = live.artistImage.ifBlank { live.cover.ifBlank { live.presenterPhoto } }
     val backgroundBitmap = rememberRemoteBitmap(backgroundUrl)
     val logoBitmap = rememberRemoteBitmap(live.logo)
@@ -151,7 +154,7 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
                     .put("userSlug", BuildConfig.STATION_SLUG)
                     .put("tvSessionId", sessionId))
             }
-            if (!created.optBoolean("ok")) error = created.optString("reason", "Não foi possível gerar o QR Code")
+            if (!created.optBoolean("ok") || created.optString("code").isBlank()) { error = created.optString("reason", "Não foi possível gerar o QR Code"); delay(5000); if (screen == Screen.LOGIN && code.isBlank()) retry++ }
             else {
                 code = created.getString("code")
                 val url = "${BuildConfig.PAIR_ORIGIN}/${BuildConfig.STATION_SLUG}/pair?code=$code"
@@ -159,7 +162,7 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
             }
         } catch (t: Throwable) {
             error = t.message ?: "Não foi possível gerar o QR Code"
-            delay(6000)
+            delay(5000)
             if (screen == Screen.LOGIN && code.isBlank()) retry++
         }
     }
@@ -197,11 +200,15 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x66000000), Color.Transparent, Color(0xAA000000)))))
 
         when (screen) {
-            Screen.SPLASH -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                if (logoBitmap != null) Image(logoBitmap.asImageBitmap(), null, Modifier.width(240.dp).height(150.dp), contentScale = ContentScale.Fit)
-                else Text(BuildConfig.STATION_NAME.uppercase(), color = BrandRed, fontSize = 28.sp, fontWeight = FontWeight.Black)
-                Text("nexo player", color = White, fontSize = 18.sp)
-                CircularProgressIndicator(color = BrandRed, strokeWidth = 3.dp)
+            Screen.SPLASH -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(28.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("nexo", color = White, fontSize = 58.sp, lineHeight = 58.sp, fontWeight = FontWeight.Light)
+                        Text("player", color = White, fontSize = 15.sp, lineHeight = 16.sp)
+                    }
+                    Image(bundledStationLogo.asImageBitmap(), null, Modifier.width(190.dp).height(130.dp), contentScale = ContentScale.Fit)
+                }
+                CircularProgressIndicator(color = White, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
             }
             Screen.LOGIN -> {
                 // Logo no canto superior direito, independente do estado do QR.
@@ -249,20 +256,20 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Box(
-                        Modifier.size(300.dp).clip(RoundedCornerShape(28.dp)).background(Color(0xFFFFFDF4)).padding(18.dp),
+                        Modifier.size(260.dp).clip(RoundedCornerShape(24.dp)).background(Color(0xFFFFFDF4)).padding(14.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         if (qr != null) Image(qr!!.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
                         else if (error.isNotBlank()) Text("Conectando…", color = Color.DarkGray, fontSize = 18.sp, textAlign = TextAlign.Center)
                         else CircularProgressIndicator(color = BrandRed)
                     }
-                    Text("Escaneie o QR Code\ne entre com sua\nconta Google", color = White, fontSize = 20.sp, lineHeight = 22.sp, textAlign = TextAlign.Center)
+                    Text("Escaneie o QR Code e entre\ncom sua conta Google", color = White, fontSize = 16.sp, lineHeight = 20.sp, fontWeight = FontWeight.Normal, textAlign = TextAlign.Center)
                     Button(
                         onClick = {
                             profileName = "Visitante"
                             prefs.edit().remove("paired_code").putBoolean("guest_mode", true)
                                 .putString("profile_name", profileName).remove("profile_avatar").apply()
-                            screen = Screen.PROFILE
+                            screen = Screen.HOME
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = BrandRed, contentColor = White),
                         shape = RoundedCornerShape(40.dp),
@@ -274,13 +281,22 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
                     }
                 }
             }
-            Screen.PROFILE -> Column(
-                Modifier.align(Alignment.CenterStart).padding(start = horizontal, top = vertical),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            Screen.PROFILE -> Column(Modifier.align(Alignment.CenterStart).padding(start = horizontal, top = vertical), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Bem-vindo!", color = White, fontSize = 42.sp, fontWeight = FontWeight.Bold)
-                Text(profileName.ifBlank { "Visitante" }, color = White, fontSize = 30.sp)
-                Button(onClick = { screen = Screen.LOGIN; retry++ }) { Text("Voltar") }
+                Text(profileName.ifBlank { "Ouvinte" }, color = White, fontSize = 30.sp)
+                Button(onClick = { screen = Screen.HOME }) { Text("Continuar") }
+            }
+            Screen.HOME -> Row(Modifier.fillMaxSize().padding(horizontal = horizontal, vertical = vertical), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(42.dp)) {
+                if (backgroundBitmap != null) Image(backgroundBitmap.asImageBitmap(), null, Modifier.weight(1.1f).fillMaxHeight().clip(RoundedCornerShape(24.dp)), contentScale = ContentScale.Crop)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Text(live.stationName, color = White, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    Text("NO AR", color = BrandRed, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(live.track.ifBlank { "Acompanhe a programação" }, color = White, fontSize = 34.sp, lineHeight = 39.sp, fontWeight = FontWeight.SemiBold)
+                    Text(live.artist, color = Muted, fontSize = 24.sp)
+                    if (live.program.isNotBlank()) Text(live.program, color = Muted, fontSize = 18.sp)
+                    if (live.presenter.isNotBlank()) Text("Locutor: ${live.presenter}", color = White, fontSize = 18.sp)
+                    Button(onClick = { screen = Screen.LOGIN; retry++ }) { Text("Sair") }
+                }
             }
         }
     }

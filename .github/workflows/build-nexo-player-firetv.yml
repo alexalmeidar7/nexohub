@@ -10,6 +10,7 @@ on:
       - "fix/positiva-firetv-parallel-install-v1-0-2"
       - "fix/positiva-firetv-reference-login-flow-v1-0-3"
       - "feat/positiva-firetv-native-login-v1-0-4"
+      - "fix/positiva-firetv-native-qr-home-splash-v1-0-5"
     paths:
       - "firetv/**"
       - ".github/workflows/build-nexo-player-firetv.yml"
@@ -37,23 +38,27 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Install image tooling
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
       - name: Install Positiva FM launcher artwork
         run: |
           test -s public/logos/positiva.png
-          mkdir -p firetv/app/src/main/res/mipmap-hdpi
-          cp public/logos/positiva.png firetv/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          mkdir -p firetv/app/src/main/res/mipmap-hdpi firetv/app/src/main/res/drawable-nodpi
+          convert public/logos/positiva.png -trim -resize 300x300 -gravity center -background none -extent 432x432 firetv/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png
+          convert public/logos/positiva.png -trim -resize 60x60 -gravity center -background '#D50000' -extent 72x72 firetv/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert public/logos/positiva.png -trim -resize 300x300 -gravity center -background none -extent 432x432 firetv/app/src/main/res/drawable-nodpi/positiva_logo.png
       - name: Build debug APK
         working-directory: firetv
         run: gradle --no-daemon :app:assemblePositivaDebug :app:assembleInterativaDebug
       - name: Name versioned Positiva APK
         run: |
           mkdir -p dist
-          cp firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk dist/Radio-Positiva-Fire-Android-TV-v1.0.4.apk
-          cp firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk dist/Radio-Interativa-Fire-Android-TV-v1.0.4.apk
+          cp firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk dist/Radio-Positiva-Fire-Android-TV-v1.0.5.apk
+          cp firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk dist/Radio-Interativa-Fire-Android-TV-v1.0.5.apk
       - name: Upload versioned APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Radio-Fire-Android-TV-v1.0.4
+          name: Radio-Fire-Android-TV-v1.0.5
           path: dist/*.apk
           if-no-files-found: error
           retention-days: 14
