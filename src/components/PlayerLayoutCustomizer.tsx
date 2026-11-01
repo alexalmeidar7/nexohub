@@ -874,6 +874,7 @@ export default function PlayerLayoutCustomizer() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-2">
@@ -892,7 +893,6 @@ export default function PlayerLayoutCustomizer() {
           {saving ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </div>
-      )}
     </div>
   );
 }
