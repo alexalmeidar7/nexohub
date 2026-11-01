@@ -11,7 +11,7 @@ android {
         targetSdk = 28
         versionCode = 3
         versionName = "1.2.0"
-        buildConfigField("String", "PLAYER_START_URL", "\"https://nexohub.lovable.app/positivafm/player/tv\"")
+        buildConfigField("String", "PLAYER_START_URL", "\"https://housemix.nexobrasil.net/positivafm/player/tv\"")
     }
     buildFeatures { buildConfig = true }
     compileOptions {
