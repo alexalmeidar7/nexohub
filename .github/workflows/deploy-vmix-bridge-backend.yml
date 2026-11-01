@@ -22,6 +22,11 @@ on:
         required: true
         default: false
         type: boolean
+      apply_has_role_rpc_security:
+        description: "Aplique somente a restrição da RPC has_role para impedir consulta de papéis de outros usuários; mantém service_role e as políticas RLS existentes."
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -39,10 +44,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Reject conflicting backend apply modes
-        if: ${{ inputs.apply_music_history_rpc_security && inputs.apply_changes }}
+        if: ${{ (inputs.apply_music_history_rpc_security || inputs.apply_has_role_rpc_security) && inputs.apply_changes }}
         shell: bash
         run: |
-          echo "::error::Use apply_music_history_rpc_security=true only with apply_changes=false. The standalone RPC security path must not run together with the full Bridge rollout."
+          echo "::error::Standalone RPC security migrations must run with apply_changes=false. Do not combine standalone security hardening with the full Bridge rollout."
           exit 1
 
       - name: Validate target project and credentials
@@ -223,6 +228,7 @@ jobs:
             20261028223300
             20261029025000
             20261030005500
+            20261101150000
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -449,6 +455,57 @@ jobs:
           echo "service_role retains EXECUTE; anon and authenticated are denied."
           echo "No Bridge schema migration or Edge Function deployment was run."
 
+      - name: Apply standalone has_role RPC scope migration (explicit approval only)
+        if: ${{ inputs.apply_has_role_rpc_security && !inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          migration="supabase/migrations/20261101150000_restrict_has_role_rpc_scope.sql"
+          if [ ! -s "$migration" ]; then
+            echo "::error::The reviewed has_role security migration source is missing or empty. Nothing was changed."
+            exit 1
+          fi
+
+          function_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT to_regprocedure('public.has_role(uuid,public.app_role)') IS NOT NULL")"
+          if [ "$function_exists" != "t" ]; then
+            echo "::error::public.has_role(uuid,public.app_role) is missing. Stop and reconcile the role helper before changing its scope."
+            exit 1
+          fi
+
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 -f "$migration"
+
+          verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT
+              (position('auth.uid()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+               AND position('auth.role()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
+              has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
+              has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
+              has_function_privilege('service_role', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text
+          ")"
+          IFS='|' read -r scoped anon_execute authenticated_execute service_execute <<< "$verification"
+          if [ "$scoped" != "true" ] || [ "$anon_execute" != "false" ] || [ "$authenticated_execute" != "true" ] || [ "$service_execute" != "true" ]; then
+            echo "::error::has_role scope or EXECUTE privileges do not match the reviewed contract. Stop for manual review."
+            exit 1
+          fi
+
+          recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261101150000')")"
+          if [ "$recorded" != "t" ]; then
+            supabase migration repair 20261101150000 --status applied --db-url "$DATABASE_URL"
+          fi
+          verified="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20261101150000')")"
+          if [ "$verified" != "t" ]; then
+            echo "::error::has_role security migration was applied but its migration-ledger record could not be verified."
+            exit 1
+          fi
+
+      - name: Standalone has_role security summary
+        if: ${{ inputs.apply_has_role_rpc_security && !inputs.apply_changes }}
+        run: |
+          echo "Authenticated callers can check only their own role membership."
+          echo "service_role retains trusted cross-user checks; anon remains denied."
+          echo "No Bridge schema migration or Edge Function deployment was run."
+
+
       - name: Require current main schema reconciliation migrations before Bridge writes
         if: ${{ inputs.apply_changes }}
         shell: bash
@@ -456,7 +513,7 @@ jobs:
           set -euo pipefail
           missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             WITH required(version) AS (
-              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029165528')
+              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029165528'), ('20261101150000')
             )
             SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
             FROM required r
@@ -469,7 +526,26 @@ jobs:
             echo "::error::Current House Mix schema migrations are not applied: $missing. Apply them separately only after approval; Bridge writes remain blocked."
             exit 1
           fi
-          echo "Current House Mix schema reconciliation migrations are recorded."
+          echo "Current House Mix schema and security migrations are recorded."
+
+      - name: Verify has_role caller scope before Bridge writes
+        if: ${{ inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT
+              (position('auth.uid()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+               AND position('auth.role()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
+              has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
+              has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
+              has_function_privilege('service_role', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text
+          ")"
+          IFS='|' read -r scoped anon_execute authenticated_execute service_execute <<< "$verification"
+          if [ "$scoped" != "true" ] || [ "$anon_execute" != "false" ] || [ "$authenticated_execute" != "true" ] || [ "$service_execute" != "true" ]; then
+            echo "::error::has_role is not caller-scoped or its EXECUTE privileges changed. Bridge writes are blocked."
+            exit 1
+          fi
 
       - name: Verify Agenda and forms/Storage schema before Bridge writes
         if: ${{ inputs.apply_changes }}
