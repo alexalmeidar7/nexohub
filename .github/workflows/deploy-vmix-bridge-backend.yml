@@ -481,7 +481,7 @@ jobs:
 
           verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
             SELECT
-              (position('auth.uid()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+              (position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
                AND position('auth.role()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
               has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
@@ -540,7 +540,7 @@ jobs:
           set -euo pipefail
           verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
             SELECT
-              (position('auth.uid()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+              (position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
                AND position('auth.role()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
               has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
@@ -822,7 +822,7 @@ jobs:
           echo "All custom vMix button compatibility columns are present."
 
       - name: Read-only preflight summary
-        if: ${{ !inputs.apply_changes && !inputs.apply_music_history_rpc_security }}
+        if: ${{ !inputs.apply_changes && !inputs.apply_music_history_rpc_security && !inputs.apply_has_role_rpc_security }}
         shell: bash
         run: |
           set -euo pipefail
@@ -920,7 +920,7 @@ jobs:
           echo "No migration was applied and no Edge Function was deployed."
 
       - name: Report detailed reconciliation gaps (read-only)
-        if: ${{ !inputs.apply_changes }}
+        if: ${{ !inputs.apply_changes && !inputs.apply_music_history_rpc_security && !inputs.apply_has_role_rpc_security }}
         shell: bash
         run: |
           set -euo pipefail
