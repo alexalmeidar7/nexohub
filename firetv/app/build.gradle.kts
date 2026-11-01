@@ -12,8 +12,8 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.positiva"
         minSdk = 23
         targetSdk = 28
-        versionCode = 8
-        versionName = "1.0.3"
+        versionCode = 9
+        versionName = "1.0.4"
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
         buildConfigField("String", "STATION_SLUG", "\"positivafm\"")
