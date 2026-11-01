@@ -1,6 +1,7 @@
 package br.com.nexobrasil.nexoplayer.firetv
 
 import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,6 +23,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -40,18 +42,33 @@ class MainActivity : ComponentActivity() {
             prefs.edit().putString("tv_session_id", it).apply()
         }
         setContent {
+            var tvAccent by remember { mutableStateOf(Accent) }
+            LaunchedEffect(Unit) {
+                while (isActive) {
+                    try {
+                        val config = withContext(Dispatchers.IO) {
+                            postJson("public-player-data", JSONObject().put("slug", BuildConfig.STATION_SLUG))
+                        }
+                        val hex = config.optString("playerTvColor", "#dc2626")
+                        if (hex.matches(Regex("^#[0-9a-fA-F]{6}$"))) {
+                            tvAccent = Color(AndroidColor.parseColor(hex))
+                        }
+                    } catch (_: Throwable) { }
+                    delay(30000)
+                }
+            }
             MaterialTheme(colorScheme = darkColorScheme(
-                background = Bg, surface = Color(0xFF171B24), primary = Accent,
+                background = Bg, surface = Color(0xFF171B24), primary = tvAccent,
                 onBackground = Color.White, onSurface = Color.White
             )) {
-                NativePairingScreen(sessionId)
+                NativePairingScreen(sessionId, tvAccent)
             }
         }
     }
 }
 
 @Composable
-private fun NativePairingScreen(sessionId: String) {
+private fun NativePairingScreen(sessionId: String, tvAccent: Color) {
     var code by remember { mutableStateOf<String?>(null) }
     var qr by remember { mutableStateOf<Bitmap?>(null) }
     var message by remember { mutableStateOf("Conectando à Positiva FM…") }
@@ -103,7 +120,7 @@ private fun NativePairingScreen(sessionId: String) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Text("POSItiva FM", fontSize = 18.sp, color = Color(0xFFB5C2BE), fontWeight = FontWeight.Bold)
                 Text("TV CONECTADA", fontSize = 34.sp, fontWeight = FontWeight.Black)
-                Text(pairedName!!, fontSize = 26.sp, color = Color(0xFF80D6A8))
+                Text(pairedName!!, fontSize = 26.sp, color = tvAccent)
                 Text("Pareamento concluído. A próxima etapa é carregar os perfis e a experiência do player.", color = Color.LightGray, textAlign = TextAlign.Center)
             }
         } else {
