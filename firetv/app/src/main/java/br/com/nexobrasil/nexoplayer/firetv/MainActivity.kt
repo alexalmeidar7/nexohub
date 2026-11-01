@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -16,9 +17,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.RectangleShape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -63,10 +66,11 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
     var message by remember { mutableStateOf("Preparando sua experiência…") }
     var errorDetail by remember { mutableStateOf("") }
     var retry by remember { mutableIntStateOf(0) }
+    var visitorFocused by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        delay(900)
+        delay(2500)
         val savedCode = prefs.getString("paired_code", null)
         if (!savedCode.isNullOrBlank()) {
             try {
@@ -109,7 +113,10 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
             message = "Escaneie o QR Code, entre com sua conta Google e confirme o código que aparece na sua TV."
         } catch (t: Throwable) {
             errorDetail = t.message ?: "falha_de_conexao"
-            message = "Não foi possível conectar. Verifique a internet e tente novamente."
+            message = "Não foi possível gerar o QR Code agora. Você pode entrar como visitante."
+            // Reconsulta automaticamente, sem exibir um botão de erro fora do layout de referência.
+            delay(8000)
+            if (screen == TvScreen.PAIRING && code == null) retry++
         }
     }
 
@@ -147,9 +154,7 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
                     Text("POSITIVA FM", color = Red, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     Text("Sua rádio na TV.", color = White, fontSize = 48.sp, fontWeight = FontWeight.Black)
                     Text(message, color = Muted, fontSize = 23.sp, lineHeight = 32.sp)
-                    if (errorDetail.isNotBlank()) Text("Detalhe técnico: $errorDetail", color = Color(0xFFFFA6AA), fontSize = 14.sp)
-                    if (errorDetail.isNotBlank()) Button(onClick = { retry++ }, colors = ButtonDefaults.buttonColors(containerColor = Red)) { Text("Tentar novamente", color = White) }
-                    Text("Acesso seguro pelo celular", color = White, fontSize = 17.sp)
+
                     Button(
                         onClick = {
                             // Visitante funciona localmente, sem depender do QR ou do servidor.
@@ -168,15 +173,17 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
                             contentColor = readableForeground(Red)
                         ),
                         modifier = Modifier.widthIn(min = 260.dp)
+                            .onFocusChanged { visitorFocused = it.isFocused }
+                            .then(if (visitorFocused) Modifier.border(3.dp, White, RoundedCornerShape(50)).padding(5.dp) else Modifier)
                     ) {
                         Text("ENTRAR COMO VISITANTE", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Column(Modifier.width(310.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (qr != null) Image(qr!!.asImageBitmap(), contentDescription = "QR Code de acesso", modifier = Modifier.size(270.dp).background(White, RoundedCornerShape(20.dp)).padding(12.dp))
-                    else CircularProgressIndicator(color = Red, modifier = Modifier.size(54.dp))
-                    Text(code ?: "----", color = White, fontSize = 35.sp, fontWeight = FontWeight.Black, letterSpacing = 7.sp)
-                    Text("APONTE A CÂMERA DO CELULAR", color = White, fontSize = 12.sp, textAlign = TextAlign.Center)
+                    else if (errorDetail.isNotBlank()) Text("QR Code temporariamente indisponível", color = Muted, fontSize = 16.sp, textAlign = TextAlign.Center) else CircularProgressIndicator(color = Red, modifier = Modifier.size(54.dp))
+                    if (code != null) Text(code!!, color = White, fontSize = 35.sp, fontWeight = FontWeight.Black, letterSpacing = 7.sp)
+                    if (qr != null) Text("APONTE A CÂMERA DO CELULAR", color = White, fontSize = 12.sp, textAlign = TextAlign.Center)
                 }
             }
             TvScreen.PROFILE -> Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(26.dp)) {
