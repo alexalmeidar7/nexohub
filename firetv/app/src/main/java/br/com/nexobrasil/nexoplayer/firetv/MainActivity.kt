@@ -81,7 +81,7 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
                     return@LaunchedEffect
                 }
             } catch (_: Throwable) { }
-            prefs.edit().remove("paired_code").remove("profile_name").remove("profile_avatar").apply()
+            prefs.edit().remove("paired_code").remove("profile_name").remove("profile_avatar").remove("guest_mode").apply()
         }
         screen = TvScreen.PAIRING
     }
@@ -125,7 +125,7 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
                 if (status.optBoolean("ok") && row?.optString("status") == "claimed") {
                     profileName = row.optString("paired_name", "Visitante")
                     profileAvatar = row.optString("paired_avatar", "")
-                    prefs.edit().putString("paired_code", current)
+                    prefs.edit().remove("guest_mode").putString("paired_code", current)
                         .putString("profile_name", profileName)
                         .putString("profile_avatar", profileAvatar).apply()
                     screen = TvScreen.PROFILE
@@ -150,7 +150,27 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
                     if (errorDetail.isNotBlank()) Text("Detalhe técnico: $errorDetail", color = Color(0xFFFFA6AA), fontSize = 14.sp)
                     if (errorDetail.isNotBlank()) Button(onClick = { retry++ }, colors = ButtonDefaults.buttonColors(containerColor = Red)) { Text("Tentar novamente", color = White) }
                     Text("Acesso seguro pelo celular", color = White, fontSize = 17.sp)
-                    Button(onClick = { scope.launch { try { val result = withContext(Dispatchers.IO) { postJson("tv-pair-claim", JSONObject().put("code", code ?: "").put("guest", true)) }; if (result.optBoolean("ok")) { profileName = "Visitante"; profileAvatar = ""; prefs.edit().putString("paired_code", code).putString("profile_name", profileName).apply(); screen = TvScreen.PROFILE } else { errorDetail = result.optString("reason", "falha_visitante") } } catch (t: Throwable) { errorDetail = t.message ?: "falha_visitante" } } }, colors = ButtonDefaults.buttonColors(containerColor = Red)) { Text("entrar como visitante", color = White, fontSize = 16.sp) }
+                    Button(
+                        onClick = {
+                            // Visitante funciona localmente, sem depender do QR ou do servidor.
+                            profileName = "Visitante"
+                            profileAvatar = ""
+                            prefs.edit()
+                                .remove("paired_code")
+                                .putBoolean("guest_mode", true)
+                                .putString("profile_name", profileName)
+                                .remove("profile_avatar")
+                                .apply()
+                            screen = TvScreen.PROFILE
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Red,
+                            contentColor = readableForeground(Red)
+                        ),
+                        modifier = Modifier.widthIn(min = 260.dp)
+                    ) {
+                        Text("ENTRAR COMO VISITANTE", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
                 Column(Modifier.width(310.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (qr != null) Image(qr!!.asImageBitmap(), contentDescription = "QR Code de acesso", modifier = Modifier.size(270.dp).background(White, RoundedCornerShape(20.dp)).padding(12.dp))
@@ -197,6 +217,11 @@ private suspend fun postJson(functionName: String, body: JSONObject): JSONObject
         val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
         JSONObject(stream.bufferedReader().use { it.readText() })
     } finally { connection.disconnect() }
+}
+
+private fun readableForeground(background: Color): Color {
+    val luminance = 0.2126 * background.red + 0.7152 * background.green + 0.0722 * background.blue
+    return if (luminance > 0.52) Color.Black else Color.White
 }
 
 private fun makeQr(value: String): Bitmap {
