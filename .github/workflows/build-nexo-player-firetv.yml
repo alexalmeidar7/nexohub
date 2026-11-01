@@ -9,6 +9,7 @@ on:
       - "fix/positiva-tv-entry-visitor-v1-0-1"
       - "fix/positiva-firetv-parallel-install-v1-0-2"
       - "fix/positiva-firetv-reference-login-flow-v1-0-3"
+      - "feat/positiva-firetv-native-login-v1-0-4"
     paths:
       - "firetv/**"
       - ".github/workflows/build-nexo-player-firetv.yml"
@@ -47,12 +48,12 @@ jobs:
       - name: Name versioned Positiva APK
         run: |
           mkdir -p dist
-          cp firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk dist/Radio-Positiva-Fire-Android-TV-v1.0.3.apk
-          cp firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk dist/Radio-Interativa-Fire-Android-TV-v1.0.3.apk
+          cp firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk dist/Radio-Positiva-Fire-Android-TV-v1.0.4.apk
+          cp firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk dist/Radio-Interativa-Fire-Android-TV-v1.0.4.apk
       - name: Upload versioned APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Radio-Fire-Android-TV-v1.0.3
+          name: Radio-Fire-Android-TV-v1.0.4
           path: dist/*.apk
           if-no-files-found: error
           retention-days: 14

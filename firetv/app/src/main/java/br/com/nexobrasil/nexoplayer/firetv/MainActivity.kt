@@ -1,30 +1,34 @@
 package br.com.nexobrasil.nexoplayer.firetv
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.RectangleShape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -33,179 +37,272 @@ import java.util.UUID
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
-private val Night = Color(0xFF08030B)
-private val Red = Color(0xFFFF1018)
-private val White = Color(0xFFFFFFFF)
-private val Muted = Color(0xFFD6D0D7)
+private val Night = Color(0xFF09030B)
+private val BrandRed = Color(0xFFFF1018)
+private val White = Color.White
+private val Muted = Color(0xFFE7E0E8)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.decorView.systemUiVisibility = 5894 or 1024 or 512
         val prefs = getSharedPreferences("nexo_tv", MODE_PRIVATE)
-        val tvSessionId = prefs.getString("tv_session_id", null) ?: UUID.randomUUID().toString().also {
+        val session = prefs.getString("tv_session_id", null) ?: UUID.randomUUID().toString().also {
             prefs.edit().putString("tv_session_id", it).apply()
         }
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme(primary = Red, background = Night, surface = Color(0xFF21151F))) {
-                TvFlow(prefs, tvSessionId)
+            MaterialTheme(colorScheme = darkColorScheme(primary = BrandRed, background = Night, surface = Night)) {
+                TvExperience(prefs, session)
             }
         }
     }
 }
 
-private enum class TvScreen { SPLASH, PAIRING, PROFILE }
+private enum class Screen { SPLASH, LOGIN, PROFILE }
+
+private data class StationLive(
+    val stationName: String = BuildConfig.STATION_NAME,
+    val logo: String = "",
+    val track: String = "",
+    val artist: String = "",
+    val cover: String = "",
+    val artistImage: String = "",
+    val presenter: String = "",
+    val presenterPhoto: String = "",
+    val program: String = ""
+)
 
 @Composable
-private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String) {
-    var screen by remember { mutableStateOf(TvScreen.SPLASH) }
-    var code by remember { mutableStateOf<String?>(null) }
+private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: String) {
+    var screen by remember { mutableStateOf(Screen.SPLASH) }
+    var live by remember { mutableStateOf(StationLive()) }
     var qr by remember { mutableStateOf<Bitmap?>(null) }
-    var profileName by remember { mutableStateOf(prefs.getString("profile_name", null) ?: "") }
-    var profileAvatar by remember { mutableStateOf(prefs.getString("profile_avatar", null) ?: "") }
-    var message by remember { mutableStateOf("Preparando sua experiência…") }
-    var errorDetail by remember { mutableStateOf("") }
-    var retry by remember { mutableIntStateOf(0) }
+    var code by remember { mutableStateOf("") }
+    var profileName by remember { mutableStateOf(prefs.getString("profile_name", "") ?: "") }
+    var error by remember { mutableStateOf("") }
     var visitorFocused by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    var retry by remember { mutableIntStateOf(0) }
+    val backgroundUrl = live.artistImage.ifBlank { live.cover.ifBlank { live.presenterPhoto } }
+    val backgroundBitmap = rememberRemoteBitmap(backgroundUrl)
+    val logoBitmap = rememberRemoteBitmap(live.logo)
+    val coverBitmap = rememberRemoteBitmap(live.cover)
+    val presenterBitmap = rememberRemoteBitmap(live.presenterPhoto)
 
     LaunchedEffect(Unit) {
-        delay(2500)
-        val savedCode = prefs.getString("paired_code", null)
-        if (!savedCode.isNullOrBlank()) {
-            try {
-                val status = withContext(Dispatchers.IO) {
-                    postJson("tv-pair-status", JSONObject().put("code", savedCode).put("tvSessionId", tvSessionId))
+        // A abertura é uma etapa real e visível, antes de consultar a sessão.
+        delay(1800)
+        val saved = prefs.getString("paired_code", null)
+        if (!saved.isNullOrBlank()) {
+            val status = runCatching {
+                withContext(Dispatchers.IO) {
+                    postJson("tv-pair-status", JSONObject().put("code", saved).put("tvSessionId", sessionId))
                 }
-                val row = status.optJSONObject("row")
-                if (status.optBoolean("ok") && row?.optString("status") == "claimed") {
-                    profileName = row.optString("paired_name", "Visitante")
-                    profileAvatar = row.optString("paired_avatar", "")
-                    screen = TvScreen.PROFILE
-                    return@LaunchedEffect
-                }
-            } catch (_: Throwable) { }
-            prefs.edit().remove("paired_code").remove("profile_name").remove("profile_avatar").remove("guest_mode").apply()
+            }.getOrNull()
+            val row = status?.optJSONObject("row")
+            if (status?.optBoolean("ok") == true && row?.optString("status") == "claimed") {
+                profileName = row.optString("paired_name", "Visitante")
+                screen = Screen.PROFILE
+                return@LaunchedEffect
+            }
+            prefs.edit().remove("paired_code").remove("profile_name").remove("profile_avatar").apply()
         }
-        screen = TvScreen.PAIRING
+        screen = Screen.LOGIN
     }
 
-    LaunchedEffect(retry, screen) {
-        if (screen != TvScreen.PAIRING) return@LaunchedEffect
-        code = null
+    // Bootstrap público: música, imagem Deezer, programa/locutor no ar e logo da rádio.
+    LaunchedEffect(screen) {
+        if (screen == Screen.SPLASH) return@LaunchedEffect
+        while (screen != Screen.PROFILE) {
+            val data = runCatching {
+                withContext(Dispatchers.IO) {
+                    postJson("public-player-data", JSONObject().put("slug", BuildConfig.STATION_SLUG))
+                }
+            }.getOrNull()
+            if (data != null) {
+                val music = data.optJSONObject("musicData")
+                val presenter = data.optJSONObject("currentPresenter")
+                val program = data.optJSONObject("currentProgram")
+                val company = data.optJSONObject("empresa")
+                live = StationLive(
+                    stationName = company?.optString("nome_empresa")?.takeIf { !it.isNullOrBlank() } ?: BuildConfig.STATION_NAME,
+                    logo = company?.optString("logo_url")?.takeIf { !it.isNullOrBlank() } ?: company?.optString("logo").orEmpty(),
+                    track = music?.optString("titulo").orEmpty(),
+                    artist = music?.optString("artista").orEmpty(),
+                    cover = music?.optString("capa").orEmpty(),
+                    artistImage = data.optString("musicDeezerArtistImg").takeUnless { it == "null" }.orEmpty(),
+                    presenter = presenter?.optString("nome").orEmpty(),
+                    presenterPhoto = presenter?.optString("foto").orEmpty(),
+                    program = program?.optString("nome").orEmpty()
+                )
+            }
+            delay(15000)
+        }
+    }
+
+    // Cria e renova o QR automaticamente, sem tela de erro ou botão "tentar novamente".
+    LaunchedEffect(screen, retry) {
+        if (screen != Screen.LOGIN) return@LaunchedEffect
+        code = ""
         qr = null
-        message = "Conectando à Positiva FM…"
-        errorDetail = ""
+        error = ""
         try {
             val created = withContext(Dispatchers.IO) {
                 postJson("tv-pair-create", JSONObject()
                     .put("userSlug", BuildConfig.STATION_SLUG)
-                    .put("tvSessionId", tvSessionId))
+                    .put("tvSessionId", sessionId))
             }
-            if (!created.optBoolean("ok")) {
-                val reason = created.optString("reason", "erro_desconhecido")
-                throw IllegalStateException(reason)
+            if (!created.optBoolean("ok")) error = created.optString("reason", "Não foi possível gerar o QR Code")
+            else {
+                code = created.getString("code")
+                val url = "${BuildConfig.PAIR_ORIGIN}/${BuildConfig.STATION_SLUG}/pair?code=$code"
+                qr = withContext(Dispatchers.Default) { makeQr(url) }
             }
-            val newCode = created.getString("code")
-            val pairUrl = "${BuildConfig.PAIR_ORIGIN}/${BuildConfig.STATION_SLUG}/pair?code=$newCode"
-            code = newCode
-            qr = makeQr(pairUrl)
-            message = "Escaneie o QR Code, entre com sua conta Google e confirme o código que aparece na sua TV."
         } catch (t: Throwable) {
-            errorDetail = t.message ?: "falha_de_conexao"
-            message = "Não foi possível gerar o QR Code agora. Você pode entrar como visitante."
-            // Reconsulta automaticamente, sem exibir um botão de erro fora do layout de referência.
-            delay(8000)
-            if (screen == TvScreen.PAIRING && code == null) retry++
+            error = t.message ?: "Não foi possível gerar o QR Code"
+            delay(6000)
+            if (screen == Screen.LOGIN && code.isBlank()) retry++
         }
     }
 
-    LaunchedEffect(code) {
-        val current = code ?: return@LaunchedEffect
-        while (screen == TvScreen.PAIRING) {
+    LaunchedEffect(code, screen) {
+        if (code.isBlank() || screen != Screen.LOGIN) return@LaunchedEffect
+        while (screen == Screen.LOGIN) {
             delay(1800)
-            try {
-                val status = withContext(Dispatchers.IO) {
-                    postJson("tv-pair-status", JSONObject().put("code", current).put("tvSessionId", tvSessionId))
+            val status = runCatching {
+                withContext(Dispatchers.IO) {
+                    postJson("tv-pair-status", JSONObject().put("code", code).put("tvSessionId", sessionId))
                 }
-                val row = status.optJSONObject("row")
-                if (status.optBoolean("ok") && row?.optString("status") == "claimed") {
-                    profileName = row.optString("paired_name", "Visitante")
-                    profileAvatar = row.optString("paired_avatar", "")
-                    prefs.edit().remove("guest_mode").putString("paired_code", current)
-                        .putString("profile_name", profileName)
-                        .putString("profile_avatar", profileAvatar).apply()
-                    screen = TvScreen.PROFILE
-                    break
-                }
-            } catch (_: Throwable) { }
+            }.getOrNull()
+            val row = status?.optJSONObject("row")
+            if (status?.optBoolean("ok") == true && row?.optString("status") == "claimed") {
+                profileName = row.optString("paired_name", "Visitante")
+                prefs.edit().putString("paired_code", code).putString("profile_name", profileName)
+                    .putString("profile_avatar", row.optString("paired_avatar")).apply()
+                screen = Screen.PROFILE
+                break
+            }
         }
     }
 
-    Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF17000A), Night, Color(0xFF10051A)))).padding(52.dp)) {
-        when (screen) {
-            TvScreen.SPLASH -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                Text("POSITIVA FM", color = Red, fontSize = 27.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-                Text("nexo player", color = White, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-                CircularProgressIndicator(color = Red, strokeWidth = 3.dp)
-            }
-            TvScreen.PAIRING -> Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    Text("POSITIVA FM", color = Red, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                    Text("Sua rádio na TV.", color = White, fontSize = 48.sp, fontWeight = FontWeight.Black)
-                    Text(message, color = Muted, fontSize = 23.sp, lineHeight = 32.sp)
+    BoxWithConstraints(Modifier.fillMaxSize().background(Night)) {
+        val horizontal = maxWidth * 0.052f
+        val vertical = maxHeight * 0.075f
+        // Fundo dinâmico: imagem do artista do Deezer; fallback para capa da faixa/locutor.
+        if (backgroundBitmap != null && screen != Screen.SPLASH) {
+            Image(backgroundBitmap.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        }
+        Box(Modifier.fillMaxSize().background(
+            Brush.horizontalGradient(listOf(Color(0xE8000000), Color(0x99090012), Color(0xC9000000)))
+        ))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x66000000), Color.Transparent, Color(0xAA000000)))))
 
+        when (screen) {
+            Screen.SPLASH -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                if (logoBitmap != null) Image(logoBitmap.asImageBitmap(), null, Modifier.width(240.dp).height(150.dp), contentScale = ContentScale.Fit)
+                else Text(BuildConfig.STATION_NAME.uppercase(), color = BrandRed, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                Text("nexo player", color = White, fontSize = 18.sp)
+                CircularProgressIndicator(color = BrandRed, strokeWidth = 3.dp)
+            }
+            Screen.LOGIN -> {
+                // Logo no canto superior direito, independente do estado do QR.
+                if (logoBitmap != null) Image(
+                    logoBitmap.asImageBitmap(), null,
+                    Modifier.align(Alignment.TopEnd).padding(end = horizontal, top = vertical * 0.55f).width(190.dp).height(125.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Column(
+                    Modifier.align(Alignment.TopStart).padding(start = horizontal, top = vertical * 1.1f).width(maxWidth * 0.48f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("bem vindo a", color = White, fontSize = 28.sp, fontWeight = FontWeight.Light)
+                    Text("${live.stationName}!", color = White, fontSize = 28.sp, fontWeight = FontWeight.Light)
+                    Spacer(Modifier.height(2.dp))
+                    Text("VIVA ESSA", color = BrandRed, fontSize = 55.sp, lineHeight = 58.sp, fontWeight = FontWeight.Black)
+                    Text("EXPERIÊNCIA!", color = BrandRed, fontSize = 55.sp, lineHeight = 58.sp, fontWeight = FontWeight.Black)
+                }
+
+                // Card de música atual e identificação do locutor no ar.
+                Row(
+                    Modifier.align(Alignment.BottomStart).padding(start = horizontal, bottom = vertical * 0.78f).width(maxWidth * 0.53f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(22.dp)
+                ) {
+                    if (coverBitmap != null) Image(
+                        coverBitmap.asImageBitmap(), null,
+                        Modifier.size(138.dp).clip(RoundedCornerShape(22.dp)),
+                        contentScale = ContentScale.Crop
+                    ) else Box(Modifier.size(138.dp).clip(RoundedCornerShape(22.dp)).background(Color(0x55333333)))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("tocando agora", color = BrandRed, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text(live.track.ifBlank { "Acompanhe a programação" }, color = White, fontSize = 25.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+                        Text(live.artist, color = White, fontSize = 22.sp, maxLines = 1)
+                        if (live.presenter.isNotBlank()) {
+                            Text("no ar: ${live.presenter}", color = White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+
+                // Área QR alinhada à direita conforme o layout enviado.
+                Column(
+                    Modifier.align(Alignment.CenterEnd).padding(end = horizontal * 0.45f, top = vertical * 0.65f).width(350.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Box(
+                        Modifier.size(300.dp).clip(RoundedCornerShape(28.dp)).background(Color(0xFFFFFDF4)).padding(18.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (qr != null) Image(qr!!.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+                        else if (error.isNotBlank()) Text("Conectando…", color = Color.DarkGray, fontSize = 18.sp, textAlign = TextAlign.Center)
+                        else CircularProgressIndicator(color = BrandRed)
+                    }
+                    Text("Escaneie o QR Code\ne entre com sua\nconta Google", color = White, fontSize = 20.sp, lineHeight = 22.sp, textAlign = TextAlign.Center)
                     Button(
                         onClick = {
-                            // Visitante funciona localmente, sem depender do QR ou do servidor.
                             profileName = "Visitante"
-                            profileAvatar = ""
-                            prefs.edit()
-                                .remove("paired_code")
-                                .putBoolean("guest_mode", true)
-                                .putString("profile_name", profileName)
-                                .remove("profile_avatar")
-                                .apply()
-                            screen = TvScreen.PROFILE
+                            prefs.edit().remove("paired_code").putBoolean("guest_mode", true)
+                                .putString("profile_name", profileName).remove("profile_avatar").apply()
+                            screen = Screen.PROFILE
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Red,
-                            contentColor = readableForeground(Red)
-                        ),
-                        modifier = Modifier.widthIn(min = 260.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandRed, contentColor = White),
+                        shape = RoundedCornerShape(40.dp),
+                        modifier = Modifier.fillMaxWidth().height(62.dp)
                             .onFocusChanged { visitorFocused = it.isFocused }
-                            .then(if (visitorFocused) Modifier.border(3.dp, White, RoundedCornerShape(50)).padding(5.dp) else Modifier)
+                            .then(if (visitorFocused) Modifier.border(3.dp, White, RoundedCornerShape(48.dp)).padding(5.dp) else Modifier)
                     ) {
-                        Text("ENTRAR COMO VISITANTE", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("entrar como visitante", fontSize = 19.sp, fontWeight = FontWeight.Medium)
                     }
-                }
-                Column(Modifier.width(310.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    if (qr != null) Image(qr!!.asImageBitmap(), contentDescription = "QR Code de acesso", modifier = Modifier.size(270.dp).background(White, RoundedCornerShape(20.dp)).padding(12.dp))
-                    else if (errorDetail.isNotBlank()) Text("QR Code temporariamente indisponível", color = Muted, fontSize = 16.sp, textAlign = TextAlign.Center) else CircularProgressIndicator(color = Red, modifier = Modifier.size(54.dp))
-                    if (code != null) Text(code!!, color = White, fontSize = 35.sp, fontWeight = FontWeight.Black, letterSpacing = 7.sp)
-                    if (qr != null) Text("APONTE A CÂMERA DO CELULAR", color = White, fontSize = 12.sp, textAlign = TextAlign.Center)
                 }
             }
-            TvScreen.PROFILE -> Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(26.dp)) {
-                Text("bem-vindo de volta", color = White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-                    Box(Modifier.size(112.dp).background(Color(0xFF56343B), RoundedCornerShape(22.dp)), contentAlignment = Alignment.Center) {
-                        Text(if (profileName.isBlank()) "🙂" else profileName.take(1).uppercase(), color = White, fontSize = 42.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                        Text(profileName.ifBlank { "Visitante" }, color = White, fontSize = 25.sp, fontWeight = FontWeight.SemiBold)
-                        Text("Perfil conectado", color = Muted, fontSize = 16.sp)
-                        Button(onClick = {
-                            prefs.edit().remove("paired_code").remove("profile_name").remove("profile_avatar").apply()
-                            profileName = ""
-                            screen = TvScreen.PAIRING
-                            retry++
-                        }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF353035))) { Text("sair", color = White) }
-                    }
-                }
+            Screen.PROFILE -> Column(
+                Modifier.align(Alignment.CenterStart).padding(start = horizontal, top = vertical),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Bem-vindo!", color = White, fontSize = 42.sp, fontWeight = FontWeight.Bold)
+                Text(profileName.ifBlank { "Visitante" }, color = White, fontSize = 30.sp)
+                Button(onClick = { screen = Screen.LOGIN; retry++ }) { Text("Voltar") }
             }
         }
     }
+}
+
+@Composable
+private fun rememberRemoteBitmap(url: String): Bitmap? {
+    var bitmap by remember(url) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(url) {
+        bitmap = if (url.isBlank()) null else withContext(Dispatchers.IO) {
+            runCatching {
+                val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 7000
+                    readTimeout = 7000
+                    instanceFollowRedirects = true
+                }
+                try { connection.inputStream.use { BitmapFactory.decodeStream(it) } }
+                finally { connection.disconnect() }
+            }.getOrNull()
+        }
+    }
+    return bitmap
 }
 
 private suspend fun postJson(functionName: String, body: JSONObject): JSONObject {
@@ -226,16 +323,12 @@ private suspend fun postJson(functionName: String, body: JSONObject): JSONObject
     } finally { connection.disconnect() }
 }
 
-private fun readableForeground(background: Color): Color {
-    val luminance = 0.2126 * background.red + 0.7152 * background.green + 0.0722 * background.blue
-    return if (luminance > 0.52) Color.Black else Color.White
-}
-
 private fun makeQr(value: String): Bitmap {
-    val matrix = QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 420, 420)
-    val bitmap = Bitmap.createBitmap(420, 420, Bitmap.Config.ARGB_8888)
-    for (x in 0 until 420) for (y in 0 until 420) {
-        bitmap.setPixel(x, y, if (matrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+    val size = 480
+    val matrix = QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, size, size)
+    return Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).also { bitmap ->
+        for (x in 0 until size) for (y in 0 until size) {
+            bitmap.setPixel(x, y, if (matrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        }
     }
-    return bitmap
 }
