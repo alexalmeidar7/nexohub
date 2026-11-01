@@ -706,7 +706,6 @@ export default function PlayerLayoutCustomizer() {
           </p>
         </div>
       ) : (
-      /* Mockup + Color pickers layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Mockup preview */}
         <div>
