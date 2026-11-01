@@ -68,7 +68,7 @@ private fun NativePairingScreen(sessionId: String) {
                     .put("userSlug", BuildConfig.STATION_SLUG)
                     .put("tvSessionId", sessionId))
             }
-            if (!created.optBoolean("ok")) error("Não foi possível gerar o código.")
+            if (!created.optBoolean("ok")) throw IllegalStateException("Não foi possível gerar o código.")
             val newCode = created.getString("code")
             val pairUrl = "${BuildConfig.PAIR_ORIGIN}/${BuildConfig.STATION_SLUG}/pair?code=$newCode"
             code = newCode
