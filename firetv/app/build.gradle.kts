@@ -12,8 +12,8 @@ android {
         applicationId = "br.com.nexobrasil.nexoplayer.positiva"
         minSdk = 23
         targetSdk = 28
-        versionCode = 6
-        versionName = "1.0.1"
+        versionCode = 7
+        versionName = "1.0.2"
         buildConfigField("String", "SUPABASE_URL", "\"https://qazvgmgdidjhbvcuinpy.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
         buildConfigField("String", "STATION_SLUG", "\"positivafm\"")
@@ -35,8 +35,8 @@ android {
     productFlavors {
         create("positiva") {
             dimension = "station"
-            applicationId = "br.com.nexobrasil.nexoplayer.positiva"
-            resValue("string", "app_name", "Positiva FM")
+            applicationId = "br.com.nexobrasil.nexoplayer.positiva.teste"
+            resValue("string", "app_name", "Positiva FM (Teste)")
         }
         create("interativa") {
             dimension = "station"
