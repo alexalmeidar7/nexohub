@@ -1,10 +1,11 @@
-name: Build Nexo Player Fire TV APK
+name: Build Nexo Player Android Native APK
 
 on:
   workflow_dispatch:
   push:
     branches:
       - "feature/nexo-player-fire-tv"
+      - "feature/nexo-player-android-native"
     paths:
       - "firetv/**"
       - ".github/workflows/build-nexo-player-firetv.yml"
@@ -18,7 +19,7 @@ permissions:
 
 jobs:
   build-firetv-apk:
-    name: Build Fire TV APK
+    name: Build Android Native APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,11 +35,13 @@ jobs:
           gradle-version: "8.9"
       - name: Build debug APK
         working-directory: firetv
-        run: gradle --no-daemon :app:assembleDebug
+        run: gradle --no-daemon :app:assemblePositivaDebug :app:assembleInterativaDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: nexo-player-firetv-debug
-          path: firetv/app/build/outputs/apk/debug/app-debug.apk
+          name: nexo-player-android-native-apks
+          path: |
+            firetv/app/build/outputs/apk/positiva/debug/app-positiva-debug.apk
+            firetv/app/build/outputs/apk/interativa/debug/app-interativa-debug.apk
           if-no-files-found: error
           retention-days: 14
