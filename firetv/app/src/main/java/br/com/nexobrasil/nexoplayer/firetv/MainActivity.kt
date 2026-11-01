@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -82,6 +83,8 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
     var error by remember { mutableStateOf("") }
     var visitorFocused by remember { mutableStateOf(false) }
     var retry by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    val bundledStationLogo = remember { BitmapFactory.decodeResource(context.resources, R.drawable.positiva_logo) }
     val backgroundUrl = live.artistImage.ifBlank { live.cover.ifBlank { live.presenterPhoto } }
     val backgroundBitmap = rememberRemoteBitmap(backgroundUrl)
     val logoBitmap = rememberRemoteBitmap(live.logo)
@@ -203,8 +206,7 @@ private fun TvExperience(prefs: android.content.SharedPreferences, sessionId: St
                         Text("nexo", color = White, fontSize = 58.sp, lineHeight = 58.sp, fontWeight = FontWeight.Light)
                         Text("player", color = White, fontSize = 15.sp, lineHeight = 16.sp)
                     }
-                    if (logoBitmap != null) Image(logoBitmap.asImageBitmap(), null, Modifier.width(190.dp).height(130.dp), contentScale = ContentScale.Fit)
-                    else Text(BuildConfig.STATION_NAME, color = BrandRed, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                    Image(bundledStationLogo.asImageBitmap(), null, Modifier.width(190.dp).height(130.dp), contentScale = ContentScale.Fit)
                 }
                 CircularProgressIndicator(color = White, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
             }
