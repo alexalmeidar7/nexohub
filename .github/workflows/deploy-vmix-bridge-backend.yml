@@ -482,7 +482,7 @@ jobs:
           verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
             SELECT
               (position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
-               AND position('auth.role()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
+               AND position('auth.role() = ''service_role''' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
               has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('service_role', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text
@@ -541,7 +541,7 @@ jobs:
           verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
             SELECT
               (position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
-               AND position('auth.role()' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
+               AND position('auth.role() = ''service_role''' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
               has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('service_role', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text
