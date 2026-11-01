@@ -38,6 +38,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Install image tooling
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
       - name: Install Positiva FM launcher artwork
         run: |
           test -s public/logos/positiva.png
