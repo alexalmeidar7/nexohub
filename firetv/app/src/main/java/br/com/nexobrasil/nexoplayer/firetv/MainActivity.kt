@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                 while (isActive) {
                     try {
                         val config = withContext(Dispatchers.IO) {
-                            postJson("public-player-data", JSONObject().put("slug", BuildConfig.STATION_SLUG))
+                            postJson("public-player-data", JSONObject().put("slug", BuildConfig.STATION_SLUG).put("section", "player_config"))
                         }
                         val hex = config.optString("playerTvColor", "#dc2626")
                         if (hex.matches(Regex("^#[0-9a-fA-F]{6}$"))) {
