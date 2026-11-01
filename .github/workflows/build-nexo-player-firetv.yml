@@ -33,6 +33,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
+      - name: Install Positiva FM launcher artwork
+        run: |
+          mkdir -p firetv/app/src/main/res/mipmap-hdpi
+          curl -fL "https://raw.githubusercontent.com/alexalmeidar7/nexohub/main/public/logos/positiva.png" -o firetv/app/src/main/res/mipmap-hdpi/ic_launcher.png
       - name: Build debug APK
         working-directory: firetv
         run: gradle --no-daemon :app:assemblePositivaDebug :app:assembleInterativaDebug
