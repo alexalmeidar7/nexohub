@@ -13,6 +13,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve and validate the configured Supabase project
+        id: target
+        shell: bash
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          PROJECT_REF="$(python3 - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          with Path("supabase/config.toml").open("rb") as config_file:
+              print(tomllib.load(config_file).get("project_id", ""))
+          PY
+          )"
+          if [[ ! "$PROJECT_REF" =~ ^[a-z0-9]{20}$ ]]; then
+            echo "::error::supabase/config.toml has no valid project_id. Nothing was changed."
+            exit 1
+          fi
+          if [[ -z "$SUPABASE_PROJECT_REF" || "$SUPABASE_PROJECT_REF" != "$PROJECT_REF" ]]; then
+            echo "::error::SUPABASE_PROJECT_REF does not match supabase/config.toml. Nothing was changed."
+            exit 1
+          fi
+          echo "project_ref=$PROJECT_REF" >> "$GITHUB_OUTPUT"
+          echo "Supabase target validated: $PROJECT_REF"
+
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -24,16 +50,19 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::Add SUPABASE_ACCESS_TOKEN in GitHub Actions secrets."; exit 1; }
-          test -n "$OPENAI_API_KEY" || { echo "::error::Add OPENAI_API_KEY in GitHub Actions secrets."; exit 1; }
+          set -euo pipefail
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::Add SUPABASE_ACCESS_TOKEN in the production environment."; exit 1; }
+          test -n "$OPENAI_API_KEY" || { echo "::error::Add OPENAI_API_KEY in the production environment."; exit 1; }
 
-      - name: Configure OpenAI key in the target Supabase project
+      - name: Configure OpenAI key in the validated Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref zzjfzxxvxbspbdkodoix
+          PROJECT_REF: ${{ steps.target.outputs.project_ref }}
+        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref "$PROJECT_REF"
 
-      - name: Deploy transform-logo
+      - name: Deploy transform-logo to the validated Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase functions deploy transform-logo --project-ref zzjfzxxvxbspbdkodoix --no-verify-jwt
+          PROJECT_REF: ${{ steps.target.outputs.project_ref }}
+        run: supabase functions deploy transform-logo --project-ref "$PROJECT_REF" --no-verify-jwt
