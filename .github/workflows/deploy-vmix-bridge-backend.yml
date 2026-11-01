@@ -208,6 +208,11 @@ jobs:
         run: |
           set -euo pipefail
           required_versions=(
+            20261022185000
+            20261022200000
+            20261023180000
+            20261026214100
+            20261027123000
             20261028003932
             20261028025459
             20261028025525
@@ -1425,18 +1430,25 @@ jobs:
           done
 
       - name: Deployment summary
-        if: ${{ inputs.apply_changes || inputs.apply_music_history_rpc_security }}
+        if: ${{ inputs.apply_changes || inputs.apply_music_history_rpc_security || inputs.apply_has_role_rpc_security }}
         env:
           APPLY_CHANGES: ${{ inputs.apply_changes }}
           APPLY_RPC_SECURITY: ${{ inputs.apply_music_history_rpc_security }}
+          APPLY_HAS_ROLE_RPC_SECURITY: ${{ inputs.apply_has_role_rpc_security }}
         shell: bash
         run: |
           if [ "$APPLY_CHANGES" = "true" ]; then
             echo "Bridge backend workflow completed for the explicitly confirmed project."
             echo "Music history RPC is restricted to service_role."
+            echo "has_role is scoped to the authenticated caller and trusted service_role."
             echo "No production deployment is triggered automatically; this workflow runs only by manual dispatch."
           elif [ "$APPLY_RPC_SECURITY" = "true" ]; then
             echo "Standalone music-history RPC security hardening completed."
+            echo "No Bridge tables were created and no Edge Functions were deployed."
+            echo "No production frontend deployment was triggered."
+          elif [ "$APPLY_HAS_ROLE_RPC_SECURITY" = "true" ]; then
+            echo "Standalone has_role RPC security hardening completed."
+            echo "Authenticated callers can inspect only their own role; service_role retains trusted cross-user checks."
             echo "No Bridge tables were created and no Edge Functions were deployed."
             echo "No production frontend deployment was triggered."
           fi
