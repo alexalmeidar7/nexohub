@@ -9,6 +9,8 @@
         android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:label="Nexo Player"
+        android:icon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
