@@ -6,13 +6,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Smartphone, Home } from "lucide-react";
 import { extractDominantPair } from "@/lib/dominantColors";
 
-const CANONICAL_PAIR_ORIGIN = "https://nexohub.lovable.app";
+const CANONICAL_PAIR_ORIGIN = "https://nexobrasil.net";
 
+/**
+ * QR e link manual devem sempre levar o ouvinte ao domínio público da Nexo.
+ * O domínio Lovable é ambiente interno de desenvolvimento e nunca deve
+ * aparecer no fluxo de pareamento apresentado ao público.
+ */
 function getPairOrigin() {
   if (typeof window === "undefined") return CANONICAL_PAIR_ORIGIN;
   const host = window.location.hostname.toLowerCase();
   if (host === "localhost" || host === "127.0.0.1") return window.location.origin;
-  if (host.endsWith(".lovable.app")) return window.location.origin;
   return CANONICAL_PAIR_ORIGIN;
 }
 
