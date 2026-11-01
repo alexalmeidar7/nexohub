@@ -1,3 +1,13 @@
+-- SUPERSEDED / DO NOT APPLY.
+-- This early Bridge prototype is retained only for historical reference.
+-- Its schema contract is incompatible with the active Bridge implementation:
+-- it uses queued/completed/expired job states, devices.name/revoked_at, and an
+-- older claim function. The active contract starts at
+-- supabase/migrations/20261022185000_vmix_bridge_backend.sql and uses
+-- pending/running/succeeded/failed, device_name/revoked, and later additive
+-- migrations. This file is intentionally outside supabase/migrations so
+-- Supabase CLI migration discovery cannot apply it accidentally.
+
 create extension if not exists pgcrypto;
 
 create table if not exists public.vmix_bridge_pairings (
@@ -75,3 +85,4 @@ $$;
 
 revoke all on function public.claim_next_vmix_bridge_job(uuid) from public, anon, authenticated;
 grant execute on function public.claim_next_vmix_bridge_job(uuid) to service_role;
+

@@ -1,6 +1,6 @@
 -- Restore the additive custom vMix button fields used by House Mix UI.
--- The QAZ backend currently has zero custom_vmix_buttons rows; this migration
--- preserves any existing values and does not delete or reassign records.
+-- Existing custom_vmix_buttons rows are preserved. This migration adds missing
+-- UI fields and normalizes only NULL/blank categories to AUDIO.
 
 ALTER TABLE public.custom_vmix_buttons
   ADD COLUMN IF NOT EXISTS shortcut text,
