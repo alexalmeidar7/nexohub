@@ -542,6 +542,7 @@ const defaultBgConfigs: ScreenBgConfigs = {
   home: { ...defaultScreenBg },
   live: { ...defaultScreenBg },
   catalog: { ...defaultScreenBg },
+  tv: { ...defaultScreenBg },
 };
 
 const screenBgColorKey: Record<ScreenTab, keyof PlayerColors> = {
