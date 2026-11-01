@@ -53,14 +53,14 @@ jobs:
       - name: Validate Desktop password-reset redirect
         shell: pwsh
         env:
-          VITE_DESKTOP_AUTH_REDIRECT_URL: ${{ vars.VITE_DESKTOP_AUTH_REDIRECT_URL }}
+          VITE_DESKTOP_AUTH_REDIRECT_URL: ${{ vars.VITE_DESKTOP_AUTH_REDIRECT_URL || secrets.VITE_DESKTOP_AUTH_REDIRECT_URL }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:VITE_DESKTOP_AUTH_REDIRECT_URL)) {
-            throw "VITE_DESKTOP_AUTH_REDIRECT_URL is required for packaged password recovery. Configure it in GitHub Actions Variables and authorize the callback in Supabase."
+            throw "VITE_DESKTOP_AUTH_REDIRECT_URL is required for packaged password recovery. Configure it in GitHub Actions Variables or Secrets and authorize the callback in Supabase."
           }
       - name: Build desktop frontend
         env:
-          VITE_DESKTOP_AUTH_REDIRECT_URL: ${{ vars.VITE_DESKTOP_AUTH_REDIRECT_URL }}
+          VITE_DESKTOP_AUTH_REDIRECT_URL: ${{ vars.VITE_DESKTOP_AUTH_REDIRECT_URL || secrets.VITE_DESKTOP_AUTH_REDIRECT_URL }}
         run: npm run desktop:build
       - name: Package Windows installer
         run: npx electron-builder --win nsis --x64 --publish never
