@@ -182,7 +182,7 @@ export default function PairPage() {
             maxLength={4}
             value={code}
             onChange={(e) => {
-              setCode(e.target.value.replace(/\\D/g, "").slice(0, 4));
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 4));
               if (status.kind === "expired" || status.kind === "error") setStatus({ kind: "idle" });
               autoRunRef.current = false;
             }}
