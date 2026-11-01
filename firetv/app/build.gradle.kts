@@ -18,7 +18,7 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_BzjxF3H_PSgFYVA3OQIaoA_Pytdg2V3\"")
         buildConfigField("String", "STATION_SLUG", "\"positivafm\"")
         buildConfigField("String", "STATION_NAME", "\"Positiva FM\"")
-        buildConfigField("String", "PAIR_ORIGIN", "\"https://housemix.nexobrasil.net\"")
+        buildConfigField("String", "PAIR_ORIGIN", "\"https://nexobrasil.net\"")
     }
 
     buildFeatures {
