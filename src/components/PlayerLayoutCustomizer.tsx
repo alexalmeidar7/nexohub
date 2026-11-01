@@ -552,6 +552,8 @@ export default function PlayerLayoutCustomizer() {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<ScreenTab>("loading");
+  const [showTvColorTab, setShowTvColorTab] = useState(false);
+  const [tvPrimaryColor, setTvPrimaryColor] = useState("#dc2626");
   const originalRef = useRef<PlayerColors>(defaultPlayerColors);
 
   useEffect(() => {
@@ -566,6 +568,7 @@ export default function PlayerLayoutCustomizer() {
       if (!active) return;
       const di = data?.dashboard_items as any;
       if (di && typeof di === "object") {
+        if (typeof di.tv_primary_color === "string" && /^#[0-9a-fA-F]{6}$/.test(di.tv_primary_color)) setTvPrimaryColor(di.tv_primary_color);
         if (di.player_colors) {
           const loaded = { ...defaultPlayerColors, ...di.player_colors };
           setColors(loaded);
@@ -602,9 +605,10 @@ export default function PlayerLayoutCustomizer() {
       await mergeUserDashboardItems(user.id, {
         player_colors: colors as unknown as Record<string, unknown>,
         player_bg_configs: bgConfigs as unknown as Record<string, unknown>,
+        tv_primary_color: tvPrimaryColor,
       });
 
-      toast.success("Cores do Player salvas com sucesso!");
+      toast.success("Configurações do Player salvas com sucesso!");
       originalRef.current = colors;
       setHasChanges(false);
       window.dispatchEvent(new Event("player-colors-updated"));
@@ -618,12 +622,14 @@ export default function PlayerLayoutCustomizer() {
   const resetColors = async () => {
     setColors(defaultPlayerColors);
     setBgConfigs({ ...defaultBgConfigs });
+    setTvPrimaryColor("#dc2626");
     if (!user) return;
     setSaving(true);
     try {
       await mergeUserDashboardItems(user.id, {
         player_colors: defaultPlayerColors as unknown as Record<string, unknown>,
         player_bg_configs: defaultBgConfigs as unknown as Record<string, unknown>,
+        tv_primary_color: "#dc2626",
       });
 
       toast.success("Cores do Player restauradas ao padrão.");
@@ -649,7 +655,7 @@ export default function PlayerLayoutCustomizer() {
         {screenTabs.map(tab => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => { setActiveTab(tab.key); setShowTvColorTab(false); }}
             className="flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold rounded-xl transition-all"
             style={{
               backgroundColor: activeTab === tab.key ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)",
@@ -661,9 +667,46 @@ export default function PlayerLayoutCustomizer() {
             {tab.label}
           </button>
         ))}
+        <button
+          onClick={() => setShowTvColorTab(true)}
+          className="flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold rounded-xl transition-all"
+          style={{
+            backgroundColor: showTvColorTab ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)",
+            color: showTvColorTab ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)",
+          }}
+        >
+          <Tv size={14} /> COR DO APP TV
+        </button>
       </div>
 
-      {/* Mockup + Color pickers layout */}
+      {showTvColorTab ? (
+        <div className="rounded-2xl p-5 space-y-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)" }}>
+          <div>
+            <h3 className="text-sm font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>COR PREDOMINANTE DO APLICATIVO DE TV</h3>
+            <p className="text-xs mt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+              Defina a cor principal da identidade visual do aplicativo Fire TV / Android TV desta emissora.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+            <div className="flex items-center gap-3">
+              <PColorInput label="Cor predominante (HEX)" value={tvPrimaryColor} onChange={(value) => { setTvPrimaryColor(value); setHasChanges(true); }} />
+            </div>
+            <div className="rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: tvPrimaryColor }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
+                <Tv size={22} color="#ffffff" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-white">Prévia do aplicativo TV</p>
+                <p className="text-xs text-white/80">Cor aplicada à identidade da emissora</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+            A alteração será salva nas configurações da emissora e disponibilizada para o aplicativo TV consultar sem precisar reinstalar o APK.
+          </p>
+        </div>
+      ) : (
+      /* Mockup + Color pickers layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Mockup preview */}
         <div>
@@ -850,6 +893,7 @@ export default function PlayerLayoutCustomizer() {
           {saving ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </div>
+      )}
     </div>
   );
 }
