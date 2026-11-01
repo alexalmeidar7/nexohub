@@ -244,6 +244,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── FAST PATH: native TV appearance configuration ───────────────
+    if (section === "player_config") {
+      const { data: settingsData, error: settingsError } = await supabase
+        .from("user_settings")
+        .select("dashboard_items")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (settingsError) throw settingsError;
+      const dashboardItems = (settingsData?.dashboard_items ?? null) as Record<string, any> | null;
+      return new Response(JSON.stringify({
+        userId,
+        playerTvColor: String(dashboardItems?.player_colors?.tvPrimaryColor || "#dc2626"),
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ── FAST PATH: now_playing ──────────────────────────────────────
     if (section === "now_playing") {
       const { data: settingsData, error: settingsError } = await supabase
@@ -379,6 +394,7 @@ Deno.serve(async (req) => {
         musicData: musicResult?.musicData || null,
         musicStartTime: musicResult?.musicStartTime || null,
         musicDeezerArtistImg: musicResult?.deezerArtistImg || deezerArtistImgFromDash || null,
+        playerTvColor: String(dashboardItems?.player_colors?.tvPrimaryColor || "#dc2626"),
         currentProgram: currentProgram || null,
         currentPresenter: currentPresenter ? { id: currentPresenter.id, nome: currentPresenter.nome, foto: currentPresenter.foto } : null,
       }),

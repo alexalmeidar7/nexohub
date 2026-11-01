@@ -126,6 +126,7 @@ export interface PlayerColors {
   catalogBadgeText: string;
   catalogPlayBg: string;
   catalogPlayText: string;
+  tvPrimaryColor: string;
 }
 
 export const defaultPlayerColors: PlayerColors = {
@@ -186,9 +187,10 @@ export const defaultPlayerColors: PlayerColors = {
   catalogBadgeText: "#ffffff",
   catalogPlayBg: "#dc2626",
   catalogPlayText: "#ffffff",
+  tvPrimaryColor: "#dc2626",
 };
 
-type ScreenTab = "loading" | "login" | "home" | "live" | "catalog";
+type ScreenTab = "loading" | "login" | "home" | "live" | "catalog" | "tv";
 
 const screenTabs: { key: ScreenTab; label: string; icon: React.ReactNode }[] = [
   { key: "loading", label: "Loading", icon: <Loader2 size={14} /> },
@@ -196,9 +198,11 @@ const screenTabs: { key: ScreenTab; label: string; icon: React.ReactNode }[] = [
   { key: "home", label: "Home", icon: <Home size={14} /> },
   { key: "live", label: "Ao Vivo", icon: <Tv size={14} /> },
   { key: "catalog", label: "Catálogo", icon: <Film size={14} /> },
+  { key: "tv", label: "Cor do Player TV", icon: <Tv size={14} /> },
 ];
 
 const screenColorKeys: Record<ScreenTab, { key: keyof PlayerColors; label: string }[]> = {
+  tv: [],
   loading: [
     { key: "loadingBg", label: "Fundo" },
     { key: "loadingSpinner", label: "Spinner" },
@@ -538,9 +542,11 @@ const defaultBgConfigs: ScreenBgConfigs = {
   home: { ...defaultScreenBg },
   live: { ...defaultScreenBg },
   catalog: { ...defaultScreenBg },
+  tv: { ...defaultScreenBg },
 };
 
 const screenBgColorKey: Record<ScreenTab, keyof PlayerColors> = {
+  tv: "homeBg",
   loading: "loadingBg", login: "loginBg", home: "homeBg", live: "liveBg", catalog: "catalogBg",
 };
 
@@ -640,6 +646,7 @@ export default function PlayerLayoutCustomizer() {
     home: <HomeMockup c={colors} bg={bgConfigs.home} />,
     live: <LiveMockup c={colors} bg={bgConfigs.live} />,
     catalog: <CatalogMockup c={colors} bg={bgConfigs.catalog} />,
+    tv: <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "#090909" }}><div className="text-center space-y-3"><div className="w-16 h-16 rounded-full mx-auto" style={{ backgroundColor: colors.tvPrimaryColor }} /><p className="text-white text-sm font-bold">Prévia da identidade do Player TV</p><p className="text-white/60 text-xs">{colors.tvPrimaryColor.toUpperCase()}</p></div></div>,
   };
 
   return (
@@ -754,7 +761,22 @@ export default function PlayerLayoutCustomizer() {
               </span>
             </div>
 
-            {activeTab === "live" ? (
+            {activeTab === "tv" ? (
+              <div className="space-y-4 p-4 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cor predominante do Player TV</span>
+                  <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Defina a cor de identidade da sua rádio. Ela será aplicada aos destaques, botões e elementos ativos do aplicativo de TV.</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <input type="color" aria-label="Cor do Player TV" value={colors.tvPrimaryColor} onChange={(e) => updateColor("tvPrimaryColor", e.target.value)} className="w-16 h-16 rounded-xl cursor-pointer border-0 p-0 bg-transparent" />
+                  <div className="flex-1 min-w-0">
+                    <PColorInput label="RGB / HEX" value={colors.tvPrimaryColor} onChange={(v) => updateColor("tvPrimaryColor", v)} />
+                    <div className="mt-3 h-9 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: colors.tvPrimaryColor }}>Prévia da cor</div>
+                  </div>
+                </div>
+                <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>A cor fica vinculada à rádio e pode ser alterada sem reinstalar o aplicativo. Salve para publicar a configuração.</p>
+              </div>
+            ) : activeTab === "live" ? (
               <div className="space-y-4">
                 {/* Group: Cores — Ao Vivo */}
                 <div>
