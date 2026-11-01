@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -62,6 +63,7 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
     var message by remember { mutableStateOf("Preparando sua experiência…") }
     var errorDetail by remember { mutableStateOf("") }
     var retry by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         delay(900)
@@ -148,7 +150,7 @@ private fun TvFlow(prefs: android.content.SharedPreferences, tvSessionId: String
                     if (errorDetail.isNotBlank()) Text("Detalhe técnico: $errorDetail", color = Color(0xFFFFA6AA), fontSize = 14.sp)
                     if (errorDetail.isNotBlank()) Button(onClick = { retry++ }, colors = ButtonDefaults.buttonColors(containerColor = Red)) { Text("Tentar novamente", color = White) }
                     Text("Acesso seguro pelo celular", color = White, fontSize = 17.sp)
-                    Text("entrar como visitante", color = Red, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Button(onClick = { scope.launch { try { val result = withContext(Dispatchers.IO) { postJson("tv-pair-claim", JSONObject().put("code", code ?: "").put("guest", true)) }; if (result.optBoolean("ok")) { profileName = "Visitante"; profileAvatar = ""; prefs.edit().putString("paired_code", code).putString("profile_name", profileName).apply(); screen = TvScreen.PROFILE } else { errorDetail = result.optString("reason", "falha_visitante") } } catch (t: Throwable) { errorDetail = t.message ?: "falha_visitante" } } }, colors = ButtonDefaults.buttonColors(containerColor = Red)) { Text("entrar como visitante", color = White, fontSize = 16.sp) }
                 }
                 Column(Modifier.width(310.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (qr != null) Image(qr!!.asImageBitmap(), contentDescription = "QR Code de acesso", modifier = Modifier.size(270.dp).background(White, RoundedCornerShape(20.dp)).padding(12.dp))
