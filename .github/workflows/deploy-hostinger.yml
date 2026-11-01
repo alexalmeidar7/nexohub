@@ -36,6 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import base64
+          import json
           import sys
           import tomllib
           from pathlib import Path
@@ -52,6 +54,18 @@ jobs:
           project_ref = config.get("project_id", "")
           expected_url = f"https://{project_ref}.supabase.co" if project_ref else ""
 
+          publishable_key = values.get("VITE_SUPABASE_PUBLISHABLE_KEY", "")
+          key_project_ref = ""
+          try:
+              token_parts = publishable_key.split(".")
+              if len(token_parts) == 3:
+                  payload = token_parts[1]
+                  payload += "=" * (-len(payload) % 4)
+                  claims = json.loads(base64.urlsafe_b64decode(payload))
+                  key_project_ref = claims.get("ref", "")
+          except Exception:
+              key_project_ref = ""
+
           checks = {
               "SUPABASE_URL": values.get("SUPABASE_URL", "").rstrip("/"),
               "VITE_SUPABASE_URL": values.get("VITE_SUPABASE_URL", "").rstrip("/"),
@@ -62,12 +76,12 @@ jobs:
               or checks["SUPABASE_URL"] != expected_url
               or checks["VITE_SUPABASE_URL"] != expected_url
               or checks["VITE_SUPABASE_PROJECT_ID"] != project_ref
-              or not values.get("VITE_SUPABASE_PUBLISHABLE_KEY")
+              or key_project_ref != project_ref
           ):
               print("::error::Frontend and backend Supabase targets do not match. Production deployment stopped before build/upload.")
               print(f"supabase/config.toml project_id: {project_ref or 'missing'}")
-              print("Expected SUPABASE_URL and VITE_SUPABASE_URL to use that project,")
-              print("VITE_SUPABASE_PROJECT_ID to match it, and the frontend publishable key to be present.")
+              print("Expected SUPABASE_URL, VITE_SUPABASE_URL, VITE_SUPABASE_PROJECT_ID,")
+              print("and the VITE JWT publishable-key ref to match that project.")
               sys.exit(1)
 
           print(f"Supabase target consistency verified for project {project_ref}.")
