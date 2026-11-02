@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 import { dynamicXmlPlugin } from "./vite-plugins/dynamicXmlPlugin";
 import { logoTransformPlugin } from "./vite-plugins/logoTransformPlugin";
 
@@ -15,7 +14,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger(), mcpPlugin(), dynamicXmlPlugin(), logoTransformPlugin()].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger(), dynamicXmlPlugin(), logoTransformPlugin()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
