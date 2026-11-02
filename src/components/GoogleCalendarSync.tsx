@@ -50,25 +50,45 @@ export default function GoogleCalendarSync({ compact = false }: GoogleCalendarSy
   }, [fetchEvents]);
 
   const handleConnect = async () => {
-    const popup = window.open("about:blank", "google-cal", "width=520,height=640");
-    if (!popup) {
+    const isDesktop = window.location.protocol === "housemix:";
+    const popup = isDesktop ? null : window.open("about:blank", "google-cal", "width=520,height=640");
+    if (!isDesktop && !popup) {
       toast({ title: "Janela bloqueada", description: "Permita pop-ups para conectar o Google Agenda.", variant: "destructive" });
       return;
     }
+
     setConnecting(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-calendar-auth", { method: "POST" });
       if (error || !data?.url) throw error || new Error("Não foi possível iniciar a autorização.");
-      popup.location.href = data.url;
+
+      const authUrl = new URL(data.url);
+      if (authUrl.protocol !== "https:" || authUrl.hostname !== "accounts.google.com") {
+        throw new Error("O servidor retornou um endereço de autorização inválido.");
+      }
+
+      if (isDesktop) {
+        // Electron routes HTTPS window.open requests through setWindowOpenHandler
+        // and shell.openExternal; do not create a blocked about:blank child window.
+        window.open(authUrl.toString(), "_blank");
+        toast({
+          title: "Conclua a autorização no navegador",
+          description: "Depois de autorizar o Google, volte ao House Mix e clique em Atualizar.",
+        });
+        setConnecting(false);
+        return;
+      }
+
+      popup!.location.href = authUrl.toString();
       const t = window.setInterval(async () => {
-        if (popup.closed) {
+        if (popup!.closed) {
           window.clearInterval(t);
           setConnecting(false);
           await fetchEvents();
         }
       }, 1000);
     } catch (e: any) {
-      popup.close();
+      popup?.close();
       toast({ title: "Erro ao conectar", description: e?.message || "Tente novamente.", variant: "destructive" });
       setConnecting(false);
     }
