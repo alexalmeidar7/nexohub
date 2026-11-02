@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src http: https:; img-src 'self' data: https:;">
+  <title>Nexo Preview</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">N</div><div><strong>NEXO<span> PREVIEW</span></strong><small>DEVICE LAB</small></div></div>
+      <div class="top-status"><i></i> AMBIENTE LOCAL <span class="divider"></span><span id="clock">PRONTO PARA TESTAR</span></div>
+    </header>
+    <main class="workspace">
+      <aside class="sidebar">
+        <div class="section-label">PROJETO</div>
+        <label class="field-label" for="app-url">URL DO APLICATIVO</label>
+        <div class="url-row"><input id="app-url" value="http://localhost:8080" spellcheck="false"><button id="load-url" title="Abrir endereço">↗</button></div>
+        <p class="hint">Use o endereço local do servidor de desenvolvimento. O HMR do Vite atualiza a prévia automaticamente.</p>
+        <div class="section-label device-heading">DISPOSITIVO</div>
+        <div class="device-tabs"><button class="tab active" data-kind="tv">TV</button><button class="tab" data-kind="mobile">CELULAR</button><button class="tab" data-kind="tablet">TABLET</button></div>
+        <label class="field-label" for="profile">PLATAFORMA / PERFIL</label>
+        <select id="profile"></select>
+        <div class="profile-meta"><span id="profile-resolution">1920 × 1080</span><span id="profile-ratio">16:9</span></div>
+        <div class="section-label">CONTROLE REMOTO</div>
+        <div class="remote">
+          <div class="remote-top"><span>POWER</span><span>HOME</span></div>
+          <button class="remote-key back" data-key="Escape">↶</button>
+          <div class="dpad">
+            <button class="remote-key up" data-key="ArrowUp">↑</button>
+            <button class="remote-key left" data-key="ArrowLeft">←</button>
+            <button class="remote-key ok" data-key="Enter">OK</button>
+            <button class="remote-key right" data-key="ArrowRight">→</button>
+            <button class="remote-key down" data-key="ArrowDown">↓</button>
+          </div>
+          <div class="remote-bottom"><button class="remote-key" data-key="Backspace">BACK</button><button class="remote-key" data-key="Enter">SELECT</button></div>
+        </div>
+        <p class="hint">As setas do teclado também funcionam. Clique na prévia para dar foco ao aplicativo.</p>
+        <div class="sidebar-footer"><span class="live-dot"></span> PRÉ-VISUALIZAÇÃO ATIVA</div>
+      </aside>
+      <section class="preview-area">
+        <div class="preview-toolbar"><div><span class="eyebrow">VISUALIZAÇÃO</span><strong id="preview-title">Android TV · Full HD</strong></div><div class="toolbar-actions"><button id="refresh" class="icon-button" title="Atualizar">⟳</button><button id="fit" class="icon-button" title="Ajustar à janela">⛶</button></div></div>
+        <div class="stage" id="stage">
+          <div class="device tv-device" id="device">
+            <div class="screen"><iframe id="app-frame" title="Prévia do aplicativo" src="http://localhost:8080"></iframe></div>
+            <div class="device-brand" id="device-brand">NEXO TV PREVIEW</div>
+          </div>
+          <div class="empty-state" id="empty-state"><div class="empty-icon">⌁</div><strong>Conecte seu aplicativo</strong><span>Informe a URL local do projeto para começar a visualizar.</span></div>
+        </div>
+        <div class="stage-footer"><span id="stage-size">ÁREA DE EXIBIÇÃO · 1920 × 1080</span><span>ESCALA AUTOMÁTICA <b id="scale-value">AJUSTADA</b></span></div>
+      </section>
+    </main>
+  </div>
+  <script src="./renderer.js"></script>
+</body>
+</html>
