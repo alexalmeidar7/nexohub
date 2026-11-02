@@ -3,7 +3,7 @@ name: Nexo Preview Windows Build
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feat/nexo-preview-desktop]
     paths:
       - "nexo-preview/**"
       - ".github/workflows/nexo-preview.yml"
@@ -19,8 +19,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: nexo-preview/package.json
       - name: Install dependencies
         run: npm install
       - name: Build Windows installer
