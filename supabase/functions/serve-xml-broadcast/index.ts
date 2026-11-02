@@ -87,7 +87,7 @@ const normalizeDateValue = (value: string | null | undefined): string =>
   (value || "").trim().slice(0, 10);
 
 const resolveDataOwnerId = async (
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   requestedUserId: string,
 ): Promise<string> => {
   const { data: subUser } = await supabase
@@ -198,7 +198,7 @@ const base64ToUint8Array = (dataUrl: string): { data: Uint8Array; contentType: s
 };
 
 const uploadPublicPng = async (
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   storagePath: string,
   data: Uint8Array,
 ): Promise<string> => {
@@ -214,7 +214,7 @@ const uploadPublicPng = async (
 const sourceMarkerPath = (storagePath: string) => `${storagePath}.src.txt`;
 
 const readSourceMarker = async (
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   storagePath: string,
 ): Promise<string> => {
   try {
@@ -227,7 +227,7 @@ const readSourceMarker = async (
 };
 
 const writeSourceMarker = async (
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   storagePath: string,
   source: string,
 ) => {
@@ -251,7 +251,7 @@ const withVersion = (url: string, version?: string | null) => {
 };
 
 const ensurePngImageUrl = async (
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   value: string | null | undefined,
   storagePath: string,
   size = 512,
@@ -1347,7 +1347,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><error>${err.message}</error>`,
+      `<?xml version="1.0" encoding="UTF-8"?><error>${(err as Error)?.message}</error>`,
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } }
     );
   }
