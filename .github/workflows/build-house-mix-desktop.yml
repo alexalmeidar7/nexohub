@@ -50,13 +50,15 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm install
-      - name: Validate Desktop password-reset redirect
+      - name: Check optional Desktop password-reset redirect
         shell: pwsh
         env:
           VITE_DESKTOP_AUTH_REDIRECT_URL: ${{ vars.VITE_DESKTOP_AUTH_REDIRECT_URL || secrets.VITE_DESKTOP_AUTH_REDIRECT_URL }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:VITE_DESKTOP_AUTH_REDIRECT_URL)) {
-            throw "VITE_DESKTOP_AUTH_REDIRECT_URL is required for packaged password recovery. Configure it in GitHub Actions Variables or Secrets and authorize the callback in Supabase."
+            Write-Warning "Password recovery will remain disabled in this test build. Configure VITE_DESKTOP_AUTH_REDIRECT_URL and authorize it in Supabase before production distribution."
+          } else {
+            Write-Host "Desktop password-reset redirect is configured."
           }
       - name: Build desktop frontend
         env:
