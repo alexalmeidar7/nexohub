@@ -2,6 +2,11 @@ name: Deploy sponsor logo transformation
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_project_ref:
+        description: "Digite exatamente o Project Ref do backend ativo para confirmar o destino"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -18,22 +23,65 @@ jobs:
         with:
           version: latest
 
-      - name: Validate required secrets
+      - name: Validate configured project and required secrets
         shell: bash
         env:
+          INPUT_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          SECRET_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "::error::Add SUPABASE_ACCESS_TOKEN in GitHub Actions secrets."; exit 1; }
-          test -n "$OPENAI_API_KEY" || { echo "::error::Add OPENAI_API_KEY in GitHub Actions secrets."; exit 1; }
+          set -euo pipefail
+          test -n "${SECRET_PROJECT_REF}" || { echo "::error::Configure SUPABASE_PROJECT_REF nos GitHub Actions secrets."; exit 1; }
+          test -n "${SUPABASE_ACCESS_TOKEN}" || { echo "::error::Configure SUPABASE_ACCESS_TOKEN nos GitHub Actions secrets."; exit 1; }
+          test -n "${OPENAI_API_KEY}" || { echo "::error::Configure OPENAI_API_KEY nos GitHub Actions secrets."; exit 1; }
 
-      - name: Configure OpenAI key in the target Supabase project
+          node <<'NODE'
+          const fs = require("node:fs");
+          const fail = (message) => {
+            console.error(`::error::${message} Nada foi publicado.`);
+            process.exit(1);
+          };
+          let config, envText;
+          try {
+            config = fs.readFileSync("supabase/config.toml", "utf8");
+            envText = fs.readFileSync(".env", "utf8");
+          } catch {
+            fail("Não foi possível ler supabase/config.toml e .env.");
+          }
+          const projectRef = config.match(/^\s*project_id\s*=\s*["']([^"']+)["']/m)?.[1];
+          if (!projectRef) fail("Project Ref não encontrado em supabase/config.toml.");
+          const envValues = {};
+          for (const line of envText.split(/\r?\n/)) {
+            const match = line.match(/^\s*(SUPABASE_URL|VITE_SUPABASE_URL)\s*=\s*(.*?)\s*$/);
+            if (!match) continue;
+            envValues[match[1]] = match[2].replace(/^(['"])(.*)\1$/, "$2").trim();
+          }
+          for (const name of ["SUPABASE_URL", "VITE_SUPABASE_URL"]) {
+            const value = envValues[name];
+            if (!value) fail(`${name} não foi encontrado no .env.`);
+            let url;
+            try { url = new URL(value); } catch { fail(`${name} não contém uma URL válida.`); }
+            if (url.protocol !== "https:" || url.hostname !== `${projectRef}.supabase.co`) {
+              fail(`${name} não aponta para o Project Ref de supabase/config.toml.`);
+            }
+          }
+          if (process.env.INPUT_PROJECT_REF?.trim() !== projectRef ||
+              process.env.SECRET_PROJECT_REF?.trim() !== projectRef) {
+            fail("A confirmação manual e o segredo SUPABASE_PROJECT_REF precisam corresponder ao projeto configurado.");
+          }
+          console.log("Project Ref confirmado contra supabase/config.toml, as duas URLs do .env e o segredo do GitHub.");
+          NODE
+
+      - name: Configure OpenAI key in the confirmed Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref zzjfzxxvxbspbdkodoix
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase secrets set OPENAI_API_KEY="$OPENAI_API_KEY" --project-ref "$PROJECT_REF"
 
       - name: Deploy transform-logo
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase functions deploy transform-logo --project-ref zzjfzxxvxbspbdkodoix --no-verify-jwt
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy transform-logo --project-ref "$PROJECT_REF" --no-verify-jwt

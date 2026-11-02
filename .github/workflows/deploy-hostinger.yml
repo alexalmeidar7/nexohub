@@ -1,19 +1,33 @@
 name: Deploy to Hostinger
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - 'infra/offline-first/**'
-      - '**/*.md'
-      - '.github/workflows/**'
   workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: "Digite exatamente DEPLOY para autorizar a publicação no site"
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: production
     steps:
+      - name: Confirm explicit production deployment
+        shell: bash
+        env:
+          CONFIRM_DEPLOY: ${{ inputs.confirm_deploy }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM_DEPLOY" = "DEPLOY" || {
+            echo "::error::Digite exatamente DEPLOY para autorizar a publicação. Nenhum arquivo foi enviado."
+            exit 1
+          }
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -60,7 +74,7 @@ jobs:
           PY
 
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -69,6 +83,7 @@ jobs:
           local-dir: ./dist/
           protocol: ftps
           port: 21
+          timeout: 120000
           exclude: |
             **/.git*
             **/.git*/**
