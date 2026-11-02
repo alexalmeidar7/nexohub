@@ -1,0 +1,382 @@
+name: Reconcile House Mix prerequisites for NexoHub Bridge (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_project_ref:
+        description: "Digite exatamente o Project Ref do backend configurado."
+        required: true
+        type: string
+      apply_reconciliation:
+        description: "Marque somente após aprovação explícita para aplicar as três migrações aditivas de pré-requisito."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: house-mix-bridge-prerequisites
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Preflight or apply only the three reviewed prerequisites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate target project and database credential
+        env:
+          INPUT_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          SECRET_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_PROJECT_REF="$(python3 - <<'PY'
+          import tomllib
+          with open("supabase/config.toml", "rb") as config_file:
+              print(tomllib.load(config_file).get("project_id", ""))
+          PY
+          )"
+          if [ -z "$EXPECTED_PROJECT_REF" ] || [ "$SECRET_PROJECT_REF" != "$EXPECTED_PROJECT_REF" ] || [ "$INPUT_PROJECT_REF" != "$EXPECTED_PROJECT_REF" ]; then
+            echo "::error::The confirmed project, SUPABASE_PROJECT_REF, and supabase/config.toml must match. Nothing was changed."
+            exit 1
+          fi
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "::error::Configure SUPABASE_DB_PASSWORD in the production environment. Nothing was changed."
+            exit 1
+          fi
+          python3 - "$EXPECTED_PROJECT_REF" <<'PY'
+          import sys
+          from pathlib import Path
+          expected = sys.argv[1]
+          values = {}
+          for raw in Path(".env").read_text(encoding="utf-8").splitlines():
+              line = raw.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              key, value = line.split("=", 1)
+              if key in {"VITE_SUPABASE_PROJECT_ID", "VITE_SUPABASE_URL"}:
+                  values[key.strip()] = value.strip().strip('"').strip("'").rstrip("/")
+          if values.get("VITE_SUPABASE_PROJECT_ID") != expected or values.get("VITE_SUPABASE_URL") != f"https://{expected}.supabase.co":
+              raise SystemExit("::error::The frontend and database project targets do not match. Nothing was changed.")
+          print(f"Frontend and database targets match {expected}.")
+          PY
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Build masked IPv4 Session Pooler URI
+        env:
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATABASE_URL="$(DB_PASSWORD="$DB_PASSWORD" PROJECT_REF="$PROJECT_REF" python3 - <<'PY'
+          import os
+          from urllib.parse import quote
+          print(
+              "postgresql://postgres."
+              + os.environ["PROJECT_REF"]
+              + ":"
+              + quote(os.environ["DB_PASSWORD"], safe="")
+              + "@aws-1-sa-east-1.pooler.supabase.com:5432/postgres"
+          )
+          PY
+          )"
+          echo "::add-mask::$DATABASE_URL"
+          echo "DATABASE_URL=$DATABASE_URL" >> "$GITHUB_ENV"
+
+      - name: Setup Supabase CLI for migration-ledger reconciliation
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Require the three exact non-empty migration sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            supabase/migrations/20261028205300_restore_musicas_tocadas_unique_key.sql
+            supabase/migrations/20261028223300_reconcile_remaining_house_mix_columns.sql
+            supabase/migrations/20261029025000_reconcile_custom_vmix_buttons_columns.sql
+          )
+          for file in "${required_files[@]}"; do
+            if [ ! -s "$file" ]; then
+              echo "::error::Missing or empty reviewed migration source: $file. Nothing was changed."
+              exit 1
+            fi
+          done
+
+      - name: Read-only schema and data preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
+          DO $preflight$
+          DECLARE
+            missing_history text;
+            infomusic_rows bigint;
+            infomusic_null_owners bigint := 0;
+            constraint_definition text;
+            wrong_existing_columns text;
+            migration_recorded boolean;
+          BEGIN
+            IF to_regclass('supabase_migrations.schema_migrations') IS NULL THEN
+              RAISE EXCEPTION 'Supabase migration history is missing. Nothing was changed.';
+            END IF;
+
+            WITH required(version) AS (
+              VALUES
+                ('20261028003932'),
+                ('20261028025459'),
+                ('20261028025525'),
+                ('20261028030056'),
+                ('20261028030116'),
+                ('20261028030144'),
+                ('20261028104022'),
+                ('20261028123803'),
+                ('20261028124350'),
+                ('20261028124413'),
+                ('20261028124449'),
+                ('20261028125121'),
+                ('20261028132309'),
+                ('20261028172338'),
+                ('20261028180000'),
+                ('20261028193000'),
+                ('20261029165528')
+            )
+            SELECT string_agg(r.version, ', ' ORDER BY r.version)
+              INTO missing_history
+            FROM required r
+            WHERE NOT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations m
+              WHERE m.version = r.version
+            );
+            IF missing_history IS NOT NULL THEN
+              RAISE EXCEPTION 'Required House Mix baseline history is incomplete: %. Nothing was changed.', missing_history;
+            END IF;
+
+            IF to_regclass('public.musicas_tocadas') IS NULL
+               OR to_regclass('public.infomusic') IS NULL
+               OR to_regclass('public.infomusic_excecoes') IS NULL
+               OR to_regclass('public.streaming_channels') IS NULL
+               OR to_regclass('public.profiles') IS NULL
+               OR to_regclass('public.custom_vmix_buttons') IS NULL THEN
+              RAISE EXCEPTION 'One or more target House Mix tables are missing. Restore the baseline before reconciliation.';
+            END IF;
+
+            IF (
+              SELECT count(*) FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'musicas_tocadas'
+                AND column_name IN ('user_id', 'musica', 'artista', 'dia')
+            ) <> 4 THEN
+              RAISE EXCEPTION 'musicas_tocadas is missing a column required by its original unique key.';
+            END IF;
+
+            IF EXISTS (
+              SELECT 1 FROM public.musicas_tocadas
+              GROUP BY user_id, musica, artista, dia
+              HAVING count(*) > 1
+            ) THEN
+              RAISE EXCEPTION 'Duplicate musicas_tocadas keys exist. Resolve them with an approved data-reconciliation plan.';
+            END IF;
+
+            SELECT pg_get_constraintdef(oid)
+              INTO constraint_definition
+            FROM pg_constraint
+            WHERE conrelid = 'public.musicas_tocadas'::regclass
+              AND conname = 'musicas_tocadas_user_musica_artista_dia_key';
+            IF constraint_definition IS NOT NULL
+               AND constraint_definition <> 'UNIQUE (user_id, musica, artista, dia)' THEN
+              RAISE EXCEPTION 'The existing musicas_tocadas key has an unexpected definition: %', constraint_definition;
+            END IF;
+            IF constraint_definition IS NULL AND EXISTS (
+              SELECT 1 FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public'
+                AND c.relname = 'musicas_tocadas_user_musica_artista_dia_key'
+                AND c.relkind = 'i'
+            ) THEN
+              RAISE EXCEPTION 'An index with the expected music key name exists without its constraint. Reconcile manually.';
+            END IF;
+            SELECT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations
+              WHERE version = '20261028205300'
+            ) INTO migration_recorded;
+            IF migration_recorded AND constraint_definition IS NULL THEN
+              RAISE EXCEPTION 'Migration 20261028205300 is recorded but its unique constraint is absent.';
+            END IF;
+
+            SELECT count(*) INTO infomusic_rows FROM public.infomusic;
+            IF EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'infomusic'
+                AND column_name = 'user_id'
+            ) THEN
+              IF (SELECT data_type FROM information_schema.columns
+                  WHERE table_schema = 'public' AND table_name = 'infomusic' AND column_name = 'user_id') <> 'uuid' THEN
+                RAISE EXCEPTION 'infomusic.user_id exists with a non-uuid type. Reconcile manually.';
+              END IF;
+              EXECUTE 'SELECT count(*) FROM public.infomusic WHERE user_id IS NULL' INTO infomusic_null_owners;
+            ELSIF infomusic_rows > 0 THEN
+              RAISE EXCEPTION 'infomusic has rows but no owner column. Restore an approved owner mapping; no ownership will be guessed.';
+            END IF;
+            IF infomusic_null_owners > 0 THEN
+              RAISE EXCEPTION 'infomusic has % rows without user_id. Restore an approved owner mapping; no rows will be deleted or reassigned.', infomusic_null_owners;
+            END IF;
+
+            WITH required(table_name, column_name, data_type) AS (
+              VALUES
+                ('infomusic_excecoes', 'artista_url', 'text'),
+                ('streaming_channels', 'numero_canal', 'text'),
+                ('profiles', 'event_types_config', 'jsonb'),
+                ('custom_vmix_buttons', 'shortcut', 'text'),
+                ('custom_vmix_buttons', 'icon', 'text'),
+                ('custom_vmix_buttons', 'category', 'text'),
+                ('custom_vmix_buttons', 'estudio', 'text'),
+                ('custom_vmix_buttons', 'color', 'text'),
+                ('custom_vmix_buttons', 'data_especifica', 'date')
+            )
+            SELECT string_agg(r.table_name || '.' || r.column_name, ', ' ORDER BY r.table_name, r.column_name)
+              INTO wrong_existing_columns
+            FROM required r
+            JOIN information_schema.columns c
+              ON c.table_schema = 'public'
+             AND c.table_name = r.table_name
+             AND c.column_name = r.column_name
+            WHERE c.data_type <> r.data_type;
+            IF wrong_existing_columns IS NOT NULL THEN
+              RAISE EXCEPTION 'Existing columns have incompatible types: %. Reconcile manually before applying migrations.', wrong_existing_columns;
+            END IF;
+
+            SELECT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations
+              WHERE version = '20261028223300'
+            ) INTO migration_recorded;
+            IF migration_recorded AND (
+              NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='infomusic' AND column_name='user_id' AND data_type='uuid' AND is_nullable='NO')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='infomusic_excecoes' AND column_name='artista_url' AND data_type='text')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='streaming_channels' AND column_name='numero_canal' AND data_type='text')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='event_types_config' AND data_type='jsonb')
+            ) THEN
+              RAISE EXCEPTION 'Migration 20261028223300 is recorded but one or more expected columns are missing or incompatible.';
+            END IF;
+
+            SELECT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations
+              WHERE version = '20261029025000'
+            ) INTO migration_recorded;
+            IF migration_recorded AND (
+              NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='shortcut' AND data_type='text' AND is_nullable='YES')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='icon' AND data_type='text' AND is_nullable='YES')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='category' AND data_type='text' AND is_nullable='NO')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='estudio' AND data_type='text' AND is_nullable='YES')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='color' AND data_type='text' AND is_nullable='YES')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='data_especifica' AND data_type='date' AND is_nullable='YES')
+            ) THEN
+              RAISE EXCEPTION 'Migration 20261029025000 is recorded but custom_vmix_buttons is not in the expected state.';
+            END IF;
+          END;
+          $preflight$;
+
+          SELECT
+            (SELECT count(*) FROM public.musicas_tocadas) AS music_rows,
+            (SELECT count(*) FROM public.infomusic) AS infomusic_rows,
+            (SELECT count(*) FROM public.custom_vmix_buttons) AS custom_vmix_button_rows,
+            (SELECT count(*) FROM public.custom_vmix_buttons WHERE category IS NULL OR btrim(category) = '') AS blank_categories,
+            (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000')) AS recorded_prerequisite_migrations;
+          SQL
+
+      - name: Apply only the three reviewed additive migrations (explicit approval only)
+        if: ${{ inputs.apply_reconciliation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261028205300_restore_musicas_tocadas_unique_key.sql \
+            -f supabase/migrations/20261028223300_reconcile_remaining_house_mix_columns.sql \
+            -f supabase/migrations/20261029025000_reconcile_custom_vmix_buttons_columns.sql
+
+          for version in 20261028205300 20261028223300 20261029025000; do
+            recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$version')")"
+            if [ "$recorded" != "t" ]; then
+              supabase migration repair "$version" --status applied --db-url "$DATABASE_URL"
+            fi
+          done
+
+      - name: Verify all three migration records and resulting schema
+        if: ${{ inputs.apply_reconciliation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
+          DO $verify$
+          DECLARE
+            missing_versions text;
+          BEGIN
+            WITH required(version) AS (
+              VALUES ('20261028205300'), ('20261028223300'), ('20261029025000')
+            )
+            SELECT string_agg(r.version, ', ' ORDER BY r.version)
+              INTO missing_versions
+            FROM required r
+            WHERE NOT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations m
+              WHERE m.version = r.version
+            );
+            IF missing_versions IS NOT NULL THEN
+              RAISE EXCEPTION 'Prerequisite migration records are missing: %', missing_versions;
+            END IF;
+
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_constraint
+              WHERE conrelid = 'public.musicas_tocadas'::regclass
+                AND conname = 'musicas_tocadas_user_musica_artista_dia_key'
+                AND pg_get_constraintdef(oid) = 'UNIQUE (user_id, musica, artista, dia)'
+            ) THEN
+              RAISE EXCEPTION 'The musicas_tocadas unique key is missing after reconciliation.';
+            END IF;
+
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='infomusic' AND column_name='user_id' AND data_type='uuid' AND is_nullable='NO')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='infomusic_excecoes' AND column_name='artista_url' AND data_type='text')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='streaming_channels' AND column_name='numero_canal' AND data_type='text')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND column_name='event_types_config' AND data_type='jsonb') THEN
+              RAISE EXCEPTION 'The remaining House Mix reconciliation columns are incomplete.';
+            END IF;
+
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='shortcut' AND data_type='text' AND is_nullable='YES')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='icon' AND data_type='text' AND is_nullable='YES')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='category' AND data_type='text' AND is_nullable='NO')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='estudio' AND data_type='text' AND is_nullable='YES')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='color' AND data_type='text' AND is_nullable='YES')
+               OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='data_especifica' AND data_type='date' AND is_nullable='YES') THEN
+              RAISE EXCEPTION 'The custom_vmix_buttons columns are incomplete or have incorrect nullability.';
+            END IF;
+          END;
+          $verify$;
+          SQL
+
+      - name: Summary
+        env:
+          APPLY_RECONCILIATION: ${{ inputs.apply_reconciliation }}
+        shell: bash
+        run: |
+          if [ "$APPLY_RECONCILIATION" = "true" ]; then
+            echo "Only the three reviewed House Mix prerequisite migrations were applied and verified."
+            echo "No Bridge tables were created and no Edge Functions were deployed."
+            echo "No production frontend deployment was triggered."
+          else
+            echo "Read-only preflight completed. No migration was applied and no Edge Function was deployed."
+          fi
