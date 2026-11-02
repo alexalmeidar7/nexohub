@@ -130,31 +130,46 @@ jobs:
         run: |
           set -euo pipefail
           python3 - "$EXPECTED_PROJECT_REF" <<'PY'
+          import base64
+          import json
           import sys
           from pathlib import Path
 
-          expected_project = sys.argv[1]
+          expected = sys.argv[1]
           values = {}
-          for raw_line in Path(".env").read_text(encoding="utf-8").splitlines():
-              line = raw_line.strip()
+          for raw in Path(".env").read_text(encoding="utf-8").splitlines():
+              line = raw.strip()
               if not line or line.startswith("#") or "=" not in line:
                   continue
               key, value = line.split("=", 1)
               key = key.strip()
-              if key in {"VITE_SUPABASE_PROJECT_ID", "VITE_SUPABASE_URL"}:
-                  values[key] = value.strip().strip('"').strip("'").rstrip("/")
+              if key in {"SUPABASE_URL", "VITE_SUPABASE_PROJECT_ID", "VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"}:
+                  values[key] = value.strip().strip('"').strip("'")
 
-          expected_url = f"https://{expected_project}.supabase.co"
-          actual_project = values.get("VITE_SUPABASE_PROJECT_ID", "")
-          actual_url = values.get("VITE_SUPABASE_URL", "")
-          if actual_project != expected_project or actual_url != expected_url:
-              print("::error::The browser Supabase client and Bridge backend target different projects.")
-              print(f"Frontend VITE_SUPABASE_PROJECT_ID: {actual_project or 'missing'}")
-              print(f"Frontend VITE_SUPABASE_URL: {actual_url or 'missing'}")
-              print(f"Bridge backend project: {expected_project}")
-              print("Align the frontend .env and supabase/config.toml with the approved backend before any write or Edge deployment.")
-              sys.exit(1)
-          print(f"Frontend and Bridge backend both target {expected_project}.")
+          expected_url = f"https://{expected}.supabase.co"
+          key_project_ref = ""
+          try:
+              token_parts = values.get("VITE_SUPABASE_PUBLISHABLE_KEY", "").split(".")
+              if len(token_parts) != 3:
+                  raise ValueError("The browser publishable key is not a project-scoped JWT.")
+              payload = token_parts[1] + "=" * (-len(token_parts[1]) % 4)
+              claims = json.loads(base64.urlsafe_b64decode(payload))
+              key_project_ref = str(claims.get("ref", ""))
+          except Exception:
+              key_project_ref = ""
+
+          checks = {
+              "SUPABASE_URL": values.get("SUPABASE_URL", "").rstrip("/"),
+              "VITE_SUPABASE_URL": values.get("VITE_SUPABASE_URL", "").rstrip("/"),
+              "VITE_SUPABASE_PROJECT_ID": values.get("VITE_SUPABASE_PROJECT_ID", ""),
+          }
+          if (
+              any(value != expected_url for key, value in checks.items() if key != "VITE_SUPABASE_PROJECT_ID")
+              or checks["VITE_SUPABASE_PROJECT_ID"] != expected
+              or key_project_ref != expected
+          ):
+              raise SystemExit("::error::SUPABASE_URL, browser URL/project ID, and the browser publishable-key project ref must all match the confirmed backend. Nothing was changed.")
+          print(f"Backend URL, browser URL/project ID, and browser publishable key all match {expected}.")
           PY
 
       - name: Verify Supabase access token can read the confirmed project (read-only)

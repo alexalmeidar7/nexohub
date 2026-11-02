@@ -53,8 +53,11 @@ jobs:
             exit 1
           fi
           python3 - "$EXPECTED_PROJECT_REF" <<'PY'
+          import base64
+          import json
           import sys
           from pathlib import Path
+
           expected = sys.argv[1]
           values = {}
           for raw in Path(".env").read_text(encoding="utf-8").splitlines():
@@ -62,11 +65,34 @@ jobs:
               if not line or line.startswith("#") or "=" not in line:
                   continue
               key, value = line.split("=", 1)
-              if key in {"VITE_SUPABASE_PROJECT_ID", "VITE_SUPABASE_URL"}:
-                  values[key.strip()] = value.strip().strip('"').strip("'").rstrip("/")
-          if values.get("VITE_SUPABASE_PROJECT_ID") != expected or values.get("VITE_SUPABASE_URL") != f"https://{expected}.supabase.co":
-              raise SystemExit("::error::The frontend and database project targets do not match. Nothing was changed.")
-          print(f"Frontend and database targets match {expected}.")
+              key = key.strip()
+              if key in {"SUPABASE_URL", "VITE_SUPABASE_PROJECT_ID", "VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"}:
+                  values[key] = value.strip().strip('"').strip("'")
+
+          expected_url = f"https://{expected}.supabase.co"
+          key_project_ref = ""
+          try:
+              token_parts = values.get("VITE_SUPABASE_PUBLISHABLE_KEY", "").split(".")
+              if len(token_parts) != 3:
+                  raise ValueError("The browser publishable key is not a project-scoped JWT.")
+              payload = token_parts[1] + "=" * (-len(token_parts[1]) % 4)
+              claims = json.loads(base64.urlsafe_b64decode(payload))
+              key_project_ref = str(claims.get("ref", ""))
+          except Exception:
+              key_project_ref = ""
+
+          checks = {
+              "SUPABASE_URL": values.get("SUPABASE_URL", "").rstrip("/"),
+              "VITE_SUPABASE_URL": values.get("VITE_SUPABASE_URL", "").rstrip("/"),
+              "VITE_SUPABASE_PROJECT_ID": values.get("VITE_SUPABASE_PROJECT_ID", ""),
+          }
+          if (
+              any(value != expected_url for key, value in checks.items() if key != "VITE_SUPABASE_PROJECT_ID")
+              or checks["VITE_SUPABASE_PROJECT_ID"] != expected
+              or key_project_ref != expected
+          ):
+              raise SystemExit("::error::SUPABASE_URL, browser URL/project ID, and the browser publishable-key project ref must all match the confirmed backend. Nothing was changed.")
+          print(f"Backend URL, browser URL/project ID, and browser publishable key all match {expected}.")
           PY
 
       - name: Install PostgreSQL client
