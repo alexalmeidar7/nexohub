@@ -35,14 +35,16 @@ function setProfile(id) {
   $("stage-size").textContent = `ÁREA DE EXIBIÇÃO · ${activeProfile.w} × ${activeProfile.h}`;
   $("device-brand").textContent = activeProfile.brand;
   device.className = "device " + (kind === "tv" ? "tv-device" : kind === "mobile" ? "phone-device" : "tablet-device");
-  device.style.width = activeProfile.w + "px";
-  device.style.height = activeProfile.h + "px";
+  device.style.width = (activeProfile.w + 18) + "px";
+  device.style.height = (activeProfile.h + 18) + "px";
   requestAnimationFrame(fitDevice);
 }
 function fitDevice() {
   const availableW = stage.clientWidth - 100;
   const availableH = stage.clientHeight - (kind === "tv" ? 54 : 28);
-  const scale = Math.min(availableW / activeProfile.w, availableH / activeProfile.h, 1);
+  const outerW = activeProfile.w + 18;
+  const outerH = activeProfile.h + 18;
+  const scale = Math.min(availableW / outerW, availableH / outerH, 1);
   device.style.transform = `scale(${Math.max(.08, scale)})`;
   $("scale-value").textContent = Math.round(scale * 100) + "%";
 }
