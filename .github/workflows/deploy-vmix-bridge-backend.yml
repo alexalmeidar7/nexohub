@@ -249,6 +249,9 @@ jobs:
             20261029025000
             20261030005500
             20261101150000
+            20261102100000
+            20261102110000
+            20261102140000
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -533,7 +536,7 @@ jobs:
           set -euo pipefail
           missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             WITH required(version) AS (
-              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029165528'), ('20261101150000')
+              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029165528'), ('20261101150000'), ('20261102100000'), ('20261102110000'), ('20261102140000')
             )
             SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
             FROM required r
@@ -566,6 +569,77 @@ jobs:
             echo "::error::has_role is not caller-scoped or its EXECUTE privileges changed. Bridge writes are blocked."
             exit 1
           fi
+
+      - name: Verify House Mix column invariants and commercial RLS before Bridge writes
+        if: ${{ inputs.apply_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dashboard_state="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT is_nullable, COALESCE(column_default, '')
+            FROM information_schema.columns
+            WHERE table_schema='public' AND table_name='user_settings' AND column_name='dashboard_items'
+          ")"
+          IFS='|' read -r dashboard_nullable dashboard_default <<< "$dashboard_state"
+          if [ "$dashboard_nullable" != "NO" ] || [[ "$dashboard_default" != *"[]"* ]]; then
+            echo "::error::user_settings.dashboard_items must be NOT NULL with an empty-array default. Bridge writes are blocked."
+            exit 1
+          fi
+
+          infomusic_state="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT data_type, is_nullable
+            FROM information_schema.columns
+            WHERE table_schema='public' AND table_name='infomusic' AND column_name='user_id'
+          ")"
+          IFS='|' read -r infomusic_type infomusic_nullable <<< "$infomusic_state"
+          if [ "$infomusic_type" != "uuid" ] || [ "$infomusic_nullable" != "NO" ]; then
+            echo "::error::infomusic.user_id must be uuid NOT NULL after ownership validation. Bridge writes are blocked."
+            exit 1
+          fi
+
+          infomusic_fk="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT pg_get_constraintdef(oid)
+            FROM pg_constraint
+            WHERE conrelid='public.infomusic'::regclass AND conname='infomusic_user_id_fkey'
+          ")"
+          if [ "$infomusic_fk" != "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE" ]; then
+            echo "::error::infomusic.user_id foreign key is missing or incompatible. Bridge writes are blocked."
+            exit 1
+          fi
+
+          preroll_rls="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT relrowsecurity
+            FROM pg_class
+            WHERE oid='public.comercial_preroll'::regclass
+          ")"
+          anon_privileges="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT (
+              has_table_privilege('anon','public.comercial_preroll','SELECT')
+              OR has_table_privilege('anon','public.comercial_preroll','INSERT')
+              OR has_table_privilege('anon','public.comercial_preroll','UPDATE')
+              OR has_table_privilege('anon','public.comercial_preroll','DELETE')
+              OR has_table_privilege('anon','public.comercial_preroll','TRUNCATE')
+            )
+          ")"
+          policy_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT count(*)
+            FROM pg_policies
+            WHERE schemaname='public' AND tablename='comercial_preroll'
+              AND policyname IN (
+                'Users manage own comercial_preroll',
+                'Sub-users can view parent comercial_preroll',
+                'Sub-users can insert parent comercial_preroll',
+                'Sub-users can update parent comercial_preroll',
+                'Sub-users can delete parent comercial_preroll'
+              )
+          ")"
+          if [ "$preroll_rls" != "t" ] || [ "$anon_privileges" != "f" ] || [ "$policy_count" != "5" ]; then
+            echo "::error::comercial_preroll must have RLS, five reviewed tenant policies, and no anon table privileges. Bridge writes are blocked."
+            exit 1
+          fi
+
+          echo "House Mix column invariants and commercial tenant RLS are verified."
 
       - name: Verify Agenda and forms/Storage schema before Bridge writes
         if: ${{ inputs.apply_changes }}

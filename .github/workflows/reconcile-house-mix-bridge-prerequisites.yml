@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       apply_reconciliation:
-        description: "Marque somente após aprovação explícita para aplicar as três migrações aditivas de pré-requisito."
+        description: "Marque somente após aprovação explícita para aplicar as três migrações de pré-requisito, a reconciliação de colunas e a proteção RLS comercial."
         required: true
         default: false
         type: boolean
@@ -127,7 +127,7 @@ jobs:
         with:
           version: latest
 
-      - name: Require the three exact non-empty migration sources
+      - name: Require all reviewed House Mix prerequisite and security migration sources
         shell: bash
         run: |
           set -euo pipefail
@@ -135,6 +135,9 @@ jobs:
             supabase/migrations/20261028205300_restore_musicas_tocadas_unique_key.sql
             supabase/migrations/20261028223300_reconcile_remaining_house_mix_columns.sql
             supabase/migrations/20261029025000_reconcile_custom_vmix_buttons_columns.sql
+            supabase/migrations/20261102100000_reconcile_housemix_schema.sql
+            supabase/migrations/20261102110000_harden_comercial_preroll_rls.sql
+            supabase/migrations/20261102140000_enforce_existing_housemix_column_invariants.sql
           )
           for file in "${required_files[@]}"; do
             if [ ! -s "$file" ]; then
@@ -325,24 +328,34 @@ jobs:
             (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000')) AS recorded_prerequisite_migrations;
           SQL
 
-      - name: Apply only the three reviewed additive migrations (explicit approval only)
+      - name: Apply reviewed House Mix prerequisites, schema, RLS, and invariant migrations (explicit approval only)
         if: ${{ inputs.apply_reconciliation }}
         shell: bash
         run: |
           set -euo pipefail
+          # Apply the three original prerequisites plus the main schema reconciliation atomically.
           psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20261028205300_restore_musicas_tocadas_unique_key.sql \
             -f supabase/migrations/20261028223300_reconcile_remaining_house_mix_columns.sql \
-            -f supabase/migrations/20261029025000_reconcile_custom_vmix_buttons_columns.sql
+            -f supabase/migrations/20261029025000_reconcile_custom_vmix_buttons_columns.sql \
+            -f supabase/migrations/20261102100000_reconcile_housemix_schema.sql
 
-          for version in 20261028205300 20261028223300 20261029025000; do
+          # This migration owns its transaction and replaces only the reviewed commercial RLS policies.
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261102110000_harden_comercial_preroll_rls.sql
+
+          # Fail closed if pre-existing nullable columns contain NULLs or ownership cannot be verified.
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261102140000_enforce_existing_housemix_column_invariants.sql
+
+          for version in 20261028205300 20261028223300 20261029025000 20261102100000 20261102110000 20261102140000; do
             recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$version')")"
             if [ "$recorded" != "t" ]; then
               supabase migration repair "$version" --status applied --db-url "$DATABASE_URL"
             fi
           done
 
-      - name: Verify all three migration records and resulting schema
+      - name: Verify all six migration records and resulting schema
         if: ${{ inputs.apply_reconciliation }}
         shell: bash
         run: |
@@ -351,9 +364,11 @@ jobs:
           DO $verify$
           DECLARE
             missing_versions text;
+            policy_count integer;
+            fk_definition text;
           BEGIN
             WITH required(version) AS (
-              VALUES ('20261028205300'), ('20261028223300'), ('20261029025000')
+              VALUES ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261102100000'), ('20261102110000'), ('20261102140000')
             )
             SELECT string_agg(r.version, ', ' ORDER BY r.version)
               INTO missing_versions
@@ -390,6 +405,61 @@ jobs:
                OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='data_especifica' AND data_type='date' AND is_nullable='YES') THEN
               RAISE EXCEPTION 'The custom_vmix_buttons columns are incomplete or have incorrect nullability.';
             END IF;
+
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_schema='public' AND table_name='user_settings'
+                AND column_name='dashboard_items' AND data_type='jsonb'
+                AND is_nullable='NO' AND column_default LIKE '%[]%'
+            ) THEN
+              RAISE EXCEPTION 'user_settings.dashboard_items must be jsonb NOT NULL with an empty-array default.';
+            END IF;
+
+            IF NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_schema='public' AND table_name='infomusic'
+                AND column_name='user_id' AND data_type='uuid' AND is_nullable='NO'
+            ) THEN
+              RAISE EXCEPTION 'infomusic.user_id must be uuid NOT NULL after ownership validation.';
+            END IF;
+
+            SELECT pg_get_constraintdef(oid) INTO fk_definition
+            FROM pg_constraint
+            WHERE conrelid='public.infomusic'::regclass
+              AND conname='infomusic_user_id_fkey';
+            IF fk_definition IS NULL OR fk_definition <> 'FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE' THEN
+              RAISE EXCEPTION 'infomusic.user_id must reference auth.users(id) with ON DELETE CASCADE; found %.', coalesce(fk_definition, 'no foreign key');
+            END IF;
+
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_class c
+              JOIN pg_namespace n ON n.oid=c.relnamespace
+              WHERE n.nspname='public' AND c.relname='comercial_preroll' AND c.relrowsecurity
+            ) THEN
+              RAISE EXCEPTION 'RLS is not enabled on comercial_preroll.';
+            END IF;
+
+            SELECT count(*) INTO policy_count
+            FROM pg_policies
+            WHERE schemaname='public' AND tablename='comercial_preroll'
+              AND policyname IN (
+                'Users manage own comercial_preroll',
+                'Sub-users can view parent comercial_preroll',
+                'Sub-users can insert parent comercial_preroll',
+                'Sub-users can update parent comercial_preroll',
+                'Sub-users can delete parent comercial_preroll'
+              );
+            IF policy_count <> 5 THEN
+              RAISE EXCEPTION 'Expected five reviewed comercial_preroll policies, found %.', policy_count;
+            END IF;
+
+            IF has_table_privilege('anon','public.comercial_preroll','SELECT')
+               OR has_table_privilege('anon','public.comercial_preroll','INSERT')
+               OR has_table_privilege('anon','public.comercial_preroll','UPDATE')
+               OR has_table_privilege('anon','public.comercial_preroll','DELETE')
+               OR has_table_privilege('anon','public.comercial_preroll','TRUNCATE') THEN
+              RAISE EXCEPTION 'anon still has table privileges on comercial_preroll.';
+            END IF;
           END;
           $verify$;
           SQL
@@ -400,7 +470,7 @@ jobs:
         shell: bash
         run: |
           if [ "$APPLY_RECONCILIATION" = "true" ]; then
-            echo "Only the three reviewed House Mix prerequisite migrations were applied and verified."
+            echo "The three original prerequisites, schema reconciliation, commercial RLS, and column invariants were applied and verified."
             echo "No Bridge tables were created and no Edge Functions were deployed."
             echo "No production frontend deployment was triggered."
           else
