@@ -1,0 +1,49 @@
+{
+  "name": "nexo-preview",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nexo Preview desktop device simulator",
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "br.com.nexobrasil.nexopreview",
+    "productName": "Nexo Preview",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "index.html",
+      "renderer.js",
+      "styles.css",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Nexo-Preview-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nexo Preview"
+    }
+  }
+}
