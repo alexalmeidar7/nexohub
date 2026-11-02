@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       apply_reconciliation:
-        description: "Marque somente após aprovação explícita para aplicar as três migrações de pré-requisito, a reconciliação de colunas e a proteção RLS comercial."
+        description: "Aprovação explícita para aplicar seis migrações revisadas: chave musical, colunas House Mix, botões vMix, schema base, RLS comercial e invariantes existentes."
         required: true
         default: false
         type: boolean
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   reconcile:
-    name: Preflight or apply only the three reviewed prerequisites
+    name: Preflight or apply six reviewed House Mix and Bridge prerequisites
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
