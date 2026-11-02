@@ -299,7 +299,7 @@ serve(async (req) => {
       }
     } catch {}
 
-    const profile = profileRes.data || {};
+    const profile = (profileRes.data || {}) as { cidade?: string; estado?: string };
     // Positiva FM fica no Shopping Passeio das Águas, em Goiânia. Para outras
     // emissoras, usar a cidade do perfil sem consultar coluna inexistente.
     const cityName = profile.cidade
