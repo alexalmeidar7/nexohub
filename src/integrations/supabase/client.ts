@@ -11,7 +11,7 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Auth pode responder com 500/504 durante oscilações do serviço. Limita a
 // duração de cada chamada HTTP e cancela o fetch de verdade para não acumular
 // requisições abandonadas quando a tela tenta novamente.
-const authResilientFetch: typeof fetch = async (input, init = {}) => {
+const authResilientFetch: typeof fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
   const requestUrl = typeof input === "string"
     ? input
     : input instanceof URL
