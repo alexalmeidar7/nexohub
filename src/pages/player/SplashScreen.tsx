@@ -49,12 +49,12 @@ export default function SplashScreen({
         pointerEvents: fadeOut ? "none" : "auto",
       }}
     >
-      <img
-        src="/nexo-player-splash.png"
-        alt="Nexo Player"
-        draggable={false}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-4xl font-bold tracking-tight">nexo</div>
+          <div className="text-2xl font-extrabold tracking-[0.22em]">PLAYER</div>
+        </div>
+      </div>
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-center pb-[7vh]">
         <div className="flex flex-col items-center gap-3">
           <ElegantLoader size={42} progress={progress} />
