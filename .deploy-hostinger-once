@@ -1,1 +1,2 @@
 Deploy pontual autorizado em 2026-11-03 para publicar a correção de pressão no banco da PR 263.
+Retry do disparo autorizado após corrigir validação do evento push.
