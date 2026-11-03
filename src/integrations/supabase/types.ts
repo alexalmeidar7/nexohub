@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.18"
   }
   public: {
     Tables: {
@@ -215,7 +215,6 @@ export type Database = {
           programa: string | null
           user_id: string
           video: number
-          youtube: number
         }
         Insert: {
           audio?: number
@@ -224,7 +223,6 @@ export type Database = {
           programa?: string | null
           user_id: string
           video?: number
-          youtube?: number
         }
         Update: {
           audio?: number
@@ -233,7 +231,6 @@ export type Database = {
           programa?: string | null
           user_id?: string
           video?: number
-          youtube?: number
         }
         Relationships: []
       }
@@ -684,9 +681,9 @@ export type Database = {
           active: boolean
           ads_canais: string[] | null
           ads_cliente: string | null
-          aspect_ratio: string
+          aspect_ratio: string | null
           background_url: string | null
-          clicks_count: number
+          clicks_count: number | null
           created_at: string
           data_final: string | null
           data_inicial: string | null
@@ -694,27 +691,27 @@ export type Database = {
           horario_fim: string
           horario_inicio: string
           id: string
-          is_midroll: boolean
+          is_midroll: boolean | null
           link_url: string | null
-          media_type: string
-          nome: string
-          placements: string[]
+          media_type: string | null
+          nome: string | null
+          placements: string[] | null
           priority: number
           skip_enabled: boolean
           updated_at: string
           user_id: string
-          video_position: string
+          video_position: Json | null
           video_url: string
-          views_count: number
+          views_count: number | null
           youtube_url: string | null
         }
         Insert: {
           active?: boolean
           ads_canais?: string[] | null
           ads_cliente?: string | null
-          aspect_ratio?: string
+          aspect_ratio?: string | null
           background_url?: string | null
-          clicks_count?: number
+          clicks_count?: number | null
           created_at?: string
           data_final?: string | null
           data_inicial?: string | null
@@ -722,27 +719,27 @@ export type Database = {
           horario_fim: string
           horario_inicio: string
           id?: string
-          is_midroll?: boolean
+          is_midroll?: boolean | null
           link_url?: string | null
-          media_type?: string
-          nome?: string
-          placements?: string[]
+          media_type?: string | null
+          nome?: string | null
+          placements?: string[] | null
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
           user_id: string
-          video_position?: string
+          video_position?: Json | null
           video_url?: string
-          views_count?: number
+          views_count?: number | null
           youtube_url?: string | null
         }
         Update: {
           active?: boolean
           ads_canais?: string[] | null
           ads_cliente?: string | null
-          aspect_ratio?: string
+          aspect_ratio?: string | null
           background_url?: string | null
-          clicks_count?: number
+          clicks_count?: number | null
           created_at?: string
           data_final?: string | null
           data_inicial?: string | null
@@ -750,18 +747,18 @@ export type Database = {
           horario_fim?: string
           horario_inicio?: string
           id?: string
-          is_midroll?: boolean
+          is_midroll?: boolean | null
           link_url?: string | null
-          media_type?: string
-          nome?: string
-          placements?: string[]
+          media_type?: string | null
+          nome?: string | null
+          placements?: string[] | null
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
           user_id?: string
-          video_position?: string
+          video_position?: Json | null
           video_url?: string
-          views_count?: number
+          views_count?: number | null
           youtube_url?: string | null
         }
         Relationships: []
@@ -904,6 +901,7 @@ export type Database = {
       }
       custom_vmix_buttons: {
         Row: {
+          category: string
           color: string | null
           commands: Json
           created_at: string
@@ -919,6 +917,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string
           color?: string | null
           commands?: Json
           created_at?: string
@@ -934,6 +933,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string
           color?: string | null
           commands?: Json
           created_at?: string
@@ -959,6 +959,7 @@ export type Database = {
           background_url: string | null
           cliente_desde: string | null
           cnpj: string | null
+          created_at: string
           endereco: string | null
           executiva_venda: string | null
           facebook: string | null
@@ -991,6 +992,7 @@ export type Database = {
           background_url?: string | null
           cliente_desde?: string | null
           cnpj?: string | null
+          created_at?: string
           endereco?: string | null
           executiva_venda?: string | null
           facebook?: string | null
@@ -1023,6 +1025,7 @@ export type Database = {
           background_url?: string | null
           cliente_desde?: string | null
           cnpj?: string | null
+          created_at?: string
           endereco?: string | null
           executiva_venda?: string | null
           facebook?: string | null
@@ -1166,7 +1169,7 @@ export type Database = {
           expires_at: string
           id: string
           musica: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           artista: string
@@ -1176,7 +1179,7 @@ export type Database = {
           expires_at?: string
           id?: string
           musica: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           artista?: string
@@ -1186,7 +1189,7 @@ export type Database = {
           expires_at?: string
           id?: string
           musica?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1226,38 +1229,47 @@ export type Database = {
       logos_patrocinadores: {
         Row: {
           ativo: boolean
+          cnpj: string | null
           created_at: string
           data_final: string
+          endereco: string | null
           excluido: boolean
           excluido_at: string | null
           id: string
           logo_url: string
           nome: string
           programa_id: string | null
+          telefone: string | null
           user_id: string
         }
         Insert: {
           ativo?: boolean
+          cnpj?: string | null
           created_at?: string
           data_final: string
+          endereco?: string | null
           excluido?: boolean
           excluido_at?: string | null
           id?: string
           logo_url?: string
           nome?: string
           programa_id?: string | null
+          telefone?: string | null
           user_id: string
         }
         Update: {
           ativo?: boolean
+          cnpj?: string | null
           created_at?: string
           data_final?: string
+          endereco?: string | null
           excluido?: boolean
           excluido_at?: string | null
           id?: string
           logo_url?: string
           nome?: string
           programa_id?: string | null
+          telefone?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1276,17 +1288,19 @@ export type Database = {
           capa: string | null
           created_at: string
           id: string
+          musica: string
           radio_user_id: string | null
           titulo: string
           user_id: string
         }
         Insert: {
-          artista: string
+          artista?: string
           capa?: string | null
           created_at?: string
           id?: string
+          musica?: string
           radio_user_id?: string | null
-          titulo: string
+          titulo?: string
           user_id: string
         }
         Update: {
@@ -1294,6 +1308,7 @@ export type Database = {
           capa?: string | null
           created_at?: string
           id?: string
+          musica?: string
           radio_user_id?: string | null
           titulo?: string
           user_id?: string
@@ -1830,7 +1845,7 @@ export type Database = {
           imagem_url: string | null
           nome: string | null
           oferecimento: string | null
-          programa_ids: string[] | null
+          programa_ids: string[]
           texto: string
           user_id: string
         }
@@ -1844,7 +1859,7 @@ export type Database = {
           imagem_url?: string | null
           nome?: string | null
           oferecimento?: string | null
-          programa_ids?: string[] | null
+          programa_ids?: string[]
           texto?: string
           user_id: string
         }
@@ -1858,7 +1873,7 @@ export type Database = {
           imagem_url?: string | null
           nome?: string | null
           oferecimento?: string | null
-          programa_ids?: string[] | null
+          programa_ids?: string[]
           texto?: string
           user_id?: string
         }
@@ -1954,7 +1969,7 @@ export type Database = {
           created_at: string
           data_programa: string
           editado_at: string | null
-          enviado_agendamento: boolean | null
+          enviado_agendamento: boolean
           estudio: string
           horario: string
           id: string
@@ -1980,7 +1995,7 @@ export type Database = {
           created_at?: string
           data_programa?: string
           editado_at?: string | null
-          enviado_agendamento?: boolean | null
+          enviado_agendamento?: boolean
           estudio?: string
           horario?: string
           id?: string
@@ -2006,7 +2021,7 @@ export type Database = {
           created_at?: string
           data_programa?: string
           editado_at?: string | null
-          enviado_agendamento?: boolean | null
+          enviado_agendamento?: boolean
           estudio?: string
           horario?: string
           id?: string
@@ -2911,7 +2926,7 @@ export type Database = {
           id: string
           infomusic_ai_enabled: boolean
           infomusic_ai_last_reset: string | null
-          infomusic_ai_monthly_count: number | null
+          infomusic_ai_monthly_count: number
           infomusic_excecoes: string | null
           infomusic_excecoes_artista_url: string | null
           infomusic_excecoes_capa_url: string | null
@@ -2937,7 +2952,7 @@ export type Database = {
           id?: string
           infomusic_ai_enabled?: boolean
           infomusic_ai_last_reset?: string | null
-          infomusic_ai_monthly_count?: number | null
+          infomusic_ai_monthly_count?: number
           infomusic_excecoes?: string | null
           infomusic_excecoes_artista_url?: string | null
           infomusic_excecoes_capa_url?: string | null
@@ -2963,7 +2978,7 @@ export type Database = {
           id?: string
           infomusic_ai_enabled?: boolean
           infomusic_ai_last_reset?: string | null
-          infomusic_ai_monthly_count?: number | null
+          infomusic_ai_monthly_count?: number
           infomusic_excecoes?: string | null
           infomusic_excecoes_artista_url?: string | null
           infomusic_excecoes_capa_url?: string | null
@@ -2982,166 +2997,6 @@ export type Database = {
           weather_city?: string | null
           weather_lat?: number | null
           weather_lon?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_settings_last_manual_curiosity_id_fkey"
-            columns: ["last_manual_curiosity_id"]
-            isOneToOne: false
-            referencedRelation: "infomusic"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vmix_bridge_devices: {
-        Row: {
-          created_at: string
-          device_name: string
-          id: string
-          last_seen_at: string | null
-          revoked: boolean
-          token_hash: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          device_name?: string
-          id?: string
-          last_seen_at?: string | null
-          revoked?: boolean
-          token_hash: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          device_name?: string
-          id?: string
-          last_seen_at?: string | null
-          revoked?: boolean
-          token_hash?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      vmix_bridge_jobs: {
-        Row: {
-          body: Json | null
-          completed_at: string | null
-          created_at: string
-          device_id: string
-          id: string
-          method: string
-          path: string
-          result_body: string | null
-          result_status: number | null
-          started_at: string | null
-          status: string
-          user_id: string
-        }
-        Insert: {
-          body?: Json | null
-          completed_at?: string | null
-          created_at?: string
-          device_id: string
-          id?: string
-          method?: string
-          path: string
-          result_body?: string | null
-          result_status?: number | null
-          started_at?: string | null
-          status?: string
-          user_id: string
-        }
-        Update: {
-          body?: Json | null
-          completed_at?: string | null
-          created_at?: string
-          device_id?: string
-          id?: string
-          method?: string
-          path?: string
-          result_body?: string | null
-          result_status?: number | null
-          started_at?: string | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vmix_bridge_jobs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "vmix_bridge_devices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vmix_bridge_pairings: {
-        Row: {
-          code_hash: string
-          created_at: string
-          expires_at: string
-          id: string
-          used_at: string | null
-          user_id: string
-        }
-        Insert: {
-          code_hash: string
-          created_at?: string
-          expires_at: string
-          id?: string
-          used_at?: string | null
-          user_id: string
-        }
-        Update: {
-          code_hash?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          used_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      vmix_button_interactions: {
-        Row: {
-          button_category: string | null
-          button_id: string
-          button_name: string
-          created_at: string
-          id: string
-          locutor_nome: string | null
-          points: number
-          program_name: string | null
-          studio_name: string | null
-          user_email: string | null
-          user_id: string
-        }
-        Insert: {
-          button_category?: string | null
-          button_id: string
-          button_name: string
-          created_at?: string
-          id?: string
-          locutor_nome?: string | null
-          points?: number
-          program_name?: string | null
-          studio_name?: string | null
-          user_email?: string | null
-          user_id: string
-        }
-        Update: {
-          button_category?: string | null
-          button_id?: string
-          button_name?: string
-          created_at?: string
-          id?: string
-          locutor_nome?: string | null
-          points?: number
-          program_name?: string | null
-          studio_name?: string | null
-          user_email?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -3546,11 +3401,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_audiencia_historico: { Args: never; Returns: undefined }
       cleanup_comercial: { Args: never; Returns: undefined }
-      cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       current_parent_user_id: { Args: never; Returns: string }
+      current_tenant_user_id: { Args: never; Returns: string }
       expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }
       get_music_history_light: {
         Args: { _limit?: number; _user_id: string }
@@ -3561,121 +3415,12 @@ export type Database = {
           musica: string
         }[]
       }
-      get_public_broadcast_assuntos: {
-        Args: { _programa_id?: string; _user_id: string }
-        Returns: {
-          bg_color: string
-          font_family: string
-          mensagens: Json
-          mensagens_enabled: boolean[]
-          rotation_seconds: number
-          text_color: string
-          updated_at: string
-        }[]
-      }
-      get_public_cenario_estudio_web: {
-        Args: { _id: string }
-        Returns: {
-          content: Json
-          created_at: string
-          id: string
-          nome: string
-          orientation: string
-          tv_count: number
-          updated_at: string
-          user_id: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "cenario_estudio_web"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      get_roteiro_by_share_token: {
-        Args: { _token: string }
-        Returns: {
-          agendado_para_envio: string | null
-          apresentador_editado: boolean | null
-          configuracoes: Json | null
-          conteudo_html: string
-          created_at: string
-          data_programa: string
-          editado_at: string | null
-          enviado_agendamento: boolean | null
-          estudio: string
-          horario: string
-          id: string
-          numero_roteiro: number | null
-          participantes: Json
-          programa_nome: string
-          share_login: string | null
-          share_token: string | null
-          status: string
-          subtitulo: string
-          tickertitulos: string | null
-          tipo_programa: string
-          titulo: string
-          updated_at: string
-          user_id: string
-          xml_pushed_at: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "roteiros"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
-      }
-      is_ouvinte_banido: {
-        Args: { _identifier: string; _radio_user_id: string }
-        Returns: boolean
-      }
-      list_roteiros_historico_by_share_token: {
-        Args: { _limit?: number; _token: string }
-        Returns: {
-          agendado_para_envio: string | null
-          apresentador_editado: boolean | null
-          configuracoes: Json | null
-          conteudo_html: string
-          created_at: string
-          data_programa: string
-          editado_at: string | null
-          enviado_agendamento: boolean | null
-          estudio: string
-          horario: string
-          id: string
-          numero_roteiro: number | null
-          participantes: Json
-          programa_nome: string
-          share_login: string | null
-          share_token: string | null
-          status: string
-          subtitulo: string
-          tickertitulos: string | null
-          tipo_programa: string
-          titulo: string
-          updated_at: string
-          user_id: string
-          xml_pushed_at: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "roteiros"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      update_roteiro_by_share_token: {
-        Args: { _conteudo_html: string; _participantes: Json; _token: string }
-        Returns: undefined
       }
     }
     Enums: {

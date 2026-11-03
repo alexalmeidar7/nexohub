@@ -31,7 +31,7 @@ export interface ClientAccountInfo {
 
 export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
   {
-    id: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+    id: "a05c5b71-a100-40f9-8be3-6eb7035a057b",
     email: "alex@nexobrasil.net",
     aliases: ["alex@nexo.com.br", "admin@nexobrasil.net", "alex", "admin", "admin_alex_nexo", "superadmin"],
     nome: "Alex Almeida",
@@ -40,11 +40,11 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     cidade: "Goiânia - GO",
     timezone: "America/Sao_Paulo",
     plano: "Super Admin",
-    avatarUrl: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5/logo-1788656177446.webp",
+    avatarUrl: "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/empresa-assets/a05c5b71-a100-40f9-8be3-6eb7035a057b/logo-1788656177446.webp",
     isAdmin: true,
   },
   {
-    id: "d17e65af-e407-466f-9b60-b55c43399513",
+    id: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
     email: "positivafm@positivafm.com.br",
     aliases: ["positiva@positivafm.com.br", "positivafm@gmail.com", "positiva@gmail.com", "positivafm", "positiva", "cli_radio_positiva_fm"],
     nome: "Positiva FM 99.1",
@@ -68,7 +68,7 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     }
   },
   {
-    id: "sub_positiva_opec",
+    id: "f264a3bc-0581-4b7d-8f9a-fee722678a65",
     email: "opec@positivafm.com.br",
     aliases: ["opecpositiva@gmail.com", "opecpositiva"],
     nome: "OPEC Positiva FM",
@@ -78,7 +78,7 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     timezone: "America/Sao_Paulo",
     plano: "House Mix Nexo Max",
     isSubUser: true,
-    parentUserId: "d17e65af-e407-466f-9b60-b55c43399513",
+    parentUserId: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
     parentEmail: "positivafm@positivafm.com.br",
     allowedModules: [
       "dashboard", "programas", "apresentadores", "musica", "agenda",
@@ -93,7 +93,7 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     }
   },
   {
-    id: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+    id: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
     email: "interativafmgynaovivo@gmail.com",
     aliases: ["interativafm@gmail.com", "interativa@interativafm.net", "interativa@interativa.fm", "interativafm", "interativa", "cli_interativa_fm"],
     nome: "Interativa FM 94.9",
@@ -117,7 +117,7 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     }
   },
   {
-    id: "sub_interativa_opec",
+    id: "9aba6e84-a7f4-404e-ace1-02a33cce85a2",
     email: "opec@interativafm.net",
     aliases: ["opec@interativafm.com.br", "opecinterativa@gmail.com", "opecinterativa"],
     nome: "OPEC Interativa FM",
@@ -127,7 +127,7 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     timezone: "America/Sao_Paulo",
     plano: "House Mix Nexo Max",
     isSubUser: true,
-    parentUserId: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+    parentUserId: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
     parentEmail: "interativafmgynaovivo@gmail.com",
     allowedModules: [
       "dashboard", "programas", "apresentadores", "musica", "agenda",
@@ -142,7 +142,7 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     }
   },
   {
-    id: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+    id: "98365ea6-0ebf-496d-83e9-69b38089586d",
     email: "transmissao@jornalfm.com.br",
     aliases: ["jornalfm@jornalfm.com.br", "jornalfm@gmail.com", "transmissao@gmail.com", "jornalfm", "jornal", "cli_jornal_fm"],
     nome: "Jornal FM 96.5",
@@ -166,7 +166,7 @@ export const CLIENT_ACCOUNTS: ClientAccountInfo[] = [
     }
   },
   {
-    id: "66337743-4e4f-4950-b58f-750b0c76861e",
+    id: "b67436c6-ede1-4438-881d-18b9e923adda",
     email: "culturafm973@gmail.com",
     aliases: ["culturafm@gmail.com", "cultura973@gmail.com", "culturafm973", "culturafm", "cultura", "cli_cultura_fm"],
     nome: "Cultura FM 97.3",
@@ -217,7 +217,7 @@ export function findClientAccountById(id?: string | null): ClientAccountInfo | n
   );
 }
 
-export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
+export const POSITIVA_USER_ID = "452ebd1e-61a0-42dd-bf80-231a3f426c83";
 
 export const POSITIVA_TESTEMUNHAIS_IDS = new Set([
   "5bae884c-e5a1-4c7a-93bc-a52b45ecec7b",
