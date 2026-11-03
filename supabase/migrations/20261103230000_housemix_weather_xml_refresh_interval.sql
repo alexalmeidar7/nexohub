@@ -20,7 +20,8 @@ BEGIN
       SELECT net.http_post(
         url := 'https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/update-weather-xml',
         headers := jsonb_build_object('Content-Type', 'application/json'),
-        body := '{}'::jsonb
+        body := '{}'::jsonb,
+        timeout_milliseconds := 90000
       ) AS request_id;
     $job$
   );
