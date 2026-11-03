@@ -56,7 +56,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
       else if (!cancelled && error) setBridgeDeviceStatus({ connected: false });
     };
     void refreshBridgeStatus();
-    const interval = window.setInterval(() => void refreshBridgeStatus(), 10000);
+    const interval = window.setInterval(() => void refreshBridgeStatus(), 15000);
     return () => { cancelled = true; window.clearInterval(interval); };
   }, [user?.id, automationMode, isButtonDevicePreview]);
 
