@@ -79,9 +79,17 @@ export default function PreRollPage() {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).order("priority");
-    if (data) setPrerolls(data as any);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.from("comercial_preroll").select("*")
+        .eq("user_id", user.id).order("priority");
+      if (error) throw error;
+      setPrerolls((data || []) as any);
+    } catch (error: any) {
+      console.error("Falha ao carregar anúncios pré-roll:", error);
+      toast({ title: "Não foi possível carregar os anúncios", description: error?.message || "Erro ao consultar o banco.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const extractYoutubeId = (url: string) => {
@@ -166,26 +174,49 @@ export default function PreRollPage() {
       };
 
       if (editId) {
-        await supabase.from("comercial_preroll").update(payload).eq("id", editId);
+        const { data, error } = await supabase.from("comercial_preroll").update(payload)
+          .eq("id", editId).eq("user_id", user.id).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou a atualização do anúncio.");
         toast({ title: "Anúncio atualizado!" });
       } else {
-        await supabase.from("comercial_preroll").insert(payload);
+        const { data, error } = await supabase.from("comercial_preroll").insert(payload).select("id");
+        if (error) throw error;
+        if (!data?.length) throw new Error("O banco não confirmou o cadastro do anúncio.");
         toast({ title: "Anúncio cadastrado!" });
       }
-      resetForm(); loadData();
+      resetForm();
+      await loadData();
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("comercial_preroll").delete().eq("id", id);
-    toast({ title: "Anúncio removido" }); loadData();
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.from("comercial_preroll").delete()
+        .eq("id", id).eq("user_id", user.id).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("O banco não confirmou a exclusão do anúncio.");
+      toast({ title: "Anúncio removido" });
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "Não foi possível remover o anúncio", description: error?.message || "Erro ao excluir no banco.", variant: "destructive" });
+    }
   };
 
   const toggleActive = async (id: string, active: boolean) => {
-    await supabase.from("comercial_preroll").update({ active: !active }).eq("id", id);
-    loadData();
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.from("comercial_preroll").update({ active: !active })
+        .eq("id", id).eq("user_id", user.id).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("O banco não confirmou a alteração de status.");
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "Não foi possível alterar o status", description: error?.message || "Erro ao atualizar no banco.", variant: "destructive" });
+    }
   };
 
   const getStatus = (p: PreRoll) => {
