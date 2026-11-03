@@ -41,8 +41,8 @@ serve(async (req) => {
       }
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY || !aiEnabled) {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY || !aiEnabled) {
       return new Response(JSON.stringify({ description: templateFallback(body) }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -58,14 +58,14 @@ serve(async (req) => {
       prompt = `Escreva uma descrição curta e natural do clima agora em ${city}: ${temp}°C (mín ${tempMin}°, máx ${tempMax}°), umidade ${humidity}%, chance de chuva ${rainChance}%, condição: ${condition}. Use no máximo 2 frases.`;
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: "Você é um apresentador de previsão do tempo brasileiro. Seja natural e conciso." },
           { role: "user", content: prompt },
