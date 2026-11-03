@@ -158,7 +158,7 @@ function weatherLabel(code: number) {
 }
 
 function WeatherBox({ weatherCity, weatherLat, weatherLon, userId }: Props) {
-  const isPositiva = userId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" || !weatherCity || weatherCity.toLowerCase().includes("goiânia");
+  const isPositiva = userId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" || userId === "d17e65af-e407-466f-9b60-b55c43399513" || !weatherCity || weatherCity.toLowerCase().includes("goiânia");
   const effectiveCity = weatherCity || (isPositiva ? "Goiânia" : null);
   const effectiveLat = weatherLat ?? (isPositiva ? -16.6869 : null);
   const effectiveLon = weatherLon ?? (isPositiva ? -49.2648 : null);
