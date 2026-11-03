@@ -44,12 +44,22 @@ export default function GoogleCalendarSync() {
   }, [fetchEvents]);
 
   const handleConnect = async () => {
+    const isDesktop =
+      (window as Window & { houseMixDesktop?: { isDesktop?: boolean } }).houseMixDesktop?.isDesktop === true;
+    const popup = isDesktop ? null : window.open("about:blank", "google-cal", "width=520,height=640");
+    if (!isDesktop && !popup) {
+      toast({ title: "Janela bloqueada", description: "Permita pop-ups para conectar o Google Agenda.", variant: "destructive" });
+      return;
+    }
+
     setConnecting(true);
     try {
       const { data, error } = await supabase.functions.invoke("google-calendar-auth");
       if (error || !data?.url) throw error || new Error("Sem URL");
-      const popup = window.open(data.url, "google-cal", "width=520,height=640");
-      if (!popup) {
+
+      if (isDesktop) {
+        // Electron delegates HTTPS windows to the system browser.
+        window.open(data.url, "_blank");
         toast({
           title: "Autorização aberta no navegador",
           description: "Conclua o acesso à sua conta Google no navegador e clique em Atualizar no House Mix.",
@@ -57,15 +67,20 @@ export default function GoogleCalendarSync() {
         setConnecting(false);
         return;
       }
+
+      if (!popup) throw new Error("Não foi possível abrir a janela de autorização.");
+      popup.location.href = data.url;
+
       // Poll for completion
-      const t = setInterval(async () => {
+      const t = window.setInterval(async () => {
         if (popup.closed) {
-          clearInterval(t);
+          window.clearInterval(t);
           setConnecting(false);
           await fetchEvents();
         }
       }, 1000);
     } catch (e: any) {
+      popup?.close();
       toast({ title: "Erro ao conectar", description: e.message, variant: "destructive" });
       setConnecting(false);
     }
