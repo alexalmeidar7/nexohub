@@ -53,7 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -f supabase/migrations/20261022185000_vmix_bridge_backend.sql
-          test "$(psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -Atc "select to_regclass('public.vmix_bridge_devices')")" = "vmix_bridge_devices" || { echo "::error::Tabela vmix_bridge_devices não foi criada."; exit 1; }
+          test -n "$(psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -Atc "select to_regclass('public.vmix_bridge_devices')")" || { echo "::error::Tabela vmix_bridge_devices não foi criada."; exit 1; }
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
