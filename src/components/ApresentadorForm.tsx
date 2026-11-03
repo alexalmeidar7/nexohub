@@ -350,7 +350,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         cargo: cargoValue,
         categoria,
         instagram: instagram.trim(),
-        whatsapp: whatsapp.replace(/\\D/g, "").length >= 10 ? whatsapp.trim() : "",
+        whatsapp: whatsapp.replace(/\D/g, "").length >= 10 ? whatsapp.trim() : "",
         foto: fotoUrl,
         background_url: finalBackgroundUrl,
         ativo,
