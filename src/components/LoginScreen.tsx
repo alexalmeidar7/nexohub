@@ -42,7 +42,12 @@ const getErrorMessage = (value: unknown) => {
 
 const isConnectionLikeError = (value: unknown) => {
   const message = getErrorMessage(value).toLowerCase();
+  const status = value && typeof value === "object" && "status" in value
+    ? Number((value as { status?: unknown }).status)
+    : 0;
   return (
+    [500, 502, 503, 504].includes(status) ||
+    /\\b(500|502|503|504)\\b/.test(message) ||
     message.includes("timeout") ||
     message.includes("tempo de conexão excedido") ||
     message.includes("connection") ||
