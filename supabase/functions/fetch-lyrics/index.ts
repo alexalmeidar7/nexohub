@@ -89,22 +89,22 @@ async function fetchFromLetras(artist: string, title: string): Promise<string | 
 }
 
 async function aiSyncLyrics(plainLyrics: string, duration: number): Promise<string | null> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) return null;
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) return null;
 
   try {
     const prompt = `Sincronize a letra abaixo no formato LRC com timestamps. A música tem ${duration} segundos de duração. Distribua os timestamps de forma natural, respeitando pausas entre estrofes. Retorne APENAS as linhas LRC, sem explicações.
 
 ${plainLyrics}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: "Você sincroniza letras de música no formato LRC. Retorne APENAS linhas no formato [MM:SS.ms] texto." },
           { role: "user", content: prompt },
