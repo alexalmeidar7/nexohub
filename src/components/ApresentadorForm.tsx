@@ -323,89 +323,63 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
   const handleSave = async () => {
     const ownerId = targetUserId || user?.id;
-    if (!nome.trim() || !ownerId || !categoria) return;
+    if (!nome.trim() || !ownerId || !categoria || saving) return;
     setSaving(true);
 
-    // Para "Convidado" com cargo livre (Médico, Advogado...), grava o cargo digitado.
-    // Caso contrário, grava a própria categoria (Apresentador/Jornalista/Convidado).
-    const cargoValue = categoria === "Convidado" && cargoConvidado.trim()
-      ? cargoConvidado.trim()
-      : (cargoConvidado.trim() || categoria);
-
-    // Upload photo to storage if it's base64
-    let fotoUrl = showFoto ? foto : "";
-    if (fotoUrl && fotoUrl.startsWith("data:")) {
-      const targetId = editingId || crypto.randomUUID();
-      const path = `${ownerId}/apresentadores/${targetId}.webp`;
-      fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", path);
-    }
-
-    let finalBackgroundUrl = backgroundUrl;
-    if (finalBackgroundUrl && finalBackgroundUrl.startsWith("data:")) {
-      const targetId = editingId || crypto.randomUUID();
-      const path = `${ownerId}/apresentadores/${targetId}-bg.webp`;
-      finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", path);
-    }
-
-    const payload = {
-      nome: nome.trim(),
-      cargo: cargoValue,
-      categoria: categoria,
-      instagram: instagram.trim(),
-      whatsapp: whatsapp.replace(/\D/g, "").length >= 10 ? whatsapp.trim() : "",
-      foto: fotoUrl,
-      background_url: finalBackgroundUrl,
-      ativo,
-    };
-
-    let error: any = null;
-    let savedId = editingId;
-    const isUuid = (v?: string | null) =>
-      !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-
-    if (editingId && isUuid(editingId)) {
-      const res = await supabase
-        .from("apresentadores")
-        .update(payload as any)
-        .eq("id", editingId)
-        .select("id");
-      error = res.error;
-      if (!res.error && (!res.data || res.data.length === 0)) {
-        // Registro não existia no banco → grava como novo
-        const ins = await supabase
-          .from("apresentadores")
-          .insert({ user_id: ownerId, ...payload } as any)
-          .select("id");
-        error = ins.error;
-        if (ins.data?.[0]?.id) savedId = ins.data[0].id;
-      }
-    } else {
-      const res = await supabase
-        .from("apresentadores")
-        .insert({ user_id: ownerId, ...payload } as any)
-        .select("id");
-      error = res.error;
-      if (res.data?.[0]?.id) savedId = res.data[0].id;
-    }
-
-    if (error) {
-      console.error("Erro ao salvar apresentador:", error);
-      const m = String(error.message || "");
-      const code = String(error.code || "");
-      if (code === "42501" || /row-level security|permission denied|violates row-level security/i.test(m)) {
-        toast.error("Sem permissão para salvar este cadastro. Verifique o acesso da emissora ou o vínculo do usuário.");
-      } else if (code === "401" || /jwt expired|invalid jwt|token is expired/i.test(m)) {
-        toast.error("Sua sessão expirou. Entre novamente para continuar.");
-      } else {
-        toast.error(`Não foi possível salvar: ${m || "erro no servidor"}`);
-      }
-      setSaving(false);
-      return;
-    }
-
-    // Sync to isolated localStorage
     try {
-      const currentList = [...apresentadores];
+      // Para "Convidado" com cargo livre (Médico, Advogado...), grava o cargo digitado.
+      const cargoValue = categoria === "Convidado" && cargoConvidado.trim()
+        ? cargoConvidado.trim()
+        : (cargoConvidado.trim() || categoria);
+
+      // O upload precisa terminar antes de gravar a URL no cadastro.
+      let fotoUrl = showFoto ? foto : "";
+      if (fotoUrl.startsWith("data:")) {
+        const targetId = editingId || crypto.randomUUID();
+        fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", `${ownerId}/apresentadores/${targetId}.webp`);
+      }
+
+      let finalBackgroundUrl = backgroundUrl;
+      if (finalBackgroundUrl.startsWith("data:")) {
+        const targetId = editingId || crypto.randomUUID();
+        finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", `${ownerId}/apresentadores/${targetId}-bg.webp`);
+      }
+
+      const payload = {
+        nome: nome.trim(),
+        cargo: cargoValue,
+        categoria,
+        instagram: instagram.trim(),
+        whatsapp: whatsapp.replace(/\\D/g, "").length >= 10 ? whatsapp.trim() : "",
+        foto: fotoUrl,
+        background_url: finalBackgroundUrl,
+        ativo,
+      };
+
+      let error: any = null;
+      let savedId = editingId;
+      const isUuid = (v?: string | null) =>
+        !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+      if (editingId && isUuid(editingId)) {
+        const res = await supabase.from("apresentadores")
+          .update(payload as any).eq("id", editingId).eq("user_id", ownerId).select("id");
+        error = res.error;
+        if (!res.error && (!res.data || res.data.length === 0)) {
+          const ins = await supabase.from("apresentadores")
+            .insert({ user_id: ownerId, ...payload } as any).select("id");
+          error = ins.error;
+          if (ins.data?.[0]?.id) savedId = ins.data[0].id;
+        }
+      } else {
+        const res = await supabase.from("apresentadores")
+          .insert({ user_id: ownerId, ...payload } as any).select("id");
+        error = res.error;
+        if (res.data?.[0]?.id) savedId = res.data[0].id;
+      }
+
+      if (error) throw error;
+
       const newEntry: Apresentador = {
         id: savedId || `part_${Date.now()}`,
         nome: payload.nome,
@@ -418,22 +392,30 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         ativo: payload.ativo,
       };
       const updated = editingId
-        ? currentList.map(a => a.id === editingId ? newEntry : a)
-        : [newEntry, ...currentList.filter(a => a.id !== newEntry.id)];
+        ? apresentadores.map(a => a.id === editingId ? newEntry : a)
+        : [newEntry, ...apresentadores.filter(a => a.id !== newEntry.id)];
       setApresentadores(updated);
-      localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
-    } catch {}
+      try { localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated)); } catch {}
+      try { window.dispatchEvent(new CustomEvent("apresentadores-updated")); } catch {}
 
-    // Dispara atualização imediata dos XMLs que dependem de apresentadores
-    try {
-      window.dispatchEvent(new CustomEvent("apresentadores-updated"));
-    } catch {}
-
-    await load();
-    resetForm();
-    setSaving(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+      resetForm();
+      setShowSuccess(true);
+      window.setTimeout(() => setShowSuccess(false), 2000);
+      // Atualiza a lista em segundo plano; não prende o botão ao carregamento da tabela.
+      void load();
+    } catch (err: any) {
+      console.error("Erro ao salvar apresentador:", err);
+      const message = String(err?.message || err || "erro inesperado");
+      if (err?.code === "42501" || /row-level security|permission denied|violates row-level security/i.test(message)) {
+        toast.error("Sem permissão para salvar este cadastro. Verifique o acesso da emissora.");
+      } else if (err?.code === "401" || /jwt expired|invalid jwt|token is expired/i.test(message)) {
+        toast.error("Sua sessão expirou. Entre novamente para continuar.");
+      } else {
+        toast.error(`Não foi possível atualizar o participante: ${message}`);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEdit = (a: Apresentador) => {
