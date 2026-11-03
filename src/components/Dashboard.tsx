@@ -1119,7 +1119,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         setOnAirThumb(thumb);
       }
     };
-    const interval = setInterval(poll, 10000);
+    const interval = setInterval(poll, 30000);
     return () => clearInterval(interval);
   }, [user, initialLoading, findCurrentOnAirThumb]);
 
