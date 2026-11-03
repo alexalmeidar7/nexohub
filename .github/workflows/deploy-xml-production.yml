@@ -79,6 +79,8 @@ jobs:
 
           apply_migration "20261028180000" "fix_agenda_eventos_schema" "supabase/migrations/20261028180000_fix_agenda_eventos_schema.sql"
           apply_migration "20261028193000" "reconcile_audited_forms_schema_and_storage" "supabase/migrations/20261028193000_reconcile_audited_forms_schema_and_storage.sql"
+          apply_migration "20261103210000" "housemix_audit_fixes" "supabase/migrations/20261103210000_housemix_audit_fixes.sql"
+          apply_migration "20261103220000" "housemix_performance_indexes" "supabase/migrations/20261103220000_housemix_performance_indexes.sql"
           apply_migration "20261103230000" "housemix_weather_xml_refresh_interval" "supabase/migrations/20261103230000_housemix_weather_xml_refresh_interval.sql"
 
       - name: Deploy XML Edge Functions
