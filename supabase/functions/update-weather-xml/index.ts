@@ -101,6 +101,31 @@ function weatherIconKey(code: number, isNight = false): string {
 }
 
 const uploadedIcons: Record<string, string> = {};
+let weatherIconFiles: Set<string> | null = null;
+let weatherIconFilesPromise: Promise<Set<string>> | null = null;
+
+async function getWeatherIconFiles(supabase: ReturnType<typeof createClient>): Promise<Set<string>> {
+  if (weatherIconFiles) return weatherIconFiles;
+  if (!weatherIconFilesPromise) {
+    weatherIconFilesPromise = (async () => {
+      const { data, error } = await supabase.storage.from("xml-files").list("weather-icons", { limit: 1000 });
+      if (error) {
+        console.warn("Não foi possível listar os ícones já armazenados:", error.message);
+        return new Set<string>();
+      }
+      return new Set((data || []).map((file) => file.name));
+    })();
+  }
+  weatherIconFiles = await weatherIconFilesPromise;
+  return weatherIconFiles;
+}
+
+const xmlEscape = (value: unknown) => String(value ?? "")
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&apos;");
 
 async function ensureIconUploaded(
   supabase: ReturnType<typeof createClient>,
@@ -111,27 +136,37 @@ async function ensureIconUploaded(
   if (uploadedIcons[key]) return uploadedIcons[key];
 
   const pngFileName = `weather-icons/${key}.png`;
-  const iconName = basmiliusIconName(code, isNight);
-  const svgSource = `cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg-static/${iconName}.svg`;
-  const pngFetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgSource)}&output=png&w=256&h=256`;
+  const { data: pngUrlData } = supabase.storage.from("xml-files").getPublicUrl(pngFileName);
+  const publicUrl = (pngUrlData?.publicUrl || "").split("?")[0];
+  const existingFiles = await getWeatherIconFiles(supabase);
 
-  let pngPublicUrl = "";
-  try {
-    const res = await fetch(pngFetchUrl);
-    if (res.ok) {
-      const bytes = new Uint8Array(await res.arrayBuffer());
-      await supabase.storage
-        .from("xml-files")
-        .upload(pngFileName, bytes, { upsert: true, contentType: "image/png", cacheControl: "3600" });
-      const { data: pngUrlData } = supabase.storage.from("xml-files").getPublicUrl(pngFileName);
-      pngPublicUrl = (pngUrlData?.publicUrl || "").split("?")[0];
-    }
-  } catch (err) {
-    console.error("Colored icon fetch failed:", err);
+  // Os ícones são imutáveis por código/clima: reutilize o PNG do Storage.
+  // Antes, cada execução do cron buscava e reenviava os mesmos arquivos.
+  if (existingFiles.has(`${key}.png`)) {
+    uploadedIcons[key] = publicUrl;
+    return publicUrl;
   }
 
-  uploadedIcons[key] = pngPublicUrl;
-  return pngPublicUrl;
+  const iconName = basmiliusIconName(code, isNight);
+  const svgSource = `https://cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg-static/${iconName}.svg`;
+  const pngFetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgSource)}&output=png&w=256&h=256`;
+
+  try {
+    const res = await fetch(pngFetchUrl, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`Conversor de ícones respondeu HTTP ${res.status}`);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const { error } = await supabase.storage
+      .from("xml-files")
+      .upload(pngFileName, bytes, { upsert: true, contentType: "image/png", cacheControl: "31536000" });
+    if (error) throw error;
+    existingFiles.add(`${key}.png`);
+    uploadedIcons[key] = publicUrl;
+    return publicUrl;
+  } catch (err) {
+    console.error("Colored icon fetch/upload failed:", err);
+    uploadedIcons[key] = "";
+    return "";
+  }
 }
 
 serve(async (req) => {
@@ -152,7 +187,7 @@ serve(async (req) => {
     if (settingsErr || !settings?.length) {
       return new Response(
         JSON.stringify({ message: "No users with weather configured", count: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } }
       );
     }
 
@@ -166,18 +201,28 @@ serve(async (req) => {
 
         if (!lat || !lon) {
           const geoRes = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=pt`
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=pt`,
+            { signal: AbortSignal.timeout(6000) },
           );
+          if (!geoRes.ok) throw new Error(`Geocoding respondeu HTTP ${geoRes.status}`);
           const geo = await geoRes.json();
           if (!geo.results?.length) continue;
           lat = geo.results[0].latitude;
           lon = geo.results[0].longitude;
           name = geo.results[0].name;
+          // Salva as coordenadas encontradas para não geocodificar a mesma cidade
+          // em todas as execuções futuras do cron.
+          const { error: coordsError } = await supabase.from("user_settings")
+            .update({ weather_lat: lat, weather_lon: lon })
+            .eq("user_id", s.user_id);
+          if (coordsError) console.warn(`Não foi possível persistir coordenadas do tempo para ${s.user_id}:`, coordsError.message);
         }
 
         const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset,relative_humidity_2m_max&timezone=auto&forecast_days=6`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset,relative_humidity_2m_max&timezone=auto&forecast_days=6`,
+          { signal: AbortSignal.timeout(8000) },
         );
+        if (!wxRes.ok) throw new Error(`Open-Meteo respondeu HTTP ${wxRes.status}`);
         const d = await wxRes.json();
 
         if (!d?.current || !d?.daily?.time?.length) {
@@ -191,29 +236,42 @@ serve(async (req) => {
         // Reliable day/night via Open-Meteo's is_day flag (1 = day, 0 = night)
         const isNight = d.current?.is_day === 0;
 
-        const iconUrl = await ensureIconUploaded(supabase as any, d.current.weather_code, isNight);
+        const dailyCodes = (d.daily.weather_code || []).map((code: number) => Number(code ?? 0));
+        const uniqueIconSpecs = new Map<string, { code: number; isNight: boolean }>();
+        uniqueIconSpecs.set(weatherIconKey(d.current.weather_code, isNight), { code: d.current.weather_code, isNight });
+        dailyCodes.forEach((code: number, index: number) => {
+          if (index > 0) uniqueIconSpecs.set(weatherIconKey(code, false), { code, isNight: false });
+        });
+        const iconPairs = await Promise.all(
+          [...uniqueIconSpecs.entries()].map(async ([key, spec]) => [key, await ensureIconUploaded(supabase as any, spec.code, spec.isNight)] as const),
+        );
+        const iconUrls = new Map(iconPairs);
+        const iconUrl = iconUrls.get(weatherIconKey(d.current.weather_code, isNight)) || "";
+        const dailyIconUrls = dailyCodes.map((code: number, index: number) =>
+          index === 0 ? iconUrl : (iconUrls.get(weatherIconKey(code, false)) || ""),
+        );
         const condLabel = getLabel(d.current.weather_code);
 
         // ─── Build weather-{user_id}.xml (legacy <tempo> format) ───
         let amanhaXml = "";
         if (d.daily.temperature_2m_min[1] != null) {
           const twCode = d.daily.weather_code[1] ?? 0;
-          const twIconUrl = await ensureIconUploaded(supabase as any, twCode, false);
+          const twIconUrl = dailyIconUrls[1] || "";
           const twLabel = getLabel(twCode);
           amanhaXml = `
     <amanha>
       <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}ºC</temperatura_minima>
       <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}ºC</temperatura_maxima>
       <url_imagem_icone>${twIconUrl}</url_imagem_icone>
-      <descricao_tempo>${twLabel}</descricao_tempo>
+      <descricao_tempo>${xmlEscape(twLabel)}</descricao_tempo>
     </amanha>`;
         }
 
         const weatherXml = `<?xml version="1.0" encoding="UTF-8"?>
 <tempo>
-    <cidade>${name}</cidade>
+    <cidade>${xmlEscape(name)}</cidade>
     <temperatura>${Math.round(d.current.temperature_2m)}ºC</temperatura>
-    <descricao>${condLabel}</descricao>
+    <descricao>${xmlEscape(condLabel)}</descricao>
     <icone_url>${iconUrl}</icone_url>
     <minima>${Math.round(d.daily.temperature_2m_min[0])}ºC</minima>
     <maxima>${Math.round(d.daily.temperature_2m_max[0])}ºC</maxima>
@@ -225,16 +283,17 @@ serve(async (req) => {
 
         const fileName = `weather-${s.user_id}.xml`;
         const file = new Blob([weatherXml], { type: "application/xml" });
-        await supabase.storage
+        const { error: legacyXmlError } = await supabase.storage
           .from("xml-files")
-          .upload(fileName, file, { upsert: true, contentType: "application/xml" });
+          .upload(fileName, file, { upsert: true, contentType: "application/xml", cacheControl: "30" });
+        if (legacyXmlError) throw legacyXmlError;
 
         // ─── Build xml-tempo-{user_id}.xml (<previsao> format used by client) ───
         const dailyLen = d.daily?.time?.length || 0;
         const dayBlocks: string[] = [];
         for (let i = 0; i < dailyLen; i++) {
           const code = d.daily.weather_code[i] ?? 0;
-          const iconU = await ensureIconUploaded(supabase as any, code, false);
+          const iconU = dailyIconUrls[i] || "";
           const lbl = getLabel(code);
           const tempAvg = Math.round(((d.daily.temperature_2m_max[i] ?? 0) + (d.daily.temperature_2m_min[i] ?? 0)) / 2);
           const tag = i === 0 ? "atual" : "dia";
@@ -246,9 +305,9 @@ serve(async (req) => {
           const humid = i === 0 ? d.current.relative_humidity_2m : (d.daily.relative_humidity_2m_max?.[i] ?? 0);
           dayBlocks.push(
             `  <${tag} date="${dateAttr}">\n` +
-            `    <cidade>${name}</cidade>\n` +
+            `    <cidade>${xmlEscape(name)}</cidade>\n` +
             `    <temperatura>${temp}ºC</temperatura>\n` +
-            `    <descricao>${desc}</descricao>\n` +
+            `    <descricao>${xmlEscape(desc)}</descricao>\n` +
             `    <icone_url>${icon}</icone_url>\n` +
             `    <minima>${Math.round(d.daily.temperature_2m_min[i] ?? 0)}ºC</minima>\n` +
             `    <maxima>${Math.round(d.daily.temperature_2m_max[i] ?? 0)}ºC</maxima>\n` +
@@ -261,7 +320,7 @@ serve(async (req) => {
         let amanhaPrevisao = "";
         if (dailyLen > 1) {
           const code = d.daily.weather_code[1] ?? 0;
-          const iconU = await ensureIconUploaded(supabase as any, code, false);
+          const iconU = dailyIconUrls[1] || "";
           amanhaPrevisao =
             `  <amanha date="${d.daily.time[1]}">\n` +
             `    <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}ºC</temperatura_minima>\n` +
@@ -282,15 +341,16 @@ serve(async (req) => {
 
         const previsaoFile = new Blob([previsaoXml], { type: "application/xml" });
         // Per-user file
-        await supabase.storage
+        const { error: forecastXmlError } = await supabase.storage
           .from("xml-files")
-          .upload(`xml-tempo-${s.user_id}.xml`, previsaoFile, { upsert: true, contentType: "application/xml" });
+          .upload(`xml-tempo-${s.user_id}.xml`, previsaoFile, { upsert: true, contentType: "application/xml", cacheControl: "30" });
+        if (forecastXmlError) throw forecastXmlError;
         // Compatibilidade com o UUID antigo da Positiva ainda usado em URLs do vMix.
         if (s.user_id === "452ebd1e-61a0-42dd-bf80-231a3f426c83") {
           await supabase.storage.from("xml-files").upload(
             "xml-tempo-d17e65af-e407-466f-9b60-b55c43399513.xml",
             previsaoFile,
-            { upsert: true, contentType: "application/xml" },
+            { upsert: true, contentType: "application/xml", cacheControl: "30" },
           );
         }
         // Não publicar um XML compartilhado: o processamento percorre várias
