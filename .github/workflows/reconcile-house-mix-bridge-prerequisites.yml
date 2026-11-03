@@ -366,6 +366,7 @@ jobs:
             missing_versions text;
             policy_count integer;
             fk_definition text;
+            fk_validated boolean;
           BEGIN
             WITH required(version) AS (
               VALUES ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261102100000'), ('20261102110000'), ('20261102140000')
@@ -423,12 +424,17 @@ jobs:
               RAISE EXCEPTION 'infomusic.user_id must be uuid NOT NULL after ownership validation.';
             END IF;
 
-            SELECT pg_get_constraintdef(oid) INTO fk_definition
+            SELECT pg_get_constraintdef(oid), convalidated
+              INTO fk_definition, fk_validated
             FROM pg_constraint
             WHERE conrelid='public.infomusic'::regclass
               AND conname='infomusic_user_id_fkey';
-            IF fk_definition IS NULL OR fk_definition <> 'FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE' THEN
-              RAISE EXCEPTION 'infomusic.user_id must reference auth.users(id) with ON DELETE CASCADE; found %.', coalesce(fk_definition, 'no foreign key');
+            IF fk_definition IS NULL
+               OR fk_definition <> 'FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE'
+               OR fk_validated IS DISTINCT FROM true THEN
+              RAISE EXCEPTION 'infomusic.user_id must have a validated FK to auth.users(id) ON DELETE CASCADE; found %, validated %.',
+                coalesce(fk_definition, 'no foreign key'),
+                coalesce(fk_validated::text, 'unknown');
             END IF;
 
             IF NOT EXISTS (

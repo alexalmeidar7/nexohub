@@ -11,6 +11,7 @@ DECLARE
   timezone_default text;
   infomusic_user_type text;
   infomusic_fk_definition text;
+  infomusic_fk_validated boolean;
   orphan_owners bigint;
 BEGIN
   SELECT data_type, column_default
@@ -91,8 +92,8 @@ BEGIN
   ALTER TABLE public.infomusic
     ALTER COLUMN user_id SET NOT NULL;
 
-  SELECT pg_get_constraintdef(oid)
-    INTO infomusic_fk_definition
+  SELECT pg_get_constraintdef(oid), convalidated
+    INTO infomusic_fk_definition, infomusic_fk_validated
   FROM pg_constraint
   WHERE conrelid='public.infomusic'::regclass
     AND conname='infomusic_user_id_fkey';
@@ -103,8 +104,19 @@ BEGIN
       FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE NOT VALID;
     ALTER TABLE public.infomusic
       VALIDATE CONSTRAINT infomusic_user_id_fkey;
+    infomusic_fk_validated := true;
   ELSIF infomusic_fk_definition <> 'FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE' THEN
     RAISE EXCEPTION 'infomusic_user_id_fkey has an unexpected definition: %.', infomusic_fk_definition;
+  ELSIF infomusic_fk_validated IS DISTINCT FROM true THEN
+    -- A matching but NOT VALID constraint must not be treated as complete.
+    -- Validate it after the explicit orphan-owner check above.
+    ALTER TABLE public.infomusic
+      VALIDATE CONSTRAINT infomusic_user_id_fkey;
+    infomusic_fk_validated := true;
+  END IF;
+
+  IF infomusic_fk_validated IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'infomusic_user_id_fkey exists but is not validated.';
   END IF;
 
   CREATE INDEX IF NOT EXISTS idx_infomusic_user_id
