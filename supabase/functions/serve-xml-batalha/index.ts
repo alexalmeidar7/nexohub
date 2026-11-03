@@ -65,14 +65,17 @@ const SLUG_TO_NAME: Record<string, string> = {
   alex: "Alex Estúdio",
 };
 
-Deno.serve(async (req) => {
+Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+  fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
+
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const sb = createClient(supabaseUrl, serviceKey);
+  const sb = createClient(supabaseUrl, serviceKey, { global: { fetch: fastSupabaseFetch }, auth: { persistSession: false, autoRefreshToken: false } });
 
   // Get current date and time in America/Sao_Paulo (Brasília)
   const formatter = new Intl.DateTimeFormat("en-GB", {
