@@ -1,2 +1,2 @@
-Deploy pontual autorizado em 2026-11-03 para publicar a correção de pressão no banco da PR 263.
-Retry do disparo autorizado após corrigir validação do evento push.
+Deploy pontual autorizado em 2026-11-03 para publicar correções consolidadas de autenticação da PR 266.
+Gatilho restrito ao marcador; não habilita deploy em pushes comuns.
