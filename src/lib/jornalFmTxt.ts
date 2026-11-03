@@ -4,7 +4,7 @@
 
 import { normalizeMusicText } from "@/lib/textEncoding";
 
-export const JORNAL_FM_USER_ID = "48423cc6-f3b1-4bea-8729-dd0ae76a89c3";
+export const JORNAL_FM_USER_ID = "98365ea6-0ebf-496d-83e9-69b38089586d";
 
 /** Remove aspas envolventes, espaços duplicados e caracteres de controle. */
 function cleanRdsFragment(s: string): string {
