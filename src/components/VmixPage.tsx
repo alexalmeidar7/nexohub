@@ -1866,8 +1866,18 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     setRunningScene(null);
     toast({ title: "Cena executada", description: `"${scene.name}" concluída.` });
   };
-  // ── Client-side scheduler (runs commands locally since edge functions can't reach private IPs) ──
+  // ── Client-side scheduler: cache database data and evaluate locally ──
+  // Previously this queried preset_commands, programas and custom_vmix_buttons
+  // every 30 seconds for every open vMix panel. With multiple stations this
+  // exhausted the production Postgres connection pool and caused Auth/REST 522s.
   const schedulerExecutedRef = useRef<Set<string>>(new Set());
+  const schedulerDataRef = useRef<{
+    presets: any[];
+    programas: any[];
+    buttons: any[];
+    loadedAt: number;
+  }>({ presets: [], programas: [], buttons: [], loadedAt: 0 });
+  const schedulerRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!connected || !savedUrl || !user) return;
@@ -1888,6 +1898,53 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       });
     };
 
+    let stopped = false;
+    const refreshSchedulerData = async () => {
+      if (schedulerRefreshInFlightRef.current) return;
+      schedulerRefreshInFlightRef.current = true;
+      try {
+        // Keep reads sequential to avoid creating connection bursts.
+        const { data: presets, error: presetError } = await supabase
+          .from("preset_commands")
+          .select("id, programa_id, commands, custom_horario")
+          .eq("user_id", user.id);
+        if (presetError) throw presetError;
+
+        const { data: buttons, error: buttonsError } = await supabase
+          .from("custom_vmix_buttons")
+          .select("id, nome, commands, horario, dias_semana, estudio")
+          .eq("user_id", user.id);
+        if (buttonsError) throw buttonsError;
+
+        const presetRows = presets || [];
+        const progIds = [...new Set(presetRows.map((p: any) => p.programa_id).filter(Boolean))];
+        let programasRows: any[] = [];
+        if (progIds.length > 0) {
+          const { data: progs, error: programasError } = await supabase
+            .from("programas")
+            .select("id, nome, horario_inicio, dias_semana")
+            .in("id", progIds);
+          if (programasError) throw programasError;
+          programasRows = progs || [];
+        }
+
+        if (!stopped) {
+          schedulerDataRef.current = {
+            presets: presetRows,
+            programas: programasRows,
+            buttons: buttons || [],
+            loadedAt: Date.now(),
+          };
+        }
+      } catch (err) {
+        // Keep the last successful snapshot; a temporary database outage must
+        // not create a rapid retry loop or stop the local vMix controls.
+        console.warn("[local-scheduler] data refresh failed; retaining cached schedule", err);
+      } finally {
+        schedulerRefreshInFlightRef.current = false;
+      }
+    };
+
     const checkSchedule = async () => {
       const now = new Date();
       const brasiliaOffset = -3 * 60;
@@ -1898,112 +1955,78 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       const jsDay = brasiliaDate.getDay();
       const timeKey = `${hh}:${mm}`;
 
-      // Reset executed set each new minute
       const currentMinuteKey = `${hh}${mm}`;
       for (const k of schedulerExecutedRef.current) {
         if (!k.startsWith(currentMinuteKey + "_")) schedulerExecutedRef.current.delete(k);
       }
 
-      // 1. Preset commands (program presets)
-      try {
-        const { data: presets } = await supabase
-          .from("preset_commands")
-          .select("id, programa_id, commands, custom_horario")
-          .eq("user_id", user.id);
+      const { presets, programas, buttons } = schedulerDataRef.current;
+      const progMap = new Map(programas.map((p: any) => [p.id, p]));
 
-        if (presets && presets.length > 0) {
-          const progIds = [...new Set(presets.map((p: any) => p.programa_id))];
-          const { data: progs } = await supabase
-            .from("programas")
-            .select("id, nome, horario_inicio, dias_semana")
-            .in("id", progIds);
+      for (const preset of presets) {
+        if (normStudio(studioName).includes("podcast")) continue;
+        const prog = progMap.get(preset.programa_id);
+        if (!prog) continue;
 
-          const progMap = new Map((progs || []).map((p: any) => [p.id, p]));
+        const horario = preset.custom_horario || (prog as any).horario_inicio;
+        if (!horario) continue;
+        const parts = horario.split(":");
+        const matchH = parts[0]?.padStart(2, "0");
+        const matchM = parts[1]?.padStart(2, "0");
+        if (matchH !== hh || matchM !== mm) continue;
+        if (!matchesDay((prog as any).dias_semana, jsDay)) continue;
 
-          for (const preset of presets) {
-            // No estúdio PODCAST, os presets não podem ser disparados pelo horário fixo
-            // da grade. A Agenda é a única fonte de verdade: o efeito central executa
-            // o preset somente quando há evento GRAVAÇÃO ativo para esse programa.
-            // Eventos AO VIVO são tratados exclusivamente pelos botões LIVE personalizados.
-            if (normStudio(studioName).includes("podcast")) continue;
+        const execKey = `${currentMinuteKey}_preset_${preset.id}`;
+        if (schedulerExecutedRef.current.has(execKey)) continue;
+        schedulerExecutedRef.current.add(execKey);
 
-            const prog = progMap.get(preset.programa_id);
-            if (!prog) continue;
-
-            const horario = preset.custom_horario || prog.horario_inicio;
-            if (!horario) continue;
-            const parts = horario.split(":");
-            const matchH = parts[0]?.padStart(2, "0");
-            const matchM = parts[1]?.padStart(2, "0");
-            if (matchH !== hh || matchM !== mm) continue;
-            if (!matchesDay(prog.dias_semana, jsDay)) continue;
-
-            const execKey = `${currentMinuteKey}_preset_${preset.id}`;
-            if (schedulerExecutedRef.current.has(execKey)) continue;
-            schedulerExecutedRef.current.add(execKey);
-
-            const cmds = preset.commands as any[];
-            if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
-
-            console.log(`[local-scheduler] Executing preset for "${prog.nome}" at ${timeKey}`);
-            addLog(`[Agendador] Preset "${prog.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
-            // Execute through the same command pipeline used by a manual preset click,
-            // so input mapping, command normalization and LAN/cloud routing are preserved.
-            await runCommandsUnified(cmds, `Preset agendado: ${prog.nome}`);
-          }
-        }
-      } catch (err) {
-        console.error("[local-scheduler] preset error:", err);
+        const cmds = preset.commands as any[];
+        if (!Array.isArray(cmds) || cmds.length === 0) continue;
+        console.log(`[local-scheduler] Executing preset for "${(prog as any).nome}" at ${timeKey}`);
+        addLog(`[Agendador] Preset "${(prog as any).nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
+        await runCommandsUnified(cmds, `Preset agendado: ${(prog as any).nome}`);
       }
 
-      // 2. Custom buttons with schedule
-      try {
-        const { data: buttons } = await supabase
-          .from("custom_vmix_buttons")
-          .select("id, nome, commands, horario, dias_semana, estudio")
-          .eq("user_id", user.id);
+      for (const btn of buttons) {
+        if (normStudio(btn.estudio).includes("podcast") && hasStartStreamingCommand(btn)) continue;
+        if (!btn.horario || !btn.dias_semana || (btn.dias_semana as string[]).length === 0) continue;
+        const parts = btn.horario.split(":");
+        const matchH = parts[0]?.padStart(2, "0");
+        const matchM = parts[1]?.padStart(2, "0");
+        if (matchH !== hh || matchM !== mm) continue;
+        if (!matchesDay(btn.dias_semana as string[], jsDay)) continue;
 
-        if (buttons) {
-          for (const btn of buttons) {
-            // StartStreaming do PODCAST nunca usa o agendador genérico: ele depende
-            // exclusivamente do evento AO VIVO vinculado ao programa na Agenda.
-            if (normStudio(btn.estudio).includes("podcast") && hasStartStreamingCommand(btn)) continue;
-            if (!btn.horario || !btn.dias_semana || (btn.dias_semana as string[]).length === 0) continue;
-            const parts = btn.horario.split(":");
-            const matchH = parts[0]?.padStart(2, "0");
-            const matchM = parts[1]?.padStart(2, "0");
-            if (matchH !== hh || matchM !== mm) continue;
-            if (!matchesDay(btn.dias_semana as string[], jsDay)) continue;
+        const execKey = `${currentMinuteKey}_btn_${btn.id}`;
+        if (schedulerExecutedRef.current.has(execKey)) continue;
+        schedulerExecutedRef.current.add(execKey);
 
-            const execKey = `${currentMinuteKey}_btn_${btn.id}`;
-            if (schedulerExecutedRef.current.has(execKey)) continue;
-            schedulerExecutedRef.current.add(execKey);
-
-            const cmds = btn.commands as any[];
-            if (!cmds || !Array.isArray(cmds) || cmds.length === 0) continue;
-
-            console.log(`[local-scheduler] Executing button "${btn.nome}" at ${timeKey}`);
-            addLog(`[Agendador] Botão "${btn.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
-            for (const cmd of cmds) {
-              const fn = (cmd as any).fn || "";
-              const input = (cmd as any).input || "";
-              const extraValue = (cmd as any).extraValue;
-              const value = extraValue ? ((cmd as any).value ? `${(cmd as any).value},${extraValue}` : extraValue) : ((cmd as any).value || "");
-              if (fn) await sendCommand(fn, input || undefined, value || undefined);
-              await new Promise((r) => setTimeout(r, 400));
-            }
-          }
+        const cmds = btn.commands as any[];
+        if (!Array.isArray(cmds) || cmds.length === 0) continue;
+        console.log(`[local-scheduler] Executing button "${btn.nome}" at ${timeKey}`);
+        addLog(`[Agendador] Botão "${btn.nome}"`, "pending", `Disparado às ${timeKey}`, "scheduler");
+        for (const cmd of cmds) {
+          const fn = (cmd as any).fn || "";
+          const input = (cmd as any).input || "";
+          const extraValue = (cmd as any).extraValue;
+          const value = extraValue ? ((cmd as any).value ? `${(cmd as any).value},${extraValue}` : extraValue) : ((cmd as any).value || "");
+          if (fn) await sendCommand(fn, input || undefined, value || undefined);
+          await new Promise((r) => setTimeout(r, 400));
         }
-      } catch (err) {
-        console.error("[local-scheduler] button error:", err);
       }
     };
 
-    // Check every 30 seconds
-    checkSchedule();
-    const id = setInterval(checkSchedule, 30000);
-    return () => clearInterval(id);
-  }, [connected, savedUrl, user, sendCommand]);
+    void refreshSchedulerData();
+    void checkSchedule();
+    // Configuration is refreshed once per minute; the clock/scheduler itself
+    // still checks every 30 seconds without querying Postgres on each tick.
+    const refreshId = window.setInterval(() => { void refreshSchedulerData(); }, 60000);
+    const scheduleId = window.setInterval(() => { void checkSchedule(); }, 30000);
+    return () => {
+      stopped = true;
+      window.clearInterval(refreshId);
+      window.clearInterval(scheduleId);
+    };
+  }, [connected, savedUrl, user, sendCommand, runCommandsUnified, studioName, addLog]);
 
   // Extract machine names from existing NDI inputs to suggest common sources
   const detectedMachines = useMemo(() => extractNdiMachinesFromInputs(inputs), [inputs]);
