@@ -37,7 +37,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
       {
         label: "XML TEMPO",
         kicker: "XML",
-        url: `${effectiveSupabaseUrl}/storage/v1/object/public/xml-files/xml-tempo-${resolvedUid}.xml`,
+        url: `${effectiveSupabaseUrl}/functions/v1/serve-xml-tempo?user_id=${encodeURIComponent(resolvedUid)}`,
         description: "Previsão do tempo atual e próximos dias",
       },
       {
