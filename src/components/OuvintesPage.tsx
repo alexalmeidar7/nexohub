@@ -366,17 +366,23 @@ export default function OuvintesPage({ effectiveUserId }: { effectiveUserId?: st
   const handleDelete = async (id: string) => {
     if (!(await confirmDialog({ title: "Excluir ouvinte", message: "Excluir este ouvinte? Esta ação não pode ser desfeita.", destructive: true, confirmLabel: "Excluir" }))) return;
     const ownerId = targetUserId || user?.id;
-    const updated = ouvintes.filter((o) => o.id !== id);
-    setOuvintes(updated);
-    if (ownerId) saveStoredOuvintes(ownerId, updated);
-
-    try {
-      const { error } = await supabase.from("ouvintes").delete().eq("id", id);
-      if (error) console.warn("Aviso ao excluir ouvinte no Supabase:", error.message);
-    } catch (e) {
-      console.warn("Exceção ao excluir ouvinte no Supabase:", e);
+    if (!ownerId) {
+      toast({ title: "Sessão inválida", description: "Entre novamente para continuar.", variant: "destructive" });
+      return;
     }
-    toast({ title: "Ouvinte excluído" });
+    try {
+      const { data, error } = await supabase.from("ouvintes").delete()
+        .eq("id", id).eq("user_id", ownerId).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("O banco não confirmou a exclusão do ouvinte.");
+      const updated = ouvintes.filter((o) => o.id !== id);
+      setOuvintes(updated);
+      saveStoredOuvintes(ownerId, updated);
+      toast({ title: "Ouvinte excluído" });
+    } catch (e: any) {
+      console.error("Falha ao excluir ouvinte:", e);
+      toast({ title: "Não foi possível excluir o ouvinte", description: e?.message || "Falha ao excluir no banco.", variant: "destructive" });
+    }
   };
 
   const handleToggleBan = async (o: Ouvinte) => {
@@ -411,18 +417,23 @@ export default function OuvintesPage({ effectiveUserId }: { effectiveUserId?: st
       ? { banido: false, banido_at: null, banido_motivo: null }
       : { banido: true, banido_at: new Date().toISOString(), banido_motivo: motivo };
 
-    const updated = ouvintes.map(item => item.id === o.id ? { ...item, ...payload } : item);
-    setOuvintes(updated);
-    if (ownerId) saveStoredOuvintes(ownerId, updated);
-
-    try {
-      const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", o.id);
-      if (error) console.warn("Aviso ao atualizar banimento no Supabase:", error.message);
-    } catch (e) {
-      console.warn("Exceção ao atualizar banimento no Supabase:", e);
+    if (!ownerId) {
+      toast({ title: "Sessão inválida", description: "Entre novamente para continuar.", variant: "destructive" });
+      return;
     }
-
-    toast({ title: isBanned ? "Banimento removido" : "Ouvinte banido" });
+    try {
+      const { data, error } = await (supabase as any).from("ouvintes").update(payload)
+        .eq("id", o.id).eq("user_id", ownerId).select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("O banco não confirmou a alteração do banimento.");
+      const updated = ouvintes.map(item => item.id === o.id ? { ...item, ...payload } : item);
+      setOuvintes(updated);
+      saveStoredOuvintes(ownerId, updated);
+      toast({ title: isBanned ? "Banimento removido" : "Ouvinte banido" });
+    } catch (e: any) {
+      console.error("Falha ao alterar banimento do ouvinte:", e);
+      toast({ title: "Não foi possível alterar o banimento", description: e?.message || "Falha ao atualizar no banco.", variant: "destructive" });
+    }
   };
 
   const filtered = ouvintes.filter((o) => {

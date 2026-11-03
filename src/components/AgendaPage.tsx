@@ -1957,7 +1957,18 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 }))
               );
               if (insertPartsError) {
-                toast({ title: "Evento salvo, mas os participantes não foram vinculados", description: insertPartsError.message, variant: "destructive" });
+                // Roll back the just-created event so the UI never reports a complete
+                // save while its required participant records are missing.
+                const { error: rollbackError } = await supabase.from("agenda_eventos")
+                  .delete().eq("id", evt.id).eq("user_id", targetUserId || user?.id);
+                if (rollbackError) {
+                  console.error("[Agenda] Falha ao reverter evento sem participantes:", rollbackError);
+                }
+                throw new Error(
+                  rollbackError
+                    ? `Não foi possível vincular os participantes (${insertPartsError.message}) nem reverter o evento (${rollbackError.message}).`
+                    : `Não foi possível vincular os participantes. O evento foi revertido: ${insertPartsError.message}`
+                );
               }
             }
           }

@@ -253,9 +253,16 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
   const updateField = async (id: string, field: string, value: any) => {
     const ownerId = targetUserId || user?.id;
-    try {
-      await supabase.from("apresentadores").update({ [field]: value }).eq("id", id);
-    } catch {}
+    if (!ownerId) {
+      toast.error("Sessão inválida. Entre novamente para continuar.");
+      return;
+    }
+    const { data, error } = await supabase.from("apresentadores")
+      .update({ [field]: value }).eq("id", id).eq("user_id", ownerId).select("id");
+    if (error || !data?.length) {
+      toast.error(error?.message || "O banco não confirmou a atualização do participante.");
+      return;
+    }
     const updated = apresentadores.map(a => a.id === id ? { ...a, [field]: value } : a);
     setApresentadores(updated);
     if (ownerId) {
@@ -502,9 +509,13 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
   const toggleAtivo = async (id: string, current: boolean) => {
     const ownerId = targetUserId || user?.id;
-    try {
-      await supabase.from("apresentadores").update({ ativo: !current }).eq("id", id);
-    } catch {}
+    if (!ownerId) { toast.error("Sessão inválida."); return; }
+    const { data, error } = await supabase.from("apresentadores")
+      .update({ ativo: !current }).eq("id", id).eq("user_id", ownerId).select("id");
+    if (error || !data?.length) {
+      toast.error(error?.message || "O banco não confirmou a alteração de status.");
+      return;
+    }
     const updated = apresentadores.map(a => a.id === id ? { ...a, ativo: !current } : a);
     setApresentadores(updated);
     if (ownerId) {
@@ -516,9 +527,13 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
   const removeApresentador = async (id: string) => {
     const ownerId = targetUserId || user?.id;
-    try {
-      await supabase.from("apresentadores").delete().eq("id", id);
-    } catch {}
+    if (!ownerId) { toast.error("Sessão inválida."); return; }
+    const { data, error } = await supabase.from("apresentadores")
+      .delete().eq("id", id).eq("user_id", ownerId).select("id");
+    if (error || !data?.length) {
+      toast.error(error?.message || "O banco não confirmou a exclusão do participante.");
+      return;
+    }
     const updated = apresentadores.filter(a => a.id !== id);
     setApresentadores(updated);
     if (ownerId) {
@@ -571,27 +586,21 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       ativo: r.ativo,
     }));
     try {
-      await supabase.from("apresentadores").insert(inserts as any);
-    } catch {}
-    const newItems: Apresentador[] = inserts.map((ins, i) => ({
-      id: `imp_${Date.now()}_${i}`,
-      nome: ins.nome,
-      cargo: ins.cargo,
-      instagram: ins.instagram,
-      whatsapp: ins.whatsapp,
-      foto: ins.foto,
-      background_url: "",
-      ativo: ins.ativo,
-    }));
-    const updated = [...newItems, ...apresentadores];
-    setApresentadores(updated);
-    try {
+      const { data, error } = await supabase.from("apresentadores").insert(inserts as any).select("*");
+      if (error) throw error;
+      if (!data || data.length !== inserts.length) throw new Error("O banco não confirmou todos os participantes importados.");
+      const updated = [...(data as Apresentador[]), ...apresentadores];
+      setApresentadores(updated);
       localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
-    } catch {}
-    setImportRows(null);
-    setImporting(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+      setImportRows(null);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (error: any) {
+      console.error("Falha ao importar participantes:", error);
+      toast.error(error?.message || "Não foi possível importar os participantes.");
+    } finally {
+      setImporting(false);
+    }
   };
 
   const filtered = apresentadores
