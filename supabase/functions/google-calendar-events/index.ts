@@ -37,13 +37,11 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub;
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Fetch user's tokens
     const { data: tokenRow, error: tokenError } = await supabaseAdmin
       .from("google_calendar_tokens")
       .select("*")
@@ -58,7 +56,6 @@ Deno.serve(async (req) => {
 
     let accessToken = tokenRow.access_token;
 
-    // Refresh if expired
     if (new Date(tokenRow.token_expiry) <= new Date()) {
       const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
@@ -72,70 +69,91 @@ Deno.serve(async (req) => {
       });
 
       const refreshData = await refreshRes.json();
-
       if (!refreshRes.ok || !refreshData.access_token) {
-        // Token invalid, delete it
         await supabaseAdmin
           .from("google_calendar_tokens")
           .delete()
           .eq("user_id", userId);
 
         return new Response(
-          JSON.stringify({ connected: false, events: [], error: "Token expired, please reconnect" }),
+          JSON.stringify({ connected: false, events: [], error: "Token expirado; conecte novamente." }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       accessToken = refreshData.access_token;
-      const newExpiry = new Date(Date.now() + refreshData.expires_in * 1000).toISOString();
+      const newExpiry = new Date(Date.now() + Number(refreshData.expires_in || 3600) * 1000).toISOString();
 
       await supabaseAdmin
         .from("google_calendar_tokens")
-        .update({
-          access_token: accessToken,
-          token_expiry: newExpiry,
-        })
+        .update({ access_token: accessToken, token_expiry: newExpiry })
         .eq("user_id", userId);
     }
 
-    // Parse query params for date range
     const url = new URL(req.url);
     const timeMin = url.searchParams.get("timeMin") || new Date().toISOString();
     const timeMax =
       url.searchParams.get("timeMax") ||
       new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Fetch Google Calendar events
-    const calendarParams = new URLSearchParams({
-      timeMin,
-      timeMax,
-      singleEvents: "true",
-      orderBy: "startTime",
-      maxResults: "100",
-    });
-
-    const calRes = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${calendarParams.toString()}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    const calData = await calRes.json();
-
-    if (!calRes.ok) {
-      console.error("Google Calendar API error:", calData);
+    const minDate = new Date(timeMin);
+    const maxDate = new Date(timeMax);
+    if (!Number.isFinite(minDate.getTime()) || !Number.isFinite(maxDate.getTime()) || minDate >= maxDate) {
       return new Response(
-        JSON.stringify({ connected: true, events: [], error: calData.error?.message }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ connected: true, events: [], error: "Intervalo de datas inválido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const events = (calData.items || []).map((item: any) => ({
+    // Paginate Google Calendar results so events after the first page are not silently omitted.
+    const items: any[] = [];
+    let pageToken: string | undefined;
+    let pageCount = 0;
+
+    do {
+      const calendarParams = new URLSearchParams({
+        timeMin: minDate.toISOString(),
+        timeMax: maxDate.toISOString(),
+        singleEvents: "true",
+        orderBy: "startTime",
+        maxResults: "250",
+      });
+      if (pageToken) calendarParams.set("pageToken", pageToken);
+
+      const calRes = await fetch(
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events?" + calendarParams.toString(),
+        { headers: { Authorization: "Bearer " + accessToken } }
+      );
+      const calData = await calRes.json();
+
+      if (!calRes.ok) {
+        console.error("Google Calendar API error status:", calRes.status);
+        return new Response(
+          JSON.stringify({ connected: true, events: [], error: "Não foi possível consultar os eventos do Google Agenda." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      items.push(...(calData.items || []));
+      pageToken = calData.nextPageToken || undefined;
+      pageCount += 1;
+    } while (pageToken && pageCount < 20);
+
+    if (pageToken) {
+      return new Response(
+        JSON.stringify({ connected: true, events: [], error: "Muitos eventos no período. Reduza o intervalo e tente novamente." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const events = items.map((item: any) => ({
       id: item.id,
       summary: item.summary || "(Sem título)",
       description: item.description || "",
       location: item.location || "",
       start: item.start?.dateTime || item.start?.date || "",
       end: item.end?.dateTime || item.end?.date || "",
+      allDay: Boolean(item.start?.date && !item.start?.dateTime),
       htmlLink: item.htmlLink || "",
     }));
 
@@ -143,10 +161,10 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Events error:", err);
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
+    console.error("Google Calendar events failed:", err);
+    return new Response(JSON.stringify({ error: "Não foi possível consultar o Google Agenda." }), {
       status: 500,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
