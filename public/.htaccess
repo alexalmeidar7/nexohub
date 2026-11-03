@@ -111,6 +111,10 @@
   RewriteRule ^xml/(alex|superadmin)/local\.xml$ https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-broadcast?user_id=a05c5b71-a100-40f9-8be3-6eb7035a057b\&tipo=musica [R=302,L,QSA,NE]
   RewriteRule ^xml/(alex|superadmin)/musica-agora\.xml$ https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-broadcast?user_id=a05c5b71-a100-40f9-8be3-6eb7035a057b\&tipo=musica [R=302,L,QSA,NE]
 
+  # Compatibilidade: URLs antigas do Storage para XML do tempo também devem ler o feed vivo.
+  # Arquivos XML estáticos antigos existem em public/storage e não podem vencer esta regra.
+  RewriteRule ^storage/v1/object/public/xml-files/xml-tempo-([0-9a-fA-F-]+)\.xml$ https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-tempo?user_id=$1 [R=302,L,QSA,NE]
+
   # 2. Existing files and directories
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
