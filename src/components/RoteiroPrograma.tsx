@@ -416,7 +416,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
     }
 
     setLoading(true);
-    const withDeadline = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
+    const withDeadline = <T,>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> =>
       Promise.race([
         promise,
         new Promise<T>((_, reject) =>
