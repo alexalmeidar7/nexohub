@@ -377,7 +377,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     if (clientAcc && !clientAcc.isAdmin) return clientAcc.id;
     if (user?.id && !clientAcc?.isAdmin) return user.id;
     // Para admin/desenvolvimento sem rádio explícita no prop, aponta para a emissora principal (Positiva FM)
-    return "d17e65af-e407-466f-9b60-b55c43399513";
+    return "452ebd1e-61a0-42dd-bf80-231a3f426c83";
   }, [effectiveUserId, clientAcc, user?.id]);
 
   const candidateUserIds = useMemo(() => {
@@ -388,7 +388,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       user?.id,
     ].filter(Boolean) as string[];
     if (ids.length === 0) {
-      ids.push("d17e65af-e407-466f-9b60-b55c43399513");
+      ids.push("452ebd1e-61a0-42dd-bf80-231a3f426c83");
     }
     return Array.from(new Set(ids));
   }, [effectiveUserId, clientAcc?.id, clientAcc?.parentUserId, user?.id]);
