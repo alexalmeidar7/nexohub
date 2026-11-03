@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
 import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Tv } from "lucide-react";
@@ -32,16 +31,16 @@ export default function PairPage() {
     try {
       setOAuthReturnPath(`/${userSlug}/pair${code ? `?code=${code}` : ""}`);
       clearSignOutFlag();
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: getManagedOAuthRedirectUri(),
-        extraParams: { prompt: "select_account" },
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: getManagedOAuthRedirectUri(), queryParams: { prompt: "select_account" } },
       });
-      if (result.error) {
-        setStatus({ kind: "error", message: result.error.message });
+      if (error) {
+        setStatus({ kind: "error", message: error.message });
         setSigningIn(false);
         return;
       }
-      if (result.redirected) return;
+      if (data?.url) return;
       setSigningIn(false);
     } catch (e: any) {
       setStatus({ kind: "error", message: String(e?.message || e) });

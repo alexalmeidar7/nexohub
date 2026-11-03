@@ -6,7 +6,7 @@ type SiteSyncEvent =
   | { type: "noticias" }
   | { type: "categorias" };
 
-const CHANNEL = "lovable-site-sync";
+const CHANNEL = "nexohub-site-sync";
 
 let bc: BroadcastChannel | null = null;
 function getChannel(): BroadcastChannel | null {

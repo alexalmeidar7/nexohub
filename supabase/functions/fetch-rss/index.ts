@@ -206,7 +206,6 @@ Deno.serve(async (req) => {
 
     let journalisticText = null;
     let summary = null;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if ((generate_journalistic_text || generate_summary) && aiEnabled) {
       try {
         let contentToProcess = text;

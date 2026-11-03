@@ -177,7 +177,7 @@ function generateFallbackRoteiro(st: StationConfig): string {
 function generateMusicaXml(st: StationConfig, broadcastXml?: string | null): string {
   let musicaNome = "Sucesso da Programação";
   let musicaArtista = st.name;
-  let musicaCapa = "https://nexohub.lovable.app/default-sponsor-logo.png";
+  let musicaCapa = "https://housemix.nexobrasil.net/default-sponsor-logo.png";
   let curiosidade = "Música em destaque na programação ao vivo.";
 
   if (broadcastXml) {
@@ -220,7 +220,7 @@ function generateFallbackLogos(st: StationConfig): string {
     <nome>Geral</nome>
     <logo>
       <nome>Patrocinador Oficial</nome>
-      <url>https://nexohub.lovable.app/default-sponsor-logo.png</url>
+      <url>https://housemix.nexobrasil.net/default-sponsor-logo.png</url>
     </logo>
   </programa>
 </logos_patrocinadores>
@@ -745,7 +745,7 @@ function generateCombinedGeralXml(
   <patrocinadores>
     <patrocinador>
       <nome>Patrocinador Oficial</nome>
-      <logo_url>https://nexohub.lovable.app/default-sponsor-logo.png</logo_url>
+      <logo_url>https://housemix.nexobrasil.net/default-sponsor-logo.png</logo_url>
     </patrocinador>
   </patrocinadores>
 </geral>
@@ -815,7 +815,7 @@ export async function generateAllUserXmls() {
       !xmlStr ||
       xmlStr.includes("Locutor de Plantão") ||
       xmlStr.includes("Locutor no Ar") ||
-      xmlStr.includes("https://nexohub.lovable.app/default-sponsor-logo.png");
+      xmlStr.includes("https://housemix.nexobrasil.net/default-sponsor-logo.png");
 
     let broadcastContent = "";
     if (broadcastRemote && !isMockBroadcast(broadcastRemote)) {

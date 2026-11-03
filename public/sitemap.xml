@@ -1,72 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://nexohub.lovable.app/</loc>
+    <loc>https://housemix.nexobrasil.net/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/home</loc>
+    <loc>https://housemix.nexobrasil.net/home</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/telapromo</loc>
+    <loc>https://housemix.nexobrasil.net/telapromo</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/player</loc>
+    <loc>https://housemix.nexobrasil.net/player</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/player/watch</loc>
+    <loc>https://housemix.nexobrasil.net/player/watch</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/player/catalog</loc>
+    <loc>https://housemix.nexobrasil.net/player/catalog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/player/app</loc>
+    <loc>https://housemix.nexobrasil.net/player/app</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/telainterativatelao</loc>
+    <loc>https://housemix.nexobrasil.net/telainterativatelao</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/cenario-tela</loc>
+    <loc>https://housemix.nexobrasil.net/cenario-tela</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/cenario-tela-full</loc>
+    <loc>https://housemix.nexobrasil.net/cenario-tela-full</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/vmix-control</loc>
+    <loc>https://housemix.nexobrasil.net/vmix-control</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/intercom</loc>
+    <loc>https://housemix.nexobrasil.net/intercom</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/tp-externo</loc>
+    <loc>https://housemix.nexobrasil.net/tp-externo</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nexohub.lovable.app/reset-password</loc>
+    <loc>https://housemix.nexobrasil.net/reset-password</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
