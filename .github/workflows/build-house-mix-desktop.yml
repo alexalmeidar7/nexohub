@@ -1,32 +1,9 @@
 name: Build House Mix Desktop
 
 on:
+  # Build only on explicit manual dispatch. Regular House Mix site PRs/pushes
+  # must never start the slow House Mix Desktop Windows build.
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "desktop/**"
-      - "src/**"
-      - "index.html"
-      - "vite.config.ts"
-      - "package.json"
-      - "package-lock.json"
-      - "infra/offline-first/api/**"
-      - "infra/offline-first/desktop-client/**"
-      - "infra/offline-first/schema/**"
-      - ".github/workflows/build-house-mix-desktop.yml"
-  push:
-    branches: [main]
-    paths:
-      - "desktop/**"
-      - "src/**"
-      - "index.html"
-      - "vite.config.ts"
-      - "package.json"
-      - "package-lock.json"
-      - "infra/offline-first/api/**"
-      - "infra/offline-first/desktop-client/**"
-      - "infra/offline-first/schema/**"
-      - ".github/workflows/build-house-mix-desktop.yml"
 
 permissions:
   contents: read
