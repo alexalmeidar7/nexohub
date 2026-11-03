@@ -730,8 +730,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
   }, []);
 
+  const lastPersistedVmixSnapshotRef = useRef<string | null>(null);
+  useEffect(() => {
+    lastPersistedVmixSnapshotRef.current = null;
+  }, [selectedConnectionId]);
+
   const persistVmixSnapshot = useCallback(async (vmixState: ReturnType<typeof parseVmixXml>) => {
-    if (!selectedConnectionId) return;
+    if (!selectedConnectionId || !user?.id) return;
     const ndiSnapshot = vmixState.inputs.filter(isNdiInput).map(inp => ({
       key: inp.key,
       number: inp.number,
@@ -739,23 +744,29 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       type: inp.type,
       state: inp.state,
     }));
+    const snapshot = {
+      last_inputs: vmixState.inputs,
+      last_state: {
+        active: vmixState.active,
+        preview: vmixState.preview,
+        streaming: vmixState.streaming,
+        recording: vmixState.recording,
+        overlays: vmixState.overlays,
+      },
+      ndi_sources: ndiSnapshot,
+    };
+    const snapshotKey = JSON.stringify(snapshot);
+    // The 5-second keepalive still refreshes the UI, but unchanged vMix state
+    // must not generate a database UPDATE or rewrite large JSONB snapshots.
+    if (snapshotKey === lastPersistedVmixSnapshotRef.current) return;
 
-    await (supabase.from("vmix_connections" as any) as any)
-      .update({
-        last_inputs: vmixState.inputs as any,
-        last_state: {
-          active: vmixState.active,
-          preview: vmixState.preview,
-          streaming: vmixState.streaming,
-          recording: vmixState.recording,
-          overlays: vmixState.overlays,
-        },
-        ndi_sources: ndiSnapshot as any,
-        last_synced_at: new Date().toISOString(),
-      })
+    const { error } = await (supabase.from("vmix_connections" as any) as any)
+      .update({ ...snapshot, last_synced_at: new Date().toISOString() })
       .eq("id", selectedConnectionId)
-      .eq("user_id", user?.id);
-  }, [selectedConnectionId]);
+      .eq("user_id", user.id);
+    if (!error) lastPersistedVmixSnapshotRef.current = snapshotKey;
+    else console.warn("Não foi possível persistir o estado do vMix:", error);
+  }, [selectedConnectionId, user?.id]);
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
