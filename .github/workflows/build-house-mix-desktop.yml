@@ -6,6 +6,8 @@ on:
     paths:
       - "desktop/**"
       - "src/**"
+      - "public/**"
+      - ".env"
       - "index.html"
       - "vite.config.ts"
       - "package.json"
@@ -19,6 +21,8 @@ on:
     paths:
       - "desktop/**"
       - "src/**"
+      - "public/**"
+      - ".env"
       - "index.html"
       - "vite.config.ts"
       - "package.json"
@@ -27,6 +31,12 @@ on:
       - "infra/offline-first/desktop-client/**"
       - "infra/offline-first/schema/**"
       - ".github/workflows/build-house-mix-desktop.yml"
+
+# Keep only the newest Windows installer build for each branch/PR.
+# A newer commit supersedes an older installer candidate.
+concurrency:
+  group: desktop-build-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -54,7 +64,7 @@ jobs:
           Copy-Item (Get-Command node).Source "desktop/runtime/node/node.exe" -Force
           if (-not (Test-Path "desktop/runtime/node/node.exe")) { throw "Portable Node runtime is missing." }
       - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "8.0.x"
       - name: Publish local API host for Windows
