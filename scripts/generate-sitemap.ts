@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 import { resolve } from "path";
 
-const BASE_URL = "https://nexohub.lovable.app";
+const BASE_URL = "https://housemix.nexobrasil.net";
 
 interface SitemapEntry {
   path: string;
