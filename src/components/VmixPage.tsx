@@ -3895,8 +3895,15 @@ function SwitcherUI({
       4: "quinta", 5: "sexta", 6: "sábado"
     };
     const dayName = dayMap[currentDay];
+    const dayShort = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][currentDay];
+    const normalizeDay = (value: string) => (value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
 
     return programas.find(p => {
+      if (!matchesStudio(p.estudio, studioName)) return false;
       if (!p.horario_inicio || !p.horario_fim) return false;
       
       const [hStart, mStart] = p.horario_inicio.split(':').map(Number);
@@ -3919,12 +3926,11 @@ function SwitcherUI({
 
       // Filter by weekday if present
       if (p.dias_semana && p.dias_semana.length > 0) {
-        return p.dias_semana.some(d => 
-          d?.toLowerCase() === dayName || 
-          d === String(currentDay) ||
-          (currentDay === 0 && d?.toLowerCase().includes("dom")) ||
-          (currentDay === 6 && d?.toLowerCase().includes("sab"))
-        );
+        return p.dias_semana.some(d => {
+          const normalized = normalizeDay(String(d || ""));
+          return normalized.startsWith(dayShort) || normalized === String(currentDay)
+            || normalized === normalizeDay(dayName);
+        });
       }
       
       return true;
@@ -3948,7 +3954,7 @@ function SwitcherUI({
       });
     };
     const withStart = programas
-      .filter((p: any) => p.horario_inicio && p.id !== currentProgram?.id && matchesToday(p))
+      .filter((p: any) => matchesStudio(p.estudio, studioName) && p.horario_inicio && p.id !== currentProgram?.id && matchesToday(p))
       .map((p: any) => {
         const [h, m] = String(p.horario_inicio).split(":").map(Number);
         return { p, start: (h || 0) * 60 + (m || 0) };
