@@ -21,6 +21,7 @@ create table if not exists public.vmix_bridge_devices (
   created_at timestamptz not null default now()
 );
 create index if not exists vmix_bridge_devices_user_idx on public.vmix_bridge_devices (user_id);
+create index if not exists vmix_bridge_devices_online_idx on public.vmix_bridge_devices (user_id, last_seen_at desc) where revoked = false;
 
 create table if not exists public.vmix_bridge_jobs (
   id uuid primary key default gen_random_uuid(),
