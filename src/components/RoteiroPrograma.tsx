@@ -410,65 +410,90 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
   };
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    const effectiveUserId = await resolveEffectiveUserId();
-    setResolvedUserId(effectiveUserId);
+    const withDeadline = <T,>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> =>
+      Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error(`Timeout carregando ${label}`)), ms)
+        ),
+      ]);
 
+    let effectiveUserId = user.id;
     let programasList: Programa[] = [];
-    try {
-      const { data: progs } = await supabase
-        .from("programas")
-        .select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, capa, selo")
-        .eq("ativo", true)
-        .eq("user_id", effectiveUserId);
-      if (progs && progs.length > 0) {
-        programasList = progs;
-      }
-    } catch {}
 
     try {
-      const fallbackProgs = await getProgramas(effectiveUserId, user.email);
-      if (fallbackProgs && fallbackProgs.length > 0) {
-        const map = new Map<string, Programa>();
-        programasList.forEach(p => map.set(p.id, p));
-        fallbackProgs.forEach((p: any) => {
-          const formatted: Programa = {
-            id: p.id,
-            nome: p.nome,
-            estudio: p.estudio || "",
-            tipo_programa: p.tipo_programa || p.tipoPrograma || null,
-            horario_inicio: p.horario_inicio || p.horarioInicio || "",
-            horario_fim: p.horario_fim || p.horarioFim || "",
-            dias_semana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray(p.diasSemana) ? p.diasSemana : (p.dias_semana ? p.dias_semana.split(",") : [])),
-            apresentador_id: p.apresentador_id || p.apresentadorId || null,
-            apresentadores_ids: (p as any).apresentadores_ids || (p as any).apresentadoresIds || (p.apresentador_id ? [p.apresentador_id] : (p as any).apresentadorId ? [(p as any).apresentadorId] : null),
-            capa: p.capa || null,
-            selo: p.selo || null,
-          };
-          if (map.has(p.id)) {
-            const existing = map.get(p.id)!;
-            map.set(p.id, {
-              ...existing,
-              tipo_programa: formatted.tipo_programa || existing.tipo_programa,
-              apresentadores_ids: (formatted.apresentadores_ids && formatted.apresentadores_ids.length > 0) ? formatted.apresentadores_ids : existing.apresentadores_ids,
-              apresentador_id: formatted.apresentador_id || existing.apresentador_id,
+      // A resolução de subusuário não pode manter a tela inteira em skeleton.
+      try {
+        effectiveUserId = await withDeadline(resolveEffectiveUserId(), 5000, "usuário");
+      } catch {
+        effectiveUserId = propEffectiveUserId || user.id;
+      }
+      setResolvedUserId(effectiveUserId);
+
+      try {
+        const result = await withDeadline(
+          supabase
+            .from("programas")
+            .select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, capa, selo")
+            .eq("ativo", true)
+            .eq("user_id", effectiveUserId),
+          7000,
+          "programas"
+        );
+        if (!result.error && result.data?.length) programasList = result.data as Programa[];
+      } catch (error) {
+        console.warn("[RoteiroPrograma] consulta de programas indisponível; tentando cache:", error);
+      }
+
+      if (programasList.length === 0) {
+        try {
+          const fallbackProgs = await withDeadline(
+            getProgramas(effectiveUserId, user.email),
+            5000,
+            "cache de programas"
+          );
+          if (fallbackProgs?.length) {
+            const map = new Map<string, Programa>();
+            fallbackProgs.forEach((p: any) => {
+              const formatted: Programa = {
+                id: p.id,
+                nome: p.nome,
+                estudio: p.estudio || "",
+                tipo_programa: p.tipo_programa || p.tipoPrograma || null,
+                horario_inicio: p.horario_inicio || p.horarioInicio || "",
+                horario_fim: p.horario_fim || p.horarioFim || "",
+                dias_semana: Array.isArray(p.dias_semana) ? p.dias_semana : (Array.isArray(p.diasSemana) ? p.diasSemana : (p.dias_semana ? p.dias_semana.split(",") : [])),
+                apresentador_id: p.apresentador_id || p.apresentadorId || null,
+                apresentadores_ids: (p as any).apresentadores_ids || (p as any).apresentadoresIds || (p.apresentador_id ? [p.apresentador_id] : (p as any).apresentadorId ? [(p as any).apresentadorId] : null),
+                capa: p.capa || null,
+                selo: p.selo || null,
+              };
+              if (formatted.id) map.set(formatted.id, formatted);
             });
-          } else {
-            map.set(p.id, formatted);
+            programasList = Array.from(map.values());
           }
-        });
-        programasList = Array.from(map.values());
+        } catch (error) {
+          console.warn("[RoteiroPrograma] cache de programas indisponível:", error);
+        }
       }
-    } catch {}
 
-    setProgramas(programasList);
-    const uniqueEstudios = [...new Set(programasList.map(p => p.estudio).filter(Boolean))] as string[];
-    setEstudios(uniqueEstudios);
-    setLoading(false);
-    await fetchHistorico(programasList);
+      setProgramas(programasList);
+      setEstudios([...new Set(programasList.map(p => p.estudio).filter(Boolean))] as string[]);
+    } finally {
+      // Sempre libera a interface; o histórico pode continuar carregando em segundo plano.
+      setLoading(false);
+    }
+
+    void fetchHistorico(programasList).catch((error) =>
+      console.warn("[RoteiroPrograma] falha ao carregar histórico:", error)
+    );
   }, [user, propEffectiveUserId]);
-
   useEffect(() => {
     load();
   }, [load]);
