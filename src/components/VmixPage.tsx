@@ -845,8 +845,16 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     }
   }, [connected, forcedConnected, navigate]);
   
+  const getStationOwnerId = useCallback(() => {
+    if (!user) return null;
+    const account = findClientAccountById(user.id) || findClientAccountByEmail(user.email || "");
+    return account?.parentUserId || account?.id || user.id;
+  }, [user?.id, user?.email]);
+
   const loadProgramas = useCallback(async () => {
     if (!user) return;
+    const ownerId = getStationOwnerId();
+    if (!ownerId) return;
     
     // Fetch all programs for the user
     // We removed the strict .eq("ativo", true) here to ensure we get data,
@@ -854,7 +862,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     let query = supabase
       .from("programas")
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
-      .eq("user_id", user.id);
+      .eq("user_id", ownerId);
     
     const { data, error } = await query.order("horario_inicio");
     
@@ -880,12 +888,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       } catch {}
       setProgramas(mapped);
     }
-  }, [user]);
+  }, [user, getStationOwnerId]);
 
   // Mantém a grade sincronizada sem recarregar a página.
   // Realtime atende as alterações normais; a consulta periódica cobre eventos perdidos.
   useEffect(() => {
-    if (!user?.id) return;
+    const ownerId = getStationOwnerId();
+    if (!ownerId) return;
     let disposed = false;
     let debounceTimer: number | undefined;
     const refresh = () => {
@@ -895,10 +904,10 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     // Carregamento inicial único: evita duplicar a consulta feita pelo efeito inicial separado.
     void loadProgramas();
     const channel = supabase
-      .channel(`vmix-program-grid-${user.id}`)
+      .channel(`vmix-program-grid-${ownerId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${ownerId}` },
         () => {
           if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
           debounceTimer = window.setTimeout(refresh, 250);
@@ -915,7 +924,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       document.removeEventListener("visibilitychange", onVisible);
       void supabase.removeChannel(channel);
     };
-  }, [user?.id, loadProgramas]);
+  }, [getStationOwnerId, loadProgramas]);
 
   // Estúdios únicos cadastrados na Grade de Programação
   const estudiosDisponiveis = useMemo(
@@ -926,9 +935,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   // Load custom buttons (escopo estrito: apenas botões do estúdio selecionado)
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
+    const ownerId = getStationOwnerId();
+    if (!ownerId) return;
     let query = (supabase.from("custom_vmix_buttons" as any) as any)
       .select("*")
-      .eq("user_id", user.id);
+      .eq("user_id", ownerId);
 
     const { data } = await query.order("created_at");
     if (data) {
@@ -955,7 +966,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       } catch { /* mantém ordem de criação */ }
       setCustomButtons(filtered);
     }
-  }, [user, studioName]);
+  }, [user, studioName, getStationOwnerId]);
 
   const assignCustomButtonCategory = useCallback((buttonId: string, category: string) => {
     if (!user || !buttonId || !category) return;
