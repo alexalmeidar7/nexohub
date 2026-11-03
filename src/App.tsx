@@ -61,7 +61,6 @@ import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
 import { pruneLocalStorageEmergency } from "@/lib/musicStorageKeys";
 
 import LayoutVersionGuard from "@/components/LayoutVersionGuard";
-import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
 import DailyUpdateGuard from "@/components/DailyUpdateGuard";
 import { isChunkErrorMessage, lazyRetry, recoverFromChunkFailure } from "@/lib/lazyRetry";
 
@@ -280,7 +279,6 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <OAuthReturnHandler />
-          <PlayerSplashPrefetch />
           <NavigationErrorBoundary>
           <Suspense fallback={<RouteProgress />}>
           <Routes>

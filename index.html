@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -13,34 +13,15 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,600&display=swap" rel="stylesheet">
-
     <meta property="og:type" content="website" />
     <meta property="og:title" content="NexoHub — Automação, broadcast e engajamento" />
     <meta property="og:description" content="Plataforma completa para rádios e TVs: automação, vMix, promoções, player interativo e engajamento em tempo real." />
-    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb57f487-e7e0-4c3a-8416-84bcca1c49e2/id-preview-e9ebe006--81d2e8f4-39c8-4488-a40e-859152da4c63.lovable.app-1771275120261.png">
-
+    <meta property="og:image" content="https://housemix.nexobrasil.net/nexo-player-splash.png">
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="NexoHub — Automação, broadcast e engajamento" />
     <meta name="twitter:description" content="Plataforma completa para rádios e TVs: automação, vMix, promoções, player interativo e engajamento em tempo real." />
-    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb57f487-e7e0-4c3a-8416-84bcca1c49e2/id-preview-e9ebe006--81d2e8f4-39c8-4488-a40e-859152da4c63.lovable.app-1771275120261.png">
-
-    <script>
-      // Preload player splash video as soon as possible on /player routes
-      (function () {
-        try {
-          if (/\/player(\/|$)/.test(location.pathname)) {
-            var l = document.createElement('link');
-            l.rel = 'preload';
-            l.as = 'video';
-            l.href = '/__l5e/assets-v1/31dcc36b-f8a9-4aaa-8c94-ef1343a85ff0/nexo_player_splash.mp4';
-            l.type = 'video/mp4';
-            document.head.appendChild(l);
-          }
-        } catch (e) {}
-      })();
-    </script>
-</head>
-
+    <meta name="twitter:image" content="https://housemix.nexobrasil.net/nexo-player-splash.png">
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
