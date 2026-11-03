@@ -18,8 +18,8 @@ serve(async (req) => {
     const { title, content } = await req.json();
     const fallback = { resumo: title || "Resumo indisponível.", tempo_leitura: "1 min" };
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
       return new Response(JSON.stringify(fallback), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -28,14 +28,14 @@ serve(async (req) => {
     const text = content || title || "";
     const prompt = `Resuma a seguinte notícia em no máximo 2 frases e estime o tempo de leitura. Retorne APENAS JSON: {"resumo": "...", "tempo_leitura": "X min"}\n\n${text}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: "Você é um editor de notícias. Responda APENAS com JSON válido." },
           { role: "user", content: prompt },
