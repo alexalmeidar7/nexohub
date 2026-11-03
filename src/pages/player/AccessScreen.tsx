@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
-import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import { toast } from "sonner";
 import { getCurrentReturnPath, getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
@@ -16,24 +16,22 @@ export default function AccessScreen({ logoUrl, onLoginSuccess }: AccessScreenPr
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      // Use the Lovable app origin as redirect to avoid custom domain OAuth issues
+      // Use the current Nexo/House Mix origin for the Supabase OAuth callback
       setOAuthReturnPath(getCurrentReturnPath());
       clearSignOutFlag();
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: getManagedOAuthRedirectUri(),
-        extraParams: {
-          prompt: "select_account",
-        },
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: getManagedOAuthRedirectUri(), queryParams: { prompt: "select_account" } },
       });
 
-      if (result.error) {
-        console.error("OAuth error:", result.error);
+      if (error) {
+        console.error("OAuth error:", error);
         toast.error("Não foi possível conectar ao Google. Tente novamente.");
         setLoading(false);
         return;
       }
 
-      if (result.redirected) {
+      if (data?.url) {
         // Browser will redirect — don't touch state
         return;
       }
