@@ -677,6 +677,7 @@ function buildBroadcastXml(
 const SLUG_MAP: Record<string, string> = {
   positiva: "positivafm",
   p: "positivafm",
+  sub_positiva_opec: "positivafm",
   "452ebd1e-61a0-42dd-bf80-231a3f426c83": "positivafm",
   "d17e65af-e407-466f-9b60-b55c43399513": "positivafm",
   interativa: "interativafm",
@@ -711,6 +712,7 @@ const SLUG_TO_UID: Record<string, string> = {
   positivafm: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
   positiva: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
   p: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  sub_positiva_opec: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
   interativafm: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
   interativa: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
   transmissao: "98365ea6-0ebf-496d-83e9-69b38089586d",
@@ -727,7 +729,7 @@ function normalizeSlug(slug: string): string {
 }
 
 const ALL_ALIASES: Record<string, string[]> = {
-  positivafm: ["positivafm", "positiva", "p"],
+  positivafm: ["positivafm", "positiva", "p", "sub_positiva_opec"],
   interativafm: ["interativafm", "interativa"],
   culturafm973: ["culturafm973", "cultura"],
   transmissao: ["transmissao", "jornal"],
