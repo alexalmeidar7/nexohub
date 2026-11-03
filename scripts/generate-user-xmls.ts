@@ -18,7 +18,7 @@ const STATIONS: StationConfig[] = [
     slug: "interativafm",
     aliases: ["interativa"],
     name: "Interativa FM 94.9",
-    uid: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
+    uid: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
     city: "Goiânia - GO",
     tempDefault: "26ºC",
     freqDefault: "94.9 FM",
@@ -27,7 +27,7 @@ const STATIONS: StationConfig[] = [
     slug: "positivafm",
     aliases: ["positiva", "p"],
     name: "Positiva FM 99.1",
-    uid: "d17e65af-e407-466f-9b60-b55c43399513",
+    uid: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
     city: "Goiânia - GO",
     tempDefault: "26ºC",
     freqDefault: "99.1 FM",
@@ -36,7 +36,7 @@ const STATIONS: StationConfig[] = [
     slug: "transmissao",
     aliases: ["jornal"],
     name: "Jornal FM 96.5",
-    uid: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
+    uid: "98365ea6-0ebf-496d-83e9-69b38089586d",
     city: "Inhumas - GO",
     tempDefault: "25ºC",
     freqDefault: "96.5 FM",
@@ -45,7 +45,7 @@ const STATIONS: StationConfig[] = [
     slug: "culturafm973",
     aliases: ["cultura"],
     name: "Cultura FM 97.3",
-    uid: "66337743-4e4f-4950-b58f-750b0c76861e",
+    uid: "b67436c6-ede1-4438-881d-18b9e923adda",
     city: "Santos - SP",
     tempDefault: "24ºC",
     freqDefault: "97.3 FM",
@@ -54,19 +54,10 @@ const STATIONS: StationConfig[] = [
     slug: "alex",
     aliases: [],
     name: "Nexo Brasil Super Admin",
-    uid: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+    uid: "a05c5b71-a100-40f9-8be3-6eb7035a057b",
     city: "Goiânia - GO",
     tempDefault: "26ºC",
     freqDefault: "Rede Nexo",
-  },
-  {
-    slug: "default",
-    aliases: [],
-    name: "House Mix Broadcast",
-    uid: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-    city: "Goiânia - GO",
-    tempDefault: "26ºC",
-    freqDefault: "House Mix",
   },
 ];
 
@@ -766,7 +757,7 @@ export async function generateAllUserXmls() {
     // 1. Fetch live XMLs from Supabase
     const [tempoRemote, roteiroRemote, broadcastRemote, logosRemote, batalhaRemote, enqueteRemote, quizRemote, geralRemote] =
       await Promise.all([
-        fetchRemoteXml(`${SUPABASE_BASE}/storage/v1/object/public/xml-files/xml-tempo-${st.uid}.xml`),
+        fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-tempo?user_id=${encodeURIComponent(st.uid)}`),
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-roteiro-estudio?user_id=${st.uid}&estudio=Estudio%20FM`),
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-broadcast?user_id=${st.uid}`),
         fetchRemoteXml(`${SUPABASE_BASE}/functions/v1/serve-xml-logos?user_id=${st.uid}`),
@@ -1141,11 +1132,11 @@ export async function generateAllUserXmls() {
     const tempoSrc = join(defaultUserDir, "tempo.xml");
     if (existsSync(tempoSrc)) {
       const uids = [
-        "d17e65af-e407-466f-9b60-b55c43399513",
-        "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-        "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
-        "66337743-4e4f-4950-b58f-750b0c76861e",
-        "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+        "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+        "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+        "98365ea6-0ebf-496d-83e9-69b38089586d",
+        "b67436c6-ede1-4438-881d-18b9e923adda",
+        "a05c5b71-a100-40f9-8be3-6eb7035a057b",
       ];
       for (const uid of uids) {
         try {
