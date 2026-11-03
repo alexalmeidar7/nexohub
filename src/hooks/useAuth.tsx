@@ -361,9 +361,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let lastRefreshAt = Date.now();
     const proactiveRefresh = async (reason: string) => {
       if (!mounted || manualSignOutRef.current) return;
-      if (isSimulatedAccessToken(lastGoodSessionRef.current?.access_token)) {
-        return; // Simulated sessions don't need Supabase JWT refresh
-      }
+      const currentSession = lastGoodSessionRef.current;
+      if (!currentSession || isSimulatedAccessToken(currentSession.access_token)) return;
+      // Supabase's autoRefreshToken already refreshes near expiry. Our safety
+      // refresh must never rotate tokens every minute for every open station.
+      const expiresAt = currentSession.expires_at ? currentSession.expires_at * 1000 : 0;
+      if (!expiresAt || expiresAt - Date.now() > 5 * 60 * 1000) return;
       try {
         const { data, error } = await supabase.auth.refreshSession();
         lastRefreshAt = Date.now();
@@ -422,15 +425,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!document.hidden) {
         const session = lastGoodSessionRef.current;
         if (session?.expires_at) {
-          const expiresAt = session.expires_at * 1000;
-          const timeToExpiry = expiresAt - Date.now();
-          // If less than 10 mins remaining, refresh proactively
-          if (timeToExpiry < 10 * 60 * 1000) {
-            void proactiveRefresh("expiry_buffer");
-            return;
-          }
+          const timeToExpiry = session.expires_at * 1000 - Date.now();
+          // Refresh only in the final 5 minutes; SDK auto-refresh remains enabled.
+          if (timeToExpiry < 5 * 60 * 1000) void proactiveRefresh("expiry_buffer");
         }
-        void proactiveRefresh("health_check");
       }
     }, 60 * 1000);
 
