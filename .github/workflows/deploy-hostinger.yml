@@ -23,6 +23,7 @@ jobs:
       name: production
     steps:
       - name: Confirm explicit production deployment
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         env:
           CONFIRM_DEPLOY: ${{ inputs.confirm_deploy }}
