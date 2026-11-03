@@ -182,7 +182,8 @@ serve(async (req) => {
     const { data: settings, error: settingsErr } = await supabase
       .from("user_settings")
       .select("user_id, weather_city, weather_lat, weather_lon")
-      .not("weather_city", "is", null);
+      .not("weather_city", "is", null)
+      .neq("weather_city", "");
 
     if (settingsErr || !settings?.length) {
       return new Response(
@@ -199,7 +200,7 @@ serve(async (req) => {
         let lon = s.weather_lon;
         let name = s.weather_city;
 
-        if (!lat || !lon) {
+        if (lat == null || lon == null) {
           const geoRes = await fetch(
             `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=pt`,
             { signal: AbortSignal.timeout(6000) },
