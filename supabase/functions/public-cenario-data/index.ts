@@ -61,6 +61,9 @@ function decodeXmlBuffer(buffer: ArrayBuffer, contentType: string): string {
 const uidCache = new Map<string, { data: any; ts: number }>();
 const CACHE_TTL_MS = 5000; // Absorve polling sincronizado sem atrasar a atualização visual.
 
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+  fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -96,8 +99,10 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey, {
       db: { schema: "public" },
       global: {
-        headers: { "x-connection-timeout": "5000" }, // hint for connection pool
+        headers: { "x-connection-timeout": "5000" },
+        fetch: fastSupabaseFetch,
       },
+      auth: { persistSession: false, autoRefreshToken: false },
     });
 
     const now = new Date();
