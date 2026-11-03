@@ -1,6 +1,11 @@
 name: Deploy to Hostinger
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.deploy-hostinger-once'
   workflow_dispatch:
     inputs:
       confirm_deploy:
