@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
 import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Tv } from "lucide-react";
@@ -32,16 +31,16 @@ export default function PairPage() {
     try {
       setOAuthReturnPath(`/${userSlug}/pair${code ? `?code=${code}` : ""}`);
       clearSignOutFlag();
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: getManagedOAuthRedirectUri(),
-        extraParams: { prompt: "select_account" },
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: getManagedOAuthRedirectUri(), queryParams: { prompt: "select_account" } },
       });
-      if (result.error) {
-        setStatus({ kind: "error", message: result.error.message });
+      if (error) {
+        setStatus({ kind: "error", message: error.message });
         setSigningIn(false);
         return;
       }
-      if (result.redirected) return;
+      if (data?.url) return;
       setSigningIn(false);
     } catch (e: any) {
       setStatus({ kind: "error", message: String(e?.message || e) });
@@ -127,73 +126,58 @@ export default function PairPage() {
   }, [loading, user, canConfirm]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex flex-col items-center justify-center px-6 py-10">
-      <div className="w-full max-w-md rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-6 shadow-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-11 w-11 rounded-2xl bg-primary/20 flex items-center justify-center">
-            <Tv className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-widest text-slate-400">Parear TV</div>
-            <div className="text-lg font-semibold">{userSlug.toUpperCase()}</div>
-          </div>
+    <main className="min-h-[100svh] w-full overflow-x-hidden bg-[#09030b] text-white flex items-center justify-center px-4 py-8">
+      <section className="w-full max-w-xl flex flex-col items-center text-center gap-5">
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.35em] text-white/55">NEXO PLAYER</div>
+          <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{userSlug.toUpperCase()}</div>
         </div>
 
-        <p className="text-sm text-slate-300 mb-5">
-          Faça login com sua conta Google e confirme o código que aparece na sua TV.
-        </p>
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-4xl font-extrabold leading-tight">Estamos quase conectados!</h1>
+          <p className="text-sm sm:text-lg text-white/75 max-w-md mx-auto">
+            Faça login com sua conta Google e confirme o código que aparece na sua TV.
+          </p>
+        </div>
 
-        {loading && (
-          <div className="mb-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center gap-3 text-sm text-slate-300">
-            <Loader2 className="h-4 w-4 animate-spin" /> Verificando sessão…
-          </div>
-        )}
-
-        {/* Login */}
         {!user ? (
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={signingIn}
-            className="w-full flex items-center justify-center gap-3 rounded-xl bg-white text-slate-900 font-semibold py-3 hover:bg-slate-100 transition disabled:opacity-60"
+            className="w-full max-w-lg min-h-24 rounded-[28px] bg-primary text-primary-foreground flex flex-col items-center justify-center gap-2 text-xl font-bold shadow-xl disabled:opacity-60"
           >
-            {signingIn ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
+            {signingIn ? <Loader2 className="h-8 w-8 animate-spin" /> : (
               <>
-                <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden>
-                  <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.2 17.7 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 2.8-2.2 5.2-4.7 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/>
-                  <path fill="#FBBC05" d="M10.4 28.7A14.6 14.6 0 0 1 9.5 24c0-1.7.3-3.2.9-4.7l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.6 2.6 10.9l7.8-6.2z"/>
-                  <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.6 2.3-6.3 0-11.7-3.7-13.6-9.1l-7.8 6C6.5 42.6 14.6 48 24 48z"/>
+                <svg width="30" height="30" viewBox="0 0 48 48" aria-hidden>
+                  <path fill="currentColor" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.2 17.7 9.5 24 9.5z"/>
+                  <path fill="currentColor" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 2.8-2.2 5.2-4.7 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/>
                 </svg>
-                Entrar com Google
+                <span>Login com Google</span>
               </>
             )}
           </button>
         ) : (
-          <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center gap-3 mb-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white/10 border border-white/15 p-4 flex items-center gap-3 text-left">
             {user.user_metadata?.avatar_url ? (
-              <img src={user.user_metadata.avatar_url as string} alt="" className="h-9 w-9 rounded-full" />
-            ) : (
-              <div className="h-9 w-9 rounded-full bg-primary/30" />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">
-                {(user.user_metadata?.full_name as string) || user.email}
-              </div>
-              <div className="text-xs text-slate-400 truncate">{user.email}</div>
+              <img src={user.user_metadata.avatar_url as string} alt="" className="h-12 w-12 rounded-full object-cover" />
+            ) : <div className="h-12 w-12 rounded-full bg-white/15" />}
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold truncate">{(user.user_metadata?.full_name as string) || user.email}</p>
+              <p className="text-sm text-white/60 truncate">{user.email}</p>
             </div>
+            <CheckCircle2 className="h-6 w-6 text-primary shrink-0" />
           </div>
         )}
 
-        {/* Código */}
-        <div className="mt-5">
-          <label className="text-xs uppercase tracking-widest text-slate-400">Código da TV</label>
+        <div className="w-full max-w-lg rounded-[30px] bg-white text-[#100914] px-5 py-5 sm:px-8 sm:py-7 shadow-2xl">
+          <label htmlFor="tv-pair-code" className="block text-xs font-bold uppercase tracking-[0.3em] text-black/50 mb-2">Código da sua TV</label>
           <input
+            id="tv-pair-code"
             type="text"
             inputMode="numeric"
-            pattern="\d*"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
             maxLength={4}
             value={code}
             onChange={(e) => {
@@ -202,7 +186,8 @@ export default function PairPage() {
               autoRunRef.current = false;
             }}
             placeholder="0000"
-            className="mt-1 w-full text-center text-4xl tracking-[0.5em] font-bold bg-white/5 border border-white/10 rounded-xl py-4 outline-none focus:border-primary/60"
+            aria-label="Código de pareamento de quatro dígitos"
+            className="w-full min-w-0 bg-transparent text-center text-6xl sm:text-8xl font-black tracking-[0.12em] leading-none outline-none placeholder:text-black/15"
           />
         </div>
 
@@ -210,73 +195,31 @@ export default function PairPage() {
           type="button"
           disabled={!user || !canConfirm || confirming || status.kind === "ok" || status.kind === "expired"}
           onClick={handleConfirm}
-          className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition inline-flex items-center justify-center gap-2"
+          className="w-full max-w-lg rounded-full bg-primary text-primary-foreground font-bold text-lg py-4 disabled:opacity-50 inline-flex items-center justify-center gap-2"
         >
-          {confirming ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Pareando com a TV…
-            </>
-          ) : status.kind === "ok" ? (
-            <>
-              <CheckCircle2 className="h-4 w-4" /> Pareado
-            </>
-          ) : (
-            "Confirmar pareamento"
-          )}
+          {confirming ? <><Loader2 className="h-5 w-5 animate-spin" /> Conectando à TV…</> : status.kind === "ok" ? <><CheckCircle2 className="h-5 w-5" /> Pareado com sucesso!</> : "Confirmar pareamento"}
         </button>
 
         {status.kind === "ok" && (
-          <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-100 text-sm px-4 py-3 flex items-start gap-3">
-            <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
-            <div>
-              <div className="font-semibold">Pareado com sucesso!</div>
-              <div className="opacity-90 mt-0.5">{status.message}</div>
+          <div className="w-full max-w-lg text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-bold">
+              <CheckCircle2 className="h-6 w-6" /> Uhu!! Pareado com sucesso!
             </div>
+            <p className="mt-3 text-sm text-white/75">Você já pode fechar esta página. A TV entrará no player em instantes.</p>
           </div>
         )}
-        {status.kind === "error" && (
-          <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-100 text-sm px-4 py-3 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-300 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="font-semibold">Não foi possível parear</div>
-              <div className="opacity-90 mt-0.5">{status.message}</div>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={!user || !canConfirm || confirming}
-                className="mt-2 text-xs font-semibold underline underline-offset-2 hover:text-white disabled:opacity-50"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          </div>
-        )}
-        {status.kind === "expired" && (
-          <div className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-100 text-sm px-4 py-3 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="font-semibold">Código expirado</div>
-              <div className="opacity-90 mt-0.5">{status.message}</div>
-              <button
-                type="button"
-                onClick={() => { setCode(""); setStatus({ kind: "idle" }); autoRunRef.current = false; }}
-                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-amber-50 px-3 py-1.5 text-xs font-semibold"
-              >
-                <RefreshCw className="h-3.5 w-3.5" /> Digitar novo código
-              </button>
-            </div>
+        {(status.kind === "error" || status.kind === "expired") && (
+          <div className="w-full max-w-lg rounded-2xl bg-white/10 border border-white/15 p-4 text-left">
+            <div className="font-bold">{status.kind === "expired" ? "Código expirado" : "Não foi possível parear"}</div>
+            <p className="mt-1 text-sm text-white/75">{status.message}</p>
+            <button type="button" onClick={() => { setStatus({ kind: "idle" }); if (status.kind === "expired") setCode(""); autoRunRef.current = false; }} className="mt-3 text-sm font-bold underline underline-offset-4">Tentar novamente</button>
           </div>
         )}
 
-        <button
-          type="button"
-          className="mt-6 w-full text-xs text-slate-400 hover:text-slate-200"
-          onClick={handleGuestContinue}
-          disabled={confirming || status.kind === "expired"}
-        >
+        <button type="button" className="text-sm text-white/55 underline underline-offset-4" onClick={handleGuestContinue} disabled={confirming || status.kind === "expired"}>
           Entrar como visitante
         </button>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

@@ -5,7 +5,6 @@ import { UserCircle, Pencil, LogIn, Star, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { getMusicData } from "@/lib/musicData";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { getCurrentReturnPath, getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
@@ -753,30 +752,6 @@ export default function WelcomeScreen({
     setSigningIn(true);
     setAuthError(null);
 
-    // Preflight: em domínios customizados que não estão registrados na Lovable,
-    // a rota /~oauth/initiate retorna 404 e o login com Google não funciona.
-    try {
-      const probe = await fetch(window.location.origin + "/~oauth/initiate", {
-        method: "GET",
-        redirect: "manual",
-        cache: "no-store",
-      });
-      // 404 real (não é opaqueredirect) => domínio não configurado
-      if (probe.status === 404) {
-        const msg =
-          "este domínio não está configurado para login com google. peça ao administrador para conectar o domínio em lovable › settings › domains.";
-        resetAuthUI(msg);
-        toast.error("Domínio não configurado para login Google", {
-          description:
-            "o domínio precisa ser adicionado como custom domain no painel da lovable para o google login funcionar aqui.",
-          duration: 8000,
-        });
-        return;
-      }
-    } catch {
-      // rede/opaqueredirect => segue o fluxo normal
-    }
-
     // Timeout de segurança: se não concluir em 90s, reabilita a UI
     authWatchdogRef.current.timer = window.setTimeout(() => {
       if (signingInRef.current) {
@@ -812,17 +787,17 @@ export default function WelcomeScreen({
       setOAuthReturnPath(getCurrentReturnPath());
 
       clearSignOutFlag();
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: getManagedOAuthRedirectUri(),
-        extraParams: { prompt: "select_account" },
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: getManagedOAuthRedirectUri(), queryParams: { prompt: "select_account" } },
       });
-      if (result?.error) {
-        const msg = (result.error as any)?.message || "não foi possível conectar com o google. tente novamente.";
+      if (error) {
+        const msg = error.message || "não foi possível conectar com o google. tente novamente.";
         resetAuthUI(msg);
         toast.error("Falha ao entrar com Google");
         return;
       }
-      if (result?.redirected) return; // navegação em curso; watchdog cuida do retorno
+      if (data?.url) return; // navegação em curso; watchdog cuida do retorno
       clearAuthWatchdog();
       setSigningIn(false);
       setAuthMode(null);

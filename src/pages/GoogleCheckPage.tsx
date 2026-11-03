@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { getCurrentReturnPath, getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
 import { CheckCircle2, XCircle, Loader2, LogOut, RefreshCw, Mail, User as UserIcon, Shield, Clock } from "lucide-react";
 
@@ -70,12 +69,12 @@ export default function GoogleCheckPage() {
     try {
       setOAuthReturnPath(getCurrentReturnPath());
       clearSignOutFlag();
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: getManagedOAuthRedirectUri(),
-        extraParams: { prompt: "select_account" },
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: getManagedOAuthRedirectUri(), queryParams: { prompt: "select_account" } },
       });
-      if (result.error) throw result.error;
-      if (result.redirected) return;
+      if (error) throw error;
+      if (data?.url) return;
       setSigningIn(false);
     } catch (e: any) {
       setError(String(e?.message || e));
