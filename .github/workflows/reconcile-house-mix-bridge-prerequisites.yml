@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       apply_reconciliation:
-        description: "Aprovação explícita para aplicar seis migrações revisadas: chave musical, colunas House Mix, botões vMix, schema base, RLS comercial e invariantes existentes."
+        description: "Aprovação explícita para aplicar sete migrações revisadas: chave musical, colunas House Mix, recuperação de categorias vMix a partir dos comandos, schema base, RLS comercial e invariantes existentes."
         required: true
         default: false
         type: boolean
@@ -135,6 +135,7 @@ jobs:
             supabase/migrations/20261028205300_restore_musicas_tocadas_unique_key.sql
             supabase/migrations/20261028223300_reconcile_remaining_house_mix_columns.sql
             supabase/migrations/20261029025000_reconcile_custom_vmix_buttons_columns.sql
+            supabase/migrations/20261029193000_recover_vmix_button_categories.sql
             supabase/migrations/20261102100000_reconcile_housemix_schema.sql
             supabase/migrations/20261102110000_harden_comercial_preroll_rls.sql
             supabase/migrations/20261102140000_enforce_existing_housemix_column_invariants.sql
@@ -317,6 +318,24 @@ jobs:
             ) THEN
               RAISE EXCEPTION 'Migration 20261029025000 is recorded but custom_vmix_buttons is not in the expected state.';
             END IF;
+
+            SELECT EXISTS (
+              SELECT 1 FROM supabase_migrations.schema_migrations
+              WHERE version = '20261029193000'
+            ) INTO migration_recorded;
+            IF migration_recorded AND EXISTS (
+              SELECT 1
+              FROM public.custom_vmix_buttons b
+              WHERE (b.category IS NULL OR btrim(b.category) = '' OR b.category = 'AUDIO')
+                AND EXISTS (
+                  SELECT 1
+                  FROM jsonb_array_elements(COALESCE(b.commands, '[]'::jsonb)) AS command
+                  WHERE NULLIF(command->>'_buttonCategory', '') IS NOT NULL
+                    AND upper(btrim(command->>'_buttonCategory')) IS DISTINCT FROM upper(btrim(b.category))
+                )
+            ) THEN
+              RAISE EXCEPTION 'Migration 20261029193000 is recorded but legacy vMix button categories remain unrecovered.';
+            END IF;
           END;
           $preflight$;
 
@@ -325,19 +344,29 @@ jobs:
             (SELECT count(*) FROM public.infomusic) AS infomusic_rows,
             (SELECT count(*) FROM public.custom_vmix_buttons) AS custom_vmix_button_rows,
             (SELECT count(*) FROM public.custom_vmix_buttons WHERE category IS NULL OR btrim(category) = '') AS blank_categories,
-            (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000')) AS recorded_prerequisite_migrations;
+            (SELECT count(*) FROM public.custom_vmix_buttons WHERE category = 'AUDIO') AS category_recovery_candidates,
+            (SELECT count(*) FROM public.custom_vmix_buttons b
+              WHERE b.category = 'AUDIO'
+                AND EXISTS (
+                  SELECT 1 FROM jsonb_array_elements(COALESCE(b.commands, '[]'::jsonb)) AS command
+                  WHERE NULLIF(command->>'_buttonCategory', '') IS NOT NULL
+                    AND upper(btrim(command->>'_buttonCategory')) <> 'AUDIO'
+                )
+            ) AS category_metadata_mismatches,
+            (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000','20261029193000')) AS recorded_prerequisite_migrations;
           SQL
 
-      - name: Apply reviewed House Mix prerequisites, schema, RLS, and invariant migrations (explicit approval only)
+      - name: Apply reviewed House Mix prerequisites, vMix category recovery, schema, RLS, and invariant migrations (explicit approval only)
         if: ${{ inputs.apply_reconciliation }}
         shell: bash
         run: |
           set -euo pipefail
-          # Apply the three original prerequisites plus the main schema reconciliation atomically.
+          # Apply the three original prerequisites, vMix category recovery, and main schema reconciliation atomically.
           psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20261028205300_restore_musicas_tocadas_unique_key.sql \
             -f supabase/migrations/20261028223300_reconcile_remaining_house_mix_columns.sql \
             -f supabase/migrations/20261029025000_reconcile_custom_vmix_buttons_columns.sql \
+            -f supabase/migrations/20261029193000_recover_vmix_button_categories.sql \
             -f supabase/migrations/20261102100000_reconcile_housemix_schema.sql
 
           # This migration owns its transaction and replaces only the reviewed commercial RLS policies.
@@ -348,14 +377,14 @@ jobs:
           psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20261102140000_enforce_existing_housemix_column_invariants.sql
 
-          for version in 20261028205300 20261028223300 20261029025000 20261102100000 20261102110000 20261102140000; do
+          for version in 20261028205300 20261028223300 20261029025000 20261029193000 20261102100000 20261102110000 20261102140000; do
             recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$version')")"
             if [ "$recorded" != "t" ]; then
               supabase migration repair "$version" --status applied --db-url "$DATABASE_URL"
             fi
           done
 
-      - name: Verify all six migration records and resulting schema
+      - name: Verify all seven migration records and resulting schema
         if: ${{ inputs.apply_reconciliation }}
         shell: bash
         run: |
@@ -369,7 +398,7 @@ jobs:
             fk_validated boolean;
           BEGIN
             WITH required(version) AS (
-              VALUES ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261102100000'), ('20261102110000'), ('20261102140000')
+              VALUES ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029193000'), ('20261102100000'), ('20261102110000'), ('20261102140000')
             )
             SELECT string_agg(r.version, ', ' ORDER BY r.version)
               INTO missing_versions
@@ -405,6 +434,20 @@ jobs:
                OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='color' AND data_type='text' AND is_nullable='YES')
                OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_vmix_buttons' AND column_name='data_especifica' AND data_type='date' AND is_nullable='YES') THEN
               RAISE EXCEPTION 'The custom_vmix_buttons columns are incomplete or have incorrect nullability.';
+            END IF;
+
+            IF EXISTS (
+              SELECT 1
+              FROM public.custom_vmix_buttons b
+              WHERE (b.category IS NULL OR btrim(b.category) = '' OR b.category = 'AUDIO')
+                AND EXISTS (
+                  SELECT 1
+                  FROM jsonb_array_elements(COALESCE(b.commands, '[]'::jsonb)) AS command
+                  WHERE NULLIF(command->>'_buttonCategory', '') IS NOT NULL
+                    AND upper(btrim(command->>'_buttonCategory')) IS DISTINCT FROM upper(btrim(b.category))
+                )
+            ) THEN
+              RAISE EXCEPTION 'Legacy custom vMix button categories were not fully recovered.';
             END IF;
 
             IF NOT EXISTS (
@@ -476,7 +519,7 @@ jobs:
         shell: bash
         run: |
           if [ "$APPLY_RECONCILIATION" = "true" ]; then
-            echo "The three original prerequisites, schema reconciliation, commercial RLS, and column invariants were applied and verified."
+            echo "The three original prerequisites, vMix category recovery, schema reconciliation, commercial RLS, and column invariants were applied and verified."
             echo "No Bridge tables were created and no Edge Functions were deployed."
             echo "No production frontend deployment was triggered."
           else
