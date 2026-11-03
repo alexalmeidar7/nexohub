@@ -24,7 +24,9 @@ import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
 import { findClientAccountByEmail, findClientAccountById, POSITIVA_TESTEMUNHAIS_IDS, isPositivaStationAccount } from "@/lib/clientAuthAccounts";
 import { DEFAULT_STATION_PARTICIPANTES } from "@/lib/stationParticipantesData";
 
-export const POSITIVA_USER_ID = "d17e65af-e407-466f-9b60-b55c43399513";
+export const POSITIVA_USER_ID = "452ebd1e-61a0-42dd-bf80-231a3f426c83";
+const LEGACY_POSITIVA_USER_IDS = new Set(["d17e65af-e407-466f-9b60-b55c43399513"]);
+const isPositivaOwnerId = (id?: string | null) => !!id && (id === POSITIVA_USER_ID || LEGACY_POSITIVA_USER_IDS.has(id));
 
 
 interface Promocao {
@@ -489,19 +491,19 @@ export default function PromocoesKiosk() {
     if (empNome.includes("positiva")) return true;
 
     // 3. ID da emissora/usuário Positiva FM
-    if (audienceUserId === "d17e65af-e407-466f-9b60-b55c43399513") return true;
+    if (isPositivaOwnerId(audienceUserId)) return true;
 
     // 4. Usuário autenticado
     const authEmail = (user?.email || "").toLowerCase();
     if (authEmail.includes("positiva")) return true;
-    if (user?.id === "d17e65af-e407-466f-9b60-b55c43399513") return true;
+    if (isPositivaOwnerId(user?.id)) return true;
 
     // 5. Fallback storage de sessão
     try {
       const backup = JSON.parse(localStorage.getItem("nexohub_backup_session") || "{}");
       const email = (backup?.user?.email || "").toLowerCase();
       if (email.includes("positiva")) return true;
-      if (backup?.user?.id === "d17e65af-e407-466f-9b60-b55c43399513") return true;
+      if (isPositivaOwnerId(backup?.user?.id)) return true;
     } catch {}
 
     return false;
@@ -727,7 +729,7 @@ export default function PromocoesKiosk() {
       if (!data) {
         const snapPromos = getSnapshotTable("promocoes");
         if (isPositivaStation) {
-          allPromos = snapPromos.filter((p: any) => p.user_id === POSITIVA_USER_ID);
+          allPromos = snapPromos.filter((p: any) => isPositivaOwnerId(p.user_id));
         } else if (syncDb?.userId) {
           allPromos = snapPromos.filter((p: any) => p.user_id === syncDb.userId);
         }
@@ -744,7 +746,7 @@ export default function PromocoesKiosk() {
       if (!data) {
         const snapTests = getSnapshotTable("testemunhais");
         if (isPositivaStation) {
-          activeTestemunhais = snapTests.filter((t: any) => t.user_id === POSITIVA_USER_ID);
+          activeTestemunhais = snapTests.filter((t: any) => isPositivaOwnerId(t.user_id));
         } else if (syncDb?.userId) {
           activeTestemunhais = snapTests.filter((t: any) => t.user_id === syncDb.userId);
         }
@@ -813,7 +815,7 @@ export default function PromocoesKiosk() {
         } catch { /* ignore */ }
       }
 
-      const isPositiva = !localUid || localUid === POSITIVA_USER_ID;
+      const isPositiva = !localUid || isPositivaOwnerId(localUid);
       const targetUid = localUid || POSITIVA_USER_ID;
 
       // Isolamento de contas: subusuário herda os dados do usuário master.
@@ -925,7 +927,7 @@ export default function PromocoesKiosk() {
       // usuário logado (e do master, no caso de subusuário).
       const belongsToOwner = (row: any) => {
         if (ownerIds.length) return ownerIds.includes(row?.user_id);
-        return isPositivaStation && row?.user_id === POSITIVA_USER_ID;
+        return isPositivaStation && isPositivaOwnerId(row?.user_id);
       };
        if (promoData === null) {
         allPromos = getSnapshotTable("promocoes").filter(belongsToOwner);
@@ -950,8 +952,8 @@ export default function PromocoesKiosk() {
            }
         } catch {}
         if (!isPositivaStation) {
-          activeTestemunhais = activeTestemunhais.filter((t: any) => t.user_id !== POSITIVA_USER_ID && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id));
-          allPromos = allPromos.filter((p: any) => p.user_id !== POSITIVA_USER_ID);
+          activeTestemunhais = activeTestemunhais.filter((t: any) => !isPositivaOwnerId(t.user_id) && !POSITIVA_TESTEMUNHAIS_IDS.has(t.id));
+          allPromos = allPromos.filter((p: any) => !isPositivaOwnerId(p.user_id));
         }
         try {
           localStorage.setItem(`nexohub_testemunhais_${localUid}`, JSON.stringify(activeTestemunhais));
@@ -1601,7 +1603,7 @@ export default function PromocoesKiosk() {
       const normalizePresenterName = (name: string) =>
         name.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
       const isPositivaTenant = (presenter: any) =>
-        !presenter?.user_id || presenter.user_id === POSITIVA_USER_ID;
+        !presenter?.user_id || isPositivaOwnerId(presenter.user_id);
 
       // Reginaldo Serra é o cadastro correto do Vale Night. Primeiro usa os
       // apresentadores já carregados e depois consulta o snapshot local para
