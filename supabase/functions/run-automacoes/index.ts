@@ -48,7 +48,7 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const results: { automacao_id: string; programa: string; ok: boolean; error?: string }[] = [];
 
     for (const automacao of dueAutomacoes) {
@@ -136,8 +136,8 @@ serve(async (req) => {
         }
 
         // Use AI
-        if (!LOVABLE_API_KEY) {
-          results.push({ automacao_id: automacao.id, programa: programaNome, ok: false, error: "LOVABLE_API_KEY não configurada" });
+        if (!OPENAI_API_KEY) {
+          results.push({ automacao_id: automacao.id, programa: programaNome, ok: false, error: "OPENAI_API_KEY não configurada" });
           continue;
         }
 
@@ -145,14 +145,14 @@ serve(async (req) => {
         const briefing = automacao.briefing || "Monte um programa jornalístico com 3 blocos e escalada";
         const newsListText = allNews.map((n, i) => `${i + 1}. ${n.titulo} [LINK:${n.link}] [IMG:${n.imagemUrl}]`).join("\n");
 
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "gpt-4o-mini",
             messages: [
               { role: "system", content: "Você é um produtor experiente de telejornal/radiojornal brasileiro. Responda APENAS com JSON válido." },
               { role: "user", content: `Organize as notícias abaixo em um roteiro.\n\nPROGRAMA: ${programaNome}\nESTÚDIO: ${estudio}\n\nINSTRUÇÕES: ${briefing}\n\nNOTÍCIAS:\n${newsListText}\n\nRetorne JSON: {"escalada": [{"titulo": "...", "imagemUrl": "..."}], "blocos": [{"noticias": [{"titulo": "...", "imagemUrl": "...", "link": "...", "escalada": false}]}]}` },

@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import { dynamicXmlPlugin } from "./vite-plugins/dynamicXmlPlugin";
 import { logoTransformPlugin } from "./vite-plugins/logoTransformPlugin";
 
@@ -14,7 +13,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger(), dynamicXmlPlugin(), logoTransformPlugin()].filter(Boolean),
+  plugins: [react(), dynamicXmlPlugin(), logoTransformPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
