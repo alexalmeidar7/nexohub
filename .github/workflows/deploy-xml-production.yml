@@ -43,7 +43,7 @@ jobs:
         with:
           version: latest
 
-      - name: Apply only the two pending audited migrations
+      - name: Apply audited schema and weather XML schedule migrations
         env:
           DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
@@ -79,6 +79,7 @@ jobs:
 
           apply_migration "20261028180000" "fix_agenda_eventos_schema" "supabase/migrations/20261028180000_fix_agenda_eventos_schema.sql"
           apply_migration "20261028193000" "reconcile_audited_forms_schema_and_storage" "supabase/migrations/20261028193000_reconcile_audited_forms_schema_and_storage.sql"
+          apply_migration "20261103230000" "housemix_weather_xml_refresh_interval" "supabase/migrations/20261103230000_housemix_weather_xml_refresh_interval.sql"
 
       - name: Deploy XML Edge Functions
         env:
