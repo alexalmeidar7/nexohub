@@ -22,20 +22,20 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supabaseUrl, serviceKey);
     const stateHash = await sha256(state);
+
+    // Atomically consume a valid, unexpired state. Concurrent callback requests
+    // cannot both obtain the user_id, so the state is genuinely single-use.
     const { data: stateRow, error: stateError } = await admin
       .from("google_calendar_oauth_states")
-      .select("user_id, expires_at")
+      .delete()
       .eq("state_hash", stateHash)
+      .gt("expires_at", new Date().toISOString())
+      .select("user_id")
       .maybeSingle();
 
-    if (stateError || !stateRow || new Date(stateRow.expires_at).getTime() <= Date.now()) {
-      await admin.from("google_calendar_oauth_states").delete().eq("state_hash", stateHash);
+    if (stateError || !stateRow) {
       return html("A autorização expirou ou não é válida. Volte ao House Mix e tente novamente.");
     }
-
-    // State is single-use: remove it before exchanging the authorization code.
-    const { error: consumeError } = await admin.from("google_calendar_oauth_states").delete().eq("state_hash", stateHash);
-    if (consumeError) return html("Não foi possível validar a autorização. Tente novamente.");
 
     const redirectUri = `${supabaseUrl}/functions/v1/google-calendar-callback`;
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
