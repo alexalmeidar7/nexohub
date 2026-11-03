@@ -16,25 +16,16 @@ const esc = (s: unknown): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-const KNOWN_SLUG_MAP: Record<string, string> = {
-  interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-  interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-  positivafm: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
-  positiva: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
-  p: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
-  transmissao: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
-  jornal: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
-  culturafm973: "66337743-4e4f-4950-b58f-750b0c76861e",
-  cultura: "66337743-4e4f-4950-b58f-750b0c76861e",
-  alex: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
-  default: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-};
+
 
 function normTime(t: any, def = "00:00"): string {
   const str = String(t ?? def).trim();
   const [h, m] = str.split(":");
   return `${(h || "0").padStart(2, "0")}:${(m || "00").slice(0, 2).padEnd(2, "0")}`;
 }
+
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+  fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -46,41 +37,46 @@ serve(async (req) => {
     let userId = url.searchParams.get("user_id") || url.searchParams.get("uid") || "";
     const rawSlug = url.searchParams.get("slug");
 
+    // IDs atuais dos titulares no banco. UUIDs legados são mantidos como aliases.
     const SLUG_TO_UID: Record<string, string> = {
       positivafm: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
       positiva: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
       p: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
       sub_positiva_opec: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
-      interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-      interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-      transmissao: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
-      jornal: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
-      culturafm973: "66337743-4e4f-4950-b58f-750b0c76861e",
-      cultura: "66337743-4e4f-4950-b58f-750b0c76861e",
-      alex: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+      "d17e65af-e407-466f-9b60-b55c43399513": "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+      interativafm: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+      interativa: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+      "b2f70324-d086-4a5d-a407-cbc4acf98dce": "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+      transmissao: "98365ea6-0ebf-496d-83e9-69b38089586d",
+      jornal: "98365ea6-0ebf-496d-83e9-69b38089586d",
+      "48423cc6-f3b1-4bea-8729-dd0ae76a89c3": "98365ea6-0ebf-496d-83e9-69b38089586d",
+      culturafm973: "b67436c6-ede1-4438-881d-18b9e923adda",
+      cultura: "b67436c6-ede1-4438-881d-18b9e923adda",
+      "66337743-4e4f-4950-b58f-750b0c76861e": "b67436c6-ede1-4438-881d-18b9e923adda",
+      alex: "a05c5b71-a100-40f9-8be3-6eb7035a057b",
+      "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5": "a05c5b71-a100-40f9-8be3-6eb7035a057b",
     };
 
-    if (rawSlug && !SLUG_TO_UID[rawSlug.toLowerCase()]) {
-      return new Response(
-        `<?xml version="1.0" encoding="UTF-8"?><error>slug de emissora não cadastrado</error>`,
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" } },
-      );
-    }
-
-    if (rawSlug && SLUG_TO_UID[rawSlug.toLowerCase()]) {
-      userId = SLUG_TO_UID[rawSlug.toLowerCase()];
-    } else if (userId && SLUG_TO_UID[userId.toLowerCase()]) {
-      userId = SLUG_TO_UID[userId.toLowerCase()];
-    } else if (!userId || !isUUID(userId)) {
-      return new Response(
-        `<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`,
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" } },
-      );
+    // A URL oficial passa user_id e slug. O UUID explícito do banco é a fonte
+    // de verdade; nunca deixe um alias antigo substituir o titular informado.
+    const suppliedUid = userId.trim().toLowerCase();
+    if (isUUID(userId)) {
+      userId = SLUG_TO_UID[suppliedUid] || userId;
+    } else {
+      const lookup = (rawSlug || suppliedUid).toLowerCase().trim();
+      const mappedUid = SLUG_TO_UID[lookup];
+      if (!mappedUid) {
+        return new Response(
+          `<?xml version="1.0" encoding="UTF-8"?><error>Identificador da emissora ausente ou inválido</error>`,
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" } },
+        );
+      }
+      userId = mappedUid;
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, serviceKey);
+    const sb = createClient(supabaseUrl, serviceKey, { global: { fetch: fastSupabaseFetch }, auth: { persistSession: false, autoRefreshToken: false } });
 
     // Get current date and time in America/Sao_Paulo
     const formatter = new Intl.DateTimeFormat("en-GB", {
@@ -126,19 +122,32 @@ serve(async (req) => {
       return r;
     };
 
-    const empresaRes = await step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle());
-    const profileRes = await step("profile", sb.from("profiles").select("cidade, estado").eq("user_id", ownerId).maybeSingle());
-    const programasRes = await step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio"));
-    const apresentadoresRes = await step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true));
-    // Alguns registros de historico possuem campos gigantes (dezenas de MB) e estouram
-    // a memoria da funcao. A RPC devolve apenas os primeiros caracteres de cada campo.
-    const musicHistoryRes = await step("musicHistory", sb.rpc("get_music_history_light", { _user_id: ownerId, _limit: 6 }));
-    const logosRes = await step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url, programa_id").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false));
-    const roteiroRes = await step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo, participantes, xml_pushed_at, created_at, updated_at").eq("user_id", ownerId).ilike("estudio", "%fm%").order("updated_at", { ascending: false }).limit(10));
-    if (roteiroRes.error) throw roteiroRes.error;
-    const batalhaRes = await step("batalha", sb.from("batalhas_agendadas").select("*").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false }));
-    const enquetesRes = await step("enquetes", sb.from("enquetes_agendadas").select("*").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false }));
-    const quizRes = await step("quiz", sb.from("quiz_agendados").select("*").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false }));
+    // Todas as leituras independentes em paralelo: o XML geral não deve somar
+    // a latência de dez consultas sequenciais a cada atualização do vMix.
+    const [
+      empresaRes,
+      profileRes,
+      programasRes,
+      apresentadoresRes,
+      musicHistoryRes,
+      logosRes,
+      roteiroRes,
+      batalhaRes,
+      enquetesRes,
+      quizRes,
+    ] = await Promise.all([
+      step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle()),
+      step("profile", sb.from("profiles").select("cidade, estado").eq("user_id", ownerId).maybeSingle()),
+      step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio")),
+      step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true)),
+      // A RPC limita campos históricos que podem conter dados enormes.
+      step("musicHistory", sb.rpc("get_music_history_light", { _user_id: ownerId, _limit: 6 })),
+      step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url, programa_id").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false)),
+      step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo, participantes, xml_pushed_at, created_at, updated_at").eq("user_id", ownerId).ilike("estudio", "%fm%").order("updated_at", { ascending: false }).limit(10)),
+      step("batalha", sb.from("batalhas_agendadas").select("artista1_nome, artista1_musica, artista1_porcentagem, artista1_imagem, artista2_nome, artista2_musica, artista2_porcentagem, artista2_imagem, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false })),
+      step("enquetes", sb.from("enquetes_agendadas").select("pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false })),
+      step("quiz", sb.from("quiz_agendados").select("pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta, horario_inicio, horario_fim, explicacao, imagem_resposta").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false })),
+    ]);
 
 
     console.log(`[serve-xml-geral] fetched owner=${ownerId} prog=${programasRes.data?.length || 0} ap=${apresentadoresRes.data?.length || 0} logos=${logosRes.data?.length || 0} rot=${roteiroRes.data?.length || 0} bat=${batalhaRes.data?.length || 0}`);

@@ -430,7 +430,7 @@ export default function PrevisaoTempo({ effectiveUserId }: PrevisaoTempoProps = 
 
       // 3) Check public weather XML for this station
       try {
-        const xmlRes = await fetch(`/storage/v1/object/public/xml-files/weather-${ownerId}.xml`);
+        const xmlRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tempo?user_id=${encodeURIComponent(ownerId)}&t=${Date.now()}`, { cache: "no-store" });
         if (xmlRes.ok) {
           const xmlText = await xmlRes.text();
           const match = xmlText.match(/<cidade>(.*?)<\/cidade>/);

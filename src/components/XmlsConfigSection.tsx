@@ -25,76 +25,80 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
   const effectiveSupabaseUrl = envSupabase || "https://qazvgmgdidjhbvcuinpy.supabase.co";
 
   const feeds = useMemo(() => {
-    const liveUrl = (feed: string, extra = "") => `${effectiveSupabaseUrl}/functions/v1/${feed}?user_id=${encodeURIComponent(resolvedUid)}${extra}`;
+    const houseMixOrigin = typeof window !== "undefined" ? window.location.origin : "https://housemix.nexobrasil.net";
+    const permanentUrl = (file: string) => `${houseMixOrigin}/xml/${encodeURIComponent(resolvedSlug)}/${file}`;
+    const supabaseFeed = (feed: string, params = "") =>
+      `${effectiveSupabaseUrl}/functions/v1/${feed}?user_id=${encodeURIComponent(resolvedUid)}${params}`;
+
     return [
       {
         label: "XML GERAL",
         kicker: "FEED UNIFICADO",
-        url: liveUrl("serve-xml-geral", `&slug=${encodeURIComponent(resolvedSlug)}`),
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-geral?user_id=${resolvedUid}&slug=${resolvedSlug}`,
+        url: permanentUrl("geral.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-geral", `&slug=${encodeURIComponent(resolvedSlug)}`),
         description: "Feed mestre em tempo real unificando todos os XMLs: No Ar, Música, Tempo, Roteiro, Interatividade e Patrocinadores",
       },
       {
         label: "XML TEMPO",
         kicker: "XML",
-        url: `${effectiveSupabaseUrl}/storage/v1/object/public/xml-files/xml-tempo-${resolvedUid}.xml`,
+        url: permanentUrl("tempo.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-tempo"),
         description: "Previsão do tempo atual e próximos dias",
       },
       {
         label: "XML ROTEIRO",
         kicker: "XML",
-        // Link direto para o feed dinâmico: evita cópias estáticas antigas no host.
-        url: `${effectiveSupabaseUrl}/functions/v1/serve-xml-roteiro-estudio?user_id=${resolvedUid}&estudio=Estudio%20FM`,
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-roteiro-estudio?user_id=${resolvedUid}&estudio=Estudio%20FM`,
+        url: permanentUrl("roteiro.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-roteiro-estudio", "&estudio=Estudio%20FM"),
         description: "Roteiro e alinhamento do estúdio no ar",
       },
       {
         label: "XML MUSICA",
         kicker: "XML",
-        url: liveUrl("serve-xml-broadcast", "&tipo=musica"),
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-broadcast?user_id=${resolvedUid}&tipo=musica`,
+        url: permanentUrl("musica.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-broadcast", "&tipo=musica"),
         description: "Música no ar, intérprete, capa e curiosidade",
       },
       {
         label: "XML LOGOS",
         kicker: "XML",
-        url: liveUrl("serve-xml-logos"),
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-logos?user_id=${resolvedUid}`,
+        url: permanentUrl("logos.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-logos"),
         description: "Logomarcas dos patrocinadores ativos",
       },
       {
         label: "XML BROADCAST",
         kicker: "XML",
-        url: liveUrl("serve-xml-broadcast"),
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-broadcast?user_id=${resolvedUid}`,
+        url: permanentUrl("broadcast.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-broadcast"),
         description: "Feed mestre com todos os dados do ar (Broadcast)",
       },
       {
         label: "XML BATALHA MUSICAL",
         kicker: "XML",
-        url: liveUrl("serve-xml-batalha"),
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-batalha?user_id=${resolvedUid}`,
+        url: permanentUrl("batalha.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-batalha"),
         description: "Disputa musical, porcentagens e fotos dos artistas",
       },
       {
         label: "XML ENQUETE",
         kicker: "XML",
-        url: liveUrl("serve-xml-enquete", `&slug=${encodeURIComponent(resolvedSlug)}`),
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-enquete?user_id=${resolvedUid}&slug=${resolvedSlug}`,
+        url: permanentUrl("enquete.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-enquete", `&slug=${encodeURIComponent(resolvedSlug)}`),
         description: "Enquete interativa com respostas e percentuais",
       },
       {
         label: "XML CENÁRIOS ESTÚDIO",
         kicker: "XML",
-        url: `${effectiveSupabaseUrl}/functions/v1/serve-xml-cenarios-estudio?uid=${encodeURIComponent(resolvedUid)}`,
+        url: permanentUrl("cenarios-estudio.xml"),
         supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-cenarios-estudio?uid=${encodeURIComponent(resolvedUid)}`,
         description: "Cenários de estúdio, programa no ar e artes das TVs para integração com vMix",
       },
       {
         label: "XML QUIZ",
         kicker: "XML",
-        url: liveUrl("serve-xml-quiz", `&slug=${encodeURIComponent(resolvedSlug)}`),
-        supabaseUrl: `${effectiveSupabaseUrl}/functions/v1/serve-xml-quiz?user_id=${resolvedUid}&slug=${resolvedSlug}`,
+        url: permanentUrl("quiz.xml"),
+        supabaseUrl: supabaseFeed("serve-xml-quiz", `&slug=${encodeURIComponent(resolvedSlug)}`),
         description: "Quiz interativo com alternativas e gabarito",
       },
     ];

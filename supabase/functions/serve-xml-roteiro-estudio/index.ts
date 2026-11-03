@@ -31,7 +31,10 @@ const xmlHeaders = {
   "CDN-Cache-Control": "no-store",
 };
 
-Deno.serve(async (req) => {
+Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+  fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
+
+serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -46,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { global: { fetch: fastSupabaseFetch }, auth: { persistSession: false, autoRefreshToken: false } });
     const subUser: any = await withRetry(() => sb.from("sub_users")
       .select("parent_user_id, ativo").eq("auth_user_id", userId).maybeSingle());
     const ownerId = subUser?.ativo && subUser.parent_user_id ? subUser.parent_user_id : userId;

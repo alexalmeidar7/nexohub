@@ -25,27 +25,38 @@ function normTime(t: any, def = "00:00"): string {
 }
 
 const SLUG_TO_UID: Record<string, string> = {
-  positivafm: "d17e65af-e407-466f-9b60-b55c43399513",
-  positiva: "d17e65af-e407-466f-9b60-b55c43399513",
-  p: "d17e65af-e407-466f-9b60-b55c43399513",
-  sub_positiva_opec: "d17e65af-e407-466f-9b60-b55c43399513",
-  interativafm: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-  interativa: "b2f70324-d086-4a5d-a407-cbc4acf98dce",
-  transmissao: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
-  jornal: "48423cc6-f3b1-4bea-8729-dd0ae76a89c3",
-  culturafm973: "66337743-4e4f-4950-b58f-750b0c76861e",
-  cultura: "66337743-4e4f-4950-b58f-750b0c76861e",
-  alex: "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5",
+  positivafm: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  positiva: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  p: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  sub_positiva_opec: "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  interativafm: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+  interativa: "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+  transmissao: "98365ea6-0ebf-496d-83e9-69b38089586d",
+  jornal: "98365ea6-0ebf-496d-83e9-69b38089586d",
+  culturafm973: "b67436c6-ede1-4438-881d-18b9e923adda",
+  cultura: "b67436c6-ede1-4438-881d-18b9e923adda",
+  alex: "a05c5b71-a100-40f9-8be3-6eb7035a057b",
 };
 
-Deno.serve(async (req) => {
+const LEGACY_UID_TO_UID: Record<string, string> = {
+  "d17e65af-e407-466f-9b60-b55c43399513": "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+  "b2f70324-d086-4a5d-a407-cbc4acf98dce": "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+  "48423cc6-f3b1-4bea-8729-dd0ae76a89c3": "98365ea6-0ebf-496d-83e9-69b38089586d",
+  "66337743-4e4f-4950-b58f-750b0c76861e": "b67436c6-ede1-4438-881d-18b9e923adda",
+  "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5": "a05c5b71-a100-40f9-8be3-6eb7035a057b",
+};
+
+Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+  fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
+
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const sb = createClient(supabaseUrl, serviceKey);
+  const sb = createClient(supabaseUrl, serviceKey, { global: { fetch: fastSupabaseFetch }, auth: { persistSession: false, autoRefreshToken: false } });
 
   // Get current date and time in America/Sao_Paulo
   const formatter = new Intl.DateTimeFormat("en-GB", {
@@ -166,10 +177,10 @@ Deno.serve(async (req) => {
     const normalizedUserId = rawUserId.toLowerCase().trim();
     const normalizedSlug = rawSlug.toLowerCase().trim();
     const userIdFromParam = isUUID(rawUserId)
-      ? rawUserId
+      ? (LEGACY_UID_TO_UID[normalizedUserId] || rawUserId)
       : (SLUG_TO_UID[normalizedUserId] || "");
     const userIdFromSlug = isUUID(rawSlug)
-      ? rawSlug
+      ? (LEGACY_UID_TO_UID[normalizedSlug] || rawSlug)
       : (SLUG_TO_UID[normalizedSlug] || "");
     const cleanInput = normalizedSlug || normalizedUserId;
     if (userIdFromParam && userIdFromSlug && userIdFromParam !== userIdFromSlug) {

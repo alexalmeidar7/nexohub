@@ -1182,7 +1182,7 @@ export default function CenarioTelaFull() {
           const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
           const day = dayNames[now.getDay()];
           const time = now.toTimeString().slice(0, 5);
-          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl || "")}&_cache=0&_t=${Date.now()}`;
+          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl || "")}&date=${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now)}&_cache=0&_t=${Date.now()}`;
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 6000);
           const resp = await fetch(baseUrl, {
@@ -1212,7 +1212,7 @@ export default function CenarioTelaFull() {
           }
         } catch { /* silent */ }
         musicPollBusy = false;
-      }, 4000);
+      }, 6000);
     }
     // ─── 5. Same-tab polling — SCOPED to effectiveUserId ───
     let localPollInterval: ReturnType<typeof setInterval> | null = null;

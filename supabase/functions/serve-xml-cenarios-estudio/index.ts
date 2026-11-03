@@ -44,7 +44,10 @@ const withCacheBuster = (rawUrl: string, version?: string | null) => {
   return base + "?" + query;
 };
 
-Deno.serve(async (req) => {
+Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+  fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
+
+serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const xmlHeaders = {
@@ -67,6 +70,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { global: { fetch: fastSupabaseFetch }, auth: { persistSession: false, autoRefreshToken: false } },
     );
 
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];

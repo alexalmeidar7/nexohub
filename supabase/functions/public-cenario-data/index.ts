@@ -8,6 +8,8 @@ const corsHeaders = {
 // Cache of the live video ID discovered per YouTube channel (slow HTML scrape).
 const liveVideoIdCache = new Map<string, { videoId: string; at: number }>();
 const LIVE_ID_CACHE_MS = 5 * 60 * 1000;
+const youtubeChatCache = new Map<string, { messages: { user: string; text: string; avatar?: string }[]; at: number }>();
+const YOUTUBE_CHAT_CACHE_MS = 10 * 1000;
 
 // Simple XML text extractor
 function extractTag(xml: string, ...tags: string[]): string {
@@ -57,7 +59,10 @@ function decodeXmlBuffer(buffer: ArrayBuffer, contentType: string): string {
 
 // Simple in-memory cache per uid (absorb request bursts)
 const uidCache = new Map<string, { data: any; ts: number }>();
-const CACHE_TTL_MS = 3000; // 3s cache to keep “música no ar” responsive on external screens
+const CACHE_TTL_MS = 5000; // Absorve polling sincronizado sem atrasar a atualização visual.
+
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+  fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -69,6 +74,7 @@ Deno.serve(async (req) => {
     const userId = url.searchParams.get("uid");
     const clientDay = url.searchParams.get("day");
     const clientTime = url.searchParams.get("time");
+    const clientDate = url.searchParams.get("date");
 
     if (!userId) {
       return new Response(JSON.stringify({ ok: false, error: "uid required" }), {
@@ -79,7 +85,7 @@ Deno.serve(async (req) => {
     // Create a composite cache key that includes the videoId if chat is enabled
     // This prevents serving old chat messages when the user changes the URL
     const ytUrlParam = url.searchParams.get("ytUrl") || "";
-    const cacheKey = ytUrlParam ? `${userId}:${ytUrlParam}` : userId;
+    const cacheKey = [userId, clientDate || "", clientDay || "", clientTime?.slice(0, 5) || "", ytUrlParam].join(":");
     const cached = uidCache.get(cacheKey);
     
     if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
@@ -93,13 +99,16 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey, {
       db: { schema: "public" },
       global: {
-        headers: { "x-connection-timeout": "5000" }, // hint for connection pool
+        headers: { "x-connection-timeout": "5000" },
+        fetch: fastSupabaseFetch,
       },
+      auth: { persistSession: false, autoRefreshToken: false },
     });
 
     const now = new Date();
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const today = clientDay || dayNames[now.getDay()];
+    const todayDate = clientDate || new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now);
     const nowTime = clientTime || now.toTimeString().slice(0, 5);
 
     // Wrap DB calls with a hard timeout to prevent 150s hangs
@@ -131,9 +140,10 @@ Deno.serve(async (req) => {
           .ilike("estudio", "%fm%"),
         supabase
           .from("enquetes_agendadas")
-          .select("*")
+          .select("id, data_enquete, horario_inicio, horario_fim, pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta")
           .eq("user_id", userId)
-          .order("data_enquete", { ascending: false }),
+          .eq("data_enquete", todayDate)
+          .order("horario_inicio", { ascending: true }),
       ]),
       "settings+progs+enquetes"
     );
@@ -310,6 +320,10 @@ Deno.serve(async (req) => {
     }
 
     if (videoId) {
+      const cachedChat = youtubeChatCache.get(videoId);
+      if (cachedChat && Date.now() - cachedChat.at < YOUTUBE_CHAT_CACHE_MS) {
+        youtubeChatMessages = cachedChat.messages;
+      } else {
       try {
         console.log(`Fetching YouTube chat for discovered videoId: ${videoId}`);
         const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}&_t=${Date.now()}`, {
@@ -364,6 +378,13 @@ Deno.serve(async (req) => {
         }
       } catch (err) {
         console.error("YouTube chat fetch error:", err);
+        if (cachedChat) youtubeChatMessages = cachedChat.messages;
+      }
+      if (youtubeChatMessages.length > 0) {
+        youtubeChatCache.set(videoId, { messages: youtubeChatMessages, at: Date.now() });
+      } else if (cachedChat) {
+        youtubeChatMessages = cachedChat.messages;
+      }
       }
     }
 
@@ -411,8 +432,16 @@ Deno.serve(async (req) => {
     try {
       const url = new URL(req.url);
       const userId = url.searchParams.get("uid");
+      const ytUrlParam = url.searchParams.get("ytUrl") || "";
+      const cacheKey = [
+        userId || "",
+        url.searchParams.get("date") || "",
+        url.searchParams.get("day") || "",
+        (url.searchParams.get("time") || "").slice(0, 5),
+        ytUrlParam,
+      ].join(":");
       if (userId) {
-        const stale = uidCache.get(userId);
+        const stale = uidCache.get(cacheKey) || uidCache.get(userId);
         if (stale) {
           return new Response(JSON.stringify({ ...stale.data, _stale: true }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },

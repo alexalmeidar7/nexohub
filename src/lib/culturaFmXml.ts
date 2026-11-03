@@ -7,7 +7,7 @@
 
 import { normalizeMusicText } from "@/lib/textEncoding";
 
-export const CULTURA_FM_USER_ID = "66337743-4e4f-4950-b58f-750b0c76861e";
+export const CULTURA_FM_USER_ID = "b67436c6-ede1-4438-881d-18b9e923adda";
 
 function decodeIso88591IfNeeded(raw: string): string {
   const encodingMatch = raw.match(/<\?xml[^>]+encoding=["']([^"']+)["']/i);

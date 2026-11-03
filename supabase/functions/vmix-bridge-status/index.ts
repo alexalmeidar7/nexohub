@@ -20,24 +20,22 @@ Deno.serve(async (req) => {
   if (authError || !user) return json({ error: "Unauthorized" }, 401);
 
   const admin = createClient(url, service, { auth: { persistSession: false } });
-  const { data: devices, error } = await admin
+  const cutoff = new Date(Date.now() - 45000).toISOString();
+  const { data: device, error } = await admin
     .from("vmix_bridge_devices")
-    .select("device_name,last_seen_at,created_at")
+    .select("device_name,last_seen_at")
     .eq("user_id", user.id)
     .eq("revoked", false)
+    .gte("last_seen_at", cutoff)
     .order("last_seen_at", { ascending: false })
-    .limit(10);
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     console.error("vmix-bridge-status", error);
     return json({ error: "Não foi possível consultar o status da Ponte remota." }, 500);
   }
 
-  const now = Date.now();
-  const online = (devices || [])
-    .filter((device) => device.last_seen_at && now - new Date(device.last_seen_at).getTime() <= 45000)
-    .sort((a, b) => new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime());
-
-  if (!online.length) return json({ connected: false, deviceName: null });
-  return json({ connected: true, deviceName: online[0].device_name || "Computador do estúdio", lastSeenAt: online[0].last_seen_at });
+  if (!device) return json({ connected: false, deviceName: null });
+  return json({ connected: true, deviceName: device.device_name || "Computador do estúdio", lastSeenAt: device.last_seen_at });
 });

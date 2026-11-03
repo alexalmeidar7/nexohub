@@ -833,7 +833,7 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
     }
     return [];
   });
-  const [eventos, setEventos] = useState<Evento[]>(() => getStoredAgendaEvents(effectiveUserId || user?.id || "d17e65af-e407-466f-9b60-b55c43399513"));
+  const [eventos, setEventos] = useState<Evento[]>(() => getStoredAgendaEvents(effectiveUserId || user?.id || "452ebd1e-61a0-42dd-bf80-231a3f426c83"));
   const [now, setNow] = useState(new Date());
 
   const currentYear = now.getFullYear();

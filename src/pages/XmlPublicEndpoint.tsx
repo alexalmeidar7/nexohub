@@ -58,8 +58,16 @@ export default function XmlPublicEndpoint() {
   );
 
   const cleanSlug = account?.slug || (cleanPathSlug && cleanPathSlug !== "xml" ? cleanPathSlug : cleanQuery);
+  const LEGACY_STATION_UIDS: Record<string, string> = {
+    "d17e65af-e407-466f-9b60-b55c43399513": "452ebd1e-61a0-42dd-bf80-231a3f426c83",
+    "b2f70324-d086-4a5d-a407-cbc4acf98dce": "9cab6c46-c32a-4c19-94db-773dcfaf7632",
+    "48423cc6-f3b1-4bea-8729-dd0ae76a89c3": "98365ea6-0ebf-496d-83e9-69b38089586d",
+    "66337743-4e4f-4950-b58f-750b0c76861e": "b67436c6-ede1-4438-881d-18b9e923adda",
+    "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5": "a05c5b71-a100-40f9-8be3-6eb7035a057b",
+  };
   const stationUid = cleanQuery && /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(cleanQuery)
-    ? cleanQuery : (account?.parentUserId || account?.id || "");
+    ? (LEGACY_STATION_UIDS[cleanQuery] || cleanQuery)
+    : (account?.parentUserId || account?.id || "");
   const stationName = account?.nome || (cleanSlug === "positivafm" ? "Positiva FM 99.1" : "House Mix Emissora");
   const rawFile = (resolvedFile || "broadcast.xml").toLowerCase();
   const filename = rawFile.endsWith(".xml") ? rawFile : `${rawFile}.xml`;
@@ -69,7 +77,7 @@ export default function XmlPublicEndpoint() {
   if (filename.includes("geral")) {
     supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-geral?user_id=${stationUid}&slug=${cleanSlug}`;
   } else if (filename.includes("tempo")) {
-    supabaseFallbackUrl = `${SUPABASE_BASE}/storage/v1/object/public/xml-files/xml-tempo-${stationUid}.xml`;
+    supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-tempo?user_id=${encodeURIComponent(stationUid)}`;
   } else if (filename.includes("roteiro")) {
     supabaseFallbackUrl = `${SUPABASE_BASE}/functions/v1/serve-xml-roteiro-estudio?user_id=${stationUid}&estudio=Estudio%20FM`;
   } else if (filename.includes("logos")) {

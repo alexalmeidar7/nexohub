@@ -456,7 +456,7 @@ export function resolveStationInfo(slugOrUid: string) {
   );
   return {
     slug: account?.slug || clean || "positivafm",
-    uid: account?.parentUserId || account?.id || "d17e65af-e407-466f-9b60-b55c43399513",
+    uid: account?.parentUserId || account?.id || "452ebd1e-61a0-42dd-bf80-231a3f426c83",
     name: account?.nome || "House Mix Emissora",
   };
 }
