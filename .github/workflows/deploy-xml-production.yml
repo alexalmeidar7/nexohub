@@ -88,6 +88,6 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
-          for function_name in serve-xml-geral serve-xml-tempo serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast serve-xml-vmix-live serve-xml-logos serve-xml-enquete serve-xml-batalha serve-xml-quiz update-weather-xml; do
+          for function_name in serve-xml-geral serve-xml-tempo serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast serve-xml-vmix-live serve-xml-logos serve-xml-enquete serve-xml-batalha serve-xml-quiz update-weather-xml public-cenario-data public-player-data get-music-curiosity; do
             supabase functions deploy "$function_name" --project-ref qazvgmgdidjhbvcuinpy --use-api
           done
