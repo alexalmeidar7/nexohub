@@ -930,7 +930,16 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
     if (!user) return;
     let cancelled = false;
 
+    // A Home nunca pode permanecer no skeleton indefinidamente se o Supabase não responder.
+    const safetyTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        console.warn("Dashboard: timeout de carregamento inicial; liberando a Home.");
+        setInitialLoading(false);
+      }
+    }, 10000);
+
     const loadAll = async () => {
+      try {
       // Check if this user is a client account or sub-user
       const clientAcc = findClientAccountByEmail(user.email) || findClientAccountById(user.id);
 
@@ -1086,10 +1095,18 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         prevThumbRef.current = finalThumb;
         setOnAirThumb(finalThumb);
       }
+      } catch (error) {
+        console.error("Dashboard: falha ao carregar dados iniciais da Home:", error);
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
     };
 
-    loadAll();
-    return () => { cancelled = true; };
+    void loadAll();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(safetyTimer);
+    };
   }, [user, findCurrentOnAirThumb]);
 
   // Poll on-air thumb every 30s (lightweight: no base64 in batch)
