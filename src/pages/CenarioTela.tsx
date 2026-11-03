@@ -1194,7 +1194,7 @@ export default function CenarioTela() {
           const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
           const day = dayNames[now.getDay()];
           const time = now.toTimeString().slice(0, 5);
-          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl || "")}&_cache=0&_t=${Date.now()}`;
+          const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-cenario-data?uid=${effectiveUserId}&day=${encodeURIComponent(day)}&time=${time}&ytUrl=${encodeURIComponent(config.chat.youtubeVideoUrl || "")}&date=${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now)}&_cache=0&_t=${Date.now()}`;
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 6000);
           const resp = await fetch(baseUrl, {
@@ -1224,7 +1224,7 @@ export default function CenarioTela() {
           }
         } catch { /* silent */ }
         musicPollBusy = false;
-      }, 4000);
+      }, 6000);
     }
     // ─── 5. Same-tab polling — SCOPED to effectiveUserId ───
     // Same rationale as (1): never read the legacy unscoped key.
@@ -2253,7 +2253,7 @@ export default function CenarioTela() {
                       </div>
 
                       {(() => {
-                        const today = new Date().toISOString().split('T')[0];
+                        const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
                         const nowTimeStr = currentTime.toTimeString().slice(0, 5);
                         const activePoll = enquetes.find(e => e.data_enquete === today && e.horario_inicio <= nowTimeStr && e.horario_fim >= nowTimeStr);
 
