@@ -1961,7 +1961,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
 
       const { presets, programas, buttons } = schedulerDataRef.current;
-      const progMap = new Map(programas.map((p: any) => [p.id, p]));
+      const progMap = new Map<string, any>(programas.map((p: any) => [String(p.id), p] as [string, any]));
 
       for (const preset of presets) {
         if (normStudio(studioName).includes("podcast")) continue;
