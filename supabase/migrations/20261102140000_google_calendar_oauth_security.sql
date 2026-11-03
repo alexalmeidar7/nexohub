@@ -15,4 +15,5 @@ DROP POLICY IF EXISTS "Users can view own google tokens" ON public.google_calend
 DROP POLICY IF EXISTS "Users can insert own google tokens" ON public.google_calendar_tokens;
 DROP POLICY IF EXISTS "Users can update own google tokens" ON public.google_calendar_tokens;
 DROP POLICY IF EXISTS "Users can delete own google tokens" ON public.google_calendar_tokens;
+DROP POLICY IF EXISTS "tenant_isolation_google_calendar_tokens" ON public.google_calendar_tokens;
 REVOKE ALL ON public.google_calendar_tokens FROM anon, authenticated;
