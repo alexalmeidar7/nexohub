@@ -598,13 +598,14 @@ jobs:
             exit 1
           fi
 
-          infomusic_fk="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
-            SELECT pg_get_constraintdef(oid)
+          infomusic_fk_state="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT pg_get_constraintdef(oid), convalidated::text
             FROM pg_constraint
             WHERE conrelid='public.infomusic'::regclass AND conname='infomusic_user_id_fkey'
           ")"
-          if [ "$infomusic_fk" != "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE" ]; then
-            echo "::error::infomusic.user_id foreign key is missing or incompatible. Bridge writes are blocked."
+          IFS='|' read -r infomusic_fk infomusic_fk_validated <<< "$infomusic_fk_state"
+          if [ "$infomusic_fk" != "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE" ] || [ "$infomusic_fk_validated" != "true" ]; then
+            echo "::error::infomusic.user_id foreign key must match the reviewed definition and be validated. Bridge writes are blocked."
             exit 1
           fi
 
