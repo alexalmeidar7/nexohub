@@ -57,9 +57,14 @@ export default function GoogleCalendarSync() {
       const { data, error } = await supabase.functions.invoke("google-calendar-auth");
       if (error || !data?.url) throw error || new Error("Sem URL");
 
+      const authUrl = new URL(data.url);
+      if (authUrl.protocol !== "https:" || authUrl.hostname !== "accounts.google.com") {
+        throw new Error("O servidor retornou um endereço de autorização inválido.");
+      }
+
       if (isDesktop) {
         // Electron delegates HTTPS windows to the system browser.
-        window.open(data.url, "_blank");
+        window.open(authUrl.toString(), "_blank");
         toast({
           title: "Autorização aberta no navegador",
           description: "Conclua o acesso à sua conta Google no navegador e clique em Atualizar no House Mix.",
@@ -69,7 +74,7 @@ export default function GoogleCalendarSync() {
       }
 
       if (!popup) throw new Error("Não foi possível abrir a janela de autorização.");
-      popup.location.href = data.url;
+      popup.location.href = authUrl.toString();
 
       // Poll for completion
       const t = window.setInterval(async () => {
