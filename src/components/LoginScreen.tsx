@@ -188,7 +188,6 @@ export default function LoginScreen() {
     if (loading) return;
     setLoading(true);
     setError("");
-    // Keep the post-logout lock until Supabase confirms a real sign-in.
     localStorage.setItem(KEEP_CONNECTED_KEY, keepConnected ? "true" : "false");
     if (keepConnected) {
       localStorage.setItem(REMEMBERED_USER_KEY, email.trim());
@@ -196,58 +195,60 @@ export default function LoginScreen() {
       localStorage.removeItem(REMEMBERED_USER_KEY);
     }
 
-    const request = () => supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
+    // Password grants are single-flight: retrying after a timeout can create
+    // concurrent sessions and rotate refresh tokens more than once.
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: email.trim(), password: pass }),
+        AUTH_TIMEOUT_MS,
+        "Tempo de conexão excedido. O servidor não respondeu a tempo; tente novamente."
+      );
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        const { data, error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
-        if (error) {
-          if (isCredentialError(error.message)) {
-            setError(getFriendlyAuthMessage(error.message));
-            break;
-          }
-          if (attempt === MAX_RETRIES - 1) {
-            setError(getFriendlyAuthMessage(error.message));
-          } else {
-            await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
-            continue;
-          }
-        }
-        if (data?.session) {
-          // Only a confirmed Supabase session can clear the post-logout lock.
-          try {
-            localStorage.removeItem("nexohub_explicit_logout");
-            localStorage.removeItem(SIGNED_OUT_FLAG);
-            sessionStorage.removeItem(SIGNED_OUT_FLAG);
-            if (import.meta.env.BASE_URL !== "./" && new URLSearchParams(window.location.search).get("signed_out") === "1") {
-              window.history.replaceState({}, "", "/");
-            }
-          } catch {}
-          localStorage.setItem("nexohub_backup_session", JSON.stringify(data.session));
-          localStorage.setItem(KEEP_CONNECTED_KEY, "true");
-          localStorage.removeItem("nexohub_explicit_logout");
-          if (import.meta.env.BASE_URL === "./") {
-            window.location.hash = "#/home";
-          } else {
-            window.location.replace("/home");
-          }
-          return;
-        }
-        break;
-      } catch (err) {
-        if (!isConnectionLikeError(err)) {
-          const rawMessage = getErrorMessage(err);
-          setError(rawMessage ? getFriendlyAuthMessage(rawMessage) : "Não foi possível autenticar. Tente novamente.");
-          break;
-        }
-        if (attempt === MAX_RETRIES - 1) {
-          setError("Não foi possível conectar ao servidor. Tente novamente em alguns segundos.");
-        } else {
-          await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
-        }
+      if (error) {
+        console.error("[AuthLogin] signInWithPassword failed", {
+          status: (error as any).status,
+          code: (error as any).code,
+          message: error.message,
+        });
+        setError(getFriendlyAuthMessage(error.message));
+        return;
       }
+
+      if (!data?.session || !data?.user) {
+        console.error("[AuthLogin] Auth returned no session or user", {
+          hasSession: Boolean(data?.session),
+          hasUser: Boolean(data?.user),
+        });
+        setError("O servidor aceitou a solicitação, mas não retornou uma sessão válida. Tente novamente.");
+        return;
+      }
+
+      localStorage.removeItem("nexohub_explicit_logout");
+      localStorage.removeItem(SIGNED_OUT_FLAG);
+      sessionStorage.removeItem(SIGNED_OUT_FLAG);
+      if (import.meta.env.BASE_URL !== "./" && new URLSearchParams(window.location.search).get("signed_out") === "1") {
+        window.history.replaceState({}, "", "/");
+      }
+      localStorage.setItem("nexohub_backup_session", JSON.stringify(data.session));
+      localStorage.setItem(KEEP_CONNECTED_KEY, "true");
+      if (import.meta.env.BASE_URL === "./") {
+        window.location.hash = "#/home";
+      } else {
+        window.location.replace("/home");
+      }
+    } catch (err) {
+      const rawMessage = getErrorMessage(err);
+      console.error("[AuthLogin] login request threw", err);
+      setError(
+        isConnectionLikeError(err)
+          ? "Não foi possível concluir a conexão com o servidor. Sua senha não foi alterada; tente novamente."
+          : rawMessage
+            ? getFriendlyAuthMessage(rawMessage)
+            : "Não foi possível autenticar. Tente novamente."
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const closeForgot = () => {
