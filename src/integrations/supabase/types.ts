@@ -651,6 +651,7 @@ export type Database = {
       }
       comercial_mockups: {
         Row: {
+          config: Json | null
           created_at: string | null
           fields: Json | null
           id: string
@@ -658,6 +659,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          config?: Json | null
           created_at?: string | null
           fields?: Json | null
           id?: string
@@ -665,6 +667,7 @@ export type Database = {
           name: string
         }
         Update: {
+          config?: Json | null
           created_at?: string | null
           fields?: Json | null
           id?: string
@@ -833,27 +836,41 @@ export type Database = {
       }
       custom_news_sites: {
         Row: {
+          category: string | null
           created_at: string
           id: string
           name: string
+          parent_id: string | null
           rss_url: string
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: string
           name: string
+          parent_id?: string | null
           rss_url: string
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           id?: string
           name?: string
+          parent_id?: string | null
           rss_url?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_news_sites_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "custom_news_sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_quiz_categories: {
         Row: {
@@ -1089,6 +1106,7 @@ export type Database = {
           id: string
           image_url: string | null
           portal: string
+          resumo: string | null
           title: string
           user_id: string
         }
@@ -1097,6 +1115,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal: string
+          resumo?: string | null
           title: string
           user_id: string
         }
@@ -1105,6 +1124,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal?: string
+          resumo?: string | null
           title?: string
           user_id?: string
         }
@@ -1145,30 +1165,37 @@ export type Database = {
           artista: string
           created_at: string
           curiosidade: string
+          deezer_artist_img: string | null
           expires_at: string
           id: string
           musica: string
+          user_id: string | null
         }
         Insert: {
           artista: string
           created_at?: string
           curiosidade: string
+          deezer_artist_img?: string | null
           expires_at?: string
           id?: string
           musica: string
+          user_id?: string | null
         }
         Update: {
           artista?: string
           created_at?: string
           curiosidade?: string
+          deezer_artist_img?: string | null
           expires_at?: string
           id?: string
           musica?: string
+          user_id?: string | null
         }
         Relationships: []
       }
       infomusic_excecoes: {
         Row: {
+          artista_url: string | null
           background_url: string | null
           capa_url: string | null
           created_at: string | null
@@ -1178,6 +1205,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          artista_url?: string | null
           background_url?: string | null
           capa_url?: string | null
           created_at?: string | null
@@ -1187,6 +1215,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          artista_url?: string | null
           background_url?: string | null
           capa_url?: string | null
           created_at?: string | null
@@ -1256,26 +1285,32 @@ export type Database = {
       music_likes: {
         Row: {
           artista: string
+          capa: string | null
           created_at: string
           id: string
           musica: string
           radio_user_id: string | null
+          titulo: string
           user_id: string
         }
         Insert: {
           artista?: string
+          capa?: string | null
           created_at?: string
           id?: string
           musica?: string
           radio_user_id?: string | null
+          titulo?: string
           user_id: string
         }
         Update: {
           artista?: string
+          capa?: string | null
           created_at?: string
           id?: string
           musica?: string
           radio_user_id?: string | null
+          titulo?: string
           user_id?: string
         }
         Relationships: []
@@ -1396,6 +1431,7 @@ export type Database = {
           telefone: string | null
           updated_at: string
           user_id: string
+          whatsapp_message_id: string | null
         }
         Insert: {
           banido?: boolean
@@ -1417,6 +1453,7 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id: string
+          whatsapp_message_id?: string | null
         }
         Update: {
           banido?: boolean
@@ -1438,6 +1475,7 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp_message_id?: string | null
         }
         Relationships: []
       }
@@ -1448,6 +1486,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          price: number
           updated_at: string
         }
         Insert: {
@@ -1456,6 +1495,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          price?: number
           updated_at?: string
         }
         Update: {
@@ -1464,6 +1504,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          price?: number
           updated_at?: string
         }
         Relationships: []
@@ -1602,43 +1643,64 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_enabled: boolean | null
           avatar_url: string | null
           cidade: string | null
+          cpf: string | null
           created_at: string
+          data_nascimento: string | null
           email: string | null
           estado: string | null
+          event_types_config: Json | null
           id: string
+          journalistic_prompt: string | null
           nome: string | null
           pais: string | null
+          setor: string | null
           sexo: string | null
+          sub_profiles: Json
           updated_at: string
           user_id: string
           whatsapp: string | null
         }
         Insert: {
+          ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           estado?: string | null
+          event_types_config?: Json | null
           id?: string
+          journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
+          setor?: string | null
           sexo?: string | null
+          sub_profiles?: Json
           updated_at?: string
           user_id: string
           whatsapp?: string | null
         }
         Update: {
+          ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           estado?: string | null
+          event_types_config?: Json | null
           id?: string
+          journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
+          setor?: string | null
           sexo?: string | null
+          sub_profiles?: Json
           updated_at?: string
           user_id?: string
           whatsapp?: string | null
@@ -1848,9 +1910,11 @@ export type Database = {
         Row: {
           created_at: string
           data_quiz: string
+          explicacao: string
           horario_fim: string
           horario_inicio: string
           id: string
+          imagem_resposta: string
           pergunta: string
           resposta_correta: number
           resposta1: string
@@ -1863,9 +1927,11 @@ export type Database = {
         Insert: {
           created_at?: string
           data_quiz: string
+          explicacao?: string
           horario_fim: string
           horario_inicio: string
           id?: string
+          imagem_resposta?: string
           pergunta?: string
           resposta_correta?: number
           resposta1?: string
@@ -1878,9 +1944,11 @@ export type Database = {
         Update: {
           created_at?: string
           data_quiz?: string
+          explicacao?: string
           horario_fim?: string
           horario_inicio?: string
           id?: string
+          imagem_resposta?: string
           pergunta?: string
           resposta_correta?: number
           resposta1?: string
@@ -2006,6 +2074,7 @@ export type Database = {
           id: string
           image_url: string | null
           portal: string
+          resumo: string | null
           title: string
           user_id: string
         }
@@ -2014,6 +2083,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal: string
+          resumo?: string | null
           title: string
           user_id: string
         }
@@ -2022,6 +2092,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal?: string
+          resumo?: string | null
           title?: string
           user_id?: string
         }
@@ -2523,10 +2594,20 @@ export type Database = {
         Row: {
           active: boolean
           background_url: string | null
+          catalog_name: string | null
+          classificacao_etaria: string | null
           cover_url: string | null
           created_at: string
+          descricao: string | null
+          estudio: string | null
+          horario_fim: string | null
+          horario_inicio: string | null
           id: string
+          is_hd: boolean | null
+          is_stereo: boolean | null
+          logo_url: string | null
           name: string
+          numero_canal: string | null
           type: string
           updated_at: string
           url: string
@@ -2535,10 +2616,20 @@ export type Database = {
         Insert: {
           active?: boolean
           background_url?: string | null
+          catalog_name?: string | null
+          classificacao_etaria?: string | null
           cover_url?: string | null
           created_at?: string
+          descricao?: string | null
+          estudio?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
+          is_hd?: boolean | null
+          is_stereo?: boolean | null
+          logo_url?: string | null
           name: string
+          numero_canal?: string | null
           type?: string
           updated_at?: string
           url: string
@@ -2547,10 +2638,20 @@ export type Database = {
         Update: {
           active?: boolean
           background_url?: string | null
+          catalog_name?: string | null
+          classificacao_etaria?: string | null
           cover_url?: string | null
           created_at?: string
+          descricao?: string | null
+          estudio?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
+          is_hd?: boolean | null
+          is_stereo?: boolean | null
+          logo_url?: string | null
           name?: string
+          numero_canal?: string | null
           type?: string
           updated_at?: string
           url?: string
@@ -2600,7 +2701,10 @@ export type Database = {
           created_at: string
           estudio: string
           id: string
+          is_html: boolean | null
+          last_seen: string | null
           nome: string
+          texto_atual: string | null
           user_id: string
         }
         Insert: {
@@ -2608,7 +2712,10 @@ export type Database = {
           created_at?: string
           estudio?: string
           id?: string
+          is_html?: boolean | null
+          last_seen?: string | null
           nome?: string
+          texto_atual?: string | null
           user_id: string
         }
         Update: {
@@ -2616,7 +2723,10 @@ export type Database = {
           created_at?: string
           estudio?: string
           id?: string
+          is_html?: boolean | null
+          last_seen?: string | null
           nome?: string
+          texto_atual?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2981,6 +3091,7 @@ export type Database = {
           fail_count: number
           finished_at: string | null
           id: string
+          image_url: string | null
           message: string
           name: string
           scheduled_at: string | null
@@ -2997,6 +3108,7 @@ export type Database = {
           fail_count?: number
           finished_at?: string | null
           id?: string
+          image_url?: string | null
           message: string
           name: string
           scheduled_at?: string | null
@@ -3013,6 +3125,7 @@ export type Database = {
           fail_count?: number
           finished_at?: string | null
           id?: string
+          image_url?: string | null
           message?: string
           name?: string
           scheduled_at?: string | null
@@ -3220,6 +3333,7 @@ export type Database = {
           channel_name: string
           channel_type: string
           id: string
+          radio_user_id: string | null
           user_id: string
           watched_at: string
         }
@@ -3230,6 +3344,7 @@ export type Database = {
           channel_name?: string
           channel_type?: string
           id?: string
+          radio_user_id?: string | null
           user_id: string
           watched_at?: string
         }
@@ -3240,6 +3355,7 @@ export type Database = {
           channel_name?: string
           channel_type?: string
           id?: string
+          radio_user_id?: string | null
           user_id?: string
           watched_at?: string
         }
@@ -3285,9 +3401,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_comercial: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       current_parent_user_id: { Args: never; Returns: string }
       current_tenant_user_id: { Args: never; Returns: string }
+      expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }
       get_music_history_light: {
         Args: { _limit?: number; _user_id: string }
         Returns: {
