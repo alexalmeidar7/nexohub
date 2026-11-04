@@ -104,9 +104,7 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
                   <span className="h-2 w-2 shrink-0 rounded-full bg-white animate-pulse" />
                   <span className="truncate">Ponte remota conectado ao {bridgeDeviceStatus.deviceName || "computador do estúdio"}</span>
                 </div>
-              ) : (
-                <button type="button" onClick={createBridgePairing} className="ml-auto mr-3 inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0042A3] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0065F9]" title="Vincular computador do estúdio para acesso remoto">Ponte remota</button>
-              )
+              ) : null
             )}
             {user && (
               <div className="ml-auto flex items-center gap-3 pl-4">
