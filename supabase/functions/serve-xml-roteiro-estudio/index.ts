@@ -206,7 +206,8 @@ serve(async (req) => {
           }
           xml += `  </escalada>\n`;
         }
-        blocosList.forEach((b: any, bi: number) => {
+        for (let bi = 0; bi < blocosList.length; bi++) {
+          const b = blocosList[bi];
           xml += `  <bloco numero="${bi + 1}">\n`;
           for (let ni = 0; ni < (b.noticias || []).length; ni++) {
             const n = b.noticias[ni];
@@ -215,7 +216,7 @@ serve(async (req) => {
             xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${esc(n.titulo)}</titulo>\n      <imagem>${esc(image)}</imagem>\n      <escalada>${n.escalada ? "true" : "false"}</escalada>\n    </noticia>\n`;
           }
           xml += `  </bloco>\n`;
-        });
+        }
       }
     } else {
       xml += `  <estudio>${esc(estudio)}</estudio>\n`;
