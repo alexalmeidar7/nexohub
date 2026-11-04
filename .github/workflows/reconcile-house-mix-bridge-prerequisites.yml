@@ -370,7 +370,7 @@ jobs:
                     AND upper(btrim(command->>'_buttonCategory')) <> 'AUDIO'
                 )
             ) AS category_metadata_mismatches,
-            (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000','20261029193000')) AS recorded_prerequisite_migrations;
+            (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000','20261029193000','20261102100000','20261102110000','20261102140000')) AS recorded_prerequisite_migrations;
           SQL
 
       - name: Apply reviewed House Mix prerequisites, vMix category recovery, schema, RLS, and invariant migrations (explicit approval only)
