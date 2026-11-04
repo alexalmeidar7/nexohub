@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
 
 const AUTH_TIMEOUT_MS = 12000;
-const MAX_RETRIES = 3;
 const KEEP_CONNECTED_KEY = "nexohub_keep_connected";
 const REMEMBERED_USER_KEY = "nexohub_remembered_user";
 const SIGNED_OUT_FLAG = "nexohub_signed_out";
@@ -21,10 +20,6 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, timeoutMe
     if (timeoutId) clearTimeout(timeoutId);
   }
 };
-
-/** Exponential backoff with jitter */
-const backoffDelay = (attempt: number) =>
-  Math.min(2000 * Math.pow(2, attempt), 20000) + Math.random() * 1000;
 
 const isCredentialError = (msg: string) => {
   const n = msg.toLowerCase();
@@ -151,32 +146,30 @@ export default function LoginScreen() {
         redirectTo,
       });
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        const { error } = await withTimeout(request(), AUTH_TIMEOUT_MS, "Tempo de conexão excedido.");
-        if (error) {
-          if (attempt === MAX_RETRIES - 1) {
-            setForgotError(getFriendlyAuthMessage(error.message));
-            break;
-          }
-          await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
-          continue;
-        }
-        setForgotSent(true);
-        break;
-      } catch (err) {
-        if (!isConnectionLikeError(err)) {
-          setForgotError("Não foi possível enviar o link. Tente novamente.");
-          break;
-        }
-        if (attempt === MAX_RETRIES - 1) {
-          setForgotError("Não foi possível conectar ao servidor. Tente novamente em alguns segundos.");
-        } else {
-          await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
-        }
+    try {
+      const { error } = await withTimeout(
+        request(),
+        AUTH_TIMEOUT_MS,
+        "Tempo de conexão excedido."
+      );
+      if (error) {
+        setForgotError(
+          isConnectionLikeError(error)
+            ? "Não foi possível confirmar o envio. Verifique sua caixa de entrada antes de solicitar outro link."
+            : getFriendlyAuthMessage(error.message)
+        );
+        return;
       }
+      setForgotSent(true);
+    } catch (err) {
+      setForgotError(
+        isConnectionLikeError(err)
+          ? "Não foi possível confirmar o envio. Verifique sua caixa de entrada antes de solicitar outro link."
+          : "Não foi possível enviar o link. Tente novamente."
+      );
+    } finally {
+      setForgotLoading(false);
     }
-    setForgotLoading(false);
   };
 
   const handleForgot = handleForgotSubmit;
