@@ -27,7 +27,7 @@ jobs:
           bun-version: latest
 
       - name: Instalar dependências
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Executar suíte completa de testes
         run: bun run test
