@@ -661,7 +661,7 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
         : commandData;
     });
 
-    const commandsWithCategory = savedCommands.map((command, index) => index === 0 ? { ...command, _buttonCategory: buttonCategory || null } : command);
+    const commandsWithCategory = savedCommands.map((command) => ({ ...command, _buttonCategory: buttonCategory || null }));
     const payload = {
       nome: nome.trim(),
       // A categoria é persistida no JSON da primeira ação (_buttonCategory).

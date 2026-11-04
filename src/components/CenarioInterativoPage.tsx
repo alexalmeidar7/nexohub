@@ -923,9 +923,10 @@ export default function CenarioInterativoPage({ effectiveUserId }: { effectiveUs
   }, []);
 
   const handleTabChange = (tab: string) => {
-    // A aba Cores é apenas uma área de configuração e nunca deve virar cena de saída.
+    // A navegação do editor é independente da cena exibida no preview e no ar.
+    // "colors" é uma aba administrativa: nunca altera activeTab nem é transmitida.
     setSettingsTab(tab);
-    if (!VALID_SCENE_TABS.has(tab) || tab === activeTab) return;
+    if (tab === "colors" || !VALID_SCENE_TABS.has(tab) || tab === activeTab) return;
     setActiveTab(tab);
     // Mirroring to other devices happens via the main save useEffect
   };
