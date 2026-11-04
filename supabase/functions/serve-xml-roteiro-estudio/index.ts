@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+const serve = Deno.serve;
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
@@ -32,7 +33,7 @@ const xmlHeaders = {
   "CDN-Cache-Control": "no-store",
 };
 
-Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
   fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 serve(async (req) => {
@@ -141,7 +142,7 @@ serve(async (req) => {
         xml += `    </perguntas>\n`;
         xml += `    <concluindo>${esc(podcastData.concluindo || "")}</concluindo>\n`;
 
-        const imagens: string[] = await Promise.all((podcastData.apoioImagens || []).filter((u: string) => u && u.trim()).map((u: string) => ensureVmixPngUrl(supabase, u, `vmix-roteiro/${userId}`)));
+        const imagens: string[] = await Promise.all((podcastData.apoioImagens || []).filter((u: string) => u && u.trim()).map((u: string) => ensureVmixPngUrl(sb, u, `vmix-roteiro/${userId}`)));
         const videos: string[] = (podcastData.apoioVideos || []).filter((u: string) => u && u.trim());
         if (imagens.length > 0) {
           // Rotate active image every 10 seconds
