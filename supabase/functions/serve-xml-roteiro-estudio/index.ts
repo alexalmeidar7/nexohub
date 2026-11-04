@@ -61,6 +61,7 @@ serve(async (req) => {
       .from("roteiros")
       .select("id, programa_nome, estudio, data_programa, horario, participantes, subtitulo, conteudo_html, xml_pushed_at, created_at, updated_at")
       .eq("user_id", ownerId)
+      .order("xml_pushed_at", { ascending: false, nullsFirst: false })
       .order("updated_at", { ascending: false })
       .limit(200))) || [];
 
