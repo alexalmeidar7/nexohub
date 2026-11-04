@@ -66,7 +66,9 @@ const SLUG_TO_NAME: Record<string, string> = {
   alex: "Alex Estúdio",
 };
 
-Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+const serve = Deno.serve;
+
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
   fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 serve(async (req) => {
