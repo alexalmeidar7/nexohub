@@ -1802,8 +1802,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       };
 
       const storageKey = `nexohub_roteiros_${ownerId}`;
-      const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      const list = Array.isArray(existing) ? existing : [];
+      // O banco é a fonte principal. O cache local é apenas auxiliar e nunca pode
+      // transformar um roteiro já gravado no servidor em um falso erro de salvamento.
+      let list: any[] = [];
+      try {
+        const rawExisting = localStorage.getItem(storageKey);
+        const parsedExisting = rawExisting ? JSON.parse(rawExisting) : [];
+        list = Array.isArray(parsedExisting) ? parsedExisting : [];
+      } catch (storageReadError) {
+        console.warn("[ProgramaExpress] Não foi possível ler o cache local de roteiros:", storageReadError);
+      }
+
       const idx = list.findIndex((r: any) => r.id === roteiroId || (r.programa_nome === programaNome && r.estudio === estudio && !r.agendado_para_envio));
       if (idx >= 0) {
         list[idx] = { ...list[idx], ...fullBaseRecord };
@@ -1849,9 +1858,34 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         list.unshift(fullSchedRecord);
       }
 
-      localStorage.setItem(storageKey, JSON.stringify(list));
-      if (user?.id && user.id !== ownerId) {
-        localStorage.setItem(`nexohub_roteiros_${user.id}`, JSON.stringify(list));
+      // Tenta cache completo primeiro; se o navegador estiver sem espaço, grava uma
+      // versão compacta para manter a listagem sem duplicar matérias e HTML pesados.
+      // Falha no cache não desfaz nem invalida a confirmação já obtida do banco.
+      let cacheSaved = false;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(list));
+        cacheSaved = true;
+      } catch (storageWriteError) {
+        console.warn("[ProgramaExpress] Cache local cheio; tentando versão compacta:", storageWriteError);
+        try {
+          const compactList = list.slice(0, 20).map((record: any) => {
+            const { conteudo_html: _html, participantes: _participantes, ...summary } = record || {};
+            return summary;
+          });
+          localStorage.setItem(storageKey, JSON.stringify(compactList));
+          cacheSaved = true;
+        } catch (compactStorageError) {
+          console.warn("[ProgramaExpress] Não foi possível atualizar o cache local; roteiro está salvo no banco:", compactStorageError);
+        }
+      }
+
+      // Espelhamento do cache para subusuário é best-effort e não pode bloquear o fluxo.
+      if (cacheSaved && user?.id && user.id !== ownerId) {
+        try {
+          localStorage.setItem(`nexohub_roteiros_${user.id}`, JSON.stringify(list));
+        } catch (mirrorStorageError) {
+          console.warn("[ProgramaExpress] Não foi possível espelhar o cache para o subusuário:", mirrorStorageError);
+        }
       }
       window.dispatchEvent(new CustomEvent("nexohub:roteiros-updated", { detail: { roteiro: fullBaseRecord } }));
 
