@@ -183,6 +183,7 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
           // STRICT FILTER: purge any leaked participant from other stations
           localList = parsed
             .filter(a => {
+              if (deletedParticipantIds.has(a.id)) return false;
               if ((a as any).stationKey && (a as any).stationKey !== resolvedStation) return false;
               if (validStationIds.has(a.id)) return true;
               if (a.nome && validStationNames.has(a.nome.trim().toLowerCase())) return true;
