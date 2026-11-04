@@ -47,7 +47,9 @@ const LEGACY_UID_TO_UID: Record<string, string> = {
   "29b1107b-3eb0-4eb3-a7f8-d9ca93be24b5": "a05c5b71-a100-40f9-8be3-6eb7035a057b",
 };
 
-Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+const serve = Deno.serve;
+
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
   fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 serve(async (req) => {
