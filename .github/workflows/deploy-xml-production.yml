@@ -92,3 +92,20 @@ jobs:
           for function_name in serve-xml-geral serve-xml-tempo serve-xml-roteiro-estudio serve-xml-cenarios-estudio serve-xml-broadcast serve-xml-vmix-live serve-xml-logos serve-xml-enquete serve-xml-batalha serve-xml-quiz collect-audience update-weather-xml public-cenario-data public-player-data get-music-curiosity; do
             supabase functions deploy "$function_name" --project-ref qazvgmgdidjhbvcuinpy --use-api
           done
+
+      - name: Validar XML real no backend de produção
+        run: |
+          set -euo pipefail
+          URL="https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-geral?slug=positiva"
+          STATUS="$(curl --silent --show-error --output /tmp/housemix-geral.xml --write-out '%{http_code}' --max-time 45 "$URL")"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::serve-xml-geral respondeu HTTP $STATUS em produção."
+            head -c 1000 /tmp/housemix-geral.xml || true
+            exit 1
+          fi
+          if ! grep -q '<?xml' /tmp/housemix-geral.xml; then
+            echo "::error::A função respondeu HTTP 200, mas não entregou um documento XML válido."
+            head -c 1000 /tmp/housemix-geral.xml || true
+            exit 1
+          fi
+          echo "XML geral de produção respondeu HTTP 200 e contém declaração XML."

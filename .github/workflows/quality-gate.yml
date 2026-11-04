@@ -1,0 +1,63 @@
+name: Quality gate - full tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  full-tests:
+    name: Testes automatizados completos
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalar dependências
+        run: bun install
+
+      - name: Executar suíte completa de testes
+        run: bun run test
+
+      - name: Compilar aplicação de produção
+        run: bun run build
+
+  edge-functions:
+    name: Validar Edge Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Verificar funções XML e helpers
+        run: |
+          deno check --node-modules-dir=none --no-lock \
+            supabase/functions/_shared/vmixPng.ts \
+            supabase/functions/serve-xml-broadcast/index.ts \
+            supabase/functions/serve-xml-cenarios-estudio/index.ts \
+            supabase/functions/serve-xml-batalha/index.ts \
+            supabase/functions/serve-xml-logos/index.ts \
+            supabase/functions/serve-xml-roteiro-estudio/index.ts \
+            supabase/functions/serve-xml-geral/index.ts \
+            supabase/functions/serve-xml-vmix-live/index.ts \
+            supabase/functions/serve-xml-quiz/index.ts \
+            supabase/functions/serve-xml-enquete/index.ts \
+            supabase/functions/serve-xml-tempo/index.ts

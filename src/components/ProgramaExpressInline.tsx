@@ -79,6 +79,13 @@ interface Bloco {
   noticias: NewsItem[];
 }
 
+export const hasInformationalContent = (blocks: Array<{ noticias?: Array<{ titulo?: string; texto_materia?: string }> }> = []) =>
+  blocks.some((block) =>
+    (block?.noticias || []).some((news) =>
+      Boolean(news?.titulo?.trim() || news?.texto_materia?.trim())
+    )
+  );
+
 interface Programa {
   id: string;
   nome: string;
@@ -1599,8 +1606,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return false;
       }
     } else {
-      const totalNews = (activeBlocos || []).reduce((s, b) => s + ((b?.noticias || []).filter(n => n?.titulo?.trim() || n?.texto_materia?.trim()).length), 0);
-      if (totalNews === 0) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
+      if (!hasInformationalContent(activeBlocos)) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
     }
     setSaving(true);
     saveInProgressRef.current = true;
