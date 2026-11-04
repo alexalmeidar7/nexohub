@@ -908,65 +908,6 @@ export async function generateAllUserXmls() {
       }
     } catch {}
 
-    try {
-      if (!batalhaContent) {
-        const batSyncPath = resolve("src/data/xml_batalhas_sync.json");
-        if (existsSync(batSyncPath)) {
-          const syncData = JSON.parse(readFileSync(batSyncPath, "utf-8"));
-          const list = syncData[st.slug] || syncData[st.uid] || [];
-          const { today, currentTime } = getBrasiliaDateTime();
-          let active = list.find((b: any) =>
-            isScheduleActive(b.data_batalha, b.horario_inicio, b.horario_fim, today, currentTime)
-          );
-          if (!active) {
-            active = list.find((b: any) => String(b.data_batalha || "").slice(0, 10) === today && b.horario_fim !== "00:00");
-          }
-          if (!active && list.length > 0) {
-            active = list[0];
-          }
-          if (active && (active.artista1_nome || active.artista2_nome)) {
-            const p1 = active.artista1_porcentagem ?? 0;
-            const p2 = active.artista2_porcentagem ?? 0;
-            batalhaContent = `<?xml version="1.0" encoding="UTF-8"?>
-<items>
-  <batalha>
-    <emissora>${escapeXml(st.name)}</emissora>
-    <artista1_nome>${escapeXml(active.artista1_nome || "")}</artista1_nome>
-    <artista1_musica>${escapeXml(active.artista1_musica || "")}</artista1_musica>
-    <artista1_porcentagem>${escapeXml(p1)}%</artista1_porcentagem>
-    <artista1_imagem>${escapeXml(active.artista1_imagem || "")}</artista1_imagem>
-    <artista2_nome>${escapeXml(active.artista2_nome || "")}</artista2_nome>
-    <artista2_musica>${escapeXml(active.artista2_musica || "")}</artista2_musica>
-    <artista2_porcentagem>${escapeXml(p2)}%</artista2_porcentagem>
-    <artista2_imagem>${escapeXml(active.artista2_imagem || "")}</artista2_imagem>
-    <horario_inicio>${escapeXml(active.horario_inicio || "00:00")}</horario_inicio>
-    <horario_fim>${escapeXml(active.horario_fim || "23:59")}</horario_fim>
-    <!-- Variantes de tags compatíveis com diferentes títulos vMix -->
-    <artista1>${escapeXml(active.artista1_nome || "")}</artista1>
-    <musica1>${escapeXml(active.artista1_musica || "")}</musica1>
-    <porcentagem1>${escapeXml(p1)}%</porcentagem1>
-    <imagem1>${escapeXml(active.artista1_imagem || "")}</imagem1>
-    <foto1>${escapeXml(active.artista1_imagem || "")}</foto1>
-    <artista2>${escapeXml(active.artista2_nome || "")}</artista2>
-    <musica2>${escapeXml(active.artista2_musica || "")}</musica2>
-    <porcentagem2>${escapeXml(p2)}%</porcentagem2>
-    <imagem2>${escapeXml(active.artista2_imagem || "")}</imagem2>
-    <foto2>${escapeXml(active.artista2_imagem || "")}</foto2>
-    <artista_a>${escapeXml(active.artista1_nome || "")}</artista_a>
-    <musica_a>${escapeXml(active.artista1_musica || "")}</musica_a>
-    <porcentagem_a>${escapeXml(p1)}%</porcentagem_a>
-    <imagem_a>${escapeXml(active.artista1_imagem || "")}</imagem_a>
-    <artista_b>${escapeXml(active.artista2_nome || "")}</artista_b>
-    <musica_b>${escapeXml(active.artista2_musica || "")}</musica_b>
-    <porcentagem_b>${escapeXml(p2)}%</porcentagem_b>
-    <imagem_b>${escapeXml(active.artista2_imagem || "")}</imagem_b>
-  </batalha>
-</items>`;
-          }
-        }
-      }
-    } catch {}
-
     batalhaContent = batalhaContent || generateFallbackBatalha(st);
     enqueteContent = enqueteContent || generateFallbackEnquete(st);
     quizContent = quizContent || generateFallbackQuiz(st);
