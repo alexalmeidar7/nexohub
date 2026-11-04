@@ -703,43 +703,55 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     }
   }, [programas, effectiveUserId, user, cachedApresentadores, estudio, editingId, markEdited]);
 
-  // Search apresentadores
+  // Search apresentadores: usa a mesma fonte centralizada do cadastro de participantes,
+  // incluindo a resolução da conta/estação e os registros já carregados do Supabase.
   useEffect(() => {
-    if (!searchNome.trim() || !user) { setSearchResults([]); setNoResults(false); return; }
+    const term = searchNome.trim().toLocaleLowerCase("pt-BR");
+    if (!term) {
+      setSearchResults([]);
+      setNoResults(false);
+      return;
+    }
+
+    let active = true;
     const timer = setTimeout(async () => {
-      const lower = searchNome.toLowerCase();
-      const localMatches = (cachedApresentadores || [])
-        .filter(a => a.nome && a.nome.toLowerCase().includes(lower))
-        .slice(0, 5)
-        .map(a => ({
-          nome: a.nome,
-          cargo: a.cargo || (a.categoria === "Apresentador" ? "Locutor / Apresentador" : a.categoria || ""),
-          instagram: a.instagram || ""
-        }));
+      try {
+        const latestList = await getApresentadores(effectiveUserId || user?.id, user?.email)
+          .catch(() => cachedApresentadores);
+        if (!active) return;
 
-      if (localMatches.length > 0) {
-        setSearchResults(localMatches);
-        setNoResults(false);
-        return;
-      }
+        const source = Array.isArray(latestList) && latestList.length > 0
+          ? latestList
+          : cachedApresentadores;
+        if (Array.isArray(latestList) && latestList.length > 0) {
+          setCachedApresentadores(latestList);
+        }
 
-      const targetId = effectiveUserId || user.id;
-      const { data } = await supabase
-        .from("apresentadores")
-        .select("nome, cargo, instagram")
-        .eq("user_id", targetId)
-        .ilike("nome", `%${searchNome}%`)
-        .limit(5);
-      if (data && data.length > 0) {
-        setSearchResults(data.map(d => ({ nome: d.nome, cargo: d.cargo || "", instagram: d.instagram || "" })));
-        setNoResults(false);
-      } else {
-        setSearchResults([]);
-        setNoResults(true);
+        const matches = (source || [])
+          .filter(a => a.nome && a.nome.toLocaleLowerCase("pt-BR").includes(term))
+          .slice(0, 8)
+          .map(a => ({
+            nome: a.nome,
+            cargo: a.cargo || (a.categoria === "Apresentador" ? "Locutor / Apresentador" : a.categoria || ""),
+            instagram: a.instagram || "",
+          }));
+
+        setSearchResults(matches);
+        setNoResults(matches.length === 0);
+      } catch (error) {
+        console.error("[ProgramaExpressInline] erro ao buscar participantes:", error);
+        if (active) {
+          setSearchResults([]);
+          setNoResults(true);
+        }
       }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchNome, user, cachedApresentadores, effectiveUserId]);
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [searchNome, user?.id, user?.email, cachedApresentadores, effectiveUserId]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -2967,7 +2979,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
             }}
             placeholder="Cole o link da matéria" 
             className="block w-full min-w-0 max-w-full pl-7 pr-3 py-1.5 rounded-lg text-[11px] outline-none" 
-            style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
+            style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box", borderRadius: 10 }} 
           />
         </div>
         <button onClick={() => handlePasteLink(linkInput)} disabled={isFetching || !linkInput} className="btn-skyglass-accent px-3.5 py-1.5 text-[11px] disabled:opacity-30 shrink-0">
