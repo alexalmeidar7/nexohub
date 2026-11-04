@@ -163,7 +163,7 @@ serve(async (req) => {
           xml += `  <escalada>\n`;
           for (let i = 0; i < escaladaItems.length; i++) {
             const e = escaladaItems[i];
-            const image = await ensureVmixPngUrl(supabase, typeof e === "string" ? "" : e.imagemUrl || "", `vmix-roteiro/${userId}`);
+            const image = await ensureVmixPngUrl(sb, typeof e === "string" ? "" : e.imagemUrl || "", `vmix-roteiro/${userId}`);
             xml += `    <item ordem="${i + 1}">\n      <titulo>${esc(typeof e === "string" ? e : e.titulo || "")}</titulo>\n      <imagem>${esc(image)}</imagem>\n    </item>\n`;
           }
           xml += `  </escalada>\n`;
