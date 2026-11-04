@@ -38,6 +38,7 @@ jobs:
           python3 - <<'PY'
           import base64
           import json
+          import re
           import sys
           import tomllib
           from pathlib import Path
@@ -53,6 +54,13 @@ jobs:
           config = tomllib.loads(Path("supabase/config.toml").read_text(encoding="utf-8"))
           project_ref = config.get("project_id", "")
           expected_url = f"https://{project_ref}.supabase.co" if project_ref else ""
+
+          htaccess = Path("public/.htaccess").read_text(encoding="utf-8")
+          htaccess_refs = set(re.findall(r"https://([a-z0-9]+)\\.supabase\\.co", htaccess))
+          if not project_ref or htaccess_refs != {project_ref}:
+              raise SystemExit(
+                  "::error::public/.htaccess must route every Supabase feed to the same project configured in .env and supabase/config.toml. Nothing was uploaded."
+              )
 
           publishable_key = values.get("VITE_SUPABASE_PUBLISHABLE_KEY", "")
           key_project_ref = ""
