@@ -98,7 +98,6 @@ jobs:
           set -euo pipefail
           URL="https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-geral?slug=positiva"
           STATUS="$(curl --silent --show-error --output /tmp/housemix-geral.xml --write-out '%{http_code}' --max-time 45 "$URL")"
-          CONTENT_TYPE="$(file --mime-type -b /tmp/housemix-geral.xml)"
           if [ "$STATUS" != "200" ]; then
             echo "::error::serve-xml-geral respondeu HTTP $STATUS em produção."
             head -c 1000 /tmp/housemix-geral.xml || true
