@@ -2496,7 +2496,7 @@ export default function ConfiguracoesPage({
                       </td>
                     </tr>
                     ))
-                  ])}}
+                  ])}
                 </tbody>
               </table>
             </div>
