@@ -2035,7 +2035,7 @@ export function dynamicXmlPlugin(): Plugin {
 
               const batStore = readSyncData(batalhasFile);
               const batList = batStore[slug] || batStore[rawSlug] || batStore[SLUG_TO_UID[slug]] || [];
-              const activeBat = getActiveBatalha(batList, today, currentTime, true);
+              const activeBat = getActiveBatalha(batList, today, currentTime, false);
 
               const geralPath = path.join(rootDir, "public", "xml", slug, "geral.xml");
               let geralXml = "";
