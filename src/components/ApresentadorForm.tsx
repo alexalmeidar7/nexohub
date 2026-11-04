@@ -148,10 +148,13 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
 
   // 1. Fetch from Supabase (if online and valid)
   let supabaseAps: Apresentador[] = [];
+  let supabaseReadSucceeded = false;
   try {
     let query = supabase.from("apresentadores").select("*");
     if (effectiveId) query = query.eq("user_id", effectiveId);
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) throw error;
+    supabaseReadSucceeded = true;
     if (data && data.length > 0) {
       // Registros do banco já estão isolados por user_id: são sempre válidos
       supabaseAps = data
@@ -181,8 +184,13 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
           // STRICT FILTER: purge any leaked participant from other stations
+          const persistedIds = new Set(supabaseAps.map(a => a.id));
           localList = parsed
             .filter(a => {
+              // Com leitura confirmada do banco, cache não pode ressuscitar UUID já excluído.
+              const cachedId = String(a?.id || "");
+              const isPersistedUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cachedId);
+              if (supabaseReadSucceeded && isPersistedUuid && !persistedIds.has(cachedId)) return false;
               if (deletedParticipantIds.has(a.id)) return false;
               if ((a as any).stationKey && (a as any).stationKey !== resolvedStation) return false;
               if (validStationIds.has(a.id)) return true;
@@ -198,6 +206,10 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
               };
             });
         }
+      }
+      // Persiste o cache saneado para não reapresentar UUIDs excluídos após recarregar.
+      if (supabaseReadSucceeded && effectiveId) {
+        try { localStorage.setItem(`nexohub_participantes_${effectiveId}`, JSON.stringify(localList)); } catch {}
       }
     }
   } catch {}
