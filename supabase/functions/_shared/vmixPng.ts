@@ -1,10 +1,8 @@
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-
 const pngCache = new Map<string, string>();
 
 /** Materializes any remote image as a real PNG object in the public XML bucket. */
 export async function ensureVmixPngUrl(
-  supabase: SupabaseClient,
+  supabase: any,
   source: string | null | undefined,
   folder: string,
 ): Promise<string> {
