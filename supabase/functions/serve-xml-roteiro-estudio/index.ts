@@ -59,7 +59,7 @@ serve(async (req) => {
     // Cada feed consulta exclusivamente os roteiros da estação solicitada.
     const allUserRoteiros: any[] = (await withRetry(() => sb
       .from("roteiros")
-      .select("id, programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
+      .select("id, programa_nome, estudio, data_programa, horario, participantes, subtitulo, conteudo_html, xml_pushed_at, created_at, updated_at")
       .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
       .limit(200))) || [];
@@ -84,8 +84,13 @@ serve(async (req) => {
     const todayLocal = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
     const studioCandidates = (allUserRoteiros || []).filter((r: any) => studioKey(r.estudio) === targetEst);
     const todayCandidates = studioCandidates.filter((r: any) => String(r.data_programa || "").slice(0, 10) === todayLocal);
-    // Enviar para XML atualiza xml_pushed_at; usar essa publicação mesmo se a pauta for de outra data.
-    let candidates = todayCandidates.length > 0 ? todayCandidates : studioCandidates;
+    const contentCandidates = studioCandidates.filter((r: any) => String(r.conteudo_html || "").trim().length > 0);
+    const todayWithContent = todayCandidates.filter((r: any) => String(r.conteudo_html || "").trim().length > 0);
+    // Ignora rascunhos vazios. Prioriza pauta com conteúdo real e, depois, a publicação mais recente.
+    let candidates = todayWithContent.length > 0 ? todayWithContent
+      : contentCandidates.length > 0 ? contentCandidates
+      : todayCandidates.length > 0 ? todayCandidates
+      : studioCandidates;
 
     // Carrega horarios dos programas para fallback
     let progs: any[] = [];
@@ -126,6 +131,31 @@ serve(async (req) => {
       xml += `  <estudio>${esc(r.estudio || "")}</estudio>\n`;
       xml += `  <data>${esc(r.data_programa || new Date().toISOString().split("T")[0])}</data>\n`;
       xml += `  <atualizado_em>${esc(r.updated_at || r.created_at || "")}</atualizado_em>\n`;
+      const rawHtml = String(r.conteudo_html || "");
+      let htmlForVmix = rawHtml;
+      const imageUrls = Array.from(new Set(rawHtml.match(/https?:\\/\\/[^"'\\s<>]+/g) || []))
+        .filter((imageUrl) => /\\.(?:webp|jpe?g|png|gif)(?:[?#]|$)/i.test(imageUrl));
+      for (const imageUrl of imageUrls) {
+        const pngUrl = await ensureVmixPngUrl(sb, imageUrl, `vmix-roteiro/${ownerId}`);
+        if (pngUrl) htmlForVmix = htmlForVmix.split(imageUrl).join(pngUrl);
+      }
+      const roteiroTexto = rawHtml
+        .replace(/<\\/(?:p|h[1-6]|li|section|div)>/gi, "\\n")
+        .replace(/<br\\s*\\/?>/gi, "\\n")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;|&apos;/gi, "'")
+        .replace(/[ \\t]+/g, " ")
+        .replace(/\\n\\s*\\n+/g, "\\n")
+        .trim();
+      if (htmlForVmix) {
+        xml += `  <conteudo_html>${esc(htmlForVmix)}</conteudo_html>\\n`;
+        xml += `  <roteiro_texto>${esc(roteiroTexto)}</roteiro_texto>\\n`;
+      }
       xml += `  <horario>${esc(finalHora)}</horario>\n`;
       xml += `  <hora>${esc(finalHora)}</hora>\n`;
 
