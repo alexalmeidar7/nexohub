@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       console.error("Google token storage failed.");
       return html("Não foi possível salvar a conexão com o Google.");
     }
-    return html("Google Agenda conectado com sucesso! Você pode fechar esta janela.");
+    return html("Google Agenda conectado com sucesso! Você já pode fechar esta aba e voltar ao House Mix.");
   } catch {
     console.error("Google Calendar callback failed.");
     return html("Erro interno ao concluir a conexão.");
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 
 function html(message: string): Response {
   const safeMessage = message.replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char] || char));
-  return new Response(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>Google Calendar</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0a1628;color:#fff}.card{text-align:center;padding:2rem;border-radius:12px;background:#1a2a4a;max-width:400px;margin:1rem}</style></head><body><div class="card"><h2>${safeMessage}</h2><p>Esta janela será fechada automaticamente...</p></div><script>setTimeout(()=>window.close(),1800)</script></body></html>`, {
+  return new Response(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>Google Calendar</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0a1628;color:#fff}.card{text-align:center;padding:2rem;border-radius:12px;background:#1a2a4a;max-width:400px;margin:1rem}</style></head><body><div class="card"><h2>${safeMessage}</h2><p>Se esta aba continuar aberta, feche-a e volte ao House Mix.</p></div><script>setTimeout(()=>window.close(),1800)</script></body></html>`, {
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" },
   });
 }
