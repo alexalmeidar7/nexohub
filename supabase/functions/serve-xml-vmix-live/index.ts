@@ -239,6 +239,14 @@ serve(async (req) => {
     ]);
     if (!capa && itunesCover) capa = itunesCover;
 
+    const [programCoverPng, presenterPhotoPng, musicCoverPng, artistImagePng, sponsorLogoPng] = await Promise.all([
+      ensureVmixPngUrl(supabase, (onAir as any)?.capa || (onAir as any)?.thumb || "", `vmix-live/${userId}`),
+      ensureVmixPngUrl(supabase, apresentadorFoto, `vmix-live/${userId}`),
+      ensureVmixPngUrl(supabase, capa, `vmix-live/${userId}`),
+      ensureVmixPngUrl(supabase, artistaImg, `vmix-live/${userId}`),
+      ensureVmixPngUrl(supabase, patrocinadorUrl, `vmix-live/${userId}`),
+    ]);
+
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <vmix_live>
   <programa>
@@ -246,21 +254,21 @@ serve(async (req) => {
     <nome>${esc(onAir?.nome || "")}</nome>
     <horario_inicio>${esc(onAir?.horario_inicio || "")}</horario_inicio>
     <horario_fim>${esc(onAir?.horario_fim || "")}</horario_fim>
-    <capa>${esc((onAir as any)?.capa || (onAir as any)?.thumb || "")}</capa>
+    <capa>${esc(programCoverPng)}</capa>
   </programa>
   <apresentador>
     <nome>${esc(apresentadorNome)}</nome>
-    <foto>${esc(apresentadorFoto)}</foto>
+    <foto>${esc(presenterPhotoPng)}</foto>
   </apresentador>
   <musica>
     <titulo>${esc(titulo)}</titulo>
     <artista>${esc(artista)}</artista>
-    <capa>${esc(capa)}</capa>
-    <artista_imagem>${esc(artistaImg)}</artista_imagem>
+    <capa>${esc(musicCoverPng)}</capa>
+    <artista_imagem>${esc(artistImagePng)}</artista_imagem>
   </musica>
   <patrocinador>
     <nome>${esc(patrocinadorNome)}</nome>
-    <url>${esc(patrocinadorUrl)}</url>
+    <url>${esc(sponsorLogoPng)}</url>
   </patrocinador>
 </vmix_live>`;
 
