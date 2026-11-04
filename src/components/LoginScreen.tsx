@@ -43,7 +43,7 @@ const getErrorMessage = (value: unknown) => {
 const isConnectionLikeError = (value: unknown) => {
   const message = getErrorMessage(value).toLowerCase();
   return (
-    /\\b(?:500|502|503|504|522)\\b/.test(message) ||
+    /\b(?:500|502|503|504|522)\b/.test(message) ||
     message.includes("timeout") ||
     message.includes("tempo de conexão excedido") ||
     message.includes("connection") ||
