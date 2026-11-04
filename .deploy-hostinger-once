@@ -1,2 +1,1 @@
-Deploy pontual autorizado em 2026-11-03 para publicar correções consolidadas de autenticação da PR 266.
-Gatilho restrito ao marcador; não habilita deploy em pushes comuns.
+Deploy pontual autorizado em 2026-11-04 para publicar as correções mescladas das PRs #270, #271 e #272 no ambiente de produção.
