@@ -141,7 +141,7 @@ serve(async (req) => {
       }
       const roteiroTexto = rawHtml
         .replace(/<\/(?:p|h[1-6]|li|section|div)>/gi, "\n")
-        .replace(/<br\s*\/?>/gi, "\\n")
+        .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/gi, " ")
         .replace(/&amp;/gi, "&")
@@ -150,7 +150,7 @@ serve(async (req) => {
         .replace(/&quot;/gi, '"')
         .replace(/&#39;|&apos;/gi, "'")
         .replace(/[ \t]+/g, " ")
-        .replace(/\n\s*\n+/g, "\\n")
+        .replace(/\n\s*\n+/g, "\n")
         .trim();
       if (htmlForVmix) {
         xml += `  <conteudo_html>${esc(htmlForVmix)}</conteudo_html>\n`;
