@@ -68,3 +68,28 @@ select cron.schedule(
     end $$;
   $job$
 );
+
+-- Keep weather XML continuously fresh: one successful Edge Function run per minute.
+do $$
+declare job record;
+begin
+  for job in
+    select jobid from cron.job
+    where jobname in ('update-weather-xml-60s', 'update-weather-xml-5m')
+  loop
+    perform cron.unschedule(job.jobid);
+  end loop;
+end $$;
+
+select cron.schedule(
+  'update-weather-xml-60s',
+  '* * * * *',
+  $job$
+    select net.http_post(
+      url := 'https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/update-weather-xml',
+      headers := jsonb_build_object('Content-Type', 'application/json'),
+      body := '{}'::jsonb,
+      timeout_milliseconds := 90000
+    );
+  $job$
+);
