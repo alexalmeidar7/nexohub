@@ -137,6 +137,7 @@ const COMMAND_OPTIONS = [
   { value: "StopStreaming", label: "Parar Streaming", category: "Streaming" },
   { value: "StartRecording", label: "Iniciar Gravação", category: "Gravação" },
   { value: "StopRecording", label: "Parar Gravação", category: "Gravação" },
+  { value: "ToggleRecording", label: "Iniciar / Parar Gravação", category: "Gravação" },
   { value: "PreviewInput", label: "Preview Input", category: "Input" },
   { value: "OverlayInput1", label: "Overlay 1 ON", category: "Overlay" },
   { value: "OverlayInput1Off", label: "Overlay 1 OFF", category: "Overlay" },
@@ -1794,11 +1795,34 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   }, []);
 
   const runCommandsUnified = useCallback(async (cmds: any[], label: string, silent = false): Promise<boolean> => {
-    const normalized = normalizeCommands(cmds).map(cmd => ({
+    let normalized = normalizeCommands(cmds).map(cmd => ({
       ...cmd,
       input: resolveInputKey(cmd.input)
     }));
-    
+
+    // A ação única consulta o estado real do vMix antes de escolher StartRecording ou StopRecording.
+    if (normalized.some(cmd => cmd.fn === "ToggleRecording")) {
+      try {
+        const forceMode: "direct" | "proxy" | undefined = savedUrl && isPrivateIp(savedUrl) ? "direct" : undefined;
+        const statusXml = await vmixFetch("/api/", forceMode);
+        const recordingMatch =
+          statusXml.match(/\brecording\s*=\s*["'](true|false)["']/i) ||
+          statusXml.match(/<recording>\s*(true|false)\s*<\/recording>/i);
+        if (!recordingMatch) {
+          throw new Error("Não foi possível identificar se a gravação está ativa no vMix.");
+        }
+        const isRecording = recordingMatch[1].toLowerCase() === "true";
+        const resolvedFn = isRecording ? "StopRecording" : "StartRecording";
+        normalized = normalized.map(cmd => cmd.fn === "ToggleRecording" ? { ...cmd, fn: resolvedFn } : cmd);
+        addLog("Iniciar / Parar Gravação", "ok", isRecording ? "Gravação ativa: enviando comando para parar" : "Gravação parada: enviando comando para iniciar", "local");
+      } catch (err: any) {
+        const message = err?.message || "Não foi possível consultar o estado da gravação no vMix.";
+        addLog("Iniciar / Parar Gravação", "error", message, "local");
+        if (!silent) toast({ title: "Não foi possível alternar a gravação", description: message, variant: "destructive" });
+        return false;
+      }
+    }
+
     if (!normalized.length) return false;
 
     const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
@@ -1855,7 +1879,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
       return allSucceeded;
     }
-  }, [normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId, silentRefresh]);
+  }, [normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId, silentRefresh, vmixFetch]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
