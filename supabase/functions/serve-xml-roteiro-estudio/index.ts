@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -140,7 +141,7 @@ serve(async (req) => {
         xml += `    </perguntas>\n`;
         xml += `    <concluindo>${esc(podcastData.concluindo || "")}</concluindo>\n`;
 
-        const imagens: string[] = (podcastData.apoioImagens || []).filter((u: string) => u && u.trim());
+        const imagens: string[] = await Promise.all((podcastData.apoioImagens || []).filter((u: string) => u && u.trim()).map((u: string) => ensureVmixPngUrl(supabase, u, `vmix-roteiro/${userId}`)));
         const videos: string[] = (podcastData.apoioVideos || []).filter((u: string) => u && u.trim());
         if (imagens.length > 0) {
           // Rotate active image every 10 seconds
@@ -159,17 +160,21 @@ serve(async (req) => {
       } else {
         if (escaladaItems.length > 0) {
           xml += `  <escalada>\n`;
-          escaladaItems.forEach((e: any, i: number) => {
-            xml += `    <item ordem="${i + 1}">\n      <titulo>${esc(typeof e === "string" ? e : e.titulo || "")}</titulo>\n      <imagem>${esc(typeof e === "string" ? "" : e.imagemUrl || "")}</imagem>\n    </item>\n`;
-          });
+          for (let i = 0; i < escaladaItems.length; i++) {
+            const e = escaladaItems[i];
+            const image = await ensureVmixPngUrl(supabase, typeof e === "string" ? "" : e.imagemUrl || "", `vmix-roteiro/${userId}`);
+            xml += `    <item ordem="${i + 1}">\n      <titulo>${esc(typeof e === "string" ? e : e.titulo || "")}</titulo>\n      <imagem>${esc(image)}</imagem>\n    </item>\n`;
+          }
           xml += `  </escalada>\n`;
         }
         blocosList.forEach((b: any, bi: number) => {
           xml += `  <bloco numero="${bi + 1}">\n`;
-          (b.noticias || []).forEach((n: any, ni: number) => {
-            if (!n.titulo) return;
-            xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${esc(n.titulo)}</titulo>\n      <imagem>${esc(n.imagemUrl || "")}</imagem>\n      <escalada>${n.escalada ? "true" : "false"}</escalada>\n    </noticia>\n`;
-          });
+          for (let ni = 0; ni < (b.noticias || []).length; ni++) {
+            const n = b.noticias[ni];
+            if (!n.titulo) continue;
+            const image = await ensureVmixPngUrl(supabase, n.imagemUrl || "", `vmix-roteiro/${userId}`);
+            xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${esc(n.titulo)}</titulo>\n      <imagem>${esc(image)}</imagem>\n      <escalada>${n.escalada ? "true" : "false"}</escalada>\n    </noticia>\n`;
+          }
           xml += `  </bloco>\n`;
         });
       }
