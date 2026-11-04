@@ -3126,7 +3126,7 @@ const saveIdSet = (key: string, set: Set<string>) => {
  * Trava de segurança: botões personalizados só são acionados automaticamente em eventos AO VIVO.
  */
 function useAgendaPodcastTriggers({
-  user, studioName, programas, customButtons, runCommandsUnified, toast,
+  user, studioName, programas, customButtons, runCommandsUnified, toast, getStationOwnerId,
 }: {
   user: any;
   studioName: string;
@@ -3134,6 +3134,7 @@ function useAgendaPodcastTriggers({
   customButtons: any[];
   runCommandsUnified: (cmds: any[], label: string) => Promise<void>;
   toast: (a: any) => void;
+  getStationOwnerId: () => string | null;
 }) {
   const isPodcastStudio = normStudio(studioName).includes("podcast");
   const [eventos, setEventos] = useState<AgendaEventoLite[]>([]);
@@ -3732,7 +3733,7 @@ function SwitcherUI({
     confirmed: agendaConfirmados,
     confirmarEvento,
     rejeitarEvento,
-  } = useAgendaPodcastTriggers({ user, studioName, programas, customButtons, runCommandsUnified, toast });
+  } = useAgendaPodcastTriggers({ user, studioName, programas, customButtons, runCommandsUnified, toast, getStationOwnerId });
 
   // No PODCAST, a automação DEFAUL/DEFAULT funciona como estado neutro.
   // Enquanto ela estiver ativa, nenhum outro botão da Automação recebe destaque visual.
