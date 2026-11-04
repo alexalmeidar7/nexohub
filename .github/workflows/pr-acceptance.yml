@@ -18,6 +18,16 @@ jobs:
         with:
           script: |
             const body = context.payload.pull_request.body || "";
+            const sections = new Map();
+            let current = null;
+            for (const line of body.split("\n")) {
+              if (line.startsWith("## ")) {
+                current = line.slice(3).trim();
+                sections.set(current, []);
+              } else if (current) {
+                sections.get(current).push(line);
+              }
+            }
             const required = [
               "Solicitação original",
               "Critérios de aceite (obrigatório)",
@@ -27,9 +37,10 @@ jobs:
               "Evidências"
             ];
             const missing = required.filter((heading) => {
-              const match = body.match(new RegExp("##\\s+" + heading.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&") + "\\s*([\\s\\S]*?)(?=\\n##\\s+|$)", "i"));
-              if (!match) return true;
-              const value = match[1].replace(/<!--([\\s\\S]*?)-->/g, "").trim();
+              const value = (sections.get(heading) || [])
+                .join("\n")
+                .replace(/<!--[\s\S]*?-->/g, "")
+                .trim();
               return !value || /^PREENCHER$/i.test(value);
             });
             if (missing.length) {
