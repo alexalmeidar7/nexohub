@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowRight, Loader2, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNexoSolucoes from "@/assets/logo-nexo-solucoes-visuais.png";
@@ -105,6 +105,7 @@ export default function LoginScreen() {
   });
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
+  const loginRequestRef = useRef<ReturnType<typeof supabase.auth.signInWithPassword> | null>(null);
   const [error, setError] = useState("");
   const [keepConnected, setKeepConnected] = useState(() => {
     try {
@@ -179,6 +180,10 @@ export default function LoginScreen() {
       setError("Preencha email e senha.");
       return;
     }
+    if (loginRequestRef.current) {
+      setError("A tentativa anterior ainda está sendo processada. Aguarde antes de tentar novamente.");
+      return;
+    }
     if (loading) return;
     setLoading(true);
     setError("");
@@ -192,10 +197,17 @@ export default function LoginScreen() {
     // Password grants are single-flight: retrying after a timeout can create
     // concurrent sessions and rotate refresh tokens more than once.
     try {
+      const loginRequest = supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
+      loginRequestRef.current = loginRequest;
+      const clearLoginRequest = () => {
+        if (loginRequestRef.current === loginRequest) loginRequestRef.current = null;
+      };
+      void loginRequest.then(clearLoginRequest, clearLoginRequest);
+
       const { data, error } = await withTimeout(
-        supabase.auth.signInWithPassword({ email: email.trim(), password: pass }),
+        loginRequest,
         AUTH_TIMEOUT_MS,
-        "Tempo de conexão excedido. O servidor não respondeu a tempo; tente novamente."
+        "Tempo de conexão excedido. O servidor não respondeu a tempo."
       );
 
       if (error) {
@@ -232,10 +244,13 @@ export default function LoginScreen() {
       }
     } catch (err) {
       const rawMessage = getErrorMessage(err);
+      const requestStillPending = Boolean(loginRequestRef.current);
       console.error("[AuthLogin] login request threw", err);
       setError(
         isConnectionLikeError(err)
-          ? "Não foi possível concluir a conexão com o servidor. Sua senha não foi alterada; tente novamente."
+          ? requestStillPending
+            ? "O servidor não respondeu a tempo. A tentativa ainda pode estar em processamento; aguarde antes de tentar novamente."
+            : "Não foi possível conectar ao servidor. Verifique a conexão e tente novamente."
           : rawMessage
             ? getFriendlyAuthMessage(rawMessage)
             : "Não foi possível autenticar. Tente novamente."
