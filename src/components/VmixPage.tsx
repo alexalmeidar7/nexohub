@@ -1806,14 +1806,21 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   // exhausted the production Postgres connection pool and caused Auth/REST 522s.
   const schedulerExecutedRef = useRef<Set<string>>(new Set());
   const schedulerDataRef = useRef<{
+    ownerId: string | null;
     presets: any[];
     programas: any[];
     buttons: any[];
     loadedAt: number;
-  }>({ presets: [], programas: [], buttons: [], loadedAt: 0 });
-  const schedulerRefreshInFlightRef = useRef(false);
+  }>({ ownerId: null, presets: [], programas: [], buttons: [], loadedAt: 0 });
+  const schedulerRefreshInFlightRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const ownerId = user?.id ?? null;
+    if (schedulerDataRef.current.ownerId !== ownerId) {
+      // Never carry one tenant's cached commands into another user's session.
+      schedulerExecutedRef.current.clear();
+      schedulerDataRef.current = { ownerId, presets: [], programas: [], buttons: [], loadedAt: 0 };
+    }
     if (!connected || !savedUrl || !user) return;
 
     const DAY_MAP: Record<string, number> = {
@@ -1833,9 +1840,9 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     };
 
     let stopped = false;
-    const refreshSchedulerData = async () => {
-      if (schedulerRefreshInFlightRef.current) return;
-      schedulerRefreshInFlightRef.current = true;
+    const refreshSchedulerData = async (): Promise<boolean> => {
+      if (schedulerRefreshInFlightRef.current === user.id || stopped) return false;
+      schedulerRefreshInFlightRef.current = user.id;
       try {
         // Keep reads sequential to avoid creating connection bursts.
         const { data: presets, error: presetError } = await supabase
@@ -1864,22 +1871,31 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
         if (!stopped) {
           schedulerDataRef.current = {
+            ownerId: user.id,
             presets: presetRows,
             programas: programasRows,
             buttons: buttons || [],
             loadedAt: Date.now(),
           };
+          return true;
         }
+        return false;
       } catch (err) {
-        // Keep the last successful snapshot; a temporary database outage must
-        // not create a rapid retry loop or stop the local vMix controls.
+        // Keep the last successful snapshot for this same tenant; never reuse
+        // it for another user when the database is temporarily unavailable.
         console.warn("[local-scheduler] data refresh failed; retaining cached schedule", err);
+        return false;
       } finally {
-        schedulerRefreshInFlightRef.current = false;
+        if (schedulerRefreshInFlightRef.current === user.id) {
+          schedulerRefreshInFlightRef.current = null;
+        }
       }
     };
 
     const checkSchedule = async () => {
+      const cached = schedulerDataRef.current;
+      if (cached.ownerId !== user.id || cached.loadedAt === 0) return;
+
       const now = new Date();
       const brasiliaOffset = -3 * 60;
       const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
@@ -1894,7 +1910,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         if (!k.startsWith(currentMinuteKey + "_")) schedulerExecutedRef.current.delete(k);
       }
 
-      const { presets, programas, buttons } = schedulerDataRef.current;
+      const { presets, programas, buttons } = cached;
       const progMap = new Map<string, any>(programas.map((p: any) => [String(p.id), p] as [string, any]));
 
       for (const preset of presets) {
@@ -1949,8 +1965,12 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
     };
 
-    void refreshSchedulerData();
+    // A same-user cache may be reused; a new user's cache is empty until its
+    // own three sequential reads have completed successfully.
     void checkSchedule();
+    void refreshSchedulerData().then((refreshed) => {
+      if (refreshed && !stopped) void checkSchedule();
+    });
     // Configuration is refreshed once per minute; the clock/scheduler itself
     // still checks every 30 seconds without querying Postgres on each tick.
     const refreshId = window.setInterval(() => { void refreshSchedulerData(); }, 60000);
