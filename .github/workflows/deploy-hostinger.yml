@@ -56,7 +56,7 @@ jobs:
           expected_url = f"https://{project_ref}.supabase.co" if project_ref else ""
 
           htaccess = Path("public/.htaccess").read_text(encoding="utf-8")
-          htaccess_refs = set(re.findall(r"https://([a-z0-9]+)\\.supabase\\.co", htaccess))
+          htaccess_refs = set(re.findall(r"https://([a-z0-9]+)\.supabase\.co", htaccess))
           if not project_ref or htaccess_refs != {project_ref}:
               raise SystemExit(
                   "::error::public/.htaccess must route every Supabase feed to the same project configured in .env and supabase/config.toml. Nothing was uploaded."
