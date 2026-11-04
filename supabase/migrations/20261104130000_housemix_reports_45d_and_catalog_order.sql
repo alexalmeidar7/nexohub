@@ -1,4 +1,37 @@
 -- House Mix consolidated reliability: 45-day operational history and active-project collector.
+-- Persistent vMix button analytics: this table was missing in the active production database.
+create table if not exists public.vmix_button_interactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  locutor_nome text,
+  user_email text,
+  studio_name text,
+  button_id text not null,
+  button_name text not null,
+  button_category text,
+  points numeric not null default 0,
+  program_name text,
+  created_at timestamptz not null default now()
+);
+alter table public.vmix_button_interactions add column if not exists button_category text;
+alter table public.vmix_button_interactions add column if not exists points numeric not null default 0;
+create index if not exists vmix_button_interactions_user_created_idx
+  on public.vmix_button_interactions (user_id, created_at desc);
+create index if not exists vmix_button_interactions_user_locutor_idx
+  on public.vmix_button_interactions (user_id, locutor_nome, created_at desc);
+alter table public.vmix_button_interactions enable row level security;
+drop policy if exists "Users can read their own vMix button interactions" on public.vmix_button_interactions;
+create policy "Users can read their own vMix button interactions"
+  on public.vmix_button_interactions for select
+  using (
+    auth.uid() = user_id
+    or user_id in (select parent_user_id from public.sub_users where auth_user_id = auth.uid() and ativo = true)
+  );
+drop policy if exists "Users can insert their own vMix button interactions" on public.vmix_button_interactions;
+create policy "Users can insert their own vMix button interactions"
+  on public.vmix_button_interactions for insert
+  with check (auth.uid() = user_id);
+
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
@@ -59,13 +92,8 @@ select cron.schedule(
   $job$
     delete from public.audiencia_historico
     where created_at < now() - interval '45 days';
-    do $$
-    begin
-      if to_regclass('public.vmix_button_interactions') is not null then
-        delete from public.vmix_button_interactions
-        where created_at < now() - interval '45 days';
-      end if;
-    end $$;
+    delete from public.vmix_button_interactions
+    where created_at < now() - interval '45 days';
   $job$
 );
 
