@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { authorizeStationWrite, assertOwnedRecordIds } from "../_shared/stationWriteAuth.ts";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -231,6 +232,7 @@ serve(async (req) => {
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<items>\n  <dados>\n';
     if (quiz) {
+      const imagemRespostaPng = await ensureVmixPngUrl(sb, quiz.imagem_resposta || "", `vmix-quiz/${resolvedUid}`);
       const respostaCorretaNum = Number(quiz.resposta_correta) || 1;
       const respostaCorretaTexto =
         respostaCorretaNum === 1
@@ -251,7 +253,7 @@ serve(async (req) => {
       xml += `    <horario_inicio>${esc(quiz.horario_inicio || "")}</horario_inicio>\n`;
       xml += `    <horario_fim>${esc(quiz.horario_fim || "")}</horario_fim>\n`;
       xml += `    <explicacao>${esc(quiz.explicacao || "")}</explicacao>\n`;
-      xml += `    <imagem_resposta>${esc(quiz.imagem_resposta || "")}</imagem_resposta>\n`;
+      xml += `    <imagem_resposta>${esc(imagemRespostaPng)}</imagem_resposta>\n`;
     } else {
       xml += `    <pergunta></pergunta>\n`;
       xml += `    <resposta1></resposta1>\n`;
