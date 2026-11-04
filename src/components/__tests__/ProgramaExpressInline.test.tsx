@@ -73,11 +73,17 @@ describe("ProgramaExpressInline - Salvamento", () => {
       />
     );
 
-    // Abrimos explicitamente o formulário e verificamos a validação do roteiro vazio.
+    // Seleciona estúdio e programa: o componente bloqueia o salvamento antes
+    // da validação de conteúdo quando esses campos obrigatórios estão vazios.
+    const selects = screen.getAllByRole("combobox");
+    fireEvent.click(selects[0]);
+    fireEvent.click(await screen.findByText("Estudio A"));
+    fireEvent.click(selects[1]);
+    fireEvent.click(await screen.findByText("Programa 1"));
+
     const saveButton = screen.getByRole("button", { name: /^Salvar$/i });
     fireEvent.click(saveButton);
-    
-    // Deve mostrar erro de validação (mockado pelo toast.error)
+
     const { toast } = await import("sonner");
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Adicione pelo menos uma notícia ou conteúdo informativo");
