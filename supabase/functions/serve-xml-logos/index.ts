@@ -64,13 +64,6 @@ serve(async (req) => {
     }
 
     const origin = `${url.protocol}//${url.host}`;
-    const pngGrouped = await Promise.all(grouped.map(async (group) => ({
-      ...group,
-      logos: await Promise.all(group.logos.map(async (logo) => ({
-        ...logo,
-        logo_url: await ensureVmixPngUrl(supabase, logo.logo_url, `vmix-logos/${userId}`),
-      }))),
-    })));
     // Sem imagem padrão: não referenciar o domínio legado Lovable.
     const DEFAULT_LOGO_URL = "";
 
@@ -88,6 +81,14 @@ serve(async (req) => {
         });
       }
     }
+
+    const pngGrouped = await Promise.all(grouped.map(async (group) => ({
+      ...group,
+      logos: await Promise.all(group.logos.map(async (logo) => ({
+        ...logo,
+        logo_url: await ensureVmixPngUrl(supabase, logo.logo_url, `vmix-logos/${userId}`),
+      }))),
+    })));
 
     const esc = (s: string) =>
       String(s ?? "")
