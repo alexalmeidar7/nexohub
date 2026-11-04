@@ -1216,6 +1216,25 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         filePath = `express/${owner}/express_${cleanId}.xml`;
       }
 
+      // O XML ROTEIRO dinâmico escolhe o roteiro mais recentemente atualizado por estúdio.
+      // Ao publicar, marque a linha selecionada ANTES de sincronizar os feeds; caso contrário,
+      // outro roteiro do mesmo estúdio pode continuar sendo escolhido mesmo após o envio.
+      const nowIso = new Date().toISOString();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+      if (isUuid) {
+        const { data: markedRows, error: markError } = await supabase
+          .from("roteiros")
+          .update({ updated_at: nowIso, xml_pushed_at: nowIso })
+          .eq("id", cleanId)
+          .eq("user_id", owner)
+          .select("id");
+        if (markError || !markedRows || markedRows.length === 0) {
+          throw new Error(`Não foi possível marcar o roteiro como publicado: ${markError?.message || "registro não encontrado"}`);
+        }
+        r.updated_at = nowIso;
+        r.xml_pushed_at = nowIso;
+      }
+
       // 1. Sync to local /api/sync-xml-roteiro (writes to public/xml/[slug]/roteiro.xml)
       try {
         const clientAcc = findClientAccountById(owner) || findClientAccountByEmail(user?.email);
@@ -1243,8 +1262,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         console.warn("[RegenXML] Storage direct upload warning:", upErr);
       }
 
-      // 3. Optional edge function invoke if cleanId is a valid UUID in roteiros table
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+      // 3. Atualiza também a representação persistida do XML quando suportado.
       if (isUuid) {
         try {
           const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID || "zzjfzxxvxbspbdkodoix";
@@ -1257,23 +1275,11 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
         } catch {}
       }
 
-      // 4. Update xml_pushed_at timestamp
-      const nowIso = new Date().toISOString();
+      // 4. Mantém a URL pública no objeto e atualiza o estado/cache local.
       r.xml_pushed_at = nowIso;
       if (xmlUrl && !r.subtitulo) {
         r.subtitulo = `express_xml::${xmlUrl}`;
       }
-
-      // Update Supabase DB table
-      try {
-        const updatePayload: any = { xml_pushed_at: nowIso };
-        if (isUuid) {
-          await supabase.from("roteiros").update(updatePayload).eq("id", cleanId).eq("user_id", owner);
-        }
-        if (r.user_id && r.programa_nome) {
-          await supabase.from("roteiros").update(updatePayload).eq("user_id", owner).eq("programa_nome", r.programa_nome);
-        }
-      } catch {}
 
       // O cache local pertence somente à conta do roteiro.
       const candidateUids = [owner];
