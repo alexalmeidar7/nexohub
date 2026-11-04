@@ -1822,8 +1822,11 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       schedulerDataRef.current = { ownerId, presets: [], programas: [], buttons: [], loadedAt: 0 };
     }
     if (!connected || !savedUrl || !user) return;
+    // vMix data is tenant-owned: subusers must load the station owner's schedule.
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
 
-    const DAY_MAP: Record<string, number> = {
+    const DAY_MAP: Record<string, number> =
       domingo: 0, segunda: 1, "terça": 2, terca: 2,
       quarta: 3, quinta: 4, sexta: 5, "sábado": 6, sabado: 6,
     };
@@ -1848,13 +1851,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         const { data: presets, error: presetError } = await supabase
           .from("preset_commands")
           .select("id, programa_id, commands, custom_horario")
-          .eq("user_id", user.id);
+          .eq("user_id", stationOwnerId);
         if (presetError) throw presetError;
 
         const { data: buttons, error: buttonsError } = await supabase
           .from("custom_vmix_buttons")
           .select("id, nome, commands, horario, dias_semana, estudio")
-          .eq("user_id", user.id);
+          .eq("user_id", stationOwnerId);
         if (buttonsError) throw buttonsError;
 
         const presetRows = presets || [];
@@ -1980,7 +1983,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       window.clearInterval(refreshId);
       window.clearInterval(scheduleId);
     };
-  }, [connected, savedUrl, user, sendCommand, runCommandsUnified, studioName, addLog]);
+  }, [connected, savedUrl, user, getStationOwnerId, sendCommand, runCommandsUnified, studioName, addLog]);
 
   // Extract machine names from existing NDI inputs to suggest common sources
   const detectedMachines = useMemo(() => extractNdiMachinesFromInputs(inputs), [inputs]);
