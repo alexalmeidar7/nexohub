@@ -582,6 +582,12 @@ export default function CortesVideoPage() {
 
   // Add new Text Overlay
   const handleAddText = (preset = "Título") => {
+    if (textOverlays.length >= 1) {
+      setSelectedTextId(textOverlays[0].id);
+      setActiveTab("texto");
+      toast.info("O editor permite apenas um texto por vídeo. Edite o texto existente ou exclua-o para criar outro.");
+      return;
+    }
     const newText: TextOverlay = {
       id: "text_" + Math.random().toString(36).substring(2, 9),
       text: preset === "Título" ? "Seu Título Aqui" : preset === "Subtítulo" ? "Texto descritivo do vídeo" : "Legenda em destaque",
@@ -1124,7 +1130,7 @@ export default function CortesVideoPage() {
   const currentSelectedText = textOverlays.find(t => t.id === selectedTextId);
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-[#f8fafc] text-slate-900 select-none">
+    <div className="fixed inset-x-2 top-[72px] bottom-2 z-[80] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-[#f8fafc] text-slate-900 shadow-2xl select-none">
       {/* ════════ TOP HEADER BAR (Matching reference image) ════════ */}
       <header className="relative h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between shrink-0 z-20">
         {/* Left: Project Name & Undo/Redo */}
@@ -1410,25 +1416,31 @@ export default function CortesVideoPage() {
             <div className="p-4 flex flex-col gap-4 flex-1">
               <h3 className="text-base font-bold text-slate-800">Texto</h3>
 
-              {/* Add Text Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAddText("Título")}
-                  className="py-2.5 px-3 rounded-xl border border-slate-200 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5 transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5 text-blue-600" />
-                  + Título
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddText("Subtítulo")}
-                  className="py-2.5 px-3 rounded-xl border border-slate-200 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5 transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5 text-blue-600" />
-                  + Subtítulo
-                </button>
-              </div>
+              {/* O fluxo de cortes permite somente um texto por vídeo */}
+              {textOverlays.length === 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAddText("Título")}
+                    className="py-2.5 px-3 rounded-xl border border-slate-200 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    + Texto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddText("Subtítulo")}
+                    className="py-2.5 px-3 rounded-xl border border-slate-200 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    + Texto menor
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-[11px] text-blue-800">
+                  Um texto já foi adicionado. Edite-o abaixo ou exclua-o para inserir outro.
+                </div>
+              )}
 
               {/* Text Customizer for selected text */}
               {currentSelectedText ? (
