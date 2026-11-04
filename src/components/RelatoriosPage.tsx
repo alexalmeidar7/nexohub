@@ -95,7 +95,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
       supabase.from("sorteio_sorteios").select("*").eq("user_id", userId).order("data_sorteio", { ascending: false }),
       supabase.from("blitz_promocionais").select("*").eq("user_id", userId).order("dia", { ascending: false }),
       supabase.from("promocoes").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-      (supabase.from("vmix_button_interactions" as any).select("*").in("user_id", reportUserIds).order("created_at", { ascending: false }).limit(1000) as any),
+      (supabase.from("vmix_button_interactions" as any).select("*").in("user_id", reportUserIds).order("created_at", { ascending: false }).limit(10000) as any),
       supabase.from("logos_patrocinadores").select("*").eq("user_id", userId).eq("excluido", false).order("created_at", { ascending: false }),
       supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana").eq("user_id", userId),
       supabase.from("audiencia_historico").select("created_at, programa, audio, video").eq("user_id", userId).order("created_at", { ascending: false }).limit(5000),
@@ -137,7 +137,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
           .select("*")
           .in("user_id", reportUserIds)
           .order("created_at", { ascending: false })
-          .limit(1000);
+          .limit(10000);
         if (disposed) return;
         if (error) {
           setVmixUnavailable(true);
@@ -158,7 +158,7 @@ export default function RelatoriosPage({ effectiveUserId }: { effectiveUserId?: 
         .on("postgres_changes", { event: "*", schema: "public", table: "vmix_button_interactions", filter: `user_id=eq.${id}` }, (payload: any) => {
           if (payload.eventType === "INSERT" && payload.new) {
             const inserted = payload.new as AnyRow;
-            setVmixEvents(current => [inserted, ...current.filter(row => row.id !== inserted.id)].slice(0, 1000));
+            setVmixEvents(current => [inserted, ...current.filter(row => row.id !== inserted.id)].slice(0, 10000));
             setVmixUnavailable(false);
           } else {
             void refreshVmixEvents();
