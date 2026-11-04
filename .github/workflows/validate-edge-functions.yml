@@ -1,0 +1,41 @@
+name: Validar Edge Functions XML
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/**"
+      - ".github/workflows/validate-edge-functions.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/**"
+      - ".github/workflows/validate-edge-functions.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deno-check:
+    name: Verificar sintaxe e tipos das Edge Functions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configurar Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Validar funções XML e dependências compartilhadas
+        run: |
+          deno check --node-modules-dir=none --no-lock \
+            supabase/functions/_shared/vmixPng.ts \
+            supabase/functions/serve-xml-broadcast/index.ts \
+            supabase/functions/serve-xml-cenarios-estudio/index.ts \
+            supabase/functions/serve-xml-batalha/index.ts \
+            supabase/functions/serve-xml-logos/index.ts \
+            supabase/functions/serve-xml-roteiro-estudio/index.ts \
+            supabase/functions/serve-xml-geral/index.ts \
+            supabase/functions/serve-xml-vmix-live/index.ts \
+            supabase/functions/serve-xml-quiz/index.ts \
+            supabase/functions/serve-xml-enquete/index.ts \
+            supabase/functions/serve-xml-tempo/index.ts

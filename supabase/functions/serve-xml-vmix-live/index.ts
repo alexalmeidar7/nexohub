@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,7 +51,9 @@ async function fetchDeezerArtistImage(artist: string): Promise<string> {
   }
 }
 
-Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+const serve = Deno.serve;
+
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
   fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 serve(async (req) => {

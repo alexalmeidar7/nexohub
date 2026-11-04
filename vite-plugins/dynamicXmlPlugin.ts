@@ -1390,7 +1390,7 @@ export function dynamicXmlPlugin(): Plugin {
 
               // Update static file on disk immediately using getActiveBatalha
               const { today, currentTime } = getBrasiliaDateTime();
-              const active = getActiveBatalha(batalhas, today, currentTime, true);
+              const active = getActiveBatalha(batalhas, today, currentTime, false);
               const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[normalizeSlug(slug)] || "House Mix Emissora";
               const xml = buildBatalhaXml(active, stName);
               writeStaticXml(slug, "batalha.xml", xml);
@@ -1966,7 +1966,7 @@ export function dynamicXmlPlugin(): Plugin {
             if (file === "batalha.xml") {
               const store = readSyncData(batalhasFile);
               const list = store[slug] || store[rawSlug] || store[SLUG_TO_UID[slug]] || [];
-              const active = getActiveBatalha(list, today, currentTime, true);
+              const active = getActiveBatalha(list, today, currentTime, false);
               const stName = SLUG_STATION_NAMES[slug] || SLUG_STATION_NAMES[rawSlug] || "House Mix Emissora";
               const xml = buildBatalhaXml(active, stName);
 
@@ -2035,7 +2035,7 @@ export function dynamicXmlPlugin(): Plugin {
 
               const batStore = readSyncData(batalhasFile);
               const batList = batStore[slug] || batStore[rawSlug] || batStore[SLUG_TO_UID[slug]] || [];
-              const activeBat = getActiveBatalha(batList, today, currentTime, true);
+              const activeBat = getActiveBatalha(batList, today, currentTime, false);
 
               const geralPath = path.join(rootDir, "public", "xml", slug, "geral.xml");
               let geralXml = "";

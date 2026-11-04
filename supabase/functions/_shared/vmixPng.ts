@@ -24,7 +24,7 @@ export async function ensureVmixPngUrl(
     if (!publicUrl) return "";
 
     const { data: existing } = await supabase.storage.from("xml-files").list(folder, { search: `${hash}.png`, limit: 1 });
-    if (!existing?.some(file => file.name === `${hash}.png`)) {
+    if (!existing?.some((file: { name: string }) => file.name === `${hash}.png`)) {
       const convertUrl = `https://wsrv.nl/?url=${encodeURIComponent(original)}&output=png&w=1920&h=1920`;
       const response = await fetch(convertUrl, { signal: AbortSignal.timeout(12000) });
       if (!response.ok) throw new Error(`PNG conversion HTTP ${response.status}`);

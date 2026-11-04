@@ -323,7 +323,9 @@ function extractHandle(raw: string): string {
   }
 }
 
-Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+const serve = Deno.serve;
+
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
   fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 serve(async (req) => {
@@ -1272,6 +1274,9 @@ serve(async (req) => {
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
     lines.push("  <dados>");
+    // Cada requisição lê os dados atuais do banco e informa a hora de geração.
+    lines.push(`    <xml_atualizado_em>${new Date().toISOString()}</xml_atualizado_em>`);
+    lines.push("    <intervalo_atualizacao>5</intervalo_atualizacao>");
 
     // O feed tipo=musica é intencionalmente enxuto: não deve expor o
     // conjunto completo de campos do Broadcast, apenas os dados de música.

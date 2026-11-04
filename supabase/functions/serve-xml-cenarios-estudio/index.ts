@@ -45,7 +45,9 @@ const withCacheBuster = (rawUrl: string, version?: string | null) => {
   return base + "?" + query;
 };
 
-Deno.const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
+const serve = Deno.serve;
+
+const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
   fetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(8000) });
 
 serve(async (req) => {
@@ -212,21 +214,7 @@ serve(async (req) => {
     ]);
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<cenarios_estudio>\n`;
-    xml += `  <programa>\n`;
-    xml += `    <id>${xmlEscape(onAir?.id || "")}</id>\n`;
-    xml += `    <nome>${xmlEscape(onAir?.nome || "")}</nome>\n`;
-    xml += `    <horario_inicio>${xmlEscape(onAir?.horario_inicio || "")}</horario_inicio>\n`;
-    xml += `    <horario_fim>${xmlEscape(onAir?.horario_fim || "")}</horario_fim>\n`;
-    xml += `    <capa>${xmlEscape(capaUrlPng)}</capa>\n`;
-    xml += `    <thumb>${xmlEscape(thumbUrlPng)}</thumb>\n`;
-    xml += `  </programa>\n`;
-    xml += `  <locutor>\n`;
-    xml += `    <nome>${xmlEscape(locutorNome)}</nome>\n`;
-    xml += `    <foto>${xmlEscape(fotoLocutorUrl)}</foto>\n`;
-    xml += `    <instagram>${xmlEscape(locutorInstagram)}</instagram>\n`;
-    xml += `    <cargo>${xmlEscape(locutorCargo)}</cargo>\n`;
-    xml += `  </locutor>\n`;
-  xml += `  <templates>\n`;
+    xml += `  <templates>\n`;
     xml += `    <template>\n`;
     xml += `      <nome>TVS ATRAS CONVIDADOS</nome>\n`;
     xml += `      <url>${xmlEscape(urlConvidados)}</url>\n`;
