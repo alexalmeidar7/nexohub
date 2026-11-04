@@ -135,8 +135,16 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
     ativo: a.ativo,
   }));
 
-  const validStationIds = new Set(defaultStationAps.map(a => a.id));
-  const validStationNames = new Set(defaultStationAps.map(a => a.nome.trim().toLowerCase()));
+  // Exclusões de participantes padrão ficam registradas localmente para não reaparecerem após recarregar.
+  let deletedParticipantIds = new Set<string>();
+  try {
+    const rawDeleted = effectiveId ? localStorage.getItem(`nexohub_participantes_excluidos_${effectiveId}`) : null;
+    const parsedDeleted = rawDeleted ? JSON.parse(rawDeleted) : [];
+    if (Array.isArray(parsedDeleted)) deletedParticipantIds = new Set(parsedDeleted.map(String));
+  } catch {}
+  const visibleDefaultAps = defaultStationAps.filter(a => !deletedParticipantIds.has(a.id));
+  const validStationIds = new Set(visibleDefaultAps.map(a => a.id));
+  const validStationNames = new Set(visibleDefaultAps.map(a => a.nome.trim().toLowerCase()));
 
   // 1. Fetch from Supabase (if online and valid)
   let supabaseAps: Apresentador[] = [];
@@ -195,7 +203,7 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
 
   // Merge default station data with local updates & supabase updates
   const mergedMap = new Map<string, Apresentador>();
-  defaultStationAps.forEach(a => {
+  visibleDefaultAps.forEach(a => {
     mergedMap.set(a.id, a);
     if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), a);
   });
@@ -228,6 +236,8 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
 export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
   const { user } = useAuth();
   const targetUserId = effectiveUserId || user?.id;
+  const ownerAccount = findClientAccountById(targetUserId) || findClientAccountByEmail(user?.email);
+  const ownerId = ownerAccount?.parentUserId || ownerAccount?.id || targetUserId || user?.id;
   const [showSuccess, setShowSuccess] = useState(false);
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -252,7 +262,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
 
   const updateField = async (id: string, field: string, value: any) => {
-    const ownerId = targetUserId || user?.id;
     if (!ownerId) {
       toast.error("Sessão inválida. Entre novamente para continuar.");
       return;
@@ -322,7 +331,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   };
 
   const handleSave = async () => {
-    const ownerId = targetUserId || user?.id;
     if (!nome.trim() || !ownerId || !categoria || saving) return;
     setSaving(true);
 
@@ -362,20 +370,50 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
       if (editingId && isUuid(editingId)) {
+        // Edição de registro persistido: nunca converter UPDATE sem correspondência em INSERT.
         const res = await supabase.from("apresentadores")
           .update(payload as any).eq("id", editingId).eq("user_id", ownerId).select("id");
-        error = res.error;
-        if (!res.error && (!res.data || res.data.length === 0)) {
+        if (res.error) throw res.error;
+        if (!res.data?.length) {
+          throw new Error("O participante selecionado não foi localizado na emissora. Nenhum novo cadastro foi criado.");
+        }
+        savedId = res.data[0].id;
+      } else if (editingId) {
+        // Participante de catálogo padrão/local: procurar correspondência antes de criar sua versão persistida.
+        const original = apresentadores.find(a => a.id === editingId);
+        let matchedId: string | null = null;
+        if (original && ownerId) {
+          let lookup = supabase.from("apresentadores").select("id")
+            .eq("user_id", ownerId)
+            .eq("nome", original.nome)
+            .eq("instagram", original.instagram || "")
+            .eq("cargo", original.cargo || "");
+          const { data: matches, error: lookupError } = await lookup.limit(2);
+          if (lookupError) throw lookupError;
+          if ((matches || []).length > 1) {
+            throw new Error("Há mais de um cadastro com os mesmos dados. Atualize a lista e selecione o registro pelo ID para evitar duplicação.");
+          }
+          matchedId = matches?.[0]?.id || null;
+        }
+        if (matchedId) {
+          const res = await supabase.from("apresentadores")
+            .update(payload as any).eq("id", matchedId).eq("user_id", ownerId).select("id");
+          if (res.error) throw res.error;
+          if (!res.data?.length) throw new Error("O cadastro existente não pôde ser atualizado.");
+          savedId = res.data[0].id;
+        } else {
           const ins = await supabase.from("apresentadores")
             .insert({ user_id: ownerId, ...payload } as any).select("id");
-          error = ins.error;
-          if (ins.data?.[0]?.id) savedId = ins.data[0].id;
+          if (ins.error) throw ins.error;
+          if (!ins.data?.[0]?.id) throw new Error("O banco não confirmou a criação do participante.");
+          savedId = ins.data[0].id;
         }
       } else {
-        const res = await supabase.from("apresentadores")
+        const ins = await supabase.from("apresentadores")
           .insert({ user_id: ownerId, ...payload } as any).select("id");
-        error = res.error;
-        if (res.data?.[0]?.id) savedId = res.data[0].id;
+        if (ins.error) throw ins.error;
+        if (!ins.data?.[0]?.id) throw new Error("O banco não confirmou a criação do participante.");
+        savedId = ins.data[0].id;
       }
 
       if (error) throw error;
@@ -490,7 +528,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   };
 
   const toggleAtivo = async (id: string, current: boolean) => {
-    const ownerId = targetUserId || user?.id;
     if (!ownerId) { toast.error("Sessão inválida."); return; }
     const { data, error } = await supabase.from("apresentadores")
       .update({ ativo: !current }).eq("id", id).eq("user_id", ownerId).select("id");
@@ -508,21 +545,39 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   };
 
   const removeApresentador = async (id: string) => {
-    const ownerId = targetUserId || user?.id;
     if (!ownerId) { toast.error("Sessão inválida."); return; }
-    const { data, error } = await supabase.from("apresentadores")
-      .delete().eq("id", id).eq("user_id", ownerId).select("id");
-    if (error || !data?.length) {
-      toast.error(error?.message || "O banco não confirmou a exclusão do participante.");
-      return;
+    const isUuid = (value: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    if (isUuid(id)) {
+      const { data, error } = await supabase.from("apresentadores")
+        .delete().eq("id", id).eq("user_id", ownerId).select("id");
+      if (error) {
+        toast.error(error.message || "Não foi possível excluir o participante.");
+        return;
+      }
+      if (!data?.length) {
+        toast.error("O participante não foi localizado no banco desta emissora. Nenhum dado foi removido.");
+        return;
+      }
+    } else {
+      // Itens padrão do catálogo não têm linha própria no banco: registrar exclusão para não reaparecerem.
+      try {
+        const key = `nexohub_participantes_excluidos_${ownerId}`;
+        const current = JSON.parse(localStorage.getItem(key) || "[]");
+        const deleted = Array.isArray(current) ? current : [];
+        if (!deleted.includes(id)) deleted.push(id);
+        localStorage.setItem(key, JSON.stringify(deleted));
+      } catch {
+        toast.error("Não foi possível registrar a exclusão local do participante.");
+        return;
+      }
     }
     const updated = apresentadores.filter(a => a.id !== id);
     setApresentadores(updated);
     if (ownerId) {
-      try {
-        localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
-      } catch {}
+      try { localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated)); } catch {}
     }
+    try { window.dispatchEvent(new CustomEvent("apresentadores-updated")); } catch {}
   };
 
   const handleExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -555,7 +610,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   };
 
   const confirmImport = async () => {
-    const ownerId = targetUserId || user?.id;
     if (!importRows || !ownerId) return;
     setImporting(true);
     const inserts = importRows.map(r => ({
