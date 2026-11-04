@@ -3804,6 +3804,8 @@ function SwitcherUI({
         : null
       : selected || scheduledProgramForAutomation;
     if (!activeProgram) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
     const dayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
     const executionKey = `${user.id}:${studioName || "default"}:${dayKey}:${isPodcastStudio ? activePodcastEvent?.id : activeProgram.id}`;
     if (lastAutoPresetKeyRef.current === executionKey) return;
@@ -3812,7 +3814,7 @@ function SwitcherUI({
       try {
         const { data: presetData, error } = await (supabase.from("preset_commands" as any) as any)
           .select("commands")
-          .eq("user_id", user.id)
+          .eq("user_id", stationOwnerId)
           .eq("programa_id", activeProgram.id)
           .maybeSingle();
         if (error) throw error;
@@ -3834,7 +3836,7 @@ function SwitcherUI({
         console.error("[vmix-switcher] Falha ao preparar ações do preset no ar:", error);
       }
     })();
-  }, [connected, savedUrl, user?.id, studioName, programas, activePreset, nowTick, isDefaultAutomationActive, scheduledProgramForAutomation, runCommandsUnified, isPodcastStudio, eventoPorPrograma]);
+  }, [connected, savedUrl, user?.id, studioName, programas, activePreset, nowTick, isDefaultAutomationActive, scheduledProgramForAutomation, runCommandsUnified, isPodcastStudio, eventoPorPrograma, getStationOwnerId]);
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
