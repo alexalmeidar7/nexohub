@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,22 @@ export default function GoogleCalendarSync() {
   const [events, setEvents] = useState<GEvent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [connecting, setConnecting] = useState(false);
+
+  const oauthPollIntervalRef = useRef<number | null>(null);
+  const oauthPollTimeoutRef = useRef<number | null>(null);
+
+  const clearOAuthPolling = useCallback(() => {
+    if (oauthPollIntervalRef.current !== null) {
+      window.clearInterval(oauthPollIntervalRef.current);
+      oauthPollIntervalRef.current = null;
+    }
+    if (oauthPollTimeoutRef.current !== null) {
+      window.clearTimeout(oauthPollTimeoutRef.current);
+      oauthPollTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => clearOAuthPolling(), [clearOAuthPolling]);
 
   const fetchEvents = useCallback(async () => {
     setRefreshing(true);
@@ -76,14 +92,25 @@ export default function GoogleCalendarSync() {
       if (!popup) throw new Error("Não foi possível abrir a janela de autorização.");
       popup.location.href = authUrl.toString();
 
-      // Poll for completion
-      const t = window.setInterval(async () => {
+      // Poll for completion, but never leave the UI stuck if the popup is abandoned.
+      clearOAuthPolling();
+      oauthPollIntervalRef.current = window.setInterval(async () => {
         if (popup.closed) {
-          window.clearInterval(t);
+          clearOAuthPolling();
           setConnecting(false);
           await fetchEvents();
         }
       }, 1000);
+      oauthPollTimeoutRef.current = window.setTimeout(() => {
+        clearOAuthPolling();
+        if (!popup.closed) popup.close();
+        setConnecting(false);
+        toast({
+          title: "Tempo de autorização esgotado",
+          description: "A janela do Google foi fechada após 10 minutos. Tente conectar novamente.",
+          variant: "destructive",
+        });
+      }, 10 * 60 * 1000);
     } catch (e: any) {
       popup?.close();
       toast({ title: "Erro ao conectar", description: e.message, variant: "destructive" });
