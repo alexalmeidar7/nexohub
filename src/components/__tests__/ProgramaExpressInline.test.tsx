@@ -10,6 +10,7 @@ vi.mock("@/integrations/supabase/client", () => {
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: { id: "123", nome: "Teste" }, error: null }),
@@ -62,19 +63,18 @@ describe("ProgramaExpressInline - Salvamento", () => {
     vi.clearAllMocks();
   });
 
-  it("deve permitir salvar roteiro com 10+ notícias e combinações de campos", async () => {
+  it("deve bloquear o salvamento quando o roteiro não tem notícias", async () => {
     render(
       <ProgramaExpressInline 
         programas={mockProgramas} 
         estudios={mockEstudios} 
-        onFinish={onFinish} 
+        onFinish={onFinish}
+        novoOpen={true}
       />
     );
 
-    // Simular preenchimento de 14 notícias com combinações variadas
-    // No ambiente de teste, o componente inicia com 1 bloco e 1 notícia vazia.
-    // Vamos verificar se o botão de salvar exibe erro quando vazio.
-    const saveButton = screen.getByText(/Salvar Roteiro/i);
+    // Abrimos explicitamente o formulário e verificamos a validação do roteiro vazio.
+    const saveButton = screen.getByRole("button", { name: /^Salvar$/i });
     fireEvent.click(saveButton);
     
     // Deve mostrar erro de validação (mockado pelo toast.error)
@@ -84,7 +84,7 @@ describe("ProgramaExpressInline - Salvamento", () => {
     });
   });
 
-  it("deve permitir salvar quando há pelo menos uma notícia com título", async () => {
+  it("mantém um teste de referência para o cenário com conteúdo", async () => {
     // Para testar o salvamento positivo, precisaríamos manipular o estado interno
     // ou disparar eventos complexos nos inputs. Como prova de conceito,
     // validamos que o erro NÃO ocorre se houver conteúdo (simulado via mock ou props se suportado).
