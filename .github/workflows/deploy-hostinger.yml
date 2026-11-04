@@ -114,20 +114,28 @@ jobs:
       - name: Confirmar versão publicada no domínio de produção
         env:
           EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
         run: |
           set -euo pipefail
           for attempt in $(seq 1 12); do
-            if curl --fail --silent --show-error "https://housemix.nexobrasil.net/deploy-info.json?check=$attempt" -o /tmp/deploy-info.json; then
-              ACTUAL_SHA="$(python3 -c 'import json; print(json.load(open("/tmp/deploy-info.json"))["commit"])')"
-              if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
-                echo "Produção confirmada no commit $ACTUAL_SHA"
-                exit 0
-              fi
-              echo "Aguardando propagação: publicado=$ACTUAL_SHA esperado=$EXPECTED_SHA"
-            else
-              echo "Site ainda não respondeu com o manifesto de publicação."
+            HTTP_STATUS="$(curl --location --silent --show-error --output /tmp/deploy-info.json --write-out '%{http_code}' --header 'Cache-Control: no-cache' "https://housemix.nexobrasil.net/deploy-info.json?check=$attempt-$(date +%s)" || true)"
+            ACTUAL_SHA="$(python3 - <<'PY'
+          import json
+          try:
+              with open("/tmp/deploy-info.json", encoding="utf-8") as f:
+                  data = json.load(f)
+              value = data.get("commit", "")
+              print(value if isinstance(value, str) else "")
+          except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+              print("")
+          PY
+          )"
+            if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
+              echo "Produção confirmada no commit $ACTUAL_SHA (HTTP $HTTP_STATUS)"
+              exit 0
             fi
+            echo "Tentativa $attempt/12: HTTP=$HTTP_STATUS publicado='${ACTUAL_SHA:-JSON ausente/inválido}' esperado=$EXPECTED_SHA"
             sleep 10
           done
-          echo "::error::O FTP terminou, mas o domínio não confirmou o commit publicado. Deploy permanece NÃO VALIDADO."
+          echo "::error::FTP terminou, mas o domínio não confirmou o SHA esperado. Deploy NÃO VALIDADO."
           exit 1
