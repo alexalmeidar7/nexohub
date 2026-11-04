@@ -145,19 +145,31 @@ export default function GoogleCalendarSync() {
               </Button>
             </>
           ) : (
-            <Button
-              size="sm"
-              onClick={handleConnect}
-              disabled={connecting}
-              className="h-8 gap-1 text-xs rounded-full font-semibold"
-              style={{
-                backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
-                color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
-              }}
-            >
-              {connecting ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
-              Conectar Google Agenda
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={fetchEvents}
+                disabled={refreshing || connecting}
+                className="h-8 gap-1 text-xs rounded-full"
+              >
+                {refreshing ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                Atualizar
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleConnect}
+                disabled={connecting}
+                className="h-8 gap-1 text-xs rounded-full font-semibold"
+                style={{
+                  backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))",
+                  color: "var(--layout-accent-text, hsl(var(--primary-foreground)))",
+                }}
+              >
+                {connecting ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
+                Conectar Google Agenda
+              </Button>
+            </>
           )}
         </div>
       </div>
