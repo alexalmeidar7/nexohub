@@ -365,7 +365,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         ativo,
       };
 
-      let error: any = null;
       let savedId = editingId;
       const isUuid = (v?: string | null) =>
         !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
@@ -416,8 +415,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         if (!ins.data?.[0]?.id) throw new Error("O banco não confirmou a criação do participante.");
         savedId = ins.data[0].id;
       }
-
-      if (error) throw error;
 
       const newEntry: Apresentador = {
         id: savedId || `part_${Date.now()}`,
