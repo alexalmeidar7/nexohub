@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
-import initialBatalhasSync from "@/data/xml_batalhas_sync.json";
 
 interface Artista {
   nome: string;
@@ -416,12 +415,9 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
       } catch {}
       const localList = getStoredBatalhas(targetUserId);
       const fallbackList = serverList.length ? serverList : localList;
-      const staticList = fallbackList.length ? [] : (
-        (initialBatalhasSync as Record<string, any[]>)[targetSlug] ||
-        (initialBatalhasSync as Record<string, any[]>)[targetUserId] || []
-      );
+      // Sem dados confirmados no banco/servidor, não exibir batalhas antigas de demonstração.
       const map = new Map<string, BatalhaAgendada>();
-      [...staticList, ...fallbackList].forEach((item: any) => {
+      [...fallbackList].forEach((item: any) => {
         if (item && (item.artista1_nome || item.artista2_nome)) {
           const key = item.id || item.data_batalha + "_" + item.horario_inicio + "_" + item.artista1_nome;
           map.set(key, item);
