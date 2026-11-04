@@ -710,6 +710,41 @@ jobs:
             exit 1
           fi
 
+          infomusic_privileges="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
+            SELECT
+              (NOT (
+                has_table_privilege('anon','public.infomusic','SELECT')
+                OR has_table_privilege('anon','public.infomusic','INSERT')
+                OR has_table_privilege('anon','public.infomusic','UPDATE')
+                OR has_table_privilege('anon','public.infomusic','DELETE')
+                OR has_table_privilege('anon','public.infomusic','TRUNCATE')
+                OR has_table_privilege('anon','public.infomusic','REFERENCES')
+                OR has_table_privilege('anon','public.infomusic','TRIGGER')
+                OR has_table_privilege('anon','public.infomusic','MAINTAIN')
+              ))::text,
+              (
+                has_table_privilege('authenticated','public.infomusic','SELECT')
+                AND has_table_privilege('authenticated','public.infomusic','INSERT')
+                AND has_table_privilege('authenticated','public.infomusic','UPDATE')
+                AND NOT has_table_privilege('authenticated','public.infomusic','DELETE')
+                AND NOT has_table_privilege('authenticated','public.infomusic','TRUNCATE')
+                AND NOT has_table_privilege('authenticated','public.infomusic','REFERENCES')
+                AND NOT has_table_privilege('authenticated','public.infomusic','TRIGGER')
+                AND NOT has_table_privilege('authenticated','public.infomusic','MAINTAIN')
+              )::text,
+              (
+                has_table_privilege('service_role','public.infomusic','SELECT')
+                AND has_table_privilege('service_role','public.infomusic','INSERT')
+                AND has_table_privilege('service_role','public.infomusic','UPDATE')
+                AND has_table_privilege('service_role','public.infomusic','DELETE')
+              )::text
+          ")"
+          IFS='|' read -r infomusic_anon_safe infomusic_auth_safe infomusic_service_safe <<< "$infomusic_privileges"
+          if [ "$infomusic_anon_safe" != "true" ] || [ "$infomusic_auth_safe" != "true" ] || [ "$infomusic_service_safe" != "true" ]; then
+            echo "::error::InfoMusic grants must deny anon, allow authenticated SELECT/INSERT/UPDATE only, and preserve service_role cleanup. Bridge writes are blocked."
+            exit 1
+          fi
+
           preroll_rls="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             SELECT relrowsecurity
             FROM pg_class

@@ -33,6 +33,11 @@ BEGIN
     RAISE EXCEPTION 'infomusic.user_id must be uuid NOT NULL before tenant write policies are created.';
   END IF;
 
+
+  EXECUTE 'REVOKE ALL ON TABLE public.infomusic FROM PUBLIC, anon';
+  EXECUTE 'REVOKE DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN ON TABLE public.infomusic FROM authenticated';
+  EXECUTE 'GRANT SELECT, INSERT, UPDATE ON TABLE public.infomusic TO authenticated';
+
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
     WHERE schemaname='public' AND tablename='infomusic' AND policyname='infomusic_tenant_insert'
@@ -69,6 +74,35 @@ BEGIN
 
   IF policy_count <> 2 THEN
     RAISE EXCEPTION 'Expected exactly two tenant-scoped InfoMusic write policies, found %.', policy_count;
+  END IF;
+
+  IF has_table_privilege('anon','public.infomusic','SELECT')
+     OR has_table_privilege('anon','public.infomusic','INSERT')
+     OR has_table_privilege('anon','public.infomusic','UPDATE')
+     OR has_table_privilege('anon','public.infomusic','DELETE')
+     OR has_table_privilege('anon','public.infomusic','TRUNCATE')
+     OR has_table_privilege('anon','public.infomusic','REFERENCES')
+     OR has_table_privilege('anon','public.infomusic','TRIGGER')
+     OR has_table_privilege('anon','public.infomusic','MAINTAIN') THEN
+    RAISE EXCEPTION 'anon must have no table privileges on public.infomusic.';
+  END IF;
+
+  IF NOT has_table_privilege('authenticated','public.infomusic','SELECT')
+     OR NOT has_table_privilege('authenticated','public.infomusic','INSERT')
+     OR NOT has_table_privilege('authenticated','public.infomusic','UPDATE')
+     OR has_table_privilege('authenticated','public.infomusic','DELETE')
+     OR has_table_privilege('authenticated','public.infomusic','TRUNCATE')
+     OR has_table_privilege('authenticated','public.infomusic','REFERENCES')
+     OR has_table_privilege('authenticated','public.infomusic','TRIGGER')
+     OR has_table_privilege('authenticated','public.infomusic','MAINTAIN') THEN
+    RAISE EXCEPTION 'authenticated must retain only SELECT, INSERT, and UPDATE on public.infomusic.';
+  END IF;
+
+  IF NOT has_table_privilege('service_role','public.infomusic','SELECT')
+     OR NOT has_table_privilege('service_role','public.infomusic','INSERT')
+     OR NOT has_table_privilege('service_role','public.infomusic','UPDATE')
+     OR NOT has_table_privilege('service_role','public.infomusic','DELETE') THEN
+    RAISE EXCEPTION 'service_role must retain InfoMusic read/write/cleanup privileges.';
   END IF;
 END
 $migration$;
