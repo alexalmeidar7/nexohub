@@ -59,7 +59,7 @@ serve(async (req) => {
     // Cada feed consulta exclusivamente os roteiros da estação solicitada.
     const allUserRoteiros: any[] = (await withRetry(() => sb
       .from("roteiros")
-      .select("programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
+      .select("id, programa_nome, estudio, data_programa, horario, participantes, subtitulo, xml_pushed_at, created_at, updated_at")
       .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
       .limit(200))) || [];
@@ -69,16 +69,23 @@ serve(async (req) => {
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toUpperCase()
-        .trim();
+        .replace(/[^A-Z0-9]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+    const studioKey = (s: string) => {
+      const value = norm(s);
+      if (value.includes("PODCAST")) return "PODCAST";
+      if (value.includes("FM") || value.includes("ESTUDIO PRINCIPAL") || value === "PRINCIPAL") return "FM";
+      return value;
+    };
 
-    const targetEst = norm(estudio);
+    const targetEst = studioKey(estudio);
     const nowLocal = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const todayLocal = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
-    let candidates = (allUserRoteiros || []).filter((r: any) => {
-      const rEst = norm(r.estudio);
-      const rDate = String(r.data_programa || "").slice(0, 10);
-      return rEst === targetEst && rDate === todayLocal;
-    });
+    const studioCandidates = (allUserRoteiros || []).filter((r: any) => studioKey(r.estudio) === targetEst);
+    const todayCandidates = studioCandidates.filter((r: any) => String(r.data_programa || "").slice(0, 10) === todayLocal);
+    // Enviar para XML atualiza xml_pushed_at; usar essa publicação mesmo se a pauta for de outra data.
+    let candidates = todayCandidates.length > 0 ? todayCandidates : studioCandidates;
 
     // Carrega horarios dos programas para fallback
     let progs: any[] = [];
@@ -90,8 +97,8 @@ serve(async (req) => {
 
     // Entre os roteiros do dia e estúdio exatos, prevalece a edição mais recente.
     candidates.sort((a: any, b: any) => {
-      const tsA = new Date(a.updated_at || a.created_at || 0).getTime();
-      const tsB = new Date(b.updated_at || b.created_at || 0).getTime();
+      const tsA = new Date(a.xml_pushed_at || a.updated_at || a.created_at || 0).getTime();
+      const tsB = new Date(b.xml_pushed_at || b.updated_at || b.created_at || 0).getTime();
       return tsB - tsA;
     });
 
@@ -142,7 +149,7 @@ serve(async (req) => {
         xml += `    </perguntas>\n`;
         xml += `    <concluindo>${esc(podcastData.concluindo || "")}</concluindo>\n`;
 
-        const imagens: string[] = await Promise.all((podcastData.apoioImagens || []).filter((u: string) => u && u.trim()).map((u: string) => ensureVmixPngUrl(sb, u, `vmix-roteiro/${userId}`)));
+        const imagens: string[] = await Promise.all((podcastData.apoioImagens || []).filter((u: string) => u && u.trim()).map((u: string) => ensureVmixPngUrl(sb, u, `vmix-roteiro/${ownerId}`)));
         const videos: string[] = (podcastData.apoioVideos || []).filter((u: string) => u && u.trim());
         if (imagens.length > 0) {
           // Rotate active image every 10 seconds
@@ -163,7 +170,7 @@ serve(async (req) => {
           xml += `  <escalada>\n`;
           for (let i = 0; i < escaladaItems.length; i++) {
             const e = escaladaItems[i];
-            const image = await ensureVmixPngUrl(sb, typeof e === "string" ? "" : e.imagemUrl || "", `vmix-roteiro/${userId}`);
+            const image = await ensureVmixPngUrl(sb, typeof e === "string" ? "" : e.imagemUrl || "", `vmix-roteiro/${ownerId}`);
             xml += `    <item ordem="${i + 1}">\n      <titulo>${esc(typeof e === "string" ? e : e.titulo || "")}</titulo>\n      <imagem>${esc(image)}</imagem>\n    </item>\n`;
           }
           xml += `  </escalada>\n`;
@@ -173,7 +180,7 @@ serve(async (req) => {
           for (let ni = 0; ni < (b.noticias || []).length; ni++) {
             const n = b.noticias[ni];
             if (!n.titulo) continue;
-            const image = await ensureVmixPngUrl(supabase, n.imagemUrl || "", `vmix-roteiro/${userId}`);
+            const image = await ensureVmixPngUrl(sb, n.imagemUrl || "", `vmix-roteiro/${ownerId}`);
             xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${esc(n.titulo)}</titulo>\n      <imagem>${esc(image)}</imagem>\n      <escalada>${n.escalada ? "true" : "false"}</escalada>\n    </noticia>\n`;
           }
           xml += `  </bloco>\n`;
