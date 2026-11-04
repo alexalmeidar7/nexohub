@@ -1054,13 +1054,13 @@ export default function ConfiguracoesPage({
     const tid = targetUid || user?.id;
     if (!tid) return;
     const { error } = await supabase.from("streaming_channels")
-      .update({ catalog_name: nextName, name: nextName })
+      .update({ catalog_name: nextName })
       .eq("user_id", tid)
       .eq("type", "catalog")
       .eq("catalog_name", group.label);
     if (error) { toast.error("Não foi possível renomear a pasta: " + error.message); return; }
     const updated = canais.map(item => item.type === "catalog" && item.catalog_name === group.label
-      ? { ...item, catalog_name: nextName, name: item.name === group.label ? nextName : item.name }
+      ? { ...item, catalog_name: nextName }
       : item);
     setCanais(updated);
     saveStoredStreamingChannels(tid, updated);
@@ -1069,7 +1069,17 @@ export default function ConfiguracoesPage({
 
   const handleRemoveCatalog = async (group: { label: string; key: string; items: Canal[] }) => {
     if (!window.confirm(`Excluir a pasta "${group.label}" e todos os ${group.items.length} vídeo(s) dela?`)) return;
-    for (const item of group.items) await handleRemoveCanal(item.id);
+    const tid = targetUid || user?.id;
+    if (!tid) return;
+    const ids = group.items.map(item => item.id).filter(id => /^[0-9a-f-]{36}$/i.test(id));
+    if (ids.length) {
+      const { error } = await supabase.from("streaming_channels").delete().in("id", ids).eq("user_id", tid);
+      if (error) { toast.error("Não foi possível excluir a pasta: " + error.message); return; }
+    }
+    const updated = canais.filter(item => !group.items.some(entry => entry.id === item.id));
+    setCanais(updated);
+    saveStoredStreamingChannels(tid, updated);
+    toast.success("Pasta e vídeos excluídos do Player.");
   };
 
   const handleMoveCatalog = async (groupKey: string, direction: -1 | 1) => {
