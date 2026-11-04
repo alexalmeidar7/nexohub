@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { 
   FileText, Plus, Trash2, Send, Mail, Smartphone, Printer, 
@@ -1882,9 +1883,8 @@ export default function PropostasPage({ effectiveUserId }: { effectiveUserId?: s
                 <label className="text-[10px] font-black tracking-wider text-slate-500 uppercase block mb-1">
                   Cliente Desde
                 </label>
-                <input
-                  type="date"
-                  value={novoClienteData.cliente_desde}
+                <DateInput
+                                  value={novoClienteData.cliente_desde}
                   onChange={e => setNovoClienteData({ ...novoClienteData, cliente_desde: e.target.value })}
                   className="w-full h-11 px-4 rounded-full bg-[#f8fafc] border border-slate-200 text-xs text-[#002132] outline-none"
                 />

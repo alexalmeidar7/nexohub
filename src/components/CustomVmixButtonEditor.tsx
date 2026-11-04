@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, createElement } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -508,6 +509,9 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
   const [running, setRunning] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copyLoading, setCopyLoading] = useState(false);
+  const [copyList, setCopyList] = useState<Array<{ id: string; nome: string; commands: PresetCommand[] }>>([]);
 
   const isPodcastStudio = normalizeStudioName(estudio).includes("podcast");
 
@@ -613,6 +617,34 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
 
   const addCommand = () => {
     setCommands(prev => [...prev, { id: crypto.randomUUID(), fn: "CutDirect" }]);
+  };
+
+  const toggleCopyPicker = async () => {
+    if (copyOpen) { setCopyOpen(false); return; }
+    setCopyOpen(true);
+    setCopyLoading(true);
+    // Somente leitura: lista os outros botões do usuário para reaproveitar as ações.
+    const { data } = await (supabase.from("custom_vmix_buttons" as any) as any)
+      .select("id, nome, commands")
+      .eq("user_id", userId)
+      .order("nome");
+    setCopyList(
+      ((data || []) as Array<{ id: string; nome: string; commands: PresetCommand[] | null }>)
+        .filter(b => b.id !== buttonId && Array.isArray(b.commands) && b.commands.length > 0)
+        .map(b => ({ id: b.id, nome: b.nome, commands: b.commands as PresetCommand[] })),
+    );
+    setCopyLoading(false);
+  };
+
+  const copyFromButton = (source: { nome: string; commands: PresetCommand[] }) => {
+    // Cópia independente (novos IDs, sem metadados do botão de origem); acrescenta às ações atuais.
+    const copied = source.commands.map(command => {
+      const { _buttonCategory: _c, agendaProgramId: _a, programa_id: _p, ...rest } = command as PresetCommand & Record<string, unknown>;
+      return { ...rest, id: crypto.randomUUID() } as PresetCommand;
+    });
+    setCommands(prev => [...prev, ...copied]);
+    setCopyOpen(false);
+    toast({ title: "Ações copiadas", description: `${copied.length} ação(ões) de "${source.nome}".` });
   };
 
   const updateCommand = (id: string, updates: Partial<PresetCommand>) => {
@@ -1067,9 +1099,8 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                   <label className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1" style={{ color: "#888" }}>
                     <Calendar size={10} color="#ffffff" /> Data Específica
                   </label>
-                  <input
-                    type="date"
-                    value={dataEspecifica}
+                  <DateInput
+                                      value={dataEspecifica}
                     onChange={e => setDataEspecifica(e.target.value)}
                     className="h-[34px] w-full min-w-0 box-border text-xs px-2.5 py-2 rounded-lg outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
                     style={{ backgroundColor: "#181820", color: "#ccc", border: "1px solid #333" }}
@@ -1244,7 +1275,11 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
                               <ChevronDown size={14} className="shrink-0" style={{ color: "#DCE6F5" }} />
                             </button>
                             {commandDropdownOpenById[cmd.id] && (
-                              <div className="relative z-[80] mt-2 w-full overflow-hidden rounded-xl shadow-xl" style={{ backgroundColor: "#111722", border: "1px solid #46536b" }}>
+                              <div
+                                ref={node => { if (node) requestAnimationFrame(() => node.scrollIntoView({ block: "nearest", behavior: "smooth" })); }}
+                                className="relative z-[80] mt-2 w-full overflow-hidden rounded-xl shadow-xl"
+                                style={{ backgroundColor: "#111722", border: "1px solid #46536b", boxShadow: "0 18px 40px rgba(0,0,0,0.65)" }}
+                              >
                                 <div className="sticky top-0 p-2" style={{ backgroundColor: "#111722", borderBottom: "1px solid #303b4d" }}>
                                   <input
                                     autoFocus
@@ -1385,18 +1420,42 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
             <Plus size={12} />
             Adicionar Ação
           </button>
-          <div className="flex items-center gap-2">
-            {commands.length > 0 && (
-              <button
-                onClick={runAll}
-                disabled={running}
-                className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.03]"
-                style={{ backgroundColor: "#22c55e15", color: "#22c55e", border: "1px solid #22c55e30" }}
+          <div className="relative flex items-center gap-2">
+            {copyOpen && (
+              <div
+                className="absolute bottom-full right-0 mb-2 w-[280px] max-h-[260px] overflow-y-auto rounded-xl p-1.5 shadow-2xl"
+                style={{ backgroundColor: "#12182b", border: "1px solid #ffffff1f" }}
               >
-                {running ? <Loader2 className="animate-spin" size={12} /> : <Play size={12} />}
-                Testar
-              </button>
+                <p className="px-2 pb-1 pt-1 text-[9px] font-bold uppercase tracking-widest" style={{ color: "#B8C5D8" }}>Copiar ações de outro botão</p>
+                {copyLoading ? (
+                  <div className="flex justify-center py-4"><Loader2 className="animate-spin" size={14} style={{ color: "#B8C5D8" }} /></div>
+                ) : copyList.length === 0 ? (
+                  <p className="px-2 py-3 text-[10px]" style={{ color: "#91A0B5" }}>Nenhum outro botão com ações.</p>
+                ) : (
+                  copyList.map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => copyFromButton(item)}
+                      className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] transition-colors hover:bg-white/10"
+                      style={{ color: "#E5ECF6" }}
+                    >
+                      <span className="truncate font-semibold">{item.nome}</span>
+                      <span className="shrink-0 text-[9px]" style={{ color: "#91A0B5" }}>{item.commands.length} ação(ões)</span>
+                    </button>
+                  ))
+                )}
+              </div>
             )}
+            <button
+              type="button"
+              onClick={toggleCopyPicker}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border px-3 text-[11px] font-bold transition-colors hover:bg-white/10"
+              style={{ color: "#B8C5D8", borderColor: "#ffffff1f", backgroundColor: "transparent" }}
+            >
+              <Copy size={12} />
+              Copiar de outro botão
+            </button>
             <button
               type="button"
               onClick={save}
@@ -1406,13 +1465,6 @@ export default function CustomVmixButtonEditor({ open, onClose, buttonId, userId
             >
               {saving ? <Loader2 className="animate-spin" size={12} /> : null}
               Salvar
-            </button>
-            <button
-              onClick={onClose}
-              className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-white/5"
-              style={{ color: "#888" }}
-            >
-              Fechar
             </button>
           </div>
         </div>

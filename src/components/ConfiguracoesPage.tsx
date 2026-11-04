@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -1510,9 +1511,8 @@ export default function ConfiguracoesPage({
 
                   <div>
                     <label style={adminLabelStyle}>Empresa / Registro Desde</label>
-                    <input 
-                      type="date"
-                      style={adminInputStyle}
+                    <DateInput 
+                                          style={adminInputStyle}
                       value={config.clienteDesde || ""} 
                       onChange={e => saveConfig({ ...config, clienteDesde: e.target.value })}
                     />

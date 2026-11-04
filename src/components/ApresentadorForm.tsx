@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 
 export interface Apresentador {
   id: string;
@@ -325,6 +326,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   const [ativo, setAtivo] = useState(true);
   const [backgroundUrl, setBackgroundUrl] = useState("");
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nome: string } | null>(null);
   const [filterCategoria, setFilterCategoria] = useState("todos");
   const [searchNome, setSearchNome] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -757,6 +759,16 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
   return (
     <div className="animate-fade-in space-y-8 w-full max-w-none mx-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      <ConfirmDeleteDialog
+        name={deleteTarget?.nome ?? null}
+        prefix="o registro de"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          const target = deleteTarget;
+          setDeleteTarget(null);
+          if (target) void removeApresentador(target.id);
+        }}
+      />
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Cadastro de Participantes
@@ -1194,7 +1206,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
                             {a.ativo ? <UserCheck size={14} /> : <UserX size={14} />}
                           </button>
                           <button
-                            onClick={() => removeApresentador(a.id)}
+                            onClick={() => setDeleteTarget({ id: a.id, nome: a.nome })}
                             title="Remover"
                             style={{ width: 30, height: 30, borderRadius: "50%", background: "#FEE2E2", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#DC2626" }}
                           >

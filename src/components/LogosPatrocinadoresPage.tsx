@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef, useMemo, useLayoutEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { createPortal } from "react-dom";
@@ -1456,9 +1457,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Data de Expiração *</label>
-                  <input
-                    type="date"
-                    value={dataFinal}
+                  <DateInput
+                                      value={dataFinal}
                     onChange={(e) => setDataFinal(e.target.value)}
                     required
                     className="w-full px-5 py-2.5 text-xs font-bold outline-none rounded-full bg-[#f8fafc] border border-slate-200/90 text-[#002132] focus:border-[#0055ff] focus:ring-2 focus:ring-[#0055ff]/15 transition-all"

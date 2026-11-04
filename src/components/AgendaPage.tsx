@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { CalendarIcon, CalendarDays, Plus, Trash2, MapPin, Users, User, Instagram, Pencil, X, AlertTriangle, History, Star, Video, Bell, AlignLeft, Briefcase, Link as LinkIcon, List, Clock, Eye, Radio, Repeat, ScrollText, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -2945,9 +2946,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                 <Label className="text-[11px] font-black uppercase tracking-wider text-[#002132] block">
                   Data Inicial
                 </Label>
-                <input
-                  type="date"
-                  value={formPeriodoInicio}
+                <DateInput
+                                  value={formPeriodoInicio}
                   onChange={(e) => setFormPeriodoInicio(e.target.value)}
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white text-sm font-semibold text-[#002132] outline-none shadow-xs transition-all focus:border-[#0055ff] focus:ring-4 focus:ring-[#0055ff]/10"
                 />
@@ -2960,9 +2960,8 @@ export default function AgendaPage({ effectiveUserId }: { effectiveUserId?: stri
                     <Label className="text-[11px] font-black uppercase tracking-wider text-[#002132] block">
                       Data Final
                     </Label>
-                    <input
-                      type="date"
-                      value={formPeriodoFim}
+                    <DateInput
+                                          value={formPeriodoFim}
                       min={formPeriodoInicio || undefined}
                       onChange={(e) => setFormPeriodoFim(e.target.value)}
                       aria-invalid={hasInvalidRange}

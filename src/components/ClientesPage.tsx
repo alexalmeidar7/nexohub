@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1402,9 +1403,8 @@ export default function ClientesPage({ effectiveUserId }: { effectiveUserId?: st
             </Field>
 
             <Field label="Cliente Desde">
-              <input 
-                type="date"
-                style={inputStyle}
+              <DateInput 
+                              style={inputStyle}
                 value={novo.cliente_desde} 
                 onChange={e => setNovo(n => ({...n, cliente_desde: e.target.value}))}
               />

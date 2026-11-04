@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -617,10 +618,9 @@ export default function OuvintesPage({ effectiveUserId }: { effectiveUserId?: st
           </Field>
           <Field label="Data de Nascimento">
             <div style={{ display: "flex", gap: 8 }}>
-              <input
-                style={{ ...pillInput, flex: 1 }}
-                type="date"
-                value={form.data_nascimento}
+              <DateInput
+                              style={{ ...pillInput, flex: 1 }}
+                              value={form.data_nascimento}
                 onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })}
               />
               <div

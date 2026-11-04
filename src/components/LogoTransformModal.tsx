@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -501,9 +502,8 @@ export function LogoTransformModal({
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                       Data de Expiração *
                     </label>
-                    <input
-                      type="date"
-                      value={expirationDate}
+                    <DateInput
+                                          value={expirationDate}
                       onChange={(e) => setExpirationDate(e.target.value)}
                       className="w-full px-3.5 py-1.5 text-xs font-bold rounded-full bg-white border border-slate-200 text-[#002132] focus:border-[#0055ff] outline-none"
                     />

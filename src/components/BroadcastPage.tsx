@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1754,8 +1755,8 @@ export default function BroadcastPage({ effectiveUserId }: { effectiveUserId?: s
 
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Dia inicial</span><input type="date" value={manualInsertDraft.startDate} onChange={e => setManualInsertDraft(p => ({ ...p, startDate: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
-                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Dia final</span><input type="date" value={manualInsertDraft.endDate} onChange={e => setManualInsertDraft(p => ({ ...p, endDate: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Dia inicial</span><DateInput value={manualInsertDraft.startDate} onChange={e => setManualInsertDraft(p => ({ ...p, startDate: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
+                    <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Dia final</span><DateInput value={manualInsertDraft.endDate} onChange={e => setManualInsertDraft(p => ({ ...p, endDate: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
                     <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Horário inicial</span><input type="time" value={manualInsertDraft.startTime} onChange={e => setManualInsertDraft(p => ({ ...p, startTime: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
                     <label className="flex flex-col gap-1.5"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Horário final</span><input type="time" value={manualInsertDraft.endTime} onChange={e => setManualInsertDraft(p => ({ ...p, endTime: e.target.value }))} className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800" /></label>
                   </div>

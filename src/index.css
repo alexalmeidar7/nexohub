@@ -10,6 +10,34 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fmp-video-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fmp-video-box { animation: fmp-video-in 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes fmp-video-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(10px) scale(0.96); }
+}
+
+@keyframes agenda-ticker-in {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes agenda-ticker-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="agenda-ticker"] { animation-duration: 1ms !important; }
+}
+
+/* Com o box de status no cabeçalho, as notificações aparecem só lá. */
+body.nexo-status-chip-on [data-sonner-toaster],
+body.nexo-status-chip-on .nexo-radix-toast-viewport {
+  display: none !important;
+}
+
 /* Registered custom properties for smooth animated gradients */
 @property --onair-primary {
   syntax: "<color>";

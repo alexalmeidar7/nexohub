@@ -26,6 +26,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import ServerClock from "@/components/ServerClock";
 import BotsStatusBox from "@/components/BotsStatusBox";
+import SystemStatusChip from "@/components/SystemStatusChip";
+import AgendaTicker from "@/components/AgendaTicker";
 import { prefetchPage, prefetchGroup, startIdlePrefetch } from "@/lib/prefetchPages";
 
 
@@ -1323,11 +1325,11 @@ export default function HouseMixHeader({
               aria-live="polite"
             >
               <CalendarDays className="w-3.5 h-3.5 shrink-0 opacity-80" />
-              <span className="truncate">
-                {upcomingAgendaItems.length === 0
+              <AgendaTicker
+                text={upcomingAgendaItems.length === 0
                   ? "Sem eventos nos próximos 3 dias"
                   : `${upcomingAgendaItems[activeAgendaItem]?.date} · ${upcomingAgendaItems[activeAgendaItem]?.time} · ${upcomingAgendaItems[activeAgendaItem]?.title || "Evento"}`}
-              </span>
+              />
               {upcomingAgendaItems.length > 1 && (
                 <span className="shrink-0 text-[10px] opacity-65">{activeAgendaItem + 1}/{upcomingAgendaItems.length}</span>
               )}
@@ -1369,17 +1371,20 @@ export default function HouseMixHeader({
             )}
           </div>
 
+          <div className="flex items-center gap-3 shrink-0">
+          <SystemStatusChip />
+
           {/* User Email: aligned to the right with the menu clock */}
           {displayEmail && (
             <div
-              className="hidden sm:flex items-center text-right select-none pl-3 shrink-0"
+              className="hidden sm:flex items-center select-none shrink-0 rounded-full px-3 py-2"
+              style={{ border: "1px solid rgba(255,255,255,0.16)", background: "transparent" }}
               title={`Conectado como: ${displayEmail}`}
             >
-              <span className="text-xs font-semibold text-slate-300/85 tracking-tight">
-                {displayEmail}
-              </span>
+              <span className="text-xs font-semibold text-slate-300/85 tracking-tight">{displayEmail}</span>
             </div>
           )}
+          </div>
         </div>
       </div>
     </header>

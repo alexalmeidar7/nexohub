@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { Swords, Loader2, CalendarPlus, Save, RefreshCw, Link as LinkIcon, ImageOff } from "lucide-react";
@@ -814,7 +815,7 @@ export default function BatalhaMusicalPage({ effectiveUserId }: { effectiveUserI
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Data</label>
-                <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)}
+                <DateInput value={schedDate} onChange={(e) => setSchedDate(e.target.value)}
                   className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
                   onFocus={handleInputFocus} onBlur={handleInputBlur} />
               </div>
