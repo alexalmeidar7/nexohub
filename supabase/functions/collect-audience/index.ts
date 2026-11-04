@@ -39,15 +39,44 @@ function localDayStartIso(now: Date, timeZone: string): string {
   return new Date(targetLocalMidnight + targetLocalMidnight - representedLocal).toISOString();
 }
 
+function parseProgramDays(raw: unknown): number[] {
+  const entries = Array.isArray(raw)
+    ? raw.map(value => String(value ?? "").trim()).filter(Boolean)
+    : String(raw ?? "").split(/[,;|]/).map(value => value.trim()).filter(Boolean);
+  const days = new Set<number>();
+
+  for (const entry of entries) {
+    // Schedule editors commonly store ranges such as "SEG > SÁB".
+    const range = entry.split(/\s*(?:>|→|–|—)\s*/);
+    const resolve = (value: string): number | undefined => {
+      const key = normalize(value);
+      return dayAliases[key] ?? dayAliases[key.slice(0, 3)];
+    };
+    if (range.length === 2) {
+      const first = resolve(range[0]);
+      const last = resolve(range[1]);
+      if (first !== undefined && last !== undefined) {
+        let cursor = first;
+        for (let count = 0; count < 7; count++) {
+          days.add(cursor);
+          if (cursor === last) break;
+          cursor = (cursor + 1) % 7;
+        }
+        continue;
+      }
+    }
+    const day = resolve(entry);
+    if (day !== undefined) days.add(day);
+  }
+
+  return [...days];
+}
+
 function programOnAir(programs: Row[], now: Date, timeZone: string): string {
   const { weekday, hhmm } = localParts(now, timeZone);
   const matches = programs.filter(p => {
     if (p.ativo === false) return false;
-    const rawDays = Array.isArray(p.dias_semana) ? p.dias_semana : typeof p.dias_semana === "string" ? p.dias_semana.split(/[,;|]/) : [];
-    const days = rawDays.map((d: unknown) => {
-      const n = normalize(d);
-      return dayAliases[n] ?? dayAliases[n.slice(0, 3)];
-    });
+    const days = parseProgramDays(p.dias_semana);
     const start = String(p.horario_inicio || "").slice(0, 5);
     const end = String(p.horario_fim || "").slice(0, 5);
     if (!start || !end || !days.includes(weekday)) return false;
