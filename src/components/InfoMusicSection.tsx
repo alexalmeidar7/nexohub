@@ -52,6 +52,7 @@ const Highlight = ({ text, term }: { text: string; term: string }) => {
 
 export default function InfoMusicSection({ music, effectiveUserId, curiosidade, setCuriosidade, manualCuriosityRef }: any) {
   const { user } = useAuth();
+  const tenantUserId = effectiveUserId || user?.id;
   const [isOpen, setIsOpen] = useState(false); // Forced closed by default per user request
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
   const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
@@ -137,7 +138,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       
       try {
         const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
-          body: { artista: target.artista, musica: target.musica, userId: user.id }
+          body: { artista: target.artista, musica: target.musica, userId: tenantUserId }
         });
 
         if (error || !data?.curiosidade) {
@@ -191,14 +192,14 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     if (!user) return;
     if (!append) setLoading(true); else setLoadingMore(true);
     try {
-      const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+      const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", tenantUserId);
       setTotalCount(count || 0);
 
       // 1) Fetch playback history - strictly the last 50 songs played on air
       const { data: historyData, error: historyError } = await supabase
         .from("musicas_tocadas")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", tenantUserId)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -208,7 +209,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       const { data: infoData, error: infoError } = await supabase
         .from("infomusic")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", tenantUserId)
         .order("created_at", { ascending: false })
         .limit(1000); // Higher limit to ensure we match most recent history
 
@@ -230,7 +231,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         if (!existingKeys.has(key)) {
           existingKeys.add(key);
           missingToInsert.push({
-            user_id: user.id,
+            user_id: tenantUserId,
             artista,
             musica,
             curiosidade: ""
@@ -278,12 +279,12 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     if (!user) return;
     setLoadingAllCuriosities(true);
     const [settingsRes, exceptionsRes, curiositiesRes] = await Promise.all([
-      supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("user_settings").select("*").eq("user_id", tenantUserId).maybeSingle(),
+      supabase.from("infomusic_excecoes").select("*").eq("user_id", tenantUserId).order("created_at", { ascending: false }),
       supabase
         .from("infomusic")
         .select("*", { count: 'exact' })
-        .eq("user_id", user.id)
+        .eq("user_id", tenantUserId)
         .not("curiosidade", "is", null)
         .neq("curiosidade", "")
         .order("created_at", { ascending: false })
@@ -344,11 +345,11 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       const column = kind === "capa" ? "infomusic_excecoes_capa_url" : "infomusic_excecoes_artista_url";
       const { error } = await supabase
         .from("user_settings")
-        .upsert({ user_id: user.id, [column]: url } as any, { onConflict: "user_id" });
+        .upsert({ user_id: tenantUserId, [column]: url } as any, { onConflict: "user_id" });
       if (error) throw error;
       if (kind === "capa") setDefaultCapaUrl(url); else setDefaultArtistaUrl(url);
       try {
-        invalidateMusicExceptionsCache(user.id);
+        invalidateMusicExceptionsCache(tenantUserId);
       } catch {}
       toast.success(kind === "capa" ? "Capa geral das exceções salva!" : "Foto geral do artista salva!");
     } catch (e) {
@@ -362,11 +363,11 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     const column = kind === "capa" ? "infomusic_excecoes_capa_url" : "infomusic_excecoes_artista_url";
     const { error } = await supabase
       .from("user_settings")
-      .upsert({ user_id: user.id, [column]: null } as any, { onConflict: "user_id" });
+      .upsert({ user_id: tenantUserId, [column]: null } as any, { onConflict: "user_id" });
     if (error) { toast.error("Erro ao remover imagem"); return; }
     if (kind === "capa") setDefaultCapaUrl(null); else setDefaultArtistaUrl(null);
     try {
-      invalidateMusicExceptionsCache(user.id);
+      invalidateMusicExceptionsCache(tenantUserId);
     } catch {}
     toast.success("Imagem geral removida");
   };
@@ -396,14 +397,14 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
 
     // Listen for real-time updates to user_settings to update "Now Playing" and "Last Played"
     const channel = supabase
-      .channel(`info-music-sync-${user.id}`)
+      .channel(`info-music-sync-${tenantUserId}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'user_settings',
-          filter: `user_id=eq.${user.id}`
+          filter: `user_id=eq.${tenantUserId}`
         },
         (payload) => {
           const di = (payload.new as any).dashboard_items;
@@ -533,7 +534,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               const { data: existing, error: findError } = await supabase
                 .from("infomusic")
                 .select("id")
-                .eq("user_id", user.id)
+                .eq("user_id", tenantUserId)
                 .ilike("artista", String(artista).trim())
                 .ilike("musica", String(musica).trim())
                 .maybeSingle();
@@ -558,7 +559,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                 const { error: insertError } = await supabase
                   .from("infomusic")
                   .insert({
-                    user_id: user.id,
+                    user_id: tenantUserId,
                     artista: String(artista).trim(),
                     musica: String(musica).trim(),
                     curiosidade: String(curiosidade).trim(),
@@ -685,7 +686,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                 if (!user || !nowPlaying) return;
                 try {
                   const { error } = await supabase.from("infomusic_excecoes").upsert({
-                    user_id: user.id,
+                    user_id: tenantUserId,
                     termo: nowPlaying.artista
                   }, { onConflict: 'user_id,termo' });
                   
@@ -693,7 +694,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                   
                   // Invalidação de cache global
                   try {
-                    invalidateMusicExceptionsCache(user.id);
+                    invalidateMusicExceptionsCache(tenantUserId);
                   } catch (e) {
                     console.warn("Could not invalidate music exceptions cache", e);
                   }
@@ -782,14 +783,14 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                               if (!user) return;
                               try {
                                 const { error } = await supabase.from("infomusic_excecoes").upsert({
-                                  user_id: user.id,
+                                  user_id: tenantUserId,
                                   termo: r.artista
                                 }, { onConflict: 'user_id,termo' });
                                 
                                 if (error) throw error;
 
                                 try {
-                                  invalidateMusicExceptionsCache(user.id);
+                                  invalidateMusicExceptionsCache(tenantUserId);
                                 } catch (e) {
                                   console.warn("Could not invalidate music exceptions cache", e);
                                 }
@@ -937,7 +938,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                               .update({ [column]: url } as any)
                               .eq("id", exc.id);
                             if (error) throw error;
-                            invalidateMusicExceptionsCache(user?.id);
+                            invalidateMusicExceptionsCache(tenantUserId);
                             loadExcecoes();
                             toast.success(kind === "capa" ? "Capa específica atualizada!" : "Foto específica do artista atualizada!");
                           } catch {
@@ -951,7 +952,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                             .update({ [column]: null } as any)
                             .eq("id", exc.id);
                           if (error) { toast.error("Erro ao remover"); return; }
-                          invalidateMusicExceptionsCache(user?.id);
+                          invalidateMusicExceptionsCache(tenantUserId);
                           loadExcecoes();
                           toast.success("Voltou a usar a imagem geral da lista");
                         };
@@ -1201,7 +1202,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                                 ...nowPlaying,
                                 music_current_curiosity: r.curiosidade
                               } as any
-                            }).eq("user_id", user.id);
+                            }).eq("user_id", tenantUserId);
                             
                             if (error) throw error;
                             toast.success("Curiosidade enviada ao XML!");

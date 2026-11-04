@@ -270,6 +270,7 @@ jobs:
             20261102100000
             20261102110000
             20261102140000
+            20261104173200
           )
           for version in "${required_versions[@]}"; do
             matches=(supabase/migrations/"${version}"_*.sql)
@@ -607,7 +608,7 @@ jobs:
           set -euo pipefail
           missing="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             WITH required(version) AS (
-              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029193000'), ('20261029165528'), ('20261101150000'), ('20261102100000'), ('20261102110000'), ('20261102140000')
+              VALUES ('20261028180000'), ('20261028193000'), ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029193000'), ('20261029165528'), ('20261101150000'), ('20261102100000'), ('20261102110000'), ('20261102140000'), ('20261104173200')
             )
             SELECT COALESCE(string_agg(r.version, ', ' ORDER BY r.version), '')
             FROM required r
@@ -690,6 +691,25 @@ jobs:
             exit 1
           fi
 
+          infomusic_policy_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT count(*)
+            FROM pg_policies
+            WHERE schemaname='public' AND tablename='infomusic'
+              AND roles = ARRAY['authenticated']::name[]
+              AND (
+                (policyname='infomusic_tenant_insert' AND cmd='INSERT'
+                  AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
+                OR
+                (policyname='infomusic_tenant_update' AND cmd='UPDATE'
+                  AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%'
+                  AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
+              )
+          ")"
+          if [ "$infomusic_policy_count" != "2" ]; then
+            echo "::error::infomusic must have tenant-scoped INSERT and UPDATE policies for authenticated users. Bridge writes are blocked."
+            exit 1
+          fi
+
           preroll_rls="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
             SELECT relrowsecurity
             FROM pg_class
@@ -721,7 +741,7 @@ jobs:
             exit 1
           fi
 
-          echo "House Mix column invariants and commercial tenant RLS are verified."
+          echo "House Mix column invariants, InfoMusic tenant writes, and commercial tenant RLS are verified."
 
       - name: Verify Agenda and forms/Storage schema before Bridge writes
         if: ${{ inputs.apply_changes }}

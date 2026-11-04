@@ -376,7 +376,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   const dataUserId = useMemo(() => {
     if (effectiveUserId) return effectiveUserId;
-    if (clientAcc && !clientAcc.isAdmin) return clientAcc.id;
+    if (clientAcc && !clientAcc.isAdmin) return clientAcc.isSubUser && clientAcc.parentUserId ? clientAcc.parentUserId : clientAcc.id;
     if (user?.id && !clientAcc?.isAdmin) return user.id;
     // Para admin/desenvolvimento sem rádio explícita no prop, aponta para a emissora principal (Positiva FM)
     return "d17e65af-e407-466f-9b60-b55c43399513";
@@ -1143,6 +1143,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       if (dataUserId) {
         (async () => {
           try {
+            const tenantUserId = await resolveTenantUserId(dataUserId);
             const titulo = (data.titulo || "").trim();
             const artista = (data.artista || "").trim();
             if (!titulo || titulo.toLowerCase() === "sem título" || titulo.toLowerCase() === "sem titulo") return;
@@ -1153,7 +1154,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const { data: settings } = await supabase
               .from("user_settings")
               .select("infomusic_excecoes")
-              .eq("user_id", dataUserId)
+              .eq("user_id", tenantUserId)
               .maybeSingle();
             const excecoes = ((settings?.infomusic_excecoes || "") as string)
               .split(",").map((s) => s.trim()).filter(Boolean);
@@ -1162,7 +1163,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const { data: programas } = await supabase
               .from("programas")
               .select("nome, horario_inicio, horario_fim, dias_semana, variavel, data_variavel, ativo")
-              .eq("user_id", dataUserId)
+              .eq("user_id", tenantUserId)
               .eq("ativo", true);
             const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
             const d = new Date();
@@ -1180,7 +1181,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             }
 
             await supabase.from("musicas_tocadas").upsert({
-              user_id: dataUserId,
+              user_id: tenantUserId,
               dia: todayStr,
               horario: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`,
               programa,
@@ -1193,14 +1194,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const { data: existingInfo } = await supabase
               .from("infomusic")
               .select("id")
-              .eq("user_id", dataUserId)
+              .eq("user_id", tenantUserId)
               .ilike("artista", artista)
               .ilike("musica", titulo)
               .maybeSingle();
 
             if (!existingInfo) {
               await supabase.from("infomusic").insert({
-                user_id: dataUserId,
+                user_id: tenantUserId,
                 artista,
                 musica: titulo,
                 curiosidade: "",

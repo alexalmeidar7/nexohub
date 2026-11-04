@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       apply_reconciliation:
-        description: "Aprovação explícita para aplicar sete migrações revisadas: chave musical, colunas House Mix, recuperação de categorias vMix a partir dos comandos, schema base, RLS comercial e invariantes existentes."
+        description: "Aprovação explícita para aplicar oito migrações revisadas: chave musical, colunas House Mix, recuperação de categorias vMix a partir dos comandos, schema base, RLS comercial e invariantes existentes."
         required: true
         default: false
         type: boolean
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   reconcile:
-    name: Preflight or apply seven reviewed House Mix and Bridge prerequisites
+    name: Preflight or apply eight reviewed House Mix and Bridge prerequisites
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -156,6 +156,7 @@ jobs:
             supabase/migrations/20261102100000_reconcile_housemix_schema.sql
             supabase/migrations/20261102110000_harden_comercial_preroll_rls.sql
             supabase/migrations/20261102140000_enforce_existing_housemix_column_invariants.sql
+            supabase/migrations/20261104173200_add_infomusic_tenant_write_policies.sql
           )
           for file in "${required_files[@]}"; do
             if [ ! -s "$file" ]; then
@@ -174,6 +175,7 @@ jobs:
             missing_history text;
             infomusic_rows bigint;
             infomusic_null_owners bigint := 0;
+            infomusic_policy_count integer;
             constraint_definition text;
             wrong_existing_columns text;
             migration_recorded boolean;
@@ -329,6 +331,24 @@ jobs:
               RAISE EXCEPTION 'infomusic has % rows without user_id. Restore an approved owner mapping; no rows will be deleted or reassigned.', infomusic_null_owners;
             END IF;
 
+            IF EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version='20261104173200') THEN
+              SELECT count(*) INTO infomusic_policy_count
+              FROM pg_policies
+              WHERE schemaname='public' AND tablename='infomusic'
+                AND roles = ARRAY['authenticated']::name[]
+                AND (
+                  (policyname='infomusic_tenant_insert' AND cmd='INSERT'
+                    AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
+                  OR
+                  (policyname='infomusic_tenant_update' AND cmd='UPDATE'
+                    AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%'
+                    AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
+                );
+              IF infomusic_policy_count <> 2 THEN
+                RAISE EXCEPTION 'InfoMusic tenant-write migration is recorded but its INSERT/UPDATE policies are missing or incorrect.';
+              END IF;
+            END IF;
+
             WITH required(table_name, column_name, data_type) AS (
               VALUES
                 ('infomusic_excecoes', 'artista_url', 'text'),
@@ -415,7 +435,7 @@ jobs:
                     AND upper(btrim(command->>'_buttonCategory')) <> 'AUDIO'
                 )
             ) AS category_metadata_mismatches,
-            (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000','20261029193000','20261102100000','20261102110000','20261102140000')) AS recorded_prerequisite_migrations;
+            (SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version IN ('20261028205300','20261028223300','20261029025000','20261029193000','20261102100000','20261102110000','20261102140000','20261104173200')) AS recorded_prerequisite_migrations;
           SQL
 
       - name: Apply reviewed House Mix prerequisites, vMix category recovery, schema, RLS, and invariant migrations (explicit approval only)
@@ -439,14 +459,18 @@ jobs:
           psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20261102140000_enforce_existing_housemix_column_invariants.sql
 
-          for version in 20261028205300 20261028223300 20261029025000 20261029193000 20261102100000 20261102110000 20261102140000; do
+          # Add tenant-scoped InfoMusic writes after the owner column and RPC are verified.
+          psql "$DATABASE_URL" -X --single-transaction -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261104173200_add_infomusic_tenant_write_policies.sql
+
+          for version in 20261028205300 20261028223300 20261029025000 20261029193000 20261102100000 20261102110000 20261102140000 20261104173200; do
             recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "SELECT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$version')")"
             if [ "$recorded" != "t" ]; then
               supabase migration repair "$version" --status applied --db-url "$DATABASE_URL"
             fi
           done
 
-      - name: Verify all seven migration records and resulting schema
+      - name: Verify all eight migration records and resulting schema
         if: ${{ inputs.apply_reconciliation }}
         shell: bash
         run: |
@@ -456,11 +480,12 @@ jobs:
           DECLARE
             missing_versions text;
             policy_count integer;
+            infomusic_policy_count integer;
             fk_definition text;
             fk_validated boolean;
           BEGIN
             WITH required(version) AS (
-              VALUES ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029193000'), ('20261102100000'), ('20261102110000'), ('20261102140000')
+              VALUES ('20261028205300'), ('20261028223300'), ('20261029025000'), ('20261029193000'), ('20261102100000'), ('20261102110000'), ('20261102140000'), ('20261104173200')
             )
             SELECT string_agg(r.version, ', ' ORDER BY r.version)
               INTO missing_versions
@@ -542,6 +567,22 @@ jobs:
                 coalesce(fk_validated::text, 'unknown');
             END IF;
 
+            SELECT count(*) INTO infomusic_policy_count
+            FROM pg_policies
+            WHERE schemaname='public' AND tablename='infomusic'
+              AND roles = ARRAY['authenticated']::name[]
+              AND (
+                (policyname='infomusic_tenant_insert' AND cmd='INSERT'
+                  AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
+                OR
+                (policyname='infomusic_tenant_update' AND cmd='UPDATE'
+                  AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%'
+                  AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
+              );
+            IF infomusic_policy_count <> 2 THEN
+              RAISE EXCEPTION 'Expected two tenant-scoped InfoMusic write policies, found %.', infomusic_policy_count;
+            END IF;
+
             IF NOT EXISTS (
               SELECT 1 FROM pg_class c
               JOIN pg_namespace n ON n.oid=c.relnamespace
@@ -581,7 +622,7 @@ jobs:
         shell: bash
         run: |
           if [ "$APPLY_RECONCILIATION" = "true" ]; then
-            echo "The three original prerequisites, vMix category recovery, schema reconciliation, commercial RLS, and column invariants were applied and verified."
+            echo "The House Mix prerequisites, vMix category recovery, schema reconciliation, commercial RLS, column invariants, and tenant-scoped InfoMusic writes were applied and verified."
             echo "No Bridge tables were created and no Edge Functions were deployed."
             echo "No production frontend deployment was triggered."
           else
