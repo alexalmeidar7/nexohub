@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
