@@ -48,6 +48,16 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Registrar commit exato do artefato
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          with open("dist/deploy-info.json", "w", encoding="utf-8") as f:
+              json.dump({"commit": os.environ["DEPLOY_SHA"]}, f)
+          PY
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -94,3 +104,23 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+      - name: Confirmar versão publicada no domínio de produção
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error "https://housemix.nexobrasil.net/deploy-info.json?check=$attempt" -o /tmp/deploy-info.json; then
+              ACTUAL_SHA="$(python3 -c 'import json; print(json.load(open("/tmp/deploy-info.json"))["commit"])')"
+              if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
+                echo "Produção confirmada no commit $ACTUAL_SHA"
+                exit 0
+              fi
+              echo "Aguardando propagação: publicado=$ACTUAL_SHA esperado=$EXPECTED_SHA"
+            else
+              echo "Site ainda não respondeu com o manifesto de publicação."
+            fi
+            sleep 10
+          done
+          echo "::error::O FTP terminou, mas o domínio não confirmou o commit publicado. Deploy permanece NÃO VALIDADO."
+          exit 1
