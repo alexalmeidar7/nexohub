@@ -1,6 +1,8 @@
 -- Restore authenticated tenant-scoped writes for InfoMusic.
--- Existing authenticated read behavior is preserved; writes are limited to the
--- station owner returned by current_tenant_user_id() for both owners and sub-users.
+-- Reads and writes are limited to the station owner returned by
+-- current_tenant_user_id() for both owners and active sub-users.
+-- The legacy authenticated read policy used USING (true), which exposed every
+-- station's InfoMusic rows to any signed-in user; this migration replaces it.
 -- This migration changes policies only and does not modify or delete data.
 
 DO $migration$
@@ -8,6 +10,7 @@ DECLARE
   user_id_type text;
   user_id_nullable text;
   policy_count integer;
+  total_policy_count integer;
 BEGIN
   IF to_regclass('public.infomusic') IS NULL THEN
     RAISE EXCEPTION 'public.infomusic is missing; restore the House Mix schema before applying this policy.';
@@ -38,6 +41,15 @@ BEGIN
   EXECUTE 'REVOKE DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN ON TABLE public.infomusic FROM authenticated';
   EXECUTE 'GRANT SELECT, INSERT, UPDATE ON TABLE public.infomusic TO authenticated';
 
+  -- RLS policies are permissive by default and are OR-combined. Leaving the
+  -- legacy USING (true) SELECT policy in place would bypass tenant isolation.
+  EXECUTE 'DROP POLICY IF EXISTS infomusic_authenticated_read ON public.infomusic';
+  EXECUTE 'DROP POLICY IF EXISTS infomusic_tenant_select ON public.infomusic';
+  EXECUTE 'CREATE POLICY infomusic_tenant_select
+    ON public.infomusic
+    FOR SELECT TO authenticated
+    USING (user_id = (SELECT public.current_tenant_user_id()))';
+
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies
     WHERE schemaname='public' AND tablename='infomusic' AND policyname='infomusic_tenant_insert'
@@ -64,6 +76,9 @@ BEGIN
   WHERE schemaname='public' AND tablename='infomusic'
     AND roles = ARRAY['authenticated']::name[]
     AND (
+      (policyname='infomusic_tenant_select' AND cmd='SELECT'
+        AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%')
+      OR
       (policyname='infomusic_tenant_insert' AND cmd='INSERT'
         AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
       OR
@@ -72,8 +87,12 @@ BEGIN
         AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
     );
 
-  IF policy_count <> 2 THEN
-    RAISE EXCEPTION 'Expected exactly two tenant-scoped InfoMusic write policies, found %.', policy_count;
+  SELECT count(*) INTO total_policy_count
+  FROM pg_policies
+  WHERE schemaname='public' AND tablename='infomusic';
+
+  IF policy_count <> 3 OR total_policy_count <> 3 THEN
+    RAISE EXCEPTION 'Expected exactly three tenant-scoped InfoMusic SELECT/INSERT/UPDATE policies and no additional policies; found % expected policies and % total policies.', policy_count, total_policy_count;
   END IF;
 
   IF has_table_privilege('anon','public.infomusic','SELECT')

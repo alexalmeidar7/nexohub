@@ -697,6 +697,9 @@ jobs:
             WHERE schemaname='public' AND tablename='infomusic'
               AND roles = ARRAY['authenticated']::name[]
               AND (
+                (policyname='infomusic_tenant_select' AND cmd='SELECT'
+                  AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%')
+                OR
                 (policyname='infomusic_tenant_insert' AND cmd='INSERT'
                   AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
                 OR
@@ -705,8 +708,12 @@ jobs:
                   AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
               )
           ")"
-          if [ "$infomusic_policy_count" != "2" ]; then
-            echo "::error::infomusic must have tenant-scoped INSERT and UPDATE policies for authenticated users. Bridge writes are blocked."
+          infomusic_total_policy_count="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -c "
+            SELECT count(*) FROM pg_policies
+            WHERE schemaname='public' AND tablename='infomusic'
+          ")"
+          if [ "$infomusic_policy_count" != "3" ] || [ "$infomusic_total_policy_count" != "3" ]; then
+            echo "::error::infomusic must have exactly three tenant-scoped SELECT/INSERT/UPDATE policies and no additional policies. Bridge writes are blocked."
             exit 1
           fi
 

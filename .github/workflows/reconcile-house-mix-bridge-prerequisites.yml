@@ -176,6 +176,7 @@ jobs:
             infomusic_rows bigint;
             infomusic_null_owners bigint := 0;
             infomusic_policy_count integer;
+            infomusic_total_policy_count integer;
             constraint_definition text;
             wrong_existing_columns text;
             migration_recorded boolean;
@@ -337,6 +338,9 @@ jobs:
               WHERE schemaname='public' AND tablename='infomusic'
                 AND roles = ARRAY['authenticated']::name[]
                 AND (
+                  (policyname='infomusic_tenant_select' AND cmd='SELECT'
+                    AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%')
+                  OR
                   (policyname='infomusic_tenant_insert' AND cmd='INSERT'
                     AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
                   OR
@@ -344,8 +348,11 @@ jobs:
                     AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%'
                     AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
                 );
-              IF infomusic_policy_count <> 2 THEN
-                RAISE EXCEPTION 'InfoMusic tenant-write migration is recorded but its INSERT/UPDATE policies are missing or incorrect.';
+              SELECT count(*) INTO infomusic_total_policy_count
+              FROM pg_policies
+              WHERE schemaname='public' AND tablename='infomusic';
+              IF infomusic_policy_count <> 3 OR infomusic_total_policy_count <> 3 THEN
+                RAISE EXCEPTION 'InfoMusic tenant-policy migration is recorded but its SELECT/INSERT/UPDATE policies are missing, incorrect, or accompanied by additional policies.';
               END IF;
 
             IF has_table_privilege('anon','public.infomusic','SELECT')
@@ -509,6 +516,7 @@ jobs:
             missing_versions text;
             policy_count integer;
             infomusic_policy_count integer;
+            infomusic_total_policy_count integer;
             fk_definition text;
             fk_validated boolean;
           BEGIN
@@ -600,6 +608,9 @@ jobs:
             WHERE schemaname='public' AND tablename='infomusic'
               AND roles = ARRAY['authenticated']::name[]
               AND (
+                (policyname='infomusic_tenant_select' AND cmd='SELECT'
+                  AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%')
+                OR
                 (policyname='infomusic_tenant_insert' AND cmd='INSERT'
                   AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
                 OR
@@ -607,8 +618,11 @@ jobs:
                   AND qual LIKE '%user_id%' AND qual LIKE '%current_tenant_user_id%'
                   AND with_check LIKE '%user_id%' AND with_check LIKE '%current_tenant_user_id%')
               );
-            IF infomusic_policy_count <> 2 THEN
-              RAISE EXCEPTION 'Expected two tenant-scoped InfoMusic write policies, found %.', infomusic_policy_count;
+            SELECT count(*) INTO infomusic_total_policy_count
+            FROM pg_policies
+            WHERE schemaname='public' AND tablename='infomusic';
+            IF infomusic_policy_count <> 3 OR infomusic_total_policy_count <> 3 THEN
+              RAISE EXCEPTION 'Expected exactly three tenant-scoped InfoMusic SELECT/INSERT/UPDATE policies and no additional policies; found % expected policies and % total policies.', infomusic_policy_count, infomusic_total_policy_count;
             END IF;
 
             IF has_table_privilege('anon','public.infomusic','SELECT')
