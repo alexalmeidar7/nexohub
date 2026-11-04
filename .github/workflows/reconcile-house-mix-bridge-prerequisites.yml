@@ -177,6 +177,9 @@ jobs:
             constraint_definition text;
             wrong_existing_columns text;
             migration_recorded boolean;
+            parent_owner_function text;
+            tenant_owner_function text;
+            active_sub_users bigint := 0;
           BEGIN
             IF to_regclass('supabase_migrations.schema_migrations') IS NULL THEN
               RAISE EXCEPTION 'Supabase migration history is missing. Nothing was changed.';
@@ -212,6 +215,48 @@ jobs:
             IF missing_history IS NOT NULL THEN
               RAISE EXCEPTION 'Required House Mix baseline history is incomplete: %. Nothing was changed.', missing_history;
             END IF;
+
+            -- Frontend vMix screens resolve the station owner, while Bridge Edge Functions
+            -- resolve it server-side through current_tenant_user_id(). Verify both RPCs and
+            -- the active sub-user mappings before any later Bridge rollout can be approved.
+            IF to_regclass('public.sub_users') IS NULL THEN
+              RAISE EXCEPTION 'The sub_users tenant-mapping table is missing. Nothing was changed.';
+            END IF;
+            IF to_regprocedure('public.current_parent_user_id()') IS NULL
+               OR to_regprocedure('public.current_tenant_user_id()') IS NULL THEN
+              RAISE EXCEPTION 'The current tenant-owner RPCs are missing. Restore migration 20261028123803 before Bridge rollout.';
+            END IF;
+
+            SELECT pg_get_functiondef('public.current_parent_user_id()'::regprocedure)
+              INTO parent_owner_function;
+            SELECT pg_get_functiondef('public.current_tenant_user_id()'::regprocedure)
+              INTO tenant_owner_function;
+            IF position('public.sub_users' IN parent_owner_function) = 0
+               OR position('auth.uid()' IN parent_owner_function) = 0
+               OR position('auth_user_id' IN parent_owner_function) = 0
+               OR position('parent_user_id' IN parent_owner_function) = 0
+               OR position('ativo' IN parent_owner_function) = 0 THEN
+              RAISE EXCEPTION 'current_parent_user_id() does not match the reviewed active sub-user mapping. Nothing was changed.';
+            END IF;
+            IF position('current_parent_user_id()' IN tenant_owner_function) = 0
+               OR position('auth.uid()' IN tenant_owner_function) = 0 THEN
+              RAISE EXCEPTION 'current_tenant_user_id() does not resolve the authenticated user or parent tenant. Nothing was changed.';
+            END IF;
+
+            SELECT count(*) INTO active_sub_users
+            FROM public.sub_users
+            WHERE ativo IS TRUE;
+            IF EXISTS (
+              SELECT 1
+              FROM public.sub_users s
+              LEFT JOIN auth.users sub_user ON sub_user.id = s.auth_user_id
+              LEFT JOIN auth.users parent_user ON parent_user.id = s.parent_user_id
+              WHERE s.ativo IS TRUE
+                AND (sub_user.id IS NULL OR parent_user.id IS NULL)
+            ) THEN
+              RAISE EXCEPTION 'An active sub-user mapping references a missing Auth user or parent. Reconcile tenant ownership before Bridge rollout.';
+            END IF;
+            RAISE NOTICE 'Validated % active sub-user tenant mappings.', active_sub_users;
 
             IF to_regclass('public.musicas_tocadas') IS NULL
                OR to_regclass('public.infomusic') IS NULL
