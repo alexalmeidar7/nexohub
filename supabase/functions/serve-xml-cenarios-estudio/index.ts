@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -194,14 +195,21 @@ serve(async (req) => {
       return withCacheBuster(arte.url, arte.updatedAt || grupo.updated_at);
     };
 
-    const urlConvidados = findArte(4); // 4TVs ATRAS CONVIDADOS
-    const urlAncora = findArte(2);     // 2TVs ATRAS ANCORA
+    const [urlConvidadosRaw, urlAncoraRaw] = [findArte(4), findArte(2)];
+    const [urlConvidados, urlAncora] = await Promise.all([
+      ensureVmixPngUrl(supabase, urlConvidadosRaw, `vmix-cenarios/${userId}`),
+      ensureVmixPngUrl(supabase, urlAncoraRaw, `vmix-cenarios/${userId}`),
+    ]);
 
     // Cache-buster para capa/thumb do programa: usa created_at (não temos updated_at em programas)
     const programaVersion = (onAir as any)?.created_at || "";
     const capaUrl = withCacheBuster((onAir as any)?.capa || "", programaVersion);
     const thumbUrl = withCacheBuster((onAir as any)?.thumb || "", programaVersion);
-    const fotoLocutorUrl = withCacheBuster(locutorFoto, programaVersion);
+    const [capaUrlPng, thumbUrlPng, fotoLocutorUrl] = await Promise.all([
+      ensureVmixPngUrl(supabase, capaUrl, `vmix-cenarios/${userId}`),
+      ensureVmixPngUrl(supabase, thumbUrl, `vmix-cenarios/${userId}`),
+      ensureVmixPngUrl(supabase, withCacheBuster(locutorFoto, programaVersion), `vmix-cenarios/${userId}`),
+    ]);
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<cenarios_estudio>\n`;
     xml += `  <programa>\n`;
@@ -209,8 +217,8 @@ serve(async (req) => {
     xml += `    <nome>${xmlEscape(onAir?.nome || "")}</nome>\n`;
     xml += `    <horario_inicio>${xmlEscape(onAir?.horario_inicio || "")}</horario_inicio>\n`;
     xml += `    <horario_fim>${xmlEscape(onAir?.horario_fim || "")}</horario_fim>\n`;
-    xml += `    <capa>${xmlEscape(capaUrl)}</capa>\n`;
-    xml += `    <thumb>${xmlEscape(thumbUrl)}</thumb>\n`;
+    xml += `    <capa>${xmlEscape(capaUrlPng)}</capa>\n`;
+    xml += `    <thumb>${xmlEscape(thumbUrlPng)}</thumb>\n`;
     xml += `  </programa>\n`;
     xml += `  <locutor>\n`;
     xml += `    <nome>${xmlEscape(locutorNome)}</nome>\n`;
