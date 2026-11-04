@@ -43,6 +43,21 @@ jobs:
       - name: Montar a prévia
         run: bun run build
 
+      - name: Configurar Deno para Edge Functions Google Agenda
+        if: ${{ hashFiles('supabase/functions/google-calendar-*/index.ts') != '' }}
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Validar sintaxe e tipos das Edge Functions Google Agenda
+        if: ${{ hashFiles('supabase/functions/google-calendar-*/index.ts') != '' }}
+        run: |
+          deno check --node-modules-dir=none --no-lock \
+            supabase/functions/google-calendar-auth/index.ts \
+            supabase/functions/google-calendar-callback/index.ts \
+            supabase/functions/google-calendar-events/index.ts \
+            supabase/functions/google-calendar-disconnect/index.ts
+
       - name: Validar compilação do NexoHub Bridge
         if: ${{ hashFiles('tools/NexoHubBridge/NexoHubBridge.csproj') != '' }}
         uses: actions/setup-dotnet@v5
