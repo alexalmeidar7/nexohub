@@ -1027,6 +1027,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   useEffect(() => {
     if (!user) return;
     const loadSettings = async () => {
+      const stationOwnerId = getStationOwnerId();
+      if (!stationOwnerId) return;
       // Load global shortcuts and input mapping
       const { data: settings } = await supabase
         .from("user_settings")
@@ -1046,7 +1048,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       // Load all connections
       const { data: connections } = await (supabase.from("vmix_connections" as any) as any)
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", stationOwnerId)
         .order("created_at", { ascending: false });
 
       if (connections && connections.length > 0) {
@@ -1086,7 +1088,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         const { data: oldData } = await supabase
           .from("user_settings")
           .select("vmix_url, vmix_user, vmix_pass")
-          .eq("user_id", user.id)
+          .eq("user_id", stationOwnerId)
           .maybeSingle();
           
         if (oldData?.vmix_url) {
@@ -1100,14 +1102,16 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       }
     };
     loadSettings();
-  }, [user]);
+  }, [user, getStationOwnerId]);
 
   const loadConnections = async () => {
     if (!user) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
     const { data } = await supabase
       .from("vmix_connections" as any)
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", stationOwnerId)
       .order("created_at", { ascending: false });
     if (data) setVmixConnections(data);
   };
@@ -1115,6 +1119,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   // Persist the active connection so it auto-applies on every future visit
   const persistActiveConnection = useCallback(async (connId: string) => {
     if (!user || !connId) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
     try { 
       localStorage.setItem(`vmix_active_conn_${user.id}`, connId);
       // Mark this as truly "connected" so we can auto-connect on reload
@@ -1123,13 +1129,14 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     try {
       await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: false })
-        .eq("user_id", user.id)
+        .eq("user_id", stationOwnerId)
         .neq("id", connId);
       await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: true })
-        .eq("id", connId);
+        .eq("id", connId)
+        .eq("user_id", stationOwnerId);
     } catch {}
-  }, [user]);
+  }, [user, getStationOwnerId]);
 
   const handleSelectConnection = (conn: any) => {
     setSelectedConnectionId(conn.id);
@@ -1157,6 +1164,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
   const saveUrl = async () => {
     if (!user || !vmixUrl.trim()) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
     let trimmed = vmixUrl.trim();
     if (trimmed && !/^https?:\/\//i.test(trimmed)) {
       trimmed = "http://" + trimmed;
@@ -1170,7 +1179,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     } catch {}
 
     const payload = { 
-      user_id: user.id,
+      user_id: stationOwnerId,
       name: studioName || "vMix Studio",
       url: trimmed, 
       username: vmixUser.trim(), 
@@ -1183,6 +1192,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       const { data } = await (supabase.from("vmix_connections" as any) as any)
         .update(payload)
         .eq("id", selectedConnectionId)
+        .eq("user_id", stationOwnerId)
         .select()
         .single();
       savedConn = data;
@@ -1197,7 +1207,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     
     // Also update global settings for backward compatibility if needed
     await supabase.from("user_settings").upsert({ 
-      user_id: user.id, 
+      user_id: stationOwnerId, 
       vmix_url: trimmed, 
       vmix_user: vmixUser.trim(), 
       vmix_pass: vmixPass 
@@ -1219,9 +1229,12 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
   const deleteConnection = async (id: string) => {
     if (!user || !id) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
     const { error } = await (supabase.from("vmix_connections" as any) as any)
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", stationOwnerId);
     
     if (error) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
@@ -3155,11 +3168,13 @@ function useAgendaPodcastTriggers({
 
   const loadEventos = useCallback(async () => {
     if (!user || !isPodcastStudio) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
     const hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
     const { data } = await supabase
       .from("agenda_eventos")
       .select("id, programa_id, data, horario_gravacao, horario_gravacao_fim, tipo_evento, descricao, status")
-      .eq("user_id", user.id)
+      .eq("user_id", stationOwnerId)
       .gte("data", hoje)
       .order("data", { ascending: true });
     if (data) {
@@ -3170,7 +3185,7 @@ function useAgendaPodcastTriggers({
           .filter((evento) => !["cancelado", "concluido", "concluído"].includes((evento.status || "").toLowerCase())),
       );
     }
-  }, [user, isPodcastStudio]);
+  }, [user, isPodcastStudio, getStationOwnerId]);
 
   useEffect(() => { loadEventos(); }, [loadEventos]);
 
@@ -3178,12 +3193,14 @@ function useAgendaPodcastTriggers({
   // sem exigir que o operador recarregue o Switcher.
   useEffect(() => {
     if (!user || !isPodcastStudio) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
 
     const channel = supabase
-      .channel(`vmix-agenda-${user.id}`)
+      .channel(`vmix-agenda-${stationOwnerId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${stationOwnerId}` },
         () => { void loadEventos(); },
       )
       .subscribe();
@@ -3196,7 +3213,7 @@ function useAgendaPodcastTriggers({
       window.clearInterval(id);
       supabase.removeChannel(channel);
     };
-  }, [user, isPodcastStudio, loadEventos]);
+  }, [user, isPodcastStudio, loadEventos, getStationOwnerId]);
 
   /** próximo evento válido (não rejeitado) por programa */
   const eventoPorPrograma = useMemo(() => {
@@ -3611,11 +3628,13 @@ function SwitcherUI({
 
   const createAudioMonitor = async () => {
     if (!user || !audioMonitorInput || !audioMonitorName.trim()) return;
+    const stationOwnerId = getStationOwnerId();
+    if (!stationOwnerId) return;
     const selectedInput = inputs.find((input: VmixInput) => input.number === audioMonitorInput);
     setCreatingAudioMonitor(true);
     try {
       const { error } = await (supabase.from("custom_vmix_buttons" as any) as any).insert({
-        user_id: user.id,
+        user_id: stationOwnerId,
         estudio: studioName || null,
         nome: audioMonitorName.trim(),
         category: "AUDIO",
