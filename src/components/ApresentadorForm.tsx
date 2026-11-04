@@ -25,6 +25,8 @@ export interface Apresentador {
   foto: string;
   background_url?: string | null;
   ativo: boolean;
+  /** True only when this participant was loaded from the station's Supabase row. */
+  persisted?: boolean;
 }
 
 export const CATEGORIA_OPTIONS = ["Apresentador", "Jornalista", "Convidado"];
@@ -133,6 +135,7 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
     whatsapp: a.whatsapp,
     foto: a.foto,
     ativo: a.ativo,
+    persisted: false,
   }));
 
   // Exclusões de participantes padrão ficam registradas localmente para não reaparecerem após recarregar.
@@ -170,6 +173,7 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
             foto: a.foto || "",
             background_url: (a as any).background_url || "",
             ativo: a.ativo ?? true,
+            persisted: true,
           };
         });
     }
@@ -203,6 +207,7 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
                 ...a,
                 categoria: a.categoria || resolved.categoria,
                 cargo: a.cargo || resolved.cargo,
+                persisted: persistedIds.has(String(a?.id || "")),
               };
             });
         }
@@ -556,9 +561,10 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
   const removeApresentador = async (id: string) => {
     if (!ownerId) { toast.error("Sessão inválida."); return; }
-    const isUuid = (value: string) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-    if (isUuid(id)) {
+    // UUID não significa necessariamente linha persistida: catálogos locais também podem usar UUID.
+    // A origem é marcada durante getApresentadores(), evitando DELETE falso no banco.
+    const participant = apresentadores.find(a => a.id === id);
+    if (participant?.persisted) {
       const { data, error } = await supabase.from("apresentadores")
         .delete().eq("id", id).eq("user_id", ownerId).select("id");
       if (error) {
@@ -566,11 +572,11 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         return;
       }
       if (!data?.length) {
-        toast.error("O participante não foi localizado no banco desta emissora. Nenhum dado foi removido.");
+        toast.error("O banco não confirmou a exclusão do participante. Nenhum dado local foi alterado.");
         return;
       }
     } else {
-      // Itens padrão do catálogo não têm linha própria no banco: registrar exclusão para não reaparecerem.
+      // Itens do catálogo/cache local não têm linha própria no banco: registrar exclusão local.
       try {
         const key = `nexohub_participantes_excluidos_${ownerId}`;
         const current = JSON.parse(localStorage.getItem(key) || "[]");
