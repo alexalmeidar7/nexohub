@@ -1048,6 +1048,30 @@ export default function ConfiguracoesPage({
     await persistChannelOrder(nextGroups.flatMap(item => item.items));
   };
 
+  const handleRenameCatalog = async (group: { label: string; key: string }) => {
+    const nextName = window.prompt("Nome da pasta do catálogo:", group.label)?.trim();
+    if (!nextName || nextName === group.label) return;
+    const tid = targetUid || user?.id;
+    if (!tid) return;
+    const { error } = await supabase.from("streaming_channels")
+      .update({ catalog_name: nextName, name: nextName })
+      .eq("user_id", tid)
+      .eq("type", "catalog")
+      .eq("catalog_name", group.label);
+    if (error) { toast.error("Não foi possível renomear a pasta: " + error.message); return; }
+    const updated = canais.map(item => item.type === "catalog" && item.catalog_name === group.label
+      ? { ...item, catalog_name: nextName, name: item.name === group.label ? nextName : item.name }
+      : item);
+    setCanais(updated);
+    saveStoredStreamingChannels(tid, updated);
+    toast.success("Pasta renomeada. A alteração já foi salva para o Player.");
+  };
+
+  const handleRemoveCatalog = async (group: { label: string; key: string; items: Canal[] }) => {
+    if (!window.confirm(`Excluir a pasta "${group.label}" e todos os ${group.items.length} vídeo(s) dela?`)) return;
+    for (const item of group.items) await handleRemoveCanal(item.id);
+  };
+
   const handleMoveCatalog = async (groupKey: string, direction: -1 | 1) => {
     const groups = [...channelGroups];
     const index = groups.findIndex(item => item.key === groupKey);
@@ -2428,6 +2452,10 @@ export default function ConfiguracoesPage({
                           <span className="text-[10px] text-slate-400">{group.items.length} vídeo(s)/canal(is)</span>
                           <div className="ml-auto flex items-center gap-1">
                             <button type="button" onClick={() => void handleMoveCatalog(group.key, -1)} disabled={groupIndex === 0} title="Mover pasta para cima" className="rounded-md p-1.5 text-slate-500 hover:bg-white disabled:opacity-25"><ChevronUp size={14} /></button>
+                            {group.key !== "__live" && <>
+                              <button type="button" onClick={() => void handleRenameCatalog(group)} title="Renomear pasta" className="rounded-md p-1.5 text-slate-500 hover:bg-white"><Pencil size={13} /></button>
+                              <button type="button" onClick={() => void handleRemoveCatalog(group)} title="Excluir pasta e vídeos" className="rounded-md p-1.5 text-rose-500 hover:bg-rose-50"><Trash2 size={13} /></button>
+                            </>}
                             <button type="button" onClick={() => void handleMoveCatalog(group.key, 1)} disabled={groupIndex === channelGroups.length - 1} title="Mover pasta para baixo" className="rounded-md p-1.5 text-slate-500 hover:bg-white disabled:opacity-25"><ChevronDown size={14} /></button>
                           </div>
                         </div>
