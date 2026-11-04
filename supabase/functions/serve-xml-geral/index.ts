@@ -1,5 +1,6 @@
 const serve = Deno.serve;
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 const isUUID = (v: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
 const corsHeaders = {
@@ -157,11 +158,7 @@ serve(async (req) => {
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
-    // Compatibilidade com o Browser Input do vMix: converter referências WebP
-    // para PNG sem alterar o cadastro original nem a URL armazenada no banco.
-    const toVmixImageUrl = (value: string) => /\.webp(?:$|[?#])/i.test(value || "")
-      ? "https://wsrv.nl/?url=" + encodeURIComponent(value) + "&output=png"
-      : (value || "");
+    const toVmixImageUrl = (value: string) => ensureVmixPngUrl(sb, value, `vmix-geral/${ownerId}`);
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const currentSeconds = Number(currentHourStr.slice(0, 2)) * 3600 + Number(currentHourStr.slice(3, 5)) * 60;
     const onAirProgram = programas.find((p: any) => {
@@ -318,6 +315,24 @@ serve(async (req) => {
     const stationName = empresa?.nome || "House Mix Emissora";
     const stationFreq = ownerId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" ? "99.1 FM" : "FM";
     const stationLogo = empresa?.logo || "";
+    const [
+      stationLogoPng, currentMusicCoverPng, currentProgramLogoPng,
+      currentPresenterPhotoPng, nextPresenterPhotoPng,
+      battleImage1Png, battleImage2Png, quizImagePng,
+    ] = await Promise.all([
+      toVmixImageUrl(stationLogo),
+      toVmixImageUrl(currentMusic?.capa || ""),
+      toVmixImageUrl(currentProgram?.selo || currentProgram?.thumb || ""),
+      toVmixImageUrl(currentPresenter?.foto || ""),
+      toVmixImageUrl(nextPresenter?.foto || ""),
+      toVmixImageUrl(activeBatalha?.artista1_imagem || ""),
+      toVmixImageUrl(activeBatalha?.artista2_imagem || ""),
+      toVmixImageUrl(activeQuiz?.imagem_resposta || ""),
+    ]);
+    const logoPngById = new Map<string, string>();
+    await Promise.all(logos.map(async (logo: any) => {
+      logoPngById.set(String(logo.id), await toVmixImageUrl(logo.logo_url || ""));
+    }));
 
     // Assemble General XML
     const xmlParts: string[] = [];
@@ -331,7 +346,7 @@ serve(async (req) => {
     xmlParts.push(`    <slug>${esc(rawSlug || "default")}</slug>`);
     xmlParts.push(`    <cidade>${esc(cityName)}</cidade>`);
     xmlParts.push(`    <frequencia>${esc(stationFreq)}</frequencia>`);
-    xmlParts.push(`    <logo_url>${esc(stationLogo)}</logo_url>`);
+    xmlParts.push(`    <logo_url>${esc(stationLogoPng)}</logo_url>`);
     xmlParts.push(`    <timezone>${esc(empresa?.timezone || "America/Sao_Paulo")}</timezone>`);
     xmlParts.push('  </estacao>');
 
@@ -341,7 +356,7 @@ serve(async (req) => {
     xmlParts.push(`      <titulo>${esc(currentMusic?.musica || "Programação Musical")}</titulo>`);
     xmlParts.push(`      <artista>${esc(currentMusic?.artista || stationName)}</artista>`);
     xmlParts.push(`      <album>${esc(currentMusic?.album || "")}</album>`);
-    xmlParts.push(`      <capa_url>${esc(currentMusic?.capa || "")}</capa_url>`);
+    xmlParts.push(`      <capa_url>${esc(currentMusicCoverPng)}</capa_url>`);
     xmlParts.push(`      <curiosidade>${esc(curiosidade)}</curiosidade>`);
     xmlParts.push(`      <texto_completo>${esc(`${currentMusic?.musica || "Programação"} - ${currentMusic?.artista || stationName}`)}</texto_completo>`);
     xmlParts.push(`      <atualizado_em>${esc(currentMusic?.created_at || now.toISOString())}</atualizado_em>`);
@@ -355,12 +370,12 @@ serve(async (req) => {
     xmlParts.push(`      <descricao>${esc(currentProgram?.descricao || "")}</descricao>`);
     xmlParts.push(`      <classificacao_etaria>${esc(currentProgram?.classificacao_etaria || "Livre")}</classificacao_etaria>`);
     xmlParts.push(`      <estudio>${esc(currentProgram?.estudio || "Estúdio FM")}</estudio>`);
-    xmlParts.push(`      <logo_url>${esc(currentProgram?.selo || currentProgram?.thumb || "")}</logo_url>`);
+    xmlParts.push(`      <logo_url>${esc(currentProgramLogoPng)}</logo_url>`);
     xmlParts.push('    </programa_atual>');
 
     xmlParts.push('    <apresentador_atual>');
     xmlParts.push(`      <nome>${esc(currentPresenter?.nome || "Locução da Estação")}</nome>`);
-    xmlParts.push(`      <foto_url>${esc(currentPresenter?.foto || "")}</foto_url>`);
+    xmlParts.push(`      <foto_url>${esc(currentPresenterPhotoPng)}</foto_url>`);
     xmlParts.push(`      <instagram>${esc(currentPresenter?.instagram || "")}</instagram>`);
     xmlParts.push('    </apresentador_atual>');
 
@@ -370,7 +385,7 @@ serve(async (req) => {
       xmlParts.push(`      <programa_nome>${esc(nextProgram.nome)}</programa_nome>`);
       xmlParts.push(`      <horario>${esc(`${(nextProgram.horario_inicio || "00:00").slice(0, 5)} às ${(nextProgram.horario_fim || "23:59").slice(0, 5)}`)}</horario>`);
       xmlParts.push(`      <locutor_nome>${esc(nextPresenter?.nome || "")}</locutor_nome>`);
-      xmlParts.push(`      <locutor_foto>${esc(nextPresenter?.foto || "")}</locutor_foto>`);
+      xmlParts.push(`      <locutor_foto>${esc(nextPresenterPhotoPng)}</locutor_foto>`);
       xmlParts.push('    </a_seguir>');
     } else {
       xmlParts.push('    <a_seguir><ativo>0</ativo></a_seguir>');
@@ -452,25 +467,33 @@ serve(async (req) => {
     });
     xmlParts.push('    </participantes>');
     xmlParts.push('    <escalada>');
-    (Array.isArray(roteiroData.escaladaList) ? roteiroData.escaladaList : []).forEach((item: any, i: number) => {
+    const escaladaRows = Array.isArray(roteiroData.escaladaList) ? roteiroData.escaladaList : [];
+    for (let i = 0; i < escaladaRows.length; i++) {
+      const item = escaladaRows[i];
+      const image = await toVmixImageUrl(typeof item === "string" ? "" : item.imagemUrl || "");
       xmlParts.push(`      <item ordem="${i + 1}">`);
       xmlParts.push(`        <titulo>${esc(typeof item === "string" ? item : item.titulo || "")}</titulo>`);
-      xmlParts.push(`        <imagem_url>${esc(typeof item === "string" ? "" : item.imagemUrl || "")}</imagem_url>`);
+      xmlParts.push(`        <imagem_url>${esc(image)}</imagem_url>`);
       xmlParts.push('      </item>');
-    });
+    }
     xmlParts.push('    </escalada>');
     xmlParts.push('    <blocos>');
-    (Array.isArray(roteiroData.blocos) ? roteiroData.blocos : []).forEach((bloco: any, bi: number) => {
+    const roteiroBlocos = Array.isArray(roteiroData.blocos) ? roteiroData.blocos : [];
+    for (let bi = 0; bi < roteiroBlocos.length; bi++) {
+      const bloco = roteiroBlocos[bi];
       xmlParts.push(`      <bloco numero="${bi + 1}">`);
-      (Array.isArray(bloco.noticias) ? bloco.noticias : []).forEach((noticia: any, ni: number) => {
+      const noticias = Array.isArray(bloco.noticias) ? bloco.noticias : [];
+      for (let ni = 0; ni < noticias.length; ni++) {
+        const noticia = noticias[ni];
+        const image = await toVmixImageUrl(noticia.imagemUrl || "");
         xmlParts.push(`        <noticia ordem="${ni + 1}">`);
         xmlParts.push(`          <titulo>${esc(noticia.titulo || "")}</titulo>`);
-        xmlParts.push(`          <imagem_url>${esc(noticia.imagemUrl || "")}</imagem_url>`);
+        xmlParts.push(`          <imagem_url>${esc(image)}</imagem_url>`);
         xmlParts.push(`          <escalada>${noticia.escalada ? "1" : "0"}</escalada>`);
         xmlParts.push('        </noticia>');
-      });
+      }
       xmlParts.push('      </bloco>');
-    });
+    }
     xmlParts.push('    </blocos>');
     const podcastData = roteiroData.podcastData || null;
     xmlParts.push('    <podcast>');
@@ -485,7 +508,8 @@ serve(async (req) => {
     xmlParts.push('      </perguntas>');
     xmlParts.push(`      <concluindo>${esc(podcastData?.concluindo || "")}</concluindo>`);
     xmlParts.push('      <imagens_apoio>');
-    (Array.isArray(podcastData?.apoioImagens) ? podcastData.apoioImagens : []).forEach((u: string) => xmlParts.push(`        <imagem>${esc(u)}</imagem>`));
+    const podcastImages = await Promise.all((Array.isArray(podcastData?.apoioImagens) ? podcastData.apoioImagens : []).map((u: string) => toVmixImageUrl(u)));
+    podcastImages.forEach((u: string) => xmlParts.push(`        <imagem>${esc(u)}</imagem>`));
     xmlParts.push('      </imagens_apoio>');
     xmlParts.push('      <videos_apoio>');
     (Array.isArray(podcastData?.apoioVideos) ? podcastData.apoioVideos : []).forEach((u: string) => xmlParts.push(`        <video>${esc(u)}</video>`));
@@ -505,23 +529,23 @@ serve(async (req) => {
       xmlParts.push(`        <artista>${esc(activeBatalha.artista1_nome || "")}</artista>`);
       xmlParts.push('        <votos>0</votos>');
       xmlParts.push(`        <porcentagem>${esc(activeBatalha.artista1_porcentagem ?? 50)}%</porcentagem>`);
-      xmlParts.push(`        <capa_url>${esc(activeBatalha.artista1_imagem || "")}</capa_url>`);
+      xmlParts.push(`        <capa_url>${esc(battleImage1Png)}</capa_url>`);
       xmlParts.push('      </musica_a>');
       xmlParts.push('      <musica_b>');
       xmlParts.push(`        <nome>${esc(activeBatalha.artista2_musica || "")}</nome>`);
       xmlParts.push(`        <artista>${esc(activeBatalha.artista2_nome || "")}</artista>`);
       xmlParts.push('        <votos>0</votos>');
       xmlParts.push(`        <porcentagem>${esc(activeBatalha.artista2_porcentagem ?? 50)}%</porcentagem>`);
-      xmlParts.push(`        <capa_url>${esc(activeBatalha.artista2_imagem || "")}</capa_url>`);
+      xmlParts.push(`        <capa_url>${esc(battleImage2Png)}</capa_url>`);
       xmlParts.push('      </musica_b>');
       xmlParts.push(`      <artista1_nome>${esc(activeBatalha.artista1_nome || "")}</artista1_nome>`);
       xmlParts.push(`      <artista1_musica>${esc(activeBatalha.artista1_musica || "")}</artista1_musica>`);
       xmlParts.push(`      <artista1_porcentagem>${esc(activeBatalha.artista1_porcentagem ?? 50)}%</artista1_porcentagem>`);
-      xmlParts.push(`      <artista1_imagem>${esc(activeBatalha.artista1_imagem || "")}</artista1_imagem>`);
+      xmlParts.push(`      <artista1_imagem>${esc(battleImage1Png)}</artista1_imagem>`);
       xmlParts.push(`      <artista2_nome>${esc(activeBatalha.artista2_nome || "")}</artista2_nome>`);
       xmlParts.push(`      <artista2_musica>${esc(activeBatalha.artista2_musica || "")}</artista2_musica>`);
       xmlParts.push(`      <artista2_porcentagem>${esc(activeBatalha.artista2_porcentagem ?? 50)}%</artista2_porcentagem>`);
-      xmlParts.push(`      <artista2_imagem>${esc(activeBatalha.artista2_imagem || "")}</artista2_imagem>`);
+      xmlParts.push(`      <artista2_imagem>${esc(battleImage2Png)}</artista2_imagem>`);
       xmlParts.push(`      <horario_inicio>${esc(activeBatalha.horario_inicio || "")}</horario_inicio>`);
       xmlParts.push(`      <horario_fim>${esc(activeBatalha.horario_fim || "")}</horario_fim>`);
       xmlParts.push('    </batalha>');
@@ -576,7 +600,7 @@ serve(async (req) => {
       xmlParts.push(`      <horario_inicio>${esc(activeQuiz.horario_inicio || "")}</horario_inicio>`);
       xmlParts.push(`      <horario_fim>${esc(activeQuiz.horario_fim || "")}</horario_fim>`);
       xmlParts.push(`      <explicacao>${esc(activeQuiz.explicacao || "")}</explicacao>`);
-      xmlParts.push(`      <imagem_resposta>${esc(activeQuiz.imagem_resposta || "")}</imagem_resposta>`);
+      xmlParts.push(`      <imagem_resposta>${esc(quizImagePng)}</imagem_resposta>`);
       xmlParts.push('    </quiz>');
     } else {
       xmlParts.push('    <quiz ativo="0"></quiz>');
@@ -589,19 +613,19 @@ serve(async (req) => {
     xmlParts.push('    <programa_no_ar>');
     xmlParts.push(`      <programa_id>${esc(onAirProgram?.id || "")}</programa_id>`);
     xmlParts.push(`      <programa_nome>${esc(onAirProgram?.nome || "")}</programa_nome>`);
-    onAirProgramLogos.forEach((l: any) => {
+    for (const l of onAirProgramLogos as any[]) {
       xmlParts.push('      <patrocinador>');
       xmlParts.push(`        <nome>${esc(l.nome || "Patrocinador")}</nome>`);
-      xmlParts.push(`        <logo_url>${esc(toVmixImageUrl(l.logo_url || ""))}</logo_url>`);
+      xmlParts.push(`        <logo_url>${esc(logoPngById.get(String(l.id)) || "")}</logo_url>`);
       xmlParts.push('      </patrocinador>');
-    });
+    }
     xmlParts.push('    </programa_no_ar>');
-    logos.forEach((l: any) => {
+    for (const l of logos as any[]) {
       xmlParts.push('    <patrocinador>');
       xmlParts.push(`      <nome>${esc(l.nome || "Patrocinador")}</nome>`);
-      xmlParts.push(`      <logo_url>${esc(toVmixImageUrl(l.logo_url || ""))}</logo_url>`);
+      xmlParts.push(`      <logo_url>${esc(logoPngById.get(String(l.id)) || "")}</logo_url>`);
       xmlParts.push('    </patrocinador>');
-    });
+    }
     xmlParts.push('  </patrocinadores>');
 
     xmlParts.push('</geral>');

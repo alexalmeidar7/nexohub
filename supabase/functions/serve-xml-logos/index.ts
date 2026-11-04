@@ -1,5 +1,6 @@
 const serve = Deno.serve;
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,10 +64,6 @@ serve(async (req) => {
     }
 
     const origin = `${url.protocol}//${url.host}`;
-    // vMix não renderiza WebP em várias versões do Browser Input.
-    const toVmixImageUrl = (value: string) => /\.webp(?:$|[?#])/i.test(value || "")
-      ? "https://wsrv.nl/?url=" + encodeURIComponent(value) + "&output=png"
-      : (value || "");
     // Sem imagem padrão: não referenciar o domínio legado Lovable.
     const DEFAULT_LOGO_URL = "";
 
@@ -85,6 +82,14 @@ serve(async (req) => {
       }
     }
 
+    const pngGrouped = await Promise.all(grouped.map(async (group) => ({
+      ...group,
+      logos: await Promise.all(group.logos.map(async (logo) => ({
+        ...logo,
+        logo_url: await ensureVmixPngUrl(supabase, logo.logo_url, `vmix-logos/${userId}`),
+      }))),
+    })));
+
     const esc = (s: string) =>
       String(s ?? "")
         .replace(/&/g, "&amp;")
@@ -93,7 +98,7 @@ serve(async (req) => {
         .replace(/"/g, "&quot;")
         .replace(/\'/g, "&apos;");
 
-    const items = grouped
+    const items = pngGrouped
       .map(
         (g, idx) =>
           `  <programa id="programa ${idx + 1}">
@@ -103,7 +108,7 @@ ${g.logos!
     (l) =>
       `    <logo>
       <nome>${esc(l.nome)}</nome>
-      <url>${esc(toVmixImageUrl(l.logo_url))}</url>
+      <url>${esc(l.logo_url)}</url>
     </logo>`
   )
   .join("\n")}

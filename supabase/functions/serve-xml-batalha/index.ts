@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { authorizeStationWrite, assertOwnedRecordIds } from "../_shared/stationWriteAuth.ts";
+import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -263,6 +264,8 @@ serve(async (req) => {
       ini = scheduled.horario_inicio ?? "";
       fim = scheduled.horario_fim ?? "";
     }
+
+    [img1, img2] = await Promise.all([ensureVmixPngUrl(sb, img1, `vmix-batalha/${resolvedUid}`), ensureVmixPngUrl(sb, img2, `vmix-batalha/${resolvedUid}`)]);
 
     const emissoraName = SLUG_TO_NAME[cleanInput] || SLUG_TO_NAME[resolvedUid] || "House Mix Emissora";
 
