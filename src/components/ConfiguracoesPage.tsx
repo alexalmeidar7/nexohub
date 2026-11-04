@@ -66,6 +66,7 @@ interface Canal {
   horario_fim?: string;
   descricao?: string;
   estudio: string;
+  sort_order?: number;
 }
 
 /* ── Nexo Form Design System (House Mix Modern Standard) ── */
@@ -359,7 +360,8 @@ export default function ConfiguracoesPage({
         horario_fim: c.horario_fim || "",
         descricao: c.descricao || "",
         estudio: c.estudio || "",
-      }));
+        sort_order: Number(c.sort_order) || 0,
+      })).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || a.numero_canal.localeCompare(b.numero_canal, "pt-BR"));
       setCanais(channels);
       saveStoredStreamingChannels(tid, channels);
     } catch (err) {
@@ -898,6 +900,7 @@ export default function ConfiguracoesPage({
       horario_fim: selectedProg?.horario_fim || existingCanal?.horario_fim || "",
       descricao: videoDescription || selectedProg?.descricao || existingCanal?.descricao || "",
       estudio: canalForm.estudio || existingCanal?.estudio || "",
+      sort_order: existingCanal?.sort_order ?? (canais.reduce((max, item) => Math.max(max, Number(item.sort_order) || 0), -1) + 1),
     };
     setSavingCanal(true);
     const tid = targetUid || user.id;
@@ -1003,6 +1006,55 @@ export default function ConfiguracoesPage({
     } catch (err: any) {
       toast.error("Canal não foi removido: " + (err?.message || "falha ao excluir no servidor."));
     }
+  };
+
+  const channelGroups = (() => {
+    const groups = new Map<string, { key: string; label: string; items: Canal[] }>();
+    [...canais].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).forEach((canal) => {
+      const key = canal.type === "catalog" ? `catalog:${(canal.catalog_name || "Sem pasta").trim()}` : "__live";
+      const label = canal.type === "catalog" ? (canal.catalog_name || "Sem pasta") : "Canais ao vivo";
+      if (!groups.has(key)) groups.set(key, { key, label, items: [] });
+      groups.get(key)!.items.push(canal);
+    });
+    return Array.from(groups.values());
+  })();
+
+  const persistChannelOrder = async (ordered: Canal[]) => {
+    const tid = targetUid || user?.id;
+    if (!tid) return;
+    const normalized = ordered.map((item, index) => ({ ...item, sort_order: index }));
+    setCanais(normalized);
+    saveStoredStreamingChannels(tid, normalized);
+    const writes = await Promise.all(normalized.filter(item => /^[0-9a-f-]{36}$/i.test(item.id)).map(item =>
+      supabase.from("streaming_channels").update({ sort_order: item.sort_order }).eq("id", item.id).eq("user_id", tid)
+    ));
+    const failed = writes.find(result => result.error);
+    if (failed?.error) {
+      toast.error("A ordem foi exibida, mas não foi possível confirmar a gravação no servidor: " + failed.error.message);
+      return;
+    }
+    toast.success("Ordem atualizada e salva no Player.");
+  };
+
+  const handleMoveChannel = async (groupKey: string, channelId: string, direction: -1 | 1) => {
+    const group = channelGroups.find(item => item.key === groupKey);
+    if (!group) return;
+    const items = [...group.items];
+    const index = items.findIndex(item => item.id === channelId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= items.length) return;
+    [items[index], items[target]] = [items[target], items[index]];
+    const nextGroups = channelGroups.map(item => item.key === groupKey ? { ...item, items } : item);
+    await persistChannelOrder(nextGroups.flatMap(item => item.items));
+  };
+
+  const handleMoveCatalog = async (groupKey: string, direction: -1 | 1) => {
+    const groups = [...channelGroups];
+    const index = groups.findIndex(item => item.key === groupKey);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= groups.length) return;
+    [groups[index], groups[target]] = [groups[target], groups[index]];
+    await persistChannelOrder(groups.flatMap(item => item.items));
   };
 
   const field = (label: string, key: keyof EmpresaConfig, placeholder: string) => (
@@ -2367,46 +2419,46 @@ export default function ConfiguracoesPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {canais.map((c, i) => (
+                  {channelGroups.flatMap((group, groupIndex) => [
+                    <tr key={`folder-${group.key}`} className="bg-slate-50/90 border-t-2 border-slate-200">
+                      <td colSpan={6} className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <FolderArchive size={17} className="text-blue-600" />
+                          <span className="text-xs font-extrabold uppercase tracking-wide text-slate-800">{group.label}</span>
+                          <span className="text-[10px] text-slate-400">{group.items.length} vídeo(s)/canal(is)</span>
+                          <div className="ml-auto flex items-center gap-1">
+                            <button type="button" onClick={() => void handleMoveCatalog(group.key, -1)} disabled={groupIndex === 0} title="Mover pasta para cima" className="rounded-md p-1.5 text-slate-500 hover:bg-white disabled:opacity-25"><ChevronUp size={14} /></button>
+                            <button type="button" onClick={() => void handleMoveCatalog(group.key, 1)} disabled={groupIndex === channelGroups.length - 1} title="Mover pasta para baixo" className="rounded-md p-1.5 text-slate-500 hover:bg-white disabled:opacity-25"><ChevronDown size={14} /></button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>,
+                    ...group.items.map((c, i) => (
                     <tr key={c.id} className="transition-colors hover:bg-blue-50/50" style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f9fe", borderTop: "1px solid rgba(13,4,70,0.05)" }}>
-                      <td className="px-4 py-3" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>
+                      <td className="px-4 py-3 pl-8" style={{ minWidth: "80px", whiteSpace: "nowrap" }}>
                         <span className="inline-flex items-center justify-center min-w-[32px] h-7 px-2 rounded-lg text-xs font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
                           {c.numero_canal || "—"}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="font-semibold">{c.name}</span>
-                        {c.catalog_name ? <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-full" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)" }}>({c.catalog_name})</span> : null}
-                      </td>
+                      <td className="px-4 py-3"><span className="font-semibold">{c.name}</span></td>
                       <td className="px-4 py-3">
                         <span className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: c.type === "catalog" ? "rgba(139,92,246,0.1)" : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: c.type === "catalog" ? "#8b5cf6" : "var(--layout-accent-color, #2563eb)" }}>
                           {typeLabels[c.type] || c.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {c.cover_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }}>—</span>}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {c.logo_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }}>—</span>}
-                      </td>
+                      <td className="px-4 py-3 text-center">{c.cover_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]">—</span>}</td>
+                      <td className="px-4 py-3 text-center">{c.logo_url ? <CheckCircle size={16} className="inline" style={{ color: "#22c55e" }} /> : <span className="text-[10px]">—</span>}</td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => handleEditCanal(c)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)"; }}
-                          >
-                            <Pencil size={13} style={{ color: "var(--layout-icon-color, #888888)" }} />
-                          </button>
-                          <button onClick={() => handleRemoveCanal(c.id)} title="Remover" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "rgba(220,38,38,0.08)" }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.15)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "rgba(220,38,38,0.08)"; }}
-                          >
-                            <Trash2 size={13} style={{ color: "#dc2626" }} />
-                          </button>
+                          <button type="button" onClick={() => void handleMoveChannel(group.key, c.id, -1)} disabled={i === 0} title="Mover vídeo para cima" className="w-7 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><ChevronUp size={13} /></button>
+                          <button type="button" onClick={() => void handleMoveChannel(group.key, c.id, 1)} disabled={i === group.items.length - 1} title="Mover vídeo para baixo" className="w-7 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><ChevronDown size={13} /></button>
+                          <button onClick={() => handleEditCanal(c)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }}><Pencil size={13} style={{ color: "var(--layout-icon-color, #888888)" }} /></button>
+                          <button onClick={() => handleRemoveCanal(c.id)} title="Remover" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:shadow-sm" style={{ backgroundColor: "rgba(220,38,38,0.08)" }}><Trash2 size={13} style={{ color: "#dc2626" }} /></button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ))
+                  ])}}
                 </tbody>
               </table>
             </div>
