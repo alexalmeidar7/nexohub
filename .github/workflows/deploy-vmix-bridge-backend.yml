@@ -331,7 +331,6 @@ jobs:
             WHERE NOT EXISTS (
               SELECT 1 FROM supabase_migrations.schema_migrations m
               WHERE m.version = r.version
-                 OR (r.version = '20261101150000' AND m.version = '20261103203654')
             );
 
             IF missing_house_mix_migrations IS NOT NULL THEN
@@ -615,6 +614,7 @@ jobs:
             WHERE NOT EXISTS (
               SELECT 1 FROM supabase_migrations.schema_migrations m
               WHERE m.version = r.version
+                 OR (r.version = '20261101150000' AND m.version = '20261103203654')
             );
           ")"
           if [ -n "$missing" ]; then
