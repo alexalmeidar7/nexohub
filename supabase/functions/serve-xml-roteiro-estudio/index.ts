@@ -133,15 +133,15 @@ serve(async (req) => {
       xml += `  <atualizado_em>${esc(r.updated_at || r.created_at || "")}</atualizado_em>\n`;
       const rawHtml = String(r.conteudo_html || "");
       let htmlForVmix = rawHtml;
-      const imageUrls = Array.from(new Set(rawHtml.match(/https?:\\/\\/[^"'\\s<>]+/g) || []))
+      const imageUrls = Array.from(new Set(rawHtml.match(/https?:\/\/[^"'\s<>]+/g) || []))
         .filter((imageUrl) => /\\.(?:webp|jpe?g|png|gif)(?:[?#]|$)/i.test(imageUrl));
       for (const imageUrl of imageUrls) {
         const pngUrl = await ensureVmixPngUrl(sb, imageUrl, `vmix-roteiro/${ownerId}`);
         if (pngUrl) htmlForVmix = htmlForVmix.split(imageUrl).join(pngUrl);
       }
       const roteiroTexto = rawHtml
-        .replace(/<\\/(?:p|h[1-6]|li|section|div)>/gi, "\\n")
-        .replace(/<br\\s*\\/?>/gi, "\\n")
+        .replace(/<\/(?:p|h[1-6]|li|section|div)>/gi, "\\n")
+        .replace(/<br\s*\/?>/gi, "\\n")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/gi, " ")
         .replace(/&amp;/gi, "&")
@@ -149,12 +149,12 @@ serve(async (req) => {
         .replace(/&gt;/gi, ">")
         .replace(/&quot;/gi, '"')
         .replace(/&#39;|&apos;/gi, "'")
-        .replace(/[ \\t]+/g, " ")
-        .replace(/\\n\\s*\\n+/g, "\\n")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n\s*\n+/g, "\\n")
         .trim();
       if (htmlForVmix) {
-        xml += `  <conteudo_html>${esc(htmlForVmix)}</conteudo_html>\\n`;
-        xml += `  <roteiro_texto>${esc(roteiroTexto)}</roteiro_texto>\\n`;
+        xml += `  <conteudo_html>${esc(htmlForVmix)}</conteudo_html>\n`;
+        xml += `  <roteiro_texto>${esc(roteiroTexto)}</roteiro_texto>\n`;
       }
       xml += `  <horario>${esc(finalHora)}</horario>\n`;
       xml += `  <hora>${esc(finalHora)}</hora>\n`;
