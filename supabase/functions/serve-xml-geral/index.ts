@@ -467,25 +467,33 @@ serve(async (req) => {
     });
     xmlParts.push('    </participantes>');
     xmlParts.push('    <escalada>');
-    (Array.isArray(roteiroData.escaladaList) ? roteiroData.escaladaList : []).forEach((item: any, i: number) => {
+    const escaladaRows = Array.isArray(roteiroData.escaladaList) ? roteiroData.escaladaList : [];
+    for (let i = 0; i < escaladaRows.length; i++) {
+      const item = escaladaRows[i];
+      const image = await toVmixImageUrl(typeof item === "string" ? "" : item.imagemUrl || "");
       xmlParts.push(`      <item ordem="${i + 1}">`);
       xmlParts.push(`        <titulo>${esc(typeof item === "string" ? item : item.titulo || "")}</titulo>`);
-      xmlParts.push(`        <imagem_url>${esc(typeof item === "string" ? "" : item.imagemUrl || "")}</imagem_url>`);
+      xmlParts.push(`        <imagem_url>${esc(image)}</imagem_url>`);
       xmlParts.push('      </item>');
-    });
+    }
     xmlParts.push('    </escalada>');
     xmlParts.push('    <blocos>');
-    (Array.isArray(roteiroData.blocos) ? roteiroData.blocos : []).forEach((bloco: any, bi: number) => {
+    const roteiroBlocos = Array.isArray(roteiroData.blocos) ? roteiroData.blocos : [];
+    for (let bi = 0; bi < roteiroBlocos.length; bi++) {
+      const bloco = roteiroBlocos[bi];
       xmlParts.push(`      <bloco numero="${bi + 1}">`);
-      (Array.isArray(bloco.noticias) ? bloco.noticias : []).forEach((noticia: any, ni: number) => {
+      const noticias = Array.isArray(bloco.noticias) ? bloco.noticias : [];
+      for (let ni = 0; ni < noticias.length; ni++) {
+        const noticia = noticias[ni];
+        const image = await toVmixImageUrl(noticia.imagemUrl || "");
         xmlParts.push(`        <noticia ordem="${ni + 1}">`);
         xmlParts.push(`          <titulo>${esc(noticia.titulo || "")}</titulo>`);
-        xmlParts.push(`          <imagem_url>${esc(noticia.imagemUrl || "")}</imagem_url>`);
+        xmlParts.push(`          <imagem_url>${esc(image)}</imagem_url>`);
         xmlParts.push(`          <escalada>${noticia.escalada ? "1" : "0"}</escalada>`);
         xmlParts.push('        </noticia>');
-      });
+      }
       xmlParts.push('      </bloco>');
-    });
+    }
     xmlParts.push('    </blocos>');
     const podcastData = roteiroData.podcastData || null;
     xmlParts.push('    <podcast>');
@@ -500,7 +508,8 @@ serve(async (req) => {
     xmlParts.push('      </perguntas>');
     xmlParts.push(`      <concluindo>${esc(podcastData?.concluindo || "")}</concluindo>`);
     xmlParts.push('      <imagens_apoio>');
-    (Array.isArray(podcastData?.apoioImagens) ? podcastData.apoioImagens : []).forEach((u: string) => xmlParts.push(`        <imagem>${esc(u)}</imagem>`));
+    const podcastImages = await Promise.all((Array.isArray(podcastData?.apoioImagens) ? podcastData.apoioImagens : []).map((u: string) => toVmixImageUrl(u)));
+    podcastImages.forEach((u: string) => xmlParts.push(`        <imagem>${esc(u)}</imagem>`));
     xmlParts.push('      </imagens_apoio>');
     xmlParts.push('      <videos_apoio>');
     (Array.isArray(podcastData?.apoioVideos) ? podcastData.apoioVideos : []).forEach((u: string) => xmlParts.push(`        <video>${esc(u)}</video>`));
