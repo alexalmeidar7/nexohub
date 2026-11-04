@@ -331,6 +331,7 @@ jobs:
             WHERE NOT EXISTS (
               SELECT 1 FROM supabase_migrations.schema_migrations m
               WHERE m.version = r.version
+                 OR (r.version = '20261101150000' AND m.version = '20261103203654')
             );
 
             IF missing_house_mix_migrations IS NOT NULL THEN
@@ -561,8 +562,17 @@ jobs:
 
           verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
             SELECT
-              (position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
-               AND position('auth.role() = ''service_role''' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
+              (
+                (
+                  position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                  AND position('auth.role() = ''service_role''' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                )
+                OR
+                (
+                  position('auth.uid() IS NOT NULL' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                  AND position('auth.uid() <> _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                )
+              )::text,
               has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('service_role', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text
@@ -620,8 +630,17 @@ jobs:
           set -euo pipefail
           verification="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -tA -F '|' -c "
             SELECT
-              (position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
-               AND position('auth.role() = ''service_role''' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0)::text,
+              (
+                (
+                  position('auth.uid() = _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                  AND position('auth.role() = ''service_role''' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                )
+                OR
+                (
+                  position('auth.uid() IS NOT NULL' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                  AND position('auth.uid() <> _user_id' IN pg_get_functiondef('public.has_role(uuid,public.app_role)'::regprocedure)) > 0
+                )
+              )::text,
               has_function_privilege('anon', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('authenticated', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text,
               has_function_privilege('service_role', 'public.has_role(uuid,public.app_role)', 'EXECUTE')::text
