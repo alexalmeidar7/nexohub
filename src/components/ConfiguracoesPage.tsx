@@ -1026,7 +1026,7 @@ export default function ConfiguracoesPage({
     setCanais(normalized);
     saveStoredStreamingChannels(tid, normalized);
     const writes = await Promise.all(normalized.filter(item => /^[0-9a-f-]{36}$/i.test(item.id)).map(item =>
-      supabase.from("streaming_channels").update({ sort_order: item.sort_order }).eq("id", item.id).eq("user_id", tid)
+      (supabase.from("streaming_channels" as any) as any).update({ sort_order: item.sort_order }).eq("id", item.id).eq("user_id", tid)
     ));
     const failed = writes.find(result => result.error);
     if (failed?.error) {
