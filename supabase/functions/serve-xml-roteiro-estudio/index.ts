@@ -134,13 +134,13 @@ serve(async (req) => {
       const rawHtml = String(r.conteudo_html || "");
       let htmlForVmix = rawHtml;
       const imageUrls = Array.from(new Set(rawHtml.match(/https?:\/\/[^"'\s<>]+/g) || []))
-        .filter((imageUrl) => /\\.(?:webp|jpe?g|png|gif)(?:[?#]|$)/i.test(imageUrl));
+        .filter((imageUrl) => /\.(?:webp|jpe?g|png|gif)(?:[?#]|$)/i.test(imageUrl));
       for (const imageUrl of imageUrls) {
         const pngUrl = await ensureVmixPngUrl(sb, imageUrl, `vmix-roteiro/${ownerId}`);
         if (pngUrl) htmlForVmix = htmlForVmix.split(imageUrl).join(pngUrl);
       }
       const roteiroTexto = rawHtml
-        .replace(/<\/(?:p|h[1-6]|li|section|div)>/gi, "\\n")
+        .replace(/<\/(?:p|h[1-6]|li|section|div)>/gi, "\n")
         .replace(/<br\s*\/?>/gi, "\\n")
         .replace(/<[^>]+>/g, " ")
         .replace(/&nbsp;/gi, " ")
