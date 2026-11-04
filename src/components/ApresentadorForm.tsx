@@ -25,6 +25,85 @@ export interface Apresentador {
   foto: string;
   background_url?: string | null;
   ativo: boolean;
+  persisted?: boolean;
+}
+
+export function mergeApresentadorSources(
+  defaults: Apresentador[],
+  local: Apresentador[],
+  persisted: Apresentador[],
+): Apresentador[] {
+  const merged: Apresentador[] = [];
+
+  for (const source of [defaults, local, persisted]) {
+    for (const participante of source) {
+      const nomeKey = participante.nome.trim().toLowerCase();
+      const existingIndex = merged.findIndex(existing =>
+        existing.id === participante.id ||
+        (!!nomeKey && existing.nome.trim().toLowerCase() === nomeKey)
+      );
+
+      if (existingIndex < 0) {
+        merged.push(participante);
+      } else {
+        merged[existingIndex] = { ...merged[existingIndex], ...participante };
+      }
+    }
+  }
+
+  return merged;
+}
+
+export async function removeParticipantFromSource(
+  participant: Apresentador,
+  ownerId: string,
+): Promise<{ error?: string }> {
+  if (participant.persisted === true) {
+    const { data, error } = await supabase.from("apresentadores")
+      .delete().eq("id", participant.id).eq("user_id", ownerId).select("id, user_id");
+    if (error) return { error: error.message || "Não foi possível excluir o participante." };
+    if (!data?.some(row => row.id === participant.id && row.user_id === ownerId)) {
+      return { error: "O banco não confirmou a exclusão do participante. Nenhum dado local foi alterado." };
+    }
+    return {};
+  }
+
+  try {
+    const key = `nexohub_participantes_excluidos_${ownerId}`;
+    const current = JSON.parse(localStorage.getItem(key) || "[]");
+    const deleted = Array.isArray(current) ? current : [];
+    if (!deleted.includes(participant.id)) deleted.push(participant.id);
+    localStorage.setItem(key, JSON.stringify(deleted));
+    return {};
+  } catch {
+    return { error: "Não foi possível registrar a exclusão local do participante." };
+  }
+}
+
+export async function findParticipantRowForEdit(
+  participant: Apresentador,
+  ownerId: string,
+): Promise<string | null> {
+  const byId = await supabase.from("apresentadores")
+    .select("id, user_id")
+    .eq("id", participant.id)
+    .eq("user_id", ownerId)
+    .limit(1);
+  if (byId.error) throw byId.error;
+  const idMatch = byId.data?.find(row => row.id === participant.id && row.user_id === ownerId);
+  if (idMatch) return idMatch.id;
+
+  const byName = await supabase.from("apresentadores")
+    .select("id, user_id")
+    .eq("user_id", ownerId)
+    .eq("nome", participant.nome)
+    .limit(2);
+  if (byName.error) throw byName.error;
+  const matches = (byName.data || []).filter(row => row.user_id === ownerId);
+  if (matches.length > 1) {
+    throw new Error("Há mais de um cadastro com o mesmo nome. Atualize a lista e selecione o registro pelo ID para evitar duplicação.");
+  }
+  return matches[0]?.id || null;
 }
 
 export const CATEGORIA_OPTIONS = ["Apresentador", "Jornalista", "Convidado"];
@@ -133,6 +212,7 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
     whatsapp: a.whatsapp,
     foto: a.foto,
     ativo: a.ativo,
+    persisted: false,
   }));
 
   // Exclusões de participantes padrão ficam registradas localmente para não reaparecerem após recarregar.
@@ -149,31 +229,31 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
   // 1. Fetch from Supabase (if online and valid)
   let supabaseAps: Apresentador[] = [];
   let supabaseReadSucceeded = false;
-  try {
-    let query = supabase.from("apresentadores").select("*");
-    if (effectiveId) query = query.eq("user_id", effectiveId);
-    const { data, error } = await query;
-    if (error) throw error;
-    supabaseReadSucceeded = true;
-    if (data && data.length > 0) {
-      // Registros do banco já estão isolados por user_id: são sempre válidos
-      supabaseAps = data
-        .map(a => {
-          const resolved = resolveParticipanteCategoria(a);
-          return {
-            id: a.id,
-            nome: a.nome,
-            categoria: (a as any).categoria || resolved.categoria,
-            cargo: a.cargo || (a as any).categoria || resolved.cargo,
-            instagram: a.instagram || "",
-            whatsapp: (a as any).whatsapp || "",
-            foto: a.foto || "",
-            background_url: (a as any).background_url || "",
-            ativo: a.ativo ?? true,
-          };
-        });
-    }
-  } catch {}
+  if (effectiveId) {
+    try {
+      const { data, error } = await supabase.from("apresentadores").select("*").eq("user_id", effectiveId);
+      if (error) throw error;
+      supabaseReadSucceeded = true;
+      if (data && data.length > 0) {
+        supabaseAps = data
+          .map(a => {
+            const resolved = resolveParticipanteCategoria(a);
+            return {
+              id: a.id,
+              nome: a.nome,
+              categoria: (a as any).categoria || resolved.categoria,
+              cargo: a.cargo || (a as any).categoria || resolved.cargo,
+              instagram: a.instagram || "",
+              whatsapp: (a as any).whatsapp || "",
+              foto: a.foto || "",
+              background_url: (a as any).background_url || "",
+              ativo: a.ativo ?? true,
+              persisted: true,
+            };
+          });
+      }
+    } catch {}
+  }
 
   // 2. Check isolated localStorage for custom saved participantes / updated cargos
   let localList: Apresentador[] = [];
@@ -187,10 +267,9 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
           const persistedIds = new Set(supabaseAps.map(a => a.id));
           localList = parsed
             .filter(a => {
-              // Com leitura confirmada do banco, cache não pode ressuscitar UUID já excluído.
+              // Só descartamos cache conhecido como persistido; UUID por si só não prova a origem.
               const cachedId = String(a?.id || "");
-              const isPersistedUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cachedId);
-              if (supabaseReadSucceeded && isPersistedUuid && !persistedIds.has(cachedId)) return false;
+              if (supabaseReadSucceeded && a?.persisted === true && !persistedIds.has(cachedId)) return false;
               if (deletedParticipantIds.has(a.id)) return false;
               if ((a as any).stationKey && (a as any).stationKey !== resolvedStation) return false;
               if (validStationIds.has(a.id)) return true;
@@ -203,6 +282,9 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
                 ...a,
                 categoria: a.categoria || resolved.categoria,
                 cargo: a.cargo || resolved.cargo,
+                persisted: supabaseReadSucceeded
+                  ? persistedIds.has(String(a?.id || ""))
+                  : a?.persisted === true,
               };
             });
         }
@@ -214,26 +296,8 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
     }
   } catch {}
 
-  // Merge default station data with local updates & supabase updates
-  const mergedMap = new Map<string, Apresentador>();
-  visibleDefaultAps.forEach(a => {
-    mergedMap.set(a.id, a);
-    if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), a);
-  });
-  supabaseAps.forEach(a => {
-    const existing = mergedMap.get(a.id) || (a.nome ? mergedMap.get(a.nome.trim().toLowerCase()) : undefined);
-    const merged = { ...(existing || {}), ...a };
-    mergedMap.set(a.id, merged);
-    if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), merged);
-  });
-  localList.forEach(a => {
-    const existing = mergedMap.get(a.id) || (a.nome ? mergedMap.get(a.nome.trim().toLowerCase()) : undefined);
-    const merged = { ...(existing || {}), ...a };
-    mergedMap.set(a.id, merged);
-    if (a.nome) mergedMap.set(a.nome.trim().toLowerCase(), merged);
-  });
-
-  const finalAps = Array.from(new Set(Array.from(mergedMap.values())));
+  // Persisted rows must win over potentially stale values from localStorage.
+  const finalAps = mergeApresentadorSources(visibleDefaultAps, localList, supabaseAps);
   const dbIds = new Set(supabaseAps.map(a => a.id));
   const dbNames = new Set(supabaseAps.map(a => (a.nome || "").trim().toLowerCase()).filter(Boolean));
   // Final filter: mantém cadastros do banco (já isolados por user_id) e da própria emissora
@@ -378,54 +442,47 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       };
 
       let savedId = editingId;
-      const isUuid = (v?: string | null) =>
-        !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+      const original = editingId ? apresentadores.find(a => a.id === editingId) : undefined;
+      if (editingId && !original) {
+        throw new Error("O participante selecionado não está mais na lista. Atualize os dados e tente novamente.");
+      }
 
-      if (editingId && isUuid(editingId)) {
-        // Edição de registro persistido: nunca converter UPDATE sem correspondência em INSERT.
+      if (editingId && original?.persisted) {
         const res = await supabase.from("apresentadores")
-          .update(payload as any).eq("id", editingId).eq("user_id", ownerId).select("id");
+          .update(payload as any).eq("id", editingId).eq("user_id", ownerId).select("id, user_id");
         if (res.error) throw res.error;
-        if (!res.data?.length) {
+        const confirmed = res.data?.find(row => row.id === editingId && row.user_id === ownerId);
+        if (!confirmed) {
           throw new Error("O participante selecionado não foi localizado na emissora. Nenhum novo cadastro foi criado.");
         }
-        savedId = res.data[0].id;
+        savedId = confirmed.id;
       } else if (editingId) {
-        // Participante de catálogo padrão/local: procurar correspondência antes de criar sua versão persistida.
-        const original = apresentadores.find(a => a.id === editingId);
-        let matchedId: string | null = null;
-        if (original && ownerId) {
-          let lookup = supabase.from("apresentadores").select("id")
-            .eq("user_id", ownerId)
-            .eq("nome", original.nome)
-            .eq("instagram", original.instagram || "")
-            .eq("cargo", original.cargo || "");
-          const { data: matches, error: lookupError } = await lookup.limit(2);
-          if (lookupError) throw lookupError;
-          if ((matches || []).length > 1) {
-            throw new Error("Há mais de um cadastro com os mesmos dados. Atualize a lista e selecione o registro pelo ID para evitar duplicação.");
-          }
-          matchedId = matches?.[0]?.id || null;
-        }
+        // Confirma pelo ID primeiro, inclusive para caches antigos sem marca de origem.
+        // Se o catálogo tiver outro ID, nome único identifica o registro já criado sem exigir
+        // que campos editáveis (cargo/Instagram) ainda coincidam com os valores antigos.
+        const matchedId = await findParticipantRowForEdit(original, ownerId);
         if (matchedId) {
           const res = await supabase.from("apresentadores")
-            .update(payload as any).eq("id", matchedId).eq("user_id", ownerId).select("id");
+            .update(payload as any).eq("id", matchedId).eq("user_id", ownerId).select("id, user_id");
           if (res.error) throw res.error;
-          if (!res.data?.length) throw new Error("O cadastro existente não pôde ser atualizado.");
-          savedId = res.data[0].id;
+          const confirmed = res.data?.find(row => row.id === matchedId && row.user_id === ownerId);
+          if (!confirmed) throw new Error("O cadastro existente não pôde ser atualizado.");
+          savedId = confirmed.id;
         } else {
           const ins = await supabase.from("apresentadores")
-            .insert({ user_id: ownerId, ...payload } as any).select("id");
+            .insert({ user_id: ownerId, ...payload } as any).select("id, user_id");
           if (ins.error) throw ins.error;
-          if (!ins.data?.[0]?.id) throw new Error("O banco não confirmou a criação do participante.");
-          savedId = ins.data[0].id;
+          const confirmed = ins.data?.find(row => row.id && row.user_id === ownerId);
+          if (!confirmed) throw new Error("O banco não confirmou a criação do participante.");
+          savedId = confirmed.id;
         }
       } else {
         const ins = await supabase.from("apresentadores")
-          .insert({ user_id: ownerId, ...payload } as any).select("id");
+          .insert({ user_id: ownerId, ...payload } as any).select("id, user_id");
         if (ins.error) throw ins.error;
-        if (!ins.data?.[0]?.id) throw new Error("O banco não confirmou a criação do participante.");
-        savedId = ins.data[0].id;
+        const confirmed = ins.data?.find(row => row.id && row.user_id === ownerId);
+        if (!confirmed) throw new Error("O banco não confirmou a criação do participante.");
+        savedId = confirmed.id;
       }
 
       const newEntry: Apresentador = {
@@ -438,9 +495,12 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         foto: payload.foto,
         background_url: payload.background_url,
         ativo: payload.ativo,
+        persisted: true,
       };
       const updated = editingId
-        ? apresentadores.map(a => a.id === editingId ? newEntry : a)
+        ? apresentadores
+            .filter(a => a.id === editingId || a.id !== newEntry.id)
+            .map(a => a.id === editingId ? newEntry : a)
         : [newEntry, ...apresentadores.filter(a => a.id !== newEntry.id)];
       setApresentadores(updated);
       try { localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated)); } catch {}
@@ -556,31 +616,16 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
   const removeApresentador = async (id: string) => {
     if (!ownerId) { toast.error("Sessão inválida."); return; }
-    const isUuid = (value: string) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-    if (isUuid(id)) {
-      const { data, error } = await supabase.from("apresentadores")
-        .delete().eq("id", id).eq("user_id", ownerId).select("id");
-      if (error) {
-        toast.error(error.message || "Não foi possível excluir o participante.");
-        return;
-      }
-      if (!data?.length) {
-        toast.error("O participante não foi localizado no banco desta emissora. Nenhum dado foi removido.");
-        return;
-      }
-    } else {
-      // Itens padrão do catálogo não têm linha própria no banco: registrar exclusão para não reaparecerem.
-      try {
-        const key = `nexohub_participantes_excluidos_${ownerId}`;
-        const current = JSON.parse(localStorage.getItem(key) || "[]");
-        const deleted = Array.isArray(current) ? current : [];
-        if (!deleted.includes(id)) deleted.push(id);
-        localStorage.setItem(key, JSON.stringify(deleted));
-      } catch {
-        toast.error("Não foi possível registrar a exclusão local do participante.");
-        return;
-      }
+    const participant = apresentadores.find(a => a.id === id);
+    if (!participant) {
+      toast.error("O participante não está mais na lista. Atualize os dados e tente novamente.");
+      return;
+    }
+
+    const result = await removeParticipantFromSource(participant, ownerId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
     }
     const updated = apresentadores.filter(a => a.id !== id);
     setApresentadores(updated);
@@ -635,7 +680,11 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       const { data, error } = await supabase.from("apresentadores").insert(inserts as any).select("*");
       if (error) throw error;
       if (!data || data.length !== inserts.length) throw new Error("O banco não confirmou todos os participantes importados.");
-      const updated = [...(data as Apresentador[]), ...apresentadores];
+      const importedParticipants = (data as Apresentador[]).map(participant => ({
+        ...participant,
+        persisted: true,
+      }));
+      const updated = [...importedParticipants, ...apresentadores];
       setApresentadores(updated);
       localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
       setImportRows(null);
@@ -1233,4 +1282,3 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
     </div>
   );
 }
-

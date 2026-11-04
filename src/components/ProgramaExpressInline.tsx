@@ -3040,7 +3040,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           placeholder={isFetching ? "Aguarde, a IA está analisando o link e gerando o texto jornalístico..." : "O texto da matéria completa aparecerá aqui automaticamente após colar o link."}
           className={`block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none resize-y transition-all ${isFetching ? 'ring-2 ring-blue-500 bg-blue-50/80 shadow-inner' : ''}`} 
           rows={10} 
-          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
+          style={{ ...inputStyle, borderRadius: 10, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
         />
       </div>
 
@@ -3055,7 +3055,7 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           onChange={e => onUpdate(bi, ni, "resumo", e.target.value)} 
           placeholder="Resumo curto da notícia..." 
           className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[10px] outline-none resize-y" 
-          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
+          style={{ ...inputStyle, borderRadius: 10, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} 
           rows={3} 
         />
       </div>

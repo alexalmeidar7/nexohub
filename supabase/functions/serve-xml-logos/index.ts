@@ -97,26 +97,19 @@ serve(async (req) => {
     let logoUrl = "";
     if (selected?.logo_url) {
       const pngUrl = await ensureVmixPngUrl(supabase, selected.logo_url, `vmix-logos/${userId}`);
-      if (pngUrl) {
-        const separator = pngUrl.includes("?") ? "&" : "?";
-        logoUrl = `${pngUrl}${separator}v=${rotationSlot}-${selected.id}`;
-      }
+      if (pngUrl) logoUrl = pngUrl.split(/[?#]/)[0];
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <estudio>
   <programa_no_ar>
-    <id>${esc(onAir?.id || "")}</id>
     <nome>${esc(onAir?.nome || "")}</nome>
     <estudio>${esc(onAir?.estudio || "")}</estudio>
     <patrocinador>
-      <id>${esc(selected?.id || "")}</id>
       <nome>${esc(selected?.nome || "")}</nome>
       <url>${esc(logoUrl)}</url>
     </patrocinador>
     <logo_url>${esc(logoUrl)}</logo_url>
-    <indice>${selectedIndex >= 0 ? selectedIndex + 1 : 0}</indice>
-    <total>${sponsorCount}</total>
     <intervalo_atualizacao>5</intervalo_atualizacao>
     <atualizado_em>${new Date().toISOString()}</atualizado_em>
   </programa_no_ar>

@@ -77,13 +77,13 @@ export default function HouseMixHeader({
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
   const { user } = useAuth();
   const [eventDates, setEventDates] = useState<Date[]>([]);
-  const [todayAgendaItems, setTodayAgendaItems] = useState<Array<{ id: string; title: string; time?: string }>>([]);
+  const [upcomingAgendaItems, setUpcomingAgendaItems] = useState<Array<{ id: string; title: string; date: string; time?: string }>>([]);
   const [activeAgendaItem, setActiveAgendaItem] = useState(0);
 
-  // Load today's agenda items for the signed-in station, including recurring events.
+  // Load agenda items for today and the next two days, including recurring events.
   useEffect(() => {
     if (!user) {
-      setTodayAgendaItems([]);
+      setUpcomingAgendaItems([]);
       return;
     }
     let cancelled = false;
@@ -98,60 +98,73 @@ export default function HouseMixHeader({
         if (subUser?.ativo && subUser.parent_user_id) targetUserId = subUser.parent_user_id;
 
         const today = new Date();
-        const todayKey = format(today, "yyyy-MM-dd");
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const todayKey = format(todayStart, "yyyy-MM-dd");
+        const rangeEnd = new Date(todayStart);
+        rangeEnd.setDate(rangeEnd.getDate() + 2);
+        const rangeEndKey = format(rangeEnd, "yyyy-MM-dd");
         const [uniqueRes, recurringRes, programsRes] = await Promise.all([
           supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId)
-            .or("recorrencia.eq.unico,recorrencia.is.null").eq("data", todayKey).limit(100),
+            .or("recorrencia.eq.unico,recorrencia.is.null").gte("data", todayKey).lte("data", rangeEndKey).limit(100),
           supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId)
-            .not("recorrencia", "eq", "unico").lte("data", todayKey)
+            .not("recorrencia", "eq", "unico").lte("data", rangeEndKey)
             .or(`periodo_fim.gte.${todayKey},periodo_fim.is.null`).limit(200),
-          supabase.from("programas").select("id,nome,horario_inicio,dias_semana").eq("user_id", targetUserId),
+          supabase.from("programas").select("id,nome,horario_inicio,horario_fim,dias_semana").eq("user_id", targetUserId),
         ]);
         if (cancelled) return;
         const programs = new Map((programsRes.data || []).map((p: any) => [p.id, p]));
-        const dow = today.getDay();
         const dayNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
-        const recurringMatches = (evt: any) => {
-          const start = evt.data ? new Date(evt.data + "T12:00:00") : null;
-          if (!start) return false;
-          if (evt.periodo_inicio && todayKey < evt.periodo_inicio) return false;
-          if (evt.periodo_fim && todayKey > evt.periodo_fim) return false;
-          const program: any = programs.get(evt.programa_id);
-          const days = evt.dias_semana || program?.dias_semana;
-          if (Array.isArray(days) && days.length) {
-            const normalized = days.map((d: any) => String(d).toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, ""));
-            return normalized.some((d: string) => d.includes(dayNames[dow]));
-          }
-          if (evt.recorrencia === "semanal") return start.getDay() === dow;
-          if (evt.recorrencia === "mensal") return start.getDate() === today.getDate();
-          if (evt.recorrencia === "programa_semanal" || evt.recorrencia?.startsWith("programa_semanal:") || evt.recorrencia?.startsWith("dias:")) {
-            let activeDays = [1, 2, 3, 4, 5];
-            if (Array.isArray(evt.dias_semana) && evt.dias_semana.length) activeDays = evt.dias_semana.map(Number);
-            else if (evt.recorrencia.startsWith("programa_semanal:")) activeDays = evt.recorrencia.slice(17).split(",").map(Number);
-            else if (evt.recorrencia.startsWith("dias:")) activeDays = evt.recorrencia.slice(5).split(",").map(Number);
-            return activeDays.includes(dow);
-          }
-          return false;
-        };
-        const all = new Map<string, any>();
-        (uniqueRes.data || []).forEach((evt: any) => all.set(evt.id, evt));
-        (recurringRes.data || []).filter(recurringMatches).forEach((evt: any) => all.set(evt.id, evt));
-        const items = Array.from(all.values()).map((evt: any) => {
-          const program: any = programs.get(evt.programa_id);
-          const title = String(evt.descricao || evt.titulo || program?.nome || evt.tipo_evento || "Evento").trim();
-          const rawTime = evt.horario_gravacao || program?.horario_inicio || "";
-          return { id: String(evt.id), title, time: rawTime ? String(rawTime).slice(0, 5) : "" };
-        }).sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+        const items = Array.from({ length: 3 }, (_, dayOffset) => {
+          const eventDate = new Date(todayStart);
+          eventDate.setDate(eventDate.getDate() + dayOffset);
+          const dateKey = format(eventDate, "yyyy-MM-dd");
+          const dow = eventDate.getDay();
+          const recurringMatches = (evt: any) => {
+            const start = evt.data ? new Date(evt.data + "T12:00:00") : null;
+            if (!start || (evt.periodo_inicio && dateKey < evt.periodo_inicio) || (evt.periodo_fim && dateKey > evt.periodo_fim)) return false;
+            const program: any = programs.get(evt.programa_id);
+            const days = evt.dias_semana || program?.dias_semana;
+            if (Array.isArray(days) && days.length) {
+              const normalized = days.map((d: any) => String(d).toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, ""));
+              return normalized.some((d: string) => d.includes(dayNames[dow]));
+            }
+            if (evt.recorrencia === "semanal") return start.getDay() === dow;
+            if (evt.recorrencia === "mensal") return start.getDate() === eventDate.getDate();
+            if (evt.recorrencia === "programa_semanal" || evt.recorrencia?.startsWith("programa_semanal:") || evt.recorrencia?.startsWith("dias:")) {
+              let activeDays = [1, 2, 3, 4, 5];
+              if (Array.isArray(evt.dias_semana) && evt.dias_semana.length) activeDays = evt.dias_semana.map(Number);
+              else if (evt.recorrencia.startsWith("programa_semanal:")) activeDays = evt.recorrencia.slice(17).split(",").map(Number);
+              else if (evt.recorrencia.startsWith("dias:")) activeDays = evt.recorrencia.slice(5).split(",").map(Number);
+              return activeDays.includes(dow);
+            }
+            return false;
+          };
+          const dayEvents = [
+            ...(uniqueRes.data || []).filter((evt: any) => evt.data === dateKey),
+            ...(recurringRes.data || []).filter(recurringMatches),
+          ].filter((evt: any) => evt.status !== "concluido" && evt.status !== "cancelado");
+          return dayEvents.map((evt: any) => {
+            const program: any = programs.get(evt.programa_id);
+            const title = String(evt.descricao || evt.titulo || program?.nome || evt.tipo_evento || "Evento").trim();
+            const startTime = evt.horario_gravacao || program?.horario_inicio || "";
+            const endTime = evt.horario_gravacao_fim || program?.horario_fim || "";
+            const time = startTime
+              ? `${String(startTime).slice(0, 5)}${endTime ? `–${String(endTime).slice(0, 5)}` : ""}`
+              : "Dia inteiro";
+            if (dateKey === todayKey && endTime && String(endTime).slice(0, 5) < format(today, "HH:mm")) return null;
+            return { id: String(evt.id), title, date: `${dayOffset === 0 ? "Hoje" : dayOffset === 1 ? "Amanhã" : format(eventDate, "EEEE", { locale: ptBR })} · ${format(eventDate, "dd/MM")}`, time, sortTime: startTime || "99:99", dayOffset };
+          }).filter(Boolean) as Array<{ id: string; title: string; date: string; time: string; sortTime: string; dayOffset: number }>;
+        }).flat().sort((a, b) => a.dayOffset - b.dayOffset || a.sortTime.localeCompare(b.sortTime));
         if (!cancelled) {
-          setTodayAgendaItems(items);
+          setUpcomingAgendaItems(items);
           setActiveAgendaItem(0);
         }
       } catch {
-        if (!cancelled) setTodayAgendaItems([]);
+        if (!cancelled) setUpcomingAgendaItems([]);
       }
     };
     void loadTodayAgenda();
-    const channel = supabase.channel(`header-agenda-today-${user.id}`)
+    const channel = supabase.channel(`header-agenda-upcoming-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos" }, () => { void loadTodayAgenda(); })
       .subscribe();
     return () => {
@@ -161,15 +174,15 @@ export default function HouseMixHeader({
   }, [user?.id]);
 
   useEffect(() => {
-    if (todayAgendaItems.length < 2) {
+    if (upcomingAgendaItems.length < 2) {
       setActiveAgendaItem(0);
       return;
     }
     const timer = window.setInterval(() => {
-      setActiveAgendaItem((current) => (current + 1) % todayAgendaItems.length);
+      setActiveAgendaItem((current) => (current + 1) % upcomingAgendaItems.length);
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [todayAgendaItems.length]);
+  }, [upcomingAgendaItems.length]);
 
   // User Auth & Profile state
   const [unreadChatbotCount, setUnreadChatbotCount] = useState<number>(() => {
@@ -1306,17 +1319,17 @@ export default function HouseMixHeader({
                 color: "var(--layout-nav-text, #ffffff)",
                 backdropFilter: "blur(14px)",
               }}
-              title={todayAgendaItems.length ? "Eventos cadastrados na agenda para hoje" : "Nenhum evento cadastrado para hoje"}
+              title={upcomingAgendaItems.length ? "Eventos de hoje e dos próximos dois dias" : "Nenhum evento nos próximos três dias"}
               aria-live="polite"
             >
               <CalendarDays className="w-3.5 h-3.5 shrink-0 opacity-80" />
               <span className="truncate">
-                {todayAgendaItems.length === 0
-                  ? "Sem eventos para hoje"
-                  : `${todayAgendaItems[activeAgendaItem]?.time ? todayAgendaItems[activeAgendaItem].time + " · " : ""}${todayAgendaItems[activeAgendaItem]?.title || "Evento"}`}
+                {upcomingAgendaItems.length === 0
+                  ? "Sem eventos nos próximos 3 dias"
+                  : `${upcomingAgendaItems[activeAgendaItem]?.date} · ${upcomingAgendaItems[activeAgendaItem]?.time} · ${upcomingAgendaItems[activeAgendaItem]?.title || "Evento"}`}
               </span>
-              {todayAgendaItems.length > 1 && (
-                <span className="shrink-0 text-[10px] opacity-65">{activeAgendaItem + 1}/{todayAgendaItems.length}</span>
+              {upcomingAgendaItems.length > 1 && (
+                <span className="shrink-0 text-[10px] opacity-65">{activeAgendaItem + 1}/{upcomingAgendaItems.length}</span>
               )}
             </div>
 
