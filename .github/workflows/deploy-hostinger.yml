@@ -1,11 +1,12 @@
 name: Deploy to Hostinger
 
 on:
+  # Every commit merged/pushed to main is published automatically.
+  # Do not restrict this to a marker file: that was preventing normal PR
+  # merges from reaching the production site.
   push:
     branches:
       - main
-    paths:
-      - '.deploy-hostinger-once'
   workflow_dispatch:
     inputs:
       confirm_deploy:
@@ -15,6 +16,12 @@ on:
 
 permissions:
   contents: read
+
+# Serialize FTP deployments so two merges cannot overwrite each other.
+# A newer pending main commit is the one that should reach production.
+concurrency:
+  group: housemix-hostinger-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
