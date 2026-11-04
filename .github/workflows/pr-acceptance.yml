@@ -1,0 +1,39 @@
+name: PR acceptance contract
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  acceptance-contract:
+    name: Exigir critérios de aceite e plano de validação
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar descrição da PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            const required = [
+              "Solicitação original",
+              "Critérios de aceite (obrigatório)",
+              "Como validar (obrigatório)",
+              "Escopo de publicação",
+              "Riscos e compatibilidade",
+              "Evidências"
+            ];
+            const missing = required.filter((heading) => {
+              const match = body.match(new RegExp("##\\s+" + heading.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&") + "\\s*([\\s\\S]*?)(?=\\n##\\s+|$)", "i"));
+              if (!match) return true;
+              const value = match[1].replace(/<!--([\\s\\S]*?)-->/g, "").trim();
+              return !value || /^PREENCHER$/i.test(value);
+            });
+            if (missing.length) {
+              core.setFailed("PR incompleta. Preencha estas seções: " + missing.join(", "));
+            } else {
+              core.notice("Contrato de aceite preenchido. Isso não substitui testes funcionais nem validação em produção.");
+            }
