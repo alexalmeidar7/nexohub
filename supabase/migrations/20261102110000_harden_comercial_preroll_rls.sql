@@ -82,10 +82,18 @@ CREATE POLICY "Sub-users can delete parent comercial_preroll"
     )
   );
 
+-- Replace legacy tenant policies created by the newer House Mix reconciliation.
+-- Their owner/sub-user scope is preserved by the five policies above.
+DROP POLICY IF EXISTS "comercial_preroll_tenant_select" ON public.comercial_preroll;
+DROP POLICY IF EXISTS "comercial_preroll_tenant_insert" ON public.comercial_preroll;
+DROP POLICY IF EXISTS "comercial_preroll_tenant_update" ON public.comercial_preroll;
+DROP POLICY IF EXISTS "comercial_preroll_tenant_delete" ON public.comercial_preroll;
+
 DO $verify$
 DECLARE
   rls_enabled boolean;
   policy_count integer;
+  total_policy_count integer;
 BEGIN
   SELECT c.relrowsecurity INTO rls_enabled
   FROM pg_class c
@@ -107,8 +115,14 @@ BEGIN
       'Sub-users can delete parent comercial_preroll'
     );
 
-  IF policy_count <> 5 THEN
-    RAISE EXCEPTION 'Expected five comercial_preroll policies, found %.', policy_count;
+  SELECT count(*) INTO total_policy_count
+  FROM pg_policies
+  WHERE schemaname = 'public' AND tablename = 'comercial_preroll';
+
+  IF policy_count <> 5 OR total_policy_count <> 5 THEN
+    RAISE EXCEPTION
+      'Expected exactly five comercial_preroll policies; found % expected policies and % total policies.',
+      policy_count, total_policy_count;
   END IF;
 
   IF has_table_privilege('anon', 'public.comercial_preroll', 'SELECT')
