@@ -1503,7 +1503,7 @@ export default function CenarioTela() {
             const btnIconOff = config.home.colorButtonOff || "rgba(255,255,255,0.7)";
             const btnIconOn = config.home.colorButtonOn || "#FFFFFF";
             return (
-              <div className="flex items-center" style={{ position: "absolute", left: 0, top: "28%", width: "8%", zIndex: 10, pointerEvents: "none" }}>
+              <div className="flex items-center" style={{ position: "absolute", left: `${vhToPx(3.2)}${vu}`, top: "28%", width: "8%", zIndex: 10, pointerEvents: "none" }}>
                 <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sidebarPad, padding: 0, marginLeft: 0 }}>
                   <button onClick={() => setActiveTab("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: btnSize, height: btnSize, background: activeTab === "home" ? btnBgOn : btnBgOff, border: "none", color: activeTab === "home" ? btnIconOn : btnIconOff, textShadow: "0 1px 3px rgba(0,0,0,0.5)", transition: "background 0.3s ease, color 0.3s ease" }}>
                     <Home style={{ width: iconSize, height: iconSize }} />
