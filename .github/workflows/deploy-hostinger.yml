@@ -80,38 +80,53 @@ jobs:
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: python3 scripts/ci/hostinger_ftp_target.py resolve
 
-      - name: Deploy via FTPS (lftp)
+      - name: Deploy via SFTP (primary) com fallback FTPS
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          SERVER_DIR: ${{ steps.ftpdir.outputs.server_dir }}
+          FTP_SERVER: \${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: \${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: \${{ secrets.FTP_PASSWORD }}
+          SFTP_SERVER_DIR: \${{ secrets.FTP_SERVER_DIR }}
+          FTPS_SERVER_DIR: \${{ steps.ftpdir.outputs.server_dir }}
         run: |
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y lftp
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" <<EOF
-          set ftp:ssl-force true
-          set ftp:ssl-protect-data true
-          set ssl:verify-certificate no
-          set ftp:passive-mode true
-          set net:timeout 30
+
+          # Hostinger SFTP usa SSH na porta 65002. Para o usuário SFTP,
+          # o caminho do domínio é relativo à raiz SSH; usamos o FTP_SERVER_DIR
+          # configurado (domains/.../public_html).
+          if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "sftp://$FTP_SERVER:65002" <<EOF
+          set sftp:auto-confirm yes
+          set net:timeout 60
           set net:max-retries 5
           set net:reconnect-interval-base 5
-          mirror -R --verbose --parallel=1 ./dist/ "$SERVER_DIR"
+          mirror -c -R --verbose --parallel=1 ./dist/ "$SFTP_SERVER_DIR"
           bye
           EOF
+          then
+            echo "Deploy concluído via SFTP."
+          else
+            echo "::warning::SFTP indisponível; usando FTPS como fallback."
+            lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" <<EOF
+            set ftp:ssl-force true
+            set ftp:ssl-protect-data true
+            set ssl:verify-certificate no
+            set ftp:passive-mode true
+            set net:timeout 60
+            set net:max-retries 5
+            set net:reconnect-interval-base 5
+            mirror -c -R --verbose --parallel=1 ./dist/ "$FTPS_SERVER_DIR"
+            bye
+            EOF
+          fi
+
       - name: Confirmar versão publicada
         env:
-          EXPECTED_SHA: ${{ github.sha }}
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
-          EFFECTIVE_DIR: ${{ steps.ftpdir.outputs.effective_dir }}
+          EXPECTED_SHA: \${{ github.sha }}
+          PUBLIC_URL: https://housemix.nexobrasil.net/deploy-info.json
+          PUBLIC_ATTEMPTS: "18"
+          PUBLIC_DELAY_SECONDS: "10"
         run: |
           set -euo pipefail
-          # 1. Mesmo diretório do upload, lido pelo FTPS.
-          python3 scripts/ci/hostinger_ftp_target.py verify
-          # 2. O domínio público precisa servir esse mesmo arquivo.
+          # Confirmação definitiva: o domínio público precisa servir o SHA deste build.
           python3 scripts/ci/hostinger_ftp_target.py public
