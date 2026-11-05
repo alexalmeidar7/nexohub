@@ -133,7 +133,7 @@ jobs:
             *) FTP_PATH="$FTP_PATH/" ;;
           esac
 
-          FTP_URL="ftp://$FTP_SERVER/$FTP_PATH"deploy-info.json"
+          FTP_URL="ftp://$FTP_SERVER/$FTP_PATH/deploy-info.json"
           echo "Validando deploy-info.json diretamente no diretório FTP configurado..."
 
           # A validação pública por HTTPS foi removida desta etapa.
