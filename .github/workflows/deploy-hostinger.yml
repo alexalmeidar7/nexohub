@@ -108,6 +108,44 @@ jobs:
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: python3 scripts/ci/hostinger_ftp_target.py resolve
 
+      - name: Garantir diretório de downloads do Bridge
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ steps.ftpdir.outputs.server_dir }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from ftplib import FTP_TLS
+          import ssl
+
+          context = ssl.create_default_context()
+          context.check_hostname = False
+          context.verify_mode = ssl.CERT_NONE
+          ftp = FTP_TLS(context=context, timeout=60)
+          ftp.connect(os.environ["FTP_SERVER"], 21, timeout=60)
+          ftp.auth()
+          ftp.prot_p()
+          ftp.login(os.environ["FTP_USERNAME"], os.environ["FTP_PASSWORD"])
+          try:
+              target = os.environ["FTP_SERVER_DIR"].strip().strip("/")
+              if target:
+                  ftp.cwd(target)
+              for part in ("downloads", "nexohub-bridge"):
+                  try:
+                      ftp.cwd(part)
+                  except Exception:
+                      ftp.mkd(part)
+                      ftp.cwd(part)
+              print(f"Diretorio garantido: {ftp.pwd()}")
+          finally:
+              try:
+                  ftp.quit()
+              except Exception:
+                  ftp.close()
+          PY
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
