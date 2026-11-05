@@ -188,6 +188,10 @@ export default function FloatingOnAirPresenter({
               });
             });
           }, 220);
+        } else {
+          setOnAirInfo((prev) =>
+            prev.locutorFoto === nextState.locutorFoto ? prev : nextState
+          );
         }
       } else {
         setOnAirInfo((prev) => ({

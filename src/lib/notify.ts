@@ -1,6 +1,7 @@
 // Padrão global de notificações. Faz o "toast" do sonner e do use-toast
 // também emitir um CustomEvent("nexo-notify") consumido pelo InlineNotification.
 import { toast as sonnerToast } from "sonner";
+import { initActivityMonitor } from "@/lib/activityStatus";
 
 let patched = false;
 
@@ -18,6 +19,7 @@ function toText(msg: unknown, opts?: any): string {
 export function initGlobalNotifications() {
   if (patched) return;
   patched = true;
+  initActivityMonitor();
 
   const fn: any = sonnerToast;
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Layout, Cpu, ChevronLeft, Clock, Wifi, WifiOff } from "lucide-react";
 const VmixPage = React.lazy(() => import("@/components/VmixPage"));
@@ -17,6 +18,7 @@ type VmixControlProps = {
 
 export default function VmixControl({ forcedConnected = false, cleanLayout = false, automationMode = false }: VmixControlProps) {
   const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const buttonPreviewMode = new URLSearchParams(window.location.search).get("buttonPreview");
   const isButtonDevicePreview = ["mobile", "tablet", "desktop"].includes(buttonPreviewMode || "");
   const [email, setEmail] = useState("");
@@ -189,7 +191,14 @@ export default function VmixControl({ forcedConnected = false, cleanLayout = fal
     <div className="vmix-flat-palette min-h-screen flex flex-col" style={{ backgroundColor: "#111111" }}>
       <header className="w-full shrink-0 px-0 pt-1 sm:pt-2 relative z-20">
         <div className={`relative mx-auto flex w-full max-w-[1440px] min-h-[44px] items-center justify-between px-4 sm:px-6 ${automationMode && !isButtonDevicePreview ? "rounded-full border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]" : isButtonDevicePreview ? "rounded-none" : "rounded-xl"}`} style={automationMode ? { backgroundColor: "rgba(13, 31, 62, 0.78)", backdropFilter: "blur(8px) saturate(115%)", WebkitBackdropFilter: "blur(8px) saturate(115%)" } : { backgroundColor: "#242424" }}>
-          <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none block h-auto max-h-[14px] w-auto max-w-[34%] object-contain object-left" />
+          <div className="flex min-w-0 max-w-[34%] items-center gap-3">
+            {automationMode && !isButtonDevicePreview && (
+              <button type="button" onClick={() => navigate("/vmix-control")} className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-white/20" title="Voltar para a seleção de vMix" aria-label="Voltar para /vmix-control">
+                <ChevronLeft size={13} /> Voltar
+              </button>
+            )}
+            <img src={cleanVmixControlLogo} alt="Nexo vMix Control" className="pointer-events-none block h-auto max-h-[14px] w-auto min-w-0 object-contain object-left" />
+          </div>
           {user && automationMode && !isButtonDevicePreview && (
             bridgeDeviceStatus.connected ? (
               <div role="status" title="Nexo Bridge ativo neste computador" className="ml-auto mr-3 inline-flex max-w-[48%] shrink items-center gap-2 rounded-lg border border-emerald-300/30 bg-emerald-600 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-[0_0_18px_rgba(16,185,129,0.18)]">

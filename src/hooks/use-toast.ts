@@ -134,6 +134,12 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
+function inferToastVariant(variant: unknown, text: string): "error" | "success" | "info" {
+  if (variant === "destructive") return "error";
+  if (/\b(salv|sucesso|criad|cadastrad|atualizad|alterad|exclu[ií]d|removid|copiad|enviad|conclu[ií]d)/i.test(text)) return "success";
+  return "info";
+}
+
 function toast({ ...props }: Toast) {
   const id = genId();
 
@@ -164,7 +170,7 @@ function toast({ ...props }: Toast) {
     if (text) {
       window.dispatchEvent(
         new CustomEvent("nexo-notify", {
-          detail: { text, variant: (props as any).variant === "destructive" ? "error" : "info" },
+          detail: { text, variant: inferToastVariant((props as any).variant, text) },
         })
       );
     }

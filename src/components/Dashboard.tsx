@@ -508,6 +508,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
 
   // Modo Janela para House Mix (Cadastros, Sorteios, Blitz, Roteiro, Música no Ar, Agenda, Gestor de Site, Player, Comercial, vMix, Ferramentas, Configurações, Chatbot)
   const HOUSEMIX_WINDOW_PAGES: Page[] = [
+    "nexoplugins",
     "clientes",
     "apresentadores",
     "ouvintes",

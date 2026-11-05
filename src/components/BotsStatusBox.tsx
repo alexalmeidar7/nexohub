@@ -168,11 +168,11 @@ export default function BotsStatusBox() {
       <TooltipTrigger asChild>
         <button
           type="button"
-          className="relative flex items-center justify-center w-8 h-8 shrink-0 rounded-full text-slate-700 hover:text-black hover:bg-slate-100/80 active:scale-95 transition-all outline-none ml-0.5 cursor-pointer select-none"
+          className="relative flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-[#0055ff] text-white hover:brightness-110 active:scale-95 transition-all outline-none cursor-pointer select-none"
           aria-label="Status dos Bots"
         >
-          <Bot className="w-4 h-4 text-white transition-transform hover:scale-110" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#0055ff]" />
+          <Bot className="w-4 h-4 text-white" />
+          <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0b1220]" />
         </button>
       </TooltipTrigger>
       <TooltipContent

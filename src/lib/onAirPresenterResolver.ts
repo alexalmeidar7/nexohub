@@ -1,4 +1,5 @@
 import { normalizeClientKey } from "./houseMixProgramasService";
+import { findClientAccountByEmail, findClientAccountById } from "./clientAuthAccounts";
 
 /**
  * Canonical on-air presenter resolver.
@@ -284,6 +285,11 @@ function normalizeName(str: string): string {
     .trim();
 }
 
+function normalizePresenterStation(stationKeyOrUserId?: string | null): string {
+  const account = findClientAccountById(stationKeyOrUserId) || findClientAccountByEmail(stationKeyOrUserId);
+  return normalizeClientKey(account?.nome || account?.slug || stationKeyOrUserId);
+}
+
 /**
  * Returns canonical presenter for a known program name keyword pattern.
  */
@@ -443,7 +449,7 @@ export function resolvePresenterForProgram(
     }
   }
 
-  const targetStation = normalizeClientKey(
+  const targetStation = normalizePresenterStation(
     stationKeyOrUserId ||
     program.cliente_nome ||
     program.clienteNome ||
@@ -644,7 +650,7 @@ export function resolveSafePresenterPhoto(
     return "";
   }
 
-  const station = normalizeClientKey(stationKeyOrUserId);
+  const station = normalizePresenterStation(stationKeyOrUserId);
 
   const isForeignPhoto = (url: string, targetStation: string): boolean => {
     if (targetStation === "INTERATIVA FM") {

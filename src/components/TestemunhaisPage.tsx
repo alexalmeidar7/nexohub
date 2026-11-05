@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -524,11 +525,11 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label style={labelStyle}>Data Início</label>
-              <input type="date" style={pillInput} value={form.data_inicio} onChange={(e) => setForm(current => ({ ...current, data_inicio: e.target.value }))}/>
+              <DateInput style={pillInput} value={form.data_inicio} onChange={(e) => setForm(current => ({ ...current, data_inicio: e.target.value }))}/>
             </div>
             <div>
               <label style={labelStyle}>Data Fim (Validade)</label>
-              <input type="date" style={pillInput} value={form.data_fim} onChange={(e) => setForm(current => ({ ...current, data_fim: e.target.value }))}/>
+              <DateInput style={pillInput} value={form.data_fim} onChange={(e) => setForm(current => ({ ...current, data_fim: e.target.value }))}/>
             </div>
           </div>
 

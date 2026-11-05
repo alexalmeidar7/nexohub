@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, Suspense, Fragment } from "react";
 import { createPortal } from "react-dom";
+import { getPlayerVideoHost } from "@/lib/playerVideoHost";
 import { Plus, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, Loader2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star, Minimize2, Maximize2 } from "lucide-react";
 import {
   Tooltip,
@@ -1350,6 +1351,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange, isA
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prefetchRef = useRef<{ url: string; audio: HTMLAudioElement } | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [videoHost] = useState<HTMLElement | null>(() => getPlayerVideoHost());
   const hlsRef = useRef<any>(null);
   const hlsInitUrlRef = useRef<string>("");
   const audioCleanupRef = useRef<(() => void) | null>(null);
@@ -2151,13 +2153,15 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange, isA
           zIndex: 5,
         }}
       >
-        <video
-          ref={videoRef}
-          muted={isMuted}
-          playsInline
-          className="absolute inset-0 w-full h-full"
-          style={{ objectFit: "cover" }}
-        />
+        {videoHost && createPortal(
+          <video
+            ref={videoRef}
+            muted={isMuted}
+            playsInline
+            style={{ width: "100%", height: "100%", objectFit: "cover", background: "#000", display: "block" }}
+          />,
+          videoHost,
+        )}
         {videoLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
             <Loader2 size={20} className="text-white/70 animate-spin" />

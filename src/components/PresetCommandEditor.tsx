@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -401,9 +402,8 @@ export default function PresetCommandEditor({ open, onClose, programaId, program
               <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#102A4C", opacity: 1 }}>Data Específica (Opcional)</label>
               <div className="flex items-center gap-2 relative">
                 <Calendar size={12} className="absolute left-3" style={{ color: "#334155" }} />
-                <input
-                  type="date"
-                  value={dataEspecifica}
+                <DateInput
+                                  value={dataEspecifica}
                   onChange={e => setDataEspecifica(e.target.value)}
                   className="text-xs pl-9 pr-3 py-2 rounded-lg outline-none w-full"
                   style={{ backgroundColor: "#FFFFFF", border: "1px solid #64748B", boxShadow: "inset 0 0 0 1px rgba(100,116,139,0.12)", color: "#172B4D", opacity: 1 }}

@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Film, Music, MessageCircle, Upload, CalendarIcon, Plus, Save, Settings2,
@@ -1287,7 +1288,7 @@ export default function AdsPage({ effectiveUserId }: { effectiveUserId?: string 
             </div>
             <div>
               <div className={labelCls}>Cliente desde</div>
-              <input type="date" className={inputCls} value={novoCliente.cliente_desde} onChange={e => setNovoCliente(n => ({ ...n, cliente_desde: e.target.value }))} />
+              <DateInput className={inputCls} value={novoCliente.cliente_desde} onChange={e => setNovoCliente(n => ({ ...n, cliente_desde: e.target.value }))} />
             </div>
             <div>
               <div className={labelCls}>Gerente executiva</div>

@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { scrollToForm } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -784,7 +785,7 @@ export default function BlitzPage({ effectiveUserId }: { effectiveUserId?: strin
         <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
           <div>
             <label style={labelStyle}><Calendar size={11} style={{ display: "inline", marginRight: 4 }} /> Dia</label>
-            <input type="date" style={pillInput} value={form.dia} onChange={e => setForm({ ...form, dia: e.target.value })} />
+            <DateInput style={pillInput} value={form.dia} onChange={e => setForm({ ...form, dia: e.target.value })} />
           </div>
           <div>
             <label style={labelStyle}><Clock size={11} style={{ display: "inline", marginRight: 4 }} /> Horário inicial</label>

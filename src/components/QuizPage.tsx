@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect } from "react";
 import { Sparkles, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -322,9 +323,8 @@ export default function QuizPage({ effectiveUserId }: { effectiveUserId?: string
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Data do Quiz</label>
-                  <Input 
-                    type="date"
-                    value={formData.data_quiz}
+                  <DateInput 
+                                      value={formData.data_quiz}
                     onChange={e => setFormData(prev => ({ ...prev, data_quiz: e.target.value }))}
                     className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                   />

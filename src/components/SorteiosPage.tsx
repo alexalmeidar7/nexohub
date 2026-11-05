@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, Plus, Shuffle, Check, Radio, Clock, AlertTriangle, History, QrCode, Image as ImageIcon, Download } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, Plus, Shuffle, Check, Radio, Clock, AlertTriangle, History, QrCode, Image as ImageIcon, Download, ShieldCheck, Users, Trophy } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -1465,19 +1465,68 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <section
+        style={{
+          ...cardStyle,
+          padding: 0,
+          overflow: "hidden",
+          border: "1px solid #dbeafe",
+          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+        }}
+      >
+        <div className="flex flex-col gap-5 p-5 sm:p-7 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex items-start gap-4">
+            <div style={{ width: 48, height: 48, flex: "0 0 auto", borderRadius: 16, background: "#eff6ff", display: "grid", placeItems: "center", color: CYAN }}>
+              <ShieldCheck size={24} />
+            </div>
+            <div>
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h2 style={{ margin: 0, color: DARK, fontSize: 20, fontWeight: 800 }}>Realizar sorteio</h2>
+                <span style={{ borderRadius: 999, background: "#ecfdf5", color: "#047857", padding: "4px 9px", fontSize: 10, fontWeight: 800, letterSpacing: 0.6, textTransform: "uppercase" }}>
+                  Contexto visível
+                </span>
+              </div>
+              <p style={{ margin: 0, maxWidth: 650, color: "#64748b", fontSize: 13, lineHeight: 1.6 }}>
+                Confira o prêmio e a lista de participantes antes de sortear. O resultado só entra no histórico depois de ser registrado.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 xl:min-w-[390px]">
+            {[
+              { label: "Prêmio", done: !!premioId, icon: Gift },
+              { label: "Participantes", done: pool.length > 0, icon: Users },
+              { label: "Resultado", done: !!ganhador, icon: Trophy },
+            ].map(({ label, done, icon: Icon }, index) => (
+              <div key={label} className="flex items-center gap-2 rounded-xl border px-3 py-2.5" style={{ borderColor: done ? "#bfdbfe" : "#e2e8f0", background: done ? "#eff6ff" : "#fff" }}>
+                <span style={{ color: done ? CYAN : "#94a3b8", display: "flex" }}>
+                  {done ? <Check size={16} /> : <Icon size={16} />}
+                </span>
+                <span style={{ color: done ? DARK : "#64748b", fontSize: 11, fontWeight: 700 }}>
+                  {index + 1}. {label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div style={cardStyle}>
-          <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
-            Configurar Sorteio
-          </h2>
+          <div className="mb-5 flex items-center gap-3">
+            <span style={{ width: 32, height: 32, borderRadius: 11, display: "grid", placeItems: "center", color: "#fff", background: CYAN, fontSize: 13, fontWeight: 800 }}>1</span>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: DARK }}>Prepare o sorteio</h2>
+              <p style={{ margin: "3px 0 0", color: "#64748B", fontSize: 11 }}>Confira o contexto e selecione o prêmio.</p>
+            </div>
+          </div>
 
           {/* Contexto: data/hora + programa no ar */}
-          <div style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33`, marginBottom: 16 }}>
+          <div style={{ background: "#f8fafc", borderRadius: 16, padding: 16, border: "1px solid #e2e8f0", marginBottom: 20 }}>
             <div className="flex items-center gap-2 mb-2">
               <Clock size={14} color={CYAN} />
-              <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: DARK }}>Momento do sorteio</span>
+              <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 800, color: "#64748b" }}>Registro do sorteio</span>
             </div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: DARK }}>{now.toLocaleString("pt-BR")}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: DARK }}>{now.toLocaleString("pt-BR")}</div>
             <div className="flex items-center gap-2 mt-3">
               <Radio size={14} color={CYAN} />
               {programaNoAr ? (
@@ -1493,7 +1542,10 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
 
           {/* Lista de prêmios vinculados ao programa */}
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Prêmios do programa no ar</label>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label style={{ ...labelStyle, marginBottom: 0 }}>1. Selecione o prêmio</label>
+              {premiosDoPrograma.length > 0 && <span style={{ color: "#64748b", fontSize: 11 }}>{premiosDoPrograma.length} disponível(is)</span>}
+            </div>
             {!programaNoAr ? (
               <div style={{ background: "#fff", borderRadius: 16, padding: 20, border: `1px dashed ${CYAN}55`, textAlign: "center", fontSize: 12, color: "#64748B" }}>
                 Nenhum programa no ar no momento.
@@ -1512,20 +1564,23 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
                       onClick={() => setPremioId(premio!.id)}
                       style={{
                         background: sel ? LIME : "#fff",
-                        borderRadius: 16,
-                        padding: 12,
-                        border: `2px solid ${sel ? DARK : CYAN}55`,
+                        borderRadius: 14,
+                        padding: 14,
+                        border: `1px solid ${sel ? CYAN : "#e2e8f0"}`,
+                        boxShadow: sel ? "0 0 0 2px rgba(0, 85, 255, 0.12)" : "none",
                         cursor: "pointer",
                         textAlign: "left",
                         fontFamily: FONT,
                         transition: "all 0.15s",
                       }}
+                      aria-pressed={sel}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                         {premio!.imagem_url && (
                           <img src={premio!.imagem_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
                         )}
                         <div style={{ fontSize: 12, fontWeight: 800, color: DARK, lineHeight: 1.2 }}>{premio!.nome}</div>
+                        {sel && <Check size={16} color={CYAN} style={{ marginLeft: "auto", flex: "0 0 auto" }} />}
                       </div>
                       <div style={{ fontSize: 10, color: DARK, opacity: 0.7 }}>
                         Reservado: <b>{link.quantidade}</b> · Estoque: <b>{premio!.quantidade_estoque}</b>
@@ -1538,10 +1593,13 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
           </div>
 
           {/* Pool com tabela */}
-          <div style={{ background: "#fff", borderRadius: 16, padding: 12, border: `1px solid ${CYAN}33` }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: 14, border: "1px solid #e2e8f0" }}>
             <div className="flex items-center justify-between mb-2">
-              <div style={{ fontSize: 11, color: "#64748B", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Pool de participantes</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: DARK }}>{pool.length}</div>
+              <div>
+                <div style={{ fontSize: 11, color: DARK, textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 800 }}>2. Ouvintes no pool</div>
+                <div style={{ marginTop: 3, fontSize: 10, color: "#64748B" }}>A pontuação é informativa e não altera as chances.</div>
+              </div>
+              <div style={{ minWidth: 42, textAlign: "center", fontSize: 18, fontWeight: 800, color: DARK, background: "#eff6ff", borderRadius: 12, padding: "6px 9px" }}>{pool.length}</div>
             </div>
             {pool.length === 0 ? (
               <p style={{ fontSize: 12, color: "#94a3b8", textAlign: "center", padding: 12 }}>Sem participantes</p>
@@ -1569,15 +1627,19 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
             )}
           </div>
 
-          <button style={{ ...limeBtn, marginTop: 16 }} onClick={sortear} disabled={!premioId || pool.length === 0}>
-            <Shuffle size={16} /> Sortear Ganhador
+          <button style={{ ...primaryBtn, width: "100%", justifyContent: "center", height: 50, marginTop: 16, opacity: !premioId || pool.length === 0 ? 0.5 : 1, cursor: !premioId || pool.length === 0 ? "not-allowed" : "pointer" }} onClick={sortear} disabled={!premioId || pool.length === 0}>
+            <Shuffle size={17} /> Sortear ganhador
           </button>
         </div>
 
         <div style={cardStyle}>
-          <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
-            Ganhador
-          </h2>
+          <div className="mb-5 flex items-center gap-3">
+            <span style={{ width: 32, height: 32, borderRadius: 11, display: "grid", placeItems: "center", color: "#fff", background: ganhador ? "#059669" : "#94a3b8", fontSize: 13, fontWeight: 800 }}>3</span>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: DARK }}>{ganhador ? "Confira o resultado" : "Resultado do sorteio"}</h2>
+              <p style={{ margin: "3px 0 0", color: "#64748B", fontSize: 11 }}>Revise os dados antes de registrar oficialmente.</p>
+            </div>
+          </div>
           {ganhador ? (
             <div className="grid gap-3">
               <div style={{ background: LIME, borderRadius: 16, padding: 16 }}>
@@ -1639,14 +1701,26 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
               </div>
             </div>
           ) : (
-            <div className="grid gap-3">
-              <p style={{ fontSize: 12, color: "#64748B" }}>Sorteie automaticamente ou informe manualmente:</p>
-              <Field label="Nome do ganhador (manual)">
-                <input style={pillInput} value={manual.nome} onChange={e => setManual({ ...manual, nome: e.target.value })} />
-              </Field>
-              <Field label="Telefone">
-                <input style={pillInput} value={manual.telefone} onChange={e => setManual({ ...manual, telefone: e.target.value })} />
-              </Field>
+            <div className="grid gap-4">
+              <div style={{ minHeight: 142, borderRadius: 18, border: "1px dashed #cbd5e1", background: "#f8fafc", display: "grid", placeItems: "center", padding: 20, textAlign: "center" }}>
+                <div>
+                  <div style={{ width: 42, height: 42, margin: "0 auto 10px", borderRadius: 14, display: "grid", placeItems: "center", background: "#eff6ff", color: CYAN }}><Trophy size={20} /></div>
+                  <div style={{ color: DARK, fontSize: 13, fontWeight: 800 }}>O resultado aparecerá aqui</div>
+                  <p style={{ maxWidth: 340, margin: "5px auto 0", color: "#64748b", fontSize: 11, lineHeight: 1.5 }}>Selecione um prêmio e clique em “Sortear ganhador” para escolher alguém da lista elegível.</p>
+                </div>
+              </div>
+              <details style={{ border: "1px solid #e2e8f0", borderRadius: 14, padding: 14 }}>
+                <summary style={{ cursor: "pointer", color: DARK, fontSize: 12, fontWeight: 700 }}>Registrar um ganhador manualmente</summary>
+                <p style={{ margin: "10px 0 12px", color: "#64748b", fontSize: 11, lineHeight: 1.5 }}>Use esta opção somente se o ganhador já foi definido fora desta tela.</p>
+                <div className="grid gap-3">
+                  <Field label="Nome do ganhador">
+                    <input style={pillInput} value={manual.nome} onChange={e => setManual({ ...manual, nome: e.target.value })} />
+                  </Field>
+                  <Field label="Telefone">
+                    <input style={pillInput} value={manual.telefone} onChange={e => setManual({ ...manual, telefone: e.target.value })} />
+                  </Field>
+                </div>
+              </details>
             </div>
           )}
           <div className="mt-4">
@@ -1654,12 +1728,12 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
               <textarea style={{ ...pillInput, height: 72, borderRadius: 22, padding: 14, resize: "none" }} value={obs} onChange={e => setObs(e.target.value)} />
             </Field>
           </div>
-          <div className="flex gap-2 mt-4">
-            <button style={primaryBtn} onClick={registrar} disabled={saving || !premioId || (!ganhador && !manual.nome.trim())}>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <button style={{ ...primaryBtn, justifyContent: "center", opacity: saving || !premioId || (!ganhador && !manual.nome.trim()) ? 0.5 : 1, cursor: saving || !premioId || (!ganhador && !manual.nome.trim()) ? "not-allowed" : "pointer" }} onClick={registrar} disabled={saving || !premioId || (!ganhador && !manual.nome.trim())}>
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              Registrar Sorteio
+              Registrar resultado
             </button>
-            {ganhador && <button style={ghostBtn} onClick={sortear}><Shuffle size={16} /> Sortear outro</button>}
+            {ganhador && <button style={{ ...ghostBtn, justifyContent: "center" }} onClick={sortear}><Shuffle size={16} /> Sortear novamente</button>}
           </div>
         </div>
       </div>

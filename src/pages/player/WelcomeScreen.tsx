@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useRef } from "react";
 import { clearSignOutFlag } from "@/hooks/useAuth";
 import { UserCircle, Pencil, LogIn, Star, Plus } from "lucide-react";
@@ -1589,7 +1590,7 @@ export default function WelcomeScreen({
                       </div>
                       <div>
                         <label className={labelCls} style={labelStyle}>Data de nascimento</label>
-                        <input type="date" className="wsp-input" style={inputStyle} value={profile.data_nascimento}
+                        <DateInput className="wsp-input" style={inputStyle} value={profile.data_nascimento}
                           onChange={e => setProfile(p => ({ ...p, data_nascimento: e.target.value }))} />
                       </div>
                     </div>

@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1333,9 +1334,8 @@ export default function FinanceiroSuperAdminPage() {
                   <label className="text-[11px] text-[#011c5b] font-black uppercase tracking-wider block mb-1">
                     Data de Vencimento
                   </label>
-                  <input
-                    type="date"
-                    value={novaCobrancaData.dataVencimento}
+                  <DateInput
+                                      value={novaCobrancaData.dataVencimento}
                     onChange={e => setNovaCobrancaData({ ...novaCobrancaData, dataVencimento: e.target.value })}
                     className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 text-xs text-[#011c5b] font-bold outline-none border border-slate-200 focus:border-[#0055ff] focus:bg-white"
                   />
