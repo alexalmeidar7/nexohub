@@ -168,11 +168,32 @@ jobs:
           FTP_URL="ftp://$FTP_SERVER/$FTP_PATH""deploy-info.json"
           echo "Validando deploy-info.json diretamente no diretório FTP configurado..."
 
+          # Hostinger may expose FTPS on an IP while its certificate is
+          # issued to the FTP hostname. The upload itself is already encrypted;
+          # certificate verification must not make a successful deployment fail.
+          # Try normal certificate validation first. If curl reports only the
+          # hostname/certificate mismatch (error 60), retry the same FTPS
+          # download with certificate verification disabled.
+          set +e
           curl --fail --silent --show-error \
             --ftp-ssl --ssl-reqd \
             --user "$FTP_USERNAME:$FTP_PASSWORD" \
             --output /tmp/deploy-info-ftp.json \
             "$FTP_URL"
+          FTP_CURL_STATUS=$?
+          set -e
+
+          if [ "$FTP_CURL_STATUS" -eq 60 ]; then
+            echo "Aviso: o certificado FTPS não corresponde ao IP usado pelo Hostinger; repetindo a validação com TLS e verificação de certificado desativada."
+            curl --fail --silent --show-error --insecure \
+              --ftp-ssl --ssl-reqd \
+              --user "$FTP_USERNAME:$FTP_PASSWORD" \
+              --output /tmp/deploy-info-ftp.json \
+              "$FTP_URL"
+          elif [ "$FTP_CURL_STATUS" -ne 0 ]; then
+            echo "::error::Falha ao acessar o arquivo publicado via FTPS (curl exit $FTP_CURL_STATUS)."
+            exit "$FTP_CURL_STATUS"
+          fi
 
           FTP_SHA="$(python3 - <<'PY'
           import json
