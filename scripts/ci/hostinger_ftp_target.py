@@ -1,16 +1,5 @@
 #!/usr/bin/env python3
-"""Destino FTP unico para o deploy do House Mix na Hostinger.
-
-Comandos:
-  resolve  Normaliza FTP_SERVER_DIR, confirma que a pasta existe e nao tem
-           segmentos repetidos (ex.: public_html/public_html) e publica o valor
-           em GITHUB_OUTPUT. Roda ANTES do upload.
-  verify   Le deploy-info.json no mesmo destino usado pelo upload (via FTPS).
-  public   Le deploy-info.json pela URL publica do dominio.
-
-FTP_SERVER_DIR e sempre tratado como caminho relativo a pasta inicial do usuario
-FTP. Nenhum trecho como "public_html" e acrescentado por este script.
-"""
+"""Resolve e valida o destino FTPS do deploy do House Mix."""
 import json
 import os
 import ssl
@@ -36,9 +25,7 @@ def normalize_server_dir(value):
         if part in ("", "."):
             continue
         if part == "..":
-            if not parts:
-                parts.append("..")
-            elif parts[-1] != "..":
+            if parts and parts[-1] != "..":
                 parts.pop()
             else:
                 parts.append("..")
@@ -60,8 +47,6 @@ def repeated_segment(path):
 
 
 def open_ftp():
-    # O certificado da Hostinger pode ser emitido para o hostname enquanto
-    # FTP_SERVER contem um IP: mantem TLS, mas nao valida o nome.
     context = ssl.create_default_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
@@ -84,55 +69,69 @@ def close_ftp(ftp):
 
 
 def configured_relative_dir():
-    try:
-        relative = normalize_server_dir(os.environ.get("FTP_SERVER_DIR", ""))
-    except ValueError as exc:
-        fail(str(exc))
+    relative = normalize_server_dir(os.environ.get("FTP_SERVER_DIR", ""))
     repeated = repeated_segment(relative)
     if repeated:
         fail(f"FTP_SERVER_DIR='{relative}' repete a pasta '{repeated}'. Corrija o secret.")
     return relative
 
 
-def cmd_resolve():
-    relative = configured_relative_dir()
-    ftp = open_ftp()
-    try:
-        login_dir = ftp.pwd()
+def resolve_relative_from_login(ftp, configured):
+    """Corrige automaticamente o caso Hostinger em que o login inicia em /public_html.
+
+    Para um docroot de domínio adicional como /domains/housemix.../public_html,
+    o caminho correto a partir de /public_html é ../domains/.../public_html.
+    """
+    login_dir = ftp.pwd()
+    candidates = [configured]
+
+    if (
+        login_dir.rstrip("/").endswith("/public_html")
+        and configured.startswith("domains/")
+    ):
+        candidates.insert(0, f"../{configured}")
+
+    errors = []
+    for candidate in candidates:
         try:
-            print(f"Conteudo da pasta inicial '{login_dir}': {sorted(ftp.nlst())[:30]}")
+            ftp.cwd("/")
+            ftp.cwd(candidate)
+            effective = ftp.pwd()
+            if repeated_segment(effective):
+                errors.append(f"{candidate} -> {effective} (pasta repetida)")
+                continue
+            return candidate, effective, login_dir
         except Exception as exc:
-            print(f"Nao foi possivel listar a pasta inicial: {exc}")
-        if relative:
-            try:
-                ftp.cwd(relative)
-            except error_perm as exc:
-                fail(
-                    f"A pasta '{relative}' nao existe a partir de '{login_dir}'. "
-                    f"O upload nao sera feito para nao criar pastas no lugar errado: {exc}"
-                )
-        effective = ftp.pwd()
-    finally:
-        close_ftp(ftp)
+            errors.append(f"{candidate}: {exc}")
 
-    repeated = repeated_segment(effective)
-    if repeated:
-        fail(
-            f"O destino FTP resolve para '{effective}' (pasta inicial '{login_dir}' + "
-            f"FTP_SERVER_DIR '{relative or './'}') e repete '{repeated}'. "
-            "Ajuste FTP_SERVER_DIR para ser relativo a pasta inicial do usuario FTP."
-        )
+    fail(
+        "Nenhum destino FTP válido foi encontrado. "
+        f"Pasta inicial='{login_dir}'. Tentativas: {' | '.join(errors)}"
+    )
 
-    server_dir = action_server_dir(relative)
-    print(f"Pasta inicial do usuario FTP: {login_dir}")
-    print(f"FTP_SERVER_DIR normalizado: {server_dir}")
-    print(f"Destino efetivo do upload: {effective}")
 
+def write_outputs(server_dir, effective):
     output = os.environ.get("GITHUB_OUTPUT")
     if output:
         with open(output, "a", encoding="utf-8") as handle:
-            handle.write(f"server_dir={server_dir}\n")
+            handle.write(f"server_dir={action_server_dir(server_dir)}\n")
             handle.write(f"effective_dir={effective}\n")
+
+
+def cmd_resolve():
+    configured = configured_relative_dir()
+    ftp = open_ftp()
+    try:
+        print(f"FTP_SERVER_DIR configurado: {action_server_dir(configured)}")
+        print(f"Conteudo da pasta inicial '{ftp.pwd()}': {sorted(ftp.nlst())[:30]}")
+        server_dir, effective, login_dir = resolve_relative_from_login(ftp, configured)
+    finally:
+        close_ftp(ftp)
+
+    print(f"Pasta inicial do usuario FTP: {login_dir}")
+    print(f"FTP_SERVER_DIR usado: {action_server_dir(server_dir)}")
+    print(f"Destino efetivo do upload: {effective}")
+    write_outputs(server_dir, effective)
 
 
 def read_commit(raw):
@@ -146,14 +145,15 @@ def read_commit(raw):
 
 def cmd_verify():
     expected = os.environ["EXPECTED_SHA"]
-    relative = configured_relative_dir()
+    configured = configured_relative_dir()
     chunks = []
     ftp = open_ftp()
     try:
-        if relative:
-            ftp.cwd(relative)
-        effective = ftp.pwd()
+        server_dir, effective, _ = resolve_relative_from_login(ftp, configured)
         try:
+            ftp.cwd("/")
+            if server_dir:
+                ftp.cwd(server_dir)
             ftp.retrbinary(f"RETR {DEPLOY_INFO}", chunks.append)
         except Exception as exc:
             fail(f"Falha ao ler {effective}/{DEPLOY_INFO} via FTPS: {exc}")
@@ -196,7 +196,6 @@ def cmd_public():
 
     fail(
         f"O upload foi para '{effective}', mas {url} nao serve o SHA esperado ({last}). "
-        "Provavel causa: FTP_SERVER_DIR nao aponta para o document root do dominio. "
         "Deploy NAO VALIDADO."
     )
 
