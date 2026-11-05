@@ -94,7 +94,10 @@ def resolve_relative_from_login(ftp, configured):
     errors = []
     for candidate in candidates:
         try:
-            ftp.cwd("/")
+            # FTP_SERVER_DIR is relative to the user's actual login root.
+            # Do not reset to "/" first: on Hostinger "/" is the virtual
+            # login root, so ../ must be resolved from that root.
+            ftp.cwd(login_dir)
             ftp.cwd(candidate)
             effective = ftp.pwd()
             if repeated_segment(effective):
