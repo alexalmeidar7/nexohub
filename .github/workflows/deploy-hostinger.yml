@@ -85,12 +85,47 @@ jobs:
           set ftp:ssl-protect-data true
           set ssl:verify-certificate no
           set ftp:passive-mode true
-          set net:timeout 60
-          set net:max-retries 8
+          set net:timeout 90
+          set net:max-retries 3
+          set net:persist-retries 2
           set net:reconnect-interval-base 5
+          set net:reconnect-interval-max 30
           set cmd:fail-exit yes
-          mirror -c -R --verbose --parallel=1 ./dist/ "$FTP_SERVER_DIR"
+
+          # Hostinger pode resetar uma conexão durante um mirror grande.
+          # Não deixamos o job preso em retry infinito: no máximo 2 mirrors,
+          # e cada nova tentativa continua do ponto já enviado.
+          attempt=1
+          max_attempts=2
+          while true; do
+            echo "FTPS mirror tentativa $attempt/$max_attempts"
+            if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate no
+          set ftp:passive-mode true
+          set net:timeout 90
+          set net:max-retries 3
+          set net:persist-retries 2
+          set net:reconnect-interval-base 5
+          set net:reconnect-interval-max 30
+          set cmd:fail-exit yes
+          mirror -c -R --verbose --parallel=1 --only-newer --continue ./dist/ "$FTP_SERVER_DIR"
           bye
+          EOF
+            then
+              break
+            fi
+
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "::error::FTPS mirror falhou após $max_attempts tentativas."
+              exit 1
+            fi
+
+            attempt=$((attempt + 1))
+            echo "FTPS instável; aguardando 15s e continuando o mirror."
+            sleep 15
+          done
           EOF
 
           echo "Deploy FTPS concluído."
