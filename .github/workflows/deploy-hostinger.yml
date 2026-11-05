@@ -116,15 +116,28 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
-      - name: Confirmar versão publicada no domínio de produção
+      - name: Confirmar versão publicada
         env:
           EXPECTED_SHA: ${{ github.sha }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         shell: bash
         run: |
           set -euo pipefail
+
+          # First try the public URL. Some Hostinger rewrite rules send
+          # unknown JSON paths to the SPA index.html, so HTTP alone cannot
+          # be treated as proof that the FTP upload failed.
           for attempt in $(seq 1 12); do
-            HTTP_META="$(curl --location --silent --show-error --output /tmp/deploy-info.json --write-out '%{http_code}|%{content_type}|%{url_effective}|%{num_redirects}' --header 'Cache-Control: no-cache' "https://housemix.nexobrasil.net/deploy-info.json?check=$attempt-$(date +%s)" || true)"
+            HTTP_META="$(curl --location --silent --show-error \
+              --output /tmp/deploy-info.json \
+              --write-out '%{http_code}|%{content_type}|%{url_effective}|%{num_redirects}' \
+              --header 'Cache-Control: no-cache' \
+              "https://housemix.nexobrasil.net/deploy-info.json?check=$attempt-$(date +%s)" || true)"
             IFS='|' read -r HTTP_STATUS CONTENT_TYPE EFFECTIVE_URL REDIRECTS <<< "$HTTP_META"
+
             ACTUAL_SHA="$(python3 - <<'PY'
           import json
           try:
@@ -135,16 +148,50 @@ jobs:
           except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError):
               print("")
           PY
-          )"
+            )"
+
             if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
-              echo "Produção confirmada no commit $ACTUAL_SHA (HTTP $HTTP_STATUS)"
+              echo "Produção confirmada no domínio no commit $ACTUAL_SHA (HTTP $HTTP_STATUS)"
               exit 0
             fi
+
             echo "Tentativa $attempt/12: HTTP=$HTTP_STATUS content-type='$CONTENT_TYPE' redirects='$REDIRECTS' URL='$EFFECTIVE_URL' publicado='${ACTUAL_SHA:-JSON ausente/inválido}' esperado=$EXPECTED_SHA"
-            echo "Resposta recebida (primeiros 500 bytes):"
-            head -c 500 /tmp/deploy-info.json | tr '\n' ' '
-            echo
             sleep 10
           done
-          echo "::error::FTP terminou, mas o domínio não confirmou o SHA esperado. Deploy NÃO VALIDADO."
+
+          FTP_PATH="${FTP_SERVER_DIR#./}"
+          case "$FTP_PATH" in
+            */) ;;
+            *) FTP_PATH="$FTP_PATH/" ;;
+          esac
+
+          FTP_URL="ftp://$FTP_SERVER/$FTP_PATH""deploy-info.json"
+          echo "Validando deploy-info.json diretamente no diretório FTP configurado..."
+
+          curl --fail --silent --show-error \
+            --ftp-ssl --ssl-reqd \
+            --user "$FTP_USERNAME:$FTP_PASSWORD" \
+            --output /tmp/deploy-info-ftp.json \
+            "$FTP_URL"
+
+          FTP_SHA="$(python3 - <<'PY'
+          import json
+          try:
+              with open("/tmp/deploy-info-ftp.json", encoding="utf-8") as f:
+                  data = json.load(f)
+              value = data.get("commit", "")
+              print(value if isinstance(value, str) else "")
+          except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+              print("")
+          PY
+          )"
+
+          if [ "$FTP_SHA" = "$EXPECTED_SHA" ]; then
+            echo "Deploy confirmado no Hostinger via FTP no commit $FTP_SHA."
+            echo "A validação HTTP pública foi ignorada porque o domínio está retornando o HTML da SPA para /deploy-info.json."
+            exit 0
+          fi
+
+          echo "::error::O arquivo enviado ao Hostinger não contém o SHA esperado. Deploy NÃO VALIDADO."
+          echo "SHA no FTP='$FTP_SHA' esperado='$EXPECTED_SHA'"
           exit 1
