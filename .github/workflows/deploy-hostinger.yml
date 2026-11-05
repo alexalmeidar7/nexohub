@@ -69,7 +69,7 @@ jobs:
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: python3 scripts/ci/hostinger_ftp_target.py resolve
 
-      - name: Deploy via FTPS com lftp
+      - name: Deploy Hostinger via FTPS/FTP resiliente
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -80,39 +80,69 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y lftp
 
-          attempt=1
-          max_attempts=2
+          run_mirror() {
+            local scheme="$1"
+            echo "Iniciando mirror via $scheme"
 
-          while [ "$attempt" -le "$max_attempts" ]; do
-            echo "FTPS mirror tentativa $attempt/$max_attempts"
+            if [ "$scheme" = "ftps" ]; then
+              lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e "
+                set ftp:ssl-force true;
+                set ftp:ssl-protect-data true;
+                set ssl:verify-certificate no;
+                set ftp:passive-mode true;
+                set net:timeout 90;
+                set net:max-retries 3;
+                set net:persist-retries 2;
+                set net:reconnect-interval-base 5;
+                set net:reconnect-interval-max 30;
+                set net:limit-total-rate 4M;
+                set net:socket-buffer 32768;
+                set cmd:fail-exit yes;
+                mirror -c -R --verbose --parallel=1 --only-newer ./dist/ "$FTP_SERVER_DIR";
+                bye
+              "
+            else
+              lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER" -e "
+                set ftp:ssl-force false;
+                set ftp:ssl-protect-data false;
+                set ftp:passive-mode true;
+                set net:timeout 90;
+                set net:max-retries 3;
+                set net:persist-retries 2;
+                set net:reconnect-interval-base 5;
+                set net:reconnect-interval-max 30;
+                set net:limit-total-rate 4M;
+                set net:socket-buffer 32768;
+                set cmd:fail-exit yes;
+                mirror -c -R --verbose --parallel=1 --only-newer ./dist/ "$FTP_SERVER_DIR";
+                bye
+              "
+            fi
+          }
 
-            if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e "
-              set ftp:ssl-force true;
-              set ftp:ssl-protect-data true;
-              set ssl:verify-certificate no;
-              set ftp:passive-mode true;
-              set net:timeout 90;
-              set net:max-retries 3;
-              set net:persist-retries 2;
-              set net:reconnect-interval-base 5;
-              set net:reconnect-interval-max 30;
-              set cmd:fail-exit yes;
-              mirror -c -R --verbose --parallel=1 --only-newer ./dist/ $FTP_SERVER_DIR;
-              bye
-            "; then
-              echo "Deploy FTPS concluído."
+          # FTPS: duas tentativas, retomando o mirror interrompido.
+          for attempt in 1 2; do
+            echo "FTPS tentativa $attempt/2"
+            if run_mirror "ftps"; then
+              echo "Deploy concluído via FTPS."
               exit 0
             fi
-
-            if [ "$attempt" -eq "$max_attempts" ]; then
-              echo "::error::FTPS mirror falhou após $max_attempts tentativas."
-              exit 1
+            if [ "$attempt" -lt 2 ]; then
+              echo "FTPS falhou; aguardando 15s para nova conexão."
+              sleep 15
             fi
-
-            attempt=$((attempt + 1))
-            echo "FTPS instável; aguardando 15s antes de retomar o mirror."
-            sleep 15
           done
+
+          # Fallback controlado para FTP simples.
+          # A Hostinger documenta FTP na porta 21 como método suportado.
+          echo "::warning::FTPS não estabilizou. Tentando FTP simples para concluir a publicação."
+          if run_mirror "ftp"; then
+            echo "Deploy concluído via FTP."
+            exit 0
+          fi
+
+          echo "::error::FTPS e FTP falharam. O artefato não foi considerado publicado."
+          exit 1
 
       - name: Confirmar versão publicada
         env:
