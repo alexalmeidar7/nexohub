@@ -65,37 +65,9 @@ jobs:
               json.dump({"commit": os.environ["DEPLOY_SHA"]}, f)
           PY
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Install ImageMagick for application icon
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
-
-      - name: Build NexoHub Bridge (Windows x64)
-        run: |
-          mkdir -p dist/downloads/nexohub-bridge
-          convert src/assets/logo-nexo.png -background none -gravity center -resize 256x256 -extent 256x256 -define icon:auto-resize=256,128,64,48,32,16 tools/NexoHubBridge/bridge.ico
-          dotnet publish tools/NexoHubBridge/NexoHubBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:ApplicationIcon=bridge.ico -o dist/downloads/nexohub-bridge
-          export BRIDGE_VERSION="$(dotnet msbuild tools/NexoHubBridge/NexoHubBridge.csproj -getProperty:Version | tail -n 1 | tr -d '\r')"
-          python3 - <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          path = "dist/downloads/nexohub-bridge/NexoHubBridge.exe"
-          if not os.path.isfile(path):
-              raise SystemExit("NexoHubBridge.exe was not generated")
-          manifest = {
-              "version": os.environ["BRIDGE_VERSION"],
-              "updatedAt": datetime.now(timezone.utc).isoformat(),
-              "sizeBytes": os.path.getsize(path),
-              "downloadUrl": "https://housemix.nexobrasil.net/downloads/nexohub-bridge/NexoHubBridge.exe"
-          }
-          with open("dist/downloads/nexohub-bridge/latest.json", "w", encoding="utf-8") as f:
-              json.dump(manifest, f, ensure_ascii=False)
-          PY
-
+      # Resolve o destino uma única vez. FTP_SERVER_DIR é relativo à pasta inicial do usuário FTP.
+      # O deploy usa lftp porque o FTP-Deploy-Action está sofrendo ECONNRESET no data socket
+      # ao sincronizar o grande volume de arquivos do House Mix.
       # Resolve o destino uma única vez. FTP_SERVER_DIR é sempre relativo à pasta
       # inicial do usuário FTP; o passo falha antes do upload se o destino não
       # existir ou repetir uma pasta (ex.: public_html/public_html).
@@ -108,23 +80,28 @@ jobs:
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: python3 scripts/ci/hostinger_ftp_target.py resolve
 
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ steps.ftpdir.outputs.server_dir }}
-          local-dir: ./dist/
-          protocol: ftps
-          port: 21
-          timeout: 120000
-          state-name: .ftp-deploy-sync-state-housemix.json
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/downloads/nexohub-bridge/**
+      - name: Deploy via FTPS (lftp)
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          SERVER_DIR: ${{ steps.ftpdir.outputs.server_dir }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y lftp
+          export LFTP_PASSWORD="$FTP_PASSWORD"
+          lftp -u "$FTP_USERNAME" "ftps://$FTP_SERVER" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate no
+          set ftp:passive-mode true
+          set net:timeout 30
+          set net:max-retries 5
+          set net:reconnect-interval-base 5
+          mirror -R --verbose --parallel=1 ./dist/ "$SERVER_DIR"
+          bye
+          EOF
       - name: Confirmar versão publicada
         env:
           EXPECTED_SHA: ${{ github.sha }}
