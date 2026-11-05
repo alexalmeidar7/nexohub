@@ -82,10 +82,12 @@ jobs:
 
           run_mirror() {
             local scheme="$1"
-            echo "Iniciando mirror via $scheme"
+            echo "Iniciando mirror via $scheme (porta 21)"
 
             if [ "$scheme" = "ftps" ]; then
-              lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftps://$FTP_SERVER" -e "
+              # Hostinger usa FTPS explícito na porta 21. No lftp, isso é
+              # ftp:// + ftp:ssl-force=true; ftps:// pode tentar TLS implícito/990.
+              lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER" -e "
                 set ftp:ssl-force true;
                 set ftp:ssl-protect-data true;
                 set ssl:verify-certificate no;
