@@ -30,9 +30,20 @@ def fail(message):
 
 
 def normalize_server_dir(value):
-    parts = [p for p in (value or "").strip().replace("\\", "/").split("/") if p not in ("", ".")]
-    if ".." in parts:
-        raise ValueError("FTP_SERVER_DIR nao pode conter '..'")
+    raw = (value or "").strip().replace("\\", "/")
+    parts = []
+    for part in raw.split("/"):
+        if part in ("", "."):
+            continue
+        if part == "..":
+            if not parts:
+                parts.append("..")
+            elif parts[-1] != "..":
+                parts.pop()
+            else:
+                parts.append("..")
+        else:
+            parts.append(part)
     return "/".join(parts)
 
 
