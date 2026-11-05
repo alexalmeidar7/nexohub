@@ -120,6 +120,10 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
+  # Arquivos de dados/binarios ausentes devem dar 404 real, nunca a SPA.
+  # Sem isso, um deploy-info.json fora do docroot parecia "HTTP 200 text/html".
+  RewriteRule \.(json|exe|pdb)$ - [R=404,L]
+
   # 3. Single Page Application (SPA) routing fallback
   RewriteRule ^ index.html [L]
 </IfModule>
