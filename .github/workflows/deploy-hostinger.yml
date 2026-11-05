@@ -107,6 +107,11 @@ jobs:
           protocol: ftps
           port: 21
           timeout: 120000
+          # Use a dedicated sync-state so the old Hostinger state cannot
+          # suppress deploy-info.json or other files after the server root
+          # was corrected. The first run with this state performs a fresh
+          # synchronization against the configured FTP server-dir.
+          state-name: .ftp-deploy-sync-state-housemix.json
           exclude: |
             **/.git*
             **/.git*/**
