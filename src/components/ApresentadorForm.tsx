@@ -230,31 +230,32 @@ export async function getApresentadores(userId?: string, userEmail?: string | nu
   // 1. Fetch from Supabase (if online and valid)
   let supabaseAps: Apresentador[] = [];
   let supabaseReadSucceeded = false;
-  if (effectiveId) {
-    try {
-      const { data, error } = await supabase.from("apresentadores").select("*").eq("user_id", effectiveId);
-      if (error) throw error;
-      supabaseReadSucceeded = true;
-      if (data && data.length > 0) {
-        supabaseAps = data
-          .map(a => {
-            const resolved = resolveParticipanteCategoria(a);
-            return {
-              id: a.id,
-              nome: a.nome,
-              categoria: (a as any).categoria || resolved.categoria,
-              cargo: a.cargo || (a as any).categoria || resolved.cargo,
-              instagram: a.instagram || "",
-              whatsapp: (a as any).whatsapp || "",
-              foto: a.foto || "",
-              background_url: (a as any).background_url || "",
-              ativo: a.ativo ?? true,
-              persisted: true,
-            };
-          });
-      }
-    } catch {}
-  }
+  try {
+    let query = supabase.from("apresentadores").select("*");
+    if (effectiveId) query = query.eq("user_id", effectiveId);
+    const { data, error } = await query;
+    if (error) throw error;
+    supabaseReadSucceeded = true;
+    if (data && data.length > 0) {
+      // Registros do banco já estão isolados por user_id: são sempre válidos
+      supabaseAps = data
+        .map(a => {
+          const resolved = resolveParticipanteCategoria(a);
+          return {
+            id: a.id,
+            nome: a.nome,
+            categoria: (a as any).categoria || resolved.categoria,
+            cargo: a.cargo || (a as any).categoria || resolved.cargo,
+            instagram: a.instagram || "",
+            whatsapp: (a as any).whatsapp || "",
+            foto: a.foto || "",
+            background_url: (a as any).background_url || "",
+            ativo: a.ativo ?? true,
+            persisted: true,
+          };
+        });
+    }
+  } catch {}
 
   // 2. Check isolated localStorage for custom saved participantes / updated cargos
   let localList: Apresentador[] = [];

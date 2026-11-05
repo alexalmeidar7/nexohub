@@ -118,7 +118,8 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 12); do
-            HTTP_STATUS="$(curl --location --silent --show-error --output /tmp/deploy-info.json --write-out '%{http_code}' --header 'Cache-Control: no-cache' "https://housemix.nexobrasil.net/deploy-info.json?check=$attempt-$(date +%s)" || true)"
+            HTTP_META="$(curl --location --silent --show-error --output /tmp/deploy-info.json --write-out '%{http_code}|%{content_type}|%{url_effective}|%{num_redirects}' --header 'Cache-Control: no-cache' "https://housemix.nexobrasil.net/deploy-info.json?check=$attempt-$(date +%s)" || true)"
+            IFS='|' read -r HTTP_STATUS CONTENT_TYPE EFFECTIVE_URL REDIRECTS <<< "$HTTP_META"
             ACTUAL_SHA="$(python3 - <<'PY'
           import json
           try:
@@ -134,7 +135,10 @@ jobs:
               echo "Produção confirmada no commit $ACTUAL_SHA (HTTP $HTTP_STATUS)"
               exit 0
             fi
-            echo "Tentativa $attempt/12: HTTP=$HTTP_STATUS publicado='${ACTUAL_SHA:-JSON ausente/inválido}' esperado=$EXPECTED_SHA"
+            echo "Tentativa $attempt/12: HTTP=$HTTP_STATUS content-type='$CONTENT_TYPE' redirects='$REDIRECTS' URL='$EFFECTIVE_URL' publicado='${ACTUAL_SHA:-JSON ausente/inválido}' esperado=$EXPECTED_SHA"
+            echo "Resposta recebida (primeiros 500 bytes):"
+            head -c 500 /tmp/deploy-info.json | tr '\n' ' '
+            echo
             sleep 10
           done
           echo "::error::FTP terminou, mas o domínio não confirmou o SHA esperado. Deploy NÃO VALIDADO."
