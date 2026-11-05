@@ -96,13 +96,25 @@ jobs:
               json.dump(manifest, f, ensure_ascii=False)
           PY
 
+      # Resolve o destino uma única vez. FTP_SERVER_DIR é sempre relativo à pasta
+      # inicial do usuário FTP; o passo falha antes do upload se o destino não
+      # existir ou repetir uma pasta (ex.: public_html/public_html).
+      - name: Resolver e validar destino FTP
+        id: ftpdir
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
+        run: python3 scripts/ci/hostinger_ftp_target.py resolve
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          server-dir: ${{ steps.ftpdir.outputs.server_dir }}
           local-dir: ./dist/
           protocol: ftps
           port: 21
@@ -116,6 +128,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+
       - name: Confirmar versão publicada
         env:
           EXPECTED_SHA: ${{ github.sha }}
@@ -123,75 +136,10 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
-        shell: bash
+          EFFECTIVE_DIR: ${{ steps.ftpdir.outputs.effective_dir }}
         run: |
           set -euo pipefail
-
-          echo "Validando deploy-info.json diretamente no mesmo servidor FTPS do upload..."
-
-          python3 - <<'PY'
-          import json
-          import os
-          import ssl
-          import sys
-          from ftplib import FTP_TLS
-
-          expected = os.environ["EXPECTED_SHA"]
-          server = os.environ["FTP_SERVER"]
-          username = os.environ["FTP_USERNAME"]
-          password = os.environ["FTP_PASSWORD"]
-          server_dir = os.environ["FTP_SERVER_DIR"].strip()
-
-          # FTP-Deploy-Action usa o mesmo servidor, porta 21 e protocolo FTPS.
-          # O Hostinger pode apresentar um certificado emitido para hostname
-          # enquanto FTP_SERVER contém um IP; nesse caso mantemos TLS ativo,
-          # mas desativamos somente a validação do nome do certificado.
-          context = ssl.create_default_context()
-          context.check_hostname = False
-          context.verify_mode = ssl.CERT_NONE
-
-          remote_path = server_dir
-          while remote_path.startswith("./"):
-              remote_path = remote_path[2:]
-          remote_path = remote_path.rstrip("/")
-          remote_path = f"{remote_path}/deploy-info.json" if remote_path else "deploy-info.json"
-
-          local_path = "/tmp/deploy-info-ftp.json"
-          ftp = FTP_TLS(context=context, timeout=60)
-
-          try:
-              ftp.connect(server, 21, timeout=60)
-              ftp.auth()
-              ftp.prot_p()
-              ftp.login(username, password)
-
-              with open(local_path, "wb") as output:
-                  ftp.retrbinary(f"RETR {remote_path}", output.write, blocksize=64 * 1024)
-
-          except Exception as exc:
-              print(f"::error::Falha ao ler {remote_path} via FTPS: {exc}")
-              sys.exit(1)
-          finally:
-              try:
-                  ftp.quit()
-              except Exception:
-                  try:
-                      ftp.close()
-                  except Exception:
-                      pass
-
-          try:
-              with open(local_path, encoding="utf-8") as f:
-                  data = json.load(f)
-              actual = data.get("commit", "")
-          except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError) as exc:
-              print(f"::error::deploy-info.json publicado é inválido ou não pôde ser lido: {exc}")
-              sys.exit(1)
-
-          if actual != expected:
-              print("::error::O arquivo publicado no Hostinger não contém o SHA esperado.")
-              print(f"SHA no FTPS='{actual}' esperado='{expected}'")
-              sys.exit(1)
-
-          print(f"Deploy confirmado no Hostinger via FTPS no commit {actual}.")
-          PY
+          # 1. Mesmo diretório do upload, lido pelo FTPS.
+          python3 scripts/ci/hostinger_ftp_target.py verify
+          # 2. O domínio público precisa servir esse mesmo arquivo.
+          python3 scripts/ci/hostinger_ftp_target.py public
