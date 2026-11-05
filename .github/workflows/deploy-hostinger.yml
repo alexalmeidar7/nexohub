@@ -108,7 +108,7 @@ jobs:
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: python3 scripts/ci/hostinger_ftp_target.py resolve
 
-      - name: Garantir diretório de downloads do Bridge
+      - name: Deploy via FTPS
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -117,56 +117,61 @@ jobs:
         run: |
           python3 - <<'PY'
           import os
-          from ftplib import FTP_TLS
+          import posixpath
           import ssl
+          from ftplib import FTP_TLS, error_perm
 
-          context = ssl.create_default_context()
-          context.check_hostname = False
-          context.verify_mode = ssl.CERT_NONE
-          ftp = FTP_TLS(context=context, timeout=60)
-          ftp.connect(os.environ["FTP_SERVER"], 21, timeout=60)
+          root = os.environ['FTP_SERVER_DIR'].strip().strip('/')
+          base = os.path.abspath('dist')
+          ctx = ssl.create_default_context()
+          ctx.check_hostname = False
+          ctx.verify_mode = ssl.CERT_NONE
+          ftp = FTP_TLS(context=ctx, timeout=120)
+          ftp.connect(os.environ['FTP_SERVER'], 21, timeout=120)
           ftp.auth()
           ftp.prot_p()
-          ftp.login(os.environ["FTP_USERNAME"], os.environ["FTP_PASSWORD"])
-          try:
-              target = os.environ["FTP_SERVER_DIR"].strip().strip("/")
-              if target:
-                  ftp.cwd(target)
-              for part in ("downloads", "nexohub-bridge"):
+          ftp.login(os.environ['FTP_USERNAME'], os.environ['FTP_PASSWORD'])
+
+          def ensure_dir(path):
+              if not path:
+                  return
+              original = ftp.pwd()
+              try:
+                  ftp.cwd(path)
+                  return
+              except error_perm:
+                  pass
+              ftp.cwd(original)
+              for part in [p for p in path.split('/') if p]:
                   try:
                       ftp.cwd(part)
-                  except Exception:
+                  except error_perm:
                       ftp.mkd(part)
                       ftp.cwd(part)
-              print(f"Diretorio garantido: {ftp.pwd()}")
+
+          try:
+              ensure_dir(root)
+              uploaded = 0
+              for current, _, files in os.walk(base):
+                  rel = os.path.relpath(current, base).replace(os.sep, '/')
+                  remote_dir = root
+                  if rel != '.':
+                      remote_dir = posixpath.join(root, rel)
+                  ensure_dir(remote_dir)
+                  ftp.cwd(remote_dir)
+                  for name in files:
+                      local = os.path.join(current, name)
+                      with open(local, 'rb') as fh:
+                          ftp.storbinary(f'STOR {name}', fh, blocksize=1024*1024)
+                      uploaded += 1
+                      print(f'UPLOAD {posixpath.join(remote_dir, name)}')
+              print(f'FTPS upload concluido: {uploaded} arquivos')
           finally:
               try:
                   ftp.quit()
               except Exception:
                   ftp.close()
           PY
-
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ steps.ftpdir.outputs.server_dir }}
-          local-dir: ./dist/
-          protocol: ftps
-          port: 21
-          timeout: 120000
-          # Use a dedicated sync-state so the old Hostinger state cannot
-          # suppress deploy-info.json or other files after the server root
-          # was corrected. The first run with this state performs a fresh
-          # synchronization against the configured FTP server-dir.
-          state-name: .ftp-deploy-sync-state-housemix.json
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-
       - name: Confirmar versão publicada
         env:
           EXPECTED_SHA: ${{ github.sha }}
