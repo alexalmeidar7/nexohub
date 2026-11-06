@@ -174,6 +174,13 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
     let realtimeConnected = false;
     const enrichmentDone = new Set<string>();
     const enrichmentPending = new Set<string>();
+    
+    // Reset enrichment cache every hour to force re-fetching of images that may have failed
+    const ENRICHMENT_CACHE_RESET_MS = 60 * 60 * 1000; // 1 hour
+    const enrichmentResetInterval = setInterval(() => {
+      enrichmentDone.clear();
+      enrichmentPending.clear();
+    }, ENRICHMENT_CACHE_RESET_MS);
 
     // Quando o XML devolve "STANDBY MUSICAL" (título ou artista), usamos a
     // foto do locutor do programa que está no ar como capa/imagem do artista.
@@ -854,6 +861,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
     return () => {
       disposed = true;
+      clearInterval(enrichmentResetInterval);
       polling.stop();
       window.removeEventListener("online", resume);
       document.removeEventListener("visibilitychange", resume);
