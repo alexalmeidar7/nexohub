@@ -34,6 +34,7 @@ import { getIconForName, resolveButtonIcon } from "./CustomVmixButtonEditor";
 import logoMixControl from "@/assets/logo-mixcontrol.png"; // Keeping reference to the main logo asset.
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
+import { useProgramGridSync } from "@/hooks/useProgramGridSync";
 import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
 
 /* ── Escopo de estúdio (validação central) ─────────────────────────────── */
@@ -772,6 +773,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
+  const programasRequestRef = useRef(0);
 
   // Scenes state
   const [scenes, setScenes] = useState<VmixScene[]>(() => {
@@ -878,18 +880,21 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     if (!user) return;
     const ownerId = getStationOwnerId();
     if (!ownerId) return;
+    const requestId = ++programasRequestRef.current;
 
     // A grade pertence à emissora; subusuários sempre leem a grade do titular.
     let query = supabase
       .from("programas")
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentador_id, apresentadores_ids, user_id, apresentadores(id, nome, foto)")
-      .eq("user_id", ownerId);
+      .eq("user_id", ownerId)
+      .is("deleted_at", null);
 
     const [{ data, error }, presenterList] = await Promise.all([
       query.order("horario_inicio"),
       getApresentadores(ownerId, user.email).catch(() => []),
     ]);
     
+    if (requestId !== programasRequestRef.current) return;
     if (error) {
       console.error("Error loading programs:", error);
       return;
@@ -923,41 +928,8 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     }
   }, [user, getStationOwnerId]);
 
-  // Mantém a grade sincronizada sem recarregar a página.
-  // Realtime atende as alterações normais; a consulta periódica cobre eventos perdidos.
-  useEffect(() => {
-    const ownerId = getStationOwnerId();
-    if (!ownerId) return;
-    let disposed = false;
-    let debounceTimer: number | undefined;
-    const refresh = () => {
-      if (disposed || document.visibilityState === "hidden") return;
-      void loadProgramas();
-    };
-    // Carregamento inicial único: evita duplicar a consulta feita pelo efeito inicial separado.
-    void loadProgramas();
-    const channel = supabase
-      .channel(`vmix-program-grid-${ownerId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${ownerId}` },
-        () => {
-          if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
-          debounceTimer = window.setTimeout(refresh, 250);
-        },
-      )
-      .subscribe();
-    const pollId = window.setInterval(refresh, 15000);
-    const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      disposed = true;
-      if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
-      window.clearInterval(pollId);
-      document.removeEventListener("visibilitychange", onVisible);
-      void supabase.removeChannel(channel);
-    };
-  }, [getStationOwnerId, loadProgramas]);
+  useProgramGridSync(getStationOwnerId(), loadProgramas);
+  useEffect(() => () => { programasRequestRef.current++; }, [getStationOwnerId]);
 
   // Estúdios únicos cadastrados na Grade de Programação
   const estudiosDisponiveis = useMemo(

@@ -1498,6 +1498,7 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
         localStorage.setItem("nexohub_housemix_programs_v2", JSON.stringify(all));
       }
     } catch {}
+    window.dispatchEvent(new CustomEvent("nexohub:programas-updated", { detail: { programId: id } }));
     await load();
   };
 
@@ -2590,4 +2591,3 @@ export default function ProgramaForm({ effectiveUserId }: { effectiveUserId?: st
     </div>
   );
 }
-
