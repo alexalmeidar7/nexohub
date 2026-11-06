@@ -126,6 +126,7 @@ serve(async (req) => {
     const [
       empresaRes,
       profileRes,
+      userSettingsRes,
       programasRes,
       apresentadoresRes,
       musicHistoryRes,
@@ -138,6 +139,7 @@ serve(async (req) => {
     ] = await Promise.all([
       step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle()),
       step("profile", sb.from("profiles").select("cidade, estado").eq("user_id", ownerId).maybeSingle()),
+      step("userSettings", sb.from("user_settings").select("weather_city").eq("user_id", ownerId).maybeSingle()),
       step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio")),
       step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true)),
       // A RPC limita campos históricos que podem conter dados enormes.
@@ -156,6 +158,7 @@ serve(async (req) => {
     const empresa: any = empresaRes.data || {};
     const programas = programasRes.data || [];
     const apresentadores = apresentadoresRes.data || [];
+    const userSettings: any = userSettingsRes.data || {};
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
     const noticias = noticiasRes.data || [];
@@ -269,10 +272,8 @@ serve(async (req) => {
 
     const profile = (profileRes.data || {}) as { cidade?: string; estado?: string };
     // Positiva FM fica no Shopping Passeio das Águas, em Goiânia. Para outras
-    // emissoras, usar a cidade do perfil sem consultar coluna inexistente.
-    const cityName = profile.cidade
-      ? `${profile.cidade}${profile.estado ? " - " + profile.estado : ""}`
-      : (ownerId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" ? "Goiânia - GO" : "Não informada");
+    // emissoras, usar a cidade configurada em user_settings para o tempo.
+    const cityName = userSettings.weather_city || "Não informada";
     const stationName = empresa?.nome || "House Mix Emissora";
     const stationLogo = empresa?.logo || "";
     const [
@@ -311,8 +312,8 @@ serve(async (req) => {
     xmlParts.push('    <musica_atual>');
     xmlParts.push(`      <titulo>${esc(currentMusic?.musica || "Programação Musical")}</titulo>`);
     xmlParts.push(`      <artista>${esc(currentMusic?.artista || stationName)}</artista>`);
-    xmlParts.push(`      <album>${esc(currentMusic?.album || "")}</album>`);
     xmlParts.push(`      <capa_url>${esc(currentMusicCoverPng)}</capa_url>`);
+    xmlParts.push(`      <artista_imagem_url>${esc(currentMusic?.artista_img_url || "")}</artista_imagem_url>`);
     xmlParts.push(`      <curiosidade>${esc(curiosidade)}</curiosidade>`);
     xmlParts.push(`      <texto_completo>${esc(`${currentMusic?.musica || "Programação"} - ${currentMusic?.artista || stationName}`)}</texto_completo>`);
     xmlParts.push('    </musica_atual>');
@@ -322,7 +323,6 @@ serve(async (req) => {
     xmlParts.push(`      <horario_inicio>${esc((currentProgram?.horario_inicio || "00:00").slice(0, 5))}</horario_inicio>`);
     xmlParts.push(`      <horario_fim>${esc((currentProgram?.horario_fim || "23:59").slice(0, 5))}</horario_fim>`);
     xmlParts.push(`      <horario_formatado>${esc(`${(currentProgram?.horario_inicio || "00:00").slice(0, 5)} às ${(currentProgram?.horario_fim || "23:59").slice(0, 5)}`)}</horario_formatado>`);
-    xmlParts.push(`      <descricao>${esc(currentProgram?.descricao || "")}</descricao>`);
     xmlParts.push(`      <classificacao_etaria>${esc(currentProgram?.classificacao_etaria || "Livre")}</classificacao_etaria>`);
     xmlParts.push(`      <estudio>${esc(currentProgram?.estudio || "Estúdio FM")}</estudio>`);
     xmlParts.push(`      <logo_url>${esc(currentProgramLogoPng)}</logo_url>`);
@@ -346,15 +346,6 @@ serve(async (req) => {
       xmlParts.push('    <a_seguir><ativo>0</ativo></a_seguir>');
     }
 
-    xmlParts.push('    <historico_recente>');
-    pastMusics.forEach((m: any, idx: number) => {
-      xmlParts.push('      <musica>');
-      xmlParts.push(`        <posicao>${idx + 1}</posicao>`);
-      xmlParts.push(`        <titulo>${esc(m.musica || "")}</titulo>`);
-      xmlParts.push(`        <artista>${esc(m.artista || "")}</artista>`);
-      xmlParts.push('      </musica>');
-    });
-    xmlParts.push('    </historico_recente>');
     xmlParts.push('  </no_ar>');
 
     // 3. PREVISAO DO TEMPO
