@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, CheckCircle, UserPlus, Camera, Shield, Phone, FileSpreadsheet, Search, Save, Upload } from "lucide-react";
+import { Instagram, UserCheck, UserX, Trash2, Pencil, X, Loader2, UserPlus, Camera, Shield, Phone, FileSpreadsheet, Search, Save, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
@@ -316,7 +316,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
   const targetUserId = effectiveUserId || user?.id;
   const ownerAccount = findClientAccountById(targetUserId) || findClientAccountByEmail(user?.email);
   const ownerId = ownerAccount?.parentUserId || ownerAccount?.id || targetUserId || user?.id;
-  const [showSuccess, setShowSuccess] = useState(false);
+  const formRef = useRef<HTMLElement>(null);
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("");
   const [cargoConvidado, setCargoConvidado] = useState("");
@@ -509,8 +509,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       try { window.dispatchEvent(new CustomEvent("apresentadores-updated")); } catch {}
 
       resetForm();
-      setShowSuccess(true);
-      window.setTimeout(() => setShowSuccess(false), 2000);
+      toast.success("Salvei");
       // Atualiza a lista em segundo plano; não prende o botão ao carregamento da tabela.
       void load();
     } catch (err: any) {
@@ -544,8 +543,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
     setFoto(a.foto);
     setBackgroundUrl(a.background_url || "");
     setAtivo(a.ativo);
-    // Scroll suave até o formulário no topo
-    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const formatWhatsapp = (value: string) => {
@@ -690,8 +688,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
       setApresentadores(updated);
       localStorage.setItem(`nexohub_participantes_${ownerId}`, JSON.stringify(updated));
       setImportRows(null);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
+      toast.success("Salvei");
     } catch (error: any) {
       console.error("Falha ao importar participantes:", error);
       toast.error(error?.message || "Não foi possível importar os participantes.");
@@ -776,6 +773,7 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
 
       {/* FORM CARD */}
       <section
+        ref={formRef}
         style={{
           background: "#ffffff",
           borderRadius: 24,
@@ -1275,22 +1273,6 @@ export default function ApresentadorForm({ effectiveUserId }: { effectiveUserId?
         </div>
       )}
 
-      {showSuccess && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10, 37, 64, 0.4)" }}>
-          <div
-            style={{
-              width: 420, padding: "28px 32px", background: CARD_BG, borderRadius: 24,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-              boxShadow: "0 20px 60px rgba(10, 37, 64, 0.3)",
-            }}
-          >
-            <CheckCircle size={24} style={{ color: CYAN }} />
-            <span style={{ fontSize: 14, fontWeight: 800, color: DARK, letterSpacing: 1, textTransform: "uppercase" }}>
-              Salvo com sucesso!
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
