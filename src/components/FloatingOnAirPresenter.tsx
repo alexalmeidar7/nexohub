@@ -18,14 +18,36 @@ export interface FloatingOnAirPresenterProps {
 }
 
 interface OnAirDisplayState {
+  programaKey?: string;
   programaNome: string;
   horarioInicio: string;
   horarioFim: string;
   locutorNome: string;
   locutorFoto: string;
+  locutores?: { id: string; nome: string; foto: string }[];
 }
 
 type AnimPhase = "idle" | "exiting" | "entering-prep";
+
+type ProgramPresenters = {
+  apresentador_id?: string | null;
+  apresentadorId?: string | null;
+  apresentadores_ids?: string[] | null;
+  apresentadoresIds?: string[] | null;
+};
+
+function getProgramPresenters(program: ProgramPresenters | null | undefined, presenters: { id: string; nome: string; foto: string; stationKey?: string }[], station?: string | null) {
+  const ids = program?.apresentadores_ids?.length ? program.apresentadores_ids : program?.apresentadoresIds;
+  const uniqueIds = Array.from(new Set(ids?.filter(Boolean) || []));
+  if (uniqueIds.length === 0) {
+    const presenter = resolvePresenterForProgram(program, presenters, station);
+    return presenter ? [{ id: presenter.id, nome: presenter.nome, foto: resolveSafePresenterPhoto(presenter.foto, presenter.nome, station) }] : [];
+  }
+  return uniqueIds.flatMap(id => {
+    const presenter = resolvePresenterForProgram({ ...program, apresentador_id: id, apresentadorId: id }, presenters, station);
+    return presenter ? [{ id: presenter.id, nome: presenter.nome, foto: resolveSafePresenterPhoto(presenter.foto, presenter.nome, station) }] : [];
+  });
+}
 
 function formatHour(h: string): string {
   if (!h) return "00:00";
@@ -52,16 +74,16 @@ export default function FloatingOnAirPresenter({
     const hInicio = active?.horarioInicio || active?.horario_inicio || "00:00";
     const hFim = active?.horarioFim || active?.horario_fim || "23:59";
 
-    const ap = resolvePresenterForProgram(active, syncDb?.apresentadores || [], targetUid || user?.email);
-    const apNome = ap?.nome || "—";
-    const apFoto = ap ? resolveSafePresenterPhoto(ap.foto, apNome, targetUid || user?.email) : "";
+    const locutores = getProgramPresenters(active, syncDb?.apresentadores || [], targetUid || user?.email);
 
     return {
+      programaKey: active?.id || progNome,
       programaNome: progNome,
       horarioInicio: hInicio,
       horarioFim: hFim,
-      locutorNome: apNome,
-      locutorFoto: apFoto,
+      locutorNome: locutores[0]?.nome || "—",
+      locutorFoto: locutores[0]?.foto || "",
+      locutores,
     };
   });
 
@@ -96,6 +118,8 @@ export default function FloatingOnAirPresenter({
   const lastKeyRef = useRef<string>("");
   const animTimerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
+  const [presenterIndex, setPresenterIndex] = useState(0);
+  const [photoExiting, setPhotoExiting] = useState(false);
 
   // Load timezone
   useEffect(() => {
@@ -157,18 +181,19 @@ export default function FloatingOnAirPresenter({
       }
 
       if (activeProg) {
-        const ap = resolvePresenterForProgram(activeProg, apresentadoresData, uid || targetEmail);
-        const apNome = ap?.nome || "—";
+        const locutores = getProgramPresenters(activeProg, apresentadoresData, uid || targetEmail);
 
         const nextState: OnAirDisplayState = {
+          programaKey: activeProg.id || activeProg.nome,
           programaNome: activeProg.nome || "Programação Normal",
           horarioInicio: activeProg.horario_inicio || activeProg.horarioInicio || "00:00",
           horarioFim: activeProg.horario_fim || activeProg.horarioFim || "23:59",
-          locutorNome: apNome,
-          locutorFoto: ap ? resolveSafePresenterPhoto(ap.foto, apNome, uid || targetEmail) : "",
+          locutorNome: locutores[0]?.nome || "—",
+          locutorFoto: locutores[0]?.foto || "",
+          locutores,
         };
 
-        const key = `${nextState.programaNome}:::${nextState.locutorNome}:::${nextState.horarioInicio}`;
+        const key = `${nextState.programaKey}:::${nextState.horarioInicio}`;
         if (!lastKeyRef.current) {
           lastKeyRef.current = key;
           setOnAirInfo(nextState);
@@ -189,9 +214,7 @@ export default function FloatingOnAirPresenter({
             });
           }, 220);
         } else {
-          setOnAirInfo((prev) =>
-            prev.locutorFoto === nextState.locutorFoto ? prev : nextState
-          );
+          setOnAirInfo((prev) => JSON.stringify(prev) === JSON.stringify(nextState) ? prev : nextState);
         }
       } else {
         setOnAirInfo((prev) => ({
@@ -199,9 +222,13 @@ export default function FloatingOnAirPresenter({
           programaNome: "Programação Normal",
           locutorNome: "—",
           locutorFoto: "",
+          locutores: [],
+          programaKey: "",
         }));
       }
-    } catch {}
+    } catch (error) {
+      console.error("Erro ao atualizar o programa no ar:", error);
+    }
   }, [targetUid, user, targetEmail, timezone]);
 
   useEffect(() => {
@@ -236,8 +263,31 @@ export default function FloatingOnAirPresenter({
     };
   }, []);
 
+  const presenterKey = JSON.stringify([onAirInfo.programaKey, onAirInfo.locutores?.map(p => p.id)]);
+  useEffect(() => {
+    setPresenterIndex(0);
+    setPhotoExiting(false);
+  }, [presenterKey]);
+
+  const presenterCount = onAirInfo.locutores?.length || 0;
+  useEffect(() => {
+    if (presenterCount < 2) return;
+    const exitTimer = window.setTimeout(() => setPhotoExiting(true), 3760);
+    const nextTimer = window.setTimeout(() => {
+      setPresenterIndex(index => (index + 1) % presenterCount);
+      setPhotoExiting(false);
+    }, 4000);
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(nextTimer);
+    };
+  }, [presenterKey, presenterCount, presenterIndex]);
+
+  const currentPresenter = onAirInfo.locutores?.[presenterIndex] || onAirInfo.locutores?.[0];
+  const currentName = currentPresenter?.nome || onAirInfo.locutorNome;
+  const currentPhoto = currentPresenter ? currentPresenter.foto : onAirInfo.locutorFoto;
   // 3. Dynamic colors extracted from the locutor's photo
-  const locutorColors = useAlbumColors(onAirInfo.locutorFoto || null);
+  const locutorColors = useAlbumColors(currentPhoto || null);
   const primaryColor = locutorColors[0] || "#0055ff";
   const secondaryColor = locutorColors[1] || "#7c3aed";
 
@@ -349,11 +399,22 @@ export default function FloatingOnAirPresenter({
               border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            {onAirInfo.locutorFoto ? (
+            <div
+              key={`${presenterKey}:${presenterIndex}`}
+              style={{
+                width: "100%",
+                height: "100%",
+                transform: photoExiting ? "translateX(-100%)" : "translateX(0)",
+                opacity: photoExiting ? 0 : 1,
+                transition: "transform 240ms ease, opacity 240ms ease",
+                animation: presenterCount > 1 ? "fmp-photo-enter 240ms ease" : undefined,
+              }}
+            >
+            {currentPhoto ? (
               <img
-                key={onAirInfo.locutorFoto}
-                src={onAirInfo.locutorFoto}
-                alt={onAirInfo.locutorNome || "Locutor no ar"}
+                key={currentPhoto}
+                src={currentPhoto}
+                alt={currentName || "Locutor no ar"}
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
@@ -379,6 +440,7 @@ export default function FloatingOnAirPresenter({
                 <Radio size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
               </div>
             )}
+            </div>
           </div>
 
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
@@ -461,7 +523,7 @@ export default function FloatingOnAirPresenter({
             </div>
 
             {/* 4. Embaixo do horário: O nome do locutor */}
-            {onAirInfo.locutorNome && onAirInfo.locutorNome !== "—" && (
+            {currentName && currentName !== "—" && (
               <div
                 style={{
                   display: "flex",
@@ -485,9 +547,9 @@ export default function FloatingOnAirPresenter({
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
-                  title={onAirInfo.locutorNome}
+                  title={currentName}
                 >
-                  {onAirInfo.locutorNome}
+                  {currentName}
                 </span>
               </div>
             )}
@@ -729,6 +791,10 @@ export default function FloatingOnAirPresenter({
         @keyframes fmp-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.45; transform: scale(0.8); }
+        }
+        @keyframes fmp-photo-enter {
+          from { transform: translateX(-100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
     </div>
