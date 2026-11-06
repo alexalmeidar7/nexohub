@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml,
+  logosXml, pngSponsorUrl, rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml,
   type ScheduledProgram, type SponsorLogo,
 } from "../../supabase/functions/_shared/sponsorRotation";
 
@@ -51,5 +51,23 @@ describe("rodízio de patrocinadores", () => {
     const empty = new DOMParser().parseFromString(`<root>${sponsorXml(null, "")}</root>`, "text/xml");
     expect(empty.querySelector("patrocinador > nome")?.textContent).toBe("");
     expect(empty.querySelector("patrocinador > logo_url")?.textContent).toBe("");
+  });
+
+  it("strips cache-busting parameters and rejects non-PNG sponsor URLs", () => {
+    expect(pngSponsorUrl("https://example.test/logo.png?v=123#section")).toBe("https://example.test/logo.png");
+    expect(pngSponsorUrl("https://example.test/logo.PNG")).toBe("https://example.test/logo.PNG");
+    expect(() => pngSponsorUrl("https://example.test/logo.webp")).toThrow();
+    expect(() => pngSponsorUrl("")).toThrow();
+  });
+
+  it("returns only the requested sponsor fields in the logos XML", () => {
+    const url = pngSponsorUrl("https://example.test/logo.png?v=123");
+    const xml = new DOMParser().parseFromString(logosXml(program, logos[0], url, new Date("2026-11-06T11:00:00Z")), "text/xml");
+    expect(xml.querySelectorAll("patrocinador")).toHaveLength(1);
+    expect(xml.querySelector("programa_no_ar > id")).toBeNull();
+    expect(xml.querySelector("patrocinador > id")).toBeNull();
+    expect(xml.querySelector("programa_no_ar > logo_url")).toBeNull();
+    expect(xml.querySelector("patrocinador > nome")?.textContent).toBe("Dois");
+    expect(xml.querySelector("patrocinador > logo_url")?.textContent).toBe("https://example.test/logo.png");
   });
 });

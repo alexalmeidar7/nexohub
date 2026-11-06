@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
-import { rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml } from "../_shared/sponsorRotation.ts";
+import { logosXml, pngSponsorUrl, rotationTime, selectOnAirProgram, selectRotatingSponsor } from "../_shared/sponsorRotation.ts";
 
 const serve = Deno.serve;
 const corsHeaders = {
@@ -69,19 +69,10 @@ serve(async (req) => {
     let logoUrl = "";
     if (selected?.logo_url) {
       const pngUrl = await ensureVmixPngUrl(supabase, selected.logo_url, `vmix-logos/${userId}`);
-      if (pngUrl) logoUrl = pngUrl.split(/[?#]/)[0];
+      logoUrl = pngSponsorUrl(pngUrl);
     }
 
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<estudio>
-  <programa_no_ar>
-    <nome>${esc(onAir?.nome || "")}</nome>
-    <estudio>${esc(onAir?.estudio || "")}</estudio>
-${sponsorXml(selected?.nome, logoUrl, "    ")}
-    <intervalo_atualizacao>5</intervalo_atualizacao>
-    <atualizado_em>${now.toISOString()}</atualizado_em>
-  </programa_no_ar>
-</estudio>`;
+    const xml = logosXml(onAir, selected, logoUrl, now);
 
     return new Response(xml, { headers });
   } catch (error) {

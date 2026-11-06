@@ -69,3 +69,25 @@ export function sponsorXml(name: string | null | undefined, logoUrl: string, ind
   const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
   return `${indent}<patrocinador>\n${indent}  <nome>${escape(name || "")}</nome>\n${indent}  <logo_url>${escape(logoUrl)}</logo_url>\n${indent}</patrocinador>`;
 }
+
+export function pngSponsorUrl(value: string): string {
+  const clean = value.trim().split(/[?#]/)[0];
+  if (!/^https?:\/\//i.test(clean) || !/\.png$/i.test(clean)) {
+    throw new Error("Não foi possível gerar uma URL PNG pública para o patrocinador.");
+  }
+  return clean;
+}
+
+export function logosXml(program: ScheduledProgram | null, sponsor: SponsorLogo | null, logoUrl: string, now: Date): string {
+  const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<estudio>
+  <programa_no_ar>
+    <nome>${escape(program?.nome || "")}</nome>
+    <estudio>${escape(program?.estudio || "")}</estudio>
+${sponsorXml(sponsor?.nome, logoUrl, "    ")}
+    <intervalo_atualizacao>5</intervalo_atualizacao>
+    <atualizado_em>${now.toISOString()}</atualizado_em>
+  </programa_no_ar>
+</estudio>`;
+}

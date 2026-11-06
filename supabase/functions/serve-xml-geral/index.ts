@@ -1,7 +1,7 @@
 const serve = Deno.serve;
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
-import { rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml } from "../_shared/sponsorRotation.ts";
+import { pngSponsorUrl, rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml } from "../_shared/sponsorRotation.ts";
 const isUUID = (v: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
 const corsHeaders = {
@@ -290,7 +290,7 @@ serve(async (req) => {
       toVmixImageUrl(activeQuiz?.imagem_resposta || ""),
     ]);
     const sponsorLogoPng = selectedSponsor?.logo_url
-      ? await ensureVmixPngUrl(sb, selectedSponsor.logo_url, `vmix-logos/${ownerId}`)
+      ? pngSponsorUrl(await ensureVmixPngUrl(sb, selectedSponsor.logo_url, `vmix-logos/${ownerId}`))
       : "";
 
     // Assemble General XML
@@ -572,7 +572,7 @@ serve(async (req) => {
     xmlParts.push('    <programa_no_ar>');
     xmlParts.push(`      <programa_id>${esc(onAirProgram?.id || "")}</programa_id>`);
     xmlParts.push(`      <programa_nome>${esc(onAirProgram?.nome || "")}</programa_nome>`);
-    xmlParts.push(sponsorXml(selectedSponsor?.nome, sponsorLogoPng.split(/[?#]/)[0], "      "));
+    xmlParts.push(sponsorXml(selectedSponsor?.nome, sponsorLogoPng, "      "));
     xmlParts.push('    </programa_no_ar>');
     xmlParts.push('  </patrocinadores>');
 
