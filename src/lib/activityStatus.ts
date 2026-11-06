@@ -7,6 +7,8 @@ export interface ActivitySnapshot {
   notice: { id: number; text: string; tone: StatusTone } | null;
   saving: boolean;
   loading: boolean;
+  /** Epoch ms da última resposta bem-sucedida do banco (leitura ou gravação). */
+  lastSyncAt: number | null;
 }
 
 const NOTICE_MS = 4000;
@@ -14,7 +16,7 @@ const ERROR_NOTICE_MS = 6500;
 const BUSY_DELAY_MS = 350;
 const BUSY_MIN_MS = 700;
 
-let snapshot: ActivitySnapshot = { notice: null, saving: false, loading: false };
+let snapshot: ActivitySnapshot = { notice: null, saving: false, loading: false, lastSyncAt: null };
 const listeners = new Set<() => void>();
 let noticeSeq = 0;
 let noticeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -134,6 +136,11 @@ export function initActivityMonitor() {
     if (!kind) return originalFetch(input, init);
     const tracker = trackers[kind];
     tracker.start();
-    return originalFetch(input, init).finally(tracker.end);
+    return originalFetch(input, init)
+      .then((res) => {
+        if (res.ok) publish({ lastSyncAt: Date.now() });
+        return res;
+      })
+      .finally(tracker.end);
   };
 }

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CheckCircle2, AlertCircle, Bell, ArrowUpFromLine, ArrowDownToLine, Database } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { dismissStatusNotice, useActivityStatus, type StatusTone } from "@/lib/activityStatus";
 
 const TONES: Record<StatusTone, { bg: string; border: string; color: string }> = {
@@ -9,7 +10,7 @@ const TONES: Record<StatusTone, { bg: string; border: string; color: string }> =
 };
 
 export default function SystemStatusChip() {
-  const { notice, saving, loading } = useActivityStatus();
+  const { notice, saving, loading, lastSyncAt } = useActivityStatus();
 
   useEffect(() => {
     document.body.classList.add("nexo-status-chip-on");
@@ -53,13 +54,21 @@ export default function SystemStatusChip() {
     return () => observer.disconnect();
   }, [text]);
 
-  return (
+  const showSyncTooltip = tone === "idle";
+  const syncLabel = lastSyncAt
+    ? `Última atualização do banco: ${new Date(lastSyncAt).toLocaleString("pt-BR", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+      })}`
+    : "Aguardando a primeira atualização do banco";
+
+  const chip = (
     <div
       data-nexo-status-chip
       role="status"
       aria-live="polite"
       onClick={notice ? dismissStatusNotice : undefined}
-      title={text}
+      title={showSyncTooltip ? undefined : text}
       className="hidden sm:flex min-w-0 max-w-[420px] shrink-0 items-center overflow-hidden rounded-full py-2 text-xs font-semibold"
       style={{
         width: contentWidth === null ? undefined : contentWidth + 26,
@@ -81,5 +90,16 @@ export default function SystemStatusChip() {
         <span style={{ opacity: tone === "idle" ? 0.75 : 1 }}>{text}</span>
       </span>
     </div>
+  );
+
+  if (!showSyncTooltip) return chip;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{chip}</TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p className="text-xs">{syncLabel}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
