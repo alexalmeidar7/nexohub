@@ -28,6 +28,7 @@ import ServerClock from "@/components/ServerClock";
 import BotsStatusBox from "@/components/BotsStatusBox";
 import SystemStatusChip from "@/components/SystemStatusChip";
 import AgendaTicker from "@/components/AgendaTicker";
+import { isAgendaEventNow, isAgendaEventPast } from "@/lib/agendaEventTime";
 import { prefetchPage, prefetchGroup, startIdlePrefetch } from "@/lib/prefetchPages";
 
 
@@ -79,8 +80,23 @@ export default function HouseMixHeader({
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
   const { user } = useAuth();
   const [eventDates, setEventDates] = useState<Date[]>([]);
-  const [upcomingAgendaItems, setUpcomingAgendaItems] = useState<Array<{ id: string; title: string; date: string; time?: string }>>([]);
+  const [upcomingAgendaItems, setUpcomingAgendaItems] = useState<Array<{ id: string; title: string; date: string; time: string; dateKey: string; startTime: string; endTime: string }>>([]);
   const [activeAgendaItem, setActiveAgendaItem] = useState(0);
+  const [agendaNow, setAgendaNow] = useState(() => new Date());
+  const agendaTodayKey = format(agendaNow, "yyyy-MM-dd");
+  const visibleAgendaItems = useMemo(
+    () => upcomingAgendaItems.filter((item) => !isAgendaEventPast(item.dateKey, item.startTime, item.endTime, agendaNow)),
+    [upcomingAgendaItems, agendaNow],
+  );
+  const currentAgendaItem = visibleAgendaItems[activeAgendaItem % (visibleAgendaItems.length || 1)];
+  const currentAgendaIsNow = !!currentAgendaItem && isAgendaEventNow(
+    currentAgendaItem.dateKey, currentAgendaItem.startTime, currentAgendaItem.endTime, agendaNow,
+  );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setAgendaNow(new Date()), 10000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // Load agenda items for today and the next two days, including recurring events.
   useEffect(() => {
@@ -102,33 +118,38 @@ export default function HouseMixHeader({
         const today = new Date();
         const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const todayKey = format(todayStart, "yyyy-MM-dd");
+        const yesterdayStart = new Date(todayStart);
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        const yesterdayKey = format(yesterdayStart, "yyyy-MM-dd");
         const rangeEnd = new Date(todayStart);
         rangeEnd.setDate(rangeEnd.getDate() + 2);
         const rangeEndKey = format(rangeEnd, "yyyy-MM-dd");
         const [uniqueRes, recurringRes, programsRes] = await Promise.all([
           supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId)
-            .or("recorrencia.eq.unico,recorrencia.is.null").gte("data", todayKey).lte("data", rangeEndKey).limit(100),
+            .or("recorrencia.eq.unico,recorrencia.is.null").gte("data", yesterdayKey).lte("data", rangeEndKey).limit(100),
           supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId)
             .not("recorrencia", "eq", "unico").lte("data", rangeEndKey)
-            .or(`periodo_fim.gte.${todayKey},periodo_fim.is.null`).limit(200),
+            .or(`periodo_fim.gte.${yesterdayKey},periodo_fim.is.null`).limit(200),
           supabase.from("programas").select("id,nome,horario_inicio,horario_fim,dias_semana").eq("user_id", targetUserId),
         ]);
         if (cancelled) return;
         const programs = new Map((programsRes.data || []).map((p: any) => [p.id, p]));
         const dayNames = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
-        const items = Array.from({ length: 3 }, (_, dayOffset) => {
+        const items = Array.from({ length: 4 }, (_, index) => {
+          const dayOffset = index - 1;
           const eventDate = new Date(todayStart);
           eventDate.setDate(eventDate.getDate() + dayOffset);
           const dateKey = format(eventDate, "yyyy-MM-dd");
           const dow = eventDate.getDay();
           const recurringMatches = (evt: any) => {
             const start = evt.data ? new Date(evt.data + "T12:00:00") : null;
-            if (!start || (evt.periodo_inicio && dateKey < evt.periodo_inicio) || (evt.periodo_fim && dateKey > evt.periodo_fim)) return false;
+            if (!start || dateKey < evt.data || (evt.periodo_inicio && dateKey < evt.periodo_inicio) || (evt.periodo_fim && dateKey > evt.periodo_fim)) return false;
+            if (Array.isArray(evt.excecoes) && evt.excecoes.some((exception: { data?: string; acao?: string }) => exception.data === dateKey && exception.acao === "skip")) return false;
             const program: any = programs.get(evt.programa_id);
             const days = evt.dias_semana || program?.dias_semana;
             if (Array.isArray(days) && days.length) {
-              const normalized = days.map((d: any) => String(d).toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, ""));
-              return normalized.some((d: string) => d.includes(dayNames[dow]));
+              const normalized = days.map((d: unknown) => String(d).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+              return normalized.some((d: string) => d === String(dow) || d.includes(dayNames[dow]));
             }
             if (evt.recorrencia === "semanal") return start.getDay() === dow;
             if (evt.recorrencia === "mensal") return start.getDate() === eventDate.getDate();
@@ -153,9 +174,12 @@ export default function HouseMixHeader({
             const time = startTime
               ? `${String(startTime).slice(0, 5)}${endTime ? `–${String(endTime).slice(0, 5)}` : ""}`
               : "Dia inteiro";
-            if (dateKey === todayKey && endTime && String(endTime).slice(0, 5) < format(today, "HH:mm")) return null;
-            return { id: String(evt.id), title, date: `${dayOffset === 0 ? "Hoje" : dayOffset === 1 ? "Amanhã" : format(eventDate, "EEEE", { locale: ptBR })} · ${format(eventDate, "dd/MM")}`, time, sortTime: startTime || "99:99", dayOffset };
-          }).filter(Boolean) as Array<{ id: string; title: string; date: string; time: string; sortTime: string; dayOffset: number }>;
+            const start = String(startTime);
+            const end = String(endTime);
+            if (dayOffset === -1 && !isAgendaEventNow(dateKey, start, end, today)) return null;
+            if (dateKey === todayKey && end && end.slice(0, 5) < format(today, "HH:mm") && (!start || end.slice(0, 5) >= start.slice(0, 5))) return null;
+            return { id: String(evt.id), title, date: `${dayOffset === 0 ? "Hoje" : dayOffset === 1 ? "Amanhã" : format(eventDate, "EEEE", { locale: ptBR })} · ${format(eventDate, "dd/MM")}`, time, dateKey, startTime: start, endTime: end, sortTime: startTime || "99:99", dayOffset };
+          }).filter(Boolean) as Array<{ id: string; title: string; date: string; time: string; dateKey: string; startTime: string; endTime: string; sortTime: string; dayOffset: number }>;
         }).flat().sort((a, b) => a.dayOffset - b.dayOffset || a.sortTime.localeCompare(b.sortTime));
         if (!cancelled) {
           setUpcomingAgendaItems(items);
@@ -173,18 +197,18 @@ export default function HouseMixHeader({
       cancelled = true;
       void supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, agendaTodayKey]);
 
   useEffect(() => {
-    if (upcomingAgendaItems.length < 2) {
+    if (visibleAgendaItems.length < 2) {
       setActiveAgendaItem(0);
       return;
     }
     const timer = window.setInterval(() => {
-      setActiveAgendaItem((current) => (current + 1) % upcomingAgendaItems.length);
+      setActiveAgendaItem((current) => (current + 1) % visibleAgendaItems.length);
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [upcomingAgendaItems.length]);
+  }, [visibleAgendaItems.length]);
 
   // User Auth & Profile state
   const [unreadChatbotCount, setUnreadChatbotCount] = useState<number>(() => {
@@ -1321,17 +1345,18 @@ export default function HouseMixHeader({
                 color: "var(--layout-nav-text, #ffffff)",
                 backdropFilter: "blur(14px)",
               }}
-              title={upcomingAgendaItems.length ? "Eventos de hoje e dos próximos dois dias" : "Nenhum evento nos próximos três dias"}
+              title={visibleAgendaItems.length ? "Eventos de hoje e dos próximos dois dias" : "Nenhum evento nos próximos três dias"}
               aria-live="polite"
             >
               <CalendarDays className="w-3.5 h-3.5 shrink-0 opacity-80" />
               <AgendaTicker
-                text={upcomingAgendaItems.length === 0
-                  ? "Sem eventos nos próximos 3 dias"
-                  : `${upcomingAgendaItems[activeAgendaItem]?.date} · ${upcomingAgendaItems[activeAgendaItem]?.time} · ${upcomingAgendaItems[activeAgendaItem]?.title || "Evento"}`}
+                text={!currentAgendaItem ? "Sem eventos nos próximos 3 dias" : currentAgendaIsNow
+                  ? currentAgendaItem.title
+                  : `${currentAgendaItem.date} · ${currentAgendaItem.time} · ${currentAgendaItem.title || "Evento"}`}
+                isNow={currentAgendaIsNow}
               />
-              {upcomingAgendaItems.length > 1 && (
-                <span className="shrink-0 text-[10px] opacity-65">{activeAgendaItem + 1}/{upcomingAgendaItems.length}</span>
+              {visibleAgendaItems.length > 1 && (
+                <span className="shrink-0 text-[10px] opacity-65">{(activeAgendaItem % visibleAgendaItems.length) + 1}/{visibleAgendaItems.length}</span>
               )}
             </div>
 
