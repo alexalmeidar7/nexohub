@@ -3,6 +3,7 @@ import { Copy, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { listXPaths, type XPathEntry } from "@/lib/xmlXPath";
+import { interactiveXmlSchema, type InteractiveXmlFeed } from "@/lib/interactiveXmlSchema";
 
 interface XmlXPathDialogProps {
   open: boolean;
@@ -10,9 +11,10 @@ interface XmlXPathDialogProps {
   title: string;
   url?: string;
   xmlContent?: string;
+  interactiveFeed?: InteractiveXmlFeed;
 }
 
-export default function XmlXPathDialog({ open, onOpenChange, title, url, xmlContent }: XmlXPathDialogProps) {
+export default function XmlXPathDialog({ open, onOpenChange, title, url, xmlContent, interactiveFeed }: XmlXPathDialogProps) {
   const [entries, setEntries] = useState<XPathEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,6 +28,7 @@ export default function XmlXPathDialog({ open, onOpenChange, title, url, xmlCont
     const load = async () => {
       setLoading(true);
       setError("");
+      setEntries([]);
       try {
         let xml = xmlContent;
         if (!xml) {
@@ -39,7 +42,7 @@ export default function XmlXPathDialog({ open, onOpenChange, title, url, xmlCont
         if (!cancelled) setEntries(list);
       } catch (e) {
         if (!cancelled) {
-          setEntries([]);
+          setEntries(interactiveFeed ? interactiveXmlSchema(interactiveFeed) : []);
           setError(e instanceof Error ? e.message : "Erro ao ler o XML.");
         }
       } finally {
@@ -49,7 +52,7 @@ export default function XmlXPathDialog({ open, onOpenChange, title, url, xmlCont
 
     load();
     return () => { cancelled = true; };
-  }, [open, url, xmlContent, reloadKey]);
+  }, [open, url, xmlContent, reloadKey, interactiveFeed]);
 
   const visible = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -92,12 +95,17 @@ export default function XmlXPathDialog({ open, onOpenChange, title, url, xmlCont
           </button>
         </div>
 
+        {error && entries.length > 0 && (
+          <div role="alert" className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
+            {error} Os caminhos abaixo são uma referência; os valores atuais estão indisponíveis.
+          </div>
+        )}
         <div className="flex-1 min-h-[200px] overflow-auto rounded-xl border border-slate-200">
           {loading && !entries.length ? (
             <div className="h-40 flex items-center justify-center text-slate-500">
               <Loader2 className="animate-spin mr-2" size={16} /> Carregando XML...
             </div>
-          ) : error ? (
+          ) : error && !entries.length ? (
             <div className="p-6 text-sm text-red-600">{error}</div>
           ) : visible.length === 0 ? (
             <div className="p-6 text-sm text-slate-500">Nenhum nó encontrado.</div>
@@ -124,7 +132,7 @@ export default function XmlXPathDialog({ open, onOpenChange, title, url, xmlCont
                       </button>
                     </td>
                     <td className="px-3 py-2 font-mono text-[11px] text-slate-700 break-words">
-                      {e.value || <span className="text-slate-300">(vazio)</span>}
+                      {error ? <span className="text-amber-700">(indisponível)</span> : e.value || <span className="text-slate-300">(vazio)</span>}
                     </td>
                   </tr>
                 ))}

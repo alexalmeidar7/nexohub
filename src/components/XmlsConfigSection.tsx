@@ -75,6 +75,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
       },
       {
         label: "XML BATALHA MUSICAL",
+        interactiveFeed: "batalha" as const,
         kicker: "XML",
         url: permanentUrl("batalha.xml"),
         supabaseUrl: supabaseFeed("serve-xml-batalha"),
@@ -82,6 +83,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
       },
       {
         label: "XML ENQUETE",
+        interactiveFeed: "enquete" as const,
         kicker: "XML",
         url: permanentUrl("enquete.xml"),
         supabaseUrl: supabaseFeed("serve-xml-enquete", `&slug=${encodeURIComponent(resolvedSlug)}`),
@@ -96,6 +98,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
       },
       {
         label: "XML QUIZ",
+        interactiveFeed: "quiz" as const,
         kicker: "XML",
         url: permanentUrl("quiz.xml"),
         supabaseUrl: supabaseFeed("serve-xml-quiz", `&slug=${encodeURIComponent(resolvedSlug)}`),
@@ -126,6 +129,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
             kicker={feed.kicker}
             permanentUrl={feed.url}
             supabaseUrl={feed.supabaseUrl}
+            interactiveFeed={feed.interactiveFeed}
             showUrl={true}
             description={feed.description}
           />

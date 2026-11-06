@@ -278,7 +278,7 @@ serve(async (req) => {
 
 
     let pergunta = "", r1 = "", r2 = "", r3 = "", r4 = "";
-    let correta = 1, ini = "", fim = "";
+    let correta: number | string = "", ini = "", fim = "";
 
     if (scheduled) {
       pergunta = scheduled.pergunta ?? "";

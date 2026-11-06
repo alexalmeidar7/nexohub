@@ -3,6 +3,7 @@ import { Code2, Copy, Check, Loader2, ExternalLink, Route } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import XmlXPathDialog from "./XmlXPathDialog";
+import type { InteractiveXmlFeed } from "@/lib/interactiveXmlSchema";
 
 interface XmlLinkRowProps {
   label: string;
@@ -26,6 +27,7 @@ interface XmlLinkRowProps {
   description?: string;
   /** URL do feed direto no Supabase (mantido para redundância) */
   supabaseUrl?: string;
+  interactiveFeed?: InteractiveXmlFeed;
 }
 
 function sanitizeFileName(label: string, scopeKey?: string): string {
@@ -77,6 +79,7 @@ export default function XmlLinkRow({
   showUrl = false,
   description,
   supabaseUrl,
+  interactiveFeed,
 }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [xpathOpen, setXpathOpen] = useState(false);
@@ -285,6 +288,7 @@ export default function XmlLinkRow({
           title={displayName}
           url={url}
           xmlContent={externalUrl ? undefined : xmlContent}
+          interactiveFeed={interactiveFeed}
         />
       </div>
     </div>
