@@ -532,8 +532,8 @@ export default function FloatingOnAirPresenter({
                 <User size={10} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
                 <span
                   style={{
-                    fontSize: 10.5,
-                    fontWeight: 700,
+                    fontSize: 9,
+                    fontWeight: 400,
                     color: "rgba(255,255,255,0.85)",
                     lineHeight: 1.2,
                     letterSpacing: "0.03em",
