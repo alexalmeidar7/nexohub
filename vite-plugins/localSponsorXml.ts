@@ -1,5 +1,6 @@
 import { JSDOM } from "jsdom";
 import { pngSponsorUrl } from "../supabase/functions/_shared/sponsorRotation";
+import { flattenGeralXml } from "../supabase/functions/_shared/flattenGeralXml";
 
 function parseXml(xml: string): Document {
   return new JSDOM(xml, { contentType: "text/xml" }).window.document;
@@ -34,6 +35,12 @@ function serialize(document: Document): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n${document.documentElement.outerHTML}`;
 }
 
+export function flattenLocalGeralXml(xml: string): string {
+  const document = parseXml(xml);
+  if (document.documentElement.tagName !== "geral") throw new Error("XML geral inválido.");
+  return flattenGeralXml(serialize(document));
+}
+
 export function localLogosXml(xml: string): string {
   const document = parseXml(xml);
   const sponsor = selectSponsor(document);
@@ -48,6 +55,7 @@ export function localLogosXml(xml: string): string {
 export function localGeralXml(xml: string, logosXml: string): string {
   const document = parseXml(xml);
   if (document.documentElement.tagName !== "geral") throw new Error("XML geral inválido.");
+  if (directChild(document.documentElement, "programa_atual_nome")) return xml;
   document.documentElement.removeAttribute("versao");
   const station = directChild(document.documentElement, "estacao");
   if (station) {
@@ -77,5 +85,5 @@ export function localGeralXml(xml: string, logosXml: string): string {
   container.appendChild(program);
   if (existing) existing.replaceWith(container);
   else document.documentElement.appendChild(container);
-  return serialize(document);
+  return flattenGeralXml(serialize(document));
 }

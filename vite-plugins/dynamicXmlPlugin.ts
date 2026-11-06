@@ -1,7 +1,7 @@
 import type { Plugin } from "vite";
 import fs from "fs";
 import path from "path";
-import { localGeralXml, localLogosXml } from "./localSponsorXml";
+import { flattenLocalGeralXml, localGeralXml, localLogosXml } from "./localSponsorXml";
 
 // Helper to get Brasilia date, time, weekday and seconds
 function getBrasiliaDateTime(): { today: string; currentTime: string; dayName: string; nowSeconds: number } {
@@ -2147,6 +2147,16 @@ export function dynamicXmlPlugin(): Plugin {
                   geralXml = geralXml.replace(/<roteiro[\s\S]*?<\/roteiro>/i, rotBlock);
                 }
 
+                try {
+                  geralXml = flattenLocalGeralXml(geralXml);
+                } catch (error) {
+                  console.warn("[XML geral local]", error);
+                  res.statusCode = 503;
+                  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+                  res.setHeader("Cache-Control", "no-store");
+                  res.end('<?xml version="1.0" encoding="UTF-8"?><error>Feed temporariamente indisponível</error>');
+                  return;
+                }
                 res.setHeader("Content-Type", "application/xml; charset=utf-8");
                 res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
                 res.setHeader("Access-Control-Allow-Origin", "*");

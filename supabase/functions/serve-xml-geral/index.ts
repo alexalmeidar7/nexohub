@@ -2,6 +2,7 @@ const serve = Deno.serve;
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
 import { pngSponsorUrl, rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml } from "../_shared/sponsorRotation.ts";
+import { flattenGeralXml } from "../_shared/flattenGeralXml.ts";
 const isUUID = (v: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
 const corsHeaders = {
@@ -572,7 +573,7 @@ serve(async (req) => {
 
     xmlParts.push('</geral>');
 
-    return new Response(xmlParts.join("\n"), {
+    return new Response(flattenGeralXml(xmlParts.join("\n")), {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
