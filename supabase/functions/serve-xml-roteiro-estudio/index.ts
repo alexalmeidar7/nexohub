@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 const serve = Deno.serve;
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
+import { noticiasComCampoFixo } from "../_shared/roteiroNoticias.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -209,9 +210,10 @@ serve(async (req) => {
         for (let bi = 0; bi < blocosList.length; bi++) {
           const b = blocosList[bi];
           xml += `  <bloco numero="${bi + 1}">\n`;
-          for (let ni = 0; ni < (b.noticias || []).length; ni++) {
-            const n = b.noticias[ni];
-            if (!n.titulo) continue;
+          const noticias = noticiasComCampoFixo(b.noticias || [], parts.campoFixo, bi === 0);
+          for (let ni = 0; ni < noticias.length; ni++) {
+            const n = noticias[ni];
+            if (!n?.titulo) continue;
             const image = await ensureVmixPngUrl(sb, n.imagemUrl || "", `vmix-roteiro/${ownerId}`);
             xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${esc(n.titulo)}</titulo>\n      <imagem>${esc(image)}</imagem>\n      <escalada>${n.escalada ? "true" : "false"}</escalada>\n    </noticia>\n`;
           }

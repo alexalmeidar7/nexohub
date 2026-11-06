@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { noticiasComCampoFixo } from "../_shared/roteiroNoticias.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -122,8 +123,8 @@ function generateXml(roteiro: any, data: any): string {
     }
     blocosList.forEach((b: any, bi: number) => {
       xml += `  <bloco numero="${bi + 1}">\n`;
-      (b.noticias || []).forEach((n: any, ni: number) => {
-        if (!n.titulo) return
+      noticiasComCampoFixo(b.noticias || [], data.campoFixo, bi === 0).forEach((n: any, ni: number) => {
+        if (!n?.titulo) return
         xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`
       })
       xml += `  </bloco>\n`

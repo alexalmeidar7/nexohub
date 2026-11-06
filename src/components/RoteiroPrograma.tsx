@@ -16,6 +16,7 @@ import HistoricoTable from "./HistoricoTable";
 import type { ExpressEditData } from "./ProgramaExpressInline";
 import { getProgramas } from "./ProgramaForm";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { noticiasComCampoFixo } from "../../supabase/functions/_shared/roteiroNoticias.ts";
 
 // Palette (nexo-form-design-system) — alinhado ao Cadastro de Cliente
 const CYAN = "#0055ff";
@@ -23,6 +24,18 @@ const LIME = "#0055ff";
 const CARD_BG = "#ffffff";
 const DARK = "#002132";
 const MONT: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
+
+function dadosAdicionaisRoteiro(value: unknown): Record<string, unknown> {
+  try {
+    let parsed = value;
+    if (typeof parsed === "string") parsed = JSON.parse(parsed);
+    if (typeof parsed === "string") parsed = JSON.parse(parsed);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch (error) {
+    console.error("Erro ao ler dados adicionais do roteiro:", error);
+    return {};
+  }
+}
 
 // Formata timestamp UTC do banco no fuso local do usuário (respeita DST automaticamente).
 const LOCAL_TZ = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "America/Sao_Paulo";
@@ -1181,8 +1194,8 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
 
         blocosList.forEach((b: any, bi: number) => {
           xml += `  <bloco numero="${bi + 1}">\n`;
-          (b.noticias || []).forEach((n: any, ni: number) => {
-            if (!n.titulo) return;
+          noticiasComCampoFixo(b.noticias || [], parts.campoFixo, bi === 0).forEach((n: any, ni: number) => {
+            if (!n?.titulo) return;
             xml += `    <noticia ordem="${ni + 1}">\n`;
             xml += `      <titulo>${escXml(n.titulo)}</titulo>\n`;
             xml += `      <resumo>${escXml(n.resumo || "")}</resumo>\n`;
@@ -1444,6 +1457,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                   blocos, 
                   participantes: editParticipantes, 
                   escaladaList: editEscaladaList, 
+                  dadosAdicionais: dadosAdicionaisRoteiro(r.participantes),
                   existingXmlPath, 
                   podcastData: editPodcastData,
                   horario: r.horario || prog?.horario_inicio || "",
@@ -1665,6 +1679,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                                   blocos,
                                   participantes: editParticipantes,
                                   escaladaList: editEscaladaList,
+                                  dadosAdicionais: dadosAdicionaisRoteiro(r.participantes),
                                   existingXmlPath,
                                   podcastData: editPodcastData,
                                   horario: r.horario || prog?.horario_inicio || "",
@@ -1823,6 +1838,7 @@ export default function RoteiroPrograma({ effectiveUserId: propEffectiveUserId }
                           blocos,
                           participantes: editParticipantes,
                           escaladaList: editEscaladaList,
+                          dadosAdicionais: dadosAdicionaisRoteiro(r.participantes),
                           existingXmlPath,
                           podcastData: editPodcastData,
                           agendaEventoId: r.id,

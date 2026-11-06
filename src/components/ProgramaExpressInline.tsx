@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getApresentadores, type Apresentador } from "./ApresentadorForm";
 import { findClientAccountById, findClientAccountByEmail } from "@/lib/clientAuthAccounts";
+import { noticiasComCampoFixo } from "../../supabase/functions/_shared/roteiroNoticias.ts";
 
 const AgendarRoteiroPopup = lazyRetry(() => import("./AgendarRoteiroPopup"));
 
@@ -79,6 +80,14 @@ interface Bloco {
   noticias: NewsItem[];
 }
 
+interface NoticiaArquivada {
+  id: string;
+  noticia: NewsItem;
+  bloco: number;
+  posicao: number;
+  restaurada?: boolean;
+}
+
 export const hasInformationalContent = (blocks: Array<{ noticias?: Array<{ titulo?: string; texto_materia?: string }> }> = []) =>
   blocks.some((block) =>
     (block?.noticias || []).some((news) =>
@@ -108,6 +117,7 @@ export interface ExpressEditData {
   blocos: Bloco[];
   participantes?: Participante[];
   escaladaList?: {titulo: string; imagemUrl: string}[];
+  dadosAdicionais?: Record<string, unknown>;
   existingXmlPath?: string;
   podcastData?: PodcastData;
   agendaEventoId?: string;
@@ -160,6 +170,7 @@ function normalizeBlocos(data: unknown): Bloco[] {
       ? (bloco as Bloco).noticias
           .filter(Boolean)
           .map((noticia) => ({
+            ...noticia,
             titulo: typeof noticia?.titulo === "string" ? noticia.titulo : "",
             imagemUrl: typeof noticia?.imagemUrl === "string" ? noticia.imagemUrl : "",
             resumo: typeof noticia?.resumo === "string" ? noticia.resumo : undefined,
@@ -169,7 +180,7 @@ function normalizeBlocos(data: unknown): Bloco[] {
           }))
       : [];
 
-    return { noticias: noticias.length > 0 ? noticias : [emptyNewsItem()] };
+    return { ...bloco, noticias: noticias.length > 0 ? noticias : [emptyNewsItem()] };
   });
 }
 
@@ -508,6 +519,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
+  const [campoFixo, setCampoFixo] = useState("");
+  const [noticiasArquivadas, setNoticiasArquivadas] = useState<NoticiaArquivada[]>([]);
+  const [noticiaParaRemover, setNoticiaParaRemover] = useState<{ bi: number; ni: number } | null>(null);
   const [showLimparConfirm, setShowLimparConfirm] = useState(false);
 
   useEffect(() => {
@@ -795,6 +809,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       setProgramaId(finalProgId);
       setSelectedProgTipo(finalTipo);
       setBlocos(normalizeBlocos(editData.blocos));
+      setCampoFixo(typeof editData.dadosAdicionais?.campoFixo === "string" ? editData.dadosAdicionais.campoFixo : "");
+      setNoticiasArquivadas(Array.isArray(editData.dadosAdicionais?.noticiasArquivadas) ? editData.dadosAdicionais.noticiasArquivadas : []);
 
       const hasParticipantes = Array.isArray(editData.participantes) && editData.participantes.some(p => p && typeof p.nome === "string" && p.nome.trim());
       if (hasParticipantes) {
@@ -915,7 +931,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       if (saveInProgressRef.current) return;
       const autoSave = async () => {
       const totalNews = blocos.reduce((s, b) => s + b.noticias.filter(n => n.titulo).length, 0);
-      if (totalNews === 0) return;
+      if (totalNews === 0 && !campoFixo.trim() && noticiasArquivadas.length === 0) return;
       setAutoSaving(true);
       try {
         const pNome = programas.find(p => p.id === programaId)?.nome || "";
@@ -923,7 +939,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         if (participantes.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">👥 PARTICIPANTES</h3><ul>`; participantes.forEach(p => { html += `<li><strong>${p.nome}</strong>${p.cargo ? ` — ${p.cargo}` : ""}${p.instagram ? ` (@${p.instagram.replace("@", "")})` : ""}</li>`; }); html += `</ul>`; }
         if (escaladaList.length > 0) { html += `<h3 style="font-weight:bold;margin-top:16px;">📢 ESCALADA</h3><ul>`; escaladaList.forEach(e => { html += `<li><strong>${e.titulo}</strong></li>`; }); html += `</ul>`; }
         blocos.forEach((b, bi) => { html += `<h3 style="font-weight:bold;margin-top:16px;">📺 BLOCO ${bi + 1}</h3>`; b.noticias.forEach((n, ni) => { if (!n.titulo) return; html += `<p><strong>Notícia ${ni + 1}:</strong> ${n.titulo}</p>`; if (n.imagemUrl) html += `<p><em>Imagem:</em> <a href="${n.imagemUrl}">${n.imagemUrl}</a></p>`; }); });
-        const blocosJson = JSON.stringify({ blocos, participantes, escaladaList });
+        const blocosJson = JSON.stringify({ ...editData?.dadosAdicionais, blocos, participantes, escaladaList, campoFixo, noticiasArquivadas });
         const autoTickerTitulos = blocos.flatMap(b => b.noticias.filter(n => n.titulo.trim()).map(n => n.titulo.trim())).join("  •  ");
         const nowIso = new Date().toISOString();
         const { data: savedRows, error: saveError } = await supabase.from("roteiros").update({
@@ -942,13 +958,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       } catch (e) { console.error("Auto-save error:", e); toast.error("Salvamento automático não concluído. Use Salvar para conferir a gravação."); }
       finally { setAutoSaving(false); }
       };
-      const pending = autoSave();
+      const previous = autoSaveInFlightRef.current;
+      const pending = (async () => {
+        if (previous) await previous;
+        await autoSave();
+      })();
       autoSaveInFlightRef.current = pending;
       void pending.finally(() => { if (autoSaveInFlightRef.current === pending) autoSaveInFlightRef.current = null; });
     }, 2000);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingId, estudio, programaId, blocos, participantes, escaladaList, initialized]);
+  }, [editingId, estudio, programaId, blocos, participantes, escaladaList, campoFixo, noticiasArquivadas, initialized]);
 
   const handleSelectPrograma = async (selectedProgId: string) => {
     setProgramaId(selectedProgId);
@@ -1017,6 +1037,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     setInitialized(false);
     setParticipantes([]);
     setEscaladaList([]);
+    setCampoFixo("");
+    setNoticiasArquivadas([]);
+    setNoticiaParaRemover(null);
     setSearchNome("");
     setSearchResults([]);
     setShowResults(false);
@@ -1214,37 +1237,29 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     });
   };
   const addNoticia = (bi: number) => { setBlocos(prev => prev.map((b, i) => i === bi ? { ...b, noticias: [...b.noticias, { titulo: "", imagemUrl: "", escalada: false }] } : b)); };
-  const removeNoticia = (bi: number, ni: number) => {
+  const removeNoticia = (bi: number, ni: number) => setNoticiaParaRemover({ bi, ni });
+  const confirmarRemocaoNoticia = () => {
+    if (!noticiaParaRemover) return;
+    const { bi, ni } = noticiaParaRemover;
+    const noticia = blocos[bi]?.noticias[ni];
+    if (!noticia) return;
+    setNoticiasArquivadas(prev => [...prev, { id: crypto.randomUUID(), noticia: { ...noticia }, bloco: bi, posicao: ni }]);
+    setBlocos(prev => prev.map((bloco, i) => i === bi ? { ...bloco, noticias: bloco.noticias.filter((_, j) => j !== ni) } : bloco));
+    setNoticiaParaRemover(null);
+    toast.info(editingId ? "Notícia retirada do roteiro. Aguarde o salvamento automático." : "Notícia retirada do roteiro. Salve para guardar a alteração.");
+  };
+  const restaurarNoticia = (item: NoticiaArquivada) => {
     setBlocos(prev => {
-      const alvo = prev[bi]?.noticias[ni];
-      const wasEscalada = !!alvo?.escalada && !!alvo?.titulo;
-      if (wasEscalada) {
-        setEscaladaList(prevList => prevList.filter(e => e.titulo !== alvo!.titulo));
-      }
-      if (alvo && (alvo.titulo || alvo.imagemUrl || (alvo as any).texto_materia || (alvo as any).resumo)) {
-        const snapshot = { ...alvo };
-        const label = (alvo.titulo || "Notícia").slice(0, 60);
-        toast.success(`Removida: ${label}`, {
-          action: {
-            label: "Desfazer",
-            onClick: () => {
-              setBlocos(cur => cur.map((b, i) => {
-                if (i !== bi) return b;
-                const noticias = [...b.noticias];
-                const insertAt = Math.min(ni, noticias.length);
-                noticias.splice(insertAt, 0, snapshot);
-                return { ...b, noticias };
-              }));
-              if (wasEscalada && snapshot.titulo) {
-                setEscaladaList(prevList => prevList.some(e => e.titulo === snapshot.titulo) ? prevList : [...prevList, { titulo: snapshot.titulo, imagemUrl: snapshot.imagemUrl || "" }]);
-              }
-            },
-          },
-          duration: 6000,
-        });
-      }
-      return prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.filter((_, j) => j !== ni) } : b);
+      const blocosAtualizados = [...prev];
+      const indice = Math.min(item.bloco, Math.max(blocosAtualizados.length - 1, 0));
+      const bloco = blocosAtualizados[indice] || { noticias: [] };
+      const noticias = [...bloco.noticias];
+      noticias.splice(Math.min(item.posicao, noticias.length), 0, item.noticia);
+      blocosAtualizados[indice] = { ...bloco, noticias };
+      return blocosAtualizados;
     });
+    setNoticiasArquivadas(prev => prev.map(arquivo => arquivo.id === item.id ? { ...arquivo, restaurada: true } : arquivo));
+    toast.info(editingId ? "Notícia restaurada. Aguarde o salvamento automático." : "Notícia restaurada. Salve para guardar a alteração.");
   };
   const addBloco = () => { setBlocos(prev => [...prev, { noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]); };
   const removeBloco = (bi: number) => { setBlocos(prev => prev.filter((_, i) => i !== bi)); setCollapsedBlocos(prev => { const n = new Set(prev); n.delete(bi); return n; }); };
@@ -1415,7 +1430,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       xml += `  </roteiro>\n`;
     } else {
       if (escaladaList.length > 0) { xml += `  <escalada>\n`; escaladaList.forEach((e, i) => { xml += `    <item ordem="${i + 1}">\n      <titulo>${escXml(e.titulo)}</titulo>\n      <imagem>${escXml(e.imagemUrl)}</imagem>\n    </item>\n`; }); xml += `  </escalada>\n`; }
-      activeBlocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; (b?.noticias || []).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
+      activeBlocos.forEach((b, bi) => { xml += `  <bloco numero="${bi + 1}">\n`; noticiasComCampoFixo(b?.noticias || [], campoFixo, bi === 0).forEach((n, ni) => { if (!n?.titulo) return; xml += `    <noticia ordem="${ni + 1}">\n      <titulo>${escXml(n.titulo)}</titulo>\n      <imagem>${escXml(n.imagemUrl)}</imagem>\n      <resumo>${escXml(n.resumo || "")}</resumo>\n      <texto_materia>${escXml(n.texto_materia || "")}</texto_materia>\n      <escalada>${n.escalada}</escalada>\n    </noticia>\n`; }); xml += `  </bloco>\n`; });
     }
     xml += `</programaExpress>`;
     return xml;
@@ -1606,7 +1621,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         toast.error("Preencha ao menos o título da tarja ou uma pergunta"); return false;
       }
     } else {
-      if (!hasInformationalContent(activeBlocos)) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
+      if (!hasInformationalContent(activeBlocos) && !campoFixo.trim() && noticiasArquivadas.length === 0) { toast.error("Adicione pelo menos uma notícia ou conteúdo informativo"); return false; }
     }
     setSaving(true);
     saveInProgressRef.current = true;
@@ -1630,8 +1645,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       }
 
       const blocosJson = isPodcast
-        ? JSON.stringify({ blocos: activeBlocos, participantes, escaladaList, podcastData })
-        : JSON.stringify({ blocos: activeBlocos, participantes, escaladaList });
+        ? JSON.stringify({ ...editData?.dadosAdicionais, blocos: activeBlocos, participantes, escaladaList, podcastData, campoFixo, noticiasArquivadas })
+        : JSON.stringify({ ...editData?.dadosAdicionais, blocos: activeBlocos, participantes, escaladaList, campoFixo, noticiasArquivadas });
 
       // Generate ticker titles from all news titles
       const allTitles = (activeBlocos || []).flatMap(b => (b?.noticias || []).filter(n => n?.titulo?.trim()).map(n => n.titulo.trim()));
@@ -2652,6 +2667,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
               </button>
             </div>
 
+            <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: NEXO_CARD_BG }}>
+              <label htmlFor="roteiro-campo-fixo" className="block text-xs font-bold uppercase mb-3" style={{ color: NEXO_DARK, letterSpacing: 1 }}>Campo fixo</label>
+              <input id="roteiro-campo-fixo" value={campoFixo} onChange={e => setCampoFixo(e.target.value)} className="w-full h-10 px-4 text-[12px] outline-none" style={{ ...inputStyle, backgroundColor: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, color: NEXO_DARK, borderRadius: 999 }} placeholder="Primeiro texto do assunto no XML" />
+            </div>
+
+            {noticiasArquivadas.some(item => !item.restaurada) && (
+              <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: NEXO_CARD_BG }}>
+                <p className="text-xs font-bold uppercase mb-3" style={{ color: NEXO_DARK }}>Notícias arquivadas</p>
+                {noticiasArquivadas.filter(item => !item.restaurada).map(item => (
+                  <div key={item.id} className="flex items-center justify-between gap-3 py-1">
+                    <span className="text-xs break-words">{item.noticia.titulo || "Notícia sem título"}</span>
+                    <button type="button" onClick={() => restaurarNoticia(item)} style={nexoPillGhost}>Restaurar</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Blocos */}
             <div className="space-y-4 min-w-0 w-full">
               {blocos.map((bloco, bi) => (
@@ -2670,7 +2702,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   {!collapsedBlocos.has(bi) && (
                     <div className="space-y-3">
                       {bloco.noticias.map((noticia, ni) => (
-                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} isOpen={openNoticia[bi] === ni} onToggleOpen={(open) => setOpenNoticia(prev => ({ ...prev, [bi]: open ? ni : null }))} onAddToEscalada={() => addToEscalada(noticia.titulo, noticia.imagemUrl)} alreadyInEscalada={escaladaList.some(e => e.titulo === noticia.titulo && !!noticia.titulo)} onMove={moveNoticia} canMoveUp={ni > 0} canMoveDown={ni < bloco.noticias.length - 1} />
+                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} isOpen={openNoticia[bi] === ni} onToggleOpen={(open) => setOpenNoticia(prev => ({ ...prev, [bi]: open ? ni : null }))} onAddToEscalada={() => addToEscalada(noticia.titulo, noticia.imagemUrl)} alreadyInEscalada={escaladaList.some(e => e.titulo === noticia.titulo && !!noticia.titulo)} onMove={moveNoticia} canMoveUp={ni > 0} canMoveDown={ni < bloco.noticias.length - 1} />
                       ))}
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => addNoticia(bi)} className="hover:opacity-80" style={nexoPillGhost}>
@@ -2707,6 +2739,18 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </>
         )}
 
+        <AlertDialog open={noticiaParaRemover !== null} onOpenChange={open => { if (!open) setNoticiaParaRemover(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Arquivar notícia?</AlertDialogTitle>
+              <AlertDialogDescription>A notícia será retirada do roteiro e do XML, mas poderá ser restaurada nesta tela.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmarRemocaoNoticia}>Arquivar notícia</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         {/* Save / Schedule */}
         <div className="flex gap-3 w-full">
           <button 
