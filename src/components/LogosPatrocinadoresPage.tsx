@@ -17,6 +17,15 @@ import { lazyRetry } from "@/lib/lazyRetry";
 const LogoTransformModal = lazyRetry(() => import("./LogoTransformModal").then((module) => ({ default: module.LogoTransformModal })));
 import { resolveSponsorLogoUrl } from "@/lib/sponsorLogoResolver";
 
+// A arte padrão (/default-sponsor-logo.png) é praticamente transparente; no fundo preto parece um quadrado vazio.
+const MISSING_LOGO_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="18" y="12" width="64" height="58" rx="10" fill="none" stroke="#64748b" stroke-width="3" stroke-dasharray="6 5"/><path d="M32 58l12-14 9 10 6-7 9 11z" fill="#64748b"/><circle cx="63" cy="28" r="5" fill="#64748b"/><text x="50" y="88" font-family="Arial" font-size="10" font-weight="700" fill="#94a3b8" text-anchor="middle">SEM LOGO</text></svg>'
+)}`;
+const sponsorLogoSrc = (url?: string | null, name?: string | null) => {
+  const resolved = resolveSponsorLogoUrl(url, name);
+  return resolved.includes("default-sponsor-logo.png") ? MISSING_LOGO_PLACEHOLDER : resolved;
+};
+
 interface Logo {
   id: string;
   programa_id: string | null;
@@ -1770,13 +1779,13 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                 >
                                   <div className="relative group rounded-2xl overflow-visible border border-slate-800 bg-black hover:border-[#0055ff]/50 transition-all shadow-sm">
                                     <img
-                                      src={resolveSponsorLogoUrl(logo.logo_url, logo.nome)}
+                                      src={sponsorLogoSrc(logo.logo_url, logo.nome)}
                                       alt={logo.nome}
                                       className="w-full aspect-square object-contain p-2.5 bg-black transition-transform group-hover:scale-105"
                                       onError={(e) => {
                                         const target = e.currentTarget as HTMLImageElement;
                                         target.onerror = null;
-                                        target.src = "/default-sponsor-logo.png";
+                                        target.src = MISSING_LOGO_PLACEHOLDER;
                                       }}
                                     />
                                     <div className="absolute left-[calc(100%+8px)] top-0 z-[100] flex w-28 flex-col rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.18)] opacity-0 invisible translate-x-1 group-hover:opacity-100 group-hover:visible group-hover:translate-x-0 group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150">
