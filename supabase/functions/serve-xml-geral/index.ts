@@ -1,6 +1,7 @@
 const serve = Deno.serve;
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
+import { rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml } from "../_shared/sponsorRotation.ts";
 const isUUID = (v: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
 const corsHeaders = {
@@ -80,6 +81,7 @@ serve(async (req) => {
     const sb = createClient(supabaseUrl, serviceKey, { global: { fetch: fastSupabaseFetch }, auth: { persistSession: false, autoRefreshToken: false } });
 
     // Get current date and time in America/Sao_Paulo
+    const now = new Date();
     const formatter = new Intl.DateTimeFormat("en-GB", {
       timeZone: "America/Sao_Paulo",
       year: "numeric",
@@ -90,15 +92,10 @@ serve(async (req) => {
       weekday: "long",
       hour12: false,
     });
-    const parts = formatter.formatToParts(new Date());
+    const parts = formatter.formatToParts(now);
     const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "";
     const today = `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
     const currentHourStr = `${getPart("hour")}:${getPart("minute")}`;
-    const weekdayMap: Record<string, string> = {
-      monday: "Segunda", tuesday: "Terça", wednesday: "Quarta",
-      thursday: "Quinta", friday: "Sexta", saturday: "Sábado", sunday: "Domingo",
-    };
-    const currentDayName = weekdayMap[(getPart("weekday") || "").toLowerCase()] || "Domingo";
 
     // Resolve sub-user parent if needed
     const { data: subUser, error: subUserError } = await sb
@@ -143,7 +140,7 @@ serve(async (req) => {
       step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true)),
       // A RPC limita campos históricos que podem conter dados enormes.
       step("musicHistory", sb.rpc("get_music_history_light", { _user_id: ownerId, _limit: 6 })),
-      step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url, programa_id").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false)),
+      step("logos", sb.from("logos_patrocinadores").select("id, nome, logo_url, programa_id, data_final, created_at").eq("user_id", ownerId).eq("ativo", true).eq("excluido", false).gte("data_final", rotationTime(now).today)),
       step("roteiros", sb.from("roteiros").select("id, programa_nome, estudio, data_programa, horario, subtitulo, participantes, xml_pushed_at, created_at, updated_at").eq("user_id", ownerId).ilike("estudio", "%fm%").order("updated_at", { ascending: false }).limit(10)),
       step("batalha", sb.from("batalhas_agendadas").select("artista1_nome, artista1_musica, artista1_porcentagem, artista1_imagem, artista2_nome, artista2_musica, artista2_porcentagem, artista2_imagem, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false })),
       step("enquetes", sb.from("enquetes_agendadas").select("pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false })),
@@ -159,23 +156,8 @@ serve(async (req) => {
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
     const toVmixImageUrl = (value: string) => ensureVmixPngUrl(sb, value, `vmix-geral/${ownerId}`);
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const currentSeconds = Number(currentHourStr.slice(0, 2)) * 3600 + Number(currentHourStr.slice(3, 5)) * 60;
-    const onAirProgram = programas.find((p: any) => {
-      const start = normTime(p.horario_inicio), end = normTime(p.horario_fim);
-      const startSeconds = Number(start.slice(0, 2)) * 3600 + Number(start.slice(3, 5)) * 60;
-      const endSeconds = Number(end.slice(0, 2)) * 3600 + Number(end.slice(3, 5)) * 60;
-      const days = Array.isArray(p.dias_semana) ? p.dias_semana : [];
-      if (endSeconds <= startSeconds) {
-        const yesterdayName = dayNames[(dayNames.indexOf(currentDayName) + 6) % 7];
-        return (days.includes(currentDayName) && currentSeconds >= startSeconds) ||
-          (days.includes(yesterdayName) && currentSeconds < endSeconds);
-      }
-      return days.includes(currentDayName) && currentSeconds >= startSeconds && currentSeconds <= endSeconds;
-    }) || null;
-    const onAirProgramLogos = onAirProgram
-      ? logos.filter((logo: any) => logo.programa_id === onAirProgram.id || logo.programa_id === null)
-      : logos.filter((logo: any) => logo.programa_id === null);
+    const onAirProgram = selectOnAirProgram(programas, now);
+    const selectedSponsor = selectRotatingSponsor(logos, onAirProgram?.id || null, now);
     const roteiros = roteiroRes.data || [];
     const activeBatalha = (batalhaRes.data || []).find((b: any) => {
       const ini = normTime(b.horario_inicio, "00:00");
@@ -196,21 +178,7 @@ serve(async (req) => {
       return ini <= fim ? (currentHourStr >= ini && currentHourStr <= fim) : (currentHourStr >= ini || currentHourStr <= fim);
     }) || null;
 
-    // Calculate current time & on-air program
-    const now = new Date();
-    // Dia da semana já foi calculado no fuso de Brasília acima.
-
-    let currentProgram: any = programas.find((p: any) => {
-      const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
-      const ini = normTime(p.horario_inicio);
-      const fim = normTime(p.horario_fim);
-      if (ini <= fim) {
-        return dias.includes(currentDayName) && currentHourStr >= ini && currentHourStr < fim;
-      }
-      const yesterdayName = dayNames[(dayNames.indexOf(currentDayName) + 6) % 7];
-      return (dias.includes(currentDayName) && currentHourStr >= ini) ||
-        (dias.includes(yesterdayName) && currentHourStr < fim);
-    }) || null;
+    let currentProgram: any = onAirProgram;
 
     // Next program
     let nextProgram: any = null;
@@ -321,10 +289,9 @@ serve(async (req) => {
       toVmixImageUrl(activeBatalha?.artista2_imagem || ""),
       toVmixImageUrl(activeQuiz?.imagem_resposta || ""),
     ]);
-    const logoPngById = new Map<string, string>();
-    await Promise.all(logos.map(async (logo: any) => {
-      logoPngById.set(String(logo.id), await toVmixImageUrl(logo.logo_url || ""));
-    }));
+    const sponsorLogoPng = selectedSponsor?.logo_url
+      ? await ensureVmixPngUrl(sb, selectedSponsor.logo_url, `vmix-logos/${ownerId}`)
+      : "";
 
     // Assemble General XML
     const xmlParts: string[] = [];
@@ -605,19 +572,8 @@ serve(async (req) => {
     xmlParts.push('    <programa_no_ar>');
     xmlParts.push(`      <programa_id>${esc(onAirProgram?.id || "")}</programa_id>`);
     xmlParts.push(`      <programa_nome>${esc(onAirProgram?.nome || "")}</programa_nome>`);
-    for (const l of onAirProgramLogos as any[]) {
-      xmlParts.push('      <patrocinador>');
-      xmlParts.push(`        <nome>${esc(l.nome || "Patrocinador")}</nome>`);
-      xmlParts.push(`        <logo_url>${esc(logoPngById.get(String(l.id)) || "")}</logo_url>`);
-      xmlParts.push('      </patrocinador>');
-    }
+    xmlParts.push(sponsorXml(selectedSponsor?.nome, sponsorLogoPng.split(/[?#]/)[0], "      "));
     xmlParts.push('    </programa_no_ar>');
-    for (const l of logos as any[]) {
-      xmlParts.push('    <patrocinador>');
-      xmlParts.push(`      <nome>${esc(l.nome || "Patrocinador")}</nome>`);
-      xmlParts.push(`      <logo_url>${esc(logoPngById.get(String(l.id)) || "")}</logo_url>`);
-      xmlParts.push('    </patrocinador>');
-    }
     xmlParts.push('  </patrocinadores>');
 
     xmlParts.push('</geral>');

@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
+import { rotationTime, selectOnAirProgram, selectRotatingSponsor, sponsorXml } from "../_shared/sponsorRotation.ts";
 
 const serve = Deno.serve;
 const corsHeaders = {
@@ -13,11 +14,6 @@ const fastSupabaseFetch: typeof fetch = (input, init = {}) =>
 const esc = (value: unknown) => String(value ?? "")
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
   .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
-
-const seconds = (value: string) => {
-  const [h = "0", m = "0", s = "0"] = String(value || "00:00:00").split(":");
-  return Number(h) * 3600 + Number(m) * 60 + Number(s);
-};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -43,45 +39,24 @@ serve(async (req) => {
       { global: { fetch: fastSupabaseFetch }, auth: { persistSession: false, autoRefreshToken: false } },
     );
 
-    const { data: subUser } = await supabase.from("sub_users")
+    const { data: subUser, error: subUserError } = await supabase.from("sub_users")
       .select("parent_user_id, ativo").eq("auth_user_id", requestedUserId).maybeSingle();
+    if (subUserError) throw subUserError;
     const userId = subUser?.ativo && subUser.parent_user_id ? subUser.parent_user_id : requestedUserId;
-
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Sao_Paulo",
-      weekday: "long", year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-    }).formatToParts(new Date());
-    const part = (type: string) => parts.find((item) => item.type === type)?.value || "";
-    const today = `${part("year")}-${part("month")}-${part("day")}`;
-    const now = seconds(`${part("hour")}:${part("minute")}:${part("second")}`);
-    const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const todayIndex = weekDays.indexOf(part("weekday"));
-    const todayName = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][Math.max(0, todayIndex)];
-    const yesterdayName = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][(Math.max(0, todayIndex) + 6) % 7];
+    const now = new Date();
+    const { today } = rotationTime(now);
 
     const { data: programas, error: programError } = await supabase.from("programas")
       .select("id, nome, estudio, dias_semana, horario_inicio, horario_fim, ativo")
       .eq("user_id", userId).eq("ativo", true).order("horario_inicio", { ascending: true });
     if (programError) throw programError;
 
-    const onAirCandidates = (programas || []).filter((programa: any) => {
-      const start = seconds(programa.horario_inicio);
-      const end = seconds(programa.horario_fim);
-      const days = Array.isArray(programa.dias_semana) ? programa.dias_semana : [];
-      if (end <= start) {
-        return (days.includes(todayName) && now >= start) || (days.includes(yesterdayName) && now < end);
-      }
-      return days.includes(todayName) && now >= start && now < end;
-    });
-    const onAir = onAirCandidates.find((programa: any) => String(programa.estudio || "").toLowerCase().includes("fm"))
-      || onAirCandidates[0]
-      || null;
+    const onAir = selectOnAirProgram(programas || [], now);
 
     let sponsorLogos: any[] = [];
     if (onAir) {
       const { data, error } = await supabase.from("logos_patrocinadores")
-        .select("id, nome, logo_url, data_final, created_at")
+        .select("id, nome, logo_url, programa_id, data_final, created_at")
         .eq("user_id", userId).eq("programa_id", onAir.id)
         .eq("ativo", true).eq("excluido", false)
         .gte("data_final", today)
@@ -90,10 +65,7 @@ serve(async (req) => {
       sponsorLogos = data || [];
     }
 
-    const rotationSlot = Math.floor(Date.now() / 5000);
-    const sponsorCount = sponsorLogos.length;
-    const selectedIndex = sponsorCount > 0 ? rotationSlot % sponsorCount : -1;
-    const selected = selectedIndex >= 0 ? sponsorLogos[selectedIndex] : null;
+    const selected = selectRotatingSponsor(sponsorLogos, onAir?.id || null, now);
     let logoUrl = "";
     if (selected?.logo_url) {
       const pngUrl = await ensureVmixPngUrl(supabase, selected.logo_url, `vmix-logos/${userId}`);
@@ -105,13 +77,9 @@ serve(async (req) => {
   <programa_no_ar>
     <nome>${esc(onAir?.nome || "")}</nome>
     <estudio>${esc(onAir?.estudio || "")}</estudio>
-    <patrocinador>
-      <nome>${esc(selected?.nome || "")}</nome>
-      <url>${esc(logoUrl)}</url>
-    </patrocinador>
-    <logo_url>${esc(logoUrl)}</logo_url>
+${sponsorXml(selected?.nome, logoUrl, "    ")}
     <intervalo_atualizacao>5</intervalo_atualizacao>
-    <atualizado_em>${new Date().toISOString()}</atualizado_em>
+    <atualizado_em>${now.toISOString()}</atualizado_em>
   </programa_no_ar>
 </estudio>`;
 

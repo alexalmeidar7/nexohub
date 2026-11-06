@@ -36,7 +36,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
         kicker: "FEED UNIFICADO",
         url: permanentUrl("geral.xml"),
         supabaseUrl: supabaseFeed("serve-xml-geral", `&slug=${encodeURIComponent(resolvedSlug)}`),
-        description: "Feed mestre em tempo real unificando todos os XMLs: No Ar, Música, Tempo, Roteiro, Interatividade e Patrocinadores",
+        description: "Feed mestre com patrocinador do programa no ar em rodízio a cada 5 segundos",
       },
       {
         label: "XML TEMPO",
@@ -64,7 +64,7 @@ export default function XmlsConfigSection({ targetUid, user }: XmlsConfigSection
         kicker: "XML",
         url: permanentUrl("logos.xml"),
         supabaseUrl: supabaseFeed("serve-xml-logos"),
-        description: "Logomarcas dos patrocinadores ativos",
+        description: "Um patrocinador do programa no ar por vez, em rodízio a cada 5 segundos",
       },
       {
         label: "XML BROADCAST",
