@@ -22,10 +22,10 @@ const FONT = "'Montserrat', sans-serif";
 const pillInput: React.CSSProperties = {
   width: "100%",
   height: 44,
-  borderRadius: 999,
-  background: "#f8fafc",
-  border: "1px solid rgba(226, 232, 240, 0.9)",
-  padding: "0 20px",
+  borderRadius: 10,
+  background: "#ffffff",
+  border: "1px solid #cbd5e1",
+  padding: "0 14px",
   fontFamily: FONT,
   fontSize: 12,
   color: "#0f172a",
@@ -39,45 +39,48 @@ const pillSelect: React.CSSProperties = {
   backgroundImage:
     "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230055ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
   backgroundRepeat: "no-repeat",
-  backgroundPosition: "right 18px center",
-  paddingRight: 44,
+  backgroundPosition: "right 14px center",
+  paddingRight: 40,
 };
 
 const labelStyle: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 10.5,
   fontWeight: 700,
-  letterSpacing: 1,
+  letterSpacing: 1.2,
   textTransform: "uppercase",
-  color: DARK,
-  marginBottom: 8,
+  color: "#475569",
+  marginBottom: 6,
   display: "block",
 };
 
 const cardStyle: React.CSSProperties = {
   background: CARD_BG,
-  borderRadius: 24,
+  borderRadius: 14,
   padding: 24,
   fontFamily: FONT,
+  border: "1px solid #e2e8f0",
+  borderTop: `3px solid ${CYAN}`,
+  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05)",
 };
 
 const primaryBtn: React.CSSProperties = {
   height: 44,
-  borderRadius: 999,
+  borderRadius: 10,
   background: "#0055ff",
   color: "#fff",
-  padding: "0 24px",
+  padding: "0 22px",
   fontFamily: FONT,
-  fontWeight: 800,
+  fontWeight: 700,
   fontSize: 12,
-  letterSpacing: 1.5,
+  letterSpacing: 1.2,
   textTransform: "uppercase",
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
   border: "none",
   cursor: "pointer",
-  boxShadow: "0 4px 14px rgba(0, 85, 255, 0.25)",
+  boxShadow: "0 2px 8px rgba(0, 85, 255, 0.22)",
 };
 
 const limeBtn: React.CSSProperties = { ...primaryBtn };
@@ -382,8 +385,32 @@ export default function SorteiosPage({ effectiveUserId }: { effectiveUserId?: st
         Sorteios
       </div>
 
+      {/* Indicadores */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: "Prêmios cadastrados", value: premios.length, icon: Gift },
+          { label: "Itens em estoque", value: premios.reduce((sum, p) => sum + (p.quantidade_estoque || 0), 0), icon: Package },
+          { label: "Sorteios realizados", value: sorteios.length, icon: ShieldCheck },
+          { label: "Entregas pendentes", value: sorteios.filter(s => !s.entregue && !s.expirado).length, icon: Truck },
+        ].map(({ label, value, icon: Icon }) => (
+          <div
+            key={label}
+            className="flex items-center gap-3"
+            style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "12px 16px", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}
+          >
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(0,85,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon size={18} color={CYAN} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: DARK, lineHeight: 1.1 }}>{value}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#64748b", marginTop: 2 }}>{label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Tabs */}
-      <div className="flex justify-center items-center gap-2 mb-6 flex-wrap w-full">
+      <div className="flex items-end gap-1 flex-wrap w-full" style={{ borderBottom: "1px solid #e2e8f0" }}>
         {([
           { k: "premios", label: "Prêmios & Estoque", icon: Package },
           { k: "lista", label: "Lista de Prêmios", icon: Radio },
@@ -394,13 +421,28 @@ export default function SorteiosPage({ effectiveUserId }: { effectiveUserId?: st
             key={k}
             onClick={() => setTab(k)}
             style={{
-              ...primaryBtn,
-              background: tab === k ? CYAN : "#fff",
-              color: tab === k ? "#fff" : DARK,
-              border: tab === k ? "none" : `2px solid ${CYAN}`,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 18px",
+              marginBottom: -1,
+              fontFamily: FONT,
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              cursor: "pointer",
+              background: tab === k ? "#fff" : "transparent",
+              color: tab === k ? CYAN : "#64748b",
+              border: "1px solid transparent",
+              borderColor: tab === k ? "#e2e8f0" : "transparent",
+              borderBottom: tab === k ? "1px solid #fff" : "1px solid transparent",
+              borderTop: tab === k ? `3px solid ${CYAN}` : "3px solid transparent",
+              borderRadius: "10px 10px 0 0",
+              transition: "color 0.2s ease, background 0.2s ease",
             }}
           >
-            <Icon size={16} />
+            <Icon size={15} />
             {label}
           </button>
         ))}
@@ -764,7 +806,8 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
       const el = onAirRef.current;
       const container = scrollContainerRef.current;
       if (el && container) {
-        container.scrollTo({ top: Math.max(0, el.offsetTop - container.offsetTop - 4), behavior: "smooth" });
+        const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top;
+        container.scrollTo({ top: Math.max(0, container.scrollTop + offset - 10), behavior: "smooth" });
       }
     }, 120);
     return () => clearTimeout(t);
@@ -997,7 +1040,8 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
               style={{
                 maxHeight: 3 * 132 + 2 * 12, // ~3 boxes + gaps
                 overflowY: "auto",
-                paddingRight: 6,
+                // Respiro interno para o anel/sombra do programa no ar não ser cortado pelo overflow
+                padding: "10px 12px 10px 8px",
               }}
             >
               {(() => {
@@ -1091,7 +1135,7 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
                   );
                 };
                 const sectionHeader = (label: string) => (
-                  <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase", color: "#64748B", padding: "4px 2px", position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase", color: "#64748B", padding: "4px 2px" }}>
                     {label}
                   </div>
                 );
