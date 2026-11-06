@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CheckCircle2, AlertCircle, Bell, ArrowUpFromLine, ArrowDownToLine, Database } from "lucide-react";
 import { dismissStatusNotice, useActivityStatus, type StatusTone } from "@/lib/activityStatus";
 
@@ -39,6 +39,20 @@ export default function SystemStatusChip() {
 
   const palette = tone === "idle" ? null : TONES[tone];
 
+  const contentRef = useRef<HTMLSpanElement>(null);
+  const [contentWidth, setContentWidth] = useState<number | null>(null);
+
+  // A largura "auto" não anima em CSS; medimos o conteúdo e animamos a largura numérica.
+  useLayoutEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const measure = () => setContentWidth(Math.ceil(el.getBoundingClientRect().width));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [text]);
+
   return (
     <div
       data-nexo-status-chip
@@ -46,18 +60,26 @@ export default function SystemStatusChip() {
       aria-live="polite"
       onClick={notice ? dismissStatusNotice : undefined}
       title={text}
-      className="hidden sm:flex min-w-0 w-[260px] shrink-0 items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition-all duration-300"
+      className="hidden sm:flex min-w-0 max-w-[420px] shrink-0 items-center overflow-hidden rounded-full py-2 text-xs font-semibold"
       style={{
+        width: contentWidth === null ? undefined : contentWidth + 26,
+        paddingLeft: 12,
+        paddingRight: 14,
+        boxSizing: "border-box",
         background: palette ? palette.bg : "rgba(255,255,255,0.14)",
         border: `1px solid ${palette ? palette.border : "rgba(255,255,255,0.16)"}`,
         color: palette ? palette.color : "var(--layout-nav-text, #ffffff)",
         backdropFilter: "blur(14px)",
         cursor: notice ? "pointer" : "default",
         boxShadow: palette ? "0 4px 14px rgba(0,0,0,0.25)" : "none",
+        transition:
+          "width 520ms cubic-bezier(0.22, 1, 0.36, 1), background-color 300ms ease, border-color 300ms ease, box-shadow 300ms ease",
       }}
     >
-      <Icon className={`w-3.5 h-3.5 shrink-0 ${pulse ? "animate-pulse" : "opacity-80"}`} />
-      <span className="truncate" style={{ opacity: tone === "idle" ? 0.75 : 1 }}>{text}</span>
+      <span ref={contentRef} className="inline-flex items-center gap-2 whitespace-nowrap">
+        <Icon className={`w-3.5 h-3.5 shrink-0 ${pulse ? "animate-pulse" : "opacity-80"}`} />
+        <span style={{ opacity: tone === "idle" ? 0.75 : 1 }}>{text}</span>
+      </span>
     </div>
   );
 }
