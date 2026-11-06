@@ -67,6 +67,9 @@ describe("rodízio de patrocinadores", () => {
     expect(xml.querySelector("programa_no_ar > id")).toBeNull();
     expect(xml.querySelector("patrocinador > id")).toBeNull();
     expect(xml.querySelector("programa_no_ar > logo_url")).toBeNull();
+    expect(xml.querySelector("programa_no_ar > indice")).toBeNull();
+    expect(xml.querySelector("programa_no_ar > total")).toBeNull();
+    expect(xml.querySelector("programa_no_ar > intervalo_atualizacao")).toBeNull();
     expect(xml.querySelector("patrocinador > nome")?.textContent).toBe("Dois");
     expect(xml.querySelector("patrocinador > logo_url")?.textContent).toBe("https://example.test/logo.png");
   });

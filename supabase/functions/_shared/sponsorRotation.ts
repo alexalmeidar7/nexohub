@@ -86,7 +86,6 @@ export function logosXml(program: ScheduledProgram | null, sponsor: SponsorLogo 
     <nome>${escape(program?.nome || "")}</nome>
     <estudio>${escape(program?.estudio || "")}</estudio>
 ${sponsorXml(sponsor?.nome, logoUrl, "    ")}
-    <intervalo_atualizacao>5</intervalo_atualizacao>
     <atualizado_em>${now.toISOString()}</atualizado_em>
   </programa_no_ar>
 </estudio>`;

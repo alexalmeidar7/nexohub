@@ -1,6 +1,7 @@
 import type { Plugin } from "vite";
 import fs from "fs";
 import path from "path";
+import { localGeralXml, localLogosXml } from "./localSponsorXml";
 
 // Helper to get Brasilia date, time, weekday and seconds
 function getBrasiliaDateTime(): { today: string; currentTime: string; dayName: string; nowSeconds: number } {
@@ -1916,8 +1917,17 @@ export function dynamicXmlPlugin(): Plugin {
                 if (file === "geral.xml" || file === "enquete.xml" || file === "quiz.xml") upstream.searchParams.set("slug", slug);
                 const response = await fetch(upstream, { headers: { "Cache-Control": "no-cache" }, signal: AbortSignal.timeout(15000) });
                 if (!response.ok) throw new Error(`Feed ${feed}: ${response.status}`);
-                const xml = await response.text();
+                let xml = await response.text();
                 if (!xml.includes("<?xml") || xml.includes("<error>")) throw new Error(`Feed ${feed}: resposta inválida`);
+                if (file === "logos.xml") {
+                  xml = localLogosXml(xml);
+                } else if (file === "geral.xml") {
+                  const logosUrl = new URL("https://qazvgmgdidjhbvcuinpy.supabase.co/functions/v1/serve-xml-logos");
+                  logosUrl.searchParams.set("user_id", uid);
+                  const logosResponse = await fetch(logosUrl, { headers: { "Cache-Control": "no-cache" }, signal: AbortSignal.timeout(15000) });
+                  if (!logosResponse.ok) throw new Error(`Feed de logos: ${logosResponse.status}`);
+                  xml = localGeralXml(xml, await logosResponse.text());
+                }
                 res.setHeader("Content-Type", "application/xml; charset=utf-8");
                 res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
                 res.setHeader("Access-Control-Allow-Origin", "*");
