@@ -123,22 +123,39 @@ function setTrackCoverCache(titulo: string, artista: string, url: string) {
  */
 async function queryItunes(query: string, timeoutMs = 3500): Promise<string | null> {
   try {
+    console.log(`[MusicSync] Querying iTunes for: "${query}"`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const timeout = setTimeout(() => {
+      console.log(`[MusicSync] iTunes query timeout for: "${query}"`);
+      controller.abort();
+    }, timeoutMs);
     const encoded = encodeURIComponent(query);
-    const res = await fetch(`https://itunes.apple.com/search?term=${encoded}&media=music&entity=song&limit=2`, {
+    const url = `https://itunes.apple.com/search?term=${encoded}&media=music&entity=song&limit=2`;
+    console.log(`[MusicSync] iTunes URL: ${url}`);
+    const res = await fetch(url, {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) return null;
+    console.log(`[MusicSync] iTunes response status: ${res.status} for query: "${query}"`);
+    if (!res.ok) {
+      console.log(`[MusicSync] iTunes error response: ${res.status} for query: "${query}"`);
+      return null;
+    }
     const data = await res.json();
+    console.log(`[MusicSync] iTunes data for "${query}":`, data?.results?.length || 0, "results");
     if (data?.results && Array.isArray(data.results) && data.results.length > 0) {
       const artwork = data.results[0].artworkUrl100;
+      console.log(`[MusicSync] iTunes artwork for "${query}":`, artwork);
       if (artwork && typeof artwork === "string") {
-        return artwork.replace("100x100", "600x600");
+        const result = artwork.replace("100x100", "600x600");
+        console.log(`[MusicSync] iTunes cover found for "${query}": ${result}`);
+        return result;
       }
     }
-  } catch {}
+    console.log(`[MusicSync] No iTunes artwork found for: "${query}"`);
+  } catch (e) {
+    console.log(`[MusicSync] iTunes fetch error for "${query}":`, e instanceof Error ? e.message : String(e));
+  }
   return null;
 }
 

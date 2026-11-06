@@ -409,13 +409,16 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
 
     const fetchCoverAndArtistImg = (data: { titulo: string; artista: string; capa: string }) => {
+      console.log(`[MusicSync] fetchCoverAndArtistImg called for: "${data.titulo}" / "${data.artista}"`);
       const cacheKey = `${data.artista}-${data.titulo}`;
       
       if (enrichmentDone.has(cacheKey)) {
+        console.log(`[MusicSync] Track already enriched (cached), skipping`);
         return;
       }
       
       if (enrichmentPending.has(cacheKey)) {
+        console.log(`[MusicSync] Track enrichment already pending, skipping`);
         return;
       }
       

@@ -246,6 +246,13 @@ serve(async (req) => {
     const stationName = empresa?.nome || "House Mix Emissora";
     let currentMusic: any = null;
     
+    console.log(`[XML-GERAL] Full dashboard_items:`, JSON.stringify(dashboard, null, 2).substring(0, 1000));
+    console.log(`[XML-GERAL] dashboard.music_current_title=${dashboard.music_current_title}`);
+    console.log(`[XML-GERAL] dashboard.music_current_artist=${dashboard.music_current_artist}`);
+    console.log(`[XML-GERAL] dashboard.music_current_cover=${dashboard.music_current_cover}`);
+    console.log(`[XML-GERAL] dashboard.music_deezer_artist_img=${dashboard.music_deezer_artist_img}`);
+    console.log(`[XML-GERAL] Music history length=${musicHistory.length}, first=${musicHistory[0]?.musica}/${musicHistory[0]?.artista}`);
+    
     // Tenta usar dados da aba "Música no Ar" (em tempo real via useGlobalMusicSync)
     if (dashboard.music_current_title || dashboard.music_current_artist) {
       currentMusic = {
@@ -254,9 +261,13 @@ serve(async (req) => {
         capa: dashboard.music_current_cover || "",
         artista_img_url: dashboard.music_deezer_artist_img || "",
       };
-    } else if (musicHistory.length > 0) {
-      // Fallback: usa histórico quando não há dado de música ao vivo
-      currentMusic = musicHistory[0] || null;
+      console.log(`[XML-GERAL] Using dashboard music: ${currentMusic.musica} / ${currentMusic.artista}, capa=${currentMusic.capa.substring(0, 80)}`);
+    } else {
+      console.log(`[XML-GERAL] No dashboard music, using history`);
+      if (musicHistory.length > 0) {
+        // Fallback: usa histórico quando não há dado de música ao vivo
+        currentMusic = musicHistory[0] || null;
+      }
     }
     
     if (!currentMusic) {
@@ -301,12 +312,11 @@ serve(async (req) => {
     const cityName = userSettings.weather_city || "Não informada";
     const stationLogo = empresa?.logo || "";
     const [
-      stationLogoPng, currentMusicCoverPng, currentProgramLogoPng,
+      stationLogoPng, currentProgramLogoPng,
       currentPresenterPhotoPng, nextPresenterPhotoPng,
       battleImage1Png, battleImage2Png, quizImagePng,
     ] = await Promise.all([
       toVmixImageUrl(stationLogo),
-      toVmixImageUrl(currentMusic?.capa || ""),
       toVmixImageUrl(currentProgram?.selo || currentProgram?.thumb || ""),
       toVmixImageUrl(currentPresenter?.foto || ""),
       toVmixImageUrl(nextPresenter?.foto || ""),
@@ -314,6 +324,9 @@ serve(async (req) => {
       toVmixImageUrl(activeBatalha?.artista2_imagem || ""),
       toVmixImageUrl(activeQuiz?.imagem_resposta || ""),
     ]);
+    // Use direct URLs for music cover and artist image (already in correct format from enrichment)
+    const currentMusicCoverPng = currentMusic?.capa || "";
+    const currentMusicArtistImgPng = currentMusic?.artista_img_url || "";
     const sponsorLogoPng = selectedSponsor?.logo_url
       ? pngSponsorUrl(await ensureVmixPngUrl(sb, selectedSponsor.logo_url, `vmix-logos/${ownerId}`))
       : "";
@@ -337,7 +350,7 @@ serve(async (req) => {
     xmlParts.push(`      <titulo>${esc(currentMusic?.musica || "Programação Musical")}</titulo>`);
     xmlParts.push(`      <artista>${esc(currentMusic?.artista || stationName)}</artista>`);
     xmlParts.push(`      <capa_url>${esc(currentMusicCoverPng)}</capa_url>`);
-    xmlParts.push(`      <artista_imagem_url>${esc(currentMusic?.artista_img_url || "")}</artista_imagem_url>`);
+    xmlParts.push(`      <artista_imagem_url>${esc(currentMusicArtistImgPng)}</artista_imagem_url>`);
     xmlParts.push(`      <curiosidade>${esc(curiosidade)}</curiosidade>`);
     xmlParts.push(`      <texto_completo>${esc(`${currentMusic?.musica || "Programação"} - ${currentMusic?.artista || stationName}`)}</texto_completo>`);
     xmlParts.push('    </musica_atual>');
