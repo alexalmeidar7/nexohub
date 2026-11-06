@@ -94,8 +94,22 @@ export default function HouseMixHeader({
   );
 
   useEffect(() => {
-    const timer = window.setInterval(() => setAgendaNow(new Date()), 10000);
-    return () => window.clearInterval(timer);
+    let timer: number;
+    const updateClock = () => {
+      window.clearTimeout(timer);
+      const now = new Date();
+      setAgendaNow(now);
+      timer = window.setTimeout(updateClock, 60000 - now.getSeconds() * 1000 - now.getMilliseconds());
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") updateClock();
+    };
+    updateClock();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   // Load agenda items for today and the next two days, including recurring events.
@@ -177,7 +191,7 @@ export default function HouseMixHeader({
             const start = String(startTime);
             const end = String(endTime);
             if (dayOffset === -1 && !isAgendaEventNow(dateKey, start, end, today)) return null;
-            if (dateKey === todayKey && end && end.slice(0, 5) < format(today, "HH:mm") && (!start || end.slice(0, 5) >= start.slice(0, 5))) return null;
+            if (isAgendaEventPast(dateKey, start, end, today)) return null;
             return { id: String(evt.id), title, date: `${dayOffset === 0 ? "Hoje" : dayOffset === 1 ? "Amanhã" : format(eventDate, "EEEE", { locale: ptBR })} · ${format(eventDate, "dd/MM")}`, time, dateKey, startTime: start, endTime: end, sortTime: startTime || "99:99", dayOffset };
           }).filter(Boolean) as Array<{ id: string; title: string; date: string; time: string; dateKey: string; startTime: string; endTime: string; sortTime: string; dayOffset: number }>;
         }).flat().sort((a, b) => a.dayOffset - b.dayOffset || a.sortTime.localeCompare(b.sortTime));

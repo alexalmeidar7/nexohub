@@ -17,9 +17,9 @@ export function isAgendaEventNow(occurrence: string, startTime: string, endTime:
   if (start === null || end === null) return false;
   const current = now.getHours() * 60 + now.getMinutes();
   if (end < start) {
-    return (occurrence === dateKey(today) && current >= start) || (occurrence === dateKey(yesterday) && current <= end);
+    return (occurrence === dateKey(today) && current >= start) || (occurrence === dateKey(yesterday) && current < end);
   }
-  return occurrence === dateKey(today) && current >= start && current <= end;
+  return occurrence === dateKey(today) && current >= start && current < end;
 }
 
 export function isAgendaEventPast(occurrence: string, startTime: string, endTime: string, now: Date): boolean {
@@ -29,5 +29,5 @@ export function isAgendaEventPast(occurrence: string, startTime: string, endTime
   if (occurrence > today) return false;
   if (occurrence < today) return !isAgendaEventNow(occurrence, startTime, endTime, now);
   if (end === null || (start !== null && end < start)) return false;
-  return now.getHours() * 60 + now.getMinutes() > end;
+  return now.getHours() * 60 + now.getMinutes() >= end;
 }
