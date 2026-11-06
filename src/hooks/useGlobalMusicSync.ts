@@ -362,6 +362,9 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           writeMusicData(targetId, data);
           writeMusicStart(targetId, now);
 
+          // Trigger async image fetching
+          fetchCoverAndArtistImg(data);
+
           (async () => {
             await applyTrackChangeWithCuriosityGuard({
               userId: targetId,
@@ -422,6 +425,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
         try {
           if (!data.capa) {
             const cover = await fetchTrackCover(data.titulo, data.artista);
+            console.log(`[MusicSync] fetchTrackCover result for "${data.titulo}" / "${data.artista}":`, cover);
             if (cover) {
               data.capa = cover;
             }
@@ -430,6 +434,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           let artistImg = "";
           if (data.artista && data.artista !== "Desconhecido") {
             artistImg = (await fetchArtistImageCached(data.artista)) || "";
+            console.log(`[MusicSync] fetchArtistImageCached result for "${data.artista}":`, artistImg);
           }
 
           const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
@@ -448,6 +453,7 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           }
 
           if (targetId) {
+            console.log(`[MusicSync] About to merge with cover="${data.capa}" and artistImg="${artistImg}"`);
             try {
               await mergeUserDashboardItems(targetId, {
                 music_current_title: data.titulo,
@@ -456,7 +462,9 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
                 music_current_excecao: null,
                 music_deezer_artist_img: artistImg || "",
               });
+              console.log(`[MusicSync] Merge SUCCESS`);
             } catch (mergeErr) {
+              console.error(`[MusicSync] Merge FAILED:`, mergeErr);
               throw mergeErr;
             }
           }
