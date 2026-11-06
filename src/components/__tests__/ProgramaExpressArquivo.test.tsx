@@ -11,6 +11,8 @@ vi.mock("sonner", () => ({ toast: { success: mocks.success, info: mocks.info, er
 import ProgramaExpressInline from "../ProgramaExpressInline";
 
 const noticia = { titulo: "Notícia original", imagemUrl: "", escalada: false, texto_materia: "Texto preservado", link: "https://example.invalid", metadado: "preservado" };
+const outraNoticia = { titulo: "Outra notícia", imagemUrl: "", escalada: false, resumo: "Resumo mantido", texto_materia: "Matéria mantida" };
+const arquivoAnterior = [{ id: "anterior", noticia: { ...noticia, titulo: "Notícia antiga" }, bloco: 0, posicao: 0 }];
 const programa = { id: "programa-test", nome: "Programa teste", estudio: "Estudio FM", tipo_programa: "Jornalístico" };
 const props = {
   programas: [programa],
@@ -21,9 +23,9 @@ const props = {
     roteiroId: "roteiro-test",
     estudio: "Estudio FM",
     programaId: programa.id,
-    blocos: [{ noticias: [noticia] }],
+    blocos: [{ noticias: [noticia, outraNoticia] }],
     participantes: [{ nome: "Pessoa", cargo: "", instagram: "" }],
-    dadosAdicionais: { campoFixo: "Abertura", propriedadeExistente: "preservada" },
+    dadosAdicionais: { campoFixo: "Abertura", propriedadeExistente: "preservada", noticiasArquivadas: arquivoAnterior },
   },
 };
 
@@ -42,23 +44,25 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-describe("edição de notícias arquivadas", () => {
-  it("confirma, persiste e restaura a notícia sem perder os dados", async () => {
+describe("exclusão individual de notícias", () => {
+  it("confirma e remove só a notícia escolhida, sem modificar arquivos anteriores", async () => {
     const view = render(<ProgramaExpressInline {...props} />);
     expect(await screen.findByLabelText("Campo fixo")).toHaveValue("Abertura");
     fireEvent.change(screen.getByLabelText("Campo fixo"), { target: { value: "Abertura & notícias" } });
-    fireEvent.click(screen.getByTitle("Remover (Delete)"));
+    fireEvent.click(screen.getAllByTitle("Remover (Delete)")[0]);
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(screen.getByText("Notícia original")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTitle("Remover (Delete)"));
-    fireEvent.click(screen.getByRole("button", { name: "Arquivar notícia" }));
-    expect(await screen.findByText("Notícias arquivadas")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByTitle("Remover (Delete)")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Excluir notícia" }));
+    expect(screen.queryByText("Notícias arquivadas")).not.toBeInTheDocument();
     await waitFor(() => {
       expect(mocks.update).toHaveBeenCalled();
       const saved = JSON.parse(mocks.update.mock.calls.at(-1)![0].participantes);
-      expect(saved.blocos[0].noticias).toEqual([]);
-      expect(saved.noticiasArquivadas[0].noticia).toMatchObject(noticia);
+      expect(saved.blocos[0].noticias).toHaveLength(1);
+      expect(saved.blocos[0].noticias[0]).toMatchObject(outraNoticia);
+      expect(saved.noticiasArquivadas).toEqual(arquivoAnterior);
+      expect(mocks.update.mock.calls.at(-1)![0].conteudo_html).toContain("Matéria mantida");
       expect(saved.campoFixo).toBe("Abertura & notícias");
       expect(saved.propriedadeExistente).toBe("preservada");
     }, { timeout: 5000 });
@@ -66,13 +70,21 @@ describe("edição de notícias arquivadas", () => {
     view.unmount();
     render(<ProgramaExpressInline {...props} editData={{ ...props.editData, blocos: saved.blocos, dadosAdicionais: saved }} />);
     expect(await screen.findByLabelText("Campo fixo")).toHaveValue("Abertura & notícias");
-    expect(await screen.findByText("Notícias arquivadas")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Restaurar" }));
     expect(screen.queryByText("Notícias arquivadas")).not.toBeInTheDocument();
+    expect(screen.getByText("Outra notícia")).toBeInTheDocument();
+    expect(screen.queryByText("Notícia original")).not.toBeInTheDocument();
+  }, 10000);
+
+  it("salva a exclusão da última notícia sem exigir campo fixo", async () => {
+    render(<ProgramaExpressInline {...props} editData={{ ...props.editData, blocos: [{ noticias: [noticia] }], dadosAdicionais: { noticiasArquivadas: arquivoAnterior } }} />);
+    await screen.findByText("Notícia original");
+    fireEvent.click(screen.getByTitle("Remover (Delete)"));
+    fireEvent.click(screen.getByRole("button", { name: "Excluir notícia" }));
     await waitFor(() => {
-      const restored = JSON.parse(mocks.update.mock.calls.at(-1)![0].participantes);
-      expect(restored.blocos[0].noticias.some((item: typeof noticia) => item.titulo === noticia.titulo && item.texto_materia === noticia.texto_materia)).toBe(true);
-      expect(restored.noticiasArquivadas[0].restaurada).toBe(true);
+      expect(mocks.update).toHaveBeenCalled();
+      const saved = JSON.parse(mocks.update.mock.calls.at(-1)![0].participantes);
+      expect(saved.blocos[0].noticias).toEqual([]);
+      expect(saved.noticiasArquivadas).toEqual(arquivoAnterior);
     }, { timeout: 5000 });
-  }, 15000);
+  }, 10000);
 });
