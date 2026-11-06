@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { preserveWhiteLogoDetails } from "@/services/whiteLogoPixels";
 
 export interface TransformResult {
   success: boolean;
@@ -204,10 +205,10 @@ export async function vectorizeWhiteLogo1080(dataUrl: string): Promise<string> {
     if (y > 0) push(index - size);
     if (y < size - 1) push(index + size);
   }
+  preserveWhiteLogoDetails(px);
   let visible = 0;
   for (let i = 0; i < px.length; i += 4) {
     if (px[i + 3] > 0) visible++;
-    px[i] = 255; px[i + 1] = 255; px[i + 2] = 255;
   }
   if (visible < 100) throw new Error("Não foi possível separar a logo do fundo. Envie uma imagem com maior contraste ou fundo transparente.");
   ctx.putImageData(image, 0, 0);
@@ -333,8 +334,7 @@ export function dataUrlToFile(dataUrl: string, filename: string): File {
 }
 
 /**
- * Converts every visible pixel to pure white #FFFFFF keeping the alpha channel,
- * so the adjusted logo is always the white version on transparent background.
+ * Converts artwork to white, retaining contrasting details as transparent cutouts.
  */
 export async function forceWhiteLogo(dataUrl: string): Promise<string> {
   const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -348,13 +348,10 @@ export async function forceWhiteLogo(dataUrl: string): Promise<string> {
   canvas.width = img.naturalWidth || img.width;
   canvas.height = img.naturalHeight || img.height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return dataUrl;
+  if (!ctx) throw new Error("Não foi possível converter a logo para branco.");
   ctx.drawImage(img, 0, 0);
   const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const p = d.data;
-  for (let i = 0; i < p.length; i += 4) {
-    p[i] = 255; p[i + 1] = 255; p[i + 2] = 255;
-  }
+  preserveWhiteLogoDetails(d.data);
   ctx.putImageData(d, 0, 0);
   return canvas.toDataURL("image/png");
 }

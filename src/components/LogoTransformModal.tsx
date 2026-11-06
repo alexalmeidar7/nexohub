@@ -161,12 +161,12 @@ export function LogoTransformModal({
             transformed = { ...transformed, success: true, imageBase64: localUrl, isAiGenerated: false };
             usedLocalFallback = true;
           } catch {
-            throw new Error(transformed.error || "Não foi possível ajustar a logo pela API da OpenAI.");
+            throw new Error(`${transformed.error || "Não foi possível ajustar a logo pela IA."} A conversão local também falhou.`);
           }
         }
         setProgress(100);
         if (usedLocalFallback) {
-          setInfoNotice("O ajuste por IA está indisponível; a logo foi convertida localmente para branco flat com fundo transparente.");
+          setInfoNotice("A IA está indisponível. A conversão local tenta preservar os detalhes em transparência; confira a prévia antes de salvar.");
         }
 
         const v1: LogoTransformVersion = {
@@ -174,12 +174,12 @@ export function LogoTransformModal({
           name: "Versão preparada",
           dataUrl: transformed.imageBase64,
           status: "ready",
-          isAiGenerated: true,
+          isAiGenerated: transformed.isAiGenerated,
         };
 
         setVersions([...initialVersionsList, v1]);
         setActiveVersionId("version_01");
-        if (autoSave) {
+        if (autoSave && !usedLocalFallback) {
           setLoading(false);
           await saveVersion(v1, cleanName);
         }

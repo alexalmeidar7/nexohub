@@ -669,8 +669,20 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       user?.id ||
       "";
     try {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(target.id)) {
+        throw new Error("Não foi possível identificar esta logo com segurança no banco. Recarregue a página e tente novamente.");
+      }
       const logo_url = await uploadLogo(file);
-      await updateLogoRecord(target, target.id, { logo_url }, activeUid);
+      const { data, error } = await supabase
+        .from("logos_patrocinadores")
+        .update({ logo_url })
+        .eq("id", target.id)
+        .eq("logo_url", target.logo_url)
+        .select("id");
+      if (error) throw error;
+      if (data?.length !== 1) {
+        throw new Error("A logo não foi atualizada: o registro mudou ou não foi encontrado. Recarregue a página e tente novamente.");
+      }
       if (activeUid) {
         const localList = getLocalLogos(activeUid);
         const idx = localList.findIndex((l) => l.id === target.id);
