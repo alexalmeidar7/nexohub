@@ -139,7 +139,7 @@ serve(async (req) => {
     ] = await Promise.all([
       step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle()),
       step("profile", sb.from("profiles").select("cidade, estado").eq("user_id", ownerId).maybeSingle()),
-      step("userSettings", sb.from("user_settings").select("weather_city").eq("user_id", ownerId).maybeSingle()),
+      step("userSettings", sb.from("user_settings").select("weather_city, dashboard_items").eq("user_id", ownerId).maybeSingle()),
       step("programas", sb.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, descricao, classificacao_etaria, estudio, apresentador_id, apresentadores_ids").eq("user_id", ownerId).eq("ativo", true).order("horario_inicio")),
       step("apresentadores", sb.from("apresentadores").select("id, nome, instagram").eq("user_id", ownerId).eq("ativo", true)),
       // A RPC limita campos históricos que podem conter dados enormes.
@@ -241,13 +241,38 @@ serve(async (req) => {
 
 
 
-    // Music data
-    const currentMusic = musicHistory[0] || null;
+    // Music data: prioriza dashboard_items (música ao vivo) sobre histórico
+    const dashboard = (userSettings?.dashboard_items as any) || {};
+    const stationName = empresa?.nome || "House Mix Emissora";
+    let currentMusic: any = null;
+    
+    // Tenta usar dados da aba "Música no Ar" (em tempo real via useGlobalMusicSync)
+    if (dashboard.music_current_title || dashboard.music_current_artist) {
+      currentMusic = {
+        musica: dashboard.music_current_title || "Programação Musical",
+        artista: dashboard.music_current_artist || stationName,
+        capa: dashboard.music_current_cover || "",
+        artista_img_url: dashboard.music_deezer_artist_img || "",
+      };
+    } else if (musicHistory.length > 0) {
+      // Fallback: usa histórico quando não há dado de música ao vivo
+      currentMusic = musicHistory[0] || null;
+    }
+    
+    if (!currentMusic) {
+      currentMusic = {
+        musica: "Programação Musical",
+        artista: stationName,
+        capa: "",
+        artista_img_url: "",
+      };
+    }
+
     const pastMusics = musicHistory.slice(1);
 
     // Fetch curiosity for current song if available
-    let curiosidade = "";
-    if (currentMusic?.musica || currentMusic?.artista) {
+    let curiosidade = dashboard.music_current_curiosity || "";
+    if (!curiosidade && (currentMusic?.musica || currentMusic?.artista)) {
       const { data: curData } = await sb
         .from("curiosidades_musicais")
         .select("curiosidade")
@@ -274,7 +299,6 @@ serve(async (req) => {
     // Positiva FM fica no Shopping Passeio das Águas, em Goiânia. Para outras
     // emissoras, usar a cidade configurada em user_settings para o tempo.
     const cityName = userSettings.weather_city || "Não informada";
-    const stationName = empresa?.nome || "House Mix Emissora";
     const stationLogo = empresa?.logo || "";
     const [
       stationLogoPng, currentMusicCoverPng, currentProgramLogoPng,
