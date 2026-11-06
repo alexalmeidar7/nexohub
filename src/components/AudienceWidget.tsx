@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings, FileBarChart, Loader2, Calendar as CalendarIcon, Trophy, X, TrendingUp, TrendingDown, Minus, Bell, Download, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1841,9 +1842,8 @@ function AudienceReportDialog({
               <>
                 <div className="flex items-center gap-2 rounded-full px-4 py-1.5" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
                   <CalendarIcon size={14} style={{ color: CYAN }} />
-                  <input
-                    type="date"
-                    value={date}
+                  <DateInput
+                                      value={date}
                     onChange={(e) => setDate(e.target.value)}
                     className="text-xs font-bold outline-none bg-transparent"
                     style={{ color: DARK, fontFamily: "Montserrat, sans-serif" }}

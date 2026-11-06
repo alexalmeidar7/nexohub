@@ -143,6 +143,14 @@ Deno.serve(async (req: Request) => {
       const video = videoValues.some(n => n !== null) ? videoValues.reduce<number>((sum, n) => sum + (n ?? 0), 0) : null;
       if (audio === null && video === null) { skipped++; continue; }
 
+      // Leitura individual usada para a média do programa; falha aqui não impede o pico diário.
+      const sampleResponse = await fetch(`${base}/rest/v1/audiencia_amostras`, {
+        method: "POST",
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ user_id: userId, programa: program, audio, video, coletado_em: now.toISOString() }),
+      });
+      if (!sampleResponse.ok) failures.push(`${userId}: sample ${sampleResponse.status}`);
+
       // Keep one row per program per local calendar day. During the show, update
       // the row with the peak concurrent audience instead of creating a row
       // every time the streaming count changes.

@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -88,9 +89,8 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
           <div>
             <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO.DARK }}>Data</label>
             <div className="relative">
-              <Input 
-                type="date" 
-                value={data} 
+              <DateInput 
+                              value={data} 
                 onChange={e => setData(e.target.value)}
                 className="pl-10 h-11 rounded-full"
                 style={{ border: `2px solid ${NEXO.CYAN}`, backgroundColor: NEXO.WHITE, color: NEXO.DARK }}

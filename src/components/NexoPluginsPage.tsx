@@ -95,7 +95,7 @@ export default function NexoPluginsPage() {
   }, []);
 
   return (
-    <section className="min-h-full rounded-2xl bg-white p-5 text-slate-900 sm:p-8">
+    <section className="min-h-full p-5 text-slate-900 sm:p-8">
       <header className="mb-8">
         <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
           <Package size={15} /> House Mix · Ferramentas

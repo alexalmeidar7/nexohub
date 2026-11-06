@@ -4,6 +4,8 @@ import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { readMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { getZonedNow } from "@/lib/onAirResolver";
+import { getApresentadores } from "@/components/ApresentadorForm";
+import { resolvePresenterForProgram, resolveSafePresenterPhoto } from "@/lib/onAirPresenterResolver";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -880,10 +882,13 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     // A grade pertence à emissora; subusuários sempre leem a grade do titular.
     let query = supabase
       .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentador_id, apresentadores_ids, user_id, apresentadores(id, nome, foto)")
       .eq("user_id", ownerId);
 
-    const { data, error } = await query.order("horario_inicio");
+    const [{ data, error }, presenterList] = await Promise.all([
+      query.order("horario_inicio"),
+      getApresentadores(ownerId, user.email).catch(() => []),
+    ]);
     
     if (error) {
       console.error("Error loading programs:", error);
@@ -891,7 +896,16 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
     }
 
     if (data) {
-      const mapped = data.map(normalizeProgramaRecord);
+      const mapped = data.map((row: any) => {
+        const program = normalizeProgramaRecord(row);
+        const resolved = resolvePresenterForProgram(row, presenterList, ownerId);
+        if (resolved) {
+          program.apresentador_nome = resolved.nome || program.apresentador_nome;
+          program.apresentador_foto =
+            resolveSafePresenterPhoto(resolved.foto, resolved.nome, ownerId) || program.apresentador_foto;
+        }
+        return program;
+      });
       try {
         const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
         if (savedOrder.length > 0) {
@@ -1108,7 +1122,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
         
         // Auto-connect if it was connected before reload
         const lastConnectedId = localStorage.getItem(`vmix_last_connected_${user.id}`);
-        if (lastConnectedId === def.id) {
+        if (lastConnectedId === def.id && forcedConnected) {
           setTimeout(() => {
             connectToVmixRef.current?.(true);
           }, 800);
@@ -1727,7 +1741,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
   // Reconecta em segundo plano se esta conexão já havia sido estabelecida.
   // Não navega, não recarrega a página e não exibe alertas repetidos durante a tentativa.
   useEffect(() => {
-    if (!user?.id || !savedUrl || !selectedConnectionId || connected || connecting) return;
+    if (!forcedConnected || !user?.id || !savedUrl || !selectedConnectionId || connected || connecting) return;
     let shouldReconnect = false;
     try {
       shouldReconnect = localStorage.getItem(`vmix_last_connected_${user.id}`) === selectedConnectionId;
@@ -1737,7 +1751,7 @@ export default function VmixPage({ forcedConnected = false, cleanLayout = false,
       void connectToVmixRef.current?.(true);
     }, 4000);
     return () => window.clearTimeout(retryId);
-  }, [user?.id, savedUrl, selectedConnectionId, connected, connecting]);
+  }, [user?.id, savedUrl, selectedConnectionId, connected, connecting, forcedConnected]);
 
   const resolveInputKey = useCallback((inputKey: string | undefined): string | undefined => {
     if (!inputKey || !inputKey.includes("-")) return inputKey;

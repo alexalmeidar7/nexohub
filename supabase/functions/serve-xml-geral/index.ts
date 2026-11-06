@@ -202,15 +202,15 @@ serve(async (req) => {
 
     let currentProgram: any = programas.find((p: any) => {
       const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
-      if (dias.length > 0 && !dias.includes(currentDayName)) return false;
-      const ini = (p.horario_inicio || "").slice(0, 5);
-      const fim = (p.horario_fim || "").slice(0, 5);
+      const ini = normTime(p.horario_inicio);
+      const fim = normTime(p.horario_fim);
       if (ini <= fim) {
-        return currentHourStr >= ini && currentHourStr < fim;
+        return dias.includes(currentDayName) && currentHourStr >= ini && currentHourStr < fim;
       }
-      // Crosses midnight
-      return currentHourStr >= ini || currentHourStr < fim;
-    }) || programas[0] || null;
+      const yesterdayName = dayNames[(dayNames.indexOf(currentDayName) + 6) % 7];
+      return (dias.includes(currentDayName) && currentHourStr >= ini) ||
+        (dias.includes(yesterdayName) && currentHourStr < fim);
+    }) || null;
 
     // Next program
     let nextProgram: any = null;
@@ -219,21 +219,13 @@ serve(async (req) => {
       nextProgram = programas[(idx + 1) % programas.length];
     }
 
-    // Presenter for current program
+    // Presenter for current program (apenas o vinculado ao programa no ar)
     let currentPresenter: any = null;
     if (currentProgram) {
       const apId = currentProgram.apresentador_id || (currentProgram.apresentadores_ids && currentProgram.apresentadores_ids[0]);
       if (apId) {
         currentPresenter = apresentadores.find((a: any) => a.id === apId);
       }
-      if (!currentPresenter && currentProgram.nome) {
-        currentPresenter = apresentadores.find((a: any) =>
-          a.nome && (currentProgram.nome.toLowerCase().includes(a.nome.toLowerCase()) || a.nome.toLowerCase().includes(currentProgram.nome.toLowerCase()))
-        );
-      }
-    }
-    if (!currentPresenter && apresentadores.length > 0) {
-      currentPresenter = apresentadores[0];
     }
 
     // Next presenter

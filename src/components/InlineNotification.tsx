@@ -51,6 +51,7 @@ export default function InlineNotification(_props: Props) {
     function onNotify(e: Event) {
       const d = (e as CustomEvent<NotifyDetail>).detail;
       if (!d?.text) return;
+      if (document.body.classList.contains("nexo-status-chip-on")) return;
       if (timerRef.current) clearTimeout(timerRef.current);
       setMsg(d);
       setVisible(true);

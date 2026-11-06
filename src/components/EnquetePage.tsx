@@ -1,3 +1,4 @@
+import { DateInput } from "@/components/ui/date-input";
 import { useState, useEffect } from "react";
 import { Tag, Plus, Trash2, CalendarPlus, Save, Loader2, X, HelpCircle, ExternalLink, Radio, StopCircle, Copy, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -384,9 +385,8 @@ export default function EnquetePage({ effectiveUserId }: { effectiveUserId?: str
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748b] block mb-1.5">Data da Enquete</label>
-                  <Input 
-                    type="date"
-                    value={formData.data_enquete}
+                  <DateInput 
+                                      value={formData.data_enquete}
                     onChange={e => setFormData(prev => ({ ...prev, data_enquete: e.target.value }))}
                     className="rounded-full h-11 bg-white border-slate-200/90 text-xs font-semibold uppercase px-5 focus:border-[#0055ff]"
                   />

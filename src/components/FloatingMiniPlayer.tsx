@@ -7,6 +7,7 @@ import { readMusicData, writeMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStor
 import { getStationDatabaseSync } from "@/lib/stationDatabaseService";
 import { findClientAccountByEmail, findClientAccountById } from "@/lib/clientAuthAccounts";
 import { fetchTrackCover, getTrackCoverSync } from "@/lib/musicCoverResolver";
+import { mountPlayerVideoHost, parkPlayerVideoHost } from "@/lib/playerVideoHost";
 
 interface MusicState {
   displayArt: string | null;
@@ -94,6 +95,20 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
     return INITIAL;
   });
   const [showControls, setShowControls] = useState(false);
+  const wantVideoBox = String(state.activeChannel?.type || "").includes("video") && (state.isPlaying || state.isLoading);
+  const [videoRendered, setVideoRendered] = useState(wantVideoBox);
+  useEffect(() => {
+    if (wantVideoBox) {
+      setVideoRendered(true);
+      return;
+    }
+    const t = window.setTimeout(() => setVideoRendered(false), 400);
+    return () => clearTimeout(t);
+  }, [wantVideoBox]);
+  const videoSlotRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) mountPlayerVideoHost(node);
+    else parkPlayerVideoHost();
+  }, []);
   const autoHideTimer = useRef<number | null>(null);
 
   // Fallback and listener for continuous updates across all pages
@@ -291,7 +306,10 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
     ? (state.displayArt || state.currentMusic?.capa || getTrackCoverSync(targetTitulo, targetArtista) || null)
     : null;
 
-  const currentKey = `${targetTitulo}:::${targetArtista}:::${targetArt}`;
+  // A animação depende só de música/artista; a capa que chega depois entra sem reanimar.
+  const currentKey = `${targetTitulo}:::${targetArtista}`;
+  const latestTargetRef = useRef({ titulo: targetTitulo, artista: targetArtista, art: targetArt });
+  latestTargetRef.current = { titulo: targetTitulo, artista: targetArtista, art: targetArt };
 
   const [displayedInfo, setDisplayedInfo] = useState<DisplayedMusicInfo>(() => ({
     titulo: targetTitulo,
@@ -304,37 +322,19 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
   const animTimerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Synchronized entrance and exit animations for: imagem da capa, nome da música e nome do artista
   useEffect(() => {
-    if (!lastKeyRef.current || lastKeyRef.current === ":::::null" || lastKeyRef.current === ":::") {
-      lastKeyRef.current = currentKey;
-      setDisplayedInfo({
-        titulo: targetTitulo,
-        artista: targetArtista,
-        art: targetArt,
-      });
-      return;
-    }
-
     if (lastKeyRef.current !== currentKey) {
       lastKeyRef.current = currentKey;
 
       if (animTimerRef.current) clearTimeout(animTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
-      // 1. Exit animation: old cover scales down/fades, text slides up/fades
       setAnimPhase("exiting");
 
       animTimerRef.current = window.setTimeout(() => {
-        // 2. Prepare new content while opacity is 0
-        setDisplayedInfo({
-          titulo: targetTitulo,
-          artista: targetArtista,
-          art: targetArt,
-        });
+        setDisplayedInfo({ ...latestTargetRef.current });
         setAnimPhase("entering-prep");
 
-        // 3. Entrance animation: slide up into position and scale into place
         rafRef.current = requestAnimationFrame(() => {
           rafRef.current = requestAnimationFrame(() => {
             setAnimPhase("idle");
@@ -342,7 +342,16 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
         });
       }, 220);
     }
-  }, [currentKey, targetTitulo, targetArtista, targetArt]);
+  }, [currentKey]);
+
+  // Capa resolvida depois do texto: atualiza sem animação.
+  useEffect(() => {
+    if (lastKeyRef.current !== currentKey) return;
+    setDisplayedInfo(prev => {
+      const t = latestTargetRef.current;
+      return prev.titulo === t.titulo && prev.artista === t.artista && prev.art !== t.art ? { ...prev, art: t.art } : prev;
+    });
+  }, [targetArt, currentKey]);
 
   useEffect(() => {
     return () => {
@@ -496,6 +505,27 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
           onMouseLeave={handlePlayerMouseLeave}
           style={{ userSelect: "none" }}
         >
+          {/* Vídeo discreto: aparece acima do player quando o canal de vídeo está tocando */}
+          {videoRendered && (
+            <div
+              ref={videoSlotRef}
+              className="fmp-video-box"
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 12px)",
+                left: 0,
+                width: 240,
+                height: 135,
+                borderRadius: 20,
+                overflow: "hidden",
+                background: "#000",
+                border: "1px solid rgba(255,255,255,0.16)",
+                boxShadow: "0 14px 40px rgba(0,0,0,0.55), 0 0 18px rgba(0,85,255,0.22)",
+                animation: `${wantVideoBox ? "fmp-video-in" : "fmp-video-out"} 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+                pointerEvents: wantVideoBox ? "auto" : "none",
+              }}
+            />
+          )}
           {/* Album art square (100x100px) — Hovering reveals player controls */}
           <div
             style={{
