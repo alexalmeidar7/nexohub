@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Code2, Copy, Check, Loader2, ExternalLink } from "lucide-react";
+import { Code2, Copy, Check, Loader2, ExternalLink, Route } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import XmlXPathDialog from "./XmlXPathDialog";
 
 interface XmlLinkRowProps {
   label: string;
@@ -78,7 +79,8 @@ export default function XmlLinkRow({
   supabaseUrl,
 }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
-  const [url, setUrl] = useState<string>(externalUrl || "");
+  const [xpathOpen, setXpathOpen] = useState(false);
+  const [url,  setUrl] = useState<string>(externalUrl || "");
   const [uploading, setUploading] = useState(false);
   const lastUploadSignatureRef = useRef<string>("");
 
@@ -234,6 +236,16 @@ export default function XmlLinkRow({
       {/* Ações à direita */}
       <div className="shrink-0 flex items-center gap-1.5">
         {ready && url && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setXpathOpen(true); }}
+            title="Ver XPath de cada nó para o vMix"
+            className="h-8 px-2.5 rounded-full flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#0055ff] bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
+          >
+            <Route size={12} /> XPath
+          </button>
+        )}
+        {ready && url && (
           <a
             href={url}
             target="_blank"
@@ -265,6 +277,15 @@ export default function XmlLinkRow({
             <Copy size={16} className="text-white" strokeWidth={2.5} />
           )}
         </div>
+      </div>
+      <div onClick={(e) => e.stopPropagation()}>
+        <XmlXPathDialog
+          open={xpathOpen}
+          onOpenChange={setXpathOpen}
+          title={displayName}
+          url={url}
+          xmlContent={externalUrl ? undefined : xmlContent}
+        />
       </div>
     </div>
   );
