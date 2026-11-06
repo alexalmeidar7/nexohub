@@ -273,7 +273,6 @@ serve(async (req) => {
       ? `${profile.cidade}${profile.estado ? " - " + profile.estado : ""}`
       : (ownerId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" ? "Goiânia - GO" : "Não informada");
     const stationName = empresa?.nome || "House Mix Emissora";
-    const stationFreq = ownerId === "452ebd1e-61a0-42dd-bf80-231a3f426c83" ? "99.1 FM" : "FM";
     const stationLogo = empresa?.logo || "";
     const [
       stationLogoPng, currentMusicCoverPng, currentProgramLogoPng,
@@ -296,15 +295,12 @@ serve(async (req) => {
     // Assemble General XML
     const xmlParts: string[] = [];
     xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>');
-    xmlParts.push('<geral versao="1.0">');
+    xmlParts.push('<geral>');
     xmlParts.push(`  <gerado_em>${new Date().toISOString()}</gerado_em>`);
 
     // 1. ESTACAO
     xmlParts.push('  <estacao>');
-    xmlParts.push(`    <nome>${esc(stationName)}</nome>`);
     xmlParts.push(`    <slug>${esc(rawSlug || "default")}</slug>`);
-    xmlParts.push(`    <cidade>${esc(cityName)}</cidade>`);
-    xmlParts.push(`    <frequencia>${esc(stationFreq)}</frequencia>`);
     xmlParts.push(`    <logo_url>${esc(stationLogoPng)}</logo_url>`);
     xmlParts.push(`    <timezone>${esc(empresa?.timezone || "America/Sao_Paulo")}</timezone>`);
     xmlParts.push('  </estacao>');
@@ -318,7 +314,6 @@ serve(async (req) => {
     xmlParts.push(`      <capa_url>${esc(currentMusicCoverPng)}</capa_url>`);
     xmlParts.push(`      <curiosidade>${esc(curiosidade)}</curiosidade>`);
     xmlParts.push(`      <texto_completo>${esc(`${currentMusic?.musica || "Programação"} - ${currentMusic?.artista || stationName}`)}</texto_completo>`);
-    xmlParts.push(`      <atualizado_em>${esc(currentMusic?.created_at || now.toISOString())}</atualizado_em>`);
     xmlParts.push('    </musica_atual>');
 
     xmlParts.push('    <programa_atual>');
@@ -570,7 +565,6 @@ serve(async (req) => {
     // 6. PATROCINADORES / LOGOS
     xmlParts.push('  <patrocinadores>');
     xmlParts.push('    <programa_no_ar>');
-    xmlParts.push(`      <programa_id>${esc(onAirProgram?.id || "")}</programa_id>`);
     xmlParts.push(`      <programa_nome>${esc(onAirProgram?.nome || "")}</programa_nome>`);
     xmlParts.push(sponsorXml(selectedSponsor?.nome, sponsorLogoPng, "      "));
     xmlParts.push('    </programa_no_ar>');

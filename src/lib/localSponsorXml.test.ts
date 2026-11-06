@@ -25,8 +25,15 @@ describe("local sponsor feeds", () => {
   });
 
   it("uses the same current sponsor in the general feed and removes the old lists", () => {
-    const geral = `<geral><musica>Preservada</musica><patrocinadores><patrocinador><nome>Antigo</nome></patrocinador><programa_no_ar><programa_id>123</programa_id><patrocinador><nome>Antigo</nome></patrocinador></programa_no_ar></patrocinadores></geral>`;
+    const geral = `<geral versao="1.0"><estacao><nome>Emissora</nome><cidade>Cidade</cidade><frequencia>FM</frequencia><slug>estacao</slug></estacao><no_ar><musica_atual><titulo>Preservado</titulo><atualizado_em>horario</atualizado_em></musica_atual></no_ar><musica>Preservada</musica><patrocinadores><patrocinador><nome>Antigo</nome></patrocinador><programa_no_ar><programa_id>123</programa_id><programa_nome>Programa</programa_nome><patrocinador><nome>Antigo</nome></patrocinador></programa_no_ar></patrocinadores></geral>`;
     const document = parse(localGeralXml(geral, logos));
+    expect(document.documentElement.hasAttribute("versao")).toBe(false);
+    for (const selector of ["estacao > nome", "estacao > cidade", "estacao > frequencia", "no_ar > musica_atual > atualizado_em", "patrocinadores > programa_no_ar > programa_id"]) {
+      expect(document.querySelector(selector)).toBeNull();
+    }
+    expect(document.querySelector("estacao > slug")?.textContent).toBe("estacao");
+    expect(document.querySelector("no_ar > musica_atual > titulo")?.textContent).toBe("Preservado");
+    expect(document.querySelector("patrocinadores > programa_no_ar > programa_nome")?.textContent).toBe("Programa");
     expect(document.querySelector("musica")?.textContent).toBe("Preservada");
     expect(document.querySelectorAll("patrocinador")).toHaveLength(1);
     expect(document.querySelector("patrocinador > nome")?.textContent).toBe("A & B");

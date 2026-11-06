@@ -48,12 +48,28 @@ export function localLogosXml(xml: string): string {
 export function localGeralXml(xml: string, logosXml: string): string {
   const document = parseXml(xml);
   if (document.documentElement.tagName !== "geral") throw new Error("XML geral inválido.");
+  document.documentElement.removeAttribute("versao");
+  const station = directChild(document.documentElement, "estacao");
+  if (station) {
+    for (const name of ["nome", "cidade", "frequencia"]) {
+      for (const child of Array.from(station.children)) {
+        if (child.tagName === name) child.remove();
+      }
+    }
+  }
+  const onAir = directChild(document.documentElement, "no_ar");
+  const music = onAir && directChild(onAir, "musica_atual");
+  if (music) {
+    for (const child of Array.from(music.children)) {
+      if (child.tagName === "atualizado_em") child.remove();
+    }
+  }
   const sponsor = selectSponsor(parseXml(logosXml));
   const existing = directChild(document.documentElement, "patrocinadores");
   const container = document.createElement("patrocinadores");
   const program = document.createElement("programa_no_ar");
   const previousProgram = existing && directChild(existing, "programa_no_ar");
-  for (const name of ["programa_id", "programa_nome"]) {
+  for (const name of ["programa_nome"]) {
     const old = previousProgram && directChild(previousProgram, name);
     if (old) program.appendChild(old.cloneNode(true));
   }
