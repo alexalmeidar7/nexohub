@@ -162,6 +162,9 @@ export async function vectorizeWhiteLogo1080(dataUrl: string): Promise<string> {
     }
   }
   const bins = new Map<string, { count: number; sum: number[] }>();
+  // Arte que já tem borda transparente não precisa de remoção de fundo: só vira branco.
+  const edgeProbes = (Math.ceil((right - left + 1) / 8) + Math.ceil((bottom - top + 1) / 8)) * 4;
+  const alreadyTransparent = samples.length < edgeProbes * 0.25;
   for (const rgb of samples) {
     const key = rgb.map(v => Math.round(v / 24)).join(",");
     const item = bins.get(key);
@@ -188,7 +191,7 @@ export async function vectorizeWhiteLogo1080(dataUrl: string): Promise<string> {
   };
   for (let x = 0; x < size; x++) { push(x); push((size - 1) * size + x); }
   for (let y = 0; y < size; y++) { push(y * size); push(y * size + size - 1); }
-  while (head < tail) {
+  while (!alreadyTransparent && head < tail) {
     const index = queue[head++];
     const x = index % size, y = Math.floor(index / size), i = index * 4;
     if (px[i + 3] > 0) {

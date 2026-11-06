@@ -200,6 +200,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   // AI Logo Transformation states
   const [transformModalOpen, setTransformModalOpen] = useState(false);
   const [clientSelectedFile, setClientSelectedFile] = useState<File | null>(null);
+  const [adjustTarget, setAdjustTarget] = useState<Logo | null>(null);
   const clientLogoInputRef = useRef<HTMLInputElement>(null);
 
   const isProgramSelected = Boolean(
@@ -640,6 +641,54 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     return await fileToDataUrl(file);
   };
 
+  const startAdjustLogo = async (logo: Logo) => {
+    const src = sponsorLogoSrc(logo.logo_url, logo.nome);
+    if (src === MISSING_LOGO_PLACEHOLDER) {
+      toast({ title: "Esta logo não tem imagem", description: "Envie o arquivo da logo pela edição antes de ajustar.", variant: "destructive" });
+      return;
+    }
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const file = new File([blob], `${(logo.nome || "logo").trim() || "logo"}.png`, { type: blob.type || "image/png" });
+      setAdjustTarget(logo);
+      setClientSelectedFile(file);
+      setTransformModalOpen(true);
+    } catch (err: any) {
+      toast({ title: "Não foi possível abrir a imagem da logo", description: err?.message, variant: "destructive" });
+    }
+  };
+
+  // Substitui a imagem da logo existente pela versão ajustada (mesmo registro, mesmo programa).
+  const replaceLogoImage = async (target: Logo, file: File) => {
+    const activeUid =
+      dataUserId ||
+      effectiveUserId ||
+      resolveStationUid(dataUserId, effectiveUserId, user) ||
+      user?.id ||
+      "";
+    try {
+      const logo_url = await uploadLogo(file);
+      await updateLogoRecord(target, target.id, { logo_url }, activeUid);
+      if (activeUid) {
+        const localList = getLocalLogos(activeUid);
+        const idx = localList.findIndex((l) => l.id === target.id);
+        if (idx >= 0) {
+          localList[idx] = { ...localList[idx], logo_url };
+          saveLocalLogos(activeUid, localList);
+        } else {
+          saveLocalLogos(activeUid, [{ ...target, logo_url }, ...localList]);
+        }
+      }
+      toast({ title: "Logo ajustada e salva!", description: `"${target.nome}" agora está em branco flat com fundo transparente.` });
+      await loadData();
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar a logo ajustada", description: err?.message, variant: "destructive" });
+      throw err;
+    }
+  };
+
   const handleApproveAndSaveAiLogo = async (result: {
     file: File;
     nome: string;
@@ -647,6 +696,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     dataFinal: string;
     version: string;
   }) => {
+    if (adjustTarget) return replaceLogoImage(adjustTarget, result.file);
     const { file, nome, programaIds: targets, dataFinal: expDate } = result;
     const activeUid =
       dataUserId ||
@@ -1791,7 +1841,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                     <div className="absolute left-[calc(100%+8px)] top-0 z-[100] flex w-28 flex-col rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.18)] opacity-0 invisible translate-x-1 group-hover:opacity-100 group-hover:visible group-hover:translate-x-0 group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150">
                                       <button type="button" onClick={(e) => { e.stopPropagation(); dragItem.current = logo; toast({ title: "Logo selecionada", description: "Clique com o botão direito no programa de destino para copiar." }); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-semibold text-slate-700 hover:bg-blue-50 hover:text-[#0055ff] transition-colors" title="Copiar para outro programa"><Copy size={13} /><span>Copiar</span></button>
                                       <button type="button" onClick={(e) => { e.stopPropagation(); handleSoftDelete(logo.id); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Deletar logo"><Trash2 size={13} /><span>Deletar</span></button>
-                                      <button type="button" onClick={(e) => { e.stopPropagation(); startFullEdit(logo); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0055ff] transition-colors" title="Ajustar logo"><Settings2 size={13} /><span>Ajustar logo</span></button>
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); startAdjustLogo(logo); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0055ff] transition-colors" title="Converter para flat branco com fundo transparente"><Settings2 size={13} /><span>Ajustar logo</span></button>
                                     </div>
                                   </div>
                                   {logo.nome && (
@@ -1912,11 +1962,13 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             onClose={() => {
               setTransformModalOpen(false);
               setClientSelectedFile(null);
+              setAdjustTarget(null);
             }}
             initialFile={clientSelectedFile}
             programas={programas}
-            defaultExpirationDate={dataFinal || defaultExpiration}
-            preselectedProgramIds={editingFullId ? [programaId] : programaIds}
+            defaultExpirationDate={adjustTarget?.data_final || dataFinal || defaultExpiration}
+            preselectedProgramIds={adjustTarget ? [adjustTarget.programa_id || "__none__"] : editingFullId ? [programaId] : programaIds}
+            autoSave={!!adjustTarget}
             onApproveAndSave={handleApproveAndSaveAiLogo}
           />
         </Suspense>

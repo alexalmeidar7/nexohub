@@ -26,6 +26,7 @@ import {
   transformLogoWithBackend,
   dataUrlToFile,
   uploadToPngDataUrl,
+  vectorizeWhiteLogo1080,
 } from "@/services/logoTransformService";
 
 
@@ -50,6 +51,8 @@ interface LogoTransformModalProps {
   programas: ProgramItem[];
   defaultExpirationDate?: string;
   preselectedProgramIds?: string[];
+  /** Salva a primeira versão gerada automaticamente, sem passo de aprovação. */
+  autoSave?: boolean;
   onApproveAndSave: (result: {
     file: File;
     nome: string;
@@ -66,6 +69,7 @@ export function LogoTransformModal({
   programas,
   defaultExpirationDate = "2026-12-31",
   preselectedProgramIds,
+  autoSave = false,
   onApproveAndSave,
 }: LogoTransformModalProps) {
   // Step state: 'preview' (review & retry) -> 'select_program' (pick target program)
@@ -144,15 +148,26 @@ export function LogoTransformModal({
         // Processamento pela API oficial da OpenAI via Edge Function própria.
         // Não usa o gateway de IA nem os créditos da Lovable.
         setProgress(24);
-        const transformed = await transformLogoWithBackend({
+        let transformed = await transformLogoWithBackend({
           originalDataUrl: origUrl,
           sessionId: sid,
           version: "version_01",
         });
+        let usedLocalFallback = false;
         if (!transformed.success || !transformed.imageBase64) {
-          throw new Error(transformed.error || "Não foi possível ajustar a logo pela API da OpenAI.");
+          try {
+            setProgress(60);
+            const localUrl = await vectorizeWhiteLogo1080(origUrl);
+            transformed = { ...transformed, success: true, imageBase64: localUrl, isAiGenerated: false };
+            usedLocalFallback = true;
+          } catch {
+            throw new Error(transformed.error || "Não foi possível ajustar a logo pela API da OpenAI.");
+          }
         }
         setProgress(100);
+        if (usedLocalFallback) {
+          setInfoNotice("O ajuste por IA está indisponível; a logo foi convertida localmente para branco flat com fundo transparente.");
+        }
 
         const v1: LogoTransformVersion = {
           id: "version_01",
@@ -164,6 +179,10 @@ export function LogoTransformModal({
 
         setVersions([...initialVersionsList, v1]);
         setActiveVersionId("version_01");
+        if (autoSave) {
+          setLoading(false);
+          await saveVersion(v1, cleanName);
+        }
       } catch (err: any) {
         setTransformFailed(true);
         setErrorMessage(err?.message || "Erro ao processar imagem da logo.");
@@ -227,9 +246,12 @@ export function LogoTransformModal({
   };
 
   // Action: APROVAR — salva direto no(s) programa(s) já escolhido(s) no campo PROGRAMA
-  const handleApprove = async () => {
+  const handleApprove = () => {
     if (!currentVersion || currentVersion.id === "original") return;
-    const approved = currentVersion;
+    return saveVersion(currentVersion, logoName);
+  };
+
+  const saveVersion = async (approved: LogoTransformVersion, name: string) => {
     setApprovedVersionId(approved.id);
     setVersions((prev) =>
       prev.map((v) => (v.id === approved.id ? { ...v, status: "approved" } : v))
@@ -237,10 +259,10 @@ export function LogoTransformModal({
     const targets = (preselectedProgramIds || []).filter((p) => p && p !== "__none__");
     setSavingFinal(true);
     try {
-      const finalFileName = `${(logoName || "LOGO_PATROCINADOR").toLowerCase().replace(/[^a-z0-9]/g, "_")}_1080.png`;
+      const finalFileName = `${(name || "LOGO_PATROCINADOR").toLowerCase().replace(/[^a-z0-9]/g, "_")}_1080.png`;
       await onApproveAndSave({
         file: dataUrlToFile(approved.dataUrl, finalFileName),
-        nome: logoName.trim().toUpperCase() || "PATROCINADOR",
+        nome: name.trim().toUpperCase() || "PATROCINADOR",
         programaIds: targets.length ? targets : ["__none__"],
         dataFinal: expirationDate,
         version: approved.id,
