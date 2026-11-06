@@ -505,18 +505,17 @@ export default function FloatingMiniPlayer({ isBehindPages = false, effectiveUse
           onMouseLeave={handlePlayerMouseLeave}
           style={{ userSelect: "none" }}
         >
-          {/* Vídeo discreto: aparece acima do player quando o canal de vídeo está tocando */}
+          {/* Vídeo discreto: aparece à esquerda da capa quando o canal de vídeo está tocando */}
           {videoRendered && (
             <div
               ref={videoSlotRef}
               className="fmp-video-box"
               style={{
-                position: "absolute",
-                bottom: "calc(100% + 12px)",
-                left: 0,
-                width: 240,
-                height: 135,
-                borderRadius: 20,
+                flexShrink: 0,
+                position: "relative",
+                width: 178,
+                height: 100,
+                borderRadius: 8,
                 overflow: "hidden",
                 background: "#000",
                 border: "1px solid rgba(255,255,255,0.16)",
