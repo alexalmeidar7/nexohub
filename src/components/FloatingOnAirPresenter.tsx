@@ -207,7 +207,11 @@ export default function FloatingOnAirPresenter({
   useEffect(() => {
     resolveOnAir();
     const iv = setInterval(resolveOnAir, 15000); // refresh every 15s
-    return () => clearInterval(iv);
+    window.addEventListener("apresentadores-updated", resolveOnAir);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener("apresentadores-updated", resolveOnAir);
+    };
   }, [resolveOnAir]);
 
   // Realtime subscription for instant updates on schedules or presenter changes

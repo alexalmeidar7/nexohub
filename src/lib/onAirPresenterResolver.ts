@@ -474,6 +474,26 @@ export function resolvePresenterForProgram(
     return true;
   });
 
+  const registeredForCanonical = (canonical: ResolvedPresenter) => {
+    const byId = safeList.find((a) => a.id === canonical.id);
+    if (byId) return byId;
+    const name = normalizeName(canonical.nome);
+    const matches = safeList.filter((a) => normalizeName(a.nome) === name);
+    return matches.length === 1 ? matches[0] : null;
+  };
+
+  const withRegisteredData = (canonical: ResolvedPresenter): ResolvedPresenter => {
+    const registered = registeredForCanonical(canonical);
+    if (!registered) return canonical;
+    return {
+      id: registered.id,
+      nome: registered.nome,
+      foto: registered.foto && !registered.foto.includes("/avatars/usr-") ? registered.foto : canonical.foto,
+      instagram: registered.instagram || canonical.instagram,
+      stationKey: canonical.stationKey,
+    };
+  };
+
   const progName = program.nome || program.programa?.nome || "";
   const diasSemana = program.dias_semana || program.diasSemana || null;
 
@@ -486,7 +506,7 @@ export function resolvePresenterForProgram(
 
   if (apId) {
     // Look up in filtered station list — registered (database) data is ALWAYS authoritative
-    const found = (apresentadoresList || []).find((a) => a?.id === apId) || safeList.find((a) => a.id === apId);
+    const found = safeList.find((a) => a.id === apId);
     if (found) {
       const canonical = CANONICAL_PRESENTERS[apId];
       const isDead = !found.foto || found.foto.includes("/avatars/usr-");
@@ -501,7 +521,7 @@ export function resolvePresenterForProgram(
 
     // Look up in canonical directory
     if (CANONICAL_PRESENTERS[apId] && isCandidateAllowed(CANONICAL_PRESENTERS[apId])) {
-      return CANONICAL_PRESENTERS[apId];
+      return withRegisteredData(CANONICAL_PRESENTERS[apId]);
     }
 
     // Program has an explicitly registered presenter that we could not load:
@@ -513,15 +533,7 @@ export function resolvePresenterForProgram(
   const canonicalByProg = getCanonicalPresenterByProgramName(progName, diasSemana);
   if (canonicalByProg && isCandidateAllowed(canonicalByProg)) {
     // If user's list has custom presenter info with this ID, prefer it
-    const userCustom = safeList.find((a) => a.id === canonicalByProg.id);
-    const isDead = !userCustom?.foto || userCustom.foto.includes("/avatars/usr-");
-    return {
-      id: canonicalByProg.id,
-      nome: userCustom?.nome || canonicalByProg.nome,
-      foto: isDead ? canonicalByProg.foto : userCustom.foto,
-      instagram: userCustom?.instagram || canonicalByProg.instagram,
-      stationKey: canonicalByProg.stationKey,
-    };
+    return withRegisteredData(canonicalByProg);
   }
 
   // 3. Check if program title mentions any presenter name in the station's list
