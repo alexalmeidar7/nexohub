@@ -134,6 +134,7 @@ serve(async (req) => {
       batalhaRes,
       enquetesRes,
       quizRes,
+      noticiasRes,
     ] = await Promise.all([
       step("empresa", sb.from("empresa_config").select("nome, logo, timezone, endereco, site").eq("user_id", ownerId).maybeSingle()),
       step("profile", sb.from("profiles").select("cidade, estado").eq("user_id", ownerId).maybeSingle()),
@@ -146,6 +147,7 @@ serve(async (req) => {
       step("batalha", sb.from("batalhas_agendadas").select("artista1_nome, artista1_musica, artista1_porcentagem, artista1_imagem, artista2_nome, artista2_musica, artista2_porcentagem, artista2_imagem, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_batalha", today).order("horario_inicio", { ascending: false })),
       step("enquetes", sb.from("enquetes_agendadas").select("pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta, horario_inicio, horario_fim").eq("user_id", ownerId).eq("data_enquete", today).order("horario_inicio", { ascending: false })),
       step("quiz", sb.from("quiz_agendados").select("pergunta, resposta1, resposta2, resposta3, resposta4, resposta_correta, horario_inicio, horario_fim, explicacao, imagem_resposta").eq("user_id", ownerId).eq("data_quiz", today).order("horario_inicio", { ascending: false })),
+      step("noticias", sb.from("noticias").select("titulo, descricao, url, criada_em").eq("user_id", ownerId).eq("ativo", true).order("criada_em", { ascending: false }).limit(10)),
     ]);
 
 
@@ -156,6 +158,7 @@ serve(async (req) => {
     const apresentadores = apresentadoresRes.data || [];
     const musicHistory = musicHistoryRes.data || [];
     const logos = logosRes.data || [];
+    const noticias = noticiasRes.data || [];
     const toVmixImageUrl = (value: string) => ensureVmixPngUrl(sb, value, `vmix-geral/${ownerId}`);
     const onAirProgram = selectOnAirProgram(programas, now);
     const selectedSponsor = selectRotatingSponsor(logos, onAirProgram?.id || null, now);
@@ -206,29 +209,26 @@ serve(async (req) => {
       }
     }
 
-    // Busca a foto apenas dos locutores usados e somente quando for URL
-    // (fotos em base64 chegam a 2 MB e estouram a memoria da funcao)
+    // Busca a foto apenas dos locutores usados
     const fotoIds = [currentPresenter?.id, nextPresenter?.id].filter(Boolean);
     if (fotoIds.length > 0) {
       const { data: fotos } = await sb
         .from("apresentadores")
         .select("id, foto")
-        .in("id", fotoIds)
-        .like("foto", "http%");
+        .in("id", fotoIds);
       (fotos || []).forEach((f: any) => {
         if (currentPresenter?.id === f.id) currentPresenter.foto = f.foto;
         if (nextPresenter?.id === f.id) nextPresenter.foto = f.foto;
       });
     }
 
-    // Selo/thumb apenas dos programas exibidos e somente quando for URL
+    // Selo/thumb apenas dos programas exibidos
     const progIds = [currentProgram?.id, nextProgram?.id].filter(Boolean);
     if (progIds.length > 0) {
       const { data: selos } = await sb
         .from("programas")
         .select("id, selo, thumb")
-        .in("id", progIds)
-        .like("selo", "http%");
+        .in("id", progIds);
       (selos || []).forEach((p: any) => {
         if (currentProgram?.id === p.id) { currentProgram.selo = p.selo; currentProgram.thumb = p.thumb; }
         if (nextProgram?.id === p.id) { nextProgram.selo = p.selo; nextProgram.thumb = p.thumb; }
@@ -563,7 +563,23 @@ serve(async (req) => {
 
     xmlParts.push('  </interatividade>');
 
-    // 6. PATROCINADORES / LOGOS
+    // 6. TICKER / NOTÍCIAS
+    xmlParts.push('  <ticker>');
+    if (noticias.length > 0) {
+      xmlParts.push('    <noticias>');
+      noticias.forEach((noticia: any, idx: number) => {
+        xmlParts.push(`      <noticia numero="${idx + 1}">`);
+        xmlParts.push(`        <titulo>${esc(noticia.titulo || "")}</titulo>`);
+        xmlParts.push(`        <descricao>${esc(noticia.descricao || "")}</descricao>`);
+        xmlParts.push(`        <url>${esc(noticia.url || "")}</url>`);
+        xmlParts.push(`        <criada_em>${esc(noticia.criada_em || "")}</criada_em>`);
+        xmlParts.push('      </noticia>');
+      });
+      xmlParts.push('    </noticias>');
+    }
+    xmlParts.push('  </ticker>');
+
+    // 7. PATROCINADORES / LOGOS
     xmlParts.push('  <patrocinadores>');
     xmlParts.push('    <programa_no_ar>');
     xmlParts.push(`      <programa_nome>${esc(onAirProgram?.nome || "")}</programa_nome>`);

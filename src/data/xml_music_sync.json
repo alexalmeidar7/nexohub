@@ -20,5 +20,60 @@
     "source": "pasta",
     "deviceName": "IN - LIVE 2",
     "updated_at": "2026-10-10T22:25:46.526Z"
+  },
+  "positivafm": {
+    "titulo": "PÓS",
+    "artista": "FELIPE E RODRIGO",
+    "duracao": 168,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f0/05/5c/f0055c6d-16b0-f331-058e-703fd7b52590/1200220331840.jpg/600x600bb.jpg",
+    "horario": "",
+    "startTime": 1793791773000,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (6162f1cc)",
+    "updated_at": "2026-11-06T01:38:51.275Z"
+  },
+  "452ebd1e-61a0-42dd-bf80-231a3f426c83": {
+    "titulo": "PÓS",
+    "artista": "FELIPE E RODRIGO",
+    "duracao": 168,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f0/05/5c/f0055c6d-16b0-f331-058e-703fd7b52590/1200220331840.jpg/600x600bb.jpg",
+    "horario": "",
+    "startTime": 1793791773000,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (6162f1cc)",
+    "updated_at": "2026-11-06T01:38:51.275Z"
+  },
+  "positiva": {
+    "titulo": "PÓS",
+    "artista": "FELIPE E RODRIGO",
+    "duracao": 168,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f0/05/5c/f0055c6d-16b0-f331-058e-703fd7b52590/1200220331840.jpg/600x600bb.jpg",
+    "horario": "",
+    "startTime": 1793791773000,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (6162f1cc)",
+    "updated_at": "2026-11-06T01:38:51.275Z"
+  },
+  "p": {
+    "titulo": "PÓS",
+    "artista": "FELIPE E RODRIGO",
+    "duracao": 168,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f0/05/5c/f0055c6d-16b0-f331-058e-703fd7b52590/1200220331840.jpg/600x600bb.jpg",
+    "horario": "",
+    "startTime": 1793791773000,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (6162f1cc)",
+    "updated_at": "2026-11-06T01:38:51.275Z"
+  },
+  "sub_positiva_opec": {
+    "titulo": "PÓS",
+    "artista": "FELIPE E RODRIGO",
+    "duracao": 168,
+    "capa": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f0/05/5c/f0055c6d-16b0-f331-058e-703fd7b52590/1200220331840.jpg/600x600bb.jpg",
+    "horario": "",
+    "startTime": 1793791773000,
+    "source": "pasta",
+    "deviceName": "Windows - Chrome (6162f1cc)",
+    "updated_at": "2026-11-06T01:38:51.275Z"
   }
 }

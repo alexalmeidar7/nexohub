@@ -441,7 +441,9 @@ export default function ConfiguracoesPage({
             },
           }),
         });
-      } catch {}
+      } catch (e) {
+        console.warn("Local sync failed:", e);
+      }
 
       const toBigInt = (v?: string) => {
         if (!v) return null;
@@ -473,9 +475,22 @@ export default function ConfiguracoesPage({
           updated_at: new Date().toISOString(),
         } as any, { onConflict: "user_id" });
         if (configSaveError) throw configSaveError;
+        toast.success("Configurações salvas com sucesso!");
       } catch (err: any) {
         console.error("Supabase empresa_config upsert failed:", err);
-        toast.error("As alterações ficaram no navegador, mas não foram confirmadas no banco: " + (err?.message || "falha ao salvar."));
+        const message = err?.message || "falha ao salvar";
+        const errorCode = err?.code;
+        
+        if (errorCode === "42P01") {
+          toast.error("Tabela empresa_config não existe no banco. Contacte o suporte.");
+        } else if (errorCode === "42501" || message.includes("permission")) {
+          toast.error("Sem permissão para salvar. Verifique suas credenciais.");
+        } else {
+          toast.error("As alterações ficaram no navegador, mas não foram confirmadas no banco: " + message);
+        }
+        
+        // Clear localStorage on persistent failure
+        console.warn("Failed to persist to database; keeping local cache for now");
       }
     }, 500);
   };
