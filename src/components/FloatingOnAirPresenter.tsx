@@ -29,6 +29,24 @@ interface OnAirDisplayState {
 
 type AnimPhase = "idle" | "exiting" | "entering-prep";
 
+const PHOTO_TRANSITION_MS = 700;
+const PRESENTER_INTERVAL_MS = 4000;
+
+function CardGradient({ primary, secondary }: { primary: string; secondary: string }) {
+  const layer: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    transition: "background-color 1.2s ease-in-out",
+  };
+  return (
+    <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: "rgba(5, 9, 18, 0.95)", pointerEvents: "none" }}>
+      <div style={{ ...layer, backgroundColor: secondary, opacity: 0.33, maskImage: "linear-gradient(135deg, transparent, black 45%, transparent)" }} />
+      <div style={{ ...layer, backgroundColor: primary, opacity: 0.53, maskImage: "linear-gradient(135deg, black, transparent 75%)" }} />
+    </div>
+  );
+}
+
 type ProgramPresenters = {
   apresentador_id?: string | null;
   apresentadorId?: string | null;
@@ -272,11 +290,11 @@ export default function FloatingOnAirPresenter({
   const presenterCount = onAirInfo.locutores?.length || 0;
   useEffect(() => {
     if (presenterCount < 2) return;
-    const exitTimer = window.setTimeout(() => setPhotoExiting(true), 3760);
+    const exitTimer = window.setTimeout(() => setPhotoExiting(true), PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS);
     const nextTimer = window.setTimeout(() => {
       setPresenterIndex(index => (index + 1) % presenterCount);
       setPhotoExiting(false);
-    }, 4000);
+    }, PRESENTER_INTERVAL_MS);
     return () => {
       clearTimeout(exitTimer);
       clearTimeout(nextTimer);
@@ -369,7 +387,6 @@ export default function FloatingOnAirPresenter({
             userSelect: "none",
             height: 100,
             boxSizing: "border-box",
-            background: `linear-gradient(135deg, ${primaryColor}88 0%, ${secondaryColor}55 45%, rgba(5, 9, 18, 0.95) 100%)`,
             backdropFilter: "blur(24px) saturate(1.5)",
             WebkitBackdropFilter: "blur(24px) saturate(1.5)",
             borderRadius: 20,
@@ -379,10 +396,11 @@ export default function FloatingOnAirPresenter({
             boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${primaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
             minWidth: 240,
             maxWidth: "min(400px, calc(100vw - 120px))",
-            transition: "box-shadow 0.4s ease, border-color 0.4s ease, transform 0.25s ease",
+            transition: "box-shadow 1.2s ease-in-out, border-color 1.2s ease-in-out, transform 0.25s ease",
             marginRight: 10,
           }}
         >
+          <CardGradient primary={primaryColor} secondary={secondaryColor} />
           <div
             style={{
               width: 100,
@@ -402,8 +420,8 @@ export default function FloatingOnAirPresenter({
                 height: "100%",
                 transform: photoExiting ? "translateX(-100%)" : "translateX(0)",
                 opacity: photoExiting ? 0 : 1,
-                transition: "transform 240ms ease, opacity 240ms ease",
-                animation: presenterCount > 1 ? "fmp-photo-enter 240ms ease" : undefined,
+                transition: `transform ${PHOTO_TRANSITION_MS}ms ease-in-out, opacity ${PHOTO_TRANSITION_MS}ms ease-in-out`,
+                animation: presenterCount > 1 ? `fmp-photo-enter ${PHOTO_TRANSITION_MS}ms ease-in-out` : undefined,
               }}
             >
             {currentPhoto ? (
@@ -440,7 +458,7 @@ export default function FloatingOnAirPresenter({
           </div>
 
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
-          <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ position: "relative", minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
             {/* 1. 'no ar' badge */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
               <span
@@ -613,33 +631,29 @@ export default function FloatingOnAirPresenter({
               userSelect: "none",
               height: 100,
               boxSizing: "border-box",
-              background: `linear-gradient(135deg, ${nextPrimaryColor}33 0%, rgba(5, 9, 18, 0.95) 100%)`,
               backdropFilter: "blur(24px) saturate(1.5)",
               WebkitBackdropFilter: "blur(24px) saturate(1.5)",
               borderRadius: 20,
-              padding: "10px 18px",
+              padding: "0 18px 0 0",
+              overflow: "hidden",
               border: `1px solid ${nextPrimaryColor}40`,
               boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${nextPrimaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
-              minWidth: 260,
-              maxWidth: "min(380px, calc(100vw - 120px))",
+              minWidth: 240,
+              maxWidth: "min(400px, calc(100vw - 120px))",
               whiteSpace: "nowrap",
             }}
           >
-            {/* Inner rounded box with gradient background matching next locutor photo */}
+            <CardGradient primary={nextPrimaryColor} secondary={nextSecondaryColor} />
             <div
               style={{
-                width: 80,
-                height: 80,
-                borderRadius: 18,
+                width: 100,
+                height: "100%",
                 overflow: "hidden",
                 position: "relative",
                 flexShrink: 0,
-                background: `linear-gradient(135deg, ${nextPrimaryColor} 0%, ${nextSecondaryColor} 100%)`,
-                boxShadow: `0 8px 20px ${nextPrimaryColor}40, 0 2px 6px rgba(0,0,0,0.35)`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "1px solid rgba(255,255,255,0.15)",
               }}
             >
               {nextProgInfo?.locutorFoto ? (
@@ -672,7 +686,7 @@ export default function FloatingOnAirPresenter({
             </div>
 
             {/* Info beside photo: 'A SEGUIR' -> Nome do Programa -> Horário -> Nome do Locutor */}
-            <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ position: "relative", minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
               {/* 1. 'A SEGUIR' badge with site layout blue (#0055ff) */}
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                 <span
@@ -761,8 +775,8 @@ export default function FloatingOnAirPresenter({
                   <User size={10} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
                   <span
                     style={{
-                      fontSize: 10.5,
-                      fontWeight: 700,
+                      fontSize: 8,
+                      fontWeight: 400,
                       color: "rgba(255,255,255,0.85)",
                       lineHeight: 1.2,
                       letterSpacing: "0.03em",

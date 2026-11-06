@@ -42,9 +42,9 @@ describe("apresentadores no ar", () => {
     await act(async () => {});
     expect(screen.getByAltText("Pessoa A")).toHaveAttribute("src", "https://example.invalid/a.png");
     await act(async () => { vi.advanceTimersByTime(2000); window.dispatchEvent(new Event("apresentadores-updated")); });
-    await act(async () => { vi.advanceTimersByTime(1760); });
+    await act(async () => { vi.advanceTimersByTime(1300); });
     expect(screen.getByAltText("Pessoa A").parentElement).toHaveStyle({ transform: "translateX(-100%)" });
-    await act(async () => { vi.advanceTimersByTime(240); });
+    await act(async () => { vi.advanceTimersByTime(700); });
     expect(screen.getByAltText("Pessoa B")).toHaveAttribute("src", "https://example.invalid/b.png");
     expect(screen.getByTitle("Pessoa B")).toBeInTheDocument();
     await act(async () => { vi.advanceTimersByTime(4000); });
