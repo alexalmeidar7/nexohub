@@ -412,12 +412,6 @@ export default function ConfiguracoesPage({
       videoStreamApiUrl: newConfig.videoStreamApiUrl || "",
       timezone: newConfig.timezone || "America/Sao_Paulo",
     };
-    try {
-      if (tid) {
-        localStorage.setItem(`${EMPRESA_EXTRA_KEY}_${tid}`, JSON.stringify(extraToSave));
-        localStorage.setItem(`nexohub_empresa_config_${tid}`, JSON.stringify(newConfig));
-      }
-    } catch {}
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
@@ -450,7 +444,10 @@ export default function ConfiguracoesPage({
         const n = parseInt(String(v).replace(/\D/g, ""), 10);
         return isNaN(n) ? null : n;
       };
+
       try {
+        // IMPORTANTE: Tenta salvar no banco PRIMEIRO
+        const clienteDesdeValue = newConfig.clienteDesde?.trim();
         const { error: configSaveError } = await supabase.from("empresa_config").upsert({
           user_id: saveId,
           nome: (newConfig.nome || "").trim(),
@@ -460,7 +457,7 @@ export default function ConfiguracoesPage({
           endereco: (newConfig.endereco || "").trim(),
           telefone_comercial: newConfig.telefoneComercial || "",
           telefone_participacao: newConfig.telefoneParticipacao || "",
-          cliente_desde: newConfig.clienteDesde || "",
+          cliente_desde: clienteDesdeValue ? clienteDesdeValue : null,
           executiva_venda: (newConfig.nomeContato || "").trim(),
           site: newConfig.site,
           instagram: newConfig.instagram,
@@ -474,23 +471,36 @@ export default function ConfiguracoesPage({
           audio_sources: extraToSave as any,
           updated_at: new Date().toISOString(),
         } as any, { onConflict: "user_id" });
+
         if (configSaveError) throw configSaveError;
+
+        // SUCESSO: Só DEPOIS de salvar no banco, salva em localStorage
+        try {
+          if (tid) {
+            localStorage.setItem(`${EMPRESA_EXTRA_KEY}_${tid}`, JSON.stringify(extraToSave));
+            localStorage.setItem(`nexohub_empresa_config_${tid}`, JSON.stringify(newConfig));
+          }
+        } catch (lsErr) {
+          console.warn("localStorage save failed:", lsErr);
+        }
+
         toast.success("Configurações salvas com sucesso!");
       } catch (err: any) {
         console.error("Supabase empresa_config upsert failed:", err);
         const message = err?.message || "falha ao salvar";
         const errorCode = err?.code;
-        
+
         if (errorCode === "42P01") {
           toast.error("Tabela empresa_config não existe no banco. Contacte o suporte.");
         } else if (errorCode === "42501" || message.includes("permission")) {
-          toast.error("Sem permissão para salvar. Verifique suas credenciais.");
+          toast.error("Sem permissão para salvar. Verifique suas credenciais de banco.");
+        } else if (message.includes("column") && message.includes("does not exist")) {
+          toast.error("Coluna não existe na tabela empresa_config. Contacte o suporte.");
         } else {
-          toast.error("As alterações ficaram no navegador, mas não foram confirmadas no banco: " + message);
+          toast.error("Falha ao salvar no banco: " + message);
         }
-        
-        // Clear localStorage on persistent failure
-        console.warn("Failed to persist to database; keeping local cache for now");
+
+        console.warn("Failed to persist to database:", { errorCode, message });
       }
     }, 500);
   };
