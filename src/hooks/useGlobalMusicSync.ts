@@ -400,7 +400,15 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
 
     const fetchCoverAndArtistImg = (data: { titulo: string; artista: string; capa: string }) => {
       const cacheKey = `${data.artista}-${data.titulo}`;
-      if (enrichmentDone.has(cacheKey) || enrichmentPending.has(cacheKey)) return;
+      
+      if (enrichmentDone.has(cacheKey)) {
+        return;
+      }
+      
+      if (enrichmentPending.has(cacheKey)) {
+        return;
+      }
+      
       enrichmentPending.add(cacheKey);
       
       const fetchAll = async () => {
@@ -418,24 +426,32 @@ export function useGlobalMusicSync(overrideUserId?: string | null, enabled: bool
           }
 
           const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
-          if (!curRaw) return;
+          if (!curRaw) {
+            return;
+          }
 
           const cur = JSON.parse(curRaw);
           const sameTrack = cur.titulo === data.titulo && cur.artista === data.artista;
-          if (!sameTrack) return;
+          if (!sameTrack) {
+            return;
+          }
 
           if (data.capa && cur.capa !== data.capa) {
             writeMusicData(targetId, { ...cur, capa: data.capa });
           }
 
           if (targetId) {
-            await mergeUserDashboardItems(targetId, {
-              music_current_title: data.titulo,
-              music_current_artist: data.artista,
-              music_current_cover: data.capa || "",
-              music_current_excecao: null,
-              music_deezer_artist_img: artistImg || "",
-            });
+            try {
+              await mergeUserDashboardItems(targetId, {
+                music_current_title: data.titulo,
+                music_current_artist: data.artista,
+                music_current_cover: data.capa || "",
+                music_current_excecao: null,
+                music_deezer_artist_img: artistImg || "",
+              });
+            } catch (mergeErr) {
+              throw mergeErr;
+            }
           }
           enrichmentDone.add(cacheKey);
         } catch (e) {

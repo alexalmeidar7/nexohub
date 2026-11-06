@@ -37,15 +37,23 @@ export async function applyTrackChangeWithCuriosityGuard(opts: ApplyTrackChangeO
   const sig = trackSignature(data.titulo, data.artista);
 
   // Step 1: immediate merge — clears old curiosity, publishes new track.
-  const basePatch = {
+  // NOTE: We intentionally omit music_current_cover if it's empty, allowing
+  // fetchCoverAndArtistImg (which runs in parallel) to provide cover/artist_img
+  // without being clobbered by an empty string from here.
+  const basePatch: Record<string, any> = {
     music_start_time: now,
     music_current_title: data.titulo,
     music_current_artist: data.artista,
-    music_current_cover: data.capa || "",
     music_current_curiosity: "",
     music_current_curiosity_track: sig,
     music_current_curiosity_expires_at: null,
   };
+  
+  // Only include cover if non-empty (e.g., from XML or cache)
+  if (data.capa) {
+    basePatch.music_current_cover = data.capa;
+  }
+  
   await merge(userId, basePatch);
 
   // Step 2: background curiosity fetch — up to 3 attempts spaced 5s apart at
