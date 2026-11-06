@@ -78,7 +78,6 @@ const BatalhaMusicalPage = lazyRetry(() => import("./BatalhaMusicalPage"));
 const EnquetePage = lazyRetry(() => import("./EnquetePage"));
 const QuizPage = lazyRetry(() => import("./QuizPage"));
 const SitePage = lazyRetry(() => import("./site/SitePage"));
-const NexoPluginsPage = lazyRetry(() => import("./NexoPluginsPage"));
 const ClientesPage = lazyRetry(() => import("./ClientesPage"));
 const ModulosPage = lazyRetry(() => import("./ModulosPage"));
 const SubUsuariosPage = lazyRetry(() => import("./SubUsuariosPage"));
@@ -1883,9 +1882,7 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
               try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
             }}
           >
-            <Suspense fallback={<ModulePageSkeleton variant="table" />}>
-              <NexoPluginsPage />
-            </Suspense>
+            {null}
           </HouseMixWindow>
         )}
 
