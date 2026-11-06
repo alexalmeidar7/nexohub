@@ -369,11 +369,12 @@ export default function FloatingOnAirPresenter({
             userSelect: "none",
             height: 100,
             boxSizing: "border-box",
-            background: `linear-gradient(135deg, ${primaryColor}33 0%, rgba(5, 9, 18, 0.95) 100%)`,
+            background: `linear-gradient(135deg, ${primaryColor}88 0%, ${secondaryColor}55 45%, rgba(5, 9, 18, 0.95) 100%)`,
             backdropFilter: "blur(24px) saturate(1.5)",
             WebkitBackdropFilter: "blur(24px) saturate(1.5)",
             borderRadius: 20,
-            padding: "10px 18px",
+            padding: "0 18px 0 0",
+            overflow: "hidden",
             border: `1px solid ${primaryColor}40`,
             boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${primaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
             minWidth: 240,
@@ -382,21 +383,16 @@ export default function FloatingOnAirPresenter({
             marginRight: 10,
           }}
         >
-          {/* Inner rounded box with gradient background matching locutor photo colors */}
           <div
             style={{
-              width: 80,
-              height: 80,
-              borderRadius: 18,
+              width: 100,
+              height: "100%",
               overflow: "hidden",
               position: "relative",
               flexShrink: 0,
-              background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
-              boxShadow: `0 8px 20px ${primaryColor}40, 0 2px 6px rgba(0,0,0,0.35)`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
             <div
