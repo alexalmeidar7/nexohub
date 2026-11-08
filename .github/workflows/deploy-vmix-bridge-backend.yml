@@ -126,69 +126,33 @@ jobs:
         if: ${{ inputs.apply_changes }}
         env:
           EXPECTED_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FRONTEND_SUPABASE_URL: ${{ secrets.SUPABASE_FRONTEND_URL }}
+          FRONTEND_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_FRONTEND_PUBLISHABLE_KEY }}
         shell: bash
         run: |
           set -euo pipefail
-          python3 - "$EXPECTED_PROJECT_REF" <<'PY'
-          import base64
-          import json
-          import sys
-          from pathlib import Path
-          from urllib.request import Request, urlopen
+          expected_url="https://${EXPECTED_PROJECT_REF}.supabase.co"
 
-          expected = sys.argv[1]
-          values = {}
-          for raw in Path(".env").read_text(encoding="utf-8").splitlines():
-              line = raw.strip()
-              if not line or line.startswith("#") or "=" not in line:
-                  continue
-              key, value = line.split("=", 1)
-              key = key.strip()
-              if key in {"SUPABASE_URL", "VITE_SUPABASE_PROJECT_ID", "VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"}:
-                  values[key] = value.strip().strip('"').strip("'")
+          if [ -z "$FRONTEND_SUPABASE_URL" ] || [ -z "$FRONTEND_PUBLISHABLE_KEY" ]; then
+            echo "::error::Configure SUPABASE_FRONTEND_URL and SUPABASE_FRONTEND_PUBLISHABLE_KEY in the production environment before the full Bridge rollout. Nothing was changed."
+            exit 1
+          fi
 
-          expected_url = f"https://{expected}.supabase.co"
-          browser_key = values.get("VITE_SUPABASE_PUBLISHABLE_KEY", "")
-          if not browser_key:
-              raise SystemExit("::error::VITE_SUPABASE_PUBLISHABLE_KEY is missing. Nothing was changed.")
+          if [ "${FRONTEND_SUPABASE_URL%/}" != "$expected_url" ]; then
+            echo "::error::SUPABASE_FRONTEND_URL does not match the confirmed backend project. Nothing was changed."
+            exit 1
+          fi
 
-          # Legacy anon JWTs expose their project ref; modern sb_publishable keys are opaque.
-          if not browser_key.startswith("sb_publishable_"):
-              try:
-                  token_parts = browser_key.split(".")
-                  if len(token_parts) != 3:
-                      raise ValueError("not a JWT")
-                  payload = token_parts[1] + "=" * (-len(token_parts[1]) % 4)
-                  claims = json.loads(base64.urlsafe_b64decode(payload))
-                  if claims.get("role") != "anon" or str(claims.get("ref", "")) != expected:
-                      raise ValueError("legacy anon JWT does not match the confirmed project")
-              except Exception as exc:
-                  raise SystemExit("::error::The browser key must be an active sb_publishable key or a legacy anon JWT for the confirmed project. Nothing was changed.") from exc
+          status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            --header "apikey: ${FRONTEND_PUBLISHABLE_KEY}" \
+            --header "Accept: application/openapi+json" \
+            "$expected_url/rest/v1/")"
+          if [ "$status" != "200" ]; then
+            echo "::error::SUPABASE_FRONTEND_PUBLISHABLE_KEY was not accepted by the confirmed backend (HTTP ${status}). Nothing was changed."
+            exit 1
+          fi
 
-          checks = {
-              "SUPABASE_URL": values.get("SUPABASE_URL", "").rstrip("/"),
-              "VITE_SUPABASE_URL": values.get("VITE_SUPABASE_URL", "").rstrip("/"),
-              "VITE_SUPABASE_PROJECT_ID": values.get("VITE_SUPABASE_PROJECT_ID", ""),
-          }
-          if (
-              checks["SUPABASE_URL"] != expected_url
-              or checks["VITE_SUPABASE_URL"] != expected_url
-              or checks["VITE_SUPABASE_PROJECT_ID"] != expected
-          ):
-              raise SystemExit("::error::SUPABASE_URL, browser URL, and browser project ID must all match the confirmed backend. Nothing was changed.")
-
-          # The live API Gateway check also validates opaque sb_publishable keys.
-          try:
-              request = Request(f"{expected_url}/rest/v1/", headers={"apikey": browser_key, "Accept": "application/openapi+json"})
-              with urlopen(request, timeout=20) as response:
-                  if response.status != 200:
-                      raise ValueError(f"Supabase Data API returned HTTP {response.status}")
-          except Exception as exc:
-              raise SystemExit("::error::The browser publishable key was not accepted by the confirmed Supabase project. Nothing was changed.") from exc
-
-          print(f"Backend URL, browser URL/project ID, and browser publishable key all match {expected}.")
-          PY
-
+          echo "Frontend Supabase URL and publishable key match the confirmed backend $EXPECTED_PROJECT_REF."
       - name: Verify Supabase access token can read the confirmed project (read-only)
         if: ${{ inputs.apply_changes }}
         env:
