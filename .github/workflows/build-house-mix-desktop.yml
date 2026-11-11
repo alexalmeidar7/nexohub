@@ -1,9 +1,8 @@
 name: Build House Mix Desktop
 
 on:
-  # Build only on explicit manual dispatch. Regular House Mix site PRs/pushes
-  # must never start the slow House Mix Desktop Windows build.
-  workflow_dispatch:
+  # Temporary build branch trigger. This branch exists only to generate the Windows installer.
+  push:
 
 permissions:
   contents: read
