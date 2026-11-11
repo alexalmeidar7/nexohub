@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "predev": "npx tsx scripts/generate-sitemap.ts",
@@ -81,7 +81,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "xlsx": "^0.18.5",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
@@ -186,6 +187,13 @@
           "*.sql"
         ]
       }
-    ]
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "alexalmeidar7",
+      "repo": "nexohub",
+      "releaseType": "release",
+      "vPrefixedTagName": true
+    }
   }
 }
