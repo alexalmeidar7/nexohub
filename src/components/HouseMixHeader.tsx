@@ -1123,30 +1123,6 @@ export default function HouseMixHeader({
 
           {/* Right: Bots, Audio Player, Intercom, Bell, Settings, Profile & Clock */}
           <div className={`flex items-center ${isIntercomEnabled ? "gap-1.5 xl:gap-2" : "gap-2"} shrink-0`} onMouseEnter={handleDirectItemHover}>
-            {/* Live Audio Stream Player button */}
-            {playerState.hasChannel && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
-                    className="w-8 h-8 shrink-0 rounded-full bg-[#0055ff] hover:bg-[#0042cc] text-white flex items-center justify-center transition-all shadow-[0_3px_10px_rgba(0,85,255,0.2)] hover:scale-105 active:scale-95 cursor-pointer"
-                    aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
-                  >
-                    {playerState.isLoading ? (
-                      <Loader2 size={14} className="animate-spin text-white" />
-                    ) : playerState.isPlaying ? (
-                      <Pause size={14} className="text-white" />
-                    ) : (
-                      <Play size={14} className="text-white ml-0.5" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p className="text-xs">{playerState.isPlaying ? `Pausar${playerState.channelName ? ` – ${playerState.channelName}` : ""}` : "Reproduzir player"}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
             {/* Intercom with inline submenu to the right */}
             <div ref={intercomContainerRef} className="relative flex items-center shrink-0">
               <Tooltip>
