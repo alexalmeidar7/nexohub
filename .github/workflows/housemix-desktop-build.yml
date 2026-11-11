@@ -1,0 +1,40 @@
+name: House Mix Desktop - Windows Build
+
+on:
+  push:
+    branches:
+      - feat/housemix-auto-update
+  workflow_dispatch:
+
+concurrency:
+  group: housemix-desktop-build
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build web application
+        run: bun run desktop:build
+
+      - name: Build House Mix Desktop installer
+        run: bunx electron-builder --win nsis --x64 --publish never
+
+      - name: Upload House Mix Desktop installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: House-Mix-Desktop-Windows
+          path: release/House-Mix-Desktop-*-Setup.exe
+          if-no-files-found: error
+          retention-days: 30
