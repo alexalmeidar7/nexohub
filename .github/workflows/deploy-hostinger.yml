@@ -74,77 +74,74 @@ jobs:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_SERVER_DIR: ${{ steps.ftpdir.outputs.server_dir }}
+          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: |
           set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y lftp
+          python3 - <<'PY'
+          import os
+          import posixpath
+          import time
+          from ftplib import FTP, FTP_TLS, error_perm
+          from pathlib import Path
 
-          run_mirror() {
-            local scheme="$1"
-            echo "Iniciando mirror via $scheme (porta 21)"
+          root = Path('dist').resolve()
+          host = os.environ['FTP_SERVER']
+          user = os.environ['FTP_USERNAME']
+          password = os.environ['FTP_PASSWORD']
+          remote_root = os.environ['FTP_SERVER_DIR'].strip('/')
 
-            if [ "$scheme" = "ftps" ]; then
-              # Hostinger usa FTPS explícito na porta 21. No lftp, isso é
-              # ftp:// + ftp:ssl-force=true; ftps:// pode tentar TLS implícito/990.
-              lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER" -e "
-                set ftp:ssl-force true;
-                set ftp:ssl-protect-data true;
-                set ssl:verify-certificate no;
-                set ftp:passive-mode true;
-                set net:timeout 90;
-                set net:max-retries 3;
-                set net:persist-retries 2;
-                set net:reconnect-interval-base 5;
-                set net:reconnect-interval-max 30;
-                set net:limit-total-rate 4M;
-                set net:socket-buffer 32768;
-                set cmd:fail-exit yes;
-                mirror -c -R --verbose --parallel=1 --only-newer ./dist/ "$FTP_SERVER_DIR";
-                bye
-              "
-            else
-              lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER" -e "
-                set ftp:ssl-force false;
-                set ftp:ssl-protect-data false;
-                set ftp:passive-mode true;
-                set net:timeout 90;
-                set net:max-retries 3;
-                set net:persist-retries 2;
-                set net:reconnect-interval-base 5;
-                set net:reconnect-interval-max 30;
-                set net:limit-total-rate 4M;
-                set net:socket-buffer 32768;
-                set cmd:fail-exit yes;
-                mirror -c -R --verbose --parallel=1 --only-newer ./dist/ "$FTP_SERVER_DIR";
-                bye
-              "
-            fi
-          }
+          def connect(tls):
+              if tls:
+                  ftp = FTP_TLS(timeout=90)
+                  ftp.connect(host, 21)
+                  ftp.login(user, password)
+                  ftp.prot_p()
+              else:
+                  ftp = FTP(timeout=90)
+                  ftp.connect(host, 21)
+                  ftp.login(user, password)
+              ftp.set_pasv(True)
+              return ftp
 
-          # FTPS: duas tentativas, retomando o mirror interrompido.
-          for attempt in 1 2; do
-            echo "FTPS tentativa $attempt/2"
-            if run_mirror "ftps"; then
-              echo "Deploy concluído via FTPS."
-              exit 0
-            fi
-            if [ "$attempt" -lt 2 ]; then
-              echo "FTPS falhou; aguardando 15s para nova conexão."
-              sleep 15
-            fi
-          done
+          def ensure_dir(ftp, path):
+              current = ''
+              for part in [p for p in path.split('/') if p]:
+                  current = posixpath.join(current, part)
+                  try:
+                      ftp.cwd(current)
+                  except error_perm:
+                      ftp.mkd(current)
+                      ftp.cwd(current)
 
-          # Fallback controlado para FTP simples.
-          # A Hostinger documenta FTP na porta 21 como método suportado.
-          echo "::warning::FTPS não estabilizou. Tentando FTP simples para concluir a publicação."
-          if run_mirror "ftp"; then
-            echo "Deploy concluído via FTP."
-            exit 0
-          fi
+          def upload(tls):
+              ftp = connect(tls)
+              try:
+                  for local in sorted(root.rglob('*')):
+                      if not local.is_file():
+                          continue
+                      rel = local.relative_to(root).as_posix()
+                      remote_path = posixpath.join(remote_root, rel)
+                      ensure_dir(ftp, posixpath.dirname(remote_path))
+                      print(f'Enviando {rel}')
+                      with local.open('rb') as fh:
+                          ftp.storbinary(f'STOR {remote_path}', fh, blocksize=1024*64)
+                  print(f'Deploy concluído via {"FTPS" if tls else "FTP"}.')
+              finally:
+                  try: ftp.quit()
+                  except Exception: ftp.close()
 
-          echo "::error::FTPS e FTP falharam. O artefato não foi considerado publicado."
-          exit 1
+          last = None
+          for tls in (True, False):
+              for attempt in (1, 2):
+                  try:
+                      upload(tls)
+                      raise SystemExit(0)
+                  except Exception as exc:
+                      last = exc
+                      print(f'Falha {"FTPS" if tls else "FTP"} tentativa {attempt}/2: {exc}')
+                      if attempt == 1: time.sleep(15)
+          raise SystemExit(f'Deploy Hostinger falhou após FTPS e FTP: {last}')
+          PY
 
       - name: Confirmar versão publicada
         env:
