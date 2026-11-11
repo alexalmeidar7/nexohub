@@ -6,8 +6,6 @@ const { spawn } = require("node:child_process");
 const { createWindowOptions, isAllowedExternalUrl, resolveRendererRequestPath } = require("./runtime.cjs");
 const { startLocalApiHost } = require("./local-api-host.cjs");
 
-// A standard custom scheme gives BrowserRouter a real "/" origin in Electron.
-// Register privileges before app readiness, as required by Electron.
 protocol.registerSchemesAsPrivileged([{
   scheme: "housemix",
   privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
@@ -23,13 +21,11 @@ async function registerRendererProtocol() {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return new Response("Method not allowed", { status: 405 });
     }
-
     const filePath = resolveRendererRequestPath(
       request.url,
       rendererRoot,
       (candidate) => fs.existsSync(candidate)
     );
-
     if (!filePath) return new Response("Not found", { status: 404 });
     return net.fetch(pathToFileURL(filePath).toString());
   });
@@ -82,15 +78,15 @@ async function startLocalRuntime() {
 
 app.whenReady().then(async () => {
   try {
-    configureAutoUpdater();
+    // Do not invoke an updater that is not initialized/implemented.
     await registerRendererProtocol();
     await startLocalRuntime();
     createMainWindow();
-    void checkForDesktopUpdate();
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
     });
-  } catch {
+  } catch (error) {
+    console.error("[House Mix Desktop] startup failed:", error);
     dialog.showErrorBox(
       "House Mix Desktop",
       "Não foi possível iniciar o House Mix Desktop. Verifique a instalação e a configuração do ambiente local."
