@@ -6,6 +6,7 @@ on:
       - feat/housemix-auto-update
   workflow_dispatch:
 
+# Force a fresh workflow event when the previous Actions queue is stale.
 concurrency:
   group: housemix-desktop-build
   cancel-in-progress: true
