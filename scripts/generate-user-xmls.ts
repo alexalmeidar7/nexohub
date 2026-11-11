@@ -204,15 +204,12 @@ function generateMusicaXml(st: StationConfig, broadcastXml?: string | null): str
 `;
 }
 
-function generateFallbackLogos(st: StationConfig): string {
+function generateEmptyLogosXml(st: StationConfig): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <logos_patrocinadores>
-  <programa id="programa 1">
-    <nome>Geral</nome>
-    <logo>
-      <nome>Patrocinador Oficial</nome>
-      <url>https://housemix.nexobrasil.net/default-sponsor-logo.png</url>
-    </logo>
+  <emissora>${escapeXml(st.name)}</emissora>
+  <programa id="">
+    <nome></nome>
   </programa>
 </logos_patrocinadores>
 `;
@@ -821,7 +818,10 @@ export async function generateAllUserXmls() {
     if (!broadcastContent) {
       broadcastContent = generateFallbackBroadcast(st);
     }
-    const logosContent = logosRemote || readExistingIfValid("logos.xml") || generateFallbackLogos(st);
+    // LOGOS: the XML must always reflect the current database state.
+    // Never restore an older local logos.xml when the remote source is unavailable:
+    // doing so can resurrect sponsors that were already deleted/disabled.
+    const logosContent = logosRemote || generateEmptyLogosXml(st);
     const musicaContent = generateMusicaXml(st, broadcastRemote);
 
     // If batalha, enquete, quiz from Supabase have empty content tags or dummy mocks, check local sync store
@@ -955,8 +955,7 @@ export async function generateAllUserXmls() {
             const isExistingSubstantial = existing.trim().length > 200;
             const isNewFallback =
               content.includes("Patrocinador Oficial") ||
-              content.includes("Locutor de Plantão") ||
-              (filename === "logos.xml" && !content.includes('id="programa 2"') && existing.includes('id="programa 2"'));
+              content.includes("Locutor de Plantão");
 
             if (isExistingSubstantial && isNewFallback) {
               if (filename === "geral.xml") {
