@@ -958,27 +958,28 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       resolveStationUid(dataUserId, effectiveUserId, user) ||
       user?.id ||
       "";
+    const target = logos.find((l) => l.id === id);
+    const excludedAt = new Date().toISOString();
 
     try {
-      const patch = { excluido: true, excluido_at: new Date().toISOString(), ativo: false };
-      await updateLogoRecord(logos.find((l) => l.id === id), id, patch, activeUid);
+      const patch = { excluido: true, excluido_at: excludedAt, ativo: false };
+      await updateLogoRecord(target, id, patch, activeUid);
     } catch (e: any) {
-      toast({ title: "Erro ao excluir logo", description: e?.message || String(e), variant: "destructive" });
-      return;
+      // Logos carregadas pelo XML/snapshot podem ter IDs sintéticos (db_xml_*/snap_*).
+      // Nesses casos não existe linha correspondente no banco para atualizar.
+      // O registro local deve ser tombstonado para que a logo não volte a aparecer
+      // a cada reload enquanto a origem remota estiver sendo reconciliada.
+      const isSynthetic = /^db_xml_|^snap_|^logo_/.test(String(id));
+      if (!isSynthetic || !target) {
+        toast({ title: "Erro ao excluir logo", description: e?.message || String(e), variant: "destructive" });
+        return;
+      }
     }
 
-    if (activeUid) {
+    if (activeUid && target) {
       const local = getLocalLogos(activeUid);
-      const existing = local.find((l) => l.id === id);
-      const updated = local.map((l) =>
-        l.id === id ? { ...l, excluido: true, excluido_at: new Date().toISOString(), ativo: false } : l
-      );
-      if (!existing) {
-        const fromState = logos.find((l) => l.id === id);
-        if (fromState) {
-          updated.push({ ...fromState, excluido: true, excluido_at: new Date().toISOString(), ativo: false });
-        }
-      }
+      const updated = local.filter((l) => l.id !== id);
+      updated.push({ ...target, excluido: true, excluido_at: excludedAt, ativo: false });
       saveLocalLogos(activeUid, updated);
     }
 
