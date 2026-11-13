@@ -99,7 +99,7 @@ const inputStyle: React.CSSProperties = {
   padding: "0 14px",
   fontFamily: FONT_FAMILY,
   fontSize: 13,
-  color: "#fff",
+  color: "#0f172a",
   outline: "none",
   transition: "all 0.2s ease",
 };
