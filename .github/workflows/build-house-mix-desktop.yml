@@ -5,6 +5,12 @@ on:
   # must never start the slow House Mix Desktop Windows build.
   workflow_dispatch:
 
+# Keep only the newest Windows installer build for each branch/PR.
+# A newer commit supersedes an older installer candidate.
+concurrency:
+  group: desktop-build-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
