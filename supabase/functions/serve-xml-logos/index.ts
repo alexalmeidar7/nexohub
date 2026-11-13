@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { ensureVmixPngUrl } from "../_shared/vmixPng.ts";
-import { logosXml, pngSponsorUrl, rotationTime, selectOnAirProgram, selectRotatingSponsor } from "../_shared/sponsorRotation.ts";
+import { IMGBLANCK_URL, logosXml, pngSponsorUrl, rotationTime, selectOnAirProgram, selectRotatingSponsor } from "../_shared/sponsorRotation.ts";
 
 const serve = Deno.serve;
 const corsHeaders = {
@@ -66,7 +66,7 @@ serve(async (req) => {
     }
 
     const selected = selectRotatingSponsor(sponsorLogos, onAir?.id || null, now);
-    let logoUrl = "";
+    let logoUrl = IMGBLANCK_URL;
     if (selected?.logo_url) {
       const pngUrl = await ensureVmixPngUrl(supabase, selected.logo_url, `vmix-logos/${userId}`);
       logoUrl = pngSponsorUrl(pngUrl);
