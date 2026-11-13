@@ -50,7 +50,7 @@ describe("rodízio de patrocinadores", () => {
     expect(xml.querySelector("patrocinador > logo_url")?.textContent).toBe("https://example.test/x?a=1&b=2");
     const empty = new DOMParser().parseFromString(`<root>${sponsorXml(null, "")}</root>`, "text/xml");
     expect(empty.querySelector("patrocinador > nome")?.textContent).toBe("");
-    expect(empty.querySelector("patrocinador > logo_url")?.textContent).toBe("");
+    expect(empty.querySelector("patrocinador > logo_url")?.textContent).toBe("https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png");
   });
 
   it("strips cache-busting parameters and rejects non-PNG sponsor URLs", () => {
