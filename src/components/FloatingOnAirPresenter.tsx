@@ -449,8 +449,9 @@ export default function FloatingOnAirPresenter({
             }}
           >
             {!isBrowsingSchedule && (
-            {/* 1. 'no ar' badge */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <>
+                {/* 1. 'no ar' badge */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
               <span
                 style={{
                   width: 7,
@@ -474,7 +475,8 @@ export default function FloatingOnAirPresenter({
               >
                 NO AR
               </span>
-            </div>
+                </div>
+              </>
             )}
 
             {/* 2. Embaixo de 'no ar': O nome do programa */}
@@ -603,8 +605,6 @@ export default function FloatingOnAirPresenter({
             </button>
           </div>
         </div>
-      </div>
-
       </div>
 
       <style>{`
