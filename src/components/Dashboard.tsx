@@ -2464,25 +2464,25 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
         )}
 
         {/* House Mix Window Mode - Configurações */}
-        {!isAdmin && (currentPage === "configuracoes" || (minimizedModules.includes("configuracoes") && (currentPage === "dashboard" || isWindowMode))) && (
+        {!isAdmin && (currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && (currentPage === "dashboard" || isWindowMode))) && (
           <HouseMixWindow
-            title="HOUSE MIX – CONFIGURAÇÕES"
-            isOpen={currentPage === "configuracoes"}
+            title="HOUSE MIX – CONFIGURAÇÃO DO PLAYER"
+            isOpen={currentPage === "playerconfig"}
             onClose={() => {
-              setMinimizedModules(prev => prev.filter(p => p !== "configuracoes"));
+              setMinimizedModules(prev => prev.filter(p => p !== "playerconfig"));
               setCurrentPage("dashboard");
             }}
             onMinimize={() => {
               setMinimizedModules(prev => {
-                if (prev.includes("configuracoes")) return prev;
-                return [...prev, "configuracoes"];
+                if (prev.includes("playerconfig")) return prev;
+                return [...prev, "playerconfig"];
               });
               setCurrentPageState("dashboard");
               try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
             }}
           >
             <Suspense fallback={<ModulePageSkeleton variant="configuracoes" />}>
-              <ConfiguracoesPage section="empresa" isSuperAdmin={isAdmin} effectiveUserId={effectiveUserId} />
+              <ConfiguracoesPage section="player" effectiveUserId={effectiveUserId} />
             </Suspense>
           </HouseMixWindow>
         )}
