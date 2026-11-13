@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Clock, User, Plus, Radio, ArrowRight } from "lucide-react";
+import { Clock, User, Radio, ArrowRight } from "lucide-react";
 import { useAlbumColors } from "@/hooks/useAlbumColors";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -390,12 +390,12 @@ export default function FloatingOnAirPresenter({
             backdropFilter: "blur(24px) saturate(1.5)",
             WebkitBackdropFilter: "blur(24px) saturate(1.5)",
             borderRadius: 20,
-            padding: "0 18px 0 0",
+            padding: "0 54px 0 0",
             overflow: "hidden",
             border: `1px solid ${primaryColor}40`,
             boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${primaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
-            minWidth: 240,
-            maxWidth: "min(400px, calc(100vw - 120px))",
+            minWidth: 320,
+            maxWidth: "min(460px, calc(100vw - 80px))",
             transition: "box-shadow 1.2s ease-in-out, border-color 1.2s ease-in-out, transform 0.25s ease",
             marginRight: 10,
           }}
@@ -570,41 +570,32 @@ export default function FloatingOnAirPresenter({
           </div>
         </div>
 
-        {/* 2. Toggle '+' button to reveal / hide next program (on the right side of NO AR box) */}
+        {/* 2. Arrow inside the NO AR box to reveal / hide the next program */}
         <button
           type="button"
           data-testid="toggle-next-program-button"
           onClick={() => setShowNextProg((prev) => !prev)}
-          className={`${
-            isBehindPages ? "pointer-events-none" : "pointer-events-auto"
-          } hidden sm:flex items-center justify-center relative cursor-pointer group/btn transition-all duration-300 hover:scale-110 active:scale-95`}
+          className={
+            (isBehindPages ? "pointer-events-none" : "pointer-events-auto") +
+            " hidden sm:flex items-center justify-center absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
+          }
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            background: showNextProg
-              ? "rgba(239, 68, 68, 0.2)"
-              : "rgba(15, 23, 42, 0.8)",
-            border: showNextProg
-              ? "1px solid rgba(239, 68, 68, 0.45)"
-              : "1px solid rgba(255, 255, 255, 0.18)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            boxShadow: showNextProg
-              ? "0 8px 24px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255,255,255,0.15)"
-              : "0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+            width: 34,
+            height: 34,
+            borderRadius: 12,
+            background: showNextProg ? "rgba(239, 68, 68, 0.12)" : "rgba(255,255,255,0.07)",
+            border: showNextProg ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid rgba(255,255,255,0.12)",
             outline: "none",
             flexShrink: 0,
-            marginRight: showNextProg ? 10 : 0,
-            transition: "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, margin-right 0.35s ease",
+            zIndex: 2,
           }}
           title={showNextProg ? "Ocultar próximo programa" : "Ver programa a seguir"}
         >
-          <Plus
-            size={18}
+          <ArrowRight
+            size={19}
             style={{
-              color: showNextProg ? "#fca5a5" : "rgba(255, 255, 255, 0.85)",
-              transform: showNextProg ? "rotate(45deg)" : "rotate(0deg)",
+              color: showNextProg ? "#fca5a5" : "rgba(255, 255, 255, 0.9)",
+              transform: showNextProg ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease",
             }}
           />
