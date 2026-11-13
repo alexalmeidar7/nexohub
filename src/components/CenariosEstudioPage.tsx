@@ -743,36 +743,63 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
               }}
             >
               <div
-                className="w-full relative overflow-hidden bg-slate-900"
-                style={{ aspectRatio: "16/9" }}
+                className="w-full relative overflow-hidden bg-slate-900 flex items-center justify-center p-2"
+                style={{
+                  aspectRatio: t.cols > 2 ? `${t.cols * 16}/${t.rows * 9}` : `${16 * t.cols}/${9 * t.rows}`
+                }}
               >
-                <img
-                  src={url}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "/images/CAPA_PH2.png";
-                  }}
-                  alt={t.nome}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-
-                {/* Sub-grid Preview Overlay */}
+                {/* TV Grid Container - proportional 16:9 TVs */}
                 <div 
-                  className="absolute inset-0 grid gap-[1px] opacity-40 pointer-events-none"
+                  className="w-full h-full grid gap-1 rounded"
                   style={{
                     gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
                     gridTemplateRows: `repeat(${t.rows}, 1fr)`,
                   }}
                 >
-                  {Array.from({ length: t.rows * t.cols }).map((_, i) => (
-                    <div key={i} className="border-[0.5px] border-white/40" />
-                  ))}
+                  {Array.from({ length: t.rows * t.cols }).map((_, i) => {
+                    // Calculate which row and column this TV is in
+                    const row = Math.floor(i / t.cols);
+                    const col = i % t.cols;
+                    
+                    // Calculate the offset for this TV slice
+                    // Image is designed as total_cols * 1920 x total_rows * 1080
+                    const offsetX = (col / t.cols) * 100;
+                    const offsetY = (row / t.rows) * 100;
+                    
+                    return (
+                      <div 
+                        key={i} 
+                        className="relative overflow-hidden rounded-sm bg-black border border-white/30 shadow-inner"
+                        style={{ aspectRatio: "16/9" }}
+                      >
+                        <img
+                          src={url}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = "/images/CAPA_PH2.png";
+                          }}
+                          alt={`${t.nome} TV ${i + 1}`}
+                          className="absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 opacity-80"
+                          style={{
+                            objectFit: "cover",
+                            objectPosition: `${offsetX}% ${offsetY}%`,
+                            width: "100%",
+                            height: "100%",
+                          }}
+                        />
+                        {/* TV Index Label */}
+                        <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-70">
+                          TV{i + 1}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity pointer-events-none" />
+              </div>
 
-                {/* Floating Actions */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+              {/* Actions Overlay */}
+              <div className="absolute inset-0 flex flex-col pointer-events-none">
+                {/* Floating Actions - Top Right */}
+                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 pointer-events-auto">
                   <Button
                     size="icon"
                     variant="secondary"
@@ -794,8 +821,8 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
                   </Button>
                 </div>
 
-                {/* Grid Badge */}
-                <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                {/* Grid Badge - Bottom Left */}
+                <div className="absolute bottom-3 left-3 flex items-center gap-2 pointer-events-auto">
                   <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
                     {t.rows}×{t.cols} GRID
                   </Badge>
