@@ -287,19 +287,6 @@ export default function FloatingOnAirPresenter({
     };
   }, [presenterKey, presenterCount, presenterIndex]);
 
-  const currentPresenter = displayedInfo.locutores?.[presenterIndex] || displayedInfo.locutores?.[0];
-  const currentName = currentPresenter?.nome || displayedInfo.locutorNome;
-  const currentPhoto = currentPresenter ? currentPresenter.foto : displayedInfo.locutorFoto;
-  const locutorColors = useAlbumColors(currentPhoto || null);
-  const primaryColor = locutorColors[0] || "#0055ff";
-  const secondaryColor = locutorColors[1] || "#7c3aed";
-
-   return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(nextTimer);
-    };
-  }, [presenterKey, presenterCount, presenterIndex]);
-
   const currentPresenter = onAirInfo.locutores?.[presenterIndex] || onAirInfo.locutores?.[0];
   const currentName = currentPresenter?.nome || onAirInfo.locutorNome;
   const currentPhoto = currentPresenter ? currentPresenter.foto : onAirInfo.locutorFoto;
@@ -353,6 +340,15 @@ export default function FloatingOnAirPresenter({
   const formattedStart = formatHour(onAirInfo.horarioInicio);
   const formattedEnd = formatHour(onAirInfo.horarioFim);
   const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
+
+  // Dynamic colors and hours for Next Program ('A SEGUIR')
+  const nextColors = useAlbumColors(nextProgInfo?.locutorFoto || null);
+  const nextPrimaryColor = nextColors[0] || "#38bdf8";
+  const nextSecondaryColor = nextColors[1] || "#6366f1";
+  const formattedNextStart = formatHour(nextProgInfo?.horarioInicio || "");
+  const formattedNextEnd = formatHour(nextProgInfo?.horarioFim || "");
+  const nextHoursStr =
+    formattedNextStart && formattedNextEnd ? `${formattedNextStart} às ${formattedNextEnd}` : "Em Breve";
 
   return (
     <div
@@ -449,8 +445,19 @@ export default function FloatingOnAirPresenter({
           </div>
 
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
-          <div key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`} style={{ position: "relative", minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", animation: isBrowsingSchedule ? `fmp-slide-${slideDirection} 420ms cubic-bezier(0.16, 1, 0.3, 1)` : undefined }}>
-            {!isBrowsingSchedule ? (
+          <div
+            key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`}
+            style={{
+              position: "relative",
+              minWidth: 0,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              animation: isBrowsingSchedule ? `fmp-slide-${slideDirection} 420ms cubic-bezier(0.16, 1, 0.3, 1)` : undefined,
+            }}
+          >
+            {!isBrowsingSchedule && (
             {/* 1. 'no ar' badge */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
               <span
@@ -477,7 +484,7 @@ export default function FloatingOnAirPresenter({
                 NO AR
               </span>
             </div>
-            ) : null}
+            )}
 
             {/* 2. Embaixo de 'no ar': O nome do programa */}
             <p
@@ -564,35 +571,46 @@ export default function FloatingOnAirPresenter({
         </div>
 
         {/* Navegação dentro do mesmo box */}
-        <div className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 ${
-          isBehindPages ? "pointer-events-none" : "pointer-events-auto"
-        }`} style={{ zIndex: 5 }}>
-          <button type="button" data-testid="previous-program-button"
-            onClick={() => {
-              if (scheduleItems.length < 2) return;
-              const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
-              const baseIndex = currentIndex >= 0 ? currentIndex : 0;
-              setSlideDirection("backward");
-              setScheduleIndex((baseIndex - 1 + scheduleItems.length) % scheduleItems.length);
-            }}
-            className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
-            style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", outline: "none" }}
-            title="Programa anterior">
-            <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)", transform: "rotate(180deg)" }} />
-          </button>
-          <button type="button" data-testid="next-program-button"
-            onClick={() => {
-              if (scheduleItems.length < 2) return;
-              const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
-              const baseIndex = currentIndex >= 0 ? currentIndex : 0;
-              setSlideDirection("forward");
-              setScheduleIndex((baseIndex + 1) % scheduleItems.length);
-            }}
-            className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
-            style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", outline: "none" }}
-            title="Próximo programa">
-            <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)" }} />
-          </button>
+        <div
+          className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+            isBehindPages ? "pointer-events-none" : "pointer-events-auto"
+          }`}
+          style={{ zIndex: 5 }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <button
+              type="button"
+              data-testid="previous-program-button"
+              onClick={() => {
+                if (scheduleItems.length < 2) return;
+                const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
+                const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+                setSlideDirection("backward");
+                setScheduleIndex((baseIndex - 1 + scheduleItems.length) % scheduleItems.length);
+              }}
+              className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
+              style={{ width: 34, height: 34, borderRadius: 11, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", outline: "none" }}
+              title="Programa anterior"
+            >
+              <ArrowRight size={17} style={{ color: "rgba(255,255,255,0.9)", transform: "rotate(180deg)" }} />
+            </button>
+            <button
+              type="button"
+              data-testid="next-program-button"
+              onClick={() => {
+                if (scheduleItems.length < 2) return;
+                const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
+                const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+                setSlideDirection("forward");
+                setScheduleIndex((baseIndex + 1) % scheduleItems.length);
+              }}
+              className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
+              style={{ width: 34, height: 34, borderRadius: 11, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", outline: "none" }}
+              title="Próximo programa"
+            >
+              <ArrowRight size={17} style={{ color: "rgba(255,255,255,0.9)" }} />
+            </button>
+          </div>
         </div>
       </div>
 
