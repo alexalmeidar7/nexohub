@@ -702,7 +702,7 @@ export default function FloatingOnAirPresenter({
                     fontWeight: 800,
                     letterSpacing: "0.12em",
                     textTransform: "uppercase",
-                    color: "#0055ff",
+                    color: "#ffffff",
                     lineHeight: 1,
                   }}
                 >
