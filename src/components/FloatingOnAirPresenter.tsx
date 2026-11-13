@@ -354,15 +354,6 @@ export default function FloatingOnAirPresenter({
   const formattedEnd = formatHour(onAirInfo.horarioFim);
   const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
 
-  // Dynamic colors and hours for Next Program ('A SEGUIR')
-  const nextColors = useAlbumColors(nextProgInfo?.locutorFoto || null);
-  const nextPrimaryColor = nextColors[0] || "#38bdf8";
-  const nextSecondaryColor = nextColors[1] || "#6366f1";
-  const formattedNextStart = formatHour(nextProgInfo?.horarioInicio || "");
-  const formattedNextEnd = formatHour(nextProgInfo?.horarioFim || "");
-  const nextHoursStr =
-    formattedNextStart && formattedNextEnd ? `${formattedNextStart} às ${formattedNextEnd}` : "Em Breve";
-
   return (
     <div
       data-floating-onair-presenter
