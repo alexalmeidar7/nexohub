@@ -40,6 +40,327 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
     transition: "background-color 1.2s ease-in-out",
   };
   return (
+    <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: "rgba(5, 9, 18, 0.95)", pointerEvents: "none" }}>
+      <div style={{ ...layer, backgroundColor: secondary, opacity: 0.33, maskImage: "linear-gradient(135deg, transparent, black 45%, transparent)" }} />
+      <div style={{ ...layer, backgroundColor: primary, opacity: 0.53, maskImage: "linear-gradient(135deg, black, transparent 75%)" }} />
+    </div>
+  );
+}
+
+type ProgramPresenters = {
+  apresentador_id?: string | null;
+  apresentadorId?: string | null;
+  apresentadores_ids?: string[] | null;
+  apresentadoresIds?: string[] | null;
+};
+
+function getProgramPresenters(program: ProgramPresenters | null | undefined, presenters: { id: string; nome: string; foto: string; stationKey?: string }[], station?: string | null) {
+  const ids = program?.apresentadores_ids?.length ? program.apresentadores_ids : program?.apresentadoresIds;
+  const uniqueIds = Array.from(new Set(ids?.filter(Boolean) || []));
+  if (uniqueIds.length === 0) {
+    const presenter = resolvePresenterForProgram(program, presenters, station);
+    return presenter ? [{ id: presenter.id, nome: presenter.nome, foto: resolveSafePresenterPhoto(presenter.foto, presenter.nome, station) }] : [];
+  }
+  return uniqueIds.flatMap(id => {
+    const presenter = resolvePresenterForProgram({ ...program, apresentador_id: id, apresentadorId: id }, presenters, station);
+    return presenter ? [{ id: presenter.id, nome: presenter.nome, foto: resolveSafePresenterPhoto(presenter.foto, presenter.nome, station) }] : [];
+  });
+}
+
+function formatHour(h: string): string {
+  if (!h) return "00:00";
+  const parts = h.split(":");
+  return `${parts[0] || "00"}:${parts[1] || "00"}`;
+}
+
+export default function FloatingOnAirPresenter({
+  isBehindPages = false,
+  effectiveUserId,
+}: FloatingOnAirPresenterProps) {
+  const { user } = useAuth();
+  const targetUid = effectiveUserId || user?.id;
+  const targetEmail = user?.email;
+
+  // 1. Synchronous initial state from station database cache (instant render)
+  const [onAirInfo, setOnAirInfo] = useState<OnAirDisplayState>(() => {
+    const syncDb = getStationDatabaseSync(targetUid || user?.email);
+    const syncPrograms = getProgramasSync(targetUid, user?.email);
+    const current = findCurrentProgram(syncPrograms);
+
+    const active = current?.programa || syncDb?.currentProgram;
+    const progNome = active?.nome || "Programação Normal";
+    const hInicio = active?.horarioInicio || active?.horario_inicio || "00:00";
+    const hFim = active?.horarioFim || active?.horario_fim || "23:59";
+
+    const locutores = getProgramPresenters(active, syncDb?.apresentadores || [], targetUid || user?.email);
+
+    return {
+      programaKey: active?.id || progNome,
+      programaNome: progNome,
+      horarioInicio: hInicio,
+      horarioFim: hFim,
+      locutorNome: locutores[0]?.nome || "—",
+      locutorFoto: locutores[0]?.foto || "",
+      locutores,
+    };
+  });
+
+  const [scheduleItems, setScheduleItems] = useState<OnAirDisplayState[]>([]);
+  const [scheduleIndex, setScheduleIndex] = useState<number | null>(null);
+  const [slideDirection, setSlideDirection] = useState<"forward" | "backward">("forward");
+  const [photoSlide, setPhotoSlide] = useState<{ key: number; from: string; to: string; direction: "forward" | "backward" } | null>(null);
+  const photoSlideTimerRef = useRef<number | null>(null);
+
+  const [timezone, setTimezone] = useState<string | null>(null);
+  const [animPhase, setAnimPhase] = useState<AnimPhase>("idle");
+  const lastKeyRef = useRef<string>("");
+  const animTimerRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const [presenterIndex, setPresenterIndex] = useState(0);
+  const [photoExiting, setPhotoExiting] = useState(false);
+
+  // Load timezone
+  useEffect(() => {
+    if (!targetUid) return;
+    supabase
+      .from("empresa_config")
+      .select("timezone")
+      .eq("user_id", targetUid)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.timezone) setTimezone(data.timezone);
+      });
+  }, [targetUid]);
+
+  // 2. Resolve program & locutor asynchronously and keep refreshed
+  const resolveOnAir = useCallback(async () => {
+    try {
+      const uid = targetUid || user?.id;
+      const [programasData, apresentadoresData] = await Promise.all([
+        getProgramas(uid, targetEmail),
+        getApresentadores(uid, targetEmail),
+      ]);
+
+      const todayName = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
+      const browseSchedule: OnAirDisplayState[] = programasData
+        .filter((p) => Array.isArray(p.diasSemana) && p.diasSemana.includes(todayName))
+        .sort((a, b) => (a.horarioInicio || "00:00").localeCompare(b.horarioInicio || "00:00"))
+        .map((p) => {
+          const locutores = getProgramPresenters(p, apresentadoresData, uid || targetEmail);
+          return {
+            programaKey: p.id || p.nome,
+            programaNome: p.nome || "Programação Normal",
+            horarioInicio: p.horarioInicio || p.horario_inicio || "00:00",
+            horarioFim: p.horarioFim || p.horario_fim || "23:59",
+            locutorNome: locutores[0]?.nome || "—",
+            locutorFoto: locutores[0]?.foto || "",
+            locutores,
+          };
+        });
+      setScheduleItems(browseSchedule);
+
+      // Use resolveEffectiveOnAir with timezone, fallback to findCurrentProgram
+      let activeProg: any = null;
+      if (programasData.length > 0) {
+        const mapped = programasData.map((p) => ({
+          ...p,
+          dias_semana: p.diasSemana,
+          horario_inicio: p.horarioInicio,
+          horario_fim: p.horarioFim,
+        }));
+        const resolved = resolveEffectiveOnAir(mapped, new Date(), timezone);
+        activeProg = resolved.current;
+        if (!activeProg) {
+          const fallback = findCurrentProgram(programasData);
+          if (fallback) {
+            activeProg = {
+              ...fallback.programa,
+              horario_inicio: fallback.programa.horarioInicio,
+              horario_fim: fallback.programa.horarioFim,
+            };
+          }
+        }
+      }
+
+      if (activeProg) {
+        const locutores = getProgramPresenters(activeProg, apresentadoresData, uid || targetEmail);
+
+        const nextState: OnAirDisplayState = {
+          programaKey: activeProg.id || activeProg.nome,
+          programaNome: activeProg.nome || "Programação Normal",
+          horarioInicio: activeProg.horario_inicio || activeProg.horarioInicio || "00:00",
+          horarioFim: activeProg.horario_fim || activeProg.horarioFim || "23:59",
+          locutorNome: locutores[0]?.nome || "—",
+          locutorFoto: locutores[0]?.foto || "",
+          locutores,
+        };
+
+        const key = `${nextState.programaKey}:::${nextState.horarioInicio}`;
+        if (!lastKeyRef.current) {
+          lastKeyRef.current = key;
+          setOnAirInfo(nextState);
+        } else if (lastKeyRef.current !== key) {
+          lastKeyRef.current = key;
+          setScheduleIndex(null);
+          if (animTimerRef.current) clearTimeout(animTimerRef.current);
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+          // Exit transition
+          setAnimPhase("exiting");
+          animTimerRef.current = window.setTimeout(() => {
+            setOnAirInfo(nextState);
+            setAnimPhase("entering-prep");
+            rafRef.current = requestAnimationFrame(() => {
+              rafRef.current = requestAnimationFrame(() => {
+                setAnimPhase("idle");
+              });
+            });
+          }, 220);
+        } else {
+          setOnAirInfo((prev) => JSON.stringify(prev) === JSON.stringify(nextState) ? prev : nextState);
+        }
+      } else {
+        setOnAirInfo((prev) => ({
+          ...prev,
+          programaNome: "Programação Normal",
+          locutorNome: "—",
+          locutorFoto: "",
+          locutores: [],
+          programaKey: "",
+        }));
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar o programa no ar:", error);
+    }
+  }, [targetUid, user, targetEmail, timezone]);
+
+  useEffect(() => {
+    resolveOnAir();
+    const iv = setInterval(resolveOnAir, 15000); // refresh every 15s
+    window.addEventListener("apresentadores-updated", resolveOnAir);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener("apresentadores-updated", resolveOnAir);
+    };
+  }, [resolveOnAir]);
+
+  // Realtime subscription for instant updates on schedules or presenter changes
+  useEffect(() => {
+    if (!targetUid) return;
+    const channel = supabase
+      .channel(`floating-onair-${targetUid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas" }, () => resolveOnAir())
+      .on("postgres_changes", { event: "*", schema: "public", table: "apresentadores" }, () => resolveOnAir())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [targetUid, resolveOnAir]);
+
+  // Clean up animation timers on unmount
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  const isBrowsingSchedule = scheduleIndex !== null && scheduleItems.length > 0;
+  const displayedInfo = isBrowsingSchedule ? scheduleItems[scheduleIndex as number] : onAirInfo;
+
+  const presenterKey = JSON.stringify([displayedInfo.programaKey, displayedInfo.locutores?.map(p => p.id)]);
+  useEffect(() => {
+    setPresenterIndex(0);
+    setPhotoExiting(false);
+  }, [presenterKey]);
+
+  const presenterCount = displayedInfo.locutores?.length || 0;
+  useEffect(() => {
+    if (presenterCount < 2) return;
+    const exitTimer = window.setTimeout(() => setPhotoExiting(true), PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS);
+    const nextTimer = window.setTimeout(() => {
+      setPresenterIndex(index => (index + 1) % presenterCount);
+      setPhotoExiting(false);
+    }, PRESENTER_INTERVAL_MS);
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(nextTimer);
+    };
+  }, [presenterKey, presenterCount, presenterIndex]);
+
+  const currentPresenter = displayedInfo.locutores?.[presenterIndex] || displayedInfo.locutores?.[0];
+  const currentName = currentPresenter?.nome || displayedInfo.locutorNome;
+  const currentPhoto = currentPresenter ? currentPresenter.foto : displayedInfo.locutorFoto;
+  // 3. Dynamic colors extracted from the locutor's photo
+  const locutorColors = useAlbumColors(currentPhoto || null);
+  const primaryColor = locutorColors[0] || "#0055ff";
+  const secondaryColor = locutorColors[1] || "#7c3aed";
+
+  // Animation styles based on phase:
+  const photoAnimStyle: React.CSSProperties =
+    animPhase === "exiting"
+      ? {
+          opacity: 0,
+          transform: "scale(0.9) rotate(-1.5deg)",
+          filter: "blur(3px)",
+          transition: "transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease, filter 0.2s ease",
+        }
+      : animPhase === "entering-prep"
+      ? {
+          opacity: 0,
+          transform: "scale(1.08) rotate(1.5deg)",
+          filter: "blur(3px)",
+          transition: "none",
+        }
+      : {
+          opacity: 1,
+          transform: "scale(1) rotate(0deg)",
+          filter: "blur(0px)",
+          transition: "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease",
+        };
+
+  const textAnimStyle: React.CSSProperties =
+    animPhase === "exiting"
+      ? {
+          opacity: 0,
+          transform: "translateY(-8px)",
+          transition: "transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease",
+        }
+      : animPhase === "entering-prep"
+      ? {
+          opacity: 0,
+          transform: "translateY(10px)",
+          transition: "none",
+        }
+      : {
+          opacity: 1,
+          transform: "translateY(0)",
+          transition: "transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease",
+        };
+
+  const formattedStart = formatHour(displayedInfo.horarioInicio);
+  const formattedEnd = formatHour(displayedInfo.horarioFim);
+  const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
+
+  const navigateSchedule = useCallback((direction: "forward" | "backward") => {
+    if (scheduleItems.length < 2) return;
+    const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
+    const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = direction === "forward"
+      ? (baseIndex + 1) % scheduleItems.length
+      : (baseIndex - 1 + scheduleItems.length) % scheduleItems.length;
+    const nextInfo = scheduleItems[nextIndex];
+    const nextPhoto = nextInfo?.locutores?.[0]?.foto || nextInfo?.locutorFoto || "";
+    const currentPhotoForSlide = currentPhoto || displayedInfo.locutorFoto || "";
+    setSlideDirection(direction);
+    if (photoSlideTimerRef.current) clearTimeout(photoSlideTimerRef.current);
+    setPhotoSlide({ key: Date.now(), from: currentPhotoForSlide, to: nextPhoto, direction });
+    setScheduleIndex(nextIndex);
+    photoSlideTimerRef.current = window.setTimeout(() => setPhotoSlide(null), PHOTO_TRANSITION_MS + 40);
+  }, [scheduleItems, scheduleIndex, onAirInfo.programaKey, currentPhoto, displayedInfo.locutorFoto]);
+
+  return (
     <div
       data-floating-onair-presenter
       className={`fixed bottom-6 left-0 right-0 select-none ${
@@ -47,12 +368,17 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
           ? "z-[2] pointer-events-none opacity-0 invisible"
           : "z-30 pointer-events-none opacity-100 visible"
       }`}
-      style={{ transition: "z-index 0.2s ease, opacity 0.25s ease, visibility 0.25s ease" }}
+      style={{
+        transition: "z-index 0.2s ease, opacity 0.25s ease, visibility 0.25s ease",
+      }}
     >
       <div className="max-w-[1600px] mx-auto px-4 lg:px-8 w-full flex items-center justify-end pointer-events-none">
+        {/* 1. Current Program Box ('NO AR') */}
         <div
           data-testid="onair-current-program-box"
-          className={`${isBehindPages ? "pointer-events-none" : "pointer-events-auto"} hidden sm:flex items-center relative group`}
+          className={`${
+            isBehindPages ? "pointer-events-none" : "pointer-events-auto"
+          } hidden sm:flex items-center gap-3.5 relative group`}
           style={{
             userSelect: "none",
             height: 100,
@@ -72,47 +398,24 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
           }}
         >
           <CardGradient primary={primaryColor} secondary={secondaryColor} />
-
-          {/* Foto fixa / área de entrada da animação */}
           <div
             style={{
               width: 82,
               height: "100%",
+              overflow: "visible",
               position: "relative",
               flexShrink: 0,
               zIndex: 2,
             }}
           >
             {!photoSlide && (
-              <div
-                key={`${presenterKey}:${presenterIndex}`}
-                style={{ width: "100%", height: "100%", position: "relative" }}
-              >
+              <div key={`${presenterKey}:${presenterIndex}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 2 }}>
                 {currentPhoto ? (
-                  <img
-                    key={currentPhoto}
-                    src={currentPhoto}
-                    alt={currentName || "Locutor no ar"}
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      objectPosition: "top center",
-                      ...photoAnimStyle,
-                    }}
-                  />
+                  <img key={currentPhoto} src={currentPhoto} alt={currentName || "Locutor no ar"} onError={(e) => { e.currentTarget.style.display = "none"; }} style={{
+                    width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", ...photoAnimStyle,
+                  }} />
                 ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      ...photoAnimStyle,
-                    }}
-                  >
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", ...photoAnimStyle }}>
                     <Radio size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
                   </div>
                 )}
@@ -120,56 +423,24 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
             )}
           </div>
 
-          {/* Foto de navegação: atravessa o box inteiro por trás dos textos */}
           {photoSlide && (
-            <div
-              key={photoSlide.key}
-              style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 1,
-                overflow: "hidden",
-                pointerEvents: "none",
-              }}
-            >
+            <div key={photoSlide.key} style={{ position: "absolute", inset: 0, zIndex: 1, overflow: "hidden", pointerEvents: "none" }}>
               {photoSlide.from && (
-                <img
-                  src={photoSlide.from}
-                  alt=""
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: 82,
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "top center",
-                    animation: `fmp-photo-exit-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
-                  }}
-                />
+                <img src={photoSlide.from} alt="" aria-hidden="true" style={{
+                  position: "absolute", top: 0, left: 0, width: 82, height: "100%", objectFit: "cover", objectPosition: "top center",
+                  animation: `fmp-photo-exit-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+                }} />
               )}
               {photoSlide.to && (
-                <img
-                  src={photoSlide.to}
-                  alt=""
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: photoSlide.direction === "forward" ? "calc(100% - 82px)" : -82,
-                    width: 82,
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "top center",
-                    animation: `fmp-photo-enter-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
-                  }}
-                />
+                <img key={`${photoSlide.key}-incoming`} src={photoSlide.to} alt="" aria-hidden="true" style={{
+                  position: "absolute", top: 0, width: 82, height: "100%", objectFit: "cover", objectPosition: "top center",
+                  animation: `fmp-photo-enter-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+                }} />
               )}
             </div>
           )}
 
-          {/* Informações: sempre no mesmo box */}
+          {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
           <div
             key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`}
             style={{
@@ -180,41 +451,41 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
-              paddingLeft: 10,
-              paddingRight: 4,
-              animation: isBrowsingSchedule
-                ? `fmp-slide-${slideDirection} 420ms cubic-bezier(0.16, 1, 0.3, 1)`
-                : undefined,
+              animation: isBrowsingSchedule ? `fmp-slide-${slideDirection} 420ms cubic-bezier(0.16, 1, 0.3, 1)` : undefined,
             }}
           >
             {!isBrowsingSchedule && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                <span
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    backgroundColor: "#ef4444",
-                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
-                    animation: "fmp-pulse 1.8s ease-in-out infinite",
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: "#ef4444",
-                    lineHeight: 1,
-                  }}
-                >
-                  NO AR
-                </span>
-              </div>
+              <>
+                {/* 1. 'no ar' badge */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  backgroundColor: "#ef4444",
+                  boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
+                  animation: "fmp-pulse 1.8s ease-in-out infinite",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#ef4444",
+                  lineHeight: 1,
+                }}
+              >
+                NO AR
+              </span>
+                </div>
+              </>
             )}
 
+            {/* 2. Embaixo de 'no ar': O nome do programa */}
             <p
               style={{
                 fontSize: 14,
@@ -235,6 +506,7 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
               {displayedInfo.programaNome}
             </p>
 
+            {/* 3. Embaixo do nome do programa: Horário inicial e final do programa */}
             <div
               style={{
                 display: "flex",
@@ -263,6 +535,7 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
               </span>
             </div>
 
+            {/* 4. Embaixo do horário: O nome do locutor */}
             {currentName && currentName !== "—" && (
               <div
                 style={{
@@ -294,66 +567,26 @@ function CardGradient({ primary, secondary }: { primary: string; secondary: stri
               </div>
             )}
           </div>
+        </div>
 
-          {/* Setas: dentro do próprio box, sem botão/caixa visível */}
-          <button
-            type="button"
-            data-testid="previous-program-button"
-            aria-label="Programa anterior"
-            onClick={() => navigateSchedule("backward")}
-            style={{
-              position: "absolute",
-              left: 7,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 20,
-              height: 40,
-              padding: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              cursor: "pointer",
-              color: "rgba(255,255,255,0.92)",
-              zIndex: 7,
-            }}
-            title="Programa anterior"
-          >
-            <ArrowRight size={16} style={{ transform: "rotate(180deg)" }} />
-          </button>
-
-          <button
-            type="button"
-            data-testid="next-program-button"
-            aria-label="Próximo programa"
-            onClick={() => navigateSchedule("forward")}
-            style={{
-              position: "absolute",
-              right: 7,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 20,
-              height: 40,
-              padding: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              cursor: "pointer",
-              color: "rgba(255,255,255,0.92)",
-              zIndex: 7,
-            }}
-            title="Próximo programa"
-          >
-            <ArrowRight size={16} />
-          </button>
+          {/* Setas dentro do próprio box */}
+          <div style={{ position: "absolute", inset: 0, zIndex: 6, pointerEvents: "none" }}>
+            <button type="button" data-testid="previous-program-button" aria-label="Programa anterior"
+              onClick={() => navigateSchedule("backward")}
+              style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto", zIndex: 7 }}
+              title="Programa anterior">
+              <ArrowRight size={17} style={{ transform: "rotate(180deg)" }} />
+            </button>
+            <button type="button" data-testid="next-program-button" aria-label="Próximo programa"
+              onClick={() => navigateSchedule("forward")}
+              style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
+              title="Próximo programa">
+              <ArrowRight size={17} />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
       <style>{`
         @keyframes fmp-slide-forward {
           from { transform: translateX(42px); opacity: 0; }
