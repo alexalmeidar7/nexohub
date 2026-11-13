@@ -139,6 +139,24 @@ export default function FloatingOnAirPresenter({
         getApresentadores(uid, targetEmail),
       ]);
 
+      const todayName = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
+      const browseSchedule: OnAirDisplayState[] = programasData
+        .filter((p) => Array.isArray(p.diasSemana) && p.diasSemana.includes(todayName))
+        .sort((a, b) => (a.horarioInicio || "00:00").localeCompare(b.horarioInicio || "00:00"))
+        .map((p) => {
+          const locutores = getProgramPresenters(p, apresentadoresData, uid || targetEmail);
+          return {
+            programaKey: p.id || p.nome,
+            programaNome: p.nome || "Programação Normal",
+            horarioInicio: p.horarioInicio || p.horario_inicio || "00:00",
+            horarioFim: p.horarioFim || p.horario_fim || "23:59",
+            locutorNome: locutores[0]?.nome || "—",
+            locutorFoto: locutores[0]?.foto || "",
+            locutores,
+          };
+        });
+      setScheduleItems(browseSchedule);
+
       // Use resolveEffectiveOnAir with timezone, fallback to findCurrentProgram
       let activeProg: any = null;
       if (programasData.length > 0) {
@@ -174,24 +192,6 @@ export default function FloatingOnAirPresenter({
           locutorFoto: locutores[0]?.foto || "",
           locutores,
         };
-
-        const today = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
-        const todaySchedule = programasData
-          .filter((p) => p.diasSemana?.includes(today))
-          .sort((a, b) => (a.horarioInicio || "00:00").localeCompare(b.horarioInicio || "00:00"))
-          .map((p) => {
-            const pLocutores = getProgramPresenters(p, apresentadoresData, uid || targetEmail);
-            return {
-              programaKey: p.id || p.nome,
-              programaNome: p.nome || "Programação Normal",
-              horarioInicio: p.horarioInicio || p.horario_inicio || "00:00",
-              horarioFim: p.horarioFim || p.horario_fim || "23:59",
-              locutorNome: pLocutores[0]?.nome || "—",
-              locutorFoto: pLocutores[0]?.foto || "",
-              locutores: pLocutores,
-            };
-          });
-        setScheduleItems(todaySchedule);
 
         const key = `${nextState.programaKey}:::${nextState.horarioInicio}`;
         if (!lastKeyRef.current) {
@@ -267,26 +267,18 @@ export default function FloatingOnAirPresenter({
   const isBrowsingSchedule = scheduleIndex !== null && scheduleItems.length > 0;
   const displayedInfo = isBrowsingSchedule ? scheduleItems[scheduleIndex as number] : onAirInfo;
 
-  const presenterKey = JSON.stringify([
-    displayedInfo.programaKey,
-    displayedInfo.locutores?.map((p) => p.id),
-  ]);
-
+  const presenterKey = JSON.stringify([displayedInfo.programaKey, displayedInfo.locutores?.map(p => p.id)]);
   useEffect(() => {
     setPresenterIndex(0);
     setPhotoExiting(false);
   }, [presenterKey]);
 
   const presenterCount = displayedInfo.locutores?.length || 0;
-
   useEffect(() => {
     if (presenterCount < 2) return;
-    const exitTimer = window.setTimeout(
-      () => setPhotoExiting(true),
-      PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS
-    );
+    const exitTimer = window.setTimeout(() => setPhotoExiting(true), PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS);
     const nextTimer = window.setTimeout(() => {
-      setPresenterIndex((index) => (index + 1) % presenterCount);
+      setPresenterIndex(index => (index + 1) % presenterCount);
       setPhotoExiting(false);
     }, PRESENTER_INTERVAL_MS);
     return () => {
@@ -295,22 +287,28 @@ export default function FloatingOnAirPresenter({
     };
   }, [presenterKey, presenterCount, presenterIndex]);
 
-  const currentPresenter =
-    displayedInfo.locutores?.[presenterIndex] || displayedInfo.locutores?.[0];
+  const currentPresenter = displayedInfo.locutores?.[presenterIndex] || displayedInfo.locutores?.[0];
   const currentName = currentPresenter?.nome || displayedInfo.locutorNome;
   const currentPhoto = currentPresenter ? currentPresenter.foto : displayedInfo.locutorFoto;
-
   const locutorColors = useAlbumColors(currentPhoto || null);
   const primaryColor = locutorColors[0] || "#0055ff";
   const secondaryColor = locutorColors[1] || "#7c3aed";
 
-  const formattedStart = formatHour(displayedInfo.horarioInicio);
-  const formattedEnd = formatHour(displayedInfo.horarioFim);
-  const hoursStr = formattedStart && formattedEnd
-    ? `${formattedStart} às ${formattedEnd}`
-    : "24 Horas";
+   return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(nextTimer);
+    };
+  }, [presenterKey, presenterCount, presenterIndex]);
 
-  // Animation styles based on the existing on-air transition phase.
+  const currentPresenter = onAirInfo.locutores?.[presenterIndex] || onAirInfo.locutores?.[0];
+  const currentName = currentPresenter?.nome || onAirInfo.locutorNome;
+  const currentPhoto = currentPresenter ? currentPresenter.foto : onAirInfo.locutorFoto;
+  // 3. Dynamic colors extracted from the locutor's photo
+  const locutorColors = useAlbumColors(currentPhoto || null);
+  const primaryColor = locutorColors[0] || "#0055ff";
+  const secondaryColor = locutorColors[1] || "#7c3aed";
+
+  // Animation styles based on phase:
   const photoAnimStyle: React.CSSProperties =
     animPhase === "exiting"
       ? {
@@ -351,6 +349,19 @@ export default function FloatingOnAirPresenter({
           transform: "translateY(0)",
           transition: "transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease",
         };
+
+  const formattedStart = formatHour(onAirInfo.horarioInicio);
+  const formattedEnd = formatHour(onAirInfo.horarioFim);
+  const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
+
+  // Dynamic colors and hours for Next Program ('A SEGUIR')
+  const nextColors = useAlbumColors(nextProgInfo?.locutorFoto || null);
+  const nextPrimaryColor = nextColors[0] || "#38bdf8";
+  const nextSecondaryColor = nextColors[1] || "#6366f1";
+  const formattedNextStart = formatHour(nextProgInfo?.horarioInicio || "");
+  const formattedNextEnd = formatHour(nextProgInfo?.horarioFim || "");
+  const nextHoursStr =
+    formattedNextStart && formattedNextEnd ? `${formattedNextStart} às ${formattedNextEnd}` : "Em Breve";
 
   return (
     <div
@@ -447,49 +458,37 @@ export default function FloatingOnAirPresenter({
           </div>
 
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
-          <div
-            key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`}
-            style={{
-              position: "relative",
-              minWidth: 0,
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              animation: isBrowsingSchedule
-                ? `fmp-slide-${slideDirection} 420ms cubic-bezier(0.16, 1, 0.3, 1)`
-                : undefined,
-            }}
-          >
+          <div key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`} style={{ position: "relative", minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", animation: isBrowsingSchedule ? `fmp-slide-${slideDirection} 420ms cubic-bezier(0.16, 1, 0.3, 1)` : undefined }}>
             {!isBrowsingSchedule ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                <span
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    backgroundColor: "#ef4444",
-                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
-                    animation: "fmp-pulse 1.8s ease-in-out infinite",
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: "#ef4444",
-                    lineHeight: 1,
-                  }}
-                >
-                  NO AR
-                </span>
-              </div>
+            {/* 1. 'no ar' badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  backgroundColor: "#ef4444",
+                  boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
+                  animation: "fmp-pulse 1.8s ease-in-out infinite",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#ef4444",
+                  lineHeight: 1,
+                }}
+              >
+                NO AR
+              </span>
+            </div>
             ) : null}
 
-            {/* 2. Embaixo de 'no ar': O nome do programa */
+            {/* 2. Embaixo de 'no ar': O nome do programa */}
             <p
               style={{
                 fontSize: 14,
@@ -573,66 +572,39 @@ export default function FloatingOnAirPresenter({
           </div>
         </div>
 
-        {/* Navegação da programação: permanece dentro do mesmo box */}
-        <div
-          className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 ${
-            isBehindPages ? "pointer-events-none" : "pointer-events-auto"
-          }`}
-          style={{ zIndex: 4 }}
-        >
-          <button
-            type="button"
-            data-testid="previous-program-button"
+        {/* Navegação dentro do mesmo box */}
+        <div className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 ${
+          isBehindPages ? "pointer-events-none" : "pointer-events-auto"
+        }`} style={{ zIndex: 5 }}>
+          <button type="button" data-testid="previous-program-button"
             onClick={() => {
               if (scheduleItems.length < 2) return;
-              const currentIndex =
-                scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
+              const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
               const baseIndex = currentIndex >= 0 ? currentIndex : 0;
               setSlideDirection("backward");
               setScheduleIndex((baseIndex - 1 + scheduleItems.length) % scheduleItems.length);
             }}
             className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.14)",
-              outline: "none",
-            }}
-            title="Programa anterior"
-          >
-            <ArrowRight
-              size={18}
-              style={{ color: "rgba(255,255,255,0.9)", transform: "rotate(180deg)" }}
-            />
+            style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", outline: "none" }}
+            title="Programa anterior">
+            <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)", transform: "rotate(180deg)" }} />
           </button>
-
-          <button
-            type="button"
-            data-testid="next-program-button"
+          <button type="button" data-testid="next-program-button"
             onClick={() => {
               if (scheduleItems.length < 2) return;
-              const currentIndex =
-                scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
+              const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
               const baseIndex = currentIndex >= 0 ? currentIndex : 0;
               setSlideDirection("forward");
               setScheduleIndex((baseIndex + 1) % scheduleItems.length);
             }}
             className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.14)",
-              outline: "none",
-            }}
-            title="Próximo programa"
-          >
+            style={{ width: 34, height: 34, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", outline: "none" }}
+            title="Próximo programa">
             <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)" }} />
           </button>
         </div>
+      </div>
+
       </div>
 
       <style>{`
