@@ -80,8 +80,6 @@ export function pngSponsorUrl(value: string): string {
   return clean;
 }
 
-export const IMGBLANCK_URL = "https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
-
 export function logosXml(program: ScheduledProgram | null, sponsor: SponsorLogo | null, logoUrl: string, now: Date): string {
   const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
   return `<?xml version="1.0" encoding="UTF-8"?>
