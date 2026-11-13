@@ -602,35 +602,14 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
           Cenários Estúdio
         </h1>
         
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Tab buttons: Cenário por imagens | Cenário web */}
-          <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#0A2540] hover:bg-white"
-            >
-              Cenário por imagens
-            </Button>
-            <span className="text-[#64748B] text-xs">|</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#0A2540] hover:bg-white"
-            >
-              Cenário web
-            </Button>
-          </div>
-          
-          {/* Novo Template button */}
-          <Button 
-            onClick={addGrupo} 
-            disabled={noProgramas} 
-            className="h-9 px-5 rounded-full bg-[#C6F03C] hover:bg-[#C6F03C]/90 text-[#0A2540] text-[10px] font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1.5" /> Novo Template
-          </Button>
-        </div>
+        {/* Novo Template button */}
+        <Button 
+          onClick={addGrupo} 
+          disabled={noProgramas} 
+          className="h-9 px-5 rounded-full bg-[#C6F03C] hover:bg-[#C6F03C]/90 text-[#0A2540] text-[10px] font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
+        >
+          <Plus className="h-3.5 w-3.5 mr-1.5" /> Novo Template
+        </Button>
       </div>
 
       {/* Empty state: no programas registered (priority over "no grupos") */}
