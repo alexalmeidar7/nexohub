@@ -567,7 +567,7 @@ export default function FloatingOnAirPresenter({
               </div>
             )}
           </div>
-        </div>
+
 
         {/* Setas dentro do próprio box */}
         <div style={{ position: "absolute", inset: 0, zIndex: 6, pointerEvents: "none" }}>
@@ -583,6 +583,7 @@ export default function FloatingOnAirPresenter({
             title="Próximo programa">
             <ArrowRight size={17} />
           </button>
+        </div>
         </div>
       </div>
 
