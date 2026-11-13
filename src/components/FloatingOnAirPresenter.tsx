@@ -440,6 +440,8 @@ export default function FloatingOnAirPresenter({
             </div>
           )}
 
+          </div>
+
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
           <div
             key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`}
