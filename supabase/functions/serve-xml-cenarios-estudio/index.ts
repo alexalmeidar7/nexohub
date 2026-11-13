@@ -198,10 +198,16 @@ serve(async (req) => {
     };
 
     const [urlConvidadosRaw, urlAncoraRaw] = [findArte(4), findArte(2)];
-    const [urlConvidados, urlAncora] = await Promise.all([
+    const [urlConvidadosResolved, urlAncoraResolved] = await Promise.all([
       ensureVmixPngUrl(supabase, urlConvidadosRaw, `vmix-cenarios/${userId}`),
       ensureVmixPngUrl(supabase, urlAncoraRaw, `vmix-cenarios/${userId}`),
     ]);
+
+    // vMix precisa receber a URL do arquivo PNG sem query string:
+    // o endereço deve terminar literalmente em .png.
+    const stripUrlSuffix = (value: string) => String(value || "").split(/[?#]/, 1)[0];
+    const urlConvidados = stripUrlSuffix(urlConvidadosResolved);
+    const urlAncora = stripUrlSuffix(urlAncoraResolved);
 
     // Cache-buster para capa/thumb do programa: usa created_at (não temos updated_at em programas)
     const programaVersion = (onAir as any)?.created_at || "";
