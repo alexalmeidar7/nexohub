@@ -1650,7 +1650,7 @@ export default function CenarioTela() {
                            <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} />
                          </div>
                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${vhToPx(0.35)}${vu}`, fontSize: `${vhToPx(0.95)}${vu}`, fontWeight: 500, lineHeight: 1.1, whiteSpace: "nowrap" }}>
-                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Thermometer size={vhToPx(1)} /> <span>Mín: {liveWeather.daily?.[0]?.tempMin ?? "--"}° Máx: {liveWeather.daily?.[0]?.tempMax ?? "--"}°</span></div>
+                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Thermometer size={vhToPx(1)} /> <span>Mín: {liveWeather.daily?.[0]?.min ?? "--"}° Máx: {liveWeather.daily?.[0]?.max ?? "--"}°</span></div>
                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><CloudRain size={vhToPx(1)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Droplets size={vhToPx(1)} /> <span>{liveWeather.current.humidity}%</span></div>
                          </div>

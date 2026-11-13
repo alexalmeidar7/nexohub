@@ -1634,7 +1634,7 @@ export default function CenarioTelaFull() {
                            <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} />
                          </div>
                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${vhToPx(0.35)}${vu}`, fontSize: `${vhToPx(0.95)}${vu}`, fontWeight: 500, lineHeight: 1.1, whiteSpace: "nowrap" }}>
-                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Thermometer size={vhToPx(1)} /> <span>Mín: {liveWeather.daily?.[0]?.tempMin ?? "--"}° Máx: {liveWeather.daily?.[0]?.tempMax ?? "--"}°</span></div>
+                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Thermometer size={vhToPx(1)} /> <span>Mín: {liveWeather.daily?.[0]?.min ?? "--"}° Máx: {liveWeather.daily?.[0]?.max ?? "--"}°</span></div>
                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><CloudRain size={vhToPx(1)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Droplets size={vhToPx(1)} /> <span>{liveWeather.current.humidity}%</span></div>
                          </div>
@@ -1652,21 +1652,21 @@ export default function CenarioTelaFull() {
                    )}
 
                   {/* Capa de música no canto superior esquerdo com informações do artista */}
-                  {musicData?.capa && showMusic && (
+                  {musicData?.capa && !isBreakTrack && config.home.showMusicCover !== false && (
                     <div style={{ position: "absolute", top: `${vhToPx(3.2)}${vu}`, left: `${vhToPx(3.2)}${vu}`, zIndex: 22, display: "flex", alignItems: "flex-start", gap: `${vhToPx(1.5)}${vu}`, pointerEvents: "none" }}>
                       {/* Capa da música */}
                       <img 
                         src={musicData.capa} 
-                        alt={musicData.musicName || "Capa"} 
+                        alt={musicData.titulo || "Capa"} 
                         style={{ width: `${vhToPx(10)}${vu}`, height: `${vhToPx(10)}${vu}`, objectFit: "cover", borderRadius: `${vhToPx(0.5)}${vu}`, boxShadow: "0 4px 12px rgba(0,0,0,0.6)" }}
                       />
                       {/* Informações de artista e música */}
                       <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: `${vhToPx(0.8)}${vu}`, maxWidth: `${vhToPx(18)}${vu}` }}>
-                        <div style={{ fontSize: `${vhToPx(1.1)}${vu}`, fontWeight: 500, lineHeight: 1.2, color: config.home.colorArtist || "#aaa", textShadow: "0 2px 6px rgba(0,0,0,0.5)" }}>
-                          {musicData.artist || "Artista desconhecido"}
+                        <div style={{ fontSize: `${vhToPx(1.1)}${vu}`, fontWeight: 500, lineHeight: 1.2,                         color: config.home.colorMusicTitle || "#aaa", textShadow: "0 2px 6px rgba(0,0,0,0.5)" }}>
+                                                  {musicData.artista || "Artista desconhecido"}
                         </div>
                         <div style={{ fontSize: `${vhToPx(1.35)}${vu}`, fontWeight: 700, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 6px rgba(0,0,0,0.5)", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                          {musicData.musicName || "Música desconhecida"}
+                          {musicData.titulo || "Música desconhecida"}
                         </div>
                       </div>
                     </div>
