@@ -285,30 +285,6 @@ export default function FloatingOnAirPresenter({
     };
   }, []);
 
-  const presenterKey = displayedPresenterKey;
-  useEffect(() => {
-    setPresenterIndex(0);
-    setPhotoExiting(false);
-  }, [presenterKey]);
-
-  useEffect(() => {
-    if (displayedPresenterCount < 2) return;
-    const exitTimer = window.setTimeout(() => setPhotoExiting(true), PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS);
-    const nextTimer = window.setTimeout(() => {
-      setPresenterIndex(index => (index + 1) % displayedPresenterCount);
-      setPhotoExiting(false);
-    }, PRESENTER_INTERVAL_MS);
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(nextTimer);
-    };
-  }, [presenterKey, displayedPresenterCount, presenterIndex]);
-
-  const currentName = displayedName;
-  const currentPhoto = displayedPhoto;
-  const primaryColor = displayedPrimaryColor;
-  const secondaryColor = displayedSecondaryColor;
-
   // Animation styles based on phase:
   const photoAnimStyle: React.CSSProperties =
     animPhase === "exiting"
@@ -370,6 +346,30 @@ export default function FloatingOnAirPresenter({
   const displayedStart = formatHour(displayedInfo?.horarioInicio || "");
   const displayedEnd = formatHour(displayedInfo?.horarioFim || "");
   const displayedHours = displayedStart && displayedEnd ? `${displayedStart} às ${displayedEnd}` : "24 Horas";
+  const presenterKey = displayedPresenterKey;
+  const presenterCount = displayedPresenterCount;
+  const currentName = displayedName;
+  const currentPhoto = displayedPhoto;
+  const primaryColor = displayedPrimaryColor;
+  const secondaryColor = displayedSecondaryColor;
+
+  useEffect(() => {
+    setPresenterIndex(0);
+    setPhotoExiting(false);
+  }, [presenterKey]);
+
+  useEffect(() => {
+    if (presenterCount < 2) return;
+    const exitTimer = window.setTimeout(() => setPhotoExiting(true), PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS);
+    const nextTimer = window.setTimeout(() => {
+      setPresenterIndex(index => (index + 1) % presenterCount);
+      setPhotoExiting(false);
+    }, PRESENTER_INTERVAL_MS);
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(nextTimer);
+    };
+  }, [presenterKey, presenterCount, presenterIndex]);
 
   return (
     <div
