@@ -67,7 +67,7 @@ export function selectRotatingSponsor<T extends SponsorLogo>(logos: T[], program
 
 export function sponsorXml(name: string | null | undefined, logoUrl: string, indent = ""): string {
   const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
-  return `${indent}<patrocinador>\n${indent}  <nome>${escape(name || "")}</nome>\n${indent}  <logo_url>${escape(resolvedLogoUrl)}</logo_url>\n${indent}</patrocinador>`;
+  const resolvedLogoUrl = logoUrl.trim() || IMGBLANCK_URL;\n  return `${indent}<patrocinador>\n${indent}  <nome>${escape(name || "")}</nome>\n${indent}  <logo_url>${escape(resolvedLogoUrl)}</logo_url>\n${indent}</patrocinador>`;
 }
 
 export function pngSponsorUrl(value: string): string {
