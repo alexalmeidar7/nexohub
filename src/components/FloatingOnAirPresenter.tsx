@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Clock, User, Plus, Radio } from "lucide-react";
+import { Clock, User, Plus, Radio, ArrowRight } from "lucide-react";
 import { useAlbumColors } from "@/hooks/useAlbumColors";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -689,14 +689,10 @@ export default function FloatingOnAirPresenter({
             <div style={{ position: "relative", minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
               {/* 1. 'A SEGUIR' badge with site layout blue (#0055ff) */}
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                <span
+                <ArrowRight
+                  size={12}
                   style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    backgroundColor: "#0055ff",
-                    boxShadow: "0 0 10px rgba(0, 85, 255, 0.9)",
-                    animation: "fmp-pulse 1.8s ease-in-out infinite",
+                    color: "#ffffff",
                     flexShrink: 0,
                   }}
                 />
