@@ -108,6 +108,8 @@ export default function FloatingOnAirPresenter({
   const [scheduleItems, setScheduleItems] = useState<OnAirDisplayState[]>([]);
   const [scheduleIndex, setScheduleIndex] = useState<number | null>(null);
   const [slideDirection, setSlideDirection] = useState<"forward" | "backward">("forward");
+  const [photoSlide, setPhotoSlide] = useState<{ key: number; from: string; to: string; direction: "forward" | "backward" } | null>(null);
+  const photoSlideTimerRef = useRef<number | null>(null);
 
   const [timezone, setTimezone] = useState<string | null>(null);
   const [animPhase, setAnimPhase] = useState<AnimPhase>("idle");
@@ -341,6 +343,23 @@ export default function FloatingOnAirPresenter({
   const formattedEnd = formatHour(displayedInfo.horarioFim);
   const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
 
+  const navigateSchedule = useCallback((direction: "forward" | "backward") => {
+    if (scheduleItems.length < 2) return;
+    const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
+    const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = direction === "forward"
+      ? (baseIndex + 1) % scheduleItems.length
+      : (baseIndex - 1 + scheduleItems.length) % scheduleItems.length;
+    const nextInfo = scheduleItems[nextIndex];
+    const nextPhoto = nextInfo?.locutores?.[0]?.foto || nextInfo?.locutorFoto || "";
+    const currentPhotoForSlide = currentPhoto || displayedInfo.locutorFoto || "";
+    setSlideDirection(direction);
+    if (photoSlideTimerRef.current) clearTimeout(photoSlideTimerRef.current);
+    setPhotoSlide({ key: Date.now(), from: currentPhotoForSlide, to: nextPhoto, direction });
+    setScheduleIndex(nextIndex);
+    photoSlideTimerRef.current = window.setTimeout(() => setPhotoSlide(null), PHOTO_TRANSITION_MS + 40);
+  }, [scheduleItems, scheduleIndex, onAirInfo.programaKey, currentPhoto, displayedInfo.locutorFoto]);
+
   return (
     <div
       data-floating-onair-presenter
@@ -383,58 +402,44 @@ export default function FloatingOnAirPresenter({
             style={{
               width: 82,
               height: "100%",
-              overflow: "hidden",
+              overflow: "visible",
               position: "relative",
               flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              zIndex: 2,
             }}
           >
-            <div
-              key={`${presenterKey}:${presenterIndex}`}
-              style={{
-                width: "100%",
-                height: "100%",
-                transform: photoExiting
-                  ? `translateX(${slideDirection === "backward" ? "100%" : "-100%"})`
-                  : "translateX(0)",
-                opacity: photoExiting ? 0 : 1,
-                transition: `transform ${PHOTO_TRANSITION_MS}ms ease-in-out, opacity ${PHOTO_TRANSITION_MS}ms ease-in-out`,
-                animation: presenterCount > 1 ? `fmp-photo-enter-${slideDirection} ${PHOTO_TRANSITION_MS}ms ease-in-out` : undefined,
-              }}
-            >
-            {currentPhoto ? (
-              <img
-                key={currentPhoto}
-                src={currentPhoto}
-                alt={currentName || "Locutor no ar"}
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "top center",
-                  ...photoAnimStyle,
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  ...photoAnimStyle,
-                }}
-              >
-                <Radio size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
+            {!photoSlide && (
+              <div key={`${presenterKey}:${presenterIndex}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 2 }}>
+                {currentPhoto ? (
+                  <img key={currentPhoto} src={currentPhoto} alt={currentName || "Locutor no ar"} onError={(e) => { e.currentTarget.style.display = "none"; }} style={{
+                    width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", ...photoAnimStyle,
+                  }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", ...photoAnimStyle }}>
+                    <Radio size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
+                  </div>
+                )}
               </div>
             )}
+          </div>
+
+          {photoSlide && (
+            <div key={photoSlide.key} style={{ position: "absolute", inset: 0, zIndex: 1, overflow: "hidden", pointerEvents: "none" }}>
+              {photoSlide.from && (
+                <img src={photoSlide.from} alt="" aria-hidden="true" style={{
+                  position: "absolute", top: 0, left: 0, width: 82, height: "100%", objectFit: "cover", objectPosition: "top center",
+                  animation: `fmp-photo-exit-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+                }} />
+              )}
+              {photoSlide.to && (
+                <img key={`${photoSlide.key}-incoming`} src={photoSlide.to} alt="" aria-hidden="true" style={{
+                  position: "absolute", top: 0, width: 82, height: "100%", objectFit: "cover", objectPosition: "top center",
+                  animation: `fmp-photo-enter-${photoSlide.direction} ${PHOTO_TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+                }} />
+              )}
             </div>
+          )}
+
           </div>
 
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
@@ -442,6 +447,7 @@ export default function FloatingOnAirPresenter({
             key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`}
             style={{
               position: "relative",
+              zIndex: 3,
               minWidth: 0,
               flex: 1,
               display: "flex",
@@ -565,51 +571,21 @@ export default function FloatingOnAirPresenter({
           </div>
         </div>
 
-        {/* Navegação dentro do mesmo box */}
-        <div
-          className={isBehindPages ? "pointer-events-none" : "pointer-events-auto"}
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 5,
-            pointerEvents: "none",
-          }}
-        >
-          <button
-            type="button"
-            data-testid="previous-program-button"
-            aria-label="Programa anterior"
-            onClick={() => {
-              if (scheduleItems.length < 2) return;
-              const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
-              const baseIndex = currentIndex >= 0 ? currentIndex : 0;
-              setSlideDirection("backward");
-              setScheduleIndex((baseIndex - 1 + scheduleItems.length) % scheduleItems.length);
-            }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
-            style={{ width: 28, height: 40, background: "transparent", border: "none", outline: "none", pointerEvents: "auto" }}
-            title="Programa anterior"
-          >
-            <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)", transform: "rotate(180deg)" }} />
-          </button>
-
-          <button
-            type="button"
-            data-testid="next-program-button"
-            aria-label="Próximo programa"
-            onClick={() => {
-              if (scheduleItems.length < 2) return;
-              const currentIndex = scheduleIndex ?? scheduleItems.findIndex((item) => item.programaKey === onAirInfo.programaKey);
-              const baseIndex = currentIndex >= 0 ? currentIndex : 0;
-              setSlideDirection("forward");
-              setScheduleIndex((baseIndex + 1) % scheduleItems.length);
-            }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
-            style={{ width: 28, height: 40, background: "transparent", border: "none", outline: "none", pointerEvents: "auto" }}
-            title="Próximo programa"
-          >
-            <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)" }} />
-          </button>
+          {/* Setas dentro do próprio box */}
+          <div style={{ position: "absolute", inset: 0, zIndex: 6, pointerEvents: "none" }}>
+            <button type="button" data-testid="previous-program-button" aria-label="Programa anterior"
+              onClick={() => navigateSchedule("backward")}
+              style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
+              title="Programa anterior">
+              <ArrowRight size={17} style={{ transform: "rotate(180deg)" }} />
+            </button>
+            <button type="button" data-testid="next-program-button" aria-label="Próximo programa"
+              onClick={() => navigateSchedule("forward")}
+              style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
+              title="Próximo programa">
+              <ArrowRight size={17} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -627,12 +603,20 @@ export default function FloatingOnAirPresenter({
           50% { opacity: 0.45; transform: scale(0.8); }
         }
         @keyframes fmp-photo-enter-forward {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
+          from { left: calc(100% - 82px); opacity: 1; }
+          to { left: 0; opacity: 1; }
         }
         @keyframes fmp-photo-enter-backward {
-          from { transform: translateX(-100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
+          from { left: -82px; opacity: 1; }
+          to { left: 0; opacity: 1; }
+        }
+        @keyframes fmp-photo-exit-forward {
+          from { left: 0; opacity: 1; }
+          to { left: -82px; opacity: 1; }
+        }
+        @keyframes fmp-photo-exit-backward {
+          from { left: 0; opacity: 1; }
+          to { left: calc(100% - 82px); opacity: 1; }
         }
       `}</style>
     </div>
