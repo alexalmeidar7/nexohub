@@ -386,13 +386,13 @@ export default function FloatingOnAirPresenter({
             backdropFilter: "blur(24px) saturate(1.5)",
             WebkitBackdropFilter: "blur(24px) saturate(1.5)",
             borderRadius: 20,
-            padding: "0 44px 0 0",
+            padding: "0",
             overflow: "hidden",
             border: `1px solid ${primaryColor}40`,
             boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${primaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
-            minWidth: 360,
-            width: "min(390px, calc(100vw - 48px))",
-            maxWidth: "min(390px, calc(100vw - 48px))",
+            minWidth: 330,
+            width: "min(330px, calc(100vw - 48px))",
+            maxWidth: "min(330px, calc(100vw - 48px))",
             transition: "box-shadow 1.2s ease-in-out, border-color 1.2s ease-in-out, transform 0.25s ease",
             marginRight: 10,
           }}
@@ -424,7 +424,7 @@ export default function FloatingOnAirPresenter({
           </div>
 
           {photoSlide && (
-            <div key={photoSlide.key} style={{ position: "absolute", inset: 0, zIndex: 1, overflow: "hidden", pointerEvents: "none" }}>
+            <div key={photoSlide.key} style={{ position: "absolute", inset: 0, zIndex: 4, overflow: "hidden", pointerEvents: "none" }}>
               {photoSlide.from && (
                 <img src={photoSlide.from} alt="" aria-hidden="true" style={{
                   position: "absolute", top: 0, left: 0, width: 82, height: "100%", objectFit: "cover", objectPosition: "top center",
@@ -440,14 +440,12 @@ export default function FloatingOnAirPresenter({
             </div>
           )}
 
-          </div>
-
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
           <div
             key={`schedule-${displayedInfo.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`}
             style={{
               position: "relative",
-              zIndex: 3,
+              zIndex: 5,
               minWidth: 0,
               flex: 1,
               display: "flex",
@@ -571,21 +569,20 @@ export default function FloatingOnAirPresenter({
           </div>
         </div>
 
-          {/* Setas dentro do próprio box */}
-          <div style={{ position: "absolute", inset: 0, zIndex: 6, pointerEvents: "none" }}>
-            <button type="button" data-testid="previous-program-button" aria-label="Programa anterior"
-              onClick={() => navigateSchedule("backward")}
-              style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
-              title="Programa anterior">
-              <ArrowRight size={17} style={{ transform: "rotate(180deg)" }} />
-            </button>
-            <button type="button" data-testid="next-program-button" aria-label="Próximo programa"
-              onClick={() => navigateSchedule("forward")}
-              style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
-              title="Próximo programa">
-              <ArrowRight size={17} />
-            </button>
-          </div>
+        {/* Setas dentro do próprio box */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 6, pointerEvents: "none" }}>
+          <button type="button" data-testid="previous-program-button" aria-label="Programa anterior"
+            onClick={() => navigateSchedule("backward")}
+            style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
+            title="Programa anterior">
+            <ArrowRight size={17} style={{ transform: "rotate(180deg)" }} />
+          </button>
+          <button type="button" data-testid="next-program-button" aria-label="Próximo programa"
+            onClick={() => navigateSchedule("forward")}
+            style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 24, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", outline: "none", cursor: "pointer", color: "rgba(255,255,255,0.9)", pointerEvents: "auto" }}
+            title="Próximo programa">
+            <ArrowRight size={17} />
+          </button>
         </div>
       </div>
 
