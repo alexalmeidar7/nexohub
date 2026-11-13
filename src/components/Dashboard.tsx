@@ -2463,6 +2463,32 @@ export default function Dashboard({ onLogout, defaultPage }: DashboardProps) {
           </HouseMixWindow>
         )}
 
+        {/* House Mix Window Mode - Configuração do Player */}
+        {!isAdmin && (currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && (currentPage === "dashboard" || isWindowMode))) && (
+          <HouseMixWindow
+            title="HOUSE MIX – CONFIGURAÇÃO DO PLAYER"
+            isOpen={currentPage === "playerconfig"}
+            onClose={() => {
+              setMinimizedModules(prev => prev.filter(p => p !== "playerconfig"));
+              setCurrentPage("dashboard");
+            }}
+            onMinimize={() => {
+              setMinimizedModules(prev => {
+                if (prev.includes("playerconfig")) return prev;
+                return [...prev, "playerconfig"];
+              });
+              setCurrentPageState("dashboard");
+              try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+            }}
+          >
+            <div className="keep-dark-layout">
+              <Suspense fallback={<ModulePageSkeleton variant="form" />}>
+                <ConfiguracoesPage section="player" effectiveUserId={effectiveUserId} />
+              </Suspense>
+            </div>
+          </HouseMixWindow>
+        )}
+
         {/* House Mix Window Mode - Configurações */}
         {!isAdmin && (currentPage === "configuracoes" || (minimizedModules.includes("configuracoes") && (currentPage === "dashboard" || isWindowMode))) && (
           <HouseMixWindow
