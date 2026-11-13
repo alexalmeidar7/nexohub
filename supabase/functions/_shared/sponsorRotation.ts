@@ -67,7 +67,7 @@ export function selectRotatingSponsor<T extends SponsorLogo>(logos: T[], program
 
 export function sponsorXml(name: string | null | undefined, logoUrl: string, indent = ""): string {
   const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
-  return `${indent}<patrocinador>\n${indent}  <nome>${escape(name || "")}</nome>\n${indent}  <logo_url>${escape(logoUrl)}</logo_url>\n${indent}</patrocinador>`;
+  return `${indent}<patrocinador>\n${indent}  <nome>${escape(name || "")}</nome>\n${indent}  <logo_url>${escape(resolvedLogoUrl)}</logo_url>\n${indent}</patrocinador>`;
 }
 
 export function pngSponsorUrl(value: string): string {
@@ -78,8 +78,11 @@ export function pngSponsorUrl(value: string): string {
   return clean;
 }
 
+export const IMGBLANCK_URL = "https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+
 export function logosXml(program: ScheduledProgram | null, sponsor: SponsorLogo | null, logoUrl: string, now: Date): string {
   const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  const resolvedLogoUrl = logoUrl.trim() || IMGBLANCK_URL;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <estudio>
   <programa_no_ar>
