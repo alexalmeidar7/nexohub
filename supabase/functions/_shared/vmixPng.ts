@@ -8,7 +8,17 @@ export async function ensureVmixPngUrl(
 ): Promise<string> {
   const original = String(source || "").trim();
   if (!original) return "";
-  if (/\.png(?:$|[?#])/i.test(original)) return original;
+  if (/\.png(?:$|[?#])/i.test(original)) {
+    // XML/vMix must receive a clean public asset URL ending literally in .png.
+    try {
+      const clean = new URL(original);
+      clean.search = "";
+      clean.hash = "";
+      return clean.toString();
+    } catch {
+      return original.split(/[?#]/)[0];
+    }
+  }
   if (!/^https?:\/\//i.test(original)) return "";
 
   const cacheKey = `${folder}:${original}`;
