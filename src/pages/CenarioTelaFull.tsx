@@ -337,6 +337,7 @@ export default function CenarioTelaFull() {
     return sub === "forecast" ? "today" : sub;
   });
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showDateTimeMode, setShowDateTimeMode] = useState(true);
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; apresentadorInstagram?: string; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
   const [presenterGradient, setPresenterGradient] = useState<string | null>(null);
@@ -664,6 +665,12 @@ export default function CenarioTelaFull() {
     }, 1000);
     return () => clearInterval(t);
   }, [musicData, musicKey]);
+
+  /* Date/time vs weather alternation every 10 seconds */
+  useEffect(() => {
+    const t = setInterval(() => setShowDateTimeMode(prev => !prev), 10000);
+    return () => clearInterval(t);
+  }, []);
 
   /* Load cached config first (works even without auth token in new tab) */
   useEffect(() => {
@@ -1612,20 +1619,28 @@ export default function CenarioTelaFull() {
                      <div style={{ fontSize: `${vhToPx(2.7)}${vu}`, fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1.05, letterSpacing: "0.01em", color: config.home.colorClock || "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
                      <div style={{ fontSize: `${vhToPx(1.05)}${vu}`, fontWeight: 400, lineHeight: 1.25, marginTop: `${vhToPx(0.45)}${vu}`, color: config.home.colorDate || "#fff", whiteSpace: "nowrap" }}>{currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, c => c.toUpperCase()) + " - " + currentTime.getDate() + " de " + currentTime.toLocaleDateString("pt-BR", { month: "long" }).replace(/^./, c => c.toUpperCase()) + "/" + currentTime.toLocaleDateString("pt-BR", { year: "2-digit" })}</div>
                    </div>
-                   {/* Condição atual no canto superior direito; indicadores alternam a cada 4 segundos */}
-                   {liveWeather && (
-                     <div style={{ position: "absolute", top: `${vhToPx(2.5)}${vu}`, right: `${vhToPx(3.2)}${vu}`, zIndex: 20, width: `${vhToPx(20)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
-                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.7)}${vu}` }}>
-                         <div style={{ fontSize: `${vhToPx(2.3)}${vu}`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
-                         <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} />
-                       </div>
-                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${vhToPx(0.45)}${vu}`, width: "100%", marginTop: `${vhToPx(0.45)}${vu}`, fontSize: `${vhToPx(1.05)}${vu}`, fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap" }}>
-                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}` }}><CloudRain size={vhToPx(1.25)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
-                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}` }}><Droplets size={vhToPx(1.25)} /> <span>{liveWeather.current.humidity}%</span></div>
-                         {(liveWeather.daily?.[0]?.precip ?? 0) > 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.6)}${vu}` }}><CloudRain size={vhToPx(1.25)} /> <span>{(liveWeather.daily?.[0]?.rainMm ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mm</span></div>}
-                       </div>
+                   {/* Canto superior direito: alterna entre data/hora e condição do tempo a cada 10 segundos */}
+                   <div style={{ position: "absolute", top: `${vhToPx(2.5)}${vu}`, right: `${vhToPx(3.2)}${vu}`, zIndex: 20, width: `${vhToPx(20)}${vu}`, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", pointerEvents: "none", minHeight: `${vhToPx(6)}${vu}` }}>
+                     {/* Modo Data/Hora */}
+                     <div style={{ opacity: showDateTimeMode ? 1 : 0, transition: "opacity 0.5s ease-in-out", pointerEvents: "none" }}>
+                       <div style={{ fontSize: `${vhToPx(1.8)}${vu}`, fontWeight: 400, fontVariantNumeric: "tabular-nums", lineHeight: 1, color: "#fff" }}>{currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
+                       <div style={{ fontSize: `${vhToPx(1)}${vu}`, fontWeight: 400, lineHeight: 1.2, marginTop: `${vhToPx(0.3)}${vu}`, color: "#fff" }}>{currentTime.toLocaleDateString("pt-BR", { weekday: "long" }).replace(/-feira$/, "").replace(/^./, c => c.toUpperCase()) + " - " + currentTime.getDate() + "/" + (currentTime.getMonth() + 1).toString().padStart(2, "0")}</div>
                      </div>
-                   )}
+                     {/* Modo Condição do Tempo */}
+                     {liveWeather && (
+                       <div style={{ opacity: showDateTimeMode ? 0 : 1, transition: "opacity 0.5s ease-in-out", pointerEvents: "none", position: "absolute", right: 0, top: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${vhToPx(0.45)}${vu}`, textAlign: "right" }}>
+                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.7)}${vu}` }}>
+                           <div style={{ fontSize: `${vhToPx(2.3)}${vu}`, fontWeight: 400, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{liveWeather.current.temp}°</div>
+                           <WeatherIcon code={liveWeather.current.code} size={vhToPx(4.4)} />
+                         </div>
+                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: `${vhToPx(0.35)}${vu}`, fontSize: `${vhToPx(0.95)}${vu}`, fontWeight: 500, lineHeight: 1.1, whiteSpace: "nowrap" }}>
+                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Thermometer size={vhToPx(1)} /> <span>Mín: {liveWeather.daily?.[0]?.tempMin ?? "--"}° Máx: {liveWeather.daily?.[0]?.tempMax ?? "--"}°</span></div>
+                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><CloudRain size={vhToPx(1)} /> <span>{liveWeather.daily?.[0]?.precip ?? 0}%</span></div>
+                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: `${vhToPx(0.5)}${vu}` }}><Droplets size={vhToPx(1)} /> <span>{liveWeather.current.humidity}%</span></div>
+                         </div>
+                       </div>
+                     )}
+                   </div>
                    
 {/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
@@ -1635,6 +1650,27 @@ export default function CenarioTelaFull() {
                        <div style={{ fontWeight: 500, fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${vhToPx(0.2)}${vu}` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                      </div>
                    )}
+
+                  {/* Capa de música no canto superior esquerdo com informações do artista */}
+                  {musicData?.capa && showMusic && (
+                    <div style={{ position: "absolute", top: `${vhToPx(3.2)}${vu}`, left: `${vhToPx(3.2)}${vu}`, zIndex: 22, display: "flex", alignItems: "flex-start", gap: `${vhToPx(1.5)}${vu}`, pointerEvents: "none" }}>
+                      {/* Capa da música */}
+                      <img 
+                        src={musicData.capa} 
+                        alt={musicData.musicName || "Capa"} 
+                        style={{ width: `${vhToPx(10)}${vu}`, height: `${vhToPx(10)}${vu}`, objectFit: "cover", borderRadius: `${vhToPx(0.5)}${vu}`, boxShadow: "0 4px 12px rgba(0,0,0,0.6)" }}
+                      />
+                      {/* Informações de artista e música */}
+                      <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: `${vhToPx(0.8)}${vu}`, maxWidth: `${vhToPx(18)}${vu}` }}>
+                        <div style={{ fontSize: `${vhToPx(1.1)}${vu}`, fontWeight: 500, lineHeight: 1.2, color: config.home.colorArtist || "#aaa", textShadow: "0 2px 6px rgba(0,0,0,0.5)" }}>
+                          {musicData.artist || "Artista desconhecido"}
+                        </div>
+                        <div style={{ fontSize: `${vhToPx(1.35)}${vu}`, fontWeight: 700, lineHeight: 1.2, color: "#fff", textShadow: "0 2px 6px rgba(0,0,0,0.5)", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                          {musicData.musicName || "Música desconhecida"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* WRAPPER: BOXES + CONTROLS */}
                   <div style={{
@@ -1739,8 +1775,8 @@ export default function CenarioTelaFull() {
                               </div>
                             </div>
 
-                            {/* Vinil: aparece após 10s e fica visível por 20s, atrás da capa */}
-                            {showMusic && !isNoPlayback && musicData?.capa && (
+                            {/* Vinil REMOVIDO conforme solicitação */}
+                            {false && showMusic && !isNoPlayback && musicData?.capa && (
                               <div style={{ position: "absolute", left: "42%", top: 0, width: "100%", height: "100%", zIndex: 1, pointerEvents: "none", overflow: "visible", opacity: 1 }}>
                                 <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "radial-gradient(circle, #343434 0%, #151515 38%, #555 39%, #080808 42%, #292929 44%, #050505 57%, #383838 59%, #090909 63%, #252525 65%, #050505 100%)", border: "2px solid rgba(255,255,255,0.42)", boxShadow: "0 0 0 2px rgba(0,0,0,0.65), 0 5px 16px rgba(0,0,0,0.65)", animation: "vinylSpin 2.4s linear infinite", willChange: "transform" }}>
                                   <div style={{ position: "absolute", inset: "8%", borderRadius: "50%", background: "repeating-conic-gradient(from 0deg, rgba(255,255,255,0.12) 0deg, rgba(255,255,255,0.02) 3deg, transparent 6deg, rgba(0,0,0,0.18) 8deg)", opacity: 0.55 }} />
