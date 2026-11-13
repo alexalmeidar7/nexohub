@@ -82,9 +82,11 @@ async function startLocalRuntime() {
 
 app.whenReady().then(async () => {
   try {
+    configureAutoUpdater();
     await registerRendererProtocol();
     await startLocalRuntime();
     createMainWindow();
+    void checkForDesktopUpdate();
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
     });
