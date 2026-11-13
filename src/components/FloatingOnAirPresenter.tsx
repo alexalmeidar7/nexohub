@@ -310,6 +310,48 @@ export default function FloatingOnAirPresenter({
     ? `${formattedStart} às ${formattedEnd}`
     : "24 Horas";
 
+  // Animation styles based on the existing on-air transition phase.
+  const photoAnimStyle: React.CSSProperties =
+    animPhase === "exiting"
+      ? {
+          opacity: 0,
+          transform: "scale(0.9) rotate(-1.5deg)",
+          filter: "blur(3px)",
+          transition: "transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease, filter 0.2s ease",
+        }
+      : animPhase === "entering-prep"
+      ? {
+          opacity: 0,
+          transform: "scale(1.08) rotate(1.5deg)",
+          filter: "blur(3px)",
+          transition: "none",
+        }
+      : {
+          opacity: 1,
+          transform: "scale(1) rotate(0deg)",
+          filter: "blur(0px)",
+          transition: "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, filter 0.35s ease",
+        };
+
+  const textAnimStyle: React.CSSProperties =
+    animPhase === "exiting"
+      ? {
+          opacity: 0,
+          transform: "translateY(-8px)",
+          transition: "transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease",
+        }
+      : animPhase === "entering-prep"
+      ? {
+          opacity: 0,
+          transform: "translateY(10px)",
+          transition: "none",
+        }
+      : {
+          opacity: 1,
+          transform: "translateY(0)",
+          transition: "transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease",
+        };
+
   return (
     <div
       data-floating-onair-presenter
