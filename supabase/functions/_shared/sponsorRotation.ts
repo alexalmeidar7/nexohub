@@ -65,11 +65,14 @@ export function selectRotatingSponsor<T extends SponsorLogo>(logos: T[], program
   return eligible.length ? eligible[time.slot % eligible.length] : null;
 }
 
-export const IMGBLANCK_URL = "https://qazvgmgdidjhbvcuinpy.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+export function imgBlanckUrl(): string {
+  const baseUrl = (Deno.env.get("SUPABASE_URL") || "").replace(/\/$/, "");
+  return `${baseUrl}/storage/v1/object/public/xml-files/broadcast/imgblanck.png`;
+}
 
 export function sponsorXml(name: string | null | undefined, logoUrl: string, indent = ""): string {
   const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/\x27/g, "&apos;");
-  const resolvedLogoUrl = logoUrl.trim() || IMGBLANCK_URL;
+  const resolvedLogoUrl = logoUrl.trim() || imgBlanckUrl();
   return `${indent}<patrocinador>\n${indent}  <nome>${escape(name || "")}</nome>\n${indent}  <logo_url>${escape(resolvedLogoUrl)}</logo_url>\n${indent}</patrocinador>`;
 }
 export function pngSponsorUrl(value: string): string {
