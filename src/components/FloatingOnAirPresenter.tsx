@@ -568,8 +568,6 @@ export default function FloatingOnAirPresenter({
               </div>
             )}
           </div>
-        </div>
-
         {/* 2. Arrow inside the NO AR box to reveal / hide the next program */}
         <button
           type="button"
@@ -600,6 +598,8 @@ export default function FloatingOnAirPresenter({
             }}
           />
         </button>
+
+        </div>
 
         {/* 3. Next Program Box ('A SEGUIR') with fluid entrance / exit animation on the right side */}
         <div
