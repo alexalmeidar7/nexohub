@@ -108,8 +108,7 @@ export default function FloatingOnAirPresenter({
   const [scheduleItems, setScheduleItems] = useState<OnAirDisplayState[]>(() => {
     const syncDb = getStationDatabaseSync(targetUid || user?.email);
     const syncPrograms = getProgramasSync(targetUid, user?.email);
-    const todayName = new Date().toLocaleDateString("pt-BR", { weekday: "long" });
-    const today = todayName.charAt(0).toUpperCase() + todayName.slice(1);
+    const today = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
     return syncPrograms
       .filter((p) => p.diasSemana?.includes(today))
       .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
@@ -197,8 +196,7 @@ export default function FloatingOnAirPresenter({
           locutores,
         };
 
-        const todayName = new Date().toLocaleDateString("pt-BR", { weekday: "long" });
-        const today = todayName.charAt(0).toUpperCase() + todayName.slice(1);
+        const today = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
         const nextScheduleItems = programasData
           .filter((p) => p.diasSemana?.includes(today))
           .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
