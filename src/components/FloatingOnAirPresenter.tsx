@@ -287,9 +287,9 @@ export default function FloatingOnAirPresenter({
     };
   }, [presenterKey, presenterCount, presenterIndex]);
 
-  const currentPresenter = onAirInfo.locutores?.[presenterIndex] || onAirInfo.locutores?.[0];
-  const currentName = currentPresenter?.nome || onAirInfo.locutorNome;
-  const currentPhoto = currentPresenter ? currentPresenter.foto : onAirInfo.locutorFoto;
+  const currentPresenter = displayedInfo.locutores?.[presenterIndex] || displayedInfo.locutores?.[0];
+  const currentName = currentPresenter?.nome || displayedInfo.locutorNome;
+  const currentPhoto = currentPresenter ? currentPresenter.foto : displayedInfo.locutorFoto;
   // 3. Dynamic colors extracted from the locutor's photo
   const locutorColors = useAlbumColors(currentPhoto || null);
   const primaryColor = locutorColors[0] || "#0055ff";
@@ -337,18 +337,9 @@ export default function FloatingOnAirPresenter({
           transition: "transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease",
         };
 
-  const formattedStart = formatHour(onAirInfo.horarioInicio);
-  const formattedEnd = formatHour(onAirInfo.horarioFim);
+  const formattedStart = formatHour(displayedInfo.horarioInicio);
+  const formattedEnd = formatHour(displayedInfo.horarioFim);
   const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
-
-  // Dynamic colors and hours for Next Program ('A SEGUIR')
-  const nextColors = useAlbumColors(nextProgInfo?.locutorFoto || null);
-  const nextPrimaryColor = nextColors[0] || "#38bdf8";
-  const nextSecondaryColor = nextColors[1] || "#6366f1";
-  const formattedNextStart = formatHour(nextProgInfo?.horarioInicio || "");
-  const formattedNextEnd = formatHour(nextProgInfo?.horarioFim || "");
-  const nextHoursStr =
-    formattedNextStart && formattedNextEnd ? `${formattedNextStart} às ${formattedNextEnd}` : "Em Breve";
 
   return (
     <div
