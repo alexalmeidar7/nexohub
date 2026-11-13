@@ -105,31 +105,29 @@ export default function FloatingOnAirPresenter({
     };
   });
 
-  const [showNextProg, setShowNextProg] = useState(false);
-  const [nextProgInfo, setNextProgInfo] = useState<OnAirDisplayState | null>(() => {
+  const [scheduleItems, setScheduleItems] = useState<OnAirDisplayState[]>(() => {
     const syncDb = getStationDatabaseSync(targetUid || user?.email);
     const syncPrograms = getProgramasSync(targetUid, user?.email);
-    if (syncPrograms && syncPrograms.length > 0) {
-      const mapped = syncPrograms.map((p) => ({
-        ...p,
-        dias_semana: p.diasSemana,
-        horario_inicio: p.horarioInicio,
-        horario_fim: p.horarioFim,
-      }));
-      const { next } = resolveEffectiveOnAir(mapped, new Date());
-      if (next) {
-        const nextAp = resolvePresenterForProgram(next, syncDb?.apresentadores || [], targetUid || user?.email);
+    const todayName = new Date().toLocaleDateString("pt-BR", { weekday: "long" });
+    const today = todayName.charAt(0).toUpperCase() + todayName.slice(1);
+    return syncPrograms
+      .filter((p) => p.diasSemana?.includes(today))
+      .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+      .map((p) => {
+        const locutores = getProgramPresenters(p, syncDb?.apresentadores || [], targetUid || user?.email);
         return {
-          programaNome: next.nome || "A Seguir",
-          horarioInicio: next.horario_inicio || next.horarioInicio || "00:00",
-          horarioFim: next.horario_fim || next.horarioFim || "23:59",
-          locutorNome: nextAp?.nome || "—",
-          locutorFoto: nextAp ? resolveSafePresenterPhoto(nextAp.foto, nextAp.nome, targetUid || user?.email) : "",
+          programaKey: p.id,
+          programaNome: p.nome || "Programação Normal",
+          horarioInicio: p.horarioInicio || "00:00",
+          horarioFim: p.horarioFim || "23:59",
+          locutorNome: locutores[0]?.nome || "—",
+          locutorFoto: locutores[0]?.foto || "",
+          locutores,
         };
-      }
-    }
-    return null;
+      });
   });
+  const [scheduleIndex, setScheduleIndex] = useState<number | null>(null);
+  const [slideDirection, setSlideDirection] = useState<"forward" | "backward">("forward");
 
   const [timezone, setTimezone] = useState<string | null>(null);
   const [animPhase, setAnimPhase] = useState<AnimPhase>("idle");
@@ -186,18 +184,6 @@ export default function FloatingOnAirPresenter({
         }
       }
 
-      if (nextProg) {
-        const nextAp = resolvePresenterForProgram(nextProg, apresentadoresData, uid || targetEmail);
-
-        setNextProgInfo({
-          programaNome: nextProg.nome || "A Seguir",
-          horarioInicio: nextProg.horario_inicio || nextProg.horarioInicio || "00:00",
-          horarioFim: nextProg.horario_fim || nextProg.horarioFim || "23:59",
-          locutorNome: nextAp?.nome || "—",
-          locutorFoto: nextAp ? resolveSafePresenterPhoto(nextAp.foto, nextAp.nome, uid || targetEmail) : "",
-        });
-      }
-
       if (activeProg) {
         const locutores = getProgramPresenters(activeProg, apresentadoresData, uid || targetEmail);
 
@@ -211,12 +197,32 @@ export default function FloatingOnAirPresenter({
           locutores,
         };
 
+        const todayName = new Date().toLocaleDateString("pt-BR", { weekday: "long" });
+        const today = todayName.charAt(0).toUpperCase() + todayName.slice(1);
+        const nextScheduleItems = programasData
+          .filter((p) => p.diasSemana?.includes(today))
+          .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+          .map((p) => {
+            const pLocutores = getProgramPresenters(p, apresentadoresData, uid || targetEmail);
+            return {
+              programaKey: p.id,
+              programaNome: p.nome || "Programação Normal",
+              horarioInicio: p.horarioInicio || "00:00",
+              horarioFim: p.horarioFim || "23:59",
+              locutorNome: pLocutores[0]?.nome || "—",
+              locutorFoto: pLocutores[0]?.foto || "",
+              locutores: pLocutores,
+            };
+          });
+        setScheduleItems(nextScheduleItems);
+
         const key = `${nextState.programaKey}:::${nextState.horarioInicio}`;
         if (!lastKeyRef.current) {
           lastKeyRef.current = key;
           setOnAirInfo(nextState);
         } else if (lastKeyRef.current !== key) {
           lastKeyRef.current = key;
+          setScheduleIndex(null);
           if (animTimerRef.current) clearTimeout(animTimerRef.current);
           if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
@@ -281,33 +287,29 @@ export default function FloatingOnAirPresenter({
     };
   }, []);
 
-  const presenterKey = JSON.stringify([onAirInfo.programaKey, onAirInfo.locutores?.map(p => p.id)]);
+  const presenterKey = displayedPresenterKey;
   useEffect(() => {
     setPresenterIndex(0);
     setPhotoExiting(false);
   }, [presenterKey]);
 
-  const presenterCount = onAirInfo.locutores?.length || 0;
   useEffect(() => {
-    if (presenterCount < 2) return;
+    if (displayedPresenterCount < 2) return;
     const exitTimer = window.setTimeout(() => setPhotoExiting(true), PRESENTER_INTERVAL_MS - PHOTO_TRANSITION_MS);
     const nextTimer = window.setTimeout(() => {
-      setPresenterIndex(index => (index + 1) % presenterCount);
+      setPresenterIndex(index => (index + 1) % displayedPresenterCount);
       setPhotoExiting(false);
     }, PRESENTER_INTERVAL_MS);
     return () => {
       clearTimeout(exitTimer);
       clearTimeout(nextTimer);
     };
-  }, [presenterKey, presenterCount, presenterIndex]);
+  }, [presenterKey, displayedPresenterCount, presenterIndex]);
 
-  const currentPresenter = onAirInfo.locutores?.[presenterIndex] || onAirInfo.locutores?.[0];
-  const currentName = currentPresenter?.nome || onAirInfo.locutorNome;
-  const currentPhoto = currentPresenter ? currentPresenter.foto : onAirInfo.locutorFoto;
-  // 3. Dynamic colors extracted from the locutor's photo
-  const locutorColors = useAlbumColors(currentPhoto || null);
-  const primaryColor = locutorColors[0] || "#0055ff";
-  const secondaryColor = locutorColors[1] || "#7c3aed";
+  const currentName = displayedName;
+  const currentPhoto = displayedPhoto;
+  const primaryColor = displayedPrimaryColor;
+  const secondaryColor = displayedSecondaryColor;
 
   // Animation styles based on phase:
   const photoAnimStyle: React.CSSProperties =
@@ -355,14 +357,21 @@ export default function FloatingOnAirPresenter({
   const formattedEnd = formatHour(onAirInfo.horarioFim);
   const hoursStr = formattedStart && formattedEnd ? `${formattedStart} às ${formattedEnd}` : "24 Horas";
 
-  // Dynamic colors and hours for Next Program ('A SEGUIR')
-  const nextColors = useAlbumColors(nextProgInfo?.locutorFoto || null);
-  const nextPrimaryColor = nextColors[0] || "#38bdf8";
-  const nextSecondaryColor = nextColors[1] || "#6366f1";
-  const formattedNextStart = formatHour(nextProgInfo?.horarioInicio || "");
-  const formattedNextEnd = formatHour(nextProgInfo?.horarioFim || "");
-  const nextHoursStr =
-    formattedNextStart && formattedNextEnd ? `${formattedNextStart} às ${formattedNextEnd}` : "Em Breve";
+  const isBrowsingSchedule = scheduleIndex !== null && scheduleItems.length > 0;
+  const displayedInfo = isBrowsingSchedule
+    ? scheduleItems[scheduleIndex as number]
+    : onAirInfo;
+  const displayedPresenterKey = JSON.stringify([displayedInfo?.programaKey, displayedInfo?.locutores?.map(p => p.id)]);
+  const displayedPresenterCount = displayedInfo?.locutores?.length || 0;
+  const displayedPresenter = displayedInfo?.locutores?.[presenterIndex] || displayedInfo?.locutores?.[0];
+  const displayedName = displayedPresenter?.nome || displayedInfo?.locutorNome;
+  const displayedPhoto = displayedPresenter ? displayedPresenter.foto : displayedInfo?.locutorFoto;
+  const displayedColors = useAlbumColors(displayedPhoto || null);
+  const displayedPrimaryColor = displayedColors[0] || "#0055ff";
+  const displayedSecondaryColor = displayedColors[1] || "#7c3aed";
+  const displayedStart = formatHour(displayedInfo?.horarioInicio || "");
+  const displayedEnd = formatHour(displayedInfo?.horarioFim || "");
+  const displayedHours = displayedStart && displayedEnd ? `${displayedStart} às ${displayedEnd}` : "24 Horas";
 
   return (
     <div
@@ -394,8 +403,9 @@ export default function FloatingOnAirPresenter({
             overflow: "hidden",
             border: `1px solid ${primaryColor}40`,
             boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${primaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
-            minWidth: 320,
-            maxWidth: "min(460px, calc(100vw - 80px))",
+            minWidth: 420,
+            width: "min(520px, calc(100vw - 80px))",
+            maxWidth: "min(520px, calc(100vw - 80px))",
             transition: "box-shadow 1.2s ease-in-out, border-color 1.2s ease-in-out, transform 0.25s ease",
             marginRight: 10,
           }}
@@ -458,33 +468,46 @@ export default function FloatingOnAirPresenter({
           </div>
 
           {/* Info beside photo: 'NO AR' -> Nome do Programa -> Horário inicial e final -> Locutor */}
-          <div style={{ position: "relative", minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            {/* 1. 'no ar' badge */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  backgroundColor: "#ef4444",
-                  boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
-                  animation: "fmp-pulse 1.8s ease-in-out infinite",
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "#ef4444",
-                  lineHeight: 1,
-                }}
-              >
-                NO AR
-              </span>
-            </div>
+          <div
+            key={`schedule-slide-${displayedInfo?.programaKey}-${scheduleIndex ?? "live"}-${slideDirection}`}
+            style={{
+              position: "relative",
+              minWidth: 0,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              animation: isBrowsingSchedule ? `fmp-slide-${slideDirection} 420ms cubic-bezier(0.16, 1, 0.3, 1)` : undefined,
+            }}
+          >
+            {/* Badge shown only while the live program is selected */}
+            {!isBrowsingSchedule && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    backgroundColor: "#ef4444",
+                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
+                    animation: "fmp-pulse 1.8s ease-in-out infinite",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "#ef4444",
+                    lineHeight: 1,
+                  }}
+                >
+                  NO AR
+                </span>
+              </div>
+            )}
 
             {/* 2. Embaixo de 'no ar': O nome do programa */}
             <p
@@ -502,9 +525,9 @@ export default function FloatingOnAirPresenter({
                 textShadow: "0 2px 8px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.9)",
                 ...textAnimStyle,
               }}
-              title={onAirInfo.programaNome}
+              title={displayedInfo?.programaNome}
             >
-              {onAirInfo.programaNome}
+              {displayedInfo?.programaNome}
             </p>
 
             {/* 3. Embaixo do nome do programa: Horário inicial e final do programa */}
@@ -532,7 +555,7 @@ export default function FloatingOnAirPresenter({
                   whiteSpace: "nowrap",
                 }}
               >
-                {hoursStr}
+                {displayedHours}
               </span>
             </div>
 
@@ -568,226 +591,74 @@ export default function FloatingOnAirPresenter({
               </div>
             )}
           </div>
-        {/* 2. Arrow inside the NO AR box to reveal / hide the next program */}
-        <button
-          type="button"
-          data-testid="toggle-next-program-button"
-          onClick={() => setShowNextProg((prev) => !prev)}
-          className={
-            (isBehindPages ? "pointer-events-none" : "pointer-events-auto") +
-            " hidden sm:flex items-center justify-center absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
-          }
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 12,
-            background: showNextProg ? "rgba(239, 68, 68, 0.12)" : "rgba(255,255,255,0.07)",
-            border: showNextProg ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid rgba(255,255,255,0.12)",
-            outline: "none",
-            flexShrink: 0,
-            zIndex: 2,
-          }}
-          title={showNextProg ? "Ocultar próximo programa" : "Ver programa a seguir"}
-        >
-          <ArrowRight
-            size={19}
-            style={{
-              color: showNextProg ? "#fca5a5" : "rgba(255, 255, 255, 0.9)",
-              transform: showNextProg ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease",
-            }}
-          />
-        </button>
-
-        </div>
-
-        {/* 3. Next Program Box ('A SEGUIR') with fluid entrance / exit animation on the right side */}
+        {/* Navigation stays inside the same box: previous / next program */}
         <div
-          data-testid="next-program-animated-box"
-          style={{
-            maxWidth: showNextProg ? 420 : 0,
-            opacity: showNextProg ? 1 : 0,
-            transform: showNextProg ? "translateX(0) scale(1)" : "translateX(-24px) scale(0.96)",
-            transition:
-              "max-width 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)",
-            overflow: "hidden",
-            display: "flex",
-            alignItems: "center",
-            pointerEvents: showNextProg && !isBehindPages ? "auto" : "none",
-          }}
+          className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 ${isBehindPages ? "pointer-events-none" : "pointer-events-auto"}`}
+          style={{ zIndex: 3 }}
         >
-          <div
-            className="flex items-center gap-3.5 relative"
-            style={{
-              userSelect: "none",
-              height: 100,
-              boxSizing: "border-box",
-              backdropFilter: "blur(24px) saturate(1.5)",
-              WebkitBackdropFilter: "blur(24px) saturate(1.5)",
-              borderRadius: 20,
-              padding: "0 18px 0 0",
-              overflow: "hidden",
-              border: `1px solid ${nextPrimaryColor}40`,
-              boxShadow: `0 16px 40px rgba(0,0,0,0.55), 0 0 24px ${nextPrimaryColor}20, inset 0 1px 0 rgba(255,255,255,0.12)`,
-              minWidth: 240,
-              maxWidth: "min(400px, calc(100vw - 120px))",
-              whiteSpace: "nowrap",
+          <button
+            type="button"
+            data-testid="previous-program-button"
+            onClick={() => {
+              if (scheduleItems.length < 2) return;
+              const currentIndex = scheduleIndex ?? scheduleItems.findIndex(item => item.programaKey === onAirInfo.programaKey);
+              const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+              setSlideDirection("backward");
+              setScheduleIndex((baseIndex - 1 + scheduleItems.length) % scheduleItems.length);
             }}
+            className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              outline: "none",
+            }}
+            title="Programa anterior"
           >
-            <CardGradient primary={nextPrimaryColor} secondary={nextSecondaryColor} />
-            <div
-              style={{
-                width: 100,
-                height: "100%",
-                overflow: "hidden",
-                position: "relative",
-                flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {nextProgInfo?.locutorFoto ? (
-                <img
-                  src={nextProgInfo.locutorFoto}
-                  alt={nextProgInfo?.locutorNome || "Próximo locutor"}
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "top center",
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Radio size={32} style={{ color: "rgba(255,255,255,0.75)" }} />
-                </div>
-              )}
-            </div>
+            <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)", transform: "rotate(180deg)" }} />
+          </button>
 
-            {/* Info beside photo: 'A SEGUIR' -> Nome do Programa -> Horário -> Nome do Locutor */}
-            <div style={{ position: "relative", minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              {/* 1. 'A SEGUIR' badge with site layout blue (#0055ff) */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                <ArrowRight
-                  size={12}
-                  style={{
-                    color: "#ffffff",
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: "#ffffff",
-                    lineHeight: 1,
-                  }}
-                >
-                  A SEGUIR
-                </span>
-              </div>
-
-              {/* 2. Embaixo de 'A SEGUIR': O nome do programa */}
-              <p
-                style={{
-                  fontSize: 14,
-                  fontWeight: 800,
-                  color: "#ffffff",
-                  lineHeight: 1.15,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  margin: 0,
-                  letterSpacing: "-0.01em",
-                  textTransform: "uppercase",
-                  textShadow: "0 2px 8px rgba(0,0,0,0.85), 0 1px 3px rgba(0,0,0,0.9)",
-                }}
-                title={nextProgInfo?.programaNome || "A Seguir"}
-              >
-                {nextProgInfo?.programaNome || "A Seguir"}
-              </p>
-
-              {/* 3. Embaixo do nome: Horário */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  marginTop: 2,
-                }}
-              >
-                <Clock size={11} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "rgba(255,255,255,0.65)",
-                    lineHeight: 1.2,
-                    letterSpacing: "0.02em",
-                    textTransform: "uppercase",
-                    textShadow: "0 2px 6px rgba(0,0,0,0.85)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {nextHoursStr}
-                </span>
-              </div>
-
-              {/* 4. Embaixo do horário: O nome do locutor */}
-              {nextProgInfo?.locutorNome && nextProgInfo.locutorNome !== "—" && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    marginTop: 2,
-                  }}
-                >
-                  <User size={10} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
-                  <span
-                    style={{
-                      fontSize: 8,
-                      fontWeight: 400,
-                      color: "rgba(255,255,255,0.85)",
-                      lineHeight: 1.2,
-                      letterSpacing: "0.03em",
-                      textTransform: "uppercase",
-                      textShadow: "0 2px 6px rgba(0,0,0,0.85)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    title={nextProgInfo.locutorNome}
-                  >
-                    {nextProgInfo.locutorNome}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+          <button
+            type="button"
+            data-testid="next-program-button"
+            onClick={() => {
+              if (scheduleItems.length < 2) return;
+              const currentIndex = scheduleIndex ?? scheduleItems.findIndex(item => item.programaKey === onAirInfo.programaKey);
+              const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+              setSlideDirection("forward");
+              setScheduleIndex((baseIndex + 1) % scheduleItems.length);
+            }}
+            className="flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95"
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              outline: "none",
+            }}
+            title="Próximo programa"
+          >
+            <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.9)" }} />
+          </button>
         </div>
+
       </div>
 
       <style>{`
         @keyframes fmp-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.45; transform: scale(0.8); }
+        }
+        @keyframes fmp-slide-forward {
+          from { transform: translateX(42px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fmp-slide-backward {
+          from { transform: translateX(-42px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
         @keyframes fmp-photo-enter {
           from { transform: translateX(-100%); opacity: 0; }
