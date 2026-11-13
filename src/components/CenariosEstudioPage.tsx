@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Plus, Trash2, Image as ImageIcon, Upload, Save, Tv, Link as LinkIcon, Copy, Loader2, LayoutGrid, Radio, ArrowRight, Pencil } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon, Upload, Save, Loader2, LayoutGrid, Radio, ArrowRight, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,13 +166,6 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
-
-  const xmlUrl = useMemo(() => {
-    const uid = targetUserId || user?.id;
-    if (!uid) return "";
-    const base = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-    return `${base}/functions/v1/serve-xml-cenarios-estudio?uid=${uid}`;
-  }, [targetUserId, user?.id]);
 
   const loadAll = useCallback(async () => {
     const ownerId = targetUserId || user?.id;
@@ -553,11 +546,6 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
     );
   };
 
-  const copyXmlUrl = () => {
-    navigator.clipboard.writeText(xmlUrl);
-    toast.success("Link XML copiado");
-  };
-
   if (loading) {
     return (
       <div className="space-y-5">
@@ -608,33 +596,38 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
 
   return (
     <div className="space-y-5">
-      {/* Header — Condensed broadcast dashboard */}
-      <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex flex-col lg:flex-row lg:items-center gap-4">
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-10 h-10 rounded-full bg-[#00BFF0] flex items-center justify-center text-white">
-            <Tv className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-[#0A2540] text-sm font-bold uppercase tracking-widest leading-none">Cenários Estúdio</h1>
-            <p className="text-[11px] text-[#64748B] mt-1">Layout de TVs sincronizado via vMix</p>
-          </div>
-        </div>
-
-        <div className="flex-1 min-w-0 lg:pl-6 lg:border-l lg:border-[#00BFF0]/20">
-          <div className="flex items-center gap-2 bg-slate-50 border border-[#00BFF0]/20 rounded-full pl-4 pr-1 py-1">
-            <LinkIcon className="h-3.5 w-3.5 shrink-0 text-[#64748B]" />
-            <code className="text-[11px] font-mono truncate flex-1 text-[#0A2540]">{xmlUrl}</code>
-            <Button size="sm" onClick={copyXmlUrl} className="h-8 px-4 rounded-full bg-[#0A2540] hover:bg-[#0A2540]/90 text-white text-[10px] font-bold uppercase tracking-wider">
-              <Copy className="h-3 w-3 mr-1.5" /> Copiar
+      {/* Header — Clean and minimal */}
+      <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-[#0A2540] text-sm font-bold uppercase tracking-widest">
+          Cenários Estúdio
+        </h1>
+        
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Tab buttons: Cenário por imagens | Cenário web */}
+          <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#0A2540] hover:bg-white"
+            >
+              Cenário por imagens
+            </Button>
+            <span className="text-[#64748B] text-xs">|</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#0A2540] hover:bg-white"
+            >
+              Cenário web
             </Button>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-[10px] font-bold text-[#64748B] bg-slate-100 px-3 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap">
-            {grupos.length} Template{grupos.length !== 1 ? "s" : ""}
-          </span>
-          <Button onClick={addGrupo} disabled={noProgramas} className="h-9 px-5 rounded-full bg-[#C6F03C] hover:bg-[#C6F03C]/90 text-[#0A2540] text-[10px] font-bold uppercase tracking-wider shadow-sm">
+          
+          {/* Novo Template button */}
+          <Button 
+            onClick={addGrupo} 
+            disabled={noProgramas} 
+            className="h-9 px-5 rounded-full bg-[#C6F03C] hover:bg-[#C6F03C]/90 text-[#0A2540] text-[10px] font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
+          >
             <Plus className="h-3.5 w-3.5 mr-1.5" /> Novo Template
           </Button>
         </div>
@@ -697,7 +690,7 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
           />
         ))}
 
-      {/* Saved templates gallery (organized by program) */}
+      {/* Saved templates gallery (organized by TEMPLATE, not by program) */}
       {(() => {
         const savedTemplates = grupos.filter((t) => {
           const a = t.tvs.find((tv) => tv.posicao === 0);
@@ -706,23 +699,12 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
         
         if (savedTemplates.length === 0) return null;
 
-        // Group templates by program, preserving program order (sorted by time in loadAll)
-        const sortedProgramSections = programas
-          .map(prog => {
-            // Only include programs that have at least one saved template
-            const progTemplates = savedTemplates.filter(t => t.programa_ids.includes(prog.id));
-            if (progTemplates.length === 0) return null;
-            return {
-              id: prog.id,
-              nome: prog.nome,
-              horario: prog.horario_inicio,
-              templates: progTemplates
-            };
-          })
-          .filter((section): section is NonNullable<typeof section> => section !== null);
-
+        // Templates linked to programs
+        const linkedTemplates = savedTemplates.filter(t => t.programa_ids.length > 0);
+        // Templates with no programs linked yet
         const unlinkedTemplates = savedTemplates.filter(t => t.programa_ids.length === 0);
 
+        // Render template card with programs on the side
         const renderTemplateCard = (t: Grupo) => {
           const a = t.tvs.find((tv) => tv.posicao === 0);
           const url = a?.imagem_url || "";
@@ -734,200 +716,288 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
           const isEditing = editingIds.has(t.id);
 
           return (
-            <Card 
+            <div 
               key={t.id} 
-              className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isActive ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-              style={{
-                ...layoutCardStyle,
-                border: isActive ? "2px solid var(--layout-accent-color, #2563eb)" : "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
+              className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 p-4 rounded-2xl border border-border/40 transition-all duration-200" 
+              style={{ ...layoutInnerStyle }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.currentTarget.style.backgroundColor = "var(--layout-accent-color, #2563eb)";
+                e.currentTarget.style.opacity = "0.15";
+              }}
+              onDragLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "";
+                e.currentTarget.style.opacity = "1";
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.currentTarget.style.backgroundColor = "";
+                e.currentTarget.style.opacity = "1";
+                const programId = e.dataTransfer.getData("program-id");
+                console.log("Drop evento acionado - programId:", programId, "template:", t.id);
+                if (programId && !t.programa_ids.includes(programId)) {
+                  console.log("Chamando toggleProgramaInGrupo com:", t.id, programId);
+                  toggleProgramaInGrupo(t.id, programId);
+                  toast.success("Programa vinculado ao template");
+                }
               }}
             >
-              <div
-                className="w-full relative overflow-hidden bg-slate-900 flex items-center justify-center p-2"
+              {/* Template Card Preview */}
+              <Card 
+                className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isActive ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                 style={{
-                  aspectRatio: t.cols > 2 ? `${t.cols * 16}/${t.rows * 9}` : `${16 * t.cols}/${9 * t.rows}`
+                  ...layoutCardStyle,
+                  border: isActive ? "2px solid var(--layout-accent-color, #2563eb)" : "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 12%, transparent)",
                 }}
               >
-                {/* TV Grid Container - proportional 16:9 TVs */}
-                <div 
-                  className="w-full h-full grid gap-1 rounded"
+                <div
+                  className="w-full relative overflow-hidden bg-slate-900 flex items-center justify-center p-2"
                   style={{
-                    gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
-                    gridTemplateRows: `repeat(${t.rows}, 1fr)`,
+                    aspectRatio: t.cols > 2 ? `${t.cols * 16}/${t.rows * 9}` : `${16 * t.cols}/${9 * t.rows}`
                   }}
                 >
-                  {Array.from({ length: t.rows * t.cols }).map((_, i) => {
-                    // Calculate which row and column this TV is in
-                    const row = Math.floor(i / t.cols);
-                    const col = i % t.cols;
-                    
-                    // Calculate the offset for this TV slice
-                    // Image is designed as total_cols * 1920 x total_rows * 1080
-                    const offsetX = (col / t.cols) * 100;
-                    const offsetY = (row / t.rows) * 100;
-                    
-                    return (
-                      <div 
-                        key={i} 
-                        className="relative overflow-hidden rounded-sm bg-black border border-white/30 shadow-inner"
-                        style={{ aspectRatio: "16/9" }}
-                      >
-                        <img
-                          src={url}
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = "/images/CAPA_PH2.png";
-                          }}
-                          alt={`${t.nome} TV ${i + 1}`}
-                          className="absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 opacity-80"
-                          style={{
-                            objectFit: "cover",
-                            objectPosition: `${offsetX}% ${offsetY}%`,
-                            width: "100%",
-                            height: "100%",
-                          }}
-                        />
-                        {/* TV Index Label */}
-                        <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-70">
-                          TV{i + 1}
+                  {/* TV Grid Container - proportional 16:9 TVs */}
+                  <div 
+                    className="w-full h-full grid gap-1 rounded"
+                    style={{
+                      gridTemplateColumns: `repeat(${t.cols}, 1fr)`,
+                      gridTemplateRows: `repeat(${t.rows}, 1fr)`,
+                    }}
+                  >
+                    {Array.from({ length: t.rows * t.cols }).map((_, i) => {
+                      // Calculate which row and column this TV is in
+                      const row = Math.floor(i / t.cols);
+                      const col = i % t.cols;
+                      
+                      // Calculate the offset for this TV slice
+                      // Image is designed as total_cols * 1920 x total_rows * 1080
+                      const offsetX = (col / t.cols) * 100;
+                      const offsetY = (row / t.rows) * 100;
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          className="relative overflow-hidden rounded-sm bg-black border border-white/30 shadow-inner"
+                          style={{ aspectRatio: "16/9" }}
+                        >
+                          <img
+                            src={url}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/images/CAPA_PH2.png";
+                            }}
+                            alt={`${t.nome} TV ${i + 1}`}
+                            className="absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-105 opacity-80"
+                            style={{
+                              objectFit: "cover",
+                              objectPosition: `${offsetX}% ${offsetY}%`,
+                              width: "100%",
+                              height: "100%",
+                            }}
+                          />
+                          {/* TV Index Label */}
+                          <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-70">
+                            TV{i + 1}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {/* Actions Overlay */}
-              <div className="absolute inset-0 flex flex-col pointer-events-none">
-                {/* Floating Actions - Top Right */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 pointer-events-auto">
+                {/* Actions Overlay */}
+                <div className="absolute inset-0 flex flex-col pointer-events-none">
+                  {/* Floating Actions - Top Right */}
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 pointer-events-auto">
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
+                      onClick={() => {
+                        setEditingIds((prev) => new Set(prev).add(t.id));
+                        scrollToForm();
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="h-9 w-9 rounded-full shadow-lg"
+                      onClick={() => removeGrupo(t.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Grid Badge - Bottom Left */}
+                  <div className="absolute bottom-3 left-3 flex items-center gap-2 pointer-events-auto">
+                    <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
+                      {t.rows}×{t.cols} GRID
+                    </Badge>
+                    {isActive && (
+                      <Badge className="bg-primary/90 backdrop-blur-md border-none text-white text-[10px] font-bold animate-pulse">
+                        NO AR
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <div className="mb-3">
+                    <h5 className="font-bold text-sm truncate" style={layoutText}>{t.nome}</h5>
+                    <p className="text-[10px] mt-0.5 font-medium uppercase tracking-tight opacity-50" style={layoutText}>
+                      {t.rows * t.cols} TV{t.rows * t.cols !== 1 ? "s" : ""} em layout
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Programs List Sidebar */}
+              <div className="flex flex-col gap-3">
+                <div>
+                  <h6 className="text-[10px] font-bold uppercase tracking-widest mb-2" style={layoutTextMuted}>Programas Vinculados</h6>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {linkedNames.length === 0 ? (
+                      <p className="text-[10px] italic opacity-40" style={layoutText}>Nenhum programa vinculado</p>
+                    ) : (
+                      linkedNames.map((nome, idx) => (
+                        <div key={idx} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={layoutAccentSoft}>
+                          <Radio className="h-3 w-3 shrink-0" style={layoutAccent} />
+                          <span className="text-[10px] font-medium truncate" style={layoutText}>{nome}</span>
+                          <button
+                            className="ml-auto h-4 w-4 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"
+                            onClick={() => toggleProgramaInGrupo(t.id, programas.find(p => p.nome === nome)?.id || "")}
+                            title="Remover vínculo"
+                          >
+                            <Trash2 className="h-3 w-3" style={layoutAccent} />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Edit & Delete Buttons */}
+                <div className="flex gap-2 mt-auto pt-3 border-t border-border/20">
                   <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-9 w-9 rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 h-8 text-[10px]"
                     onClick={() => {
                       setEditingIds((prev) => new Set(prev).add(t.id));
                       scrollToForm();
                     }}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="h-3 w-3 mr-1" /> Editar
                   </Button>
                   <Button
-                    size="icon"
+                    size="sm"
                     variant="destructive"
-                    className="h-9 w-9 rounded-full shadow-lg"
+                    className="flex-1 h-8 text-[10px]"
                     onClick={() => removeGrupo(t.id)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3 mr-1" /> Remover
                   </Button>
                 </div>
-
-                {/* Grid Badge - Bottom Left */}
-                <div className="absolute bottom-3 left-3 flex items-center gap-2 pointer-events-auto">
-                  <Badge className="bg-white/10 backdrop-blur-md border-white/20 text-white text-[10px] font-mono">
-                    {t.rows}×{t.cols} GRID
-                  </Badge>
-                  {isActive && (
-                    <Badge className="bg-primary/90 backdrop-blur-md border-none text-white text-[10px] font-bold animate-pulse">
-                      NO AR
-                    </Badge>
-                  )}
-                </div>
               </div>
-
-              <div className="p-4">
-                <div className="mb-3">
-                  <h5 className="font-bold text-sm truncate" style={layoutText}>{t.nome}</h5>
-                  <p className="text-[10px] mt-0.5 font-medium uppercase tracking-tight opacity-50" style={layoutText}>
-                    {t.rows * t.cols} TV{t.rows * t.cols !== 1 ? "s" : ""} em layout
-                  </p>
-                </div>
-                
-                <div className="min-h-[24px]">
-                  {linkedNames.length === 0 ? (
-                    <span className="text-[10px] italic opacity-40 font-medium" style={layoutText}>
-                      Nenhum programa vinculado
-                    </span>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {linkedNames.slice(0, 3).map((nome, i) => (
-                        <Badge 
-                          key={i} 
-                          variant="secondary" 
-                          className="text-[9px] px-1.5 py-0 rounded-md font-bold h-5"
-                          style={{ ...layoutAccentSoft, color: "var(--layout-accent-color, #2563eb)", border: "none" }}
-                        >
-                          {nome}
-                        </Badge>
-                      ))}
-                      {linkedNames.length > 3 && (
-                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 rounded-md h-5 opacity-50">
-                          +{linkedNames.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
+            </div>
           );
         };
 
         return (
-          <div className="space-y-12">
-            <div className="flex items-center justify-between pb-2 border-b border-border/40">
-              <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
-                <LayoutGrid className="h-4 w-4" /> Templates Disponíveis
-              </h4>
-              <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
-                Organizado por horário
-              </Badge>
-            </div>
-
-            {sortedProgramSections.map(({ id, nome, templates, horario }) => (
-              <div key={id} className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
-                      <Radio className="h-4 w-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm tracking-tight" style={layoutText}>{nome}</span>
-                      <span className="text-[10px] font-mono opacity-60 uppercase" style={layoutTextMuted}>
-                        {horario ? horario.substring(0, 5) : "--:--"} • {templates.length} template{templates.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent" />
+          <div className="space-y-8">
+            {/* Linked Templates */}
+            {linkedTemplates.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                  <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
+                    <LayoutGrid className="h-4 w-4" /> Templates com Programas
+                  </h4>
+                  <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
+                    {linkedTemplates.length} template{linkedTemplates.length !== 1 ? 's' : ''}
+                  </Badge>
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {templates.map(renderTemplateCard)}
+                <div className="space-y-4">
+                  {linkedTemplates.map(renderTemplateCard)}
                 </div>
               </div>
-            ))}
+            )}
 
+            {/* Unlinked Templates */}
             {unlinkedTemplates.length > 0 && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-muted/20 text-muted-foreground">
-                      <LayoutGrid className="h-4 w-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm tracking-tight" style={layoutText}>Templates sem Programa</span>
-                      <span className="text-[10px] font-mono opacity-60 uppercase" style={layoutTextMuted}>
-                        Não vinculados • {unlinkedTemplates.length} template{unlinkedTemplates.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent" />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                  <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
+                    <LayoutGrid className="h-4 w-4" /> Templates sem Programas
+                  </h4>
+                  <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
+                    {unlinkedTemplates.length} template{unlinkedTemplates.length !== 1 ? 's' : ''}
+                  </Badge>
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="space-y-4">
                   {unlinkedTemplates.map(renderTemplateCard)}
                 </div>
               </div>
             )}
+
+            {/* Programs without any template */}
+            {(() => {
+              const programsWithoutTemplate = programas.filter(
+                p => !savedTemplates.some(t => t.programa_ids.includes(p.id))
+              );
+
+              if (programsWithoutTemplate.length === 0) return null;
+
+              return (
+                <div className="space-y-4 mt-12 pt-8 border-t-2 border-dashed border-border/30">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2" style={layoutText}>
+                      <Radio className="h-4 w-4" /> Programas sem Cenário
+                    </h4>
+                    <Badge variant="outline" className="text-[10px] font-medium" style={layoutTextMuted}>
+                      {programsWithoutTemplate.length} programa{programsWithoutTemplate.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-[11px] leading-relaxed" style={layoutTextMuted}>
+                    Arraste os programas abaixo para um template acima para vinculá-los. Ou edite o template para adicionar programas manualmente.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {programsWithoutTemplate.map((prog) => (
+                      <div
+                        key={prog.id}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "copy";
+                          e.dataTransfer.setData("program-id", prog.id);
+                          e.dataTransfer.setData("program-name", prog.nome);
+                        }}
+                        className="p-3 rounded-lg border-2 border-dashed border-border/40 cursor-move hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
+                        style={layoutInnerStyle}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="h-6 w-6 rounded-full flex items-center justify-center bg-primary/20 text-primary shrink-0 mt-1">
+                            <Radio className="h-3 w-3" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h5 className="text-[11px] font-bold truncate group-hover:text-primary transition-colors" style={layoutText}>
+                              {prog.nome}
+                            </h5>
+                            <p className="text-[9px] opacity-50 mt-0.5">
+                              {prog.horario_inicio && prog.horario_fim 
+                                ? `${prog.horario_inicio.substring(0, 5)} - ${prog.horario_fim.substring(0, 5)}`
+                                : 'Sem horário'
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         );
       })()}
