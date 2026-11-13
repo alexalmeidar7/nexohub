@@ -1,24 +1,28 @@
-import { Suspense, useState } from "react";
-import { Image as ImageIcon, Globe } from "lucide-react";
+import { Suspense, useRef, useEffect } from "react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { registerAddTemplate } from "./CenariosPage";
 
 const CenariosEstudioPage = lazyRetry(() => import("./CenariosEstudioPage"));
 const CenariosEstudioWebPage = lazyRetry(() => import("./CenariosEstudioWebPage"));
 
 type SubTab = "imagens" | "web";
 
-const SUB_TABS: { id: SubTab; label: string; icon: typeof ImageIcon }[] = [
-  { id: "imagens", label: "Cenário por imagens", icon: ImageIcon },
-  { id: "web", label: "Cenário web", icon: Globe },
-];
+export default function CenariosEstudioTabs({ subTab, effectiveUserId }: { subTab?: SubTab; effectiveUserId?: string | null } = {}) {
+  const pageRef = useRef<{ addGrupo: () => void } | null>(null);
+  const tab = subTab || "imagens";
 
-export default function CenariosEstudioTabs({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
-  const [tab, setTab] = useState<SubTab>("imagens");
+  useEffect(() => {
+    registerAddTemplate(() => pageRef.current?.addGrupo?.());
+  }, []);
 
   return (
     <Suspense fallback={<ModulePageSkeleton />}>
-      {tab === "imagens" ? <CenariosEstudioPage effectiveUserId={effectiveUserId} /> : <CenariosEstudioWebPage effectiveUserId={effectiveUserId} />}
+      {tab === "imagens" ? (
+        <CenariosEstudioPage ref={pageRef} effectiveUserId={effectiveUserId} />
+      ) : (
+        <CenariosEstudioWebPage effectiveUserId={effectiveUserId} />
+      )}
     </Suspense>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Plus, Trash2, Image as ImageIcon, Upload, Save, Loader2, LayoutGrid, Radio, ArrowRight, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { compressImage } from "@/lib/imageCompressor";
 import { toast } from "sonner";
 import { confirmDialog } from "@/lib/confirmDialog";
 import { scrollToForm } from "@/lib/utils";
+import { registerAddTemplate } from "./CenariosPage";
 
 interface Programa {
   id: string;
@@ -158,12 +159,13 @@ const layoutAccentSoft: React.CSSProperties = {
 };
 const layoutAccent: React.CSSProperties = { color: "var(--layout-accent-color, #2563eb)" };
 
-export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUserId?: string | null } = {}) {
-  const { user } = useAuth();
-  const targetUserId = effectiveUserId || user?.id;
-  const [grupos, setGrupos] = useState<Grupo[]>([]);
-  const [programas, setProgramas] = useState<Programa[]>([]);
-  const [loading, setLoading] = useState(true);
+export default forwardRef<{ addGrupo: () => void }, { effectiveUserId?: string | null }>(
+  ({ effectiveUserId }, ref) => {
+    const { user } = useAuth();
+    const targetUserId = effectiveUserId || user?.id;
+    const [grupos, setGrupos] = useState<Grupo[]>([]);
+    const [programas, setProgramas] = useState<Programa[]>([]);
+    const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
 
@@ -291,6 +293,10 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
     loadAll();
   }, [loadAll]);
 
+  useEffect(() => {
+    registerAddTemplate(() => addGrupo());
+  }, []);
+
   const addGrupo = async () => {
     const ownerId = targetUserId || user?.id;
     if (!ownerId) return;
@@ -325,6 +331,8 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       toast.error("Não foi possível criar o template: " + (err?.message || "falha no servidor."));
     }
   };
+
+  useImperativeHandle(ref, () => ({ addGrupo }), [addGrupo]);
 
   const updateGrupo = (id: string, patch: Partial<Grupo>) => {
     setGrupos((prev) => {
@@ -596,22 +604,6 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
 
   return (
     <div className="space-y-5">
-      {/* Header — Clean and minimal */}
-      <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-[#0A2540] text-sm font-bold uppercase tracking-widest">
-          Cenários Estúdio
-        </h1>
-        
-        {/* Novo Template button */}
-        <Button 
-          onClick={addGrupo} 
-          disabled={noProgramas} 
-          className="h-9 px-5 rounded-full bg-[#C6F03C] hover:bg-[#C6F03C]/90 text-[#0A2540] text-[10px] font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
-        >
-          <Plus className="h-3.5 w-3.5 mr-1.5" /> Novo Template
-        </Button>
-      </div>
-
       {/* Empty state: no programas registered (priority over "no grupos") */}
       {noProgramas && (
         <Card className="p-10 text-center border-dashed" style={layoutCardStyle}>
@@ -982,7 +974,8 @@ export default function CenariosEstudioPage({ effectiveUserId }: { effectiveUser
       })()}
     </div>
   );
-}
+  }
+);
 
 /* ─── Grupo Card ─── */
 interface GrupoCardProps {
