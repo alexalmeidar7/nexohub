@@ -419,34 +419,33 @@ export default function FloatingOnAirPresenter({
                 : undefined,
             }}
           >
-            {!isBrowsingSchedule && (
-            {/* 1. 'no ar' badge */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  backgroundColor: "#ef4444",
-                  boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
-                  animation: "fmp-pulse 1.8s ease-in-out infinite",
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "#ef4444",
-                  lineHeight: 1,
-                }}
-              >
-                NO AR
-              </span>
-            </div>
-            )}
+            {!isBrowsingSchedule ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    backgroundColor: "#ef4444",
+                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.9)",
+                    animation: "fmp-pulse 1.8s ease-in-out infinite",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "#ef4444",
+                    lineHeight: 1,
+                  }}
+                >
+                  NO AR
+                </span>
+              </div>
+            ) : null}
 
             {/* 2. Embaixo de 'no ar': O nome do programa */
             <p
