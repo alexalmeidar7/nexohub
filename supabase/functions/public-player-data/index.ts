@@ -372,6 +372,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         userId,
+        tvPrimaryColor: (typeof dashboardItems?.tv_primary_color === "string" && /^#[0-9a-fA-F]{6}$/.test(dashboardItems.tv_primary_color)) ? dashboardItems.tv_primary_color : "#dc2626",
         channels: channelsRes.data || [],
         programas: programasRes.data || [],
         apresentadores: apresentadoresRes.data || [],
